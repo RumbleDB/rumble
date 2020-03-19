@@ -216,31 +216,30 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeTupleIterator previousIterator
     ) {
         if (clause instanceof ForClause) {
-            for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
-                RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                    ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getSequenceType(),
-                        var.getExpression(),
-                        this.visitorConfig
-                    );
-                    assignmentIterator = new TreatIterator(
-                            assignmentIterator,
-                            var.getSequenceType(),
-                            false,
-                            executionMode,
-                            clause.getMetadata()
-                    );
-                }
-
-                previousIterator = new ForClauseSparkIterator(
-                        previousIterator,
-                        var.getVariableReference().getVariableName(),
-                        assignmentIterator,
-                        var.getHighestExecutionMode(this.visitorConfig),
-                        clause.getMetadata()
-                );
+        	ForClause forClause = (ForClause) clause;
+            RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
+            if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
+	            ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+	            		forClause.getSequenceType(),
+	            		forClause.getExpression(),
+	                this.visitorConfig
+	            );
+	            assignmentIterator = new TreatIterator(
+	                    assignmentIterator,
+	                    forClause.getSequenceType(),
+	                    false,
+	                    executionMode,
+	                    clause.getMetadata()
+	            );
             }
+
+            previousIterator = new ForClauseSparkIterator(
+                    previousIterator,
+                    forClause.getVariableName(),
+                    assignmentIterator,
+                    forClause.getHighestExecutionMode(this.visitorConfig),
+                    clause.getMetadata()
+            );
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);

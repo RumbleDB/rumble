@@ -293,34 +293,34 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitForClause(JsoniqParser.ForClauseContext ctx) {
-        List<ForClauseVar> vars = new ArrayList<>();
-        ForClauseVar child;
+        ForClause clause = null;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
-            child = (ForClauseVar) this.visitForVar(var);
-            vars.add(child);
+            ForClause newClause = (ForClause) this.visitForVar(var);
+            newClause.setPreviousClause(clause);
+            clause = newClause;
         }
 
-        return new ForClause(vars, createMetadataFromContext(ctx));
+        return clause;
     }
 
     @Override
     public Node visitForVar(JsoniqParser.ForVarContext ctx) {
         SequenceType seq = null;
         boolean emptyFlag;
-        VariableReferenceExpression var = (VariableReferenceExpression) this.visitVarRef(ctx.var_ref);
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
             seq = SequenceType.mostGeneralSequenceType;
         }
         emptyFlag = (ctx.flag != null);
-        VariableReferenceExpression atVarRef = null;
+        String atVar = null;
         if (ctx.at != null) {
-            atVarRef = (VariableReferenceExpression) this.visitVarRef(ctx.at);
+            atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
 
-        return new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
+        return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
     }
 
     @Override

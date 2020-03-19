@@ -30,6 +30,7 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
+import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClauseVar;
@@ -138,17 +139,17 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region FLWOR vars
     @Override
-    public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
+    public StaticContext visitForClause(ForClause clause, StaticContext argument) {
         // TODO visit at...
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
+        this.visit(clause.getExpression(), argument);
+        clause.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
 
-        StaticContext result = visitFlowrVarDeclaration(expression, argument);
-        if (expression.getPositionalVariableReference() != null) {
+        StaticContext result = visitFlowrVarDeclaration(clause, argument);
+        if (clause.getPositionalVariableReference() != null) {
             result.addVariable(
-                expression.getPositionalVariableReference().getVariableName(),
+        		clause.getPositionalVariableReference().getVariableName(),
                 new SequenceType(ItemType.integerItem),
-                expression.getMetadata(),
+                clause.getMetadata(),
                 ExecutionMode.LOCAL
             );
         }

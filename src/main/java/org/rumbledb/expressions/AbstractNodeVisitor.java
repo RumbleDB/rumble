@@ -129,10 +129,6 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitForClauseVar(ForClauseVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
     public T visitLetClauseVar(LetClauseVar expression, T argument) {
         return defaultAction(expression, argument);
     }
