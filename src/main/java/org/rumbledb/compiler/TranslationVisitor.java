@@ -91,6 +91,7 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -244,8 +245,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             startClause = (Clause) this.visitForClause(ctx.start_for);
         }
 
-        // exclude return + returnExpr
         Clause previousFLWORClause = startClause;
+
+        // there might have been multiple variables in the syntactic starting clause
+        // and each one is mapped to a separate start clause on the logical level, so we need to rewind
+        // and populate content clauses appropriately
+        List<Clause> clausesTemp = new ArrayList<>();
+        while (startClause.getPreviousClause() != null) {
+            clausesTemp.add(startClause);
+            startClause = startClause.getPreviousClause();
+        }
+        Collections.reverse(clausesTemp);
+        contentClauses.addAll(clausesTemp);
+
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
                 childClause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
@@ -265,9 +277,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         createMetadataFromContext(ctx)
                 );
             }
-            childClause.setPreviousClause(previousFLWORClause);
-            previousFLWORClause = childClause;
+
+            // there might have been multiple variables in the syntactic starting clause
+            // and each one is mapped to a separate start clause on the logical level, so we need to rewind
+            // and populate content clauses appropriately
+            clausesTemp.clear();
+            Clause lastChildClause = childClause;
+            while (childClause.getPreviousClause() != null) {
+                clausesTemp.add(childClause);
+                childClause = childClause.getPreviousClause();
+            }
             contentClauses.add(childClause);
+            Collections.reverse(clausesTemp);
+            contentClauses.addAll(clausesTemp);
+
+            childClause.setPreviousClause(previousFLWORClause);
+            previousFLWORClause = lastChildClause;
         }
 
         // visit return
