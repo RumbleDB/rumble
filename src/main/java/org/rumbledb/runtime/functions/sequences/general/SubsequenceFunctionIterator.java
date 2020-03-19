@@ -71,7 +71,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 filteredRDD = zippedRDD.filter((input) -> input._2() >= this.startPosition - 1);
             } else {
                 filteredRDD = zippedRDD.filter(
-                        (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
+                    (input) -> input._2() >= this.startPosition - 1 && input._2() < this.startPosition - 1 + this.length
                 );
             }
             return filteredRDD.map(x -> x._1);
@@ -152,13 +152,13 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
     private void setInstanceVariables(DynamicContext context) {
         Item positionItem = this.positionIterator
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         this.startPosition = (int) Math.round(positionItem.getDoubleValue());
 
         this.length = -1;
         if (this.children.size() == 3) {
             Item lengthItem = this.lengthIterator
-                    .materializeFirstItemOrNull(context);
+                .materializeFirstItemOrNull(context);
             this.length = (int) Math.round(lengthItem.getDoubleValue());
         }
     }
