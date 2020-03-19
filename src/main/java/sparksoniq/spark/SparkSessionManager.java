@@ -44,6 +44,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
+import java.util.NoSuchElementException;
 
 public class SparkSessionManager {
 
@@ -100,24 +101,30 @@ public class SparkSessionManager {
     }
 
     private void initializeKryoSerialization() {
-        this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        Class<?>[] serializedClasses = new Class[] {
-            Item.class,
-            ArrayItem.class,
-            ObjectItem.class,
-            StringItem.class,
-            IntegerItem.class,
-            DoubleItem.class,
-            DecimalItem.class,
-            NullItem.class,
-            BooleanItem.class,
-            DynamicContext.class,
-            FlworTuple.class,
-            FlworKey.class,
-            RuntimeIterator.class,
-            RuntimeTupleIterator.class };
+        String serializer = null;
+        try {
+            serializer = this.configuration.get("spark.serializer");
+        } catch (NoSuchElementException e) {
+            this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            serializer = this.configuration.get("spark.serializer");
+            Class<?>[] serializedClasses = new Class[] {
+                Item.class,
+                ArrayItem.class,
+                ObjectItem.class,
+                StringItem.class,
+                IntegerItem.class,
+                DoubleItem.class,
+                DecimalItem.class,
+                NullItem.class,
+                BooleanItem.class,
+                DynamicContext.class,
+                FlworTuple.class,
+                FlworKey.class,
+                RuntimeIterator.class,
+                RuntimeTupleIterator.class };
 
-        this.configuration.registerKryoClasses(serializedClasses);
+            this.configuration.registerKryoClasses(serializedClasses);
+        }
     }
 
 
