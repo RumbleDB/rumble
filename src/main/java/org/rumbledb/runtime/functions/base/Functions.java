@@ -1096,6 +1096,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
+         * `
          * function that reverses the order of items in a sequence.
          */
         static final BuiltinFunction reverse = createBuiltinFunction(
@@ -1103,7 +1104,7 @@ public class Functions {
             "item*",
             "item*",
             ReverseFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that applies a subsequence operation to the given sequence with the given start index and length
