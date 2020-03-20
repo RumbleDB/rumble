@@ -73,9 +73,14 @@ public class DynamicFunctionCallExpression extends Expression {
         result.append("(dynamicFunctionCall ");
         result.append(this.mainExpression.serializationString(false));
         for (Expression arg : this.arguments) {
-            result.append("(argument (exprSingle ");
-            result.append(arg.serializationString(false));
-            result.append((this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) "));
+            if (arg == null) {
+                result.append("?");
+                result.append(this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ", " : " ");
+            } else {
+                result.append("(argument (exprSingle ");
+                result.append(arg.serializationString(false));
+                result.append((this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) "));
+            }
         }
         result.append("))");
         return result.toString();

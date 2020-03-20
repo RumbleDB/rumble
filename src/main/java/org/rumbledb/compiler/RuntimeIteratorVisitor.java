@@ -42,7 +42,6 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
@@ -216,31 +215,30 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeTupleIterator previousIterator
     ) {
         if (clause instanceof ForClause) {
-            for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
-                RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                    ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getSequenceType(),
-                        var.getExpression(),
-                        this.visitorConfig
-                    );
-                    assignmentIterator = new TreatIterator(
-                            assignmentIterator,
-                            var.getSequenceType(),
-                            false,
-                            executionMode,
-                            clause.getMetadata()
-                    );
-                }
-
-                previousIterator = new ForClauseSparkIterator(
-                        previousIterator,
-                        var.getVariableReference().getVariableName(),
+            ForClause forClause = (ForClause) clause;
+            RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
+            if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
+                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+                    forClause.getSequenceType(),
+                    forClause.getExpression(),
+                    this.visitorConfig
+                );
+                assignmentIterator = new TreatIterator(
                         assignmentIterator,
-                        var.getHighestExecutionMode(this.visitorConfig),
+                        forClause.getSequenceType(),
+                        false,
+                        executionMode,
                         clause.getMetadata()
                 );
             }
+
+            previousIterator = new ForClauseSparkIterator(
+                    previousIterator,
+                    forClause.getVariableName(),
+                    assignmentIterator,
+                    forClause.getHighestExecutionMode(this.visitorConfig),
+                    clause.getMetadata()
+            );
         } else if (clause instanceof LetClause) {
             for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
                 RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
