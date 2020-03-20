@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -30,9 +31,11 @@ import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
@@ -61,7 +64,34 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
+        init(context);
+        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+        List<Item> inserts = this.insertIterator.materialize(context);
+
+        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+        int numPartitions = zippedRDD.partitions().size();
+        int indexOfInsertion = this.insertPosition;
+        JavaRDD<Item> insertedRDD = zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
+            List<Item> list = new ArrayList<>();
+            int lastIndex = -1;
+            if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
+                list.addAll(inserts);
+            }
+            Tuple2<Item, Long> element;
+            while (iterator.hasNext()) {
+                element = iterator.next();
+                if (element._2() == indexOfInsertion - 1) {
+                    list.addAll(inserts);
+                }
+                list.add(element._1());
+                lastIndex = element._2().intValue();
+            }
+            if (partitionIndex == numPartitions - 1 && indexOfInsertion - 1 > lastIndex) {
+                list.addAll(inserts);
+            }
+            return list.iterator();
+        }, false);
+        return insertedRDD;
     }
 
     @Override
