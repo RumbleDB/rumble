@@ -28,22 +28,19 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FlworExpression extends Expression {
 
-    private Clause startClause;
-    private List<Clause> contentClauses;
     private ReturnClause returnClause;
 
     public FlworExpression(
-            Clause startClause,
-            List<Clause> containingClauses,
             ReturnClause returnClause,
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        Clause startClause = returnClause.getFirstClause();
         if (
             startClause.getClauseType() != FLWOR_CLAUSES.FOR
                 &&
@@ -52,30 +49,11 @@ public class FlworExpression extends Expression {
             throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
         }
 
-        setStartClause(startClause);
-        setContentClauses(containingClauses);
-        setReturnClause(returnClause);
-    }
-
-    public Clause getStartClause() {
-        return this.startClause;
-    }
-
-    public List<Clause> getContentClauses() {
-        return this.contentClauses;
-    }
-
-    private void setContentClauses(List<Clause> contentClauses) {
-        this.contentClauses = new ArrayList<>();
-        this.contentClauses.addAll(contentClauses);
+        this.returnClause = returnClause;
     }
 
     public ReturnClause getReturnClause() {
         return this.returnClause;
-    }
-
-    private void setReturnClause(ReturnClause returnClause) {
-        this.returnClause = returnClause;
     }
 
     @Override
@@ -91,17 +69,7 @@ public class FlworExpression extends Expression {
     }
 
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.startClause);
-        if (this.contentClauses != null) {
-            this.contentClauses.forEach(e -> {
-                if (e != null) {
-                    result.add(e);
-                }
-            });
-        }
-        result.add(this.returnClause);
-        return result;
+        return Collections.singletonList(returnClause);
     }
 
     @Override
@@ -112,20 +80,14 @@ public class FlworExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(flowrExpr ";
-        result += this.startClause.serializationString(true) + " ";
-        for (Clause clause : this.contentClauses) {
+        Clause clause = this.returnClause.getFirstClause();
+        while (clause != null) {
             result += clause.serializationString(true) + " ";
+            clause = clause.getNextClause();
         }
-        result += this.returnClause.serializationString(true);
         result += "))";
         return result;
     }
-
-    private void setStartClause(Clause startClause) {
-        this.startClause = startClause;
-    }
-
-
 }
 
 

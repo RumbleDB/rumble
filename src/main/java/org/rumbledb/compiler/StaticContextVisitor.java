@@ -32,7 +32,7 @@ import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
-import org.rumbledb.expressions.flowr.LetClauseVar;
+import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -127,12 +127,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        StaticContext result = this.visit(expression.getStartClause(), argument);
-        for (Clause clause : expression.getContentClauses()) {
+        Clause clause = expression.getReturnClause().getFirstClause();
+        StaticContext result = this.visit(clause, argument);
+        while (clause != null) {
             result = this.visit(clause, result);
+            clause = clause.getNextClause();
         }
-
-        result = this.visit(expression.getReturnClause(), result);
         return result;
     }
 
@@ -164,10 +164,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitLetClauseVar(LetClauseVar expression, StaticContext argument) {
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
-        return visitFlowrVarDeclaration(expression, argument);
+    public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
+        // TODO visit at...
+        this.visit(clause.getExpression(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
+
+        StaticContext result = new StaticContext(argument);
+        // TODO for now we only support as/default, no inference, flags
+        result.addVariable(
+            clause.getVariableName(),
+            clause.getSequenceType(),
+            clause.getMetadata(),
+            clause.getVariableHighestStorageMode(this.visitorConfig)
+        );
+
+        return result;
     }
 
     @Override
