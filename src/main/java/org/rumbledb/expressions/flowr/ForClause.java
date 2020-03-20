@@ -76,7 +76,7 @@ public class ForClause extends Clause {
         return this.variableName;
     }
 
-    public boolean isAlowsEmpty() {
+    public boolean isAllowEmpty() {
         return this.allowEmpty;
     }
 
@@ -109,7 +109,7 @@ public class ForClause extends Clause {
             !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
                 && this.variableHighestStorageMode == ExecutionMode.UNSET
         ) {
-            throw new OurBadException("An variable storage mode is accessed without being set.");
+            throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
     }
