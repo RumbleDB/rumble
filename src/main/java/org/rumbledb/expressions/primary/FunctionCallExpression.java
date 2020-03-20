@@ -154,10 +154,16 @@ public class FunctionCallExpression extends Expression {
         }
         result += "(argumentList ( ";
         for (Expression arg : this.arguments) {
-            result += "(argument (exprSingle "
-                + arg.serializationString(false)
-                +
-                (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
+            if (arg == null) {
+                result += "?"
+                    +
+                    (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ", " : " ");
+            } else {
+                result += "(argument (exprSingle "
+                    + arg.serializationString(false)
+                    +
+                    (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
+            }
         }
         result += "))";
         result += "))";
