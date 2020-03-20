@@ -187,6 +187,6 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     );
             }
         }
-        return childDataFrame.sparkSession().sql("SELECT * FROM array WHERE false");
+        return childDataFrame.sparkSession().emptyDataFrame();
     }
 }
