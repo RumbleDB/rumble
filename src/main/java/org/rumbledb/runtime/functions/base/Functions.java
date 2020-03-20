@@ -1174,11 +1174,11 @@ public class Functions {
          */
         static final BuiltinFunction index_of = createBuiltinFunction(
             "index-of",
-            "item*",
-            "item",
+            "atomic*",
+            "atomic",
             "integer*",
             IndexOfFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns whether two sequences are deep-equal to each other
