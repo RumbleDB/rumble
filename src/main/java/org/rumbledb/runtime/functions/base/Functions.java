@@ -1090,10 +1090,10 @@ public class Functions {
         static final BuiltinFunction remove = createBuiltinFunction(
             "remove",
             "item*",
-            "item*",
+            "integer",
             "item*",
             RemoveFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * `
