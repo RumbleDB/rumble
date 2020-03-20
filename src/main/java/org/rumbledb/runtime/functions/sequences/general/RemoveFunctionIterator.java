@@ -20,13 +20,11 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -57,16 +55,18 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
-        return null;
+        init(context);
+        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+
+        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._2() != this.removePosition - 1);
+        return filteredRDD.map((item) -> item._1);
     }
 
     @Override
     protected void openLocal() {
+        init(this.currentDynamicContextForLocalExecution);
         this.currentPosition = 1;
-
-        Item positionItem =
-                this.positionIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.removePosition = positionItem.getIntegerValue();
 
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -98,6 +98,10 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", getMetadata());
     }
 
+    private void init(DynamicContext context) {
+        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        this.removePosition = positionItem.getIntegerValue();
+    }
 
     public void setNextResult() {
         this.nextResult = null;
