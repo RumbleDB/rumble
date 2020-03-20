@@ -133,12 +133,21 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         childDataFrame.createOrReplaceTempView("array");
         StructType schema = childDataFrame.schema();
         String[] fieldNames = schema.fieldNames();
-        if (fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (
+            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
+        ) {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof ArrayType) {
-                return childDataFrame.sparkSession().sql(String.format("SELECT explode(`%s`) AS `%s` FROM array", SparkSessionManager.atomicJSONiqItemColumnName, SparkSessionManager.atomicJSONiqItemColumnName));
+                return childDataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT explode(`%s`) AS `%s` FROM array",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.atomicJSONiqItemColumnName
+                        )
+                    );
             }
         }
         return childDataFrame.sparkSession().sql("SELECT * FROM array WHERE false");
