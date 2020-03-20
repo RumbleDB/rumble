@@ -79,6 +79,8 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
+        this.currentPosition = 1;
+
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
