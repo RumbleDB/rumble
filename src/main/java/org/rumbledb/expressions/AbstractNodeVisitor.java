@@ -30,7 +30,6 @@ import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
@@ -126,10 +125,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitOrderByClause(OrderByClause expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitForClauseVar(ForClauseVar expression, T argument) {
         return defaultAction(expression, argument);
     }
 

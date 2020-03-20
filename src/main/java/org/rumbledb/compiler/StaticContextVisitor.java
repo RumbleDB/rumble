@@ -30,7 +30,7 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
-import org.rumbledb.expressions.flowr.ForClauseVar;
+import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -138,17 +138,25 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region FLWOR vars
     @Override
-    public StaticContext visitForClauseVar(ForClauseVar expression, StaticContext argument) {
+    public StaticContext visitForClause(ForClause clause, StaticContext argument) {
         // TODO visit at...
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
+        this.visit(clause.getExpression(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = visitFlowrVarDeclaration(expression, argument);
-        if (expression.getPositionalVariableReference() != null) {
+        StaticContext result = new StaticContext(argument);
+        // TODO for now we only support as/default, no inference, flags
+        result.addVariable(
+            clause.getVariableName(),
+            clause.getSequenceType(),
+            clause.getMetadata(),
+            clause.getVariableHighestStorageMode(this.visitorConfig)
+        );
+
+        if (clause.getPositionalVariableName() != null) {
             result.addVariable(
-                expression.getPositionalVariableReference().getVariableName(),
+                clause.getPositionalVariableName(),
                 new SequenceType(ItemType.integerItem),
-                expression.getMetadata(),
+                clause.getMetadata(),
                 ExecutionMode.LOCAL
             );
         }
