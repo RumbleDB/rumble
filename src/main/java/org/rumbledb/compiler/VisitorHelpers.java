@@ -19,10 +19,10 @@ public class VisitorHelpers {
         visitor.visit(node, null);
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
-        int prevUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+        int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
         while (true) {
             visitor.visit(node, null);
-            int currentUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+            int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
@@ -44,7 +44,7 @@ public class VisitorHelpers {
         try {
             for (
                 FunctionIdentifier functionIdentifier : Functions
-                    .getCurrentUnsetUserDefinedFunctionIdentifiers()
+                    .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
             ) {
                 Functions.addUserDefinedFunctionExecutionMode(
                     functionIdentifier,
