@@ -44,7 +44,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
-import java.util.NoSuchElementException;
 
 public class SparkSessionManager {
 
@@ -101,12 +100,8 @@ public class SparkSessionManager {
     }
 
     private void initializeKryoSerialization() {
-        String serializer = null;
-        try {
-            serializer = this.configuration.get("spark.serializer");
-        } catch (NoSuchElementException e) {
+        if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-            serializer = this.configuration.get("spark.serializer");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,
                 ArrayItem.class,
