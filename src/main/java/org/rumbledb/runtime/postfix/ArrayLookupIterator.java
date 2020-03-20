@@ -22,6 +22,12 @@ package org.rumbledb.runtime.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
@@ -32,6 +38,7 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 
@@ -149,5 +156,37 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+        initLookupPosition();
+        childDataFrame.createOrReplaceTempView("array");
+        StructType schema = childDataFrame.schema();
+        String[] fieldNames = schema.fieldNames();
+        if (Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
+            StructField field = schema.fields()[i];
+            DataType type = field.dataType();
+            if (type instanceof ArrayType) {
+                return childDataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            Integer.toString(this.lookup - 1),
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            Integer.toString(this.lookup)
+                        )
+                    );
+            }
+        }
+        return childDataFrame.sparkSession().sql("SELECT * FROM array WHERE false");
     }
 }
