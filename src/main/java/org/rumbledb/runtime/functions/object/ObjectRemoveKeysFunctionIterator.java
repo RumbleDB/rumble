@@ -56,7 +56,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-    	this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
@@ -122,7 +122,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
         return ItemFactory.getInstance()
             .createObjectItem(finalKeylist, finalValueList, getMetadata());
     }
-    
+
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
@@ -130,7 +130,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-    	this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
@@ -154,7 +154,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         this.iterator.close();
     }
-    
+
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
@@ -165,7 +165,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        
+
         this.removalKeys = new ArrayList<>();
         for (Item removalKeyItem : removalKeys) {
             if (!removalKeyItem.isString()) {
