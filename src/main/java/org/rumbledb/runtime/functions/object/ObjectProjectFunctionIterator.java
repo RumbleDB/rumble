@@ -42,7 +42,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator iterator;
     private Item nextResult;
     private List<Item> projectionKeys;
-    private ExceptionMetadata iteratorMetadata;
 
     public ObjectProjectFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -51,7 +50,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, executionMode, iteratorMetadata);
         this.iterator = arguments.get(0);
-        this.iteratorMetadata = iteratorMetadata;
     }
 
     @Override
@@ -146,7 +144,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
                 this.projectionKeys,
-                this.iteratorMetadata
+                getMetadata()
         );
         return childRDD.flatMap(transformation);
     }
