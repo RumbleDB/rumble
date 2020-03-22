@@ -56,6 +56,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+    	this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
@@ -129,6 +130,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
+    	this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
