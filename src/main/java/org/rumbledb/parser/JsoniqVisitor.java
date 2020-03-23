@@ -10,7 +10,7 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  * by {@link JsoniqParser}.
  *
  * @param <T> The return type of the visit operation. Use {@link Void} for
- *        operations with no return type.
+ *            operations with no return type.
  */
 public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
     /**
@@ -676,6 +676,14 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
      * @return the visitor result
      */
     T visitKeyWordTime(JsoniqParser.KeyWordTimeContext ctx);
+
+    /**
+     * Visit a parse tree produced by {@link JsoniqParser#keyWordAnyURI}.
+     *
+     * @param ctx the parse tree
+     * @return the visitor result
+     */
+    T visitKeyWordAnyURI(JsoniqParser.KeyWordAnyURIContext ctx);
 
     /**
      * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.

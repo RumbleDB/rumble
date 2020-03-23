@@ -47,6 +47,7 @@ public class ItemType implements Serializable {
     public static final ItemType dateItem = new ItemType("date");
     public static final ItemType timeItem = new ItemType("time");
     public static final ItemType hexBinaryItem = new ItemType("hexBinary");
+    public static final ItemType anyURIItem = new ItemType("anyURI");
     public static final ItemType base64BinaryItem = new ItemType("base64Binary");
     public static final ItemType item = new ItemType("item");
     public static final ItemType functionItem = new ItemType("function");
@@ -111,6 +112,9 @@ public class ItemType implements Serializable {
         if (name.equals(timeItem.name)) {
             return timeItem;
         }
+        if (name.equals(anyURIItem.name)) {
+            return anyURIItem;
+        }
         if (name.equals(hexBinaryItem.name)) {
             return hexBinaryItem;
         }
@@ -148,7 +152,8 @@ public class ItemType implements Serializable {
                 || this.equals(integerItem)
                 || this.equals(decimalItem)
                 || this.equals(doubleItem)
-                || this.equals(booleanItem);
+                || this.equals(booleanItem)
+                || this.equals(anyURIItem);
         }
 
         return false;

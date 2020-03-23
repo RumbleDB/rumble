@@ -238,6 +238,8 @@ keyWordDate             : 'date';
 
 keyWordTime             : 'time';
 
+keyWordAnyURI           : 'anyURI';
+
 typesKeywords           : keyWordString
                         | keyWordInteger
                         | keyWordDecimal
@@ -250,7 +252,8 @@ typesKeywords           : keyWordString
                         | keyWordDate
                         | keyWordTime
                         | keyWordHexBinary
-                        | keyWordBase64Binary;
+                        | keyWordBase64Binary
+                        | keyWordAnyURI;
 
 singleType              : item=atomicType (question +='?')?;
 

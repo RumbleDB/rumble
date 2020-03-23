@@ -76,15 +76,15 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
             }
             this.hasNext = true;
             this.result = i.get(0);
-        }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.iterator.hasNext()) {
-            this.hasNext = true;
-            this.result = this.iterator.next();
         } else {
-            this.hasNext = false;
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
+            if (this.iterator.hasNext()) {
+                this.hasNext = true;
+                this.result = this.iterator.next();
+            } else {
+                this.hasNext = false;
+            }
+            this.iterator.close();
         }
-        this.iterator.close();
     }
-
 }
