@@ -97,7 +97,7 @@ public class LetClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(expression);
+        return Collections.singletonList(this.expression);
     }
 
     @Override
