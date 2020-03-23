@@ -25,12 +25,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -71,7 +67,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         int numPartitions = zippedRDD.partitions().size();
         int indexOfInsertion = this.insertPosition;
-        JavaRDD<Item> insertedRDD = zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
+        return zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
             List<Item> list = new ArrayList<>();
             int lastIndex = -1;
             if (partitionIndex == 0 && indexOfInsertion - 1 < 0) {
@@ -91,7 +87,6 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
             }
             return list.iterator();
         }, false);
-        return insertedRDD;
     }
 
     @Override
