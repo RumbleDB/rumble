@@ -22,6 +22,11 @@ package org.rumbledb.runtime.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
@@ -35,8 +40,10 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
 import java.util.Arrays;
@@ -193,5 +200,43 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         FlatMapFunction<Item, Item> transformation = new ObjectLookupClosure(key);
 
         return childRDD.flatMap(transformation);
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+        initLookupKey();
+        String key;
+        if (this.contextLookup) {
+            // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
+            key = context.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
+        } else {
+            key = this.lookupKey.getStringValue();
+        }
+        childDataFrame.createOrReplaceTempView("object");
+        StructType schema = childDataFrame.schema();
+        String[] fieldNames = schema.fieldNames();
+        if (Arrays.asList(fieldNames).contains(key)) {
+            int i = schema.fieldIndex(key);
+            StructField field = schema.fields()[i];
+            DataType type = field.dataType();
+            if (type instanceof StructType) {
+                return childDataFrame.sparkSession().sql(String.format("SELECT `%s`.* FROM object", key));
+            } else {
+                return childDataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s` AS `%s` FROM object",
+                            key,
+                            SparkSessionManager.atomicJSONiqItemColumnName
+                        )
+                    );
+            }
+        }
+        return childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
     }
 }

@@ -46,7 +46,6 @@ import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
@@ -92,6 +91,7 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -245,8 +245,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             startClause = (Clause) this.visitForClause(ctx.start_for);
         }
 
-        // exclude return + returnExpr
         Clause previousFLWORClause = startClause;
+
+        // there might have been multiple variables in the syntactic starting clause
+        // and each one is mapped to a separate start clause on the logical level, so we need to rewind
+        // and populate content clauses appropriately
+        List<Clause> clausesTemp = new ArrayList<>();
+        while (startClause.getPreviousClause() != null) {
+            clausesTemp.add(startClause);
+            startClause = startClause.getPreviousClause();
+        }
+        Collections.reverse(clausesTemp);
+        contentClauses.addAll(clausesTemp);
+
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
                 childClause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
@@ -266,9 +277,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         createMetadataFromContext(ctx)
                 );
             }
-            childClause.setPreviousClause(previousFLWORClause);
-            previousFLWORClause = childClause;
+
+            // there might have been multiple variables in the syntactic starting clause
+            // and each one is mapped to a separate start clause on the logical level, so we need to rewind
+            // and populate content clauses appropriately
+            clausesTemp.clear();
+            Clause lastChildClause = childClause;
+            while (childClause.getPreviousClause() != null) {
+                clausesTemp.add(childClause);
+                childClause = childClause.getPreviousClause();
+            }
             contentClauses.add(childClause);
+            Collections.reverse(clausesTemp);
+            contentClauses.addAll(clausesTemp);
+
+            childClause.setPreviousClause(previousFLWORClause);
+            previousFLWORClause = lastChildClause;
         }
 
         // visit return
@@ -293,34 +317,34 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitForClause(JsoniqParser.ForClauseContext ctx) {
-        List<ForClauseVar> vars = new ArrayList<>();
-        ForClauseVar child;
+        ForClause clause = null;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
-            child = (ForClauseVar) this.visitForVar(var);
-            vars.add(child);
+            ForClause newClause = (ForClause) this.visitForVar(var);
+            newClause.setPreviousClause(clause);
+            clause = newClause;
         }
 
-        return new ForClause(vars, createMetadataFromContext(ctx));
+        return clause;
     }
 
     @Override
     public Node visitForVar(JsoniqParser.ForVarContext ctx) {
         SequenceType seq = null;
         boolean emptyFlag;
-        VariableReferenceExpression var = (VariableReferenceExpression) this.visitVarRef(ctx.var_ref);
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
             seq = SequenceType.mostGeneralSequenceType;
         }
         emptyFlag = (ctx.flag != null);
-        VariableReferenceExpression atVarRef = null;
+        String atVar = null;
         if (ctx.at != null) {
-            atVarRef = (VariableReferenceExpression) this.visitVarRef(ctx.at);
+            atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
 
-        return new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
+        return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
     }
 
     @Override

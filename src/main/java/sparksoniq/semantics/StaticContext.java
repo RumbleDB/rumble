@@ -132,4 +132,12 @@ public class StaticContext {
     protected Map<String, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
     }
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Static context with variables: ");
+        this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
+        return stringBuilder.toString();
+    }
 }

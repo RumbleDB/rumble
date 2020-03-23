@@ -33,6 +33,7 @@ import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.utils.FileUtils;
 
@@ -135,7 +136,10 @@ public class RumbleJLineShell {
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
-                    handleException(new SparksoniqRuntimeException(ex.getMessage()), showErrorInfo);
+                    if (showErrorInfo) {
+                        ex.printStackTrace();
+                    }
+                    handleException(new OurBadException(ex.getMessage()), showErrorInfo);
                 }
             } else if (ex instanceof SparksoniqRuntimeException) {
                 System.err.println("⚠️  ️" + ex.getMessage());

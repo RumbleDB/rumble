@@ -257,6 +257,11 @@
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
         </dependency>
+		<dependency>
+		    <groupId>edu.vanderbilt.accre</groupId>
+		    <artifactId>laurelin</artifactId>
+		    <version>1.0.0</version>
+		</dependency>
     </dependencies>
 
     <distributionManagement>
