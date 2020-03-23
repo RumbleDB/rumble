@@ -50,7 +50,7 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
             message = String.format(
                 "\"%s\": value of type %s is not castable to type anyURI",
                 atomicItem.serialize(),
-                ItemType.getItemTypeByName(atomicItem.getClass().getSimpleName())
+                atomicItem.getDynamicType().getName()
             );
             throw new CastException(message, getMetadata());
         } else
