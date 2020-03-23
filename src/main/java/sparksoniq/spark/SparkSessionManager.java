@@ -100,24 +100,26 @@ public class SparkSessionManager {
     }
 
     private void initializeKryoSerialization() {
-        this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        Class<?>[] serializedClasses = new Class[] {
-            Item.class,
-            ArrayItem.class,
-            ObjectItem.class,
-            StringItem.class,
-            IntegerItem.class,
-            DoubleItem.class,
-            DecimalItem.class,
-            NullItem.class,
-            BooleanItem.class,
-            DynamicContext.class,
-            FlworTuple.class,
-            FlworKey.class,
-            RuntimeIterator.class,
-            RuntimeTupleIterator.class };
+        if (!this.configuration.contains("spark.serializer")) {
+            this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            Class<?>[] serializedClasses = new Class[] {
+                Item.class,
+                ArrayItem.class,
+                ObjectItem.class,
+                StringItem.class,
+                IntegerItem.class,
+                DoubleItem.class,
+                DecimalItem.class,
+                NullItem.class,
+                BooleanItem.class,
+                DynamicContext.class,
+                FlworTuple.class,
+                FlworKey.class,
+                RuntimeIterator.class,
+                RuntimeTupleIterator.class };
 
-        this.configuration.registerKryoClasses(serializedClasses);
+            this.configuration.registerKryoClasses(serializedClasses);
+        }
     }
 
 

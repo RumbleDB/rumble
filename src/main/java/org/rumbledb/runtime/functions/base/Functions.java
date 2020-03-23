@@ -70,6 +70,7 @@ import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
@@ -237,6 +238,8 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.pro
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove_keys;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.reverse;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.root_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.root_file2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round1;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round_half_to_even1;
@@ -277,6 +280,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.yea
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.year_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.years_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.zero_or_one;
+
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
@@ -368,6 +372,8 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
+        builtInFunctions.put(root_file1.getIdentifier(), root_file1);
+        builtInFunctions.put(root_file2.getIdentifier(), root_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -896,6 +902,27 @@ public class Functions {
             "string?",
             "item*",
             ParquetFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a ROOT file
+         */
+        static final BuiltinFunction root_file1 = createBuiltinFunction(
+            "root-file",
+            "string",
+            "item*",
+            RootFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a ROOT file
+         */
+        static final BuiltinFunction root_file2 = createBuiltinFunction(
+            "root-file",
+            "string",
+            "string",
+            "item*",
+            RootFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
         /**
