@@ -61,21 +61,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(node, argument);
-        // initialize execution mode by visiting children and expressions first, then calling initialize methods
-        node.initHighestExecutionMode(this.visitorConfig);
-        return generatedContext;
-    }
-
-    @Override
-    public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
             argument = new StaticContext();
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
         }
-        return node.accept(this, argument);
+        visitDescendants(node, argument);
+        // initialize execution mode by visiting children and expressions first, then calling initialize methods
+        node.initHighestExecutionMode(this.visitorConfig);
+        return argument;
     }
 
     // region primary
@@ -118,9 +113,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
-        StaticContext generatedContext = visitDescendants(expression, argument);
+        visitDescendants(expression, argument);
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
-        return generatedContext;
+        return argument;
     }
     // endregion
 
@@ -133,7 +128,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
-        return result;
+        return argument;
     }
 
     // region FLWOR vars
