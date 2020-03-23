@@ -229,7 +229,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // endregion
 
     // region Flowr
-    // TODO [EXPRVISITOR] count
     @Override
     public Node visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
         Clause clause;
@@ -266,8 +265,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             previousFLWORClause = clause.getLastClause();
         }
 
-        // visit return
-
         Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
         ReturnClause returnClause = new ReturnClause(
                 returnExpr,
@@ -290,9 +287,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.ForVarContext var : ctx.vars) {
             ForClause newClause = (ForClause) this.visitForVar(var);
             if (clause != null) {
-                clause.chainWith(newClause.getFirstClause());
+                clause.chainWith(newClause);
             }
-            clause = (ForClause) newClause.getLastClause();
+            clause = newClause;
         }
 
         return clause;
@@ -324,9 +321,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.LetVarContext var : ctx.vars) {
             LetClause newClause = (LetClause) this.visitLetVar(var);
             if (clause != null) {
-                clause.chainWith(newClause.getFirstClause());
+                clause.chainWith(newClause);
             }
-            clause = (LetClause) newClause.getLastClause();
+            clause = newClause;
         }
 
         return clause;

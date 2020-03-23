@@ -144,7 +144,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         clause.initHighestExecutionMode(this.visitorConfig);
 
         StaticContext result = new StaticContext(argument);
-        // TODO for now we only support as/default, no inference, flags
         result.addVariable(
             clause.getVariableName(),
             clause.getSequenceType(),
@@ -165,12 +164,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        // TODO visit at...
         this.visit(clause.getExpression(), argument);
         clause.initHighestExecutionMode(this.visitorConfig);
 
         StaticContext result = new StaticContext(argument);
-        // TODO for now we only support as/default, no inference, flags
         result.addVariable(
             clause.getVariableName(),
             clause.getSequenceType(),
