@@ -268,7 +268,7 @@ flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
 
 Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
 
-Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
 
 ## Atomic functions
 
