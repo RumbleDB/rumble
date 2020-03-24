@@ -56,6 +56,10 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+        startLocal();
+    }
+
+    private void startLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
@@ -130,24 +134,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal(DynamicContext context) {
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
-        if (removalKeys.isEmpty()) {
-            throw new InvalidSelectorException(
-                    "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
-                    getMetadata()
-            );
-        }
-        this.removalKeys = new ArrayList<>();
-        for (Item removalKeyItem : removalKeys) {
-            if (!removalKeyItem.isString()) {
-                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
-            }
-            String removalKey = removalKeyItem.getStringValue();
-            this.removalKeys.add(removalKey);
-        }
-
-        setNextResult();
+        startLocal();
     }
 
     @Override
