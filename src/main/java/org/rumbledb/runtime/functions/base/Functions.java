@@ -1984,7 +1984,7 @@ public class Functions {
             "item*",
             "item*",
             ArrayFlattenFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
