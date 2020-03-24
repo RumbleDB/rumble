@@ -86,6 +86,10 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
+    public Item createAnyURIItem(String s) {
+        return new AnyURIItem(s);
+    }
+
     public Item createHexBinaryItem(String s) {
         return new HexBinaryItem(s);
     }
