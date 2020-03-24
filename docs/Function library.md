@@ -362,6 +362,22 @@ log(100)
 log10(100)
 ```
 
+### number
+
+```
+number("15")
+```
+returns 15 as a double
+
+```
+number("foo")
+```
+returns NaN as a double
+
+```
+number(15)
+```
+returns 15 as a double
 
 ### pow
 
@@ -534,6 +550,84 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+### replace
+
+Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
+
+```
+replace("abracadabra", "bra", "*")
+```
+
+returns "a\*cada\*"
+
+```
+replace("abracadabra", "a(.)", "a$1$1")
+```
+
+returns "abbraccaddabbra"
+
+### translate
+
+```
+translate("bar","abc","ABC")
+```
+returns "BAr"
+
+```
+translate("--aaa--","abc-","ABC")
+```
+returns "AAA"
+
+### codepoint-equal
+
+```
+codepoint-equal("abcd", "abcd")
+```
+returns true
+
+```
+codepoint-equal("", ())
+```
+returns ()
+
+### string-to-codepoint
+
+```
+string-to-codepoints("Thérèse")
+```
+returns (84, 104, 233, 114, 232, 115, 101)
+
+```
+string-to-codepoints("")
+```
+returns ()
+
+### codepoints-to-string
+
+```
+codepoints-to-string((2309, 2358, 2378, 2325))
+```
+returns "अशॊक"
+
+```
+codepoints-to-string(())
+```
+returns ""
+
+### upper-case
+
+```
+upper-case("abCd0")
+```
+returns "ABCD0"
+
+### lower-case
+
+```
+lower-case("ABc!D")
+```
+returns "abc!d"
+
 ## Context functions
 
 ### position
@@ -662,6 +756,32 @@ Several files or whole directories can be read with the same pattern syntax as i
 for $my-object in parquet-file("*.parquet")
 where $my-object.property eq "some value"
 return $my-json
+```
+
+### csv-file (Rumble specific)
+
+Parses one or more csv files and returns a sequence of objects. This is also similar to Spark's spark.read.csv()
+
+```
+for $i in csv-file("file.csv")
+where $i._c0 eq "some value"
+return $i
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $i in csv-file("*.csv")
+where $i._c0 eq "some value"
+return $i
+```
+
+Options can be given in the form of a JSON object. All available options can be found in the [Spark documentation](https://spark.apache.org/docs/latest/api/java/org/apache/spark/sql/DataFrameReader.html#csv-java.lang.String...-)
+
+```
+for $i in csv-file("file.csv", {"header": true, "inferSchema": true})
+where $i.key eq "some value"
+return $i
 ```
 
 ### parallelize (Rumble specific)

@@ -129,6 +129,9 @@ public class StringItem extends AtomicItem {
         if (itemType.equals(ItemType.base64BinaryItem)) {
             return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
         }
+        if (itemType.equals(ItemType.anyURIItem)) {
+            return ItemFactory.getInstance().createAnyURIItem(this.getStringValue());
+        }
         if (itemType.equals(ItemType.stringItem)) {
             return this;
         }
@@ -152,6 +155,8 @@ public class StringItem extends AtomicItem {
         try {
             if (itemType.equals(ItemType.integerItem)) {
                 Integer.parseInt(this.getValue());
+            } else if (itemType.equals(ItemType.anyURIItem)) {
+                AnyURIItem.parseAnyURIString(this.getValue());
             } else if (itemType.equals(ItemType.decimalItem)) {
                 if (this.getValue().contains("e") || this.getValue().contains("E")) {
                     return false;
