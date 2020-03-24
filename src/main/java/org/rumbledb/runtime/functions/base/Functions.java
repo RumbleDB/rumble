@@ -2006,7 +2006,7 @@ public class Functions {
             "string*",
             "item*",
             ObjectProjectFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that removes the pairs with the given keys from all objects and leaves non-objects intact
