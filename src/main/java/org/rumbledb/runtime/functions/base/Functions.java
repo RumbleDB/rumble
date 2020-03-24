@@ -2017,7 +2017,7 @@ public class Functions {
             "string*",
             "item*",
             ObjectRemoveKeysFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns the values of a Json Object
