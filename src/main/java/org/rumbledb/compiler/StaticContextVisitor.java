@@ -61,16 +61,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(node, argument);
+        // initialize execution mode by visiting children and expressions first, then calling initialize methods
+        node.initHighestExecutionMode(this.visitorConfig);
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
             argument = new StaticContext();
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
         }
-        visitDescendants(node, argument);
-        // initialize execution mode by visiting children and expressions first, then calling initialize methods
-        node.initHighestExecutionMode(this.visitorConfig);
-        return argument;
+        return node.accept(this, argument);
     }
 
     // region primary
