@@ -93,11 +93,6 @@ public class ForClause extends Clause {
     }
 
     @Override
-    public void setPreviousClause(Clause previousClause) {
-        super.setPreviousClause(previousClause);
-    }
-
-    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
             (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
@@ -121,7 +116,7 @@ public class ForClause extends Clause {
 
     @Override
     public List<Node> getChildren() {
-        return Collections.singletonList(expression);
+        return Collections.singletonList(this.expression);
     }
 
     @Override

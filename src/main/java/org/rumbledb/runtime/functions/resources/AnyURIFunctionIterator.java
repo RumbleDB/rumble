@@ -10,7 +10,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
-import org.rumbledb.types.ItemTypes;
 import org.rumbledb.types.ItemType;
 
 
@@ -51,7 +50,7 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
             message = String.format(
                 "\"%s\": value of type %s is not castable to type anyURI",
                 atomicItem.serialize(),
-                ItemTypes.getItemTypeName(atomicItem.getClass().getSimpleName())
+                atomicItem.getDynamicType().getName()
             );
             throw new CastException(message, getMetadata());
         } else
