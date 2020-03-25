@@ -62,11 +62,23 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         init(context);
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
-        List<Item> inserts = this.insertIterator.materialize(context);
-
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+
+        if (this.insertIterator.isRDD()) {
+            JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
+            JavaRDD<Item> beforeRDD = zippedRDD
+                    .filter((item) -> item._2() < this.insertPosition - 1)
+                    .map((item) -> item._1);
+            JavaRDD<Item> afterRDD = zippedRDD
+                    .filter((item) -> item._2() >= this.insertPosition - 1)
+                    .map((item) -> item._1);
+            return beforeRDD.union(insertsRDD).union(afterRDD);
+        }
+
+        List<Item> inserts = this.insertIterator.materialize(context);
         int numPartitions = zippedRDD.partitions().size();
         int indexOfInsertion = this.insertPosition;
+
         return zippedRDD.mapPartitionsWithIndex((partitionIndex, iterator) -> {
             List<Item> list = new ArrayList<>();
             int lastIndex = -1;
