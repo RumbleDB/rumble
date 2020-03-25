@@ -1036,12 +1036,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
         List<QuantifiedExpressionVar> vars = new ArrayList<>();
-        QuantifiedExpression.QuantifiedOperators operator;
+        QuantifiedExpression.Quantification operator;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         if (ctx.ev == null) {
-            operator = QuantifiedExpression.QuantifiedOperators.SOME;
+            operator = QuantifiedExpression.Quantification.SOME;
         } else {
-            operator = QuantifiedExpression.QuantifiedOperators.EVERY;
+            operator = QuantifiedExpression.Quantification.EVERY;
         }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             String variableName;
@@ -1059,8 +1059,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 new QuantifiedExpressionVar(
                         variableName,
                         varExpression,
-                        sequenceType,
-                        createMetadataFromContext(ctx)
+                        sequenceType
                 )
             );
         }

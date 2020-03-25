@@ -63,7 +63,6 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -278,10 +277,6 @@ public abstract class AbstractNodeVisitor<T> {
 
     // region quantifiers
     public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument) {
         return defaultAction(expression, argument);
     }
     // endregion

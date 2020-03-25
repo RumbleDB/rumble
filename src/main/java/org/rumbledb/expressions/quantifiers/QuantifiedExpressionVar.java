@@ -20,16 +20,10 @@
 
 package org.rumbledb.expressions.quantifiers;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class QuantifiedExpressionVar extends Node {
+public class QuantifiedExpressionVar {
     private final String variableName;
     private final Expression expression;
     private final SequenceType sequenceType;
@@ -37,10 +31,8 @@ public class QuantifiedExpressionVar extends Node {
     public QuantifiedExpressionVar(
             String variableName,
             Expression varExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
+            SequenceType sequenceType
     ) {
-        super(metadata);
         this.variableName = variableName;
         this.expression = varExpression;
         this.sequenceType = sequenceType;
@@ -60,19 +52,7 @@ public class QuantifiedExpressionVar extends Node {
     }
 
     @Override
-    public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.expression);
-        return result;
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitQuantifiedExpressionVar(this, argument);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        return null;
+    public String toString() {
+        return variableName + " as " + sequenceType.toString() + " satisfies " + expression.serializationString(false);
     }
 }
