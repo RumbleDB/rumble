@@ -1105,11 +1105,11 @@ public class Functions {
         static final BuiltinFunction insert_before = createBuiltinFunction(
             "insert-before",
             "item*",
-            "item*",
+            "integer",
             "item*",
             "item*",
             InsertBeforeFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns a new sequence containing all the items of $target except the item at position
