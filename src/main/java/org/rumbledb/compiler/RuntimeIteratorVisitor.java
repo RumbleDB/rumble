@@ -21,6 +21,7 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -45,7 +46,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.WhereClause;
@@ -193,11 +193,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region FLOWR
     @Override
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
-        Clause startClause = expression.getStartClause();
-        RuntimeTupleIterator previous = this.visitFlowrClause(startClause, argument, null);
-        for (Clause clause : expression.getContentClauses()) {
-            previous = this.visitFlowrClause(clause, argument, previous);
-        }
+        RuntimeTupleIterator previous = this.visitFlowrClause(
+            expression.getReturnClause().getPreviousClause(),
+            argument
+        );
         return new ReturnClauseSparkIterator(
                 previous,
                 this.visit(
@@ -211,9 +210,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     private RuntimeTupleIterator visitFlowrClause(
             Clause clause,
-            RuntimeIterator argument,
-            RuntimeTupleIterator previousIterator
+            RuntimeIterator argument
     ) {
+        RuntimeTupleIterator previousIterator = null;
+        if (clause.getPreviousClause() != null) {
+            previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
+        }
         if (clause instanceof ForClause) {
             ForClause forClause = (ForClause) clause;
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
@@ -232,7 +234,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 );
             }
 
-            previousIterator = new ForClauseSparkIterator(
+            return new ForClauseSparkIterator(
                     previousIterator,
                     forClause.getVariableName(),
                     assignmentIterator,
@@ -240,31 +242,30 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     clause.getMetadata()
             );
         } else if (clause instanceof LetClause) {
-            for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
-                RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                    ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getSequenceType(),
-                        var.getExpression(),
-                        this.visitorConfig
-                    );
-                    assignmentIterator = new TreatIterator(
-                            assignmentIterator,
-                            var.getSequenceType(),
-                            false,
-                            executionMode,
-                            clause.getMetadata()
-                    );
-                }
-
-                previousIterator = new LetClauseSparkIterator(
-                        previousIterator,
-                        var.getVariableReference().getVariableName(),
+            LetClause letClause = (LetClause) clause;
+            RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
+            if (letClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
+                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+                    letClause.getSequenceType(),
+                    letClause.getExpression(),
+                    this.visitorConfig
+                );
+                assignmentIterator = new TreatIterator(
                         assignmentIterator,
-                        var.getHighestExecutionMode(this.visitorConfig),
+                        letClause.getSequenceType(),
+                        false,
+                        executionMode,
                         clause.getMetadata()
                 );
             }
+
+            return new LetClauseSparkIterator(
+                    previousIterator,
+                    letClause.getVariableName(),
+                    assignmentIterator,
+                    letClause.getHighestExecutionMode(this.visitorConfig),
+                    clause.getMetadata()
+            );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
             for (GroupByClauseVar var : ((GroupByClause) clause).getGroupVariables()) {
@@ -300,7 +301,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            previousIterator = new GroupByClauseSparkIterator(
+            return new GroupByClauseSparkIterator(
                     previousIterator,
                     groupingExpressions,
                     clause.getHighestExecutionMode(this.visitorConfig),
@@ -318,7 +319,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            previousIterator = new OrderByClauseSparkIterator(
+            return new OrderByClauseSparkIterator(
                     previousIterator,
                     expressionsWithIterator,
                     ((OrderByClause) clause).isStable(),
@@ -326,21 +327,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     clause.getMetadata()
             );
         } else if (clause instanceof WhereClause) {
-            previousIterator = new WhereClauseSparkIterator(
+            return new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof CountClause) {
-            previousIterator = new CountClauseSparkIterator(
+            return new CountClauseSparkIterator(
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
                     clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         }
-        return previousIterator;
+        throw new OurBadException("Clause unrecognized.");
     }
 
     @Override
