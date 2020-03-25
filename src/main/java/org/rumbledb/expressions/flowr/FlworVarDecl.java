@@ -20,56 +20,36 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.jsoniq.ExecutionMode;
+public class FlworVarDecl {
 
-import java.util.ArrayList;
-import java.util.List;
-
-public abstract class FlworVarDecl extends Clause {
-
-    protected VariableReferenceExpression variableReferenceExpression;
+    protected String variableName;
     protected Expression expression;
-
     protected SequenceType sequenceType;
 
-    // Holds whether the variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
-    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
-
-    private FlworVarDecl(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
-        super(clauseType, metadata);
-    }
-
     public FlworVarDecl(
-            FLWOR_CLAUSES forVar,
-            VariableReferenceExpression variableReferenceExpression,
+            String variableName,
             SequenceType sequenceType,
-            Expression expression,
-            ExceptionMetadata metadata
+            Expression expression
     ) {
-        this(forVar, metadata);
-        if (variableReferenceExpression == null) {
+        if (variableName == null) {
             throw new IllegalArgumentException("Flowr var decls cannot be empty");
         }
-        this.variableReferenceExpression = variableReferenceExpression;
+        this.variableName = variableName;
         this.sequenceType = sequenceType;
         if (this.sequenceType == null) {
             throw new OurBadException("A sequence type cannot be null");
         }
         this.expression = expression;
 
-        this.variableReferenceExpression.setType(this.sequenceType);
+        sequenceType = this.sequenceType;
     }
 
-    public VariableReferenceExpression getVariableReference() {
-        return this.variableReferenceExpression;
+    public String getVariableName() {
+        return this.variableName;
     }
 
     public Expression getExpression() {
@@ -79,31 +59,10 @@ public abstract class FlworVarDecl extends Clause {
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
-
+    
     @Override
-    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        throw new OurBadException("Flwor variable declarations do not use the highestExecutionMode initializer");
-    }
-
-    public abstract void initHighestExecutionAndVariableHighestStorageModes(VisitorConfig visitorConfig);
-
-    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
-        if (
-            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
-                && this.variableHighestStorageMode == ExecutionMode.UNSET
-        ) {
-            throw new OurBadException("An variable storage mode is accessed without being set.");
-        }
-        return this.variableHighestStorageMode;
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.variableReferenceExpression);
-        if (this.expression != null) {
-            result.add(this.expression);
-        }
-        return result;
+    public String toString()
+    {
+    	return variableName + " as " + sequenceType.toString() + " := " + expression.serializationString(false);
     }
 }

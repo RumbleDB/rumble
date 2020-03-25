@@ -42,9 +42,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
@@ -268,7 +268,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByClauseVar var : ((GroupByClause) clause).getGroupVariables()) {
+            for (FlworVarDecl var : ((GroupByClause) clause).getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -297,7 +297,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
                             variableReferenceIterator,
-                            var.getMetadata()
+                            clause.getMetadata()
                     )
                 );
             }

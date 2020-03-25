@@ -30,26 +30,26 @@ import java.util.List;
 
 public class GroupByClause extends Clause {
 
-    private final List<GroupByClauseVar> groupVars;
+    private final List<FlworVarDecl> variables;
 
-    public GroupByClause(List<GroupByClauseVar> vars, ExceptionMetadata metadata) {
+    public GroupByClause(List<FlworVarDecl> variables, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_BY, metadata);
-        if (vars == null || vars.isEmpty()) {
+        if (variables == null || variables.isEmpty()) {
             throw new SemanticException("Group clause must have at least one variable", metadata);
         }
-        this.groupVars = vars;
+        this.variables = variables;
     }
 
-    public List<GroupByClauseVar> getGroupVariables() {
-        return this.groupVars;
+    public List<FlworVarDecl> getGroupVariables() {
+        return this.variables;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        this.groupVars.forEach(e -> {
+        this.variables.forEach(e -> {
             if (e != null) {
-                result.add(e);
+                result.add(e.getExpression());
             }
         });
         return result;
@@ -63,9 +63,9 @@ public class GroupByClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(groupByClause group by ";
-        for (GroupByClauseVar var : this.groupVars) {
-            result += var.serializationString(true)
-                + (this.groupVars.indexOf(var) < this.groupVars.size() - 1 ? " , " : "");
+        for (FlworVarDecl var : this.variables) {
+            result += var.toString()
+                + (this.variables.indexOf(var) < this.variables.size() - 1 ? " , " : "");
         }
         result += ")";
         return result;

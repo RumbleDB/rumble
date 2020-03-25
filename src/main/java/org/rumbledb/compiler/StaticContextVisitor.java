@@ -31,7 +31,7 @@ import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
+import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -179,20 +179,23 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitGroupByClauseVar(GroupByClauseVar expression, StaticContext argument) {
+    public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
         StaticContext groupByClauseContext;
-        if (expression.getExpression() != null) {
-            // if a variable declaration takes place
-            this.visit(expression.getExpression(), argument);
-            // initialize execution and storage modes and then add the variable to the context
-            expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
-            groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
-        } else {
-            // if a variable is only referenced, use the context as is
-            groupByClauseContext = argument;
+        for(FlworVarDecl variable : clause.getGroupVariables())
+        {
+	        if (variable.getExpression() != null) {
+	            // if a variable declaration takes place
+	            this.visit(variable.getExpression(), argument);
+	            // initialize execution and storage modes and then add the variable to the context
+	            variable.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
+	            groupByClauseContext = visitFlowrVarDeclaration(variable, argument);
+	        } else {
+	            // if a variable is only referenced, use the context as is
+	            groupByClauseContext = argument;
+	        }
+	        // validate if the referenced variable exists in the current context
+	        this.visit(variable.getVariableReference(), groupByClauseContext);
         }
-        // validate if the referenced variable exists in the current context
-        this.visit(expression.getVariableReference(), groupByClauseContext);
         return groupByClauseContext;
     }
 
