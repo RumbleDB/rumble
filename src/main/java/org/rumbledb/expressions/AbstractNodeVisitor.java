@@ -33,7 +33,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.ReturnClause;
@@ -125,10 +124,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitOrderByClause(OrderByClause expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitLetClauseVar(LetClauseVar expression, T argument) {
         return defaultAction(expression, argument);
     }
 

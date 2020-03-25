@@ -22,6 +22,7 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Node;
 
 /**
@@ -31,7 +32,9 @@ import org.rumbledb.expressions.Node;
  */
 public abstract class Clause extends Node {
 
+    /* Clauses are organized in doubly-linked lists */
     protected Clause previousClause;
+    protected Clause nextClause;
     protected FLWOR_CLAUSES clauseType;
 
 
@@ -48,8 +51,8 @@ public abstract class Clause extends Node {
         return this.previousClause;
     }
 
-    public void setPreviousClause(Clause previousClause) {
-        this.previousClause = previousClause;
+    public Clause getNextClause() {
+        return this.nextClause;
     }
 
     /**
@@ -63,5 +66,32 @@ public abstract class Clause extends Node {
     @Override
     public String serializationString(boolean prefix) {
         return "";
+    }
+
+    public Clause getFirstClause() {
+        Clause result = this;
+        while (result.previousClause != null) {
+            result = result.previousClause;
+        }
+        return result;
+    }
+
+    public Clause getLastClause() {
+        Clause result = this;
+        while (result.nextClause != null) {
+            result = result.nextClause;
+        }
+        return result;
+    }
+
+    public void chainWith(Clause otherClause) {
+        if (this.nextClause != null) {
+            throw new OurBadException("Previous clause already chained!");
+        }
+        if (otherClause.previousClause != null) {
+            throw new OurBadException("Next clause already chained!");
+        }
+        this.nextClause = otherClause;
+        otherClause.previousClause = this;
     }
 }

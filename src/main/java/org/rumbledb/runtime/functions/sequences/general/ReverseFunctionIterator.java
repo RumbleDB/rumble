@@ -63,7 +63,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         this.results = new ArrayList<>();
         this.currentIndex = 0;
 
-        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
             this.results.add(items.get(i));
@@ -82,7 +82,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
         this.results = new ArrayList<>();
         this.currentIndex = 0;
 
-        List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> items = this.sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
 
         for (int i = items.size() - 1; i >= 0; i--) {
             this.results.add(items.get(i));
