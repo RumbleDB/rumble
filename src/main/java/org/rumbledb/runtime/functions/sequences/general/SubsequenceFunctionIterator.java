@@ -97,7 +97,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, null);
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, false);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
@@ -115,7 +115,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             .sql(
                 String.format(
                     "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
-                    selectSQL.substring(0, selectSQL.length() - 1),
+                    selectSQL,
                     SparkSessionManager.temporaryColumnName,
                     Integer.toString(this.startPosition)
                 )
