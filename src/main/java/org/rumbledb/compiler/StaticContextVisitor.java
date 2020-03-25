@@ -247,7 +247,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // create a child context, add the variable and return it
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-            expression.getVariableReference().getVariableName(),
+            expression.getVariableName(),
             expression.getSequenceType(),
             expression.getMetadata(),
             ExecutionMode.LOCAL

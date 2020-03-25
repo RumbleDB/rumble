@@ -835,7 +835,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument) {
         return new QuantifiedExpressionVarIterator(
-                expression.getVariableReference().getVariableName(),
+                expression.getVariableName(),
                 expression.getSequenceType(),
                 this.visit(expression.getExpression(), argument),
                 expression.getHighestExecutionMode(this.visitorConfig),
