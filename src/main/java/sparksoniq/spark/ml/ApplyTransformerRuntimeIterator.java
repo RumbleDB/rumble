@@ -1,5 +1,6 @@
 package sparksoniq.spark.ml;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.param.ParamMap;
 import org.apache.spark.sql.Dataset;
@@ -17,10 +18,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamDefaultValue;
-import static sparksoniq.spark.ml.RumbleMLCatalog.featuresColParamName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLFeatureColumnsJavaTypeName;
-import static sparksoniq.spark.ml.RumbleMLCatalog.rumbleMLGeneratedFeatureColumnName;
+import static sparksoniq.spark.ml.RumbleMLCatalog.specialParams;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
@@ -46,42 +44,73 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         Dataset<Row> inputDataset = getInputDataset(context);
         Item paramMapItem = getParamMapItem(context);
 
-        boolean transformerExpectsFeaturesColParam = RumbleMLCatalog
-            .getTransformerParams(this.transformerShortName, getMetadata())
-            .contains(featuresColParamName);
-
-        boolean isFeaturesColumnGenerated = false;
-
-        if (transformerExpectsFeaturesColParam) {
-            Object featuresColValue = new String[] { featuresColParamDefaultValue };
-            if (paramMapItem.getItemByKey(featuresColParamName) != null) {
-                RumbleMLCatalog.validateTransformerParameterByName(
-                    this.transformerShortName,
-                    featuresColParamName,
-                    getMetadata()
-                );
-
-                Item featureColumnsParam = paramMapItem.getItemByKey(featuresColParamName);
-                paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, featuresColParamName, getMetadata());
-
-                featuresColValue = RumbleMLUtils.convertParamItemToJava(
-                    featuresColParamName,
-                    featureColumnsParam,
-                    rumbleMLFeatureColumnsJavaTypeName,
-                    getMetadata()
-                );
+        // update input dataset and paramMapItem based on the needs of special params
+        for (String specialParamName : RumbleMLCatalog.specialParams) {
+            if (
+                !RumbleMLCatalog.getTransformerParams(this.transformerShortName, getMetadata())
+                    .contains(specialParamName)
+            ) {
+                continue;
             }
+            boolean shouldVectorizeColumnContents = RumbleMLCatalog
+                .shouldTransformerColumnReferencedByParamContainVectors(
+                    this.transformerShortName,
+                    specialParamName,
+                    getMetadata()
+                );
 
-            inputDataset = RumbleMLUtils.generateAndAddVectorizedFeaturesColumn(
-                inputDataset,
-                featuresColValue,
-                getMetadata()
-            );
-            isFeaturesColumnGenerated = true;
+            if (shouldVectorizeColumnContents) {
+                Object paramValue;
+                String javaTypeName = RumbleMLCatalog.getJavaTypeNameOfOfSpecialParam(specialParamName);
 
-            this.setTransformerFeaturesColFieldToGeneratedColumn();
+                Item paramItemForSpecialParam = paramMapItem.getItemByKey(specialParamName);
+                if (paramItemForSpecialParam == null) {
+                    if (RumbleMLCatalog.specialParamHasNoDefaultvalue(specialParamName)) {
+                        throw new InvalidRumbleMLParamException(
+                                "Parameters provided to "
+                                    + this.transformerShortName
+                                    + " causes the following error: "
+                                    + "Missing parameter value for '"
+                                    + specialParamName
+                                    + "'.",
+                                getMetadata()
+                        );
+                    }
+                    if (javaTypeName.equals("String[]")) {
+                        paramValue = new String[] { RumbleMLCatalog.getDefaultValueOfSpecialParam(specialParamName) };
+                    } else {
+                        throw new OurBadException(
+                                "Unhandled javaTypeName '"
+                                    + javaTypeName
+                                    + "' found while handling the default value of special param '"
+                                    + specialParamName
+                                    + "'."
+                        );
+                    }
+                } else {
+                    // remove this param from the map to prevent processing the param again
+                    paramMapItem = RumbleMLUtils.removeParameter(paramMapItem, specialParamName, getMetadata());
+
+                    paramValue = RumbleMLUtils.convertParamItemToJava(
+                        specialParamName,
+                        paramItemForSpecialParam,
+                        javaTypeName,
+                        getMetadata()
+                    );
+                }
+
+                String nameOfColumnToGenerate = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
+                inputDataset = RumbleMLUtils.createDataFrameContainingVectorizedColumn(
+                    inputDataset,
+                    specialParamName,
+                    paramValue,
+                    nameOfColumnToGenerate,
+                    getMetadata()
+                );
+
+                this.setTransformerStringParamToValue(specialParamName, nameOfColumnToGenerate);
+            }
         }
-
 
         ParamMap paramMap = convertRumbleObjectItemToSparkMLParamMap(
             this.transformerShortName,
@@ -92,8 +121,24 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
 
         try {
             Dataset<Row> result = this.transformer.transform(inputDataset, paramMap);
-            if (transformerExpectsFeaturesColParam && isFeaturesColumnGenerated) {
-                result = result.drop(rumbleMLGeneratedFeatureColumnName);
+
+            for (String specialParamName : specialParams) {
+                if (
+                    !RumbleMLCatalog.getTransformerParams(this.transformerShortName, getMetadata())
+                        .contains(specialParamName)
+                ) {
+                    continue;
+                }
+                boolean isTemporaryColumnGenerated = RumbleMLCatalog
+                    .shouldTransformerColumnReferencedByParamContainVectors(
+                        this.transformerShortName,
+                        specialParamName,
+                        getMetadata()
+                    );
+                if (isTemporaryColumnGenerated) {
+                    String nameOfTemporaryColumn = RumbleMLCatalog.getUUIDOfOfSpecialParam(specialParamName);
+                    result = result.drop(nameOfTemporaryColumn);
+                }
             }
 
             return result;
@@ -154,14 +199,14 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         return paramMapItemList.get(0);
     }
 
-    private void setTransformerFeaturesColFieldToGeneratedColumn() {
+    private void setTransformerStringParamToValue(String paramName, String value) {
         try {
             this.transformer
                 .getClass()
-                .getMethod("setFeaturesCol", String.class)
-                .invoke(this.transformer, rumbleMLGeneratedFeatureColumnName);
+                .getMethod("set" + StringUtils.capitalize(paramName), String.class)
+                .invoke(this.transformer, value);
         } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
-            throw new OurBadException("Failed to set featuresCol on the transformer");
+            throw new OurBadException("Failed to set " + paramName + " on the transformer");
         }
     }
 }

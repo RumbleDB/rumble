@@ -1,0 +1,2 @@
+{"foo" :  1, "bar" :  null, "foobar" :  { "foo" : ["test1", "test2"], "bar" : 2, "foobar" : { "foo" : 1 }  } }
+{"foo" :  2, "bar" :  "test3", "foobar" :  { "foo" : ["test4", "test5"], "bar" : 2 , "foobar" : { "foo" : 2 }  } }

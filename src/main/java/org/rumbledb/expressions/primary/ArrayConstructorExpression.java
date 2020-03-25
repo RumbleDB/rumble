@@ -22,7 +22,6 @@ package org.rumbledb.expressions.primary;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -66,7 +65,7 @@ public class ArrayConstructorExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(primaryExpr (arrayConstructor [";
-        if (this.expression != null && ((CommaExpression) this.expression).getExpressions().size() > 0) {
+        if (this.expression != null) {
             result += " " + this.expression.serializationString(true);
         }
 

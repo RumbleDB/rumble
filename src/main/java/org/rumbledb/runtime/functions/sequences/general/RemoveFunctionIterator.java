@@ -20,24 +20,24 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class RemoveFunctionIterator extends LocalFunctionCallIterator {
+public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator sequenceIterator;
+    private RuntimeIterator positionIterator;
     private Item nextResult;
     private int removePosition; // position to remove the item
     private int currentPosition; // current position
@@ -49,10 +49,49 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
+        this.sequenceIterator = this.children.get(0);
+        this.positionIterator = this.children.get(1);
     }
 
     @Override
-    public Item next() {
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        init(context);
+        JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
+
+        JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+        JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._2() != this.removePosition - 1);
+        return filteredRDD.map((item) -> item._1);
+    }
+
+    @Override
+    protected void openLocal() {
+        init(this.currentDynamicContextForLocalExecution);
+        this.currentPosition = 1;
+
+        this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.sequenceIterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.currentPosition = 1;
+
+        this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
         if (this.hasNext()) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -61,43 +100,9 @@ public class RemoveFunctionIterator extends LocalFunctionCallIterator {
         throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "remove function", getMetadata());
     }
 
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.currentPosition = 1;
-
-        RuntimeIterator positionIterator = this.children.get(1);
-        positionIterator.open(context);
-        if (!positionIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args. remove can't be performed with empty sequence as the position",
-                    getMetadata()
-            );
-        }
-        Item positionItem = positionIterator.next();
-        if (positionItem.isArray()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. remove can't be performed with an array parameter as the position",
-                    getMetadata()
-            );
-        } else if (positionItem.isObject()) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. remove can't be performed with an object parameter as the position",
-                    getMetadata()
-            );
-        } else if (!(positionItem instanceof IntegerItem)) {
-            throw new UnexpectedTypeException(
-                    "Invalid args. Position parameter should be an integer",
-                    getMetadata()
-            );
-        }
-        this.removePosition = ((IntegerItem) positionItem).getIntegerValue();
-        positionIterator.close();
-
-        this.sequenceIterator = this.children.get(0);
-        this.sequenceIterator.open(context);
-        setNextResult();
+    private void init(DynamicContext context) {
+        Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
+        this.removePosition = positionItem.getIntegerValue();
     }
 
     public void setNextResult() {

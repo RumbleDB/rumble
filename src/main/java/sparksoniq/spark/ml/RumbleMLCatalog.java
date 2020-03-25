@@ -1,6 +1,7 @@
 package sparksoniq.spark.ml;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnrecognizedRumbleMLClassReferenceException;
 import org.rumbledb.exceptions.UnrecognizedRumbleMLParamReferenceException;
 
@@ -14,12 +15,6 @@ import java.util.List;
  * tool
  */
 public class RumbleMLCatalog {
-    public static final String featuresColParamName = "featuresCol";
-    public static final String featuresColParamDefaultValue = "features";
-    public static final String rumbleMLFeatureColumnsJavaTypeName = "String[]";
-    public static final String rumbleMLGeneratedFeatureColumnName = "59992242-914d-4357-bcc8-10b1c134476b";
-
-
     private static final HashMap<String, String> estimatorFullClassNames;
     private static final HashMap<String, String> transformerFullClassNames;
 
@@ -1260,7 +1255,7 @@ public class RumbleMLCatalog {
         }
     }
 
-    private static void validateJavaTypeName(String name, ExceptionMetadata metadata) {
+    private static void validateParamName(String name, ExceptionMetadata metadata) {
         if (!paramJavaTypeNames.containsKey(name)) {
             throw new UnrecognizedRumbleMLParamReferenceException(
                     "Parameter \""
@@ -1272,13 +1267,129 @@ public class RumbleMLCatalog {
     }
 
 
-    public static String getParamJavaTypeName(String name, ExceptionMetadata metadata) {
-        validateJavaTypeName(name, metadata);
+    static String getJavaTypeNameOfParamByName(String name, ExceptionMetadata metadata) {
+        validateParamName(name, metadata);
         return paramJavaTypeNames.get(name);
     }
 
-    public static String getRumbleMLShortName(String javaFullClassName) {
+    static String getRumbleMLShortName(String javaFullClassName) {
         int indexOfLastDot = javaFullClassName.lastIndexOf(".");
         return javaFullClassName.substring(indexOfLastDot + 1);
+    }
+
+    static final List<String> specialParams = new ArrayList<>();
+    private static final HashMap<String, String> defaultValuesOfSpecialParams = new HashMap<>();
+    private static final HashMap<String, String> javaTypeNamesOfSpecialParams = new HashMap<>();
+    private static final HashMap<String, String> UUIDsForSpecialParams = new HashMap<>();
+
+    private static final String featuresColParamName = "featuresCol";
+    private static final String inputColParamName = "inputCol";
+    static {
+        specialParams.add(featuresColParamName);
+        specialParams.add(inputColParamName);
+
+        defaultValuesOfSpecialParams.put(featuresColParamName, "features");
+
+        javaTypeNamesOfSpecialParams.put(featuresColParamName, "String[]");
+        javaTypeNamesOfSpecialParams.put(inputColParamName, "String[]");
+
+        UUIDsForSpecialParams.put(featuresColParamName, "59992242-914d-4357-bcc8-10b1c134476b");
+        UUIDsForSpecialParams.put(inputColParamName, "fd289b98-4410-4423-96bd-001bb703e8d3");
+
+    }
+
+    static boolean specialParamHasNoDefaultvalue(String paramName) {
+        if (!specialParams.contains(paramName)) {
+            throw new OurBadException("Special param with name '" + paramName + "' not found.");
+        }
+        return !defaultValuesOfSpecialParams.containsKey(paramName);
+    }
+
+    static String getDefaultValueOfSpecialParam(String paramName) {
+        if (!specialParams.contains(paramName)) {
+            throw new OurBadException("Special param with name '" + paramName + "' not found.");
+        }
+        if (!defaultValuesOfSpecialParams.containsKey(paramName)) {
+            throw new OurBadException("Default value for special param '" + paramName + "' not found.");
+        }
+        return defaultValuesOfSpecialParams.get(paramName);
+    }
+
+    static String getJavaTypeNameOfOfSpecialParam(String paramName) {
+        if (!specialParams.contains(paramName)) {
+            throw new OurBadException("Special param with name '" + paramName + "' not found.");
+        }
+        if (!javaTypeNamesOfSpecialParams.containsKey(paramName)) {
+            throw new OurBadException("JavaTypeName for special param '" + paramName + "' not found.");
+        }
+        return javaTypeNamesOfSpecialParams.get(paramName);
+    }
+
+    static String getUUIDOfOfSpecialParam(String paramName) {
+        if (!specialParams.contains(paramName)) {
+            throw new OurBadException("Special param with name '" + paramName + "' not found.");
+        }
+        if (!UUIDsForSpecialParams.containsKey(paramName)) {
+            throw new OurBadException("UUID for special param '" + paramName + "' not found.");
+        }
+        return UUIDsForSpecialParams.get(paramName);
+    }
+
+    static boolean shouldEstimatorColumnReferencedByParamContainVectors(
+            String estimatorName,
+            String paramName,
+            ExceptionMetadata metadata
+    ) {
+        validateEstimatorByName(estimatorName, metadata);
+        validateEstimatorParameterByName(estimatorName, paramName, metadata);
+        if (paramName.equals(featuresColParamName) && !estimatorName.equals("RFormula")) {
+            return true;
+        }
+        if (
+            paramName.equals(inputColParamName)
+                && (estimatorName.equals("BucketedRandomProjectionLSH")
+                    || estimatorName.equals("IDF")
+                    || estimatorName.equals("MaxAbsScaler")
+                    || estimatorName.equals("MinHashLSH")
+                    || estimatorName.equals("MinMaxScaler")
+                    || estimatorName.equals("PCA")
+                    || estimatorName.equals("StandardScaler")
+                    || estimatorName.equals("VectorIndexer"))
+        ) {
+            return true;
+        }
+        return false;
+    }
+
+    static boolean shouldTransformerColumnReferencedByParamContainVectors(
+            String transformerName,
+            String paramName,
+            ExceptionMetadata metadata
+    ) {
+        validateTransformerByName(transformerName, metadata);
+        validateTransformerParameterByName(transformerName, paramName, metadata);
+        if (paramName.equals(featuresColParamName) && !transformerName.equals("RFormulaModel")) {
+            return true;
+        }
+        if (
+            paramName.equals(inputColParamName)
+                && (transformerName.equals("BucketedRandomProjectionLSHModel")
+                    || transformerName.equals("IDFModel")
+                    || transformerName.equals("MaxAbsScalerModel")
+                    || transformerName.equals("MinHashLSHModel")
+                    || transformerName.equals("MinMaxScalerModel")
+                    || transformerName.equals("PCAModel")
+                    || transformerName.equals("StandardScalerModel")
+                    || transformerName.equals("VectorIndexerModel")
+                    || transformerName.equals("DCT")
+                    || transformerName.equals("ElementwiseProduct")
+                    || transformerName.equals("Normalizer")
+                    || transformerName.equals("PolynomialExpansion")
+                    || transformerName.equals("VectorSizeHint")
+                    || transformerName.equals("VectorSlicer"))
+        ) {
+            return true;
+        }
+        return false;
     }
 }
