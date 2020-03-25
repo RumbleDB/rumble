@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,7 +32,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
@@ -110,15 +108,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 )
             );
 
-        df = FlworDataFrameUtils.zipWithIndex(df, 1L, "foo");
-
-        df.sparkSession()
-            .udf()
-            .register(
-                "serializeCountIndex",
-                new CountClauseSerializeUDF(),
-                DataTypes.BinaryType
-            );
+        df = FlworDataFrameUtils.zipWithIndex(df, 1L, SparkSessionManager.temporaryColumnName);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
@@ -126,7 +116,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                 String.format(
                     "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
                     selectSQL.substring(0, selectSQL.length() - 1),
-                    "foo",
+                    SparkSessionManager.temporaryColumnName,
                     Integer.toString(this.startPosition)
                 )
             );
