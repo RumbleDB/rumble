@@ -229,11 +229,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
         StaticContext contextWithQuantifiedExpressionVariables = argument;
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
-            this.visit(clause.getExpression(), argument);
+            this.visit(clause.getExpression(), contextWithQuantifiedExpressionVariables);
             expression.initHighestExecutionMode(this.visitorConfig);
 
             // create a child context, add the variable and return it
-            StaticContext result = new StaticContext(argument);
+            StaticContext result = new StaticContext(contextWithQuantifiedExpressionVariables);
             result.addVariable(
                 clause.getVariableName(),
                 clause.getSequenceType(),
