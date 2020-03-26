@@ -32,7 +32,7 @@ import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
-import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.utils.FileUtils;
@@ -46,7 +46,7 @@ public class RumbleJLineShell {
     private static final String PROMPT = "rumble$ ";
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean printTime;
-    private final SparksoniqRuntimeConfiguration configuration;
+    private final RumbleRuntimeConfiguration configuration;
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
@@ -55,7 +55,7 @@ public class RumbleJLineShell {
     private String currentQueryContent = "";
     private String welcomeMessage;
 
-    public RumbleJLineShell(SparksoniqRuntimeConfiguration configuration) throws IOException {
+    public RumbleJLineShell(RumbleRuntimeConfiguration configuration) throws IOException {
         this.configuration = configuration;
         initialize();
         this.printTime = true;

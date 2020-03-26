@@ -32,7 +32,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
-import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -57,10 +57,10 @@ import java.util.List;
 
 public class JsoniqQueryExecutor {
     public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
-    private SparksoniqRuntimeConfiguration configuration;
+    private RumbleRuntimeConfiguration configuration;
     private boolean useLocalOutputLog;
 
-    public JsoniqQueryExecutor(boolean useLocalOutputLog, SparksoniqRuntimeConfiguration configuration) {
+    public JsoniqQueryExecutor(boolean useLocalOutputLog, RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
         this.useLocalOutputLog = useLocalOutputLog;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
@@ -91,6 +91,7 @@ public class JsoniqQueryExecutor {
         if (this.configuration.isPrintIteratorTree()) {
             System.out.println(mainModule.serializationString(true));
         }
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = generateRuntimeIterators(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
@@ -99,11 +100,11 @@ public class JsoniqQueryExecutor {
             return;
         }
         if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+            JavaRDD<Item> rdd = result.getRDD(dynamicContext);
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         } else {
-            String output = runIterators(result);
+            String output = runIterators(result, dynamicContext);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
                 org.apache.commons.io.FileUtils.writeLines(outputFile, "UTF-8", lines);
@@ -123,10 +124,11 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = generateRuntimeIterators(mainModule);
         // collect output in memory and write to filesystem from java
         if (this.useLocalOutputLog) {
-            String output = runIterators(result);
+            String output = runIterators(result, dynamicContext);
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                 .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
@@ -180,10 +182,11 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = getInputSource(queryFile.toString());
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
-            String localOutput = this.runIterators(runtimeIterator);
+            String localOutput = this.runIterators(runtimeIterator, dynamicContext);
             return localOutput;
         }
         String rddOutput = this.getRDDResults(runtimeIterator);
@@ -244,12 +247,12 @@ public class JsoniqQueryExecutor {
         return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    protected String runIterators(RuntimeIterator iterator) {
-        return getIteratorOutput(iterator);
+    protected String runIterators(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        return getIteratorOutput(iterator, dynamicContext);
     }
 
-    private String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    private String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();

@@ -60,6 +60,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -125,7 +126,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
+        List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<InlineFunctionExpression> InlineFunctionExpressions = new ArrayList<>();
+        for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
+            VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                variable
+            );
+            globalVariables.add(variableDeclaration);
+        }
         for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
             InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
                 function
@@ -136,7 +144,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.visitModuleImport(module);
         }
 
-        return new Prolog(InlineFunctionExpressions, createMetadataFromContext(ctx));
+        return new Prolog(globalVariables, InlineFunctionExpressions, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1072,6 +1080,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExceptionMetadata(tokenLineNumber, tokenColumnNumber);
+    }
+
+    @Override
+    public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
+        SequenceType seq = null;
+        boolean external;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        if (ctx.sequenceType() != null) {
+            seq = this.processSequenceType(ctx.sequenceType());
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
+        }
+        external = (ctx.external != null);
+        Expression expr = null;
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+        }
+
+        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
 
 }

@@ -33,6 +33,7 @@ import org.rumbledb.expressions.flowr.FlworVarDecl;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -293,5 +294,19 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
     // endregion
+
+    // region FLWOR vars
+    @Override
+    public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        variableDeclaration.initHighestExecutionMode(this.visitorConfig);
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+            variableDeclaration.getVariableName(),
+            variableDeclaration.getSequenceType(),
+            variableDeclaration.getMetadata(),
+            variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
+        );
+        return result;
+    }
 
 }
