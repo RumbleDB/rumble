@@ -75,7 +75,11 @@ public class Main {
                 );
             }
         } catch (Exception ex) {
-            handleException(ex, sparksoniqConf.getShowErrorInfo());
+            boolean showErrorInfo = false;
+            if (sparksoniqConf != null) {
+                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            }
+            handleException(ex, showErrorInfo);
         }
     }
 
