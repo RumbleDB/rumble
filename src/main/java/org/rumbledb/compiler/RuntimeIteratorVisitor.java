@@ -42,7 +42,7 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarDecl;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
@@ -268,7 +268,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (FlworVarDecl var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -289,14 +289,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     }
                 }
 
-                VariableReferenceExpression variableReference = var.getVariableReference();
-                VariableReferenceIterator variableReferenceIterator =
-                    (VariableReferenceIterator) this.visit(variableReference, argument);
+                String variableName = var.getVariableName();
 
                 groupingExpressions.add(
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
-                            variableReferenceIterator,
+                            variableName,
                             clause.getMetadata()
                     )
                 );

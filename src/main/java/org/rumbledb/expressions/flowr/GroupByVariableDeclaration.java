@@ -24,13 +24,13 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
-public class FlworVarDecl {
+public class GroupByVariableDeclaration {
 
     protected String variableName;
     protected Expression expression;
     protected SequenceType sequenceType;
 
-    public FlworVarDecl(
+    public GroupByVariableDeclaration(
             String variableName,
             SequenceType sequenceType,
             Expression expression
@@ -59,10 +59,13 @@ public class FlworVarDecl {
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
-    
+
     @Override
-    public String toString()
-    {
-    	return variableName + " as " + sequenceType.toString() + " := " + expression.serializationString(false);
+    public String toString() {
+        return this.variableName
+            + " as "
+            + this.sequenceType.toString()
+            + " := "
+            + this.expression.serializationString(false);
     }
 }

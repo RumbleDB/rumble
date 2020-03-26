@@ -49,7 +49,8 @@ public class StaticContext {
             this.storageMode = storageMode;
         }
 
-        public String getName() {
+        @SuppressWarnings("unused")
+		public String getName() {
             return this.name;
         }
 
