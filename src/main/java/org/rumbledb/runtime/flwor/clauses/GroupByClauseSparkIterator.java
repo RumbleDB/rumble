@@ -169,7 +169,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
                 } else { // if grouping on a variable reference
                     String groupVariableName = expression.getVariableName();
-                    if (!inputTuple.contains(groupVariableName)) {
+                    if (!tupleContext.contains(groupVariableName)) {
                         throw new InvalidGroupVariableException(
                                 "Variable "
                                     + groupVariableName
