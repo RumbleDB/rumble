@@ -30,9 +30,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarDecl;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
+import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
@@ -180,19 +180,26 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitGroupByClauseVar(GroupByClauseVar expression, StaticContext argument) {
-        StaticContext groupByClauseContext;
-        if (expression.getExpression() != null) {
-            // if a variable declaration takes place
-            this.visit(expression.getExpression(), argument);
-            expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
-            groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
-        } else {
-            // if a variable is only referenced, use the context as is
-            groupByClauseContext = argument;
+    public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
+        StaticContext groupByClauseContext = new StaticContext(argument);
+        for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+            if (variable.getExpression() != null) {
+                // if a variable declaration takes place
+                this.visit(variable.getExpression(), argument);
+                groupByClauseContext.addVariable(
+                    variable.getVariableName(),
+                    variable.getSequenceType(),
+                    clause.getMetadata(),
+                    ExecutionMode.LOCAL
+                );
+            } else if (!argument.isInScope(variable.getVariableName())) {
+                throw new UndeclaredVariableException(
+                        "Uninitialized variable reference: " + variable.getVariableName(),
+                        clause.getMetadata()
+                );
+            }
         }
-        // validate if the referenced variable exists in the current context
-        this.visit(expression.getVariableReference(), groupByClauseContext);
+        clause.initHighestExecutionMode(this.visitorConfig);
         return groupByClauseContext;
     }
 
@@ -210,18 +217,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return result;
     }
 
-    private StaticContext visitFlowrVarDeclaration(FlworVarDecl expression, StaticContext argument) {
-        StaticContext result = new StaticContext(argument);
-        // TODO for now we only suppot as/default, no inference, flags
-        result.addVariable(
-            expression.getVariableReference().getVariableName(),
-            expression.getSequenceType(),
-            expression.getMetadata(),
-            expression.getVariableHighestStorageMode(this.visitorConfig)
-        );
-        return result;
-    }
-    // endregion
     // endregion
 
     // region quantifiers
