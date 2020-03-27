@@ -39,7 +39,6 @@ import java.util.Map;
 public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> columnNamesByType;
 
@@ -70,7 +69,6 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         this.input = new Input();
 
         this.columnNamesByType = columnNamesByType;
-        this.dependencies = this.expression.getVariableDependencies();
 
     }
 

@@ -41,7 +41,6 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -78,7 +77,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 this.dependencies.putAll(e.getExpression().getVariableDependencies());
             } else {
                 this.dependencies.put(
-                    e.getVariableReference().getVariableName(),
+                    e.getVariableName(),
                     DynamicContext.VariableDependency.FULL
                 );
             }
@@ -143,7 +142,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 // if grouping on an expression
                 RuntimeIterator groupVariableExpression = expression.getExpression();
                 if (groupVariableExpression != null) {
-                    if (inputTuple.contains(expression.getVariableReference().getVariableName())) {
+                    if (inputTuple.contains(expression.getVariableName())) {
                         throw new InvalidGroupVariableException(
                                 "Group by variable redeclaration is illegal",
                                 getMetadata()
@@ -165,25 +164,26 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     groupVariableExpression.close();
 
                     // if a new variable is declared inside the group by clause, insert value in tuple
-                    inputTuple.putValue(expression.getVariableReference().getVariableName(), newVariableResults);
+                    inputTuple.putValue(expression.getVariableName(), newVariableResults);
                     results.addAll(newVariableResults);
 
                 } else { // if grouping on a variable reference
-                    VariableReferenceIterator groupVariableReference = expression.getVariableReference();
-                    if (!inputTuple.contains(groupVariableReference.getVariableName())) {
+                    String groupVariableName = expression.getVariableName();
+                    if (!inputTuple.contains(groupVariableName)) {
                         throw new InvalidGroupVariableException(
                                 "Variable "
-                                    + groupVariableReference.getVariableName()
+                                    + groupVariableName
                                     + " cannot be used in group clause",
-                                groupVariableReference.getMetadata()
+                                this.getMetadata()
                         );
                     }
 
-                    groupVariableReference.open(tupleContext);
-                    while (groupVariableReference.hasNext()) {
-                        results.add(groupVariableReference.next());
-                    }
-                    groupVariableReference.close();
+                    results.addAll(
+                        tupleContext.getLocalVariableValue(
+                            groupVariableName,
+                            getMetadata()
+                        )
+                    );
                 }
             }
             FlworKey key = new FlworKey(results);
@@ -205,7 +205,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             iterator = keyTuplePairs.iterator();
             if (
                 this.groupingExpressions.stream()
-                    .anyMatch(v -> v.getVariableReference().getVariableName().equals(tupleVariable))
+                    .anyMatch(v -> v.getVariableName().equals(tupleVariable))
             ) {
                 newTuple.putValue(tupleVariable, oldFirstTuple.getLocalValue(tupleVariable, getMetadata()));
             } else {
@@ -242,7 +242,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String[] columnNamesArray;
         List<String> columnNames;
 
-        List<VariableReferenceIterator> variableAccessExpressions = new ArrayList<>();
+        List<String> variableAccessNames = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
             inputSchema = df.schema();
             columnNamesArray = inputSchema.fieldNames();
@@ -250,8 +250,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
-                variableAccessExpressions.add(expression.getVariableReference());
-                String newVariableName = expression.getVariableReference().getVariableName();
+                variableAccessNames.add(expression.getVariableName());
+                String newVariableName = expression.getVariableName();
                 RuntimeIterator newVariableExpression = expression.getExpression();
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName);
 
@@ -286,15 +286,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
 
             } else {
-                if (!columnNames.contains(expression.getVariableReference().getVariableName())) {
+                if (!columnNames.contains(expression.getVariableName())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
-                                + expression.getVariableReference().getVariableName()
+                                + expression.getVariableName()
                                 + " cannot be used in group clause",
-                            expression.getVariableReference().getMetadata()
+                            getMetadata()
                     );
                 }
-                variableAccessExpressions.add(expression.getVariableReference());
+                variableAccessNames.add(expression.getVariableName());
             }
         }
 
@@ -308,7 +308,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String appendedGroupingColumnsName = "grouping_columns";
         for (int columnIndex = 0; columnIndex < this.groupingExpressions.size(); columnIndex++) {
             groupingVariables.put(
-                this.groupingExpressions.get(columnIndex).getVariableReference().getVariableName(),
+                this.groupingExpressions.get(columnIndex).getVariableName(),
                 DynamicContext.VariableDependency.FULL
             );
             // every expression contains an int column for null/empty/true/false/string/double check
@@ -345,7 +345,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessExpressions, context, UDFcolumnsByType),
+                new GroupClauseCreateColumnsUDF(variableAccessNames, context, UDFcolumnsByType, getMetadata()),
                 DataTypes.createStructType(typedFields)
             );
 
@@ -360,16 +360,12 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
-        List<String> groupbyVariableNames = new ArrayList<>();
-        for (VariableReferenceIterator variableAccessExpression : variableAccessExpressions) {
-            groupbyVariableNames.add(variableAccessExpression.getVariableName());
-        }
         String projectSQL = FlworDataFrameUtils.getGroupbyProjectSQL(
             inputSchema,
             -1,
             false,
             serializerUDFName,
-            groupbyVariableNames,
+            variableAccessNames,
             parentProjection,
             UDFcolumnsByType
         );
@@ -391,7 +387,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             if (iterator.getExpression() != null) {
                 result.putAll(iterator.getExpression().getVariableDependencies());
             } else {
-                result.put(iterator.getVariableReference().getVariableName(), DynamicContext.VariableDependency.FULL);
+                result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
         }
         for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
@@ -404,7 +400,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     public Set<String> getVariablesBoundInCurrentFLWORExpression() {
         Set<String> result = new HashSet<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
-            result.add(iterator.getVariableReference().getVariableName());
+            result.add(iterator.getVariableName());
         }
         result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         return result;
@@ -416,7 +412,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             for (int i = 0; i < indent + 1; ++i) {
                 buffer.append("  ");
             }
-            buffer.append("Variable ").append(iterator.getVariableReference().getVariableName()).append("\n");
+            buffer.append("Variable ").append(iterator.getVariableName()).append("\n");
             if (iterator.getExpression() != null) {
                 iterator.getExpression().print(buffer, indent + 1);
             }
@@ -431,13 +427,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         // remove the variables that this clause binds.
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
-            projection.remove(iterator.getVariableReference().getVariableName());
+            projection.remove(iterator.getVariableName());
         }
 
         // add the variable dependencies needed by this for clause's expression.
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() == null) {
-                String variable = iterator.getVariableReference().getVariableName();
+                String variable = iterator.getVariableName();
                 projection.put(variable, DynamicContext.VariableDependency.FULL);
                 continue;
             }

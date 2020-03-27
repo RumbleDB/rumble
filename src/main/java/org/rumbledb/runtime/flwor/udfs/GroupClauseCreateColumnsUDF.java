@@ -28,10 +28,10 @@ import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import scala.collection.mutable.WrappedArray;
 
 import java.io.IOException;
@@ -42,7 +42,7 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<VariableReferenceIterator> expressions;
+    private List<String> variableNames;
     private Map<String, List<String>> columnNamesByType;
 
     private List<List<Item>> deserializedParams;
@@ -50,16 +50,18 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private DynamicContext parentContext;
     private DynamicContext context;
     private List<Object> results;
+    private ExceptionMetadata metadata;
 
     private transient Kryo kryo;
     private transient Input input;
 
     public GroupClauseCreateColumnsUDF(
-            List<VariableReferenceIterator> expressions,
+            List<String> variableNames,
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            Map<String, List<String>> columnNamesByType,
+            ExceptionMetadata metadata
     ) {
-        this.expressions = expressions;
+        this.variableNames = variableNames;
         this.columnNamesByType = columnNamesByType;
 
         this.deserializedParams = new ArrayList<>();
@@ -72,6 +74,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
+        this.metadata = metadata;
     }
 
     @Override
@@ -94,7 +97,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.longParams.add(count);
         }
 
-        for (VariableReferenceIterator expression : this.expressions) {
+        for (String variableName : this.variableNames) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
             // The second column is used for strings, with a special value in the first column.
             // The third column is used for numbers (as a double), with a special value in the first column.
@@ -122,12 +125,14 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 );
             }
 
-            // apply expression in the dynamic context
-            expression.open(this.context);
             boolean isEmptySequence = true;
-            if (expression.hasNext()) {
+            List<Item> items = this.context.getLocalVariableValue(
+                variableName,
+                this.metadata
+            );
+            if (items.size() >= 1) {
                 isEmptySequence = false;
-                Item nextItem = expression.next();
+                Item nextItem = items.get(0);
                 if (nextItem.isNull()) {
                     this.results.add(nullGroupIndex);
                     this.results.add(null);
@@ -175,14 +180,14 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 } else {
                     throw new UnexpectedTypeException(
                             "Group by variable can not contain arrays or objects.",
-                            expression.getMetadata()
+                            this.metadata
                     );
                 }
             }
-            if (expression.hasNext()) {
+            if (items.size() > 1) {
                 throw new UnexpectedTypeException(
                         "Can not group on variables with sequences of multiple items.",
-                        expression.getMetadata()
+                        this.metadata
                 );
             }
             if (isEmptySequence) {
@@ -191,7 +196,6 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 this.results.add(null);
                 this.results.add(null);
             }
-            expression.close();
 
         }
         return RowFactory.create(this.results.toArray());

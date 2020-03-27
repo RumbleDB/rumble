@@ -61,6 +61,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
+    @SuppressWarnings("unused")
     private final boolean isStable;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<String, DynamicContext.VariableDependency> dependencies;
