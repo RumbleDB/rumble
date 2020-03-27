@@ -114,8 +114,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         if (localContains) {
             return true;
         }
-        if (parent != null) {
-            return parent.contains(varName);
+        if (this.parent != null) {
+            return this.parent.contains(varName);
         }
         return false;
     }
