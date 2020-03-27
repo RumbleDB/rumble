@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="([ 1, 2 ], { "hel" : "lo" })" :)
+(:JIQS: ShouldRun; Output="({ "str" : "asdffwesdafafasdf" }, { "str" : "cd" })" :)
 for $i in (
 {"str": 1},
 {"str": 2},
