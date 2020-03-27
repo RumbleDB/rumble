@@ -31,18 +31,18 @@ import java.util.List;
 
 public class QuantifiedExpression extends Expression {
     private final Expression expression;
-    private final QuantifiedOperators operator;
+    private final Quantification quantifier;
     private final List<QuantifiedExpressionVar> variables;
 
 
     public QuantifiedExpression(
-            QuantifiedOperators operator,
+            Quantification quantifier,
             Expression expression,
             List<QuantifiedExpressionVar> vars,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this.operator = operator;
+        this.quantifier = quantifier;
         this.variables = vars;
         this.expression = expression;
     }
@@ -51,8 +51,8 @@ public class QuantifiedExpression extends Expression {
         return this.expression;
     }
 
-    public QuantifiedOperators getOperator() {
-        return this.operator;
+    public Quantification getOperator() {
+        return this.quantifier;
     }
 
     public List<QuantifiedExpressionVar> getVariables() {
@@ -63,9 +63,9 @@ public class QuantifiedExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this.variables != null) {
-            this.variables.forEach(e -> {
-                if (e != null) {
-                    result.add(e);
+            this.variables.forEach(v -> {
+                if (v != null) {
+                    result.add(v.getExpression());
                 }
             });
         }
@@ -80,10 +80,18 @@ public class QuantifiedExpression extends Expression {
 
     @Override
     public String serializationString(boolean prefix) {
-        return "";
+        StringBuilder sb = new StringBuilder();
+        sb.append(quantifier.equals(Quantification.EVERY) ? "every " : "some ");
+        String separator = "";
+        for (QuantifiedExpressionVar v : this.variables) {
+            sb.append(separator);
+            sb.append(v.toString());
+            separator = ", ";
+        }
+        return sb.toString();
     }
 
-    public enum QuantifiedOperators {
+    public enum Quantification {
         EVERY,
         SOME
     }

@@ -77,7 +77,6 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -819,23 +818,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
         List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
         expression.getVariables()
-            .forEach(var -> variables.add((QuantifiedExpressionVarIterator) this.visit(var, argument)));
+            .forEach(
+                var -> variables.add(
+                    new QuantifiedExpressionVarIterator(
+                            var.getVariableName(),
+                            var.getSequenceType(),
+                            this.visit(var.getExpression(), argument),
+                            expression.getHighestExecutionMode(this.visitorConfig),
+                            expression.getMetadata()
+                    )
+                )
+            );
         RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
         return new QuantifiedExpressionIterator(
                 expression.getOperator(),
                 variables,
                 evaluationExpression,
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
-    }
-
-    @Override
-    public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument) {
-        return new QuantifiedExpressionVarIterator(
-                expression.getVariableReference().getVariableName(),
-                expression.getSequenceType(),
-                this.visit(expression.getExpression(), argument),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

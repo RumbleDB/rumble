@@ -224,30 +224,24 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
         StaticContext contextWithQuantifiedExpressionVariables = argument;
         for (QuantifiedExpressionVar clause : expression.getVariables()) {
-            contextWithQuantifiedExpressionVariables = this.visit(clause, contextWithQuantifiedExpressionVariables);
+            this.visit(clause.getExpression(), contextWithQuantifiedExpressionVariables);
+            expression.initHighestExecutionMode(this.visitorConfig);
+
+            // create a child context, add the variable and return it
+            StaticContext result = new StaticContext(contextWithQuantifiedExpressionVariables);
+            result.addVariable(
+                clause.getVariableName(),
+                clause.getSequenceType(),
+                expression.getMetadata(),
+                ExecutionMode.LOCAL
+            );
+            contextWithQuantifiedExpressionVariables = result;
         }
         // validate expression with the defined variables
         this.visit(expression.getEvaluationExpression(), contextWithQuantifiedExpressionVariables);
         expression.initHighestExecutionMode(this.visitorConfig);
         // return the given context unchanged as defined variables go out of scope
         return argument;
-    }
-
-    @Override
-    public StaticContext visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, StaticContext argument) {
-        // validate expression with starting context
-        this.visit(expression.getExpression(), argument);
-        expression.initHighestExecutionMode(this.visitorConfig);
-
-        // create a child context, add the variable and return it
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(
-            expression.getVariableReference().getVariableName(),
-            expression.getSequenceType(),
-            expression.getMetadata(),
-            ExecutionMode.LOCAL
-        );
-        return result;
     }
     // endregion
 
