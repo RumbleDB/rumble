@@ -12,7 +12,6 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import org.rumbledb.types.ItemType;
 
-
 import java.util.List;
 
 public class AnyURIFunctionIterator extends LocalFunctionCallIterator {

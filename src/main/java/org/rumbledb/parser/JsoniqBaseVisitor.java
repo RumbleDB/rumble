@@ -11,14 +11,16 @@ import org.antlr.v4.runtime.tree.AbstractParseTreeVisitor;
  * of the available methods.
  *
  * @param <T> The return type of the visit operation. Use {@link Void} for
- *            operations with no return type.
+ *        operations with no return type.
  */
 public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements JsoniqVisitor<T> {
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitModule(JsoniqParser.ModuleContext ctx) {
@@ -28,8 +30,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitMainModule(JsoniqParser.MainModuleContext ctx) {
@@ -39,8 +43,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
@@ -50,8 +56,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitProlog(JsoniqParser.PrologContext ctx) {
@@ -61,8 +69,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitDefaultCollationDecl(JsoniqParser.DefaultCollationDeclContext ctx) {
@@ -72,8 +82,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitOrderingModeDecl(JsoniqParser.OrderingModeDeclContext ctx) {
@@ -83,8 +95,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitEmptyOrderDecl(JsoniqParser.EmptyOrderDeclContext ctx) {
@@ -94,8 +108,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx) {
@@ -105,8 +121,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitDfPropertyName(JsoniqParser.DfPropertyNameContext ctx) {
@@ -116,8 +134,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
@@ -127,8 +147,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitVarDecl(JsoniqParser.VarDeclContext ctx) {
@@ -138,8 +160,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
@@ -149,8 +173,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitParamList(JsoniqParser.ParamListContext ctx) {
@@ -160,8 +186,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitParam(JsoniqParser.ParamContext ctx) {
@@ -171,8 +199,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitExpr(JsoniqParser.ExprContext ctx) {
@@ -182,8 +212,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
@@ -193,8 +225,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
@@ -204,8 +238,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitForClause(JsoniqParser.ForClauseContext ctx) {
@@ -215,8 +251,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitForVar(JsoniqParser.ForVarContext ctx) {
@@ -226,8 +264,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitLetClause(JsoniqParser.LetClauseContext ctx) {
@@ -237,8 +277,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitLetVar(JsoniqParser.LetVarContext ctx) {
@@ -248,8 +290,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
@@ -259,8 +303,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
@@ -270,8 +316,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitGroupByVar(JsoniqParser.GroupByVarContext ctx) {
@@ -281,8 +329,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
@@ -292,8 +342,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
@@ -303,8 +355,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitCountClause(JsoniqParser.CountClauseContext ctx) {
@@ -314,8 +368,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
@@ -325,8 +381,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitQuantifiedExprVar(JsoniqParser.QuantifiedExprVarContext ctx) {
@@ -336,8 +394,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
@@ -347,8 +407,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx) {
@@ -358,8 +420,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
@@ -369,8 +433,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
@@ -380,8 +446,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitIfExpr(JsoniqParser.IfExprContext ctx) {
@@ -391,8 +459,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
@@ -402,8 +472,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitOrExpr(JsoniqParser.OrExprContext ctx) {
@@ -413,8 +485,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitAndExpr(JsoniqParser.AndExprContext ctx) {
@@ -424,8 +498,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitNotExpr(JsoniqParser.NotExprContext ctx) {
@@ -435,8 +511,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
@@ -446,8 +524,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
@@ -457,8 +537,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
@@ -468,8 +550,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
@@ -479,8 +563,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
@@ -490,8 +576,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
@@ -501,8 +589,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
@@ -512,8 +602,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
@@ -523,8 +615,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitCastExpr(JsoniqParser.CastExprContext ctx) {
@@ -534,8 +628,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
@@ -545,8 +641,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
@@ -556,8 +654,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {
@@ -567,8 +667,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
@@ -578,8 +680,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitArrayUnboxing(JsoniqParser.ArrayUnboxingContext ctx) {
@@ -589,8 +693,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitPredicate(JsoniqParser.PredicateContext ctx) {
@@ -600,8 +706,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
@@ -611,8 +719,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
@@ -622,8 +732,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitVarRef(JsoniqParser.VarRefContext ctx) {
@@ -633,8 +745,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
@@ -644,8 +758,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
@@ -655,8 +771,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitOrderedExpr(JsoniqParser.OrderedExprContext ctx) {
@@ -666,8 +784,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitUnorderedExpr(JsoniqParser.UnorderedExprContext ctx) {
@@ -677,8 +797,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
@@ -688,8 +810,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitArgumentList(JsoniqParser.ArgumentListContext ctx) {
@@ -699,8 +823,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitArgument(JsoniqParser.ArgumentContext ctx) {
@@ -710,8 +836,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
@@ -721,8 +849,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
@@ -732,8 +862,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
@@ -743,8 +875,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitSequenceType(JsoniqParser.SequenceTypeContext ctx) {
@@ -754,8 +888,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
@@ -765,8 +901,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitItemType(JsoniqParser.ItemTypeContext ctx) {
@@ -776,8 +914,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitJSONItemTest(JsoniqParser.JSONItemTestContext ctx) {
@@ -787,8 +927,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordString(JsoniqParser.KeyWordStringContext ctx) {
@@ -798,8 +940,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordInteger(JsoniqParser.KeyWordIntegerContext ctx) {
@@ -809,8 +953,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDecimal(JsoniqParser.KeyWordDecimalContext ctx) {
@@ -820,8 +966,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDouble(JsoniqParser.KeyWordDoubleContext ctx) {
@@ -831,8 +979,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx) {
@@ -842,8 +992,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDuration(JsoniqParser.KeyWordDurationContext ctx) {
@@ -853,8 +1005,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordYearMonthDuration(JsoniqParser.KeyWordYearMonthDurationContext ctx) {
@@ -864,8 +1018,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDayTimeDuration(JsoniqParser.KeyWordDayTimeDurationContext ctx) {
@@ -875,8 +1031,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordHexBinary(JsoniqParser.KeyWordHexBinaryContext ctx) {
@@ -886,8 +1044,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx) {
@@ -897,8 +1057,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDateTime(JsoniqParser.KeyWordDateTimeContext ctx) {
@@ -908,8 +1070,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordDate(JsoniqParser.KeyWordDateContext ctx) {
@@ -919,8 +1083,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordTime(JsoniqParser.KeyWordTimeContext ctx) {
@@ -930,8 +1096,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWordAnyURI(JsoniqParser.KeyWordAnyURIContext ctx) {
@@ -941,8 +1109,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitTypesKeywords(JsoniqParser.TypesKeywordsContext ctx) {
@@ -952,8 +1122,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitSingleType(JsoniqParser.SingleTypeContext ctx) {
@@ -963,8 +1135,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitAtomicType(JsoniqParser.AtomicTypeContext ctx) {
@@ -974,8 +1148,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitNCNameOrKeyWord(JsoniqParser.NCNameOrKeyWordContext ctx) {
@@ -985,8 +1161,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitPairConstructor(JsoniqParser.PairConstructorContext ctx) {
@@ -996,8 +1174,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
@@ -1007,8 +1187,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitUriLiteral(JsoniqParser.UriLiteralContext ctx) {
@@ -1018,8 +1200,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitStringLiteral(JsoniqParser.StringLiteralContext ctx) {
@@ -1029,8 +1213,10 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
     /**
      * {@inheritDoc}
      *
-     * <p>The default implementation returns the result of calling
-     * {@link #visitChildren} on {@code ctx}.</p>
+     * <p>
+     * The default implementation returns the result of calling
+     * {@link #visitChildren} on {@code ctx}.
+     * </p>
      */
     @Override
     public T visitKeyWords(JsoniqParser.KeyWordsContext ctx) {

@@ -36,7 +36,6 @@ import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 
-
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
