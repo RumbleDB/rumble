@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -12,7 +13,6 @@ import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Collections;

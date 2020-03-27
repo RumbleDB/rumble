@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics;
+package org.rumbledb.context;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;

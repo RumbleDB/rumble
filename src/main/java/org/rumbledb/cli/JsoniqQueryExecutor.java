@@ -33,6 +33,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
@@ -40,7 +41,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
+
 import sparksoniq.spark.SparkSessionManager;
 import sparksoniq.utils.FileUtils;
 

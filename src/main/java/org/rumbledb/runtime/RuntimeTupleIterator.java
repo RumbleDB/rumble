@@ -26,12 +26,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.HashSet;
 import java.util.Map;

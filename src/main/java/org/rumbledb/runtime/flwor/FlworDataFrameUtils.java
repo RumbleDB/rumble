@@ -33,6 +33,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
@@ -56,7 +57,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;

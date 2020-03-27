@@ -23,13 +23,13 @@ package org.rumbledb.runtime.functions.sequences.value;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;

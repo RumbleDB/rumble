@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
@@ -32,10 +33,8 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.SequenceType.Arity;
 
-import sparksoniq.semantics.DynamicContext;
-
 /**
- * Static context visitor implements a multi-pass algorithm that enables function hoisting
+ * Dynamic context visitor. Populates the dynamic context to evaluate the main expression.
  */
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
@@ -73,7 +72,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
             ) {
                 throw new UnexpectedTypeException(
-                        "External variable value is empty and does not match the expected type.",
+                        "External variable value does not match the expected type.",
                         variableDeclaration.getMetadata()
                 );
             }

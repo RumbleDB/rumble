@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -43,7 +44,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.StaticContext;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -185,7 +185,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (expression.getExpression() != null) {
             // if a variable declaration takes place
             this.visit(expression.getExpression(), argument);
-            // initialize execution and storage modes and then add the variable to the context
             expression.initHighestExecutionAndVariableHighestStorageModes(this.visitorConfig);
             groupByClauseContext = visitFlowrVarDeclaration(expression, argument);
         } else {
@@ -295,7 +294,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
     // endregion
 
-    // region FLWOR vars
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);

@@ -26,9 +26,9 @@ import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import sparksoniq.semantics.DynamicContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
