@@ -199,7 +199,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
         }
-    	clause.initHighestExecutionMode(this.visitorConfig);
+        clause.initHighestExecutionMode(this.visitorConfig);
         return groupByClauseContext;
     }
 

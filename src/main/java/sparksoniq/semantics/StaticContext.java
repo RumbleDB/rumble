@@ -50,7 +50,7 @@ public class StaticContext {
         }
 
         @SuppressWarnings("unused")
-		public String getName() {
+        public String getName() {
             return this.name;
         }
 
