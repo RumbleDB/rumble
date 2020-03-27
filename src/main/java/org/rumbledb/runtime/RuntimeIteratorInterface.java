@@ -21,7 +21,7 @@
 package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
-import sparksoniq.semantics.DynamicContext;
+import org.rumbledb.context.DynamicContext;
 
 import java.io.Serializable;
 

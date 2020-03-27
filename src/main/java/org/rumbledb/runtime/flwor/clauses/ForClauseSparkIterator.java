@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -38,7 +39,6 @@ import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;

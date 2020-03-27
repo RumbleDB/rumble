@@ -20,8 +20,8 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.StaticContext;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression

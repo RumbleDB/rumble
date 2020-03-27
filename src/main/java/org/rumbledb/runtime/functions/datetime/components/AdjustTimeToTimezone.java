@@ -3,6 +3,7 @@ package org.rumbledb.runtime.functions.datetime.components;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -10,7 +11,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 

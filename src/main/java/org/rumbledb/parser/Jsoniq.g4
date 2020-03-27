@@ -38,7 +38,7 @@ dfPropertyName          : 'decimal-separator'
 
 moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
-varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | ('external' (':=' exprSingle)?));
+varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
 functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
                           (Kas return_type=sequenceType)?

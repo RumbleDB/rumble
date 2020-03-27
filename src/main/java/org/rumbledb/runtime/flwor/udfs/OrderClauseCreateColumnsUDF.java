@@ -27,6 +27,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.api.java.UDF2;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.items.ItemFactory;
@@ -36,7 +37,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.semantics.DynamicContext;
 
 import java.io.IOException;
 import java.util.ArrayList;

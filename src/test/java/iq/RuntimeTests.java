@@ -29,10 +29,10 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 

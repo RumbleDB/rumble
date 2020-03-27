@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics;
+package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;

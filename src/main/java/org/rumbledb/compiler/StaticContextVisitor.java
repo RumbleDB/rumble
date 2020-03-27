@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -33,6 +34,7 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -42,7 +44,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.StaticContext;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
@@ -185,7 +186,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
                 this.visit(variable.getExpression(), argument);
-                // initialize execution and storage modes and then add the variable to the context
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
                     variable.getSequenceType(),
@@ -282,5 +282,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
     // endregion
+
+    @Override
+    public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        variableDeclaration.initHighestExecutionMode(this.visitorConfig);
+        StaticContext result = new StaticContext(argument);
+        result.addVariable(
+            variableDeclaration.getVariableName(),
+            variableDeclaration.getSequenceType(),
+            variableDeclaration.getMetadata(),
+            variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
+        );
+        return result;
+    }
 
 }
