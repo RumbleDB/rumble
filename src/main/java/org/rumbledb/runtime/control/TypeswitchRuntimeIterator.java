@@ -45,16 +45,25 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
+        if(this.matchingIterator != null)
+        {
+            this.matchingIterator.close();
+        }
+        this.matchingIterator = null;
         initializeIterator(this.testField, this.cases, this.defaultCase);
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
             this.matchingIterator.close();
-            this.hasNext = false;
+            this.hasNext = this.matchingIterator.hasNext();
+            if(!this.hasNext())
+            {
+                this.matchingIterator.close();
+                this.matchingIterator = null;
+            }
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -66,6 +75,10 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
+        if(this.matchingIterator != null)
+        {
+            this.matchingIterator.close();
+        }
         this.matchingIterator = null;
         initializeIterator(this.testField, this.cases, this.defaultCase);
     }
@@ -96,7 +109,6 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
 
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.matchingIterator.hasNext();
-        this.matchingIterator.close();
     }
 
     private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
