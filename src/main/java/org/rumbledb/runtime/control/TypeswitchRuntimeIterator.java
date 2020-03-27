@@ -126,6 +126,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
                 }
             }
         }
+        this.matchingIterator = null;
         return false;
     }
 }
