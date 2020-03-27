@@ -45,9 +45,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
@@ -346,10 +346,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
-        List<GroupByClauseVar> vars = new ArrayList<>();
-        GroupByClauseVar child;
+        List<GroupByVariableDeclaration> vars = new ArrayList<>();
+        GroupByVariableDeclaration child;
         for (JsoniqParser.GroupByVarContext var : ctx.vars) {
-            child = (GroupByClauseVar) this.visitGroupByVar(var);
+            child = this.processGroupByVar(var);
             vars.add(child);
         }
         return new GroupByClause(vars, createMetadataFromContext(ctx));
@@ -397,12 +397,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         );
     }
 
-    @Override
-    public Node visitGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+    public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
         SequenceType seq = null;
         Expression expr = null;
-        String uri = null;
-        VariableReferenceExpression var = (VariableReferenceExpression) this.visitVarRef(ctx.var_ref);
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
@@ -415,11 +413,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             expr = (Expression) this.visitExprSingle(ctx.ex);
         }
 
-        if (ctx.uri != null) {
-            uri = ctx.uri.getText();
-        }
 
-        return new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
+        return new GroupByVariableDeclaration(var, seq, expr);
     }
 
     @Override

@@ -29,7 +29,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -93,7 +92,6 @@ public class RuntimeTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        TranslationVisitor visitor = new TranslationVisitor();
         testAnnotations(this.testFile.getAbsolutePath());
     }
 
