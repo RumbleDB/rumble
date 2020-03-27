@@ -1277,56 +1277,49 @@ public class RumbleMLCatalog {
         return javaFullClassName.substring(indexOfLastDot + 1);
     }
 
-    static final List<String> specialParams = new ArrayList<>();
-    private static final HashMap<String, String> defaultValuesOfSpecialParams = new HashMap<>();
-    private static final HashMap<String, String> javaTypeNamesOfSpecialParams = new HashMap<>();
+    /**
+     * SparkMl parameters that require a column of vectors are re-purposed in RumbleML
+     * SparkML expects a single string to refers to a column of vectors
+     * RumbleML collects an array of strings and generates a Vector from referenced columns
+     */
+    static final List<String> specialParamsThatMayReferToAColumnOfVectors = new ArrayList<>();
+    private static final HashMap<String, String> defaultSparkMLValuesOfSpecialParams = new HashMap<>();
+    static final String javaTypeNameOfSpecialParams = "String[]";
     private static final HashMap<String, String> UUIDsForSpecialParams = new HashMap<>();
 
     private static final String featuresColParamName = "featuresCol";
     private static final String inputColParamName = "inputCol";
     static {
-        specialParams.add(featuresColParamName);
-        specialParams.add(inputColParamName);
+        specialParamsThatMayReferToAColumnOfVectors.add(featuresColParamName);
+        specialParamsThatMayReferToAColumnOfVectors.add(inputColParamName);
 
-        defaultValuesOfSpecialParams.put(featuresColParamName, "features");
-
-        javaTypeNamesOfSpecialParams.put(featuresColParamName, "String[]");
-        javaTypeNamesOfSpecialParams.put(inputColParamName, "String[]");
+        defaultSparkMLValuesOfSpecialParams.put(featuresColParamName, "features");
 
         UUIDsForSpecialParams.put(featuresColParamName, "59992242-914d-4357-bcc8-10b1c134476b");
         UUIDsForSpecialParams.put(inputColParamName, "fd289b98-4410-4423-96bd-001bb703e8d3");
 
     }
 
-    static boolean specialParamHasNoDefaultvalue(String paramName) {
-        if (!specialParams.contains(paramName)) {
+    static boolean specialParamHasNoDefaultSparkMLValue(String paramName) {
+        if (!specialParamsThatMayReferToAColumnOfVectors.contains(paramName)) {
             throw new OurBadException("Special param with name '" + paramName + "' not found.");
         }
-        return !defaultValuesOfSpecialParams.containsKey(paramName);
+        return !defaultSparkMLValuesOfSpecialParams.containsKey(paramName);
     }
 
-    static String getDefaultValueOfSpecialParam(String paramName) {
-        if (!specialParams.contains(paramName)) {
+    static String getDefaultSparkMLValueOfSpecialParam(String paramName) {
+        if (!specialParamsThatMayReferToAColumnOfVectors.contains(paramName)) {
             throw new OurBadException("Special param with name '" + paramName + "' not found.");
         }
-        if (!defaultValuesOfSpecialParams.containsKey(paramName)) {
-            throw new OurBadException("Default value for special param '" + paramName + "' not found.");
+        if (!defaultSparkMLValuesOfSpecialParams.containsKey(paramName)) {
+            throw new OurBadException("Default SparkML value for special param '" + paramName + "' not found.");
         }
-        return defaultValuesOfSpecialParams.get(paramName);
+        return defaultSparkMLValuesOfSpecialParams.get(paramName);
     }
 
-    static String getJavaTypeNameOfOfSpecialParam(String paramName) {
-        if (!specialParams.contains(paramName)) {
-            throw new OurBadException("Special param with name '" + paramName + "' not found.");
-        }
-        if (!javaTypeNamesOfSpecialParams.containsKey(paramName)) {
-            throw new OurBadException("JavaTypeName for special param '" + paramName + "' not found.");
-        }
-        return javaTypeNamesOfSpecialParams.get(paramName);
-    }
 
     static String getUUIDOfOfSpecialParam(String paramName) {
-        if (!specialParams.contains(paramName)) {
+        if (!specialParamsThatMayReferToAColumnOfVectors.contains(paramName)) {
             throw new OurBadException("Special param with name '" + paramName + "' not found.");
         }
         if (!UUIDsForSpecialParams.containsKey(paramName)) {
@@ -1335,7 +1328,7 @@ public class RumbleMLCatalog {
         return UUIDsForSpecialParams.get(paramName);
     }
 
-    static boolean shouldEstimatorColumnReferencedByParamContainVectors(
+    static boolean shouldEstimatorColumnReferencedBySpecialParamContainVectors(
             String estimatorName,
             String paramName,
             ExceptionMetadata metadata
@@ -1361,7 +1354,7 @@ public class RumbleMLCatalog {
         return false;
     }
 
-    static boolean shouldTransformerColumnReferencedByParamContainVectors(
+    static boolean shouldTransformerColumnReferencedBySpecialParamContainVectors(
             String transformerName,
             String paramName,
             ExceptionMetadata metadata
