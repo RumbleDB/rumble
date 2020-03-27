@@ -22,12 +22,17 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
@@ -77,6 +82,45 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             return filteredRDD.map(x -> x._1);
         }
         return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+        setInstanceVariables(dynamicContext);
+        StructType inputSchema = df.schema();
+
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, null);
+
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, false);
+
+        df.createOrReplaceTempView("input");
+        df = df.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT * FROM input LIMIT %s",
+                    Integer.toString(this.startPosition + this.length - 1)
+                )
+            );
+
+        df = FlworDataFrameUtils.zipWithIndex(df, 1L, SparkSessionManager.temporaryColumnName);
+
+        df.createOrReplaceTempView("input");
+        df = df.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
+                    selectSQL,
+                    SparkSessionManager.temporaryColumnName,
+                    Integer.toString(this.startPosition)
+                )
+            );
+        return df;
     }
 
     @Override

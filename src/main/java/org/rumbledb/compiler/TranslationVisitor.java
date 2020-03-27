@@ -49,7 +49,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.ReturnClause;
@@ -91,7 +90,6 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -231,46 +229,31 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // endregion
 
     // region Flowr
-    // TODO [EXPRVISITOR] count
     @Override
     public Node visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
-        Clause startClause;
-        Clause childClause;
-        List<Clause> contentClauses = new ArrayList<>();
-        ReturnClause returnClause;
+        Clause clause;
         // check the start clause, for or let
         if (ctx.start_for == null) {
-            startClause = (Clause) this.visitLetClause(ctx.start_let);
+            clause = (Clause) this.visitLetClause(ctx.start_let);
         } else {
-            startClause = (Clause) this.visitForClause(ctx.start_for);
+            clause = (Clause) this.visitForClause(ctx.start_for);
         }
 
-        Clause previousFLWORClause = startClause;
-
-        // there might have been multiple variables in the syntactic starting clause
-        // and each one is mapped to a separate start clause on the logical level, so we need to rewind
-        // and populate content clauses appropriately
-        List<Clause> clausesTemp = new ArrayList<>();
-        while (startClause.getPreviousClause() != null) {
-            clausesTemp.add(startClause);
-            startClause = startClause.getPreviousClause();
-        }
-        Collections.reverse(clausesTemp);
-        contentClauses.addAll(clausesTemp);
+        Clause previousFLWORClause = clause.getLastClause();
 
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
-                childClause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
+                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
             } else if (child instanceof JsoniqParser.LetClauseContext) {
-                childClause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
+                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
             } else if (child instanceof JsoniqParser.WhereClauseContext) {
-                childClause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
+                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
             } else if (child instanceof JsoniqParser.GroupByClauseContext) {
-                childClause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
+                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
             } else if (child instanceof JsoniqParser.OrderByClauseContext) {
-                childClause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
+                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
             } else if (child instanceof JsoniqParser.CountClauseContext) {
-                childClause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
             } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
@@ -278,38 +261,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 );
             }
 
-            // there might have been multiple variables in the syntactic starting clause
-            // and each one is mapped to a separate start clause on the logical level, so we need to rewind
-            // and populate content clauses appropriately
-            clausesTemp.clear();
-            Clause lastChildClause = childClause;
-            while (childClause.getPreviousClause() != null) {
-                clausesTemp.add(childClause);
-                childClause = childClause.getPreviousClause();
-            }
-            contentClauses.add(childClause);
-            Collections.reverse(clausesTemp);
-            contentClauses.addAll(clausesTemp);
-
-            childClause.setPreviousClause(previousFLWORClause);
-            previousFLWORClause = lastChildClause;
+            previousFLWORClause.chainWith(clause.getFirstClause());
+            previousFLWORClause = clause.getLastClause();
         }
 
-        // visit return
-
         Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
-        returnClause = new ReturnClause(
+        ReturnClause returnClause = new ReturnClause(
                 returnExpr,
                 new ExceptionMetadata(
                         ctx.getStop().getLine(),
                         ctx.getStop().getCharPositionInLine()
                 )
         );
-        returnClause.setPreviousClause(previousFLWORClause);
+        previousFLWORClause.chainWith(returnClause);
 
         return new FlworExpression(
-                startClause,
-                contentClauses,
                 returnClause,
                 createMetadataFromContext(ctx)
         );
@@ -320,7 +286,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         ForClause clause = null;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
             ForClause newClause = (ForClause) this.visitForVar(var);
-            newClause.setPreviousClause(clause);
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
             clause = newClause;
         }
 
@@ -349,20 +317,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitLetClause(JsoniqParser.LetClauseContext ctx) {
-        List<LetClauseVar> vars = new ArrayList<>();
-        LetClauseVar child;
+        LetClause clause = null;
         for (JsoniqParser.LetVarContext var : ctx.vars) {
-            child = (LetClauseVar) this.visitLetVar(var);
-            vars.add(child);
+            LetClause newClause = (LetClause) this.visitLetVar(var);
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
+            clause = newClause;
         }
 
-        return new LetClause(vars, createMetadataFromContext(ctx));
+        return clause;
     }
 
     @Override
     public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
         SequenceType seq = null;
-        VariableReferenceExpression var = (VariableReferenceExpression) this.visitVarRef(ctx.var_ref);
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
@@ -371,7 +341,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
 
-        return new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
+        return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
     }
 
     @Override

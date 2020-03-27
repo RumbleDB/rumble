@@ -93,11 +93,6 @@ public class ForClause extends Clause {
     }
 
     @Override
-    public void setPreviousClause(Clause previousClause) {
-        super.setPreviousClause(previousClause);
-    }
-
-    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
             (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
