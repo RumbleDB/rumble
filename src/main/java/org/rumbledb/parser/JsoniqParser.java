@@ -3,14 +3,25 @@
 // Java header
 package org.rumbledb.parser;
 
-import org.antlr.v4.runtime.atn.*;
-import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.*;
-import org.antlr.v4.runtime.tree.*;
-import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.RuntimeMetaData;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.VocabularyImpl;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 @SuppressWarnings({ "all", "warnings", "unchecked", "unused", "cast" })
 public class JsoniqParser extends Parser {
@@ -218,7 +229,7 @@ public class JsoniqParser extends Parser {
                     setState(187);
                     match(Kversion);
                     setState(188);
-                    ((ModuleContext) _localctx).vers = stringLiteral();
+                    _localctx.vers = stringLiteral();
                     setState(189);
                     match(T__0);
                 }
@@ -308,7 +319,7 @@ public class JsoniqParser extends Parser {
                 case Literal:
                 case NCName: {
                     setState(194);
-                    ((ModuleContext) _localctx).main = mainModule();
+                    _localctx.main = mainModule();
                 }
                     break;
                 default:
@@ -1129,7 +1140,7 @@ public class JsoniqParser extends Parser {
                 case T__24: {
                     {
                         setState(298);
-                        ((VarDeclContext) _localctx).external = match(T__24);
+                        _localctx.external = match(T__24);
                         setState(301);
                         _errHandler.sync(this);
                         _la = _input.LA(1);
@@ -1223,14 +1234,14 @@ public class JsoniqParser extends Parser {
                 switch (getInterpreter().adaptivePredict(_input, 15, _ctx)) {
                 case 1: {
                     setState(307);
-                    ((FunctionDeclContext) _localctx).namespace = match(NCName);
+                    _localctx.namespace = match(NCName);
                     setState(308);
                     match(T__9);
                 }
                     break;
                 }
                 setState(311);
-                ((FunctionDeclContext) _localctx).fn_name = match(NCName);
+                _localctx.fn_name = match(NCName);
                 setState(312);
                 match(T__26);
                 setState(314);
@@ -1253,7 +1264,7 @@ public class JsoniqParser extends Parser {
                         setState(317);
                         match(Kas);
                         setState(318);
-                        ((FunctionDeclContext) _localctx).return_type = sequenceType();
+                        _localctx.return_type = sequenceType();
                     }
                 }
 
@@ -1264,7 +1275,7 @@ public class JsoniqParser extends Parser {
                     setState(321);
                     match(T__28);
                     setState(322);
-                    ((FunctionDeclContext) _localctx).fn_body = expr();
+                    _localctx.fn_body = expr();
                     setState(323);
                     match(T__29);
                 }
@@ -1677,12 +1688,12 @@ public class JsoniqParser extends Parser {
                 switch (_input.LA(1)) {
                 case Kfor: {
                     setState(359);
-                    ((FlowrExprContext) _localctx).start_for = forClause();
+                    _localctx.start_for = forClause();
                 }
                     break;
                 case Klet: {
                     setState(360);
-                    ((FlowrExprContext) _localctx).start_let = letClause();
+                    _localctx.start_let = letClause();
                 }
                     break;
                 default:
@@ -1740,7 +1751,7 @@ public class JsoniqParser extends Parser {
                 setState(374);
                 match(Kreturn);
                 setState(375);
-                ((FlowrExprContext) _localctx).return_expr = exprSingle();
+                _localctx.return_expr = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -1796,8 +1807,8 @@ public class JsoniqParser extends Parser {
                 setState(377);
                 match(Kfor);
                 setState(378);
-                ((ForClauseContext) _localctx).forVar = forVar();
-                ((ForClauseContext) _localctx).vars.add(((ForClauseContext) _localctx).forVar);
+                _localctx.forVar = forVar();
+                _localctx.vars.add(_localctx.forVar);
                 setState(383);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -1807,8 +1818,8 @@ public class JsoniqParser extends Parser {
                             setState(379);
                             match(T__21);
                             setState(380);
-                            ((ForClauseContext) _localctx).forVar = forVar();
-                            ((ForClauseContext) _localctx).vars.add(((ForClauseContext) _localctx).forVar);
+                            _localctx.forVar = forVar();
+                            _localctx.vars.add(_localctx.forVar);
                         }
                     }
                     setState(385);
@@ -1895,7 +1906,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(386);
-                ((ForVarContext) _localctx).var_ref = varRef();
+                _localctx.var_ref = varRef();
                 setState(389);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -1904,7 +1915,7 @@ public class JsoniqParser extends Parser {
                         setState(387);
                         match(Kas);
                         setState(388);
-                        ((ForVarContext) _localctx).seq = sequenceType();
+                        _localctx.seq = sequenceType();
                     }
                 }
 
@@ -1914,7 +1925,7 @@ public class JsoniqParser extends Parser {
                 if (_la == Kallowing) {
                     {
                         setState(391);
-                        ((ForVarContext) _localctx).flag = match(Kallowing);
+                        _localctx.flag = match(Kallowing);
                         setState(392);
                         match(Kempty);
                     }
@@ -1928,14 +1939,14 @@ public class JsoniqParser extends Parser {
                         setState(395);
                         match(Kat);
                         setState(396);
-                        ((ForVarContext) _localctx).at = varRef();
+                        _localctx.at = varRef();
                     }
                 }
 
                 setState(399);
                 match(Kin);
                 setState(400);
-                ((ForVarContext) _localctx).ex = exprSingle();
+                _localctx.ex = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -1991,8 +2002,8 @@ public class JsoniqParser extends Parser {
                 setState(402);
                 match(Klet);
                 setState(403);
-                ((LetClauseContext) _localctx).letVar = letVar();
-                ((LetClauseContext) _localctx).vars.add(((LetClauseContext) _localctx).letVar);
+                _localctx.letVar = letVar();
+                _localctx.vars.add(_localctx.letVar);
                 setState(408);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -2002,8 +2013,8 @@ public class JsoniqParser extends Parser {
                             setState(404);
                             match(T__21);
                             setState(405);
-                            ((LetClauseContext) _localctx).letVar = letVar();
-                            ((LetClauseContext) _localctx).vars.add(((LetClauseContext) _localctx).letVar);
+                            _localctx.letVar = letVar();
+                            _localctx.vars.add(_localctx.letVar);
                         }
                     }
                     setState(410);
@@ -2068,7 +2079,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(411);
-                ((LetVarContext) _localctx).var_ref = varRef();
+                _localctx.var_ref = varRef();
                 setState(414);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -2077,14 +2088,14 @@ public class JsoniqParser extends Parser {
                         setState(412);
                         match(Kas);
                         setState(413);
-                        ((LetVarContext) _localctx).seq = sequenceType();
+                        _localctx.seq = sequenceType();
                     }
                 }
 
                 setState(416);
                 match(T__23);
                 setState(417);
-                ((LetVarContext) _localctx).ex = exprSingle();
+                _localctx.ex = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -2194,8 +2205,8 @@ public class JsoniqParser extends Parser {
                 setState(423);
                 match(Kby);
                 setState(424);
-                ((GroupByClauseContext) _localctx).groupByVar = groupByVar();
-                ((GroupByClauseContext) _localctx).vars.add(((GroupByClauseContext) _localctx).groupByVar);
+                _localctx.groupByVar = groupByVar();
+                _localctx.vars.add(_localctx.groupByVar);
                 setState(429);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -2205,8 +2216,8 @@ public class JsoniqParser extends Parser {
                             setState(425);
                             match(T__21);
                             setState(426);
-                            ((GroupByClauseContext) _localctx).groupByVar = groupByVar();
-                            ((GroupByClauseContext) _localctx).vars.add(((GroupByClauseContext) _localctx).groupByVar);
+                            _localctx.groupByVar = groupByVar();
+                            _localctx.vars.add(_localctx.groupByVar);
                         }
                     }
                     setState(431);
@@ -2281,7 +2292,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(432);
-                ((GroupByVarContext) _localctx).var_ref = varRef();
+                _localctx.var_ref = varRef();
                 setState(439);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -2295,14 +2306,14 @@ public class JsoniqParser extends Parser {
                                 setState(433);
                                 match(Kas);
                                 setState(434);
-                                ((GroupByVarContext) _localctx).seq = sequenceType();
+                                _localctx.seq = sequenceType();
                             }
                         }
 
                         setState(437);
-                        ((GroupByVarContext) _localctx).decl = match(T__23);
+                        _localctx.decl = match(T__23);
                         setState(438);
-                        ((GroupByVarContext) _localctx).ex = exprSingle();
+                        _localctx.ex = exprSingle();
                     }
                 }
 
@@ -2314,7 +2325,7 @@ public class JsoniqParser extends Parser {
                         setState(441);
                         match(Kcollation);
                         setState(442);
-                        ((GroupByVarContext) _localctx).uri = uriLiteral();
+                        _localctx.uri = uriLiteral();
                     }
                 }
 
@@ -2392,7 +2403,7 @@ public class JsoniqParser extends Parser {
                 case Kstable: {
                     {
                         setState(447);
-                        ((OrderByClauseContext) _localctx).stb = match(Kstable);
+                        _localctx.stb = match(Kstable);
                         setState(448);
                         match(Korder);
                         setState(449);
@@ -2497,7 +2508,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(460);
-                ((OrderByExprContext) _localctx).ex = exprSingle();
+                _localctx.ex = exprSingle();
                 setState(463);
                 _errHandler.sync(this);
                 switch (_input.LA(1)) {
@@ -2508,7 +2519,7 @@ public class JsoniqParser extends Parser {
                     break;
                 case Kdescending: {
                     setState(462);
-                    ((OrderByExprContext) _localctx).desc = match(Kdescending);
+                    _localctx.desc = match(Kdescending);
                 }
                     break;
                 case T__21:
@@ -2538,12 +2549,12 @@ public class JsoniqParser extends Parser {
                         switch (_input.LA(1)) {
                         case Kgreatest: {
                             setState(466);
-                            ((OrderByExprContext) _localctx).gr = match(Kgreatest);
+                            _localctx.gr = match(Kgreatest);
                         }
                             break;
                         case Kleast: {
                             setState(467);
-                            ((OrderByExprContext) _localctx).ls = match(Kleast);
+                            _localctx.ls = match(Kleast);
                         }
                             break;
                         default:
@@ -2560,7 +2571,7 @@ public class JsoniqParser extends Parser {
                         setState(472);
                         match(Kcollation);
                         setState(473);
-                        ((OrderByExprContext) _localctx).uril = uriLiteral();
+                        _localctx.uril = uriLiteral();
                     }
                 }
 
@@ -2683,20 +2694,20 @@ public class JsoniqParser extends Parser {
                 switch (_input.LA(1)) {
                 case Ksome: {
                     setState(479);
-                    ((QuantifiedExprContext) _localctx).so = match(Ksome);
+                    _localctx.so = match(Ksome);
                 }
                     break;
                 case Kevery: {
                     setState(480);
-                    ((QuantifiedExprContext) _localctx).ev = match(Kevery);
+                    _localctx.ev = match(Kevery);
                 }
                     break;
                 default:
                     throw new NoViableAltException(this);
                 }
                 setState(483);
-                ((QuantifiedExprContext) _localctx).quantifiedExprVar = quantifiedExprVar();
-                ((QuantifiedExprContext) _localctx).vars.add(((QuantifiedExprContext) _localctx).quantifiedExprVar);
+                _localctx.quantifiedExprVar = quantifiedExprVar();
+                _localctx.vars.add(_localctx.quantifiedExprVar);
                 setState(488);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -2706,9 +2717,9 @@ public class JsoniqParser extends Parser {
                             setState(484);
                             match(T__21);
                             setState(485);
-                            ((QuantifiedExprContext) _localctx).quantifiedExprVar = quantifiedExprVar();
-                            ((QuantifiedExprContext) _localctx).vars
-                                    .add(((QuantifiedExprContext) _localctx).quantifiedExprVar);
+                            _localctx.quantifiedExprVar = quantifiedExprVar();
+                            _localctx.vars
+                                    .add(_localctx.quantifiedExprVar);
                         }
                     }
                     setState(490);
@@ -2869,7 +2880,7 @@ public class JsoniqParser extends Parser {
                 setState(503);
                 match(T__26);
                 setState(504);
-                ((SwitchExprContext) _localctx).cond = expr();
+                _localctx.cond = expr();
                 setState(505);
                 match(T__27);
                 setState(507);
@@ -2879,8 +2890,8 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(506);
-                            ((SwitchExprContext) _localctx).switchCaseClause = switchCaseClause();
-                            ((SwitchExprContext) _localctx).cases.add(((SwitchExprContext) _localctx).switchCaseClause);
+                            _localctx.switchCaseClause = switchCaseClause();
+                            _localctx.cases.add(_localctx.switchCaseClause);
                         }
                     }
                     setState(509);
@@ -2892,7 +2903,7 @@ public class JsoniqParser extends Parser {
                 setState(512);
                 match(Kreturn);
                 setState(513);
-                ((SwitchExprContext) _localctx).def = exprSingle();
+                _localctx.def = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -2963,9 +2974,9 @@ public class JsoniqParser extends Parser {
                             setState(515);
                             match(Kcase);
                             setState(516);
-                            ((SwitchCaseClauseContext) _localctx).exprSingle = exprSingle();
-                            ((SwitchCaseClauseContext) _localctx).cond
-                                    .add(((SwitchCaseClauseContext) _localctx).exprSingle);
+                            _localctx.exprSingle = exprSingle();
+                            _localctx.cond
+                                    .add(_localctx.exprSingle);
                         }
                     }
                     setState(519);
@@ -2975,7 +2986,7 @@ public class JsoniqParser extends Parser {
                 setState(521);
                 match(Kreturn);
                 setState(522);
-                ((SwitchCaseClauseContext) _localctx).ret = exprSingle();
+                _localctx.ret = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3056,7 +3067,7 @@ public class JsoniqParser extends Parser {
                 setState(525);
                 match(T__26);
                 setState(526);
-                ((TypeSwitchExprContext) _localctx).cond = expr();
+                _localctx.cond = expr();
                 setState(527);
                 match(T__27);
                 setState(529);
@@ -3066,9 +3077,9 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(528);
-                            ((TypeSwitchExprContext) _localctx).caseClause = caseClause();
-                            ((TypeSwitchExprContext) _localctx).cses
-                                    .add(((TypeSwitchExprContext) _localctx).caseClause);
+                            _localctx.caseClause = caseClause();
+                            _localctx.cses
+                                    .add(_localctx.caseClause);
                         }
                     }
                     setState(531);
@@ -3083,14 +3094,14 @@ public class JsoniqParser extends Parser {
                 if (_la == T__30) {
                     {
                         setState(534);
-                        ((TypeSwitchExprContext) _localctx).var_ref = varRef();
+                        _localctx.var_ref = varRef();
                     }
                 }
 
                 setState(537);
                 match(Kreturn);
                 setState(538);
-                ((TypeSwitchExprContext) _localctx).def = exprSingle();
+                _localctx.def = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3169,15 +3180,15 @@ public class JsoniqParser extends Parser {
                 if (_la == T__30) {
                     {
                         setState(541);
-                        ((CaseClauseContext) _localctx).var_ref = varRef();
+                        _localctx.var_ref = varRef();
                         setState(542);
                         match(Kas);
                     }
                 }
 
                 setState(546);
-                ((CaseClauseContext) _localctx).sequenceType = sequenceType();
-                ((CaseClauseContext) _localctx).union.add(((CaseClauseContext) _localctx).sequenceType);
+                _localctx.sequenceType = sequenceType();
+                _localctx.union.add(_localctx.sequenceType);
                 setState(551);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -3187,8 +3198,8 @@ public class JsoniqParser extends Parser {
                             setState(547);
                             match(T__31);
                             setState(548);
-                            ((CaseClauseContext) _localctx).sequenceType = sequenceType();
-                            ((CaseClauseContext) _localctx).union.add(((CaseClauseContext) _localctx).sequenceType);
+                            _localctx.sequenceType = sequenceType();
+                            _localctx.union.add(_localctx.sequenceType);
                         }
                     }
                     setState(553);
@@ -3198,7 +3209,7 @@ public class JsoniqParser extends Parser {
                 setState(554);
                 match(Kreturn);
                 setState(555);
-                ((CaseClauseContext) _localctx).ret = exprSingle();
+                _localctx.ret = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3268,17 +3279,17 @@ public class JsoniqParser extends Parser {
                 setState(558);
                 match(T__26);
                 setState(559);
-                ((IfExprContext) _localctx).test_condition = expr();
+                _localctx.test_condition = expr();
                 setState(560);
                 match(T__27);
                 setState(561);
                 match(Kthen);
                 setState(562);
-                ((IfExprContext) _localctx).branch = exprSingle();
+                _localctx.branch = exprSingle();
                 setState(563);
                 match(Kelse);
                 setState(564);
-                ((IfExprContext) _localctx).else_branch = exprSingle();
+                _localctx.else_branch = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3407,7 +3418,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(576);
-                ((OrExprContext) _localctx).main_expr = andExpr();
+                _localctx.main_expr = andExpr();
                 setState(581);
                 _errHandler.sync(this);
                 _alt = getInterpreter().adaptivePredict(_input, 51, _ctx);
@@ -3418,8 +3429,8 @@ public class JsoniqParser extends Parser {
                                 setState(577);
                                 match(Kor);
                                 setState(578);
-                                ((OrExprContext) _localctx).andExpr = andExpr();
-                                ((OrExprContext) _localctx).rhs.add(((OrExprContext) _localctx).andExpr);
+                                _localctx.andExpr = andExpr();
+                                _localctx.rhs.add(_localctx.andExpr);
                             }
                         }
                     }
@@ -3485,7 +3496,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(584);
-                ((AndExprContext) _localctx).main_expr = notExpr();
+                _localctx.main_expr = notExpr();
                 setState(589);
                 _errHandler.sync(this);
                 _alt = getInterpreter().adaptivePredict(_input, 52, _ctx);
@@ -3496,8 +3507,8 @@ public class JsoniqParser extends Parser {
                                 setState(585);
                                 match(Kand);
                                 setState(586);
-                                ((AndExprContext) _localctx).notExpr = notExpr();
-                                ((AndExprContext) _localctx).rhs.add(((AndExprContext) _localctx).notExpr);
+                                _localctx.notExpr = notExpr();
+                                _localctx.rhs.add(_localctx.notExpr);
                             }
                         }
                     }
@@ -3558,13 +3569,13 @@ public class JsoniqParser extends Parser {
                 switch (getInterpreter().adaptivePredict(_input, 53, _ctx)) {
                 case 1: {
                     setState(592);
-                    ((NotExprContext) _localctx).Knot = match(Knot);
-                    ((NotExprContext) _localctx).op.add(((NotExprContext) _localctx).Knot);
+                    _localctx.Knot = match(Knot);
+                    _localctx.op.add(_localctx.Knot);
                 }
                     break;
                 }
                 setState(595);
-                ((NotExprContext) _localctx).main_expr = comparisonExpr();
+                _localctx.main_expr = comparisonExpr();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -3629,7 +3640,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(597);
-                ((ComparisonExprContext) _localctx).main_expr = stringConcatExpr();
+                _localctx.main_expr = stringConcatExpr();
                 setState(600);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -3638,23 +3649,23 @@ public class JsoniqParser extends Parser {
                         | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) {
                     {
                         setState(598);
-                        ((ComparisonExprContext) _localctx)._tset1051 = _input.LT(1);
+                        _localctx._tset1051 = _input.LT(1);
                         _la = _input.LA(1);
                         if (!((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34)
                                 | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39)
                                 | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0))) {
-                            ((ComparisonExprContext) _localctx)._tset1051 = (Token) _errHandler.recoverInline(this);
+                            _localctx._tset1051 = _errHandler.recoverInline(this);
                         } else {
                             if (_input.LA(1) == Token.EOF)
                                 matchedEOF = true;
                             _errHandler.reportMatch(this);
                             consume();
                         }
-                        ((ComparisonExprContext) _localctx).op.add(((ComparisonExprContext) _localctx)._tset1051);
+                        _localctx.op.add(_localctx._tset1051);
                         setState(599);
-                        ((ComparisonExprContext) _localctx).stringConcatExpr = stringConcatExpr();
-                        ((ComparisonExprContext) _localctx).rhs
-                                .add(((ComparisonExprContext) _localctx).stringConcatExpr);
+                        _localctx.stringConcatExpr = stringConcatExpr();
+                        _localctx.rhs
+                                .add(_localctx.stringConcatExpr);
                     }
                 }
 
@@ -3708,7 +3719,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(602);
-                ((StringConcatExprContext) _localctx).main_expr = rangeExpr();
+                _localctx.main_expr = rangeExpr();
                 setState(607);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -3718,9 +3729,9 @@ public class JsoniqParser extends Parser {
                             setState(603);
                             match(T__44);
                             setState(604);
-                            ((StringConcatExprContext) _localctx).rangeExpr = rangeExpr();
-                            ((StringConcatExprContext) _localctx).rhs
-                                    .add(((StringConcatExprContext) _localctx).rangeExpr);
+                            _localctx.rangeExpr = rangeExpr();
+                            _localctx.rhs
+                                    .add(_localctx.rangeExpr);
                         }
                     }
                     setState(609);
@@ -3780,7 +3791,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(610);
-                ((RangeExprContext) _localctx).main_expr = additiveExpr();
+                _localctx.main_expr = additiveExpr();
                 setState(613);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 56, _ctx)) {
@@ -3788,8 +3799,8 @@ public class JsoniqParser extends Parser {
                     setState(611);
                     match(Kto);
                     setState(612);
-                    ((RangeExprContext) _localctx).additiveExpr = additiveExpr();
-                    ((RangeExprContext) _localctx).rhs.add(((RangeExprContext) _localctx).additiveExpr);
+                    _localctx.additiveExpr = additiveExpr();
+                    _localctx.rhs.add(_localctx.additiveExpr);
                 }
                     break;
                 }
@@ -3848,7 +3859,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(615);
-                ((AdditiveExprContext) _localctx).main_expr = multiplicativeExpr();
+                _localctx.main_expr = multiplicativeExpr();
                 setState(620);
                 _errHandler.sync(this);
                 _alt = getInterpreter().adaptivePredict(_input, 57, _ctx);
@@ -3857,10 +3868,10 @@ public class JsoniqParser extends Parser {
                         {
                             {
                                 setState(616);
-                                ((AdditiveExprContext) _localctx)._tset1160 = _input.LT(1);
+                                _localctx._tset1160 = _input.LT(1);
                                 _la = _input.LA(1);
                                 if (!(_la == T__45 || _la == T__46)) {
-                                    ((AdditiveExprContext) _localctx)._tset1160 = (Token) _errHandler
+                                    _localctx._tset1160 = _errHandler
                                             .recoverInline(this);
                                 } else {
                                     if (_input.LA(1) == Token.EOF)
@@ -3868,11 +3879,11 @@ public class JsoniqParser extends Parser {
                                     _errHandler.reportMatch(this);
                                     consume();
                                 }
-                                ((AdditiveExprContext) _localctx).op.add(((AdditiveExprContext) _localctx)._tset1160);
+                                _localctx.op.add(_localctx._tset1160);
                                 setState(617);
-                                ((AdditiveExprContext) _localctx).multiplicativeExpr = multiplicativeExpr();
-                                ((AdditiveExprContext) _localctx).rhs
-                                        .add(((AdditiveExprContext) _localctx).multiplicativeExpr);
+                                _localctx.multiplicativeExpr = multiplicativeExpr();
+                                _localctx.rhs
+                                        .add(_localctx.multiplicativeExpr);
                             }
                         }
                     }
@@ -3936,7 +3947,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(623);
-                ((MultiplicativeExprContext) _localctx).main_expr = instanceOfExpr();
+                _localctx.main_expr = instanceOfExpr();
                 setState(628);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -3945,11 +3956,11 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(624);
-                            ((MultiplicativeExprContext) _localctx)._tset1188 = _input.LT(1);
+                            _localctx._tset1188 = _input.LT(1);
                             _la = _input.LA(1);
                             if (!((((_la) & ~0x3f) == 0 && ((1L << _la)
                                     & ((1L << T__32) | (1L << T__47) | (1L << T__48) | (1L << T__49))) != 0))) {
-                                ((MultiplicativeExprContext) _localctx)._tset1188 = (Token) _errHandler
+                                _localctx._tset1188 = _errHandler
                                         .recoverInline(this);
                             } else {
                                 if (_input.LA(1) == Token.EOF)
@@ -3957,12 +3968,12 @@ public class JsoniqParser extends Parser {
                                 _errHandler.reportMatch(this);
                                 consume();
                             }
-                            ((MultiplicativeExprContext) _localctx).op
-                                    .add(((MultiplicativeExprContext) _localctx)._tset1188);
+                            _localctx.op
+                                    .add(_localctx._tset1188);
                             setState(625);
-                            ((MultiplicativeExprContext) _localctx).instanceOfExpr = instanceOfExpr();
-                            ((MultiplicativeExprContext) _localctx).rhs
-                                    .add(((MultiplicativeExprContext) _localctx).instanceOfExpr);
+                            _localctx.instanceOfExpr = instanceOfExpr();
+                            _localctx.rhs
+                                    .add(_localctx.instanceOfExpr);
                         }
                     }
                     setState(630);
@@ -4025,7 +4036,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(631);
-                ((InstanceOfExprContext) _localctx).main_expr = treatExpr();
+                _localctx.main_expr = treatExpr();
                 setState(635);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 59, _ctx)) {
@@ -4035,7 +4046,7 @@ public class JsoniqParser extends Parser {
                     setState(633);
                     match(Kof);
                     setState(634);
-                    ((InstanceOfExprContext) _localctx).seq = sequenceType();
+                    _localctx.seq = sequenceType();
                 }
                     break;
                 }
@@ -4095,7 +4106,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(637);
-                ((TreatExprContext) _localctx).main_expr = castableExpr();
+                _localctx.main_expr = castableExpr();
                 setState(641);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 60, _ctx)) {
@@ -4105,7 +4116,7 @@ public class JsoniqParser extends Parser {
                     setState(639);
                     match(Kas);
                     setState(640);
-                    ((TreatExprContext) _localctx).seq = sequenceType();
+                    _localctx.seq = sequenceType();
                 }
                     break;
                 }
@@ -4165,7 +4176,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(643);
-                ((CastableExprContext) _localctx).main_expr = castExpr();
+                _localctx.main_expr = castExpr();
                 setState(647);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 61, _ctx)) {
@@ -4175,7 +4186,7 @@ public class JsoniqParser extends Parser {
                     setState(645);
                     match(Kas);
                     setState(646);
-                    ((CastableExprContext) _localctx).single = singleType();
+                    _localctx.single = singleType();
                 }
                     break;
                 }
@@ -4235,7 +4246,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(649);
-                ((CastExprContext) _localctx).main_expr = unaryExpr();
+                _localctx.main_expr = unaryExpr();
                 setState(653);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 62, _ctx)) {
@@ -4245,7 +4256,7 @@ public class JsoniqParser extends Parser {
                     setState(651);
                     match(Kas);
                     setState(652);
-                    ((CastExprContext) _localctx).single = singleType();
+                    _localctx.single = singleType();
                 }
                     break;
                 }
@@ -4303,17 +4314,17 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(655);
-                            ((UnaryExprContext) _localctx)._tset1305 = _input.LT(1);
+                            _localctx._tset1305 = _input.LT(1);
                             _la = _input.LA(1);
                             if (!(_la == T__45 || _la == T__46)) {
-                                ((UnaryExprContext) _localctx)._tset1305 = (Token) _errHandler.recoverInline(this);
+                                _localctx._tset1305 = _errHandler.recoverInline(this);
                             } else {
                                 if (_input.LA(1) == Token.EOF)
                                     matchedEOF = true;
                                 _errHandler.reportMatch(this);
                                 consume();
                             }
-                            ((UnaryExprContext) _localctx).op.add(((UnaryExprContext) _localctx)._tset1305);
+                            _localctx.op.add(_localctx._tset1305);
                         }
                     }
                     setState(660);
@@ -4321,7 +4332,7 @@ public class JsoniqParser extends Parser {
                     _la = _input.LA(1);
                 }
                 setState(661);
-                ((UnaryExprContext) _localctx).main_expr = simpleMapExpr();
+                _localctx.main_expr = simpleMapExpr();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -4370,7 +4381,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(663);
-                ((SimpleMapExprContext) _localctx).main_expr = postFixExpr();
+                _localctx.main_expr = postFixExpr();
                 setState(668);
                 _errHandler.sync(this);
                 _la = _input.LA(1);
@@ -4471,7 +4482,7 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(671);
-                ((PostFixExprContext) _localctx).main_expr = primaryExpr();
+                _localctx.main_expr = primaryExpr();
                 setState(679);
                 _errHandler.sync(this);
                 _alt = getInterpreter().adaptivePredict(_input, 66, _ctx);
@@ -4770,32 +4781,32 @@ public class JsoniqParser extends Parser {
                 case Kjsoniq:
                 case Kjson: {
                     setState(696);
-                    ((ObjectLookupContext) _localctx).kw = keyWords();
+                    _localctx.kw = keyWords();
                 }
                     break;
                 case STRING: {
                     setState(697);
-                    ((ObjectLookupContext) _localctx).lt = stringLiteral();
+                    _localctx.lt = stringLiteral();
                 }
                     break;
                 case NCName: {
                     setState(698);
-                    ((ObjectLookupContext) _localctx).nc = match(NCName);
+                    _localctx.nc = match(NCName);
                 }
                     break;
                 case T__26: {
                     setState(699);
-                    ((ObjectLookupContext) _localctx).pe = parenthesizedExpr();
+                    _localctx.pe = parenthesizedExpr();
                 }
                     break;
                 case T__30: {
                     setState(700);
-                    ((ObjectLookupContext) _localctx).vr = varRef();
+                    _localctx.vr = varRef();
                 }
                     break;
                 case T__54: {
                     setState(701);
-                    ((ObjectLookupContext) _localctx).ci = contextItemExpr();
+                    _localctx.ci = contextItemExpr();
                 }
                     break;
                 case T__61:
@@ -4813,7 +4824,7 @@ public class JsoniqParser extends Parser {
                 case T__73:
                 case T__74: {
                     setState(702);
-                    ((ObjectLookupContext) _localctx).tkw = typesKeywords();
+                    _localctx.tkw = typesKeywords();
                 }
                     break;
                 default:
@@ -5030,14 +5041,14 @@ public class JsoniqParser extends Parser {
                 switch (getInterpreter().adaptivePredict(_input, 69, _ctx)) {
                 case 1: {
                     setState(720);
-                    ((VarRefContext) _localctx).ns = match(NCName);
+                    _localctx.ns = match(NCName);
                     setState(721);
                     match(T__9);
                 }
                     break;
                 }
                 setState(724);
-                ((VarRefContext) _localctx).name = match(NCName);
+                _localctx.name = match(NCName);
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -5319,7 +5330,7 @@ public class JsoniqParser extends Parser {
                     switch (_input.LA(1)) {
                     case NCName: {
                         setState(744);
-                        ((FunctionCallContext) _localctx).ns = match(NCName);
+                        _localctx.ns = match(NCName);
                     }
                         break;
                     case Kfor:
@@ -5366,7 +5377,7 @@ public class JsoniqParser extends Parser {
                     case Kjsoniq:
                     case Kjson: {
                         setState(745);
-                        ((FunctionCallContext) _localctx).kw = keyWords();
+                        _localctx.kw = keyWords();
                     }
                         break;
                     case T__9: {
@@ -5399,7 +5410,7 @@ public class JsoniqParser extends Parser {
                 case T__74:
                 case NCName: {
                     setState(752);
-                    ((FunctionCallContext) _localctx).fn_name = nCNameOrKeyWord();
+                    _localctx.fn_name = nCNameOrKeyWord();
                 }
                     break;
                 case Kfor:
@@ -5446,7 +5457,7 @@ public class JsoniqParser extends Parser {
                 case Kjsoniq:
                 case Kjson: {
                     setState(753);
-                    ((FunctionCallContext) _localctx).kw = keyWords();
+                    _localctx.kw = keyWords();
                 }
                     break;
                 default:
@@ -5535,8 +5546,8 @@ public class JsoniqParser extends Parser {
                     {
                         {
                             setState(759);
-                            ((ArgumentListContext) _localctx).argument = argument();
-                            ((ArgumentListContext) _localctx).args.add(((ArgumentListContext) _localctx).argument);
+                            _localctx.argument = argument();
+                            _localctx.args.add(_localctx.argument);
                             setState(761);
                             _errHandler.sync(this);
                             _la = _input.LA(1);
@@ -5793,11 +5804,11 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(778);
-                ((NamedFunctionRefContext) _localctx).fn_name = match(NCName);
+                _localctx.fn_name = match(NCName);
                 setState(779);
                 match(T__55);
                 setState(780);
-                ((NamedFunctionRefContext) _localctx).arity = match(Literal);
+                _localctx.arity = match(Literal);
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
@@ -5878,7 +5889,7 @@ public class JsoniqParser extends Parser {
                         setState(788);
                         match(Kas);
                         setState(789);
-                        ((InlineFunctionExprContext) _localctx).return_type = sequenceType();
+                        _localctx.return_type = sequenceType();
                     }
                 }
 
@@ -5886,7 +5897,7 @@ public class JsoniqParser extends Parser {
                     setState(792);
                     match(T__28);
                     setState(793);
-                    ((InlineFunctionExprContext) _localctx).fn_body = expr();
+                    _localctx.fn_body = expr();
                     setState(794);
                     match(T__29);
                 }
@@ -5969,26 +5980,26 @@ public class JsoniqParser extends Parser {
             case NullLiteral:
                 enterOuterAlt(_localctx, 2); {
                 setState(798);
-                ((SequenceTypeContext) _localctx).item = itemType();
+                _localctx.item = itemType();
                 setState(802);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 80, _ctx)) {
                 case 1: {
                     setState(799);
-                    ((SequenceTypeContext) _localctx).s121 = match(ArgumentPlaceholder);
-                    ((SequenceTypeContext) _localctx).question.add(((SequenceTypeContext) _localctx).s121);
+                    _localctx.s121 = match(ArgumentPlaceholder);
+                    _localctx.question.add(_localctx.s121);
                 }
                     break;
                 case 2: {
                     setState(800);
-                    ((SequenceTypeContext) _localctx).s33 = match(T__32);
-                    ((SequenceTypeContext) _localctx).star.add(((SequenceTypeContext) _localctx).s33);
+                    _localctx.s33 = match(T__32);
+                    _localctx.star.add(_localctx.s33);
                 }
                     break;
                 case 3: {
                     setState(801);
-                    ((SequenceTypeContext) _localctx).s46 = match(T__45);
-                    ((SequenceTypeContext) _localctx).plus.add(((SequenceTypeContext) _localctx).s46);
+                    _localctx.s46 = match(T__45);
+                    _localctx.plus.add(_localctx.s46);
                 }
                     break;
                 }
@@ -6109,8 +6120,8 @@ public class JsoniqParser extends Parser {
             case T__56:
                 enterOuterAlt(_localctx, 2); {
                 setState(818);
-                ((ObjectConstructorContext) _localctx).s57 = match(T__56);
-                ((ObjectConstructorContext) _localctx).merge_operator.add(((ObjectConstructorContext) _localctx).s57);
+                _localctx.s57 = match(T__56);
+                _localctx.merge_operator.add(_localctx.s57);
                 setState(819);
                 expr();
                 setState(820);
@@ -7009,14 +7020,14 @@ public class JsoniqParser extends Parser {
             enterOuterAlt(_localctx, 1);
             {
                 setState(875);
-                ((SingleTypeContext) _localctx).item = atomicType();
+                _localctx.item = atomicType();
                 setState(877);
                 _errHandler.sync(this);
                 switch (getInterpreter().adaptivePredict(_input, 87, _ctx)) {
                 case 1: {
                     setState(876);
-                    ((SingleTypeContext) _localctx).s121 = match(ArgumentPlaceholder);
-                    ((SingleTypeContext) _localctx).question.add(((SingleTypeContext) _localctx).s121);
+                    _localctx.s121 = match(ArgumentPlaceholder);
+                    _localctx.question.add(_localctx.s121);
                 }
                     break;
                 }
@@ -7228,12 +7239,12 @@ public class JsoniqParser extends Parser {
                 switch (getInterpreter().adaptivePredict(_input, 90, _ctx)) {
                 case 1: {
                     setState(888);
-                    ((PairConstructorContext) _localctx).lhs = exprSingle();
+                    _localctx.lhs = exprSingle();
                 }
                     break;
                 case 2: {
                     setState(889);
-                    ((PairConstructorContext) _localctx).name = match(NCName);
+                    _localctx.name = match(NCName);
                 }
                     break;
                 }
@@ -7248,7 +7259,7 @@ public class JsoniqParser extends Parser {
                     consume();
                 }
                 setState(893);
-                ((PairConstructorContext) _localctx).rhs = exprSingle();
+                _localctx.rhs = exprSingle();
             }
         } catch (RecognitionException re) {
             _localctx.exception = re;
