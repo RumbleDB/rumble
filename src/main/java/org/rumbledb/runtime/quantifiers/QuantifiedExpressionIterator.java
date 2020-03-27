@@ -38,11 +38,11 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final QuantifiedExpression.QuantifiedOperators operator;
+    private final QuantifiedExpression.Quantification operator;
     private final RuntimeIterator evaluationExpression;
 
     public QuantifiedExpressionIterator(
-            QuantifiedExpression.QuantifiedOperators operator,
+            QuantifiedExpression.Quantification operator,
             List<QuantifiedExpressionVarIterator> children,
             RuntimeIterator evaluationExpression,
             ExecutionMode executionMode,
@@ -76,9 +76,9 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                 results.add(result);
             }
 
-            boolean result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY;
+            boolean result = this.operator == QuantifiedExpression.Quantification.EVERY;
             for (BooleanItem res : results) {
-                result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY
+                result = this.operator == QuantifiedExpression.Quantification.EVERY
                     ? result && res.getBooleanValue()
                     : result || res.getBooleanValue();
             }

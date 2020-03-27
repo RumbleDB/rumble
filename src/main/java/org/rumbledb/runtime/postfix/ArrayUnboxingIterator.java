@@ -129,7 +129,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        String key;
         childDataFrame.createOrReplaceTempView("array");
         StructType schema = childDataFrame.schema();
         String[] fieldNames = schema.fieldNames();
