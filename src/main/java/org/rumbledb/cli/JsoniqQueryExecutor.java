@@ -159,19 +159,19 @@ public class JsoniqQueryExecutor {
             timeLogPath += Path.SEPARATOR + "time_log_";
             java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
             java.nio.file.Files.write(finalPath, result.getBytes());
-        }
-        if (this.configuration.getLogPath().startsWith("hdfs://")) {
+        } else if (this.configuration.getLogPath().startsWith("hdfs://")) {
             org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
                 .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
             FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(this.configuration.getLogPath()));
             BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
             stream.write(result.getBytes());
             stream.close();
-        }
-        if (this.configuration.getLogPath().startsWith("./")) {
+        } else if (this.configuration.getLogPath().startsWith("./")) {
             List<String> lines = Arrays.asList(result);
             java.nio.file.Path file = Paths.get(this.configuration.getLogPath());
             Files.write(file, lines, Charset.forName("UTF-8"));
+        } else {
+            throw new OurBadException("An unhandled log path is found: " + this.configuration.getLogPath());
         }
     }
 
