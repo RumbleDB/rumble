@@ -44,7 +44,7 @@
             <url>file://${libPath.jsound}</url>
         </repository>
     </repositories>
-    
+
     <build>
         <plugins>
             <plugin>
@@ -262,6 +262,8 @@
             <groupId>org.jsound.validator</groupId>
             <artifactId>JSound</artifactId>
             <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${libPath.jsound}</systemPath>
         </dependency>
     </dependencies>
 
