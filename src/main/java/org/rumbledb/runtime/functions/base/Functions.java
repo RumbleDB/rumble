@@ -68,7 +68,6 @@ import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFun
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.input.AnnotateFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.AnnotateFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
@@ -145,6 +144,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
@@ -172,6 +172,7 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotateFile;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotateJSound;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -545,8 +546,9 @@ public class Functions {
 
         builtInFunctions.put(validate.getIdentifier(), validate);
         builtInFunctions.put(validateFile.getIdentifier(), validateFile);
-        builtInFunctions.put(annotate.getIdentifier(), annotate);
+        builtInFunctions.put(annotateJSound.getIdentifier(), annotateJSound);
         builtInFunctions.put(annotateFile.getIdentifier(), annotateFile);
+        builtInFunctions.put(annotate.getIdentifier(), annotate);
     }
 
     static {
@@ -2178,14 +2180,14 @@ public class Functions {
         /**
          * function annotates json file with types defined in JSound 2.0 schema
          */
-        static final BuiltinFunction annotate = createBuiltinFunction(
-            "annotate",
+        static final BuiltinFunction annotateJSound = createBuiltinFunction(
+            "annotate-jsound",
             "string",
             "object",
             "string",
             "boolean?",
             "string",
-            AnnotateFunctionIterator.class,
+            org.rumbledb.runtime.functions.input.AnnotateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
@@ -2201,6 +2203,18 @@ public class Functions {
                 "string",
                 AnnotateFileFunctionIterator.class,
                 BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function converts given RDD or local data to a DataFrame using a schema
+         */
+        static final BuiltinFunction annotate = createBuiltinFunction(
+            "annotate",
+            "object*",
+            "object",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            AnnotateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
     }
 }
