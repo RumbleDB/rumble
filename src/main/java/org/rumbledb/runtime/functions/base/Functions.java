@@ -2167,14 +2167,14 @@ public class Functions {
          * function validates json file against JSound 2.0 schema
          */
         static final BuiltinFunction validateFile = createBuiltinFunction(
-                "validateFile",
-                "string",
-                "string",
-                "string",
-                "boolean?",
-                "boolean",
-                ValidateFileFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "validateFile",
+            "string",
+            "string",
+            "string",
+            "boolean?",
+            "boolean",
+            ValidateFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
@@ -2195,14 +2195,14 @@ public class Functions {
          * function annotates json file with types defined in JSound 2.0 schema
          */
         static final BuiltinFunction annotateFile = createBuiltinFunction(
-                "annotateFile",
-                "string",
-                "string",
-                "string",
-                "boolean?",
-                "string",
-                AnnotateFileFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "annotateFile",
+            "string",
+            "string",
+            "string",
+            "boolean?",
+            "string",
+            AnnotateFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**

@@ -38,6 +38,13 @@
         </libPath.jsound>
     </properties>
 
+    <repositories>
+        <repository>
+            <id>JSound</id>
+            <url>file://${libPath.jsound}</url>
+        </repository>
+    </repositories>
+    
     <build>
         <plugins>
             <plugin>
@@ -269,13 +276,6 @@
             </url>
         </repository>
     </distributionManagement>
-
-    <repositories>
-        <repository>
-            <id>JSound</id>
-            <url>file://${libPath.jsound}</url>
-        </repository>
-    </repositories>
 
     <organization>
         <name>com.github.rumbledb</name>

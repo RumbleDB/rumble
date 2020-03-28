@@ -37,8 +37,13 @@ public class ValidateFileFunctionIterator extends LocalFunctionCallIterator {
             Item compact = this.children.get(3).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             try {
-                JSoundSchema schema = JSoundExecutor.loadSchemaFromPath(schemaPath.getStringValue(), targetType.getStringValue(), compact.getBooleanValue());
-                return ItemFactory.getInstance().createBooleanItem(schema.validateJSONLinesFromPath(filePath.getStringValue()));
+                JSoundSchema schema = JSoundExecutor.loadSchemaFromPath(
+                    schemaPath.getStringValue(),
+                    targetType.getStringValue(),
+                    compact.getBooleanValue()
+                );
+                return ItemFactory.getInstance()
+                    .createBooleanItem(schema.validateJSONLinesFromPath(filePath.getStringValue()));
             } catch (IOException e) {
                 throw new SparksoniqRuntimeException(e.getMessage());
             }

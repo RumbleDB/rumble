@@ -40,12 +40,16 @@ public class AnnotateFileFunctionIterator extends LocalFunctionCallIterator {
             Item compact = this.children.get(3).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             try {
-                JSoundSchema schema = JSoundExecutor.loadSchemaFromPath(schemaPath.getStringValue(), targetType.getStringValue(), compact.getBooleanValue());
+                JSoundSchema schema = JSoundExecutor.loadSchemaFromPath(
+                    schemaPath.getStringValue(),
+                    targetType.getStringValue(),
+                    compact.getBooleanValue()
+                );
                 BufferedReader instanceFileReader = Files.newBufferedReader(Paths.get(filePath.getStringValue()));
 
                 StringBuilder stringBuilder = new StringBuilder();
                 String line;
-                while((line = instanceFileReader.readLine()) != null) {
+                while ((line = instanceFileReader.readLine()) != null) {
                     stringBuilder.append(schema.annotateInstance(line)).append('\n');
                 }
                 return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
