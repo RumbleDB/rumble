@@ -20,25 +20,33 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
 import java.util.List;
 
-public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
+public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
     /**
      * 
      */
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator iterator;
 
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -46,13 +54,13 @@ public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = arguments.get(0);
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
-            RuntimeIterator sequenceIterator = this.children.get(0);
-            List<Item> items = sequenceIterator.materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> items = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
             LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
             boolean firstItem = true;
             for (Item item : items) {
@@ -95,5 +103,55 @@ public class ObjectIntersectFunctionIterator extends LocalFunctionCallIterator {
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " INTERSECT function",
                 getMetadata()
         );
+    }
+
+    @Override
+    protected void openLocal() {
+    }
+
+    @Override
+    protected void closeLocal() {
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        Function2<Item, Item, Item> transformation = new ObjectIntersectClosure();
+        Item reduceResult = childRDD.reduce(transformation);
+
+        // flatten values for each key
+        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
+        for (String key : reduceResult.getKeys()) {
+            Item value = reduceResult.getItemByKey(key);
+            List<Item> flatValues = flatten(Collections.singletonList(value));
+            keyValuePairs.put(key, flatValues);
+        }
+        Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
+
+        // transform Item to JavaRDD<Item>
+        JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
+        List<Item> listResult = Arrays.asList(result);
+        return sparkContext.parallelize(listResult);
+    }
+
+    private List<Item> flatten(List<Item> items) {
+        List<Item> result = new ArrayList<>();
+        for (Item item : items) {
+            if (item.isArray()) {
+                result.addAll(flatten(item.getItems()));
+            } else {
+                result.add(item);
+            }
+        }
+        return result;
     }
 }
