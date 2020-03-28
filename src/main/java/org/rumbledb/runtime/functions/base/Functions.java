@@ -67,12 +67,15 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.AnnotateFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.ValidateFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.ValidateFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
@@ -168,6 +171,8 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.adjust_time_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotate;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotateFile;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.annotateJSound;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.asin;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.atan2;
@@ -277,6 +282,8 @@ import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezo
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.timezone_from_time;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize1;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.tokenize2;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.validate;
+import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.validateFile;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.values;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.yearMonthDuration;
 import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.year_from_date;
@@ -359,6 +366,7 @@ public class Functions {
         sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
 
@@ -535,6 +543,11 @@ public class Functions {
 
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
+
+        builtInFunctions.put(validate.getIdentifier(), validate);
+        builtInFunctions.put(validateFile.getIdentifier(), validateFile);
+        builtInFunctions.put(annotateJSound.getIdentifier(), annotateJSound);
+        builtInFunctions.put(annotateFile.getIdentifier(), annotateFile);
         builtInFunctions.put(annotate.getIdentifier(), annotate);
     }
 
@@ -809,6 +822,34 @@ public class Functions {
                                 sequenceTypes.get(param1Type),
                                 sequenceTypes.get(param2Type),
                                 sequenceTypes.get(param3Type)
+                            )
+                        ),
+                        sequenceTypes.get(returnType)
+                ),
+                functionIteratorClass,
+                builtInFunctionExecutionMode
+        );
+    }
+
+    private static BuiltinFunction createBuiltinFunction(
+            String functionName,
+            String param1Type,
+            String param2Type,
+            String param3Type,
+            String param4Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 4),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(
+                                sequenceTypes.get(param1Type),
+                                sequenceTypes.get(param2Type),
+                                sequenceTypes.get(param3Type),
+                                sequenceTypes.get(param4Type)
                             )
                         ),
                         sequenceTypes.get(returnType)
@@ -2105,6 +2146,62 @@ public class Functions {
             "string",
             "item",
             GetEstimatorFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function validates json file against JSound 2.0 schema
+         */
+        static final BuiltinFunction validate = createBuiltinFunction(
+            "validate",
+            "string",
+            "object",
+            "string",
+            "boolean?",
+            "boolean",
+            ValidateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function validates json file against JSound 2.0 schema
+         */
+        static final BuiltinFunction validateFile = createBuiltinFunction(
+            "validateFile",
+            "string",
+            "string",
+            "string",
+            "boolean?",
+            "boolean",
+            ValidateFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function annotates json file with types defined in JSound 2.0 schema
+         */
+        static final BuiltinFunction annotateJSound = createBuiltinFunction(
+            "annotate-jsound",
+            "string",
+            "object",
+            "string",
+            "boolean?",
+            "string",
+            org.rumbledb.runtime.functions.input.AnnotateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function annotates json file with types defined in JSound 2.0 schema
+         */
+        static final BuiltinFunction annotateFile = createBuiltinFunction(
+            "annotateFile",
+            "string",
+            "string",
+            "string",
+            "boolean?",
+            "string",
+            AnnotateFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 

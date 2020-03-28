@@ -1,0 +1,100 @@
+{
+  "types": [
+    {
+      "name": "booleanOrDecimal",
+      "kind": "union",
+      "content": ["boolean", "decimal"]
+    },
+    {
+      "name": "stringOrNull",
+      "kind": "union",
+      "content": ["string", "null"]
+    },
+    {
+      "name": "targetType",
+      "kind": "object",
+      "content": [
+        {
+          "name": "author",
+          "type": "string"
+        },
+        {
+          "name": "name",
+          "type": "string"
+        },
+        {
+          "name": "body",
+          "type": "string"
+        },
+        {
+          "name": "gilded",
+          "type": "integer"
+        },
+        {
+          "name": "score",
+          "type": "integer"
+        },
+        {
+          "name": "ups",
+          "type": "integer"
+        },
+        {
+          "name": "downs",
+          "type": "integer"
+        },
+        {
+          "name": "created_utc",
+          "type": "integer"
+        },
+        {
+          "name": "parent_id",
+          "type": "string"
+        },
+        {
+          "name": "subreddit",
+          "type": "string"
+        },
+        {
+          "name": "id",
+          "type": "string"
+        },
+        {
+          "name": "url",
+          "type": "string"
+        },
+        {
+          "name": "author_flair_text",
+          "type": "stringOrNull"
+        },
+        {
+          "name": "distinguished",
+          "type": "null"
+        },
+        {
+          "name": "author_flair_css_class",
+          "type": "stringOrNull"
+        },
+        {
+          "name": "edited",
+          "type": "booleanOrDecimal"
+        },
+        {
+          "name": "retrieved_on",
+          "type": "integer"
+        },
+        {
+          "name": "link_id",
+          "type": "string"
+        },
+        {
+          "name": "stickied",
+          "type": "boolean"
+        },
+        {
+          "name": "controversiality",
+          "type": "integer"
+        }
+      ]
+    }
+  ]
+}

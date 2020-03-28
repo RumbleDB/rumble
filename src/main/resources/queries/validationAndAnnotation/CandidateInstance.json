@@ -1,0 +1,2 @@
+{"first": "James", "last": "Kirk", "picture": "af88", "birthDate": "2001-02-10", "maritalStatus": null}
+{"first": "Mary", "picture": "bf98", "birthDate": "1999-12-31", "otherFieldObject": {"hello": "world!", "nullField": null}, "otherFieldArray": [1,2,3,4,5]}

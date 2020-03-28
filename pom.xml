@@ -33,7 +33,17 @@
     <url>http://rumbledb.org/</url>
     <properties>
         <encoding>UTF-8</encoding>
+        <libPath.jsound>
+            ${project.basedir}/lib/JSound-1.0-jar-with-dependencies.jar
+        </libPath.jsound>
     </properties>
+
+    <repositories>
+        <repository>
+            <id>JSound</id>
+            <url>file://${libPath.jsound}</url>
+        </repository>
+    </repositories>
 
     <build>
         <plugins>
@@ -247,6 +257,13 @@
             <groupId>commons-io</groupId>
             <artifactId>commons-io</artifactId>
             <version>2.6</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jsound.validator</groupId>
+            <artifactId>JSound</artifactId>
+            <version>1.0</version>
+            <scope>system</scope>
+            <systemPath>${libPath.jsound}</systemPath>
         </dependency>
     </dependencies>
 
