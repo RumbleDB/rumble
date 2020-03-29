@@ -67,11 +67,11 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         if (this.insertIterator.isRDD()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
-                    .filter((item) -> item._2() < this.insertPosition - 1)
-                    .map((item) -> item._1);
+                .filter((item) -> item._2() < this.insertPosition - 1)
+                .map((item) -> item._1);
             JavaRDD<Item> afterRDD = zippedRDD
-                    .filter((item) -> item._2() >= this.insertPosition - 1)
-                    .map((item) -> item._1);
+                .filter((item) -> item._2() >= this.insertPosition - 1)
+                .map((item) -> item._1);
             return beforeRDD.union(insertsRDD).union(afterRDD);
         }
 
