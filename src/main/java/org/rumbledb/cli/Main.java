@@ -21,7 +21,7 @@ package org.rumbledb.cli;
 
 
 import org.apache.spark.SparkException;
-import org.rumbledb.config.SparksoniqRuntimeConfiguration;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.shell.RumbleJLineShell;
@@ -33,10 +33,10 @@ public class Main {
     public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
-        SparksoniqRuntimeConfiguration sparksoniqConf = null;
+        RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
         try {
-            sparksoniqConf = new SparksoniqRuntimeConfiguration(args);
+            sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
             if (sparksoniqConf.isShell()) {
                 initializeApplication();
@@ -106,7 +106,7 @@ public class Main {
         }
     }
 
-    private static void runQueryExecutor(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
+    private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
 
         JsoniqQueryExecutor translator;
         translator = new JsoniqQueryExecutor(sparksoniqConf.isLocal(), sparksoniqConf);
@@ -123,7 +123,7 @@ public class Main {
         SparkSessionManager.getInstance().initializeConfigurationAndSession();
     }
 
-    private static void launchShell(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
+    private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
         terminal = new RumbleJLineShell(sparksoniqConf);
         terminal.launch();
     }

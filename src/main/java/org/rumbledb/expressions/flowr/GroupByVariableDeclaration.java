@@ -18,33 +18,42 @@
  *
  */
 
-package org.rumbledb.expressions.quantifiers;
+package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 
-public class QuantifiedExpressionVar {
-    private final String variableName;
-    private final Expression expression;
-    private final SequenceType sequenceType;
+public class GroupByVariableDeclaration {
 
-    public QuantifiedExpressionVar(
+    protected String variableName;
+    protected Expression expression;
+    protected SequenceType sequenceType;
+
+    public GroupByVariableDeclaration(
             String variableName,
-            Expression varExpression,
-            SequenceType sequenceType
+            SequenceType sequenceType,
+            Expression expression
     ) {
+        if (variableName == null) {
+            throw new IllegalArgumentException("Flowr var decls cannot be empty");
+        }
         this.variableName = variableName;
-        this.expression = varExpression;
         this.sequenceType = sequenceType;
+        if (this.sequenceType == null) {
+            throw new OurBadException("A sequence type cannot be null");
+        }
+        this.expression = expression;
+
+        sequenceType = this.sequenceType;
+    }
+
+    public String getVariableName() {
+        return this.variableName;
     }
 
     public Expression getExpression() {
         return this.expression;
-    }
-
-    public String getVariableName() {
-
-        return this.variableName;
     }
 
     public SequenceType getSequenceType() {
@@ -53,6 +62,10 @@ public class QuantifiedExpressionVar {
 
     @Override
     public String toString() {
-        return variableName + " as " + sequenceType.toString() + " satisfies " + expression.serializationString(false);
+        return this.variableName
+            + " as "
+            + this.sequenceType.toString()
+            + " := "
+            + this.expression.serializationString(false);
     }
 }

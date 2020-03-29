@@ -42,9 +42,9 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseExpr;
@@ -77,7 +77,6 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -132,7 +131,6 @@ import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -268,7 +266,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByClauseVar var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
@@ -289,15 +287,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     }
                 }
 
-                VariableReferenceExpression variableReference = var.getVariableReference();
-                VariableReferenceIterator variableReferenceIterator =
-                    (VariableReferenceIterator) this.visit(variableReference, argument);
+                String variableName = var.getVariableName();
 
                 groupingExpressions.add(
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
-                            variableReferenceIterator,
-                            var.getMetadata()
+                            variableName,
+                            clause.getMetadata()
                     )
                 );
             }
@@ -821,23 +817,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
         List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
         expression.getVariables()
-            .forEach(var -> variables.add((QuantifiedExpressionVarIterator) this.visit(var, argument)));
+            .forEach(
+                var -> variables.add(
+                    new QuantifiedExpressionVarIterator(
+                            var.getVariableName(),
+                            var.getSequenceType(),
+                            this.visit(var.getExpression(), argument),
+                            expression.getHighestExecutionMode(this.visitorConfig),
+                            expression.getMetadata()
+                    )
+                )
+            );
         RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
         return new QuantifiedExpressionIterator(
                 expression.getOperator(),
                 variables,
                 evaluationExpression,
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
-    }
-
-    @Override
-    public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument) {
-        return new QuantifiedExpressionVarIterator(
-                expression.getVariableReference().getVariableName(),
-                expression.getSequenceType(),
-                this.visit(expression.getExpression(), argument),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

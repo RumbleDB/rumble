@@ -960,6 +960,7 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class VarDeclContext extends ParserRuleContext {
+		public Token external;
 		public VarRefContext varRef() {
 			return getRuleContext(VarRefContext.class,0);
 		}
@@ -1023,7 +1024,7 @@ public class JsoniqParser extends Parser {
 				{
 				{
 				setState(298);
-				match(T__24);
+				((VarDeclContext)_localctx).external = match(T__24);
 				setState(301);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
@@ -3113,7 +3114,7 @@ public class JsoniqParser extends Parser {
 		public Token s42;
 		public Token s43;
 		public Token s44;
-		public Token _tset1049;
+		public Token _tset1051;
 		public StringConcatExprContext stringConcatExpr;
 		public List<StringConcatExprContext> rhs = new ArrayList<StringConcatExprContext>();
 		public List<StringConcatExprContext> stringConcatExpr() {
@@ -3148,17 +3149,17 @@ public class JsoniqParser extends Parser {
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) {
 				{
 				setState(598);
-				((ComparisonExprContext)_localctx)._tset1049 = _input.LT(1);
+				((ComparisonExprContext)_localctx)._tset1051 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__3) | (1L << T__33) | (1L << T__34) | (1L << T__35) | (1L << T__36) | (1L << T__37) | (1L << T__38) | (1L << T__39) | (1L << T__40) | (1L << T__41) | (1L << T__42) | (1L << T__43))) != 0)) ) {
-					((ComparisonExprContext)_localctx)._tset1049 = (Token)_errHandler.recoverInline(this);
+					((ComparisonExprContext)_localctx)._tset1051 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				((ComparisonExprContext)_localctx).op.add(((ComparisonExprContext)_localctx)._tset1049);
+				((ComparisonExprContext)_localctx).op.add(((ComparisonExprContext)_localctx)._tset1051);
 				setState(599);
 				((ComparisonExprContext)_localctx).stringConcatExpr = stringConcatExpr();
 				((ComparisonExprContext)_localctx).rhs.add(((ComparisonExprContext)_localctx).stringConcatExpr);
@@ -3299,7 +3300,7 @@ public class JsoniqParser extends Parser {
 		public Token s46;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s47;
-		public Token _tset1158;
+		public Token _tset1160;
 		public MultiplicativeExprContext multiplicativeExpr;
 		public List<MultiplicativeExprContext> rhs = new ArrayList<MultiplicativeExprContext>();
 		public List<MultiplicativeExprContext> multiplicativeExpr() {
@@ -3337,17 +3338,17 @@ public class JsoniqParser extends Parser {
 					{
 					{
 					setState(616);
-					((AdditiveExprContext)_localctx)._tset1158 = _input.LT(1);
+					((AdditiveExprContext)_localctx)._tset1160 = _input.LT(1);
 					_la = _input.LA(1);
 					if ( !(_la==T__45 || _la==T__46) ) {
-						((AdditiveExprContext)_localctx)._tset1158 = (Token)_errHandler.recoverInline(this);
+						((AdditiveExprContext)_localctx)._tset1160 = (Token)_errHandler.recoverInline(this);
 					}
 					else {
 						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 						_errHandler.reportMatch(this);
 						consume();
 					}
-					((AdditiveExprContext)_localctx).op.add(((AdditiveExprContext)_localctx)._tset1158);
+					((AdditiveExprContext)_localctx).op.add(((AdditiveExprContext)_localctx)._tset1160);
 					setState(617);
 					((AdditiveExprContext)_localctx).multiplicativeExpr = multiplicativeExpr();
 					((AdditiveExprContext)_localctx).rhs.add(((AdditiveExprContext)_localctx).multiplicativeExpr);
@@ -3378,7 +3379,7 @@ public class JsoniqParser extends Parser {
 		public Token s48;
 		public Token s49;
 		public Token s50;
-		public Token _tset1186;
+		public Token _tset1188;
 		public InstanceOfExprContext instanceOfExpr;
 		public List<InstanceOfExprContext> rhs = new ArrayList<InstanceOfExprContext>();
 		public List<InstanceOfExprContext> instanceOfExpr() {
@@ -3414,17 +3415,17 @@ public class JsoniqParser extends Parser {
 				{
 				{
 				setState(624);
-				((MultiplicativeExprContext)_localctx)._tset1186 = _input.LT(1);
+				((MultiplicativeExprContext)_localctx)._tset1188 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << T__32) | (1L << T__47) | (1L << T__48) | (1L << T__49))) != 0)) ) {
-					((MultiplicativeExprContext)_localctx)._tset1186 = (Token)_errHandler.recoverInline(this);
+					((MultiplicativeExprContext)_localctx)._tset1188 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				((MultiplicativeExprContext)_localctx).op.add(((MultiplicativeExprContext)_localctx)._tset1186);
+				((MultiplicativeExprContext)_localctx).op.add(((MultiplicativeExprContext)_localctx)._tset1188);
 				setState(625);
 				((MultiplicativeExprContext)_localctx).instanceOfExpr = instanceOfExpr();
 				((MultiplicativeExprContext)_localctx).rhs.add(((MultiplicativeExprContext)_localctx).instanceOfExpr);
@@ -3679,7 +3680,7 @@ public class JsoniqParser extends Parser {
 		public Token s47;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s46;
-		public Token _tset1303;
+		public Token _tset1305;
 		public SimpleMapExprContext main_expr;
 		public SimpleMapExprContext simpleMapExpr() {
 			return getRuleContext(SimpleMapExprContext.class,0);
@@ -3709,17 +3710,17 @@ public class JsoniqParser extends Parser {
 				{
 				{
 				setState(655);
-				((UnaryExprContext)_localctx)._tset1303 = _input.LT(1);
+				((UnaryExprContext)_localctx)._tset1305 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !(_la==T__45 || _la==T__46) ) {
-					((UnaryExprContext)_localctx)._tset1303 = (Token)_errHandler.recoverInline(this);
+					((UnaryExprContext)_localctx)._tset1305 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1303);
+				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1305);
 				}
 				}
 				setState(660);

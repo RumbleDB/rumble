@@ -150,7 +150,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
                 <configuration>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
@@ -260,7 +259,7 @@
 		<dependency>
 		    <groupId>edu.vanderbilt.accre</groupId>
 		    <artifactId>laurelin</artifactId>
-		    <version>1.0.0</version>
+		    <version>1.0.1</version>
 		</dependency>
     </dependencies>
 

@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.Main;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.BooleanItem;
@@ -41,7 +42,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
