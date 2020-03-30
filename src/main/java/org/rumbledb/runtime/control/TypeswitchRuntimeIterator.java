@@ -45,8 +45,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if(this.matchingIterator != null)
-        {
+        if (this.matchingIterator != null) {
             this.matchingIterator.close();
         }
         this.matchingIterator = null;
@@ -59,8 +58,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
             Item nextItem = this.matchingIterator.next();
             this.matchingIterator.close();
             this.hasNext = this.matchingIterator.hasNext();
-            if(!this.hasNext())
-            {
+            if (!this.hasNext()) {
                 this.matchingIterator.close();
                 this.matchingIterator = null;
             }
@@ -75,8 +73,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if(this.matchingIterator != null)
-        {
+        if (this.matchingIterator != null) {
             this.matchingIterator.close();
         }
         this.matchingIterator = null;
