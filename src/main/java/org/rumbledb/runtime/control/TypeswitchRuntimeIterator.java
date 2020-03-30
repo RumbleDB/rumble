@@ -47,13 +47,14 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
         // this.matchingIterator is null at that point;
-        if(this.matchingIterator != null)
-        {
-            throw new IteratorFlowException("The matching iterator should be null when opening the typeswitch iterator!");
+        if (this.matchingIterator != null) {
+            throw new IteratorFlowException(
+                    "The matching iterator should be null when opening the typeswitch iterator!"
+            );
         }
         initializeIterator();
     }
-    
+
     private void resetMatchingIteratorToNull() {
         if (this.matchingIterator != null) {
             this.matchingIterator.close();
