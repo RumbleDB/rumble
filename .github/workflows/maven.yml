@@ -40,3 +40,10 @@ jobs:
       run: mvn -Dtest=JavaAPITest test
     - name: Spotless check
       run: mvn spotless:check
+    - name: Copying artefacts
+      run: mkdir staging && cp target/*.jar staging
+    - name: Package
+      uses: actions/upload-artifact@v1
+      with:
+        name: Package
+        path: staging
