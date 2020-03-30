@@ -21,9 +21,10 @@
 package org.rumbledb.runtime;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
 import java.io.Serializable;
+
+import org.rumbledb.context.DynamicContext;
 
 public interface RuntimeTupleIteratorInterface extends Serializable {
     void open(DynamicContext context);

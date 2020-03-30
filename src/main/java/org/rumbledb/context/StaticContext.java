@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics;
+package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
@@ -49,6 +49,7 @@ public class StaticContext {
             this.storageMode = storageMode;
         }
 
+        @SuppressWarnings("unused")
         public String getName() {
             return this.name;
         }

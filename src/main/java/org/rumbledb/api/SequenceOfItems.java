@@ -1,8 +1,8 @@
 package org.rumbledb.api;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
 
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
