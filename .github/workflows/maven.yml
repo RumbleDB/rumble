@@ -20,5 +20,17 @@ jobs:
       uses: actions/setup-java@v1
       with:
         java-version: 1.8
-    - name: Build with Maven
-      run: mvn -B package --file pom.xml
+    - name: Install with Maven
+      run: mvn install -DskipTests -Dgpg.skip --quiet
+    - name: Compile with Maven
+      run: mvn clean compile assembly:single
+    - name: FrontendTests
+      run: mvn -Dtest=FrontendTests test
+    - name: RuntimeTests
+      run: mvn -Dtest=RuntimeTests test
+    - name: SparkRuntimeTests
+      run: mvn -Dtest=SparkRuntimeTests test
+    - name: JavaAPITest
+      run: mvn -Dtest=JavaAPITest test
+    - name: Spotless check
+      run: mvn spotless:check
