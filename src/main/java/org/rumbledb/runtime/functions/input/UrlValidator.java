@@ -8,8 +8,8 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 
 public class UrlValidator {
@@ -17,16 +17,15 @@ public class UrlValidator {
     private static final String[] allowedSchemes = { "file", "hdfs", "s3", "s3a", "s3n", "wasb", "gs", "root" };
 
     public static boolean exists(String url) {
-        URL locator = null;
+        URI locator = null;
         try {
-            locator = new URL(url);
-        } catch (MalformedURLException e) {
+            locator = new URI(url);
+        } catch (URISyntaxException e) {
             throw new OurBadException("Malformed URL: " + url);
         }
         if (
-            url.startsWith("/")
-                || url.startsWith("./")
-                || Arrays.asList(allowedSchemes).contains(locator.getProtocol())
+            !locator.isAbsolute()
+            || Arrays.asList(allowedSchemes).contains(locator.getScheme())
         ) {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
@@ -39,6 +38,6 @@ public class UrlValidator {
 
         }
 
-        throw new OurBadException("Cannot interprete URL: " + url);
+        throw new OurBadException("Cannot interpret URL: " + url);
     }
 }
