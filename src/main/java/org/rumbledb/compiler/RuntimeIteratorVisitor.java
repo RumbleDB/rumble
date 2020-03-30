@@ -305,7 +305,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getExpressions()) {
+            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
                 expressionsWithIterator.add(
                     new OrderByClauseAnnotatedChildIterator(
                             this.visit(orderExpr.getExpression(), argument),

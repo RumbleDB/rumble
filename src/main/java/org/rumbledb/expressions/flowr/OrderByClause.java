@@ -75,7 +75,7 @@ public class OrderByClause extends Clause {
         return this.isStable;
     }
 
-    public List<OrderByClauseSortingKey> getExpressions() {
+    public List<OrderByClauseSortingKey> getSortingKeys() {
         return this.sortingKeys;
     }
 }
