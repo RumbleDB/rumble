@@ -25,7 +25,7 @@ public class UrlValidator {
         }
         if (
             !locator.isAbsolute()
-            || Arrays.asList(allowedSchemes).contains(locator.getScheme())
+                || Arrays.asList(allowedSchemes).contains(locator.getScheme())
         ) {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
