@@ -81,7 +81,7 @@ public class QuantifiedExpression extends Expression {
     @Override
     public String serializationString(boolean prefix) {
         StringBuilder sb = new StringBuilder();
-        sb.append(quantifier.equals(Quantification.EVERY) ? "every " : "some ");
+        sb.append(this.quantifier.equals(Quantification.EVERY) ? "every " : "some ");
         String separator = "";
         for (QuantifiedExpressionVar v : this.variables) {
             sb.append(separator);
