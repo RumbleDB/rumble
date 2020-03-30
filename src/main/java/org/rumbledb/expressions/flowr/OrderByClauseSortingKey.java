@@ -20,40 +20,25 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class OrderByClauseExpr extends Clause {
+public class OrderByClauseSortingKey {
     private final Expression expression;
     private final boolean ascending;
     private final EMPTY_ORDER emptyOrder;
-    private final String uri;
+    private final String collationURI;
 
-    public OrderByClauseExpr(
+    public OrderByClauseSortingKey(
             Expression expression,
             boolean ascending,
-            String uri,
-            EMPTY_ORDER empty_order,
-            ExceptionMetadata metadata
+            String collationURI,
+            EMPTY_ORDER empty_order
     ) {
-        super(FLWOR_CLAUSES.ORDER_BY_EXPR, metadata);
+        super();
         this.expression = expression;
         this.ascending = ascending;
-        this.uri = uri;
+        this.collationURI = collationURI;
         this.emptyOrder = empty_order;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        // OrderByClauseExpr's execution mode is not used. Leave it unset
-        this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     public Expression getExpression() {
@@ -69,30 +54,7 @@ public class OrderByClauseExpr extends Clause {
     }
 
     public String getUri() {
-        return this.uri;
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitOrderByClauseExpr(this, argument);
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.expression);
-        return result;
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(orderByExpr " + this.expression.serializationString(false);
-        // if(this.asSequence !=null)
-        // result += " as " + asSequence.serializationString(true);
-        // if(this.expression!=null)
-        // result += " in " + this.expression.serializationString(true);
-        // result += ")";
-        return result;
+        return this.collationURI;
     }
 
     public enum EMPTY_ORDER {
