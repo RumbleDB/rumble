@@ -51,7 +51,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
         {
             throw new IteratorFlowException("The matching iterator should be null when opening the typeswitch iterator!");
         }
-        initializeIterator(this.testField, this.cases, this.defaultCase);
+        initializeIterator();
     }
     
     private void resetMatchingIteratorToNull() {
@@ -87,18 +87,14 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         resetMatchingIteratorToNull();
-        initializeIterator(this.testField, this.cases, this.defaultCase);
+        initializeIterator();
     }
 
-    private void initializeIterator(
-            RuntimeIterator test,
-            List<TypeswitchRuntimeIteratorCase> cases,
-            TypeswitchRuntimeIteratorCase defaultCase
-    ) {
+    private void initializeIterator() {
 
-        this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
             this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (this.matchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
@@ -112,13 +108,13 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
         }
 
         if (this.matchingIterator == null) {
-            if (defaultCase.getVariableName() != null) {
+            if (this.defaultCase.getVariableName() != null) {
                 this.currentDynamicContextForLocalExecution.addVariableValue(
-                    defaultCase.getVariableName(),
+                    this.defaultCase.getVariableName(),
                     Collections.singletonList(this.testValue)
                 );
             }
-            this.matchingIterator = defaultCase.getReturnIterator();
+            this.matchingIterator = this.defaultCase.getReturnIterator();
         }
 
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
