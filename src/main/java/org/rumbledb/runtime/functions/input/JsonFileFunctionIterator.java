@@ -52,7 +52,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        if (!UrlValidator.isValid(url)) {
+        if (!UrlValidator.exists(url)) {
             throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
         }
 
