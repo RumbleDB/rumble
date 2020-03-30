@@ -40,3 +40,8 @@ jobs:
       run: mvn -Dtest=JavaAPITest test
     - name: Spotless check
       run: mvn spotless:check
+    - name: Package
+      uses: actions/upload-artifact@v1
+      with:
+        name: Package
+        path: staging
