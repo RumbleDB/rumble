@@ -20,7 +20,7 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.io.Serializable;
@@ -31,14 +31,14 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
     private final RuntimeIterator iterator;
     private final boolean ascending;
     private final String uri;
-    private final OrderByClauseExpr.EMPTY_ORDER emptyOrder;
+    private final OrderByClauseSortingKey.EMPTY_ORDER emptyOrder;
 
 
     public OrderByClauseAnnotatedChildIterator(
             RuntimeIterator iterator,
             boolean ascending,
             String uri,
-            OrderByClauseExpr.EMPTY_ORDER empty_order
+            OrderByClauseSortingKey.EMPTY_ORDER empty_order
     ) {
         this.iterator = iterator;
         this.ascending = ascending;
@@ -58,7 +58,7 @@ public class OrderByClauseAnnotatedChildIterator implements Serializable {
         return this.uri;
     }
 
-    public OrderByClauseExpr.EMPTY_ORDER getEmptyOrder() {
+    public OrderByClauseSortingKey.EMPTY_ORDER getEmptyOrder() {
         return this.emptyOrder;
     }
 
