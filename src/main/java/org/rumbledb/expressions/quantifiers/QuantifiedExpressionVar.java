@@ -53,6 +53,10 @@ public class QuantifiedExpressionVar {
 
     @Override
     public String toString() {
-        return variableName + " as " + sequenceType.toString() + " satisfies " + expression.serializationString(false);
+        return this.variableName
+            + " as "
+            + this.sequenceType.toString()
+            + " satisfies "
+            + this.expression.serializationString(false);
     }
 }
