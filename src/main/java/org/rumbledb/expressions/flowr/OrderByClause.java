@@ -32,24 +32,24 @@ import java.util.List;
 public class OrderByClause extends Clause {
 
 
-    private final List<OrderByClauseExpr> expressions;
+    private final List<OrderByClauseSortingKey> sortingKeys;
     private final boolean isStable;
 
-    public OrderByClause(List<OrderByClauseExpr> exprs, boolean stable, ExceptionMetadata metadata) {
+    public OrderByClause(List<OrderByClauseSortingKey> exprs, boolean stable, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.ORDER_BY, metadata);
         if (exprs == null || exprs.isEmpty()) {
             throw new SemanticException("Group clause must have at least one variable", metadata);
         }
-        this.expressions = exprs;
+        this.sortingKeys = exprs;
         this.isStable = stable;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        this.expressions.forEach(e -> {
+        this.sortingKeys.forEach(e -> {
             if (e != null) {
-                result.add(e);
+                result.add(e.getExpression());
             }
         });
         return result;
@@ -63,9 +63,9 @@ public class OrderByClause extends Clause {
     @Override
     public String serializationString(boolean prefix) {
         String result = "(orderByClause order by ";
-        for (OrderByClauseExpr var : this.expressions) {
-            result += var.serializationString(true)
-                + (this.expressions.indexOf(var) < this.expressions.size() - 1 ? " , " : "");
+        for (OrderByClauseSortingKey var : this.sortingKeys) {
+            result += var.getExpression().serializationString(true)
+                + (this.sortingKeys.indexOf(var) < this.sortingKeys.size() - 1 ? " , " : "");
         }
         result += ")";
         return result;
@@ -75,7 +75,7 @@ public class OrderByClause extends Clause {
         return this.isStable;
     }
 
-    public List<OrderByClauseExpr> getExpressions() {
-        return this.expressions;
+    public List<OrderByClauseSortingKey> getExpressions() {
+        return this.sortingKeys;
     }
 }

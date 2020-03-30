@@ -47,7 +47,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
@@ -305,7 +305,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
+            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getExpressions()) {
                 expressionsWithIterator.add(
                     new OrderByClauseAnnotatedChildIterator(
                             this.visit(orderExpr.getExpression(), argument),
@@ -338,11 +338,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             );
         }
         throw new OurBadException("Clause unrecognized.");
-    }
-
-    @Override
-    public RuntimeIterator visitOrderByClauseExpr(OrderByClauseExpr expression, RuntimeIterator argument) {
-        return defaultAction(expression, argument);
     }
 
     @Override

@@ -50,7 +50,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
@@ -366,10 +366,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
         boolean stable = false;
-        List<OrderByClauseExpr> exprs = new ArrayList<>();
-        OrderByClauseExpr child;
+        List<OrderByClauseSortingKey> exprs = new ArrayList<>();
+        OrderByClauseSortingKey child;
         for (JsoniqParser.OrderByExprContext var : ctx.orderByExpr()) {
-            child = (OrderByClauseExpr) this.visitOrderByExpr(var);
+            child = this.processOrderByExpr(var);
             exprs.add(child);
         }
         if (ctx.stb != null && !ctx.stb.getText().isEmpty()) {
@@ -378,8 +378,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
     }
 
-    @Override
-    public Node visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+    public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
@@ -388,20 +387,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.uriLiteral() != null) {
             uri = ctx.uriLiteral().getText();
         }
-        OrderByClauseExpr.EMPTY_ORDER empty_order = OrderByClauseExpr.EMPTY_ORDER.NONE;
+        OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.LAST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LAST;
         }
         if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.FIRST;
         }
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new OrderByClauseExpr(
+        return new OrderByClauseSortingKey(
                 expression,
                 ascending,
                 uri,
-                empty_order,
-                createMetadataFromContext(ctx)
+                empty_order
         );
     }
 
