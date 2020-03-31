@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="[ "hello", "world" ]" :)
-serialize(["hello","world"])
+(:JIQS: ShouldCrash; ErrorCode="XPST0017"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+serialize()
 
-(: Array :)
+(: No argument error :)
