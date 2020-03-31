@@ -1,12 +1,11 @@
 package org.rumbledb.runtime.functions.input;
 
-import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.Path;
-import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 import java.net.URI;
@@ -27,19 +26,20 @@ public class UrlValidator {
         if (locator.isAbsolute() && !Arrays.asList(allowedSchemes).contains(locator.getScheme())) {
             throw new OurBadException("Cannot interpret URL: " + url);
         }
-        if (
-            !locator.isAbsolute() || (locator.isAbsolute() && locator.getScheme().equals("hdfs"))
-        ) {
-            JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
+        {
             try {
-                FileSystem fileSystem = FileSystem.get(sparkContext.hadoopConfiguration());
+                FileContext fileContext = FileContext.getFileContext();
                 Path path = new Path(url);
-                return url.contains("*") || fileSystem.exists(path);
-            } catch (IOException e) {
+                return url.contains("*") || fileContext.util().exists(path);
+
+            } catch (UnsupportedFileSystemException e)
+            {
+                throw new CannotRetrieveResourceException("No file system is configured for scheme " + url + "!", metadata);
+            }
+            catch (IOException e) {
+                e.printStackTrace();
                 throw new CannotRetrieveResourceException("Error while accessing local or HDFS filesystem.", metadata);
             }
-
         }
-        return true;
     }
 }
