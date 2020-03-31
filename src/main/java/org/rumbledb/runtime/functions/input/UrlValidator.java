@@ -16,7 +16,7 @@ public class UrlValidator {
 
     private static final String[] allowedSchemes = { "file", "hdfs", "s3", "s3a", "s3n", "wasb", "gs", "root" };
 
-    public static boolean check(String url, ExceptionMetadata metadata) {
+    public static boolean exists(String url, ExceptionMetadata metadata) {
         URI locator = null;
         try {
             locator = new URI(url);
@@ -32,11 +32,12 @@ public class UrlValidator {
                 Path path = new Path(url);
                 return url.contains("*") || fileContext.util().exists(path);
 
-            } catch (UnsupportedFileSystemException e)
-            {
-                throw new CannotRetrieveResourceException("No file system is configured for scheme " + url + "!", metadata);
-            }
-            catch (IOException e) {
+            } catch (UnsupportedFileSystemException e) {
+                throw new CannotRetrieveResourceException(
+                        "No file system is configured for scheme " + url + "!",
+                        metadata
+                );
+            } catch (IOException e) {
                 e.printStackTrace();
                 throw new CannotRetrieveResourceException("Error while accessing local or HDFS filesystem.", metadata);
             }

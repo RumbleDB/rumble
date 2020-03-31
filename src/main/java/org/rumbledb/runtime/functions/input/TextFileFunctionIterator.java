@@ -52,7 +52,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        if (!UrlValidator.check(url, getMetadata())) {
+        if (!UrlValidator.exists(url, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
         }
 
