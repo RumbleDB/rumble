@@ -135,6 +135,7 @@ import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
@@ -266,6 +267,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.rou
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.serialize;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sin;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.size;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sqrt;
@@ -481,6 +483,7 @@ public class Functions {
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
         builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtInFunctions.put(serialize.getIdentifier(), serialize);
         builtInFunctions.put(number.getIdentifier(), number);
 
         builtInFunctions.put(duration.getIdentifier(), duration);
@@ -1709,6 +1712,17 @@ public class Functions {
             NormalizeSpaceFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
+        /**
+         * function that serializes a given input sequence
+         */
+        static final BuiltinFunction serialize = createBuiltinFunction(
+                "serialize",
+                "item*",
+                "string",
+                SerializeFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
         /**
          * function that that returns the double representation of the input string or number
          */
