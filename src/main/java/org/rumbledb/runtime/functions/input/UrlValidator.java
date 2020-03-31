@@ -23,21 +23,23 @@ public class UrlValidator {
         } catch (URISyntaxException e) {
             throw new OurBadException("Malformed URL: " + url);
         }
+        if (locator.isAbsolute() && !Arrays.asList(allowedSchemes).contains(locator.getScheme()))
+        {
+            throw new OurBadException("Cannot interpret URL: " + url);
+        }
         if (
-            !locator.isAbsolute()
-                || Arrays.asList(allowedSchemes).contains(locator.getScheme())
-        ) {
+            !locator.isAbsolute() || (locator.isAbsolute() && locator.getScheme().equals("hdfs")))
+        {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
                 FileSystem fileSystem = FileSystem.get(sparkContext.hadoopConfiguration());
                 Path path = new Path(url);
                 return url.contains("*") || fileSystem.exists(path);
             } catch (IOException e) {
-                throw new SparksoniqRuntimeException("Error while accessing hadoop filesystem.");
+                throw new SparksoniqRuntimeException("Error while accessing local or HDFS filesystem.");
             }
 
         }
-
-        throw new OurBadException("Cannot interpret URL: " + url);
+        return true;
     }
 }
