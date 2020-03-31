@@ -3,8 +3,9 @@ package org.rumbledb.runtime.functions.input;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
@@ -16,12 +17,12 @@ public class UrlValidator {
 
     private static final String[] allowedSchemes = { "file", "hdfs", "s3", "s3a", "s3n", "wasb", "gs", "root" };
 
-    public static boolean exists(String url) {
+    public static boolean check(String url, ExceptionMetadata metadata) {
         URI locator = null;
         try {
             locator = new URI(url);
         } catch (URISyntaxException e) {
-            throw new OurBadException("Malformed URL: " + url);
+            throw new CannotRetrieveResourceException("Malformed URL: " + url, metadata);
         }
         if (locator.isAbsolute() && !Arrays.asList(allowedSchemes).contains(locator.getScheme())) {
             throw new OurBadException("Cannot interpret URL: " + url);
@@ -35,7 +36,7 @@ public class UrlValidator {
                 Path path = new Path(url);
                 return url.contains("*") || fileSystem.exists(path);
             } catch (IOException e) {
-                throw new SparksoniqRuntimeException("Error while accessing local or HDFS filesystem.");
+                throw new CannotRetrieveResourceException("Error while accessing local or HDFS filesystem.", metadata);
             }
 
         }
