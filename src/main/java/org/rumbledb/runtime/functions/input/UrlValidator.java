@@ -23,13 +23,12 @@ public class UrlValidator {
         } catch (URISyntaxException e) {
             throw new OurBadException("Malformed URL: " + url);
         }
-        if (locator.isAbsolute() && !Arrays.asList(allowedSchemes).contains(locator.getScheme()))
-        {
+        if (locator.isAbsolute() && !Arrays.asList(allowedSchemes).contains(locator.getScheme())) {
             throw new OurBadException("Cannot interpret URL: " + url);
         }
         if (
-            !locator.isAbsolute() || (locator.isAbsolute() && locator.getScheme().equals("hdfs")))
-        {
+            !locator.isAbsolute() || (locator.isAbsolute() && locator.getScheme().equals("hdfs"))
+        ) {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             try {
                 FileSystem fileSystem = FileSystem.get(sparkContext.hadoopConfiguration());
