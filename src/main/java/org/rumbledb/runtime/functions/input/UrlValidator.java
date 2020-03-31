@@ -39,7 +39,10 @@ public class UrlValidator {
                 );
             } catch (IOException e) {
                 e.printStackTrace();
-                throw new CannotRetrieveResourceException("Error while accessing local or HDFS filesystem.", metadata);
+                throw new CannotRetrieveResourceException(
+                        "Error while accessing the " + locator.getScheme() + " filesystem.",
+                        metadata
+                );
             }
         }
     }
