@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.functions.input;
 
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileContext;
+import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -17,6 +19,12 @@ public class UrlValidator {
     private static final String[] allowedSchemes = { "file", "hdfs", "s3", "s3a", "s3n", "wasb", "gs", "root" };
 
     public static boolean exists(String url, ExceptionMetadata metadata) {
+        if (url.isEmpty()) {
+            throw new CannotRetrieveResourceException(
+                    "No path provided!",
+                    new ExceptionMetadata(0, 0)
+            );
+        }
         URI locator = null;
         try {
             locator = new URI(url);
@@ -44,6 +52,91 @@ public class UrlValidator {
                         metadata
                 );
             }
+        }
+    }
+
+    public static boolean isDirectory(String url, ExceptionMetadata metadata) {
+        if (url.contains("*")) {
+            throw new CannotRetrieveResourceException(
+                    "Path cannot contain *!",
+                    metadata
+            );
+        }
+        URI locator = null;
+        try {
+            locator = new URI(url);
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(url);
+            FileStatus status = fileContext.getFileStatus(path);
+            return status.isDirectory();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    metadata
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "An unexpected exception happened while testing for directory.",
+                    metadata
+            );
+        }
+    }
+
+    public static boolean delete(String url, ExceptionMetadata metadata) {
+        if (url.contains("*")) {
+            throw new CannotRetrieveResourceException(
+                    "Path cannot contain *!",
+                    metadata
+            );
+        }
+        URI locator = null;
+        try {
+            locator = new URI(url);
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(url);
+            return fileContext.delete(path, true);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    metadata
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "An unexpected exception happened while deleting.",
+                    metadata
+            );
+        }
+    }
+
+    public static FSDataInputStream getDataInputStream(String url, ExceptionMetadata metadata) {
+        if (url.contains("*")) {
+            throw new CannotRetrieveResourceException(
+                    "Path cannot contain *!",
+                    metadata
+            );
+        }
+        URI locator = null;
+        try {
+            locator = new URI(url);
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(url);
+            return fileContext.open(path);
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    metadata
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "An unexpected exception happened while reading the file.",
+                    metadata
+            );
         }
     }
 }
