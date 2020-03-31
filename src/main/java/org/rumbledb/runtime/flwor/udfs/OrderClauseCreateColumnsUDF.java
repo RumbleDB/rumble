@@ -29,7 +29,7 @@ import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -129,7 +129,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             int emptySequenceOrderIndex = 1; // by default, empty sequence is taken as first(=least)
             int nullOrderIndex = 2; // null is the smallest value except empty sequence(default)
             int valueOrderIndex = 3; // values are larger than null and empty sequence(default)
-            if (expressionWithIterator.getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+            if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
                 emptySequenceOrderIndex = 4;
             }
 

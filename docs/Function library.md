@@ -663,7 +663,7 @@ returns the (single) JSON value read from the supplied JSON file. This will also
 
 ## Integration with HDFS and Spark
 
-We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
+We support more functions to read JSON, Parquet, CSV, text and ROOT files from various storage layers such as S3 and HDFS, or send a large sequence to the cluster. Supported schemes are: file, s3, s3a, s3n, hdfs, wasb, gs and root.
 
 ### json-file (Rumble specific)
 
