@@ -1716,11 +1716,11 @@ public class Functions {
          * function that serializes a given input sequence
          */
         static final BuiltinFunction serialize = createBuiltinFunction(
-                "serialize",
-                "item*",
-                "string",
-                SerializeFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "serialize",
+            "item*",
+            "string",
+            SerializeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
         /**
