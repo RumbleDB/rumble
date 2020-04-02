@@ -57,7 +57,6 @@ import java.util.List;
 
 
 public class JsoniqQueryExecutor {
-    public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
     private RumbleRuntimeConfiguration configuration;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
