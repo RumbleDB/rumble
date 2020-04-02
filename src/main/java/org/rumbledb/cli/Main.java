@@ -111,7 +111,7 @@ public class Main {
     }
 
     private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-        JsoniqQueryExecutor translator = new JsoniqQueryExecutor( sparksoniqConf);
+        JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
         translator.runQuery(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
     }
 
