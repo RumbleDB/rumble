@@ -59,11 +59,9 @@ import java.util.List;
 public class JsoniqQueryExecutor {
     public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
     private RumbleRuntimeConfiguration configuration;
-    private boolean forceLocalOutput;
 
-    public JsoniqQueryExecutor(boolean forceLocalOutput, RumbleRuntimeConfiguration configuration) {
+    public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
-        this.forceLocalOutput = forceLocalOutput;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
@@ -82,7 +80,7 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public void runLocal(String queryFile, String outputPath) throws IOException {
+    public void runQuery(String queryFile, String outputPath) throws IOException {
         checkOutputFile(outputPath);
         ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
         if (!UrlValidator.exists(queryFile, metadata)) {
@@ -128,56 +126,6 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public void run(String queryFile, String outputPath) throws IOException {
-        checkOutputFile(outputPath);
-        ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
-        if (!UrlValidator.exists(queryFile, metadata)) {
-            throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
-        }
-        FSDataInputStream in = UrlValidator.getDataInputStream(queryFile, metadata);
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
-
-        long startTime = System.currentTimeMillis();
-        MainModule mainModule = this.parse(lexer);
-        generateStaticContext(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule.serializationString(true));
-        }
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = generateRuntimeIterators(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            result.print(sb, 0);
-            System.out.println(sb);
-            return;
-        }
-
-        // collect output in memory and write to filesystem from java
-        if (this.forceLocalOutput) {
-            String output = runIterators(result, dynamicContext);
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
-            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
-            stream.write(output.getBytes());
-            stream.close();
-            // else write from Spark RDD
-        } else {
-            if (!result.isRDD()) {
-                throw new OurBadException("Could not find any RDD iterators in executor");
-            }
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            output.saveAsTextFile(outputPath);
-        }
-
-        long endTime = System.currentTimeMillis();
-        long totalTime = endTime - startTime;
-        if (this.configuration.getLogPath() != null) {
-            writeTimeLog(totalTime);
-        }
-    }
-
     private void writeTimeLog(long totalTime) throws IOException {
         String result = "[ExecTime]" + totalTime;
         if (
@@ -204,10 +152,9 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public String runInteractive(java.nio.file.Path queryFile) throws IOException {
+    public String runInteractive(String query) throws IOException {
         // create temp file
-        FSDataInputStream in = UrlValidator.getDataInputStream(queryFile.toString(), new ExceptionMetadata(0, 0));
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
+        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
