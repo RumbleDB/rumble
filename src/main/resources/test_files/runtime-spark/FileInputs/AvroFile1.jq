@@ -1,5 +1,5 @@
-(:JIQS: ShouldRun; Output="({ "_c0" : "LatD", "_c1" : "LatM", "_c2" : "LatS", "_c3" : "NS", "_c4" : "LonD", "_c5" : "LonM", "_c6" : "LonS", "_c7" : "EW", "_c8" : "City", "_c9" : "State" }, { "_c0" : "41", "_c1" : "5", "_c2" : "59", "_c3" : "N", "_c4" : "80", "_c5" : "39", "_c6" : "0", "_c7" : "W", "_c8" : "Youngstown", "_c9" : "OH" })" :)
-for $i in csv-file("./src/main/resources/queries/cities.csv")
-count $c
-where $c le 2
-return $i
+(:JIQS: ShouldRun; Output="({ "registration_dttm" : "2016-02-03T07:55:29Z", "id" : 1, "first_name" : "Amanda", "last_name" : "Jordan", "email" : "ajordan0@com.com", "gender" : "Female", "ip_address" : "1.197.201.2", "cc" : 6759521864920116, "country" : "Indonesia", "birthdate" : "3\/8\/1971", "salary" : 49756.53, "title" : "Internal Auditor", "comments" : "1E+02" }, 100)" :)
+avro-file("src/main/resources/queries/userdata1-limit.avro")[1],
+count(avro-file("src/main/resources/queries/userdata1-limit.avro"))
+
+(: read in file without arguments :)
