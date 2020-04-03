@@ -196,12 +196,12 @@ public class RumbleMLUtils {
     public static Dataset<Row> createDataFrameContainingVectorizedColumn(
             Dataset<Row> inputDataset,
             String paramNameExposedToTheUser,
-            Object arrayOfInputColumnNames,
+            String[] arrayOfInputColumnNames,
             String outputColumnName,
             ExceptionMetadata metadata
     ) {
         VectorAssembler vectorAssembler = new VectorAssembler();
-        vectorAssembler.setInputCols((String[]) arrayOfInputColumnNames);
+        vectorAssembler.setInputCols(arrayOfInputColumnNames);
         vectorAssembler.setOutputCol(outputColumnName);
 
         try {
