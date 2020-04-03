@@ -16,7 +16,7 @@ import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
-public class UrlValidator {
+public class FileSystemUtil {
 
     public static URI validateURI(String url, ExceptionMetadata metadata) {
         if (url.isEmpty()) {

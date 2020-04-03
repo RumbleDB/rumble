@@ -39,7 +39,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.UrlValidator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
@@ -58,7 +58,7 @@ public class JsoniqQueryExecutor {
 
     private void checkOutputFile(String outputPath) throws IOException {
         if (outputPath != null) {
-            if (UrlValidator.exists(outputPath, new ExceptionMetadata(0, 0))) {
+            if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
                 if (!this.configuration.getOverwrite()) {
                     System.err.println(
                         "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
@@ -72,10 +72,10 @@ public class JsoniqQueryExecutor {
     public void runQuery(String queryFile, String outputPath) throws IOException {
         checkOutputFile(outputPath);
         ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
-        if (!UrlValidator.exists(queryFile, metadata)) {
+        if (!FileSystemUtil.exists(queryFile, metadata)) {
             throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
         }
-        FSDataInputStream in = UrlValidator.getDataInputStream(queryFile, metadata);
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, metadata);
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
 
         long startTime = System.currentTimeMillis();
@@ -101,7 +101,7 @@ public class JsoniqQueryExecutor {
             String output = runIterators(result, dynamicContext);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
-                UrlValidator.write(outputPath, lines, metadata);
+                FileSystemUtil.write(outputPath, lines, metadata);
             } else {
                 System.out.println(output);
             }
@@ -112,7 +112,7 @@ public class JsoniqQueryExecutor {
         String logPath = this.configuration.getLogPath();
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            UrlValidator.write(logPath, Collections.singletonList(time), metadata);
+            FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
         }
     }
 
