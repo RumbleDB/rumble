@@ -64,8 +64,6 @@ public class JsoniqQueryExecutor {
                         "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
                     System.exit(1);
-                } else {
-                    UrlValidator.delete(outputPath, new ExceptionMetadata(0, 0));
                 }
             }
         }
