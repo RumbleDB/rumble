@@ -635,7 +635,7 @@ Serializes the supplied input sequence, returning the serialized representation 
 ```
 serialize({hello: "world"})
 ```
-returns "[ "hello", "world" ]"
+returns "[ \\"hello\\", \\"world\\" ]"
 
 ## Context functions
 
