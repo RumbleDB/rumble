@@ -66,6 +66,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
@@ -180,6 +181,8 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.asi
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avg;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avro_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avro_file2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.base64Binary;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.boolean_function;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ceiling;
@@ -404,6 +407,8 @@ public class Functions {
         builtInFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtInFunctions.put(root_file1.getIdentifier(), root_file1);
         builtInFunctions.put(root_file2.getIdentifier(), root_file2);
+        builtInFunctions.put(avro_file1.getIdentifier(), avro_file1);
+        builtInFunctions.put(avro_file2.getIdentifier(), avro_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -964,6 +969,27 @@ public class Functions {
             "object",
             "item*",
             CSVFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses an avro file
+         */
+        static final BuiltinFunction avro_file1 = createBuiltinFunction(
+            "avro-file",
+            "string",
+            "item*",
+            AvroFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses an avro file
+         */
+        static final BuiltinFunction avro_file2 = createBuiltinFunction(
+            "avro-file",
+            "string",
+            "object",
+            "item*",
+            AvroFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
 
