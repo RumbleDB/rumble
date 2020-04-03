@@ -1,6 +1,8 @@
 package org.rumbledb.runtime.functions.input;
 
+import org.apache.hadoop.fs.CreateFlag;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileContext;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.fs.UnsupportedFileSystemException;
@@ -11,6 +13,8 @@ import org.rumbledb.exceptions.OurBadException;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
+import java.util.List;
 
 public class UrlValidator {
 
@@ -105,6 +109,42 @@ public class UrlValidator {
             e.printStackTrace();
             throw new OurBadException(
                     "An unexpected exception happened while reading the file.",
+                    metadata
+            );
+        }
+    }
+
+    public static void write(String url, List<String> content, ExceptionMetadata metadata) {
+        URI locator = validateURI(url, metadata);
+        if (url.contains("*")) {
+            throw new CannotRetrieveResourceException(
+                    "Path cannot contain *!",
+                    metadata
+            );
+        }
+        try {
+            locator = new URI(url);
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(url);
+            FSDataOutputStream outputStream = fileContext.create(
+                path,
+                EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE)
+            );
+            for (String s : content) {
+                outputStream.writeBytes(s);
+                outputStream.writeBytes("\n");
+            }
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    metadata
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "An unexpected exception happened while writing the file.",
                     metadata
             );
         }

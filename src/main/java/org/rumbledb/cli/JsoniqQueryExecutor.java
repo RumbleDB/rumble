@@ -25,8 +25,6 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.compiler.TranslationVisitor;
@@ -44,15 +42,9 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.UrlValidator;
 
 import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.utils.FileUtils;
-
-import java.io.BufferedOutputStream;
-import java.io.File;
 import java.io.IOException;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 
@@ -110,9 +102,8 @@ public class JsoniqQueryExecutor {
         } else {
             String output = runIterators(result, dynamicContext);
             if (outputPath != null) {
-                File outputFile = new File(outputPath);
                 List<String> lines = Arrays.asList(output);
-                org.apache.commons.io.FileUtils.writeLines(outputFile, "UTF-8", lines);
+                UrlValidator.write(outputPath, lines, metadata);
             } else {
                 System.out.println(output);
             }
@@ -120,34 +111,10 @@ public class JsoniqQueryExecutor {
 
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (this.configuration.getLogPath() != null) {
-            writeTimeLog(totalTime);
-        }
-    }
-
-    private void writeTimeLog(long totalTime) throws IOException {
-        String result = "[ExecTime]" + totalTime;
-        if (
-            this.configuration.getLogPath().startsWith("file://") || this.configuration.getLogPath().startsWith("/")
-        ) {
-            String timeLogPath = this.configuration.getLogPath()
-                .substring(0, this.configuration.getLogPath().lastIndexOf("/"));
-            timeLogPath += Path.SEPARATOR + "time_log_";
-            java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
-            java.nio.file.Files.write(finalPath, result.getBytes());
-        } else if (this.configuration.getLogPath().startsWith("hdfs://")) {
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(this.configuration.getLogPath()));
-            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
-            stream.write(result.getBytes());
-            stream.close();
-        } else if (this.configuration.getLogPath().startsWith("./")) {
-            List<String> lines = Arrays.asList(result);
-            java.nio.file.Path file = Paths.get(this.configuration.getLogPath());
-            Files.write(file, lines, Charset.forName("UTF-8"));
-        } else {
-            throw new OurBadException("An unhandled log path is found: " + this.configuration.getLogPath());
+        String logPath = this.configuration.getLogPath();
+        if (logPath != null) {
+            String time = "[ExecTime] " + totalTime;
+            UrlValidator.write(logPath, Collections.singletonList(time), metadata);
         }
     }
 
