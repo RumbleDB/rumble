@@ -769,7 +769,7 @@ return $my-json
 
 ### csv-file (Rumble specific)
 
-Parses one or more csv files and returns a sequence of objects. This is also similar to Spark's spark.read.csv()
+Parses one or more csv files and returns a sequence of objects. This is similar to Spark's `spark.read.csv()`
 
 ```
 for $i in csv-file("file.csv")
@@ -790,6 +790,32 @@ Options can be given in the form of a JSON object. All available options can be 
 ```
 for $i in csv-file("file.csv", {"header": true, "inferSchema": true})
 where $i.key eq "some value"
+return $i
+```
+
+### avro-file (Rumble specific)
+
+Parses one or more avro files and returns a sequence of objects. This is similar to Spark's `spark.read().format("avro").load()`
+
+```
+for $i in avro-file("file.avro")
+where $i._col1 eq "some value"
+return $i
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $i in avro-file("*.avro")
+where $i._col1 eq "some value"
+return $i
+```
+
+Options can be given in the form of a JSON object. All available options relevant for reading in avro data can be found in the [Spark documentation](https://spark.apache.org/docs/latest/sql-data-sources-avro.html#data-source-option)
+
+```
+for $i in avro-file("file.avro", {"ignoreExtension": true, "avroSchema": "/path/to/schema.avsc"})
+where $i._col1 eq "some value"
 return $i
 ```
 
