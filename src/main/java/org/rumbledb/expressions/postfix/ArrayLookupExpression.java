@@ -67,16 +67,6 @@ public class ArrayLookupExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(arrayLookup "
-            + this.mainExpression.serializationString(false)
-            + " [["
-            + this.lookupExpression.serializationString(false)
-            + "]])";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitArrayLookupExpression(this, argument);
     }

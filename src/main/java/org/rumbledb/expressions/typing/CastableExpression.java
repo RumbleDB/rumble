@@ -35,16 +35,6 @@ public class CastableExpression extends Expression {
         return visitor.visitCastableExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(castableExpr ");
-        result.append(this.mainExpression.serializationString(true));
-        result.append(" castable as " + this.sequenceType.toString());
-        result.append(")");
-        return result.toString();
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }

@@ -63,11 +63,6 @@ public abstract class Clause extends Node {
         this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "";
-    }
-
     public Clause getFirstClause() {
         Clause result = this;
         while (result.previousClause != null) {

@@ -67,14 +67,22 @@ public class GroupByClause extends Clause {
         return visitor.visitGroupByClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(groupByClause group by ";
-        for (GroupByVariableDeclaration var : this.variables) {
-            result += var.toString()
-                + (this.variables.indexOf(var) < this.variables.size() - 1 ? " , " : "");
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
         }
-        result += ")";
-        return result;
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (");
+        for (GroupByVariableDeclaration var : this.variables) {
+            buffer.append(var.getVariableName());
+            buffer.append(", ");
+        }
+        buffer.append(")\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 }

@@ -105,23 +105,12 @@ public class LetClause extends Clause {
         return visitor.visitLetClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(letClause " + this.variableName + " ";
-        if (this.sequenceType != null) {
-            result += ":= " + this.sequenceType.toString() + " ";
-        }
-        result += "in " + this.expression.serializationString(true);
-        result += "))";
-        return result;
-    }
-
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.variableName) + ") ");
+        buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

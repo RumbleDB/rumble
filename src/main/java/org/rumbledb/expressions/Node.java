@@ -95,14 +95,6 @@ public abstract class Node {
     public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     /**
-     * Serializes the node.
-     *
-     * @param prefix for indentation purposes.
-     * @return the serialized node.
-     */
-    public abstract String serializationString(boolean prefix);
-
-    /**
      * Returns all children nodes as a list. The list is new and can be modified at will by the caller.
      *
      * @return the children nodes as a list.
@@ -162,5 +154,12 @@ public abstract class Node {
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public final String toString() {
+        StringBuffer sb = new StringBuffer();
+        this.print(sb, 0);
+        return sb.toString();
     }
 }

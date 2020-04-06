@@ -90,10 +90,7 @@ public class JsoniqQueryExecutor {
         MainModule mainModule = this.parse(new JsoniqLexer(charStream));
         generateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule.serializationString(true));
-            StringBuffer sb = new StringBuffer();
-            mainModule.print(sb, 0);
-            System.out.println(sb);
+            System.out.println(mainModule);
         }
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = generateRuntimeIterators(mainModule);
@@ -186,10 +183,7 @@ public class JsoniqQueryExecutor {
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule.serializationString(true));
-            StringBuffer sb = new StringBuffer();
-            mainModule.print(sb, 0);
-            System.out.println(sb);
+            System.out.println(mainModule);
         }
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);

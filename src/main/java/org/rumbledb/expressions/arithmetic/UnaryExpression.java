@@ -50,15 +50,6 @@ public class UnaryExpression extends Expression {
         return visitor.visitUnaryExpr(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(unaryExpr ";
-        result += this.negated ? "-(" : "+(";
-        result += this.mainExpression.serializationString(true);
-        result += ")";
-        return result;
-    }
-
     public Expression getMainExpression() {
         return this.mainExpression;
     }

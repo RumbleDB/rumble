@@ -95,22 +95,6 @@ public class VariableDeclaration extends Node {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(varDecl " + this.variableName + " ";
-        if (this.sequenceType != null) {
-            result += "as " + this.sequenceType.toString() + " ";
-        }
-        if (this.external) {
-            result += "external";
-        }
-        if (this.expression != null) {
-            result += " := " + this.expression.serializationString(true);
-        }
-        result += "))";
-        return result;
-    }
-
-    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = ExecutionMode.LOCAL;
         this.variableHighestStorageMode = ExecutionMode.LOCAL;
@@ -124,6 +108,25 @@ public class VariableDeclaration extends Node {
             throw new OurBadException("A variable storage mode is accessed without being set.");
         }
         return this.variableHighestStorageMode;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(
+            " ("
+                + (this.variableName)
+                + ", "
+                + (this.external ? "external, " : "")
+                + this.sequenceType.toString()
+                + ") "
+        );
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }
 

@@ -44,14 +44,6 @@ public class StringLiteralExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = (prefix ? "(primaryExpr " : "") + "(stringLiteral ";
-        result += "\"" + this.getValue() + "\"";
-        result += (prefix ? ")" : "") + ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitString(this, argument);
     }

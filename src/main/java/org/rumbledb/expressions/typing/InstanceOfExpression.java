@@ -54,15 +54,6 @@ public class InstanceOfExpression extends Expression {
         return visitor.visitInstanceOfExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(instanceOfExpr ";
-        result += this.mainExpression.serializationString(true);
-        result += this.sequenceType != null ? "instance of " + this.sequenceType.toString() : "";
-        result += ")";
-        return result;
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }

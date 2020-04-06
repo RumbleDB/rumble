@@ -60,17 +60,6 @@ public class OrderByClause extends Clause {
         return visitor.visitOrderByClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(orderByClause order by ";
-        for (OrderByClauseSortingKey var : this.sortingKeys) {
-            result += var.getExpression().serializationString(true)
-                + (this.sortingKeys.indexOf(var) < this.sortingKeys.size() - 1 ? " , " : "");
-        }
-        result += ")";
-        return result;
-    }
-
     public boolean isStable() {
         return this.isStable;
     }

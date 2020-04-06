@@ -124,29 +124,21 @@ public class ForClause extends Clause {
         return visitor.visitForClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(forClause " + this.variableName + " ";
-        if (this.sequenceType != null) {
-            result += "as " + this.sequenceType.toString() + " ";
-        }
-        if (this.allowEmpty) {
-            result += "allowing empty ";
-        }
-        if (this.positionalVariableName != null) {
-            result += "at " + this.positionalVariableName + " ";
-        }
-        result += "in " + this.expression.serializationString(true);
-        result += "))";
-        return result;
-    }
-
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.variableName) + ") ");
+        buffer.append(
+            " ("
+                + (this.variableName)
+                + ", "
+                + this.sequenceType.toString()
+                + ", "
+                + (this.allowEmpty ? "allowing empty, " : "")
+                + this.positionalVariableName
+                + ") "
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

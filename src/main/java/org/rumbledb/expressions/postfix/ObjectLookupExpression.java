@@ -57,17 +57,6 @@ public class ObjectLookupExpression extends Expression {
         return this.lookupExpression;
     }
 
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(objectLookup "
-            + this.mainExpression.serializationString(false)
-            + " [["
-            + this.lookupExpression.serializationString(false)
-            + "]])";
-        return result;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitObjectLookupExpression(this, argument);

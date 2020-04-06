@@ -35,15 +35,6 @@ public class CastExpression extends Expression {
         return visitor.visitCastExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(castExpr ";
-        result += this.mainExpression.serializationString(true);
-        result += " cast as" + this.sequenceType.toString();
-        result += ")";
-        return result;
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }

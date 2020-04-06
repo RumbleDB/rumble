@@ -54,15 +54,6 @@ public class NamedFunctionReferenceExpression extends Expression {
         return visitor.visitNamedFunctionRef(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "(namedFunctionRef(NCName "
-            + this.identifier.getName()
-            + ") (IntegerLiteral "
-            + this.identifier.getArity()
-            + "))";
-    }
-
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");

@@ -66,15 +66,6 @@ public class TreatExpression extends Expression {
         return visitor.visitTreatExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(treatExpr ";
-        result += this.mainExpression.serializationString(true);
-        result += " treat as " + this.sequenceType.toString();
-        result += ")";
-        return result;
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }

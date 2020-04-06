@@ -46,16 +46,6 @@ public class RangeExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(rangeExpr ";
-        result += this.getChildren().get(0).serializationString(true);
-        result += " to  ";
-        result += this.getChildren().get(1).serializationString(true);
-        result += ")";
-        return result;
-    }
-
-    @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }

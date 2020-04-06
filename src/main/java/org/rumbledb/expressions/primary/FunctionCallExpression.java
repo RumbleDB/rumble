@@ -34,8 +34,6 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -145,33 +143,6 @@ public class FunctionCallExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (functionCall ";
-        List<String> names = Arrays.asList(this.functionName.split(":"));
-        Collections.reverse(names);
-        for (String name : names) {
-            result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
-        }
-        result += "(argumentList ( ";
-        for (Expression arg : this.arguments) {
-            if (arg == null) {
-                result += "?"
-                    +
-                    (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ", " : " ");
-            } else {
-                result += "(argument (exprSingle "
-                    + arg.serializationString(false)
-                    +
-                    (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
-            }
-        }
-        result += "))";
-        result += "))";
-        return result;
-
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
     }
@@ -187,7 +158,7 @@ public class FunctionCallExpression extends Expression {
                 for (int i = 0; i < indent; ++i) {
                     buffer.append("  ");
                 }
-                buffer.append("?");
+                buffer.append("?\n");
             } else {
                 arg.print(buffer, indent + 1);
             }

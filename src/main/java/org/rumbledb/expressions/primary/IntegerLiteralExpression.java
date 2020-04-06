@@ -43,14 +43,6 @@ public class IntegerLiteralExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr ";
-        result += this.getValue();
-        result += ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitInteger(this, argument);
     }

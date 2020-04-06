@@ -47,11 +47,6 @@ public class CountClause extends Clause {
         return visitor.visitCountClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "(countClause count " + this.countClauseVar.serializationString(true) + ")";
-    }
-
     public VariableReferenceExpression getCountVariable() {
         return this.countClauseVar;
     }
