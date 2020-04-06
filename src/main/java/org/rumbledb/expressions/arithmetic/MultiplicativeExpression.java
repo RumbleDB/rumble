@@ -83,16 +83,6 @@ public class MultiplicativeExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(multiplicativeExpr ";
-        result += this.getChildren().get(0).serializationString(true);
-        result += this.multiplicativeOperator;
-        result += this.getChildren().get(1).serializationString(true);
-        result += ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitMultiplicativeExpr(this, argument);
     }
@@ -104,5 +94,18 @@ public class MultiplicativeExpression extends Expression {
 
     public MultiplicativeOperator getMultiplicativeOperator() {
         return this.multiplicativeOperator;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.multiplicativeOperator) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

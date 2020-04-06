@@ -65,11 +65,4 @@ public class ReturnClause extends Clause {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitReturnClause(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "return " + this.returnExpr.serializationString(true);
-        // result += ")";
-        return result;
-    }
 }

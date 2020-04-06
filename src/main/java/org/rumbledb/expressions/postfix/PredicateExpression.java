@@ -59,16 +59,6 @@ public class PredicateExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(predicate "
-            + this.mainExpression.serializationString(false)
-            + " [["
-            + this.predicateExpression.serializationString(false)
-            + "]])";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitPredicateExpression(this, argument);
     }
