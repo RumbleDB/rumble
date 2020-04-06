@@ -115,4 +115,19 @@ public class LetClause extends Clause {
         result += "))";
         return result;
     }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.variableName) + ") ");
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
+    }
 }

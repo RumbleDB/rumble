@@ -105,4 +105,16 @@ public class MultiplicativeExpression extends Expression {
     public MultiplicativeOperator getMultiplicativeOperator() {
         return this.multiplicativeOperator;
     }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.multiplicativeOperator) + ") ");
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
 }

@@ -94,4 +94,22 @@ public class DynamicFunctionCallExpression extends Expression {
     public Expression getMainExpression() {
         return this.mainExpression;
     }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append("\n");
+        for (Expression arg : this.arguments) {
+            if (arg == null) {
+                for (int i = 0; i < indent; ++i) {
+                    buffer.append("  ");
+                }
+                buffer.append("?");
+            } else {
+                arg.print(buffer, indent + 1);
+            }
+        }
+    }
 }

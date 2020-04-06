@@ -94,4 +94,18 @@ public abstract class Clause extends Node {
         this.nextClause = otherClause;
         otherClause.previousClause = this;
     }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
+    }
 }

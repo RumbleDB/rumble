@@ -175,4 +175,22 @@ public class FunctionCallExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
     }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append("\n");
+        for (Expression arg : this.arguments) {
+            if (arg == null) {
+                for (int i = 0; i < indent; ++i) {
+                    buffer.append("  ");
+                }
+                buffer.append("?");
+            } else {
+                arg.print(buffer, indent + 1);
+            }
+        }
+    }
 }

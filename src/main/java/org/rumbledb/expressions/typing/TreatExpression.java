@@ -88,4 +88,16 @@ public class TreatExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+
 }

@@ -23,6 +23,7 @@ package org.rumbledb.expressions;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -146,4 +147,20 @@ public abstract class Node {
         return this.metadata;
     }
 
+    /**
+     * Prints the node tree to a string buffer.
+     *
+     * @param buffer a string buffer to write to
+     * @param indent the current level of indentation
+     */
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
 }

@@ -70,4 +70,16 @@ public class AdditiveExpression extends Expression {
         return this.isMinus;
     }
 
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+
 }
