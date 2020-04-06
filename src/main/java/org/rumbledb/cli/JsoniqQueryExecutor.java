@@ -33,7 +33,6 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
@@ -98,7 +97,7 @@ public class JsoniqQueryExecutor {
             JavaRDD<String> output = rdd.map(o -> o.serialize());
             output.saveAsTextFile(outputPath);
         } else {
-            String output = runIterators(result, dynamicContext);
+            String output = getIteratorOutput(result, dynamicContext);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
                 FileSystemUtil.write(outputPath, lines, metadata);
@@ -125,10 +124,10 @@ public class JsoniqQueryExecutor {
         RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions
         if (!runtimeIterator.isRDD()) {
-            String localOutput = this.runIterators(runtimeIterator, dynamicContext);
+            String localOutput = this.getIteratorOutput(runtimeIterator, dynamicContext);
             return localOutput;
         }
-        String rddOutput = this.getRDDResults(runtimeIterator);
+        String rddOutput = this.getRDDResults(runtimeIterator, dynamicContext);
         return rddOutput;
     }
 
@@ -162,10 +161,6 @@ public class JsoniqQueryExecutor {
         return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    protected String runIterators(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        return getIteratorOutput(iterator, dynamicContext);
-    }
-
     private String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
         iterator.open(dynamicContext);
         Item result = null;
@@ -179,7 +174,7 @@ public class JsoniqQueryExecutor {
         if (!iterator.hasNext()) {
             return singleOutput;
         } else {
-            int itemCount = 0;
+            int itemCount = 1;
             StringBuilder sb = new StringBuilder();
             sb.append(result.serialize());
             sb.append("\n");
@@ -194,32 +189,29 @@ public class JsoniqQueryExecutor {
                 sb.append("\n");
                 itemCount++;
             }
+            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
             // remove last comma
             return sb.toString();
         }
     }
 
-    private String getRDDResults(RuntimeIterator result) {
-        JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
+    private String getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
+        JavaRDD<Item> rdd = result.getRDD(dynamicContext);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        long resultCount = output.take(2).size();
-        if (resultCount == 0) {
-            return "";
-        }
-        if (resultCount == 1) {
-            return output.collect().get(0);
-        }
-        if (resultCount > 1) {
-            List<String> collectedOutput = SparkSessionManager.collectRDDwithLimit(output, new ExceptionMetadata(0, 0));
+        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
 
-            StringBuilder sb = new StringBuilder();
-            for (String item : collectedOutput) {
-                sb.append(item);
-                sb.append("\n");
-            }
-
-            return sb.toString();
+        StringBuilder sb = new StringBuilder();
+        for (String item : collectedOutput) {
+            sb.append(item);
+            sb.append("\n");
         }
-        throw new OurBadException("Unexpected rdd result count in getRDDResults()");
+
+        return sb.toString();
     }
 }

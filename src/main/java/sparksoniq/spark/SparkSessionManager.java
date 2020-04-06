@@ -45,6 +45,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SparkSessionManager {
 
@@ -160,6 +161,26 @@ public class SparkSessionManager {
                         metadata
                 );
             }
+            return result;
+        } else {
+            return rdd.collect();
+        }
+    }
+
+    public static <T> List<T> collectRDDwithLimitWarningOnly(JavaRDD<T> rdd) {
+        if (SparkSessionManager.LIMIT_COLLECT()) {
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
+                long count = rdd.count();
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + count
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+            result = result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList());
             return result;
         } else {
             return rdd.collect();
