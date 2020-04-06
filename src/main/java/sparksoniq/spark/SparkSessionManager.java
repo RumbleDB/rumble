@@ -151,7 +151,14 @@ public class SparkSessionManager {
             List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
             if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
                 long count = rdd.count();
-                throw new CannotMaterializeException("Cannot materialize a sequence of " + count + " items because the limit is set to " + SparkSessionManager.COLLECT_ITEM_LIMIT + ". This value can be configured with the --result-size parameter at startup", metadata);
+                throw new CannotMaterializeException(
+                        "Cannot materialize a sequence of "
+                            + count
+                            + " items because the limit is set to "
+                            + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + ". This value can be configured with the --result-size parameter at startup",
+                        metadata
+                );
             }
             return result;
         } else {
