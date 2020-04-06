@@ -81,6 +81,7 @@ public class DynamicFunctionCallExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {

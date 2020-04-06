@@ -58,6 +58,7 @@ public class BooleanLiteralExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.value) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

@@ -92,7 +92,8 @@ public class QuantifiedExpression extends Expression {
             buffer.append(var.getVariableName());
             buffer.append(", ");
         }
-        buffer.append(")\n");
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

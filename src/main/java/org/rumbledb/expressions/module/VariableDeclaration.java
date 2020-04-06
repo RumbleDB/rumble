@@ -123,6 +123,7 @@ public class VariableDeclaration extends Node {
                 + this.sequenceType.toString()
                 + ") "
         );
+        buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

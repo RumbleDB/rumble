@@ -69,6 +69,7 @@ public class UnaryExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.negated ? "-" : "+") + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

@@ -111,6 +111,7 @@ public class LetClause extends Clause {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
+        buffer.append(")\n");
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

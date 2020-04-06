@@ -109,7 +109,9 @@ public class InlineFunctionExpression extends Expression {
             buffer.append(", ");
         }
         buffer.append(this.returnType.toString());
-        buffer.append(")\n");
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
         buffer.append("Body:\n");
         this.body.print(buffer, indent + 2);
     }
