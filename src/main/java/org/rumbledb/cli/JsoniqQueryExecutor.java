@@ -296,7 +296,7 @@ public class JsoniqQueryExecutor {
             return output.collect().get(0);
         }
         if (resultCount > 1) {
-            List<String> collectedOutput = SparkSessionManager.collectRDDwithLimit(output);
+            List<String> collectedOutput = SparkSessionManager.collectRDDwithLimit(output, new ExceptionMetadata(0, 0));
 
             StringBuilder sb = new StringBuilder();
             for (String item : collectedOutput) {
