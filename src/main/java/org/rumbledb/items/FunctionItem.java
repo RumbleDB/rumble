@@ -187,23 +187,24 @@ public class FunctionItem extends Item {
         for (String param : this.parameterNames) {
             sb.append(param + " ");
         }
-        for (String param : this.parameterNames) {
-            sb.append(param + " ");
-        }
         sb.append("Signature: " + this.signature + "\n");
-        sb.append("Body:\n" + this.bodyIterator);
+        sb.append("Body:\n" + this.bodyIterator + "\n");
         sb.append("Closure:\n");
         sb.append("  Local:\n");
         for (String name : this.localVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)");
+            sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)\n");
+            if(this.localVariablesInClosure.get(name).size() == 1)
+            {
+                sb.append("      " + this.localVariablesInClosure.get(name).get(0)+"\n");
+            }
         }
         sb.append("  RDD:\n");
         for (String name : this.RDDVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)");
+            sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)\n");
         }
         sb.append("  Data Frames:\n");
         for (String name : this.dataFrameVariablesInClosure.keySet()) {
-            sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)");
+            sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)\n");
         }
         return sb.toString();
     }

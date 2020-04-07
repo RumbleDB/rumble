@@ -170,6 +170,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
+        System.out.println(this.functionItem);
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
                         "partially applied " + this.functionItem.getIdentifier().getName(),
@@ -185,6 +186,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
+        System.out.println(partiallyAppliedFunction);
         return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
