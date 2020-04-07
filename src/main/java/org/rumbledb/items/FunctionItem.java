@@ -27,6 +27,8 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -56,7 +58,7 @@ public class FunctionItem extends Item {
     private RuntimeIterator bodyIterator;
     private Map<String, List<Item>> localVariablesInClosure;
     private Map<String, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<String, Dataset<Row>> DFVariablesInClosure;
+    private Map<String, Dataset<Row>> dataFrameVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -74,7 +76,7 @@ public class FunctionItem extends Item {
         this.bodyIterator = bodyIterator;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
-        this.DFVariablesInClosure = new HashMap<>();
+        this.dataFrameVariablesInClosure = new HashMap<>();
     }
 
     public FunctionItem(
@@ -92,7 +94,7 @@ public class FunctionItem extends Item {
         this.bodyIterator = bodyIterator;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
-        this.DFVariablesInClosure = DFVariablesInClosure;
+        this.dataFrameVariablesInClosure = DFVariablesInClosure;
     }
 
     public FunctionItem(
@@ -114,7 +116,7 @@ public class FunctionItem extends Item {
         this.bodyIterator = bodyIterator;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
-        this.DFVariablesInClosure = new HashMap<>();
+        this.dataFrameVariablesInClosure = new HashMap<>();
     }
 
     public FunctionIdentifier getIdentifier() {
@@ -142,7 +144,7 @@ public class FunctionItem extends Item {
     }
 
     public Map<String, Dataset<Row>> getDFVariablesInClosure() {
-        return this.DFVariablesInClosure;
+        return this.dataFrameVariablesInClosure;
     }
 
     @Override
@@ -177,6 +179,36 @@ public class FunctionItem extends Item {
     }
 
     @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("Function\n");
+        sb.append("Identifier:" + this.identifier + "\n");
+        sb.append("Parameters: ");
+        for (String param : this.parameterNames) {
+            sb.append(param + " ");
+        }
+        for (String param : this.parameterNames) {
+            sb.append(param + " ");
+        }
+        sb.append("Signature: " + this.signature + "\n");
+        sb.append("Body:\n" + this.bodyIterator);
+        sb.append("Closure:\n");
+        sb.append("  Local:\n");
+        for (String name : this.localVariablesInClosure.keySet()) {
+            sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)");
+        }
+        sb.append("  RDD:\n");
+        for (String name : this.RDDVariablesInClosure.keySet()) {
+            sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)");
+        }
+        sb.append("  Data Frames:\n");
+        for (String name : this.dataFrameVariablesInClosure.keySet()) {
+            sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)");
+        }
+        return sb.toString();
+    }
+
+    @Override
     public int hashCode() {
         return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode() + this.signature.hashCode();
     }
@@ -190,7 +222,7 @@ public class FunctionItem extends Item {
         // kryo.writeObject(output, this.bodyIterator);
         kryo.writeObject(output, this.localVariablesInClosure);
         kryo.writeObject(output, this.RDDVariablesInClosure);
-        kryo.writeObject(output, this.DFVariablesInClosure);
+        kryo.writeObject(output, this.dataFrameVariablesInClosure);
 
         // convert RuntimeIterator to byte[] data
         try {
@@ -219,7 +251,7 @@ public class FunctionItem extends Item {
         // this.bodyIterator = kryo.readObject(input, RuntimeIterator.class);
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.DFVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
 
         try {
             int dataLength = input.readInt();
@@ -251,6 +283,21 @@ public class FunctionItem extends Item {
             return (FunctionItem) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
             throw new OurBadException("Error while deep copying the function body runtimeIterator");
+        }
+    }
+
+    public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
+        for (String variable : dynamicContext.getLocalVariableNames()) {
+            this.localVariablesInClosure.put(variable, dynamicContext.getLocalVariableValue(variable, metadata));
+        }
+        for (String variable : dynamicContext.getRDDVariableNames()) {
+            this.RDDVariablesInClosure.put(variable, dynamicContext.getRDDVariableValue(variable, metadata));
+        }
+        for (String variable : dynamicContext.getDataFrameVariableNames()) {
+            this.dataFrameVariablesInClosure.put(
+                variable,
+                dynamicContext.getDataFrameVariableValue(variable, metadata)
+            );
         }
     }
 }

@@ -212,7 +212,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues.put(argName, argIterator.materialize(context));
             }
         }
-        return new DynamicContext(context, localArgumentValues, RDDArgumentValues, DFArgumentValues);
+        return new DynamicContext(null, localArgumentValues, RDDArgumentValues, DFArgumentValues);
     }
 
     @Override
