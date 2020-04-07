@@ -68,30 +68,30 @@ public class DynamicFunctionCallExpression extends Expression {
      */
 
     @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(dynamicFunctionCall ");
-        result.append(this.mainExpression.serializationString(false));
-        for (Expression arg : this.arguments) {
-            if (arg == null) {
-                result.append("?");
-                result.append(this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ", " : " ");
-            } else {
-                result.append("(argument (exprSingle ");
-                result.append(arg.serializationString(false));
-                result.append((this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) "));
-            }
-        }
-        result.append("))");
-        return result.toString();
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
     }
 
     public Expression getMainExpression() {
         return this.mainExpression;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Expression arg : this.arguments) {
+            if (arg == null) {
+                for (int i = 0; i < indent; ++i) {
+                    buffer.append("  ");
+                }
+                buffer.append("?\n");
+            } else {
+                arg.print(buffer, indent + 1);
+            }
+        }
     }
 }

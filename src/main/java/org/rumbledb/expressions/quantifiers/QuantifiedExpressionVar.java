@@ -50,13 +50,4 @@ public class QuantifiedExpressionVar {
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
-
-    @Override
-    public String toString() {
-        return this.variableName
-            + " as "
-            + this.sequenceType.toString()
-            + " satisfies "
-            + this.expression.serializationString(false);
-    }
 }

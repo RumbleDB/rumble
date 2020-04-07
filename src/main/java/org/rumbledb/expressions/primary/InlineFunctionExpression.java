@@ -96,28 +96,24 @@ public class InlineFunctionExpression extends Expression {
         return visitor.visitFunctionDeclaration(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(functionDeclaration ";
-        result += this.name;
-        result += " (paramList (";
-        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
-            result += "param (";
-            result += "NCName "
-                + entry.getKey()
-                + " sequenceType "
-                + entry.getValue().toString()
-                + ") , ";
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
         }
-        result = result.substring(0, result.length() - 1); // remove last comma
-        result += "))";
-
-        result += " (sequenceType ( " + this.returnType.toString() + "))";
-
-        result += " (expr (" + this.body.serializationString(false) + "))";
-
-        result += ")";
-        return result;
+        buffer.append(getClass().getSimpleName());
+        buffer.append("(");
+        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
+            buffer.append(entry.getKey());
+            buffer.append(", ");
+            buffer.append(entry.getValue().toString());
+            buffer.append(", ");
+        }
+        buffer.append(this.returnType.toString());
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        buffer.append("Body:\n");
+        this.body.print(buffer, indent + 2);
     }
 }
 

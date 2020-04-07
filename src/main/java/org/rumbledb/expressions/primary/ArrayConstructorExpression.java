@@ -62,15 +62,4 @@ public class ArrayConstructorExpression extends Expression {
         return visitor.visitArrayConstructor(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (arrayConstructor [";
-        if (this.expression != null) {
-            result += " " + this.expression.serializationString(true);
-        }
-
-        result += " ]))";
-        return result;
-    }
-
 }
