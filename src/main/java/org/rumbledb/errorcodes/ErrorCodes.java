@@ -47,6 +47,8 @@ public class ErrorCodes {
     public static final String NonAtomicElementErrorCode = "JNTY0004";
     public static final String InvalidSelectorErrorCode = "JNTY0018";
 
+    public static final String CannotMaterializeErrorCode = "RBDY0005";
+
 
     public static final String UnrecognizedRumbleMLClassReferenceErrorCode = "RBML0001";
     public static final String UnrecognizedRumbleMLParamReferenceErrorCode = "RBML0002";
@@ -59,7 +61,6 @@ public class ErrorCodes {
     public static final String UnimplementedErrorCode = "RBST0002";
     public static final String JobWithinAJobErrorCode = "RBST0003";
     public static final String OurBadErrorCode = "RBST0004";
-    public static final String CannotMaterializeErrorCode = "RBDY0005";
 
 
     public static final String FunctionsNonSerializable = "SENR0001";

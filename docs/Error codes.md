@@ -16,6 +16,8 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
+- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --result-size to increase the maximum  materialization size.
+
 - [RBML0001] - Unrecognized Rumble ML Class Reference
 An unrecognized classname is used in query while accessing the Rumble ML API.
 
@@ -42,8 +44,6 @@ big sequence of items for each binding within a big tuple,
 which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
 
 - [RBST0004] - Implementation Error.
-
-- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --result-size to increase the maximum  materialization size.
 
 - [SENR0001] - Serialization error. Function items can not be serialized.
 
