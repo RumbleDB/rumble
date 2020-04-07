@@ -22,6 +22,7 @@ package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -35,7 +36,6 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;

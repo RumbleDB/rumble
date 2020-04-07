@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.control;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
@@ -8,7 +9,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -19,7 +19,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     private final RuntimeIterator testField;
     private final List<TypeswitchRuntimeIteratorCase> cases;
     private final TypeswitchRuntimeIteratorCase defaultCase;
-    private RuntimeIterator matchingIterator = null;
+    private RuntimeIterator matchingIterator;
     private Item testValue;
 
 
@@ -40,21 +40,36 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
         this.testField = test;
         this.cases = cases;
         this.defaultCase = defaultCase;
+        this.matchingIterator = null;
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        initializeIterator(this.testField, this.cases, this.defaultCase);
+        // this.matchingIterator is null at that point;
+        if (this.matchingIterator != null) {
+            throw new IteratorFlowException(
+                    "The matching iterator should be null when opening the typeswitch iterator!"
+            );
+        }
+        initializeIterator();
+    }
+
+    private void resetMatchingIteratorToNull() {
+        if (this.matchingIterator != null) {
+            this.matchingIterator.close();
+        }
+        this.matchingIterator = null;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
-            this.matchingIterator.close();
-            this.hasNext = false;
+            this.hasNext = this.matchingIterator.hasNext();
+            if (!this.hasNext()) {
+                resetMatchingIteratorToNull();
+            }
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -64,56 +79,57 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        this.matchingIterator = null;
-        initializeIterator(this.testField, this.cases, this.defaultCase);
+    public void close() {
+        super.close();
+        resetMatchingIteratorToNull();
     }
 
-    private void initializeIterator(
-            RuntimeIterator test,
-            List<TypeswitchRuntimeIteratorCase> cases,
-            TypeswitchRuntimeIteratorCase defaultCase
-    ) {
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        resetMatchingIteratorToNull();
+        initializeIterator();
+    }
 
-        this.testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    private void initializeIterator() {
 
-        for (TypeswitchRuntimeIteratorCase typeSwitchCase : cases) {
-            if (testTypeMatch(typeSwitchCase)) {
+        this.testValue = this.testField.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+            this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
+            if (this.matchingIterator != null) {
+                if (typeSwitchCase.getVariableName() != null) {
+                    this.currentDynamicContextForLocalExecution.addVariableValue(
+                        typeSwitchCase.getVariableName(),
+                        Collections.singletonList(this.testValue)
+                    );
+                }
                 break;
             }
         }
 
         if (this.matchingIterator == null) {
-            if (defaultCase.getVariableName() != null) {
+            if (this.defaultCase.getVariableName() != null) {
                 this.currentDynamicContextForLocalExecution.addVariableValue(
-                    defaultCase.getVariableName(),
+                    this.defaultCase.getVariableName(),
                     Collections.singletonList(this.testValue)
                 );
             }
-            this.matchingIterator = defaultCase.getReturnIterator();
+            this.matchingIterator = this.defaultCase.getReturnIterator();
         }
 
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.matchingIterator.hasNext();
-        this.matchingIterator.close();
     }
 
-    private boolean testTypeMatch(TypeswitchRuntimeIteratorCase typeSwitchCase) {
+    private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
                 if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
-                    if (typeSwitchCase.getVariableName() != null) {
-                        this.currentDynamicContextForLocalExecution.addVariableValue(
-                            typeSwitchCase.getVariableName(),
-                            Collections.singletonList(this.testValue)
-                        );
-                    }
-                    this.matchingIterator = typeSwitchCase.getReturnIterator();
-                    return true;
+                    return typeSwitchCase.getReturnIterator();
                 }
             }
         }
-        return false;
+        return null;
     }
 }

@@ -255,7 +255,8 @@ public class ItemParser implements Serializable {
                     addValue(null, 0, object, dataType, members, metadata);
                 }
             } else {
-                Object arrayObject = ((WrappedArray) o).array();
+                @SuppressWarnings("unchecked")
+                Object arrayObject = ((WrappedArray<Object>) o).array();
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
                     addValue(null, 0, value, dataType, members, metadata);

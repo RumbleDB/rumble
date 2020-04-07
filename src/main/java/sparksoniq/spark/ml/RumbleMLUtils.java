@@ -40,6 +40,7 @@ public class RumbleMLUtils {
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
+                @SuppressWarnings("unchecked")
                 Param<Object> sparkMLParam = (Param<Object>) transformer.getClass()
                     .getMethod(paramName)
                     .invoke(transformer);
@@ -77,6 +78,7 @@ public class RumbleMLUtils {
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
+                @SuppressWarnings("unchecked")
                 Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
                     .getMethod(paramName)
                     .invoke(estimator);
@@ -194,12 +196,12 @@ public class RumbleMLUtils {
     public static Dataset<Row> createDataFrameContainingVectorizedColumn(
             Dataset<Row> inputDataset,
             String paramNameExposedToTheUser,
-            Object arrayOfInputColumnNames,
+            String[] arrayOfInputColumnNames,
             String outputColumnName,
             ExceptionMetadata metadata
     ) {
         VectorAssembler vectorAssembler = new VectorAssembler();
-        vectorAssembler.setInputCols((String[]) arrayOfInputColumnNames);
+        vectorAssembler.setInputCols(arrayOfInputColumnNames);
         vectorAssembler.setOutputCol(outputColumnName);
 
         try {

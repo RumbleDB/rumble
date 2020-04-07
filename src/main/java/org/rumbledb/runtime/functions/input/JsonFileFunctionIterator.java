@@ -22,13 +22,13 @@ package org.rumbledb.runtime.functions.input;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.parsing.JSONSyntaxToItemMapper;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -52,7 +52,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        if (!UrlValidator.isValid(url)) {
+        if (!FileSystemUtil.exists(url, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
         }
 

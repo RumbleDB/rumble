@@ -76,18 +76,6 @@ public class FlworExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFlowrExpression(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(flowrExpr ";
-        Clause clause = this.returnClause.getFirstClause();
-        while (clause != null) {
-            result += clause.serializationString(true) + " ";
-            clause = clause.getNextClause();
-        }
-        result += "))";
-        return result;
-    }
 }
 
 

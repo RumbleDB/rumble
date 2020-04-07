@@ -31,10 +31,16 @@ import java.util.List;
 
 public class Prolog extends Node {
 
+    private final List<VariableDeclaration> variableDeclarations;
     private final List<InlineFunctionExpression> functionDeclarations;
 
-    public Prolog(List<InlineFunctionExpression> functionDeclarations, ExceptionMetadata metadata) {
+    public Prolog(
+            List<VariableDeclaration> variableDeclarations,
+            List<InlineFunctionExpression> functionDeclarations,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
+        this.variableDeclarations = variableDeclarations;
         this.functionDeclarations = functionDeclarations;
     }
 
@@ -42,9 +48,14 @@ public class Prolog extends Node {
         return this.functionDeclarations;
     }
 
+    public List<VariableDeclaration> getVariableDeclarations() {
+        return this.variableDeclarations;
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+        result.addAll(this.variableDeclarations);
         if (this.functionDeclarations != null) {
             this.functionDeclarations.forEach(e -> {
                 if (e != null) {
@@ -58,18 +69,6 @@ public class Prolog extends Node {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitProlog(this, argument);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(prolog ";
-        result += " (functionDecl ";
-        for (InlineFunctionExpression func : this.functionDeclarations) {
-            result += "(" + func.serializationString(false) + ") , ";
-        }
-        result = result.substring(0, result.length() - 1); // remove last comma
-        result += "))";
-        return result;
     }
 }
 

@@ -20,29 +20,20 @@
 
 package org.rumbledb.expressions.quantifiers;
 
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.List;
-
-public class QuantifiedExpressionVar extends Node {
-    private final VariableReferenceExpression variableReference;
+public class QuantifiedExpressionVar {
+    private final String variableName;
     private final Expression expression;
     private final SequenceType sequenceType;
 
     public QuantifiedExpressionVar(
-            VariableReferenceExpression varRef,
+            String variableName,
             Expression varExpression,
-            SequenceType sequenceType,
-            ExceptionMetadata metadata
+            SequenceType sequenceType
     ) {
-        super(metadata);
-        this.variableReference = varRef;
+        this.variableName = variableName;
         this.expression = varExpression;
         this.sequenceType = sequenceType;
     }
@@ -51,30 +42,12 @@ public class QuantifiedExpressionVar extends Node {
         return this.expression;
     }
 
-    public VariableReferenceExpression getVariableReference() {
+    public String getVariableName() {
 
-        return this.variableReference;
+        return this.variableName;
     }
 
     public SequenceType getSequenceType() {
         return this.sequenceType;
-    }
-
-    @Override
-    public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.variableReference);
-        result.add(this.expression);
-        return result;
-    }
-
-    @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitQuantifiedExpressionVar(this, argument);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        return null;
     }
 }

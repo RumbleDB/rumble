@@ -45,12 +45,12 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
@@ -60,6 +60,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -125,7 +126,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
+        List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<InlineFunctionExpression> InlineFunctionExpressions = new ArrayList<>();
+        for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
+            VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                variable
+            );
+            globalVariables.add(variableDeclaration);
+        }
         for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
             InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
                 function
@@ -136,7 +144,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.visitModuleImport(module);
         }
 
-        return new Prolog(InlineFunctionExpressions, createMetadataFromContext(ctx));
+        return new Prolog(globalVariables, InlineFunctionExpressions, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -346,10 +354,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
-        List<GroupByClauseVar> vars = new ArrayList<>();
-        GroupByClauseVar child;
+        List<GroupByVariableDeclaration> vars = new ArrayList<>();
+        GroupByVariableDeclaration child;
         for (JsoniqParser.GroupByVarContext var : ctx.vars) {
-            child = (GroupByClauseVar) this.visitGroupByVar(var);
+            child = this.processGroupByVar(var);
             vars.add(child);
         }
         return new GroupByClause(vars, createMetadataFromContext(ctx));
@@ -358,10 +366,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
         boolean stable = false;
-        List<OrderByClauseExpr> exprs = new ArrayList<>();
-        OrderByClauseExpr child;
+        List<OrderByClauseSortingKey> exprs = new ArrayList<>();
+        OrderByClauseSortingKey child;
         for (JsoniqParser.OrderByExprContext var : ctx.orderByExpr()) {
-            child = (OrderByClauseExpr) this.visitOrderByExpr(var);
+            child = this.processOrderByExpr(var);
             exprs.add(child);
         }
         if (ctx.stb != null && !ctx.stb.getText().isEmpty()) {
@@ -370,8 +378,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
     }
 
-    @Override
-    public Node visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+    public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
@@ -380,29 +387,26 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.uriLiteral() != null) {
             uri = ctx.uriLiteral().getText();
         }
-        OrderByClauseExpr.EMPTY_ORDER empty_order = OrderByClauseExpr.EMPTY_ORDER.NONE;
+        OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.LAST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LAST;
         }
         if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.FIRST;
         }
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
-        return new OrderByClauseExpr(
+        return new OrderByClauseSortingKey(
                 expression,
                 ascending,
                 uri,
-                empty_order,
-                createMetadataFromContext(ctx)
+                empty_order
         );
     }
 
-    @Override
-    public Node visitGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+    public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
         SequenceType seq = null;
         Expression expr = null;
-        String uri = null;
-        VariableReferenceExpression var = (VariableReferenceExpression) this.visitVarRef(ctx.var_ref);
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
@@ -415,11 +419,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             expr = (Expression) this.visitExprSingle(ctx.ex);
         }
 
-        if (ctx.uri != null) {
-            uri = ctx.uri.getText();
-        }
 
-        return new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
+        return new GroupByVariableDeclaration(var, seq, expr);
     }
 
     @Override
@@ -1036,18 +1037,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
         List<QuantifiedExpressionVar> vars = new ArrayList<>();
-        QuantifiedExpression.QuantifiedOperators operator;
+        QuantifiedExpression.Quantification operator;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         if (ctx.ev == null) {
-            operator = QuantifiedExpression.QuantifiedOperators.SOME;
+            operator = QuantifiedExpression.Quantification.SOME;
         } else {
-            operator = QuantifiedExpression.QuantifiedOperators.EVERY;
+            operator = QuantifiedExpression.Quantification.EVERY;
         }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
-            VariableReferenceExpression varRef;
+            String variableName;
             Expression varExpression;
             SequenceType sequenceType = null;
-            varRef = (VariableReferenceExpression) this.visitVarRef(currentVariable.varRef());
+            variableName = ((VariableReferenceExpression) this.visitVarRef(currentVariable.varRef())).getVariableName();
             if (currentVariable.sequenceType() != null) {
                 sequenceType = this.processSequenceType(currentVariable.sequenceType());
             } else {
@@ -1057,10 +1058,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
             vars.add(
                 new QuantifiedExpressionVar(
-                        varRef,
+                        variableName,
                         varExpression,
-                        sequenceType,
-                        createMetadataFromContext(ctx)
+                        sequenceType
                 )
             );
         }
@@ -1072,6 +1072,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExceptionMetadata(tokenLineNumber, tokenColumnNumber);
+    }
+
+    @Override
+    public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
+        SequenceType seq = null;
+        boolean external;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        if (ctx.sequenceType() != null) {
+            seq = this.processSequenceType(ctx.sequenceType());
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
+        }
+        external = (ctx.external != null);
+        Expression expr = null;
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+        }
+
+        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
 
 }

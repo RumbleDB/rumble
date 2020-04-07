@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.durations;
 
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -12,7 +13,6 @@ import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 

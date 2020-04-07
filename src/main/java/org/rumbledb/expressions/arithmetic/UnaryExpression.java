@@ -50,15 +50,6 @@ public class UnaryExpression extends Expression {
         return visitor.visitUnaryExpr(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(unaryExpr ";
-        result += this.negated ? "-(" : "+(";
-        result += this.mainExpression.serializationString(true);
-        result += ")";
-        return result;
-    }
-
     public Expression getMainExpression() {
         return this.mainExpression;
     }
@@ -70,5 +61,18 @@ public class UnaryExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.negated ? "-" : "+") + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

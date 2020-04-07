@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.quantifiers;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
@@ -29,7 +30,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,11 +38,11 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final QuantifiedExpression.QuantifiedOperators operator;
+    private final QuantifiedExpression.Quantification operator;
     private final RuntimeIterator evaluationExpression;
 
     public QuantifiedExpressionIterator(
-            QuantifiedExpression.QuantifiedOperators operator,
+            QuantifiedExpression.Quantification operator,
             List<QuantifiedExpressionVarIterator> children,
             RuntimeIterator evaluationExpression,
             ExecutionMode executionMode,
@@ -76,9 +76,9 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                 results.add(result);
             }
 
-            boolean result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY;
+            boolean result = this.operator == QuantifiedExpression.Quantification.EVERY;
             for (BooleanItem res : results) {
-                result = this.operator == QuantifiedExpression.QuantifiedOperators.EVERY
+                result = this.operator == QuantifiedExpression.Quantification.EVERY
                     ? result && res.getBooleanValue()
                     : result || res.getBooleanValue();
             }

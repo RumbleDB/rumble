@@ -35,16 +35,6 @@ public class CastableExpression extends Expression {
         return visitor.visitCastableExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(castableExpr ");
-        result.append(this.mainExpression.serializationString(true));
-        result.append(" castable as " + this.sequenceType.toString());
-        result.append(")");
-        return result.toString();
-    }
-
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
@@ -56,5 +46,18 @@ public class CastableExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return Collections.singletonList(this.mainExpression);
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

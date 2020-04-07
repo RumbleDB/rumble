@@ -23,7 +23,6 @@ package org.rumbledb.runtime.flwor.expression;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.io.Serializable;
 
@@ -31,22 +30,22 @@ public class GroupByClauseSparkIteratorExpression implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
-    private final VariableReferenceIterator variableReference;
+    private final String variableName;
     private final RuntimeIterator expression;
     private final ExceptionMetadata iteratorMetadata;
 
     public GroupByClauseSparkIteratorExpression(
             RuntimeIterator expression,
-            VariableReferenceIterator variable,
+            String variableName,
             ExceptionMetadata iteratorMetadata
     ) {
         this.expression = expression;
-        this.variableReference = variable;
+        this.variableName = variableName;
         this.iteratorMetadata = iteratorMetadata;
     }
 
-    public VariableReferenceIterator getVariableReference() {
-        return this.variableReference;
+    public String getVariableName() {
+        return this.variableName;
     }
 
     public ExceptionMetadata getIteratorMetadata() {

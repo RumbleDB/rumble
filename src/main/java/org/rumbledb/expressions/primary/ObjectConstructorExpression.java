@@ -81,25 +81,4 @@ public class ObjectConstructorExpression extends Expression {
         return visitor.visitObjectConstructor(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder builder = new StringBuilder();
-        builder.append("(primaryExpr (objectConstructor {");
-        if (!this.isMergedConstructor) {
-            builder.append(" ");
-            for (Expression key : this.keys) {
-                builder.append("(pairConstructor (exprSingle ");
-                builder.append(key.serializationString(false));
-                builder.append(") : (exprSingle ");
-                builder.append(this.values.get(this.keys.indexOf(key)).serializationString(false));
-                builder.append("))");
-                builder.append((this.keys.indexOf(key) < this.keys.size() - 1 ? " , " : " "));
-            }
-        } else {
-            builder.append("| " + this.childExpression.serializationString(prefix) + " |");
-        }
-        builder.append("}))");
-        return builder.toString();
-    }
-
 }

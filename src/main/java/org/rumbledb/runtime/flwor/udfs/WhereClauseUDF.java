@@ -25,11 +25,11 @@ import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
-import sparksoniq.semantics.DynamicContext;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -39,7 +39,6 @@ import java.util.Map;
 public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> columnNamesByType;
 
@@ -70,7 +69,6 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
         this.input = new Input();
 
         this.columnNamesByType = columnNamesByType;
-        this.dependencies = this.expression.getVariableDependencies();
 
     }
 

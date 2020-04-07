@@ -52,22 +52,25 @@ public class AdditiveExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(additiveExpr ";
-        result += this.getChildren().get(0).serializationString(true);
-        result += this.isMinus ? " - " : " +  ";
-        result += this.getChildren().get(1).serializationString(true);
-        result += ")";
-        return result;
-    }
-
-    @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
     public boolean isMinus() {
         return this.isMinus;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 
 }

@@ -44,14 +44,6 @@ public class StringLiteralExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = (prefix ? "(primaryExpr " : "") + "(stringLiteral ";
-        result += "\"" + this.getValue() + "\"";
-        result += (prefix ? ")" : "") + ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitString(this, argument);
     }
@@ -59,5 +51,18 @@ public class StringLiteralExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.value) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

@@ -18,7 +18,7 @@
  *
  */
 
-package sparksoniq.semantics;
+package org.rumbledb.context;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -108,9 +108,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public boolean contains(String varName) {
-        return this.localVariableValues.containsKey(varName)
+        boolean localContains = this.localVariableValues.containsKey(varName)
             || this.rddVariableValues.containsKey(varName)
             || this.dataFrameVariableValues.containsKey(varName);
+        if (localContains) {
+            return true;
+        }
+        if (this.parent != null) {
+            return this.parent.contains(varName);
+        }
+        return false;
     }
 
     public boolean isRDD(String varName, ExceptionMetadata metadata) {

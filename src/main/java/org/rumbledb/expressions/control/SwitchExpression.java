@@ -74,24 +74,4 @@ public class SwitchExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitSwitchExpression(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(SwitchExpression switch ");
-        result.append(this.testCondition.serializationString(false));
-        for (SwitchCase c : this.cases) {
-            for (Expression e : c.getConditionExpressions()) {
-                result.append("case ");
-                result.append(e.serializationString(false));
-                result.append(" ");
-            }
-            result.append("return ");
-            result.append(c.getReturnExpression().serializationString(false));
-        }
-        result.append(" default ");
-        result.append(this.defaultExpression.serializationString(false));
-        result.append(")");
-        return result.toString();
-    }
 }

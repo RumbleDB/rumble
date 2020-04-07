@@ -20,36 +20,43 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
+
 
 import java.util.ArrayList;
 import java.util.List;
 
 public class GroupByClause extends Clause {
 
-    private final List<GroupByClauseVar> groupVars;
+    private final List<GroupByVariableDeclaration> variables;
 
-    public GroupByClause(List<GroupByClauseVar> vars, ExceptionMetadata metadata) {
+    public GroupByClause(List<GroupByVariableDeclaration> variables, ExceptionMetadata metadata) {
         super(FLWOR_CLAUSES.GROUP_BY, metadata);
-        if (vars == null || vars.isEmpty()) {
+        if (variables == null || variables.isEmpty()) {
             throw new SemanticException("Group clause must have at least one variable", metadata);
         }
-        this.groupVars = vars;
+        this.variables = variables;
     }
 
-    public List<GroupByClauseVar> getGroupVariables() {
-        return this.groupVars;
+    public List<GroupByVariableDeclaration> getGroupVariables() {
+        return this.variables;
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        this.groupVars.forEach(e -> {
+        this.variables.forEach(e -> {
             if (e != null) {
-                result.add(e);
+                result.add(e.getExpression());
             }
         });
         return result;
@@ -60,14 +67,24 @@ public class GroupByClause extends Clause {
         return visitor.visitGroupByClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(groupByClause group by ";
-        for (GroupByClauseVar var : this.groupVars) {
-            result += var.serializationString(true)
-                + (this.groupVars.indexOf(var) < this.groupVars.size() - 1 ? " , " : "");
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
         }
-        result += ")";
-        return result;
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (");
+        for (GroupByVariableDeclaration var : this.variables) {
+            buffer.append(var.getVariableName());
+            buffer.append(", ");
+        }
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 }

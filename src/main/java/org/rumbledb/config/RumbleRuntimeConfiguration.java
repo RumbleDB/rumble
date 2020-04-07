@@ -25,21 +25,25 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
 
-public class SparksoniqRuntimeConfiguration {
+public class RumbleRuntimeConfiguration {
 
-    public static final String ARGUMENT_PREFIX = "--";
+    private static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
     private HashMap<String, String> arguments;
 
-    public SparksoniqRuntimeConfiguration(String[] args) {
+    public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2) {
-            if (args[i].startsWith(ARGUMENT_PREFIX)) {
-                this.arguments.put(args[i].trim().replace(ARGUMENT_PREFIX, ""), args[i + 1]);
-            } else {
+            if (!args[i].startsWith(ARGUMENT_PREFIX)) {
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
             }
+            String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
+            if (i + 1 >= args.length || args[i + 1].startsWith(ARGUMENT_PREFIX)) {
+                throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
+            }
+            String argumentValue = args[i + 1];
+            this.arguments.put(argumentName, argumentValue);
         }
     }
 
@@ -97,6 +101,15 @@ public class SparksoniqRuntimeConfiguration {
         } else {
             return 200;
         }
+    }
+
+    public String getExternalVariableValue(String name) {
+        for (String s : this.arguments.keySet()) {
+            if (s.equals("variable:" + name)) {
+                return this.arguments.get(s);
+            }
+        }
+        return null;
     }
 
     public boolean isShell() {

@@ -31,10 +31,8 @@ import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
@@ -44,6 +42,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -63,7 +62,6 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -124,14 +122,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitOrderByClause(OrderByClause expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitGroupByClauseVar(GroupByClauseVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitOrderByClauseExpr(OrderByClauseExpr expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -280,10 +270,6 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
-
-    public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
     // endregion
 
     // region control
@@ -296,6 +282,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitVariableDeclaration(VariableDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
 
