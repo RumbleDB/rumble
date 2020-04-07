@@ -115,7 +115,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         }
         if (this.rddVariables.containsKey(key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd);
+            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
         }
 
         throw new OurBadException("Undeclared FLOWR variable", metadata);

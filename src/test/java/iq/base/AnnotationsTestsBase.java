@@ -27,6 +27,8 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
 import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
@@ -52,6 +54,7 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] {});
 
 
     public void initializeTests(File dir) {
@@ -72,11 +75,13 @@ public class AnnotationsTestsBase {
             Assert.fail();
         }
         MainModule mainModule = null;
+        DynamicContext dynamicContext = null;
         try {
             mainModule = this.parse(path);
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
             VisitorHelpers.populateStaticContext(mainModule);
+            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING
         } catch (ParsingException exception) {
@@ -155,7 +160,7 @@ public class AnnotationsTestsBase {
                 this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator);
+                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
             } catch (SparksoniqRuntimeException exception) {
                 String errorOutput = exception.getMessage();
                 exception.printStackTrace();
@@ -169,7 +174,7 @@ public class AnnotationsTestsBase {
                     !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
@@ -216,7 +221,11 @@ public class AnnotationsTestsBase {
         }
     }
 
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+    protected void checkExpectedOutput(
+            String expectedOutput,
+            RuntimeIterator runtimeIterator,
+            DynamicContext dynamicContext
+    ) {
         Assert.assertTrue(true);
     }
 
