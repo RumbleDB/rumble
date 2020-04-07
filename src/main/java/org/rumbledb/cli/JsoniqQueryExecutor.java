@@ -81,7 +81,7 @@ public class JsoniqQueryExecutor {
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule.serializationString(true));
+            System.out.println(mainModule);
         }
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = generateRuntimeIterators(mainModule);
@@ -89,7 +89,6 @@ public class JsoniqQueryExecutor {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.out.println(sb);
-            return;
         }
 
         if (result.isRDD() && outputPath != null) {
@@ -120,9 +119,17 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
         generateStaticContext(mainModule);
+        if (this.configuration.isPrintIteratorTree()) {
+            System.out.println(mainModule);
+        }
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions
+        if (this.configuration.isPrintIteratorTree()) {
+            StringBuffer sb = new StringBuffer();
+            runtimeIterator.print(sb, 0);
+            System.out.println(sb);
+        }
         if (!runtimeIterator.isRDD()) {
             String localOutput = this.getIteratorOutput(runtimeIterator, dynamicContext);
             return localOutput;

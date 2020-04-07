@@ -76,14 +76,20 @@ public class VariableReferenceExpression extends Expression implements Serializa
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = (prefix ? "(primaryExpr " : "") + "(varRef $ " + this.name;
-        result += (prefix ? ")" : "") + ")";
-        return result;
-    }
-
-    @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" ($" + this.name + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

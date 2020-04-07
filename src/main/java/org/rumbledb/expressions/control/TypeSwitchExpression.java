@@ -55,22 +55,4 @@ public class TypeSwitchExpression extends Expression {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTypeSwitchExpression(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(TypeswitchExpression switch ");
-        result.append(this.testCondition.serializationString(false));
-        for (TypeswitchCase c : this.cases) {
-            result.append("case ");
-            result.append(c.getVariableName());
-            result.append(" ");
-            result.append("return ");
-            result.append(c.getReturnExpression().serializationString(false));
-        }
-        result.append(" default ");
-        result.append(this.defaultCase.getReturnExpression().serializationString(false));
-        result.append(")");
-        return result.toString();
-    }
 }

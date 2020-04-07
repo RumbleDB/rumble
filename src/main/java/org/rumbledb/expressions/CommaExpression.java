@@ -85,21 +85,5 @@ public class CommaExpression extends Expression {
         return visitor.visitCommaExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(expr ";
-        for (Expression expr : this.expressions) {
-
-            result += "(exprSingle "
-                + expr.serializationString(false)
-                + (this.expressions.size() >= 2
-                    && this.expressions.indexOf(expr) < this.expressions.size() - 1 ? ") , " : ")");
-        }
-
-        result += ")";
-        return result;
-    }
-
-
 }
 

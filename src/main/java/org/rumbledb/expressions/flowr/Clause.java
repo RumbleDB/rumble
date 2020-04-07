@@ -63,11 +63,6 @@ public abstract class Clause extends Node {
         this.highestExecutionMode = this.previousClause.getHighestExecutionMode(visitorConfig);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "";
-    }
-
     public Clause getFirstClause() {
         Clause result = this;
         while (result.previousClause != null) {
@@ -93,5 +88,20 @@ public abstract class Clause extends Node {
         }
         this.nextClause = otherClause;
         otherClause.previousClause = this;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 }

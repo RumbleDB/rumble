@@ -35,14 +35,6 @@ public class ContextItemExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(contextExpr ";
-        result += "$$";
-        result += ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitContextExpr(this, argument);
     }

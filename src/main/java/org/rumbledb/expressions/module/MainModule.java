@@ -66,14 +66,5 @@ public class MainModule extends Node {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitMainModule(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(mainModule ";
-        result += " (prolog " + this.prolog.serializationString(false) + "), ";
-        result += " (expr " + this.expression.serializationString(false) + ") ";
-        result += ")";
-        return result;
-    }
 }
 
