@@ -41,8 +41,6 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     private RuntimeIterator iterator;
     private RuntimeIterator map;
     private Item nextResult;
-    private long position;
-    private boolean mustMaintainPosition;
     private DynamicContext mapDynamicContext;
 
 
