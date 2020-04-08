@@ -77,7 +77,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
             setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
+        throw new IteratorFlowException("Invalid next() call in simple map expression", getMetadata());
     }
 
     @Override
@@ -104,15 +104,15 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     private void setNextResult() {
         this.nextResult = null;
 
-        while (this.iterator.hasNext()) {
+        if (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
-            currentItems.add(item);
             this.mapDynamicContext.addVariableValue("$$", currentItems);
+            currentItems.add(item);
 
             this.nextResult = this.map.materializeFirstItemOrNull(this.mapDynamicContext);
+            this.mapDynamicContext.removeVariable("$$");
         }
-        this.mapDynamicContext.removeVariable("$$");
 
         if (this.nextResult == null) {
             this.hasNext = false;
