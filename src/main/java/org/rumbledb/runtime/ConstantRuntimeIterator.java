@@ -43,8 +43,7 @@ public class ConstantRuntimeIterator extends LocalRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item result = this.item;
-            return result;
+            return this.item;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
