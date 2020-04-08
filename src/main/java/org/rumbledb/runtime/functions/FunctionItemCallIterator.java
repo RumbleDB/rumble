@@ -141,8 +141,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         String argName;
         RuntimeIterator argIterator;
 
-        System.out.println(this.functionItem);
-
         Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
@@ -187,7 +185,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        System.out.println(partiallyAppliedFunction);
         return new ConstantRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 

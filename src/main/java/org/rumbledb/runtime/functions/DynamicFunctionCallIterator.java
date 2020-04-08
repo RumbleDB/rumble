@@ -109,7 +109,6 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
             this.functionItemIterator.open(this.currentDynamicContextForLocalExecution);
             if (this.functionItemIterator.hasNext()) {
                 this.functionItem = (FunctionItem) this.functionItemIterator.next();
-                System.out.println(this.functionItem);
             }
             if (this.functionItemIterator.hasNext()) {
                 throw new UnexpectedTypeException(
