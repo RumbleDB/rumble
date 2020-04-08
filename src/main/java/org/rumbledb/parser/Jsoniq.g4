@@ -144,7 +144,7 @@ castExpr                : main_expr=unaryExpr ( Kcast Kas single=singleType )?;
 
 unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
-simpleMapExpr           : main_expr=postFixExpr ('!' map_expr=postFixExpr)*;
+simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
 postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 
