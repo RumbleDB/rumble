@@ -27,8 +27,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
-import org.rumbledb.cli.Main;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CannotMaterializeException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.BooleanItem;
@@ -44,6 +45,7 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SparkSessionManager {
 
@@ -145,19 +147,40 @@ public class SparkSessionManager {
         return this.javaSparkContext;
     }
 
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd) {
-        String truncationMessage = "Results have been truncated to:"
-            + SparkSessionManager.COLLECT_ITEM_LIMIT
-            + " items. This value can be configured with the --result-size parameter at startup.\n";
-        return collectRDDwithLimit(rdd, truncationMessage);
+    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, ExceptionMetadata metadata) {
+        if (SparkSessionManager.LIMIT_COLLECT()) {
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
+                long count = rdd.count();
+                throw new CannotMaterializeException(
+                        "Cannot materialize a sequence of "
+                            + count
+                            + " items because the limit is set to "
+                            + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + ". This value can be configured with the --result-size parameter at startup",
+                        metadata
+                );
+            }
+            return result;
+        } else {
+            return rdd.collect();
+        }
     }
 
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, String customTruncationMessage) {
+    public static <T> List<T> collectRDDwithLimitWarningOnly(JavaRDD<T> rdd) {
         if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                Main.printMessageToLog(customTruncationMessage);
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
+                long count = rdd.count();
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + count
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
             }
+            result = result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList());
             return result;
         } else {
             return rdd.collect();

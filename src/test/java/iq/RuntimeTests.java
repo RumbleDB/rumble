@@ -30,7 +30,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -86,7 +85,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-
+        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
     @Test(timeout = 1000000)
@@ -96,27 +95,31 @@ public class RuntimeTests extends AnnotationsTestsBase {
     }
 
     @Override
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+    protected void checkExpectedOutput(
+            String expectedOutput,
+            RuntimeIterator runtimeIterator,
+            DynamicContext dynamicContext
+    ) {
         String actualOutput;
         if (!runtimeIterator.isRDD()) {
-            actualOutput = runIterators(runtimeIterator);
+            actualOutput = runIterators(runtimeIterator, dynamicContext);
         } else {
-            actualOutput = getRDDResults(runtimeIterator);
+            actualOutput = getRDDResults(runtimeIterator, dynamicContext);
         }
         Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
+            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
-    protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
+    protected String runIterators(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        String actualOutput = getIteratorOutput(iterator, dynamicContext);
         return actualOutput;
     }
 
-    protected String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    protected String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
@@ -125,57 +128,63 @@ public class RuntimeTests extends AnnotationsTestsBase {
             return "";
         }
         String singleOutput = result.serialize();
-        if (!iterator.hasNext())
+        if (!iterator.hasNext()) {
             return singleOutput;
-        else {
-            String output = "(" + result.serialize() + ", ";
-            while (iterator.hasNext()) {
-                result = iterator.next();
-                if (result != null)
-                    output += result.serialize() + ", ";
+        } else {
+            int itemCount = 1;
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            sb.append(result.serialize());
+            sb.append(", ");
+            while (
+                iterator.hasNext()
+                    &&
+                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
+                        ||
+                        this.configuration.getResultSizeCap() == 0)
+            ) {
+                sb.append(iterator.next().serialize());
+                sb.append(", ");
+                itemCount++;
+            }
+            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
             }
             // remove last comma
+            String output = sb.toString();
             output = output.substring(0, output.length() - 2);
             output += ")";
             return output;
         }
     }
 
-    private String getRDDResults(RuntimeIterator runtimeIterator) {
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
+    private String getRDDResults(RuntimeIterator runtimeIterator, DynamicContext dynamicContext) {
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        int resultCount = output.take(2).size();
-        if (resultCount == 0) {
+        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
+
+        if (collectedOutput.isEmpty()) {
             return "";
         }
-        if (resultCount == 1) {
-            return output.collect().get(0);
-        }
-        if (resultCount > 1) {
-            List<String> collectedOutput;
-            /*
-             * if (SparkSessionManager.LIMIT_COLLECT()) {
-             * collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-             * if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-             * ShellStart.terminal.output("\nWarning: Results have been truncated to: " +
-             * SparkSessionManager.COLLECT_ITEM_LIMIT
-             * + " items. This value can be configured with the --result-size parameter at startup.\n");
-             * }
-             * } else {
-             */
-            collectedOutput = output.collect();
-            // }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            for (String item : collectedOutput) {
-                sb.append(item + ", ");
-            }
-
-            sb.delete(sb.length() - 2, sb.length());
-            sb.append(")");
-            return sb.toString();
+        if (collectedOutput.size() == 1) {
+            return collectedOutput.get(0);
         }
-        throw new OurBadException("Unexpected rdd result count in getRDDResults()");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        for (String item : collectedOutput) {
+            sb.append(item);
+            sb.append(", ");
+        }
+
+        String result = sb.toString();
+        result = result.substring(0, result.length() - 2);
+        result += ")";
+        return result;
     }
 }

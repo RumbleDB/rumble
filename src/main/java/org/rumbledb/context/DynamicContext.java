@@ -164,7 +164,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
         if (this.rddVariableValues.containsKey(varName)) {
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd);
+            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
         }
 
         if (this.parent != null) {
