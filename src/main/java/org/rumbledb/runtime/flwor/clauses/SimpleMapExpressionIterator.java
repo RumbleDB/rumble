@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
@@ -46,7 +47,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
+public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
@@ -70,7 +71,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected Item nextLocal() {
+    public Item next() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -80,25 +81,18 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected boolean hasNextLocal() {
+    public boolean hasNext() {
         return this.hasNext;
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
-        this.iterator.close();
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        this.iterator.reset(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    @Override
-    protected void closeLocal() {
+    public void close() {
         this.iterator.close();
     }
 
     @Override
-    protected void openLocal() {
+    public void open(DynamicContext context) {
+        super.open(context);
         if (this.children.size() < 2) {
             throw new OurBadException("Invalid simple map! Must initialize map before calling next");
         }
@@ -128,43 +122,10 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         }
     }
 
-    @Override
-    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator iterator = this.children.get(0);
-        RuntimeIterator filter = this.children.get(1);
-        JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        if (
-            !filter.getVariableDependencies().containsKey("$position")
-                && !filter.getVariableDependencies().containsKey("$last")
-                && (filter instanceof BooleanRuntimeIterator
-                    || filter instanceof AndOperationIterator
-                    || filter instanceof OrOperationIterator
-                    || filter instanceof NotOperationIterator
-                    || filter instanceof ComparisonOperationIterator)
-        ) {
-            Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
-            JavaRDD<Item> resultRDD = childRDD.filter(transformation);
-            return resultRDD;
-        } else {
-            JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
-            long last = 0;
-            if (filter.getVariableDependencies().containsKey("$last")) {
-                last = childRDD.count();
-            }
-            Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
-                    filter,
-                    dynamicContext,
-                    last
-            );
-            JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
-            return resultRDD.keys();
-        }
-    }
-
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(this.filter.getVariableDependencies());
+        result.putAll(this.map.getVariableDependencies());
         result.remove("$");
         result.putAll(this.iterator.getVariableDependencies());
         return result;
