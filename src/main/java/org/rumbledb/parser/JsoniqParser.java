@@ -3744,6 +3744,7 @@ public class JsoniqParser extends Parser {
 
 	public static class SimpleMapExprContext extends ParserRuleContext {
 		public PostFixExprContext main_expr;
+		public PostFixExprContext map_expr;
 		public List<PostFixExprContext> postFixExpr() {
 			return getRuleContexts(PostFixExprContext.class);
 		}
@@ -3779,7 +3780,7 @@ public class JsoniqParser extends Parser {
 				setState(664);
 				match(T__50);
 				setState(665);
-				postFixExpr();
+				((SimpleMapExprContext)_localctx).map_expr = postFixExpr();
 				}
 				}
 				setState(670);
