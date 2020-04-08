@@ -18,37 +18,32 @@
  *
  */
 
-package org.rumbledb.runtime.functions;
+package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
-import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
-public class FunctionRuntimeIterator extends LocalRuntimeIterator {
+public class ConstantRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item item;
 
-    public FunctionRuntimeIterator(
-            FunctionItem function,
+    public ConstantRuntimeIterator(
+            Item item,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this.item = function;
+        this.item = item;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            FunctionItem result = ((FunctionItem) this.item).deepCopy();
-            result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
-            return result;
+            return this.item;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());

@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -91,7 +92,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.currentDynamicContextForLocalExecution
             );
         }
-
         this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -137,7 +137,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
-    private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
+    private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         String argName;
         RuntimeIterator argIterator;
 
@@ -185,7 +185,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
+        return new ConstantRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
@@ -212,7 +212,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues.put(argName, argIterator.materialize(context));
             }
         }
-        return new DynamicContext(context, localArgumentValues, RDDArgumentValues, DFArgumentValues);
+        return new DynamicContext(null, localArgumentValues, RDDArgumentValues, DFArgumentValues);
     }
 
     @Override
