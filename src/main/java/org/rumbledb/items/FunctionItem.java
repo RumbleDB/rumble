@@ -193,9 +193,8 @@ public class FunctionItem extends Item {
         sb.append("  Local:\n");
         for (String name : this.localVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)\n");
-            if(this.localVariablesInClosure.get(name).size() == 1)
-            {
-                sb.append("      " + this.localVariablesInClosure.get(name).get(0)+"\n");
+            if (this.localVariablesInClosure.get(name).size() == 1) {
+                sb.append("      " + this.localVariablesInClosure.get(name).get(0).serialize() + "\n");
             }
         }
         sb.append("  RDD:\n");

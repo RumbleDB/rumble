@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -91,7 +92,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.currentDynamicContextForLocalExecution
             );
         }
-
         this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -137,9 +137,11 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
-    private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
+    private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         String argName;
         RuntimeIterator argIterator;
+
+        System.out.println(this.functionItem);
 
         Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
@@ -170,7 +172,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             }
         }
 
-        System.out.println(this.functionItem);
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
                         "partially applied " + this.functionItem.getIdentifier().getName(),
@@ -187,7 +188,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 DFArgumentValues
         );
         System.out.println(partiallyAppliedFunction);
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
+        return new ConstantRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
