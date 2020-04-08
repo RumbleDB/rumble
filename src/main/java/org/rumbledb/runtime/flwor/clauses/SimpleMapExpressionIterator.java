@@ -20,25 +20,13 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
-import org.apache.spark.api.java.JavaPairRDD;
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
-import org.rumbledb.runtime.operational.NotOperationIterator;
-import org.rumbledb.runtime.operational.OrOperationIterator;
-import org.rumbledb.runtime.postfix.PredicateClosure;
-import org.rumbledb.runtime.postfix.PredicateClosureZipped;
-import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
-import scala.Tuple2;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
