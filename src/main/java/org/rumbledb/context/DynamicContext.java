@@ -346,6 +346,34 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
     }
 
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("  Local:\n");
+        for (String name : this.localVariableValues.keySet()) {
+            sb.append("    " + name + " (" + this.localVariableValues.get(name).size() + " items)\n");
+            if (this.localVariableValues.get(name).size() == 1) {
+                sb.append("      " + this.localVariableValues.get(name).get(0).serialize() + "\n");
+            }
+        }
+        sb.append("  Counts:\n");
+        for (String name : this.localVariableCounts.keySet()) {
+            sb.append("    " + name + " (" + this.localVariableCounts.get(name) + " items)\n");
+        }
+        sb.append("  RDD:\n");
+        for (String name : this.rddVariableValues.keySet()) {
+            sb.append("    " + name + " (" + this.rddVariableValues.get(name).count() + " items)\n");
+        }
+        sb.append("  Data Frames:\n");
+        for (String name : this.dataFrameVariableValues.keySet()) {
+            sb.append("    " + name + " (" + this.dataFrameVariableValues.get(name).count() + " items)\n");
+        }
+        if (this.parent != null) {
+            sb.append("Parent context:\n");
+            sb.append(this.parent.toString());
+        }
+        return sb.toString();
+    }
 
 }
 

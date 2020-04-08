@@ -58,4 +58,18 @@ public class FunctionSignature implements Serializable {
     public int hashCode() {
         return this.getParameterTypes().hashCode() + this.getReturnType().hashCode();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        String separator = "";
+        for (SequenceType type : this.parameterTypes) {
+            sb.append(separator + type);
+            separator = ", ";
+        }
+        sb.append(") as ");
+        sb.append(this.returnType);
+        return sb.toString();
+    }
 }
