@@ -40,13 +40,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -107,9 +106,12 @@ public class ItemParser implements Serializable {
                 object.readNull();
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new SparksoniqRuntimeException("Invalid value found while parsing. JSON is not well-formed!");
-        } catch (IOException e) {
-            throw new SparksoniqRuntimeException("IO error while parsing. JSON is not well-formed!");
+            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+        } catch (Exception e) {
+            throw new ParsingException(
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata
+            );
         }
     }
 
