@@ -92,7 +92,7 @@ import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
-import org.rumbledb.runtime.flwor.clauses.SimpleMapExpressionIterator;
+import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;

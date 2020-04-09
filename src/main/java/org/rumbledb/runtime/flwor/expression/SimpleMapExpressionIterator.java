@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.flwor.clauses;
+package org.rumbledb.runtime.flwor.expression;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
