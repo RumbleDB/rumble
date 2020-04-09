@@ -18,23 +18,34 @@
  *
  */
 
-package sparksoniq.utils;
+package org.rumbledb.runtime;
 
-public class Tuple<T, V> {
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import sparksoniq.jsoniq.ExecutionMode;
 
-    private final T first;
-    private final V second;
+public class ConstantRuntimeIterator extends LocalRuntimeIterator {
 
-    public Tuple(T first, V second) {
-        this.first = first;
-        this.second = second;
+    private static final long serialVersionUID = 1L;
+    private Item item;
+
+    public ConstantRuntimeIterator(
+            Item item,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
+        super(null, executionMode, iteratorMetadata);
+        this.item = item;
     }
 
-    public T getFirst() {
-        return this.first;
-    }
+    @Override
+    public Item next() {
+        if (this.hasNext) {
+            this.hasNext = false;
+            return this.item;
+        }
 
-    public V getSecond() {
-        return this.second;
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
     }
 }

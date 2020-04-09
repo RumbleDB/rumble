@@ -141,7 +141,7 @@ public class RumbleRuntimeConfiguration {
             + "\n"
             +
             "Item Display Limit: "
-            + (this.arguments.getOrDefault("result-size", "-"))
+            + getResultSizeCap()
             + "\n"
             +
             "Output Path: "

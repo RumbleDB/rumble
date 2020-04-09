@@ -35,11 +35,8 @@ import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-import sparksoniq.utils.FileUtils;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
@@ -85,29 +82,20 @@ public class RumbleJLineShell {
     }
 
     private void processQuery() throws IOException {
-        Path file = FileUtils.writeToFileInCurrentDirectory(this.currentQueryContent.trim());
+        String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
         try {
-            String result = this.jsoniqQueryExecutor.runInteractive(file);
+            String result = this.jsoniqQueryExecutor.runInteractive(query);
             output(result);
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
-                output("[EXEC TIME]: " + time);
+                output("The query took " + time + " milliseconds to execute.");
             }
-            removeQueryFile(file);
         } catch (Exception ex) {
             handleException(ex, this.configuration.getShowErrorInfo());
-            removeQueryFile(file);
         }
         this.queryStarted = false;
         this.currentQueryContent = "";
-    }
-
-    private void removeQueryFile(Path file) {
-        try {
-            Files.delete(file);
-        } catch (Exception ignored) {
-        }
     }
 
     private void initialize() throws IOException {
@@ -124,7 +112,7 @@ public class RumbleJLineShell {
             .highlighter(new DefaultHighlighter())
             // .parser(new JiqsJlineParser())
             .build();
-        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(false, this.configuration);
+        this.jsoniqQueryExecutor = new JsoniqQueryExecutor(this.configuration);
     }
 
     private void handleException(Throwable ex, boolean showErrorInfo) {

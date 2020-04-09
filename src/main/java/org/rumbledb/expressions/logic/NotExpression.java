@@ -47,15 +47,6 @@ public class NotExpression extends Expression {
         return visitor.visitNotExpr(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(notExpr ";
-        result += "not ";
-        result += this.mainExpression.serializationString(true);
-        result += ")";
-        return result;
-    }
-
     public Expression getMainExpression() {
         return this.mainExpression;
     }

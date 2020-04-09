@@ -49,16 +49,6 @@ public class StringConcatExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(andExpr ";
-        result += this.leftExpression.serializationString(true);
-        result += " || ";
-        result += this.rightExpression.serializationString(true);
-        result += ")";
-        return result;
-    }
-
-    @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }

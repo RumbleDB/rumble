@@ -74,15 +74,4 @@ public class ConditionalExpression extends Expression {
         return visitor.visitConditionalExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(ifExpr if ( ";
-        result += this.conditionExpression.serializationString(prefix);
-        result += " ) then ";
-        result += this.thenExpression.serializationString(true);
-        result += ") else ";
-        result += this.elseExpression.serializationString(true);
-        result += "))";
-        return result;
-    }
 }

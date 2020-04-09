@@ -135,15 +135,6 @@ public class ComparisonExpression extends Expression {
         return visitor.visitComparisonExpr(this, argument);
     }
 
-    public String serializationString(boolean prefix) {
-        String result = "(comparisonExpr ";
-        result += this.getChildren().get(0).serializationString(true);
-        result += this.comparisonOperator;
-        result += this.getChildren().get(1).serializationString(true);
-        result += ")";
-        return result;
-    }
-
     @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
@@ -151,5 +142,18 @@ public class ComparisonExpression extends Expression {
 
     public ComparisonOperator getComparisonOperator() {
         return this.comparisonOperator;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.comparisonOperator) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }
