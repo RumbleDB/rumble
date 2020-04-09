@@ -25,7 +25,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,21 +77,26 @@ public class QuantifiedExpression extends Expression {
         return visitor.visitQuantifiedExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder sb = new StringBuilder();
-        sb.append(this.quantifier.equals(Quantification.EVERY) ? "every " : "some ");
-        String separator = "";
-        for (QuantifiedExpressionVar v : this.variables) {
-            sb.append(separator);
-            sb.append(v.toString());
-            separator = ", ";
-        }
-        return sb.toString();
-    }
-
     public enum Quantification {
         EVERY,
         SOME
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.quantifier) + ", ");
+        for (QuantifiedExpressionVar var : this.variables) {
+            buffer.append(var.getVariableName());
+            buffer.append(", ");
+        }
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

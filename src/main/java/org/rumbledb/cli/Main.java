@@ -111,16 +111,8 @@ public class Main {
     }
 
     private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-
-        JsoniqQueryExecutor translator;
-        translator = new JsoniqQueryExecutor(sparksoniqConf.isLocal(), sparksoniqConf);
-        if (sparksoniqConf.isLocal()) {
-            System.out.println("Running in local mode");
-            translator.runLocal(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
-        } else {
-            System.out.println("Running in remote mode");
-            translator.run(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
-        }
+        JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
+        translator.runQuery(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
     }
 
     private static void initializeApplication() {

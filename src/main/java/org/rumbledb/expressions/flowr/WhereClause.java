@@ -55,12 +55,4 @@ public class WhereClause extends Clause {
         }
         return result;
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(whereClause where ";
-        result += this.whereExpression.serializationString(true);
-        result += "))";
-        return result;
-    }
 }

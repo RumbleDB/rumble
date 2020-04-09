@@ -44,14 +44,6 @@ public class DecimalLiteralExpression extends Expression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr ";
-        result += this.getValue();
-        result += ")";
-        return result;
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDecimal(this, argument);
     }
@@ -59,5 +51,18 @@ public class DecimalLiteralExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         return new ArrayList<>();
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.value) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

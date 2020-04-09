@@ -59,13 +59,4 @@ public class GroupByVariableDeclaration {
     public SequenceType getSequenceType() {
         return this.sequenceType;
     }
-
-    @Override
-    public String toString() {
-        return this.variableName
-            + " as "
-            + this.sequenceType.toString()
-            + " := "
-            + this.expression.serializationString(false);
-    }
 }

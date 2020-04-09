@@ -54,4 +54,9 @@ public class FunctionIdentifier implements Serializable {
     public int hashCode() {
         return this.name.hashCode() + this.arity;
     }
+
+    @Override
+    public String toString() {
+        return this.name + "#" + this.arity;
+    }
 }

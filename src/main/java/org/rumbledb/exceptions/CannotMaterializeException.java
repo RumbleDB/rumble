@@ -18,14 +18,15 @@
  *
  */
 
-package org.rumbledb.cli;
+package org.rumbledb.exceptions;
 
-import java.io.IOException;
+import org.rumbledb.errorcodes.ErrorCodes;
 
-public class ShellStart {
-    public static void main(String[] args) throws IOException {
-        System.err.println(
-            "ShellStart as a main entry point is deprecated. Please use --shell yes with the Main class."
-        );
+public class CannotMaterializeException extends SparksoniqRuntimeException {
+
+    private static final long serialVersionUID = 1L;
+
+    public CannotMaterializeException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCodes.CannotMaterializeErrorCode, metadata);
     }
 }

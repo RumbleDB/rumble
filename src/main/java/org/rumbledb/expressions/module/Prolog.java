@@ -70,28 +70,5 @@ public class Prolog extends Node {
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitProlog(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(prolog ");
-        result.append(" (varDecl ");
-        String separator = "";
-        for (VariableDeclaration var : this.variableDeclarations) {
-            result.append(separator);
-            result.append("(" + var.serializationString(false) + ") , ");
-            separator = ", ";
-        }
-        result.append("), ");
-        result.append(" (functionDecl ");
-        separator = "";
-        for (InlineFunctionExpression func : this.functionDeclarations) {
-            result.append(separator);
-            result.append("(" + func.serializationString(false) + ") , ");
-            separator = ", ";
-        }
-        result.append("))");
-        return result.toString();
-    }
 }
 
