@@ -31,8 +31,10 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.TreeMap;
 
 public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
@@ -42,6 +44,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     private RuntimeIterator map;
     private Item nextResult;
     private DynamicContext mapDynamicContext;
+    private Queue<Item> mapValues;
 
 
     public SimpleMapExpressionIterator(
@@ -83,6 +86,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
             throw new OurBadException("Invalid simple map! Must initialize map before calling next");
         }
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        this.mapValues = new LinkedList<>();
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -90,13 +94,21 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     private void setNextResult() {
         this.nextResult = null;
 
-        if (this.iterator.hasNext()) {
+        if (this.mapValues.size() > 0) {
+            this.nextResult = this.mapValues.poll();
+        } else if (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
             this.mapDynamicContext.addVariableValue("$$", currentItems);
             currentItems.add(item);
 
-            this.nextResult = this.map.materializeFirstItemOrNull(this.mapDynamicContext);
+            List<Item> mapValuesRaw = this.map.materialize(this.mapDynamicContext);
+            if (mapValuesRaw.size() == 1) {
+                this.nextResult = mapValuesRaw.get(0);
+            } else {
+                this.mapValues.addAll(mapValuesRaw);
+                this.nextResult = this.mapValues.poll();
+            }
             this.mapDynamicContext.removeVariable("$$");
         }
 
