@@ -29,12 +29,12 @@ import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
-public class ObjectIntersectClosure implements Function2<Item, Item, Item> {
+public class ObjectIntersectReduceClosure implements Function2<Item, Item, Item> {
 
 
     private static final long serialVersionUID = 1L;
 
-    public ObjectIntersectClosure() {
+    public ObjectIntersectReduceClosure() {
     }
 
     @Override
@@ -65,7 +65,9 @@ public class ObjectIntersectClosure implements Function2<Item, Item, Item> {
             } else {
                 // add the matching key's value to the list
                 Item value = v2.getItemByKey(key);
-                keyValuePairs.get(key).add(value);
+                Item prevValue = keyValuePairs.get(key).get(0);
+                for (Item elem : value.getItems())
+                    prevValue.putItem(elem);
             }
         }
 

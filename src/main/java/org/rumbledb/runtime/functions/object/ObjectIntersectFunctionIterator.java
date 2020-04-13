@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.object;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.api.java.function.Function2;
+import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -124,34 +125,18 @@ public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        // Enclose object values into arrays.
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        Function2<Item, Item, Item> transformation = new ObjectIntersectClosure();
-        Item reduceResult = childRDD.reduce(transformation);
+        Function<Item, Item> mapTransformation = new ObjectIntersectMapClosure();
+        JavaRDD<Item> mapResult = childRDD.map(mapTransformation);
 
-        // flatten values for each key
-        LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
-        for (String key : reduceResult.getKeys()) {
-            Item value = reduceResult.getItemByKey(key);
-            List<Item> flatValues = flatten(Collections.singletonList(value));
-            keyValuePairs.put(key, flatValues);
-        }
-        Item result = ItemFactory.getInstance().createObjectItem(keyValuePairs);
+        // Reduce input objects.
+        Function2<Item, Item, Item> transformation = new ObjectIntersectReduceClosure();
+        Item reduceResult = mapResult.reduce(transformation);
 
         // transform Item to JavaRDD<Item>
         JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
-        List<Item> listResult = Arrays.asList(result);
+        List<Item> listResult = Arrays.asList(reduceResult);
         return sparkContext.parallelize(listResult);
-    }
-
-    private List<Item> flatten(List<Item> items) {
-        List<Item> result = new ArrayList<>();
-        for (Item item : items) {
-            if (item.isArray()) {
-                result.addAll(flatten(item.getItems()));
-            } else {
-                result.add(item);
-            }
-        }
-        return result;
     }
 }
