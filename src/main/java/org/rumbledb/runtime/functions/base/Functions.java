@@ -1954,7 +1954,7 @@ public class Functions {
             "item*",
             "item*",
             ArrayDescendantFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
