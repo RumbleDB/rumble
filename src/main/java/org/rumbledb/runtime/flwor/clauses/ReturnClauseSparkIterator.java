@@ -29,12 +29,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 import java.util.Map;
@@ -63,16 +65,75 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDD()) {
-            throw new JobWithinAJobException(
-                    "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                    getMetadata()
-            );
-        }
+            if(this.child.isDataFrame())
+                throw new JobWithinAJobException(
+                        "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
+            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+            this.child.open(this.currentDynamicContextForLocalExecution);
+            JavaRDD<Item> result = null;
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                this.tupleContext.removeAllVariables(); // clear the previous variables
+                this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
+                JavaRDD<Item> intermediateResult = this.expression.getRDD(this.tupleContext);
+                if(result == null)
+                {
+                    result = intermediateResult;
+                } else {
+                    result = result.union(intermediateResult);
+                }
+            }
+            if(result == null)
+            {
+                return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
+            }
+            return result;
+        }
 
         Dataset<Row> df = this.child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
+    }
+    
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        RuntimeIterator expression = this.children.get(0);
+        if (expression.isRDD()) {
+            if(this.child.isDataFrame())
+                throw new JobWithinAJobException(
+                        "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
+            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+            this.child.open(this.currentDynamicContextForLocalExecution);
+            Dataset<Row> result = null;
+            while (this.child.hasNext()) {
+                FlworTuple tuple = this.child.next();
+                this.tupleContext.removeAllVariables(); // clear the previous variables
+                this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+
+                Dataset<Row> intermediateResult = this.expression.getDataFrame(this.tupleContext);
+                if(result == null)
+                {
+                    result = intermediateResult;
+                } else {
+                    result = result.union(intermediateResult);
+                }
+            }
+            if(result == null)
+            {
+                return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+            }
+            return result;
+        }
+
+        throw new OurBadException(
+            "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
+            getMetadata()
+    );
     }
 
     @Override

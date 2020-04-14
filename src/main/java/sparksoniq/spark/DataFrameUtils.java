@@ -42,6 +42,10 @@ public class DataFrameUtils {
             List<Item> items,
             ObjectItem schemaItem
     ) {
+        if(items.size() == 0)
+        {
+            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+        }
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
