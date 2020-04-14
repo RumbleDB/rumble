@@ -65,12 +65,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDD()) {
-            if(this.child.isDataFrame())
+            if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current
+                                                                                                 // context
             this.child.open(this.currentDynamicContextForLocalExecution);
             JavaRDD<Item> result = null;
             while (this.child.hasNext()) {
@@ -79,15 +80,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
                 JavaRDD<Item> intermediateResult = this.expression.getRDD(this.tupleContext);
-                if(result == null)
-                {
+                if (result == null) {
                     result = intermediateResult;
                 } else {
                     result = result.union(intermediateResult);
                 }
             }
-            if(result == null)
-            {
+            if (result == null) {
                 return SparkSessionManager.getInstance().getJavaSparkContext().emptyRDD();
             }
             return result;
@@ -97,17 +96,18 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         StructType oldSchema = df.schema();
         return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
     }
-    
+
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDD()) {
-            if(this.child.isDataFrame())
+            if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
+            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current
+                                                                                                 // context
             this.child.open(this.currentDynamicContextForLocalExecution);
             Dataset<Row> result = null;
             while (this.child.hasNext()) {
@@ -116,24 +116,22 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
                 Dataset<Row> intermediateResult = this.expression.getDataFrame(this.tupleContext);
-                if(result == null)
-                {
+                if (result == null) {
                     result = intermediateResult;
                 } else {
                     result = result.union(intermediateResult);
                 }
             }
-            if(result == null)
-            {
+            if (result == null) {
                 return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
             }
             return result;
         }
 
         throw new OurBadException(
-            "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
-            getMetadata()
-    );
+                "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
+                getMetadata()
+        );
     }
 
     @Override

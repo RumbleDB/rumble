@@ -42,8 +42,7 @@ public class DataFrameUtils {
             List<Item> items,
             ObjectItem schemaItem
     ) {
-        if(items.size() == 0)
-        {
+        if (items.size() == 0) {
             return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
         }
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
