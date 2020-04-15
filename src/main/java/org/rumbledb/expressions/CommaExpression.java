@@ -64,9 +64,17 @@ public class CommaExpression extends Expression {
     @Override
     public void initHighestExecutionMode() {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
+            this.highestExecutionMode = this.expressions.get(0).getHighestExecutionMode();
             return;
         }
-        super.initHighestExecutionMode();
+
+        ExecutionMode currentMode = ExecutionMode.LOCAL;
+        for (Expression expression : this.expressions)
+            if (expression.getHighestExecutionMode().isRDD()) {
+                currentMode = ExecutionMode.RDD;
+                break;
+            }
+        this.highestExecutionMode = currentMode;
     }
 
     @Override
