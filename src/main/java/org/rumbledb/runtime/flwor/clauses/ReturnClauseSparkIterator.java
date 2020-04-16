@@ -70,16 +70,16 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current
-                                                                                                 // context
-            this.child.open(this.currentDynamicContextForLocalExecution);
+
+            this.child.open(context);
             JavaRDD<Item> result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
-                this.tupleContext.removeAllVariables(); // clear the previous variables
-                this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                // We need a fresh context every time, because the evaluation of RDD is lazy.
+                DynamicContext dynamicContext = new DynamicContext(context);
+                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
-                JavaRDD<Item> intermediateResult = this.expression.getRDD(this.tupleContext);
+                JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -106,16 +106,16 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
                 );
-            this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current
-                                                                                                 // context
-            this.child.open(this.currentDynamicContextForLocalExecution);
+            // context
+            this.child.open(context);
             Dataset<Row> result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
-                this.tupleContext.removeAllVariables(); // clear the previous variables
-                this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                // We need a fresh context every time, because the evaluation of RDD is lazy.
+                DynamicContext dynamicContext = new DynamicContext(context);
+                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
-                Dataset<Row> intermediateResult = this.expression.getDataFrame(this.tupleContext);
+                Dataset<Row> intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
