@@ -82,6 +82,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -609,32 +610,32 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
         Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
 
-        if (ctx.functionCall() == null) {
-            return mainExpression;
-        }
-
-        String name;
-        if (ctx.function_call_expr.fn_name != null) {
-            name = ctx.function_call_expr.fn_name.getText();
-        } else {
-            name = ctx.function_call_expr.kw.getText();
-        }
-        if (ctx.functionCall().ns != null) {
-            name = name + ":" + ctx.function_call_expr.ns.getText();
-        }
-        List<Expression> arguments = new ArrayList<>();
-        arguments.add(mainExpression);
-        if (ctx.function_call_expr.argumentList().args != null) {
-            for (JsoniqParser.ArgumentContext arg : ctx.function_call_expr.argumentList().args) {
-                Expression currentArg = (Expression) this.visitArgument(arg);
-                arguments.add(currentArg);
+        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
+            FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+            String name;
+            if (functionCallContext.fn_name != null) {
+                name = functionCallContext.fn_name.getText();
+            } else {
+                name = functionCallContext.kw.getText();
             }
+            if (functionCallContext.ns != null) {
+                name = name + ":" + functionCallContext.ns.getText();
+            }
+            List<Expression> arguments = new ArrayList<>();
+            arguments.add(mainExpression);
+            if (functionCallContext.argumentList().args != null) {
+                for (JsoniqParser.ArgumentContext arg : functionCallContext.argumentList().args) {
+                    Expression currentArg = (Expression) this.visitArgument(arg);
+                    arguments.add(currentArg);
+                }
+            }
+            mainExpression = new FunctionCallExpression(
+                    name,
+                    arguments,
+                    createMetadataFromContext(ctx)
+            );
         }
-        return new FunctionCallExpression(
-                name,
-                arguments,
-                createMetadataFromContext(ctx)
-        );
+        return mainExpression;
 
     }
 
