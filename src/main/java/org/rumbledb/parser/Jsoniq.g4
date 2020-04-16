@@ -142,7 +142,7 @@ castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )
 
 castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 
-arrowExpr               : op+=unaryExpr (('=' '>') functionCall)?;
+arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr=functionCall)?;
 
 unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 

@@ -3689,8 +3689,8 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class ArrowExprContext extends ParserRuleContext {
-		public UnaryExprContext unaryExpr;
-		public List<UnaryExprContext> op = new ArrayList<UnaryExprContext>();
+		public UnaryExprContext main_expr;
+		public FunctionCallContext function_call_expr;
 		public UnaryExprContext unaryExpr() {
 			return getRuleContext(UnaryExprContext.class,0);
 		}
@@ -3715,8 +3715,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(657);
-			((ArrowExprContext)_localctx).unaryExpr = unaryExpr();
-			((ArrowExprContext)_localctx).op.add(((ArrowExprContext)_localctx).unaryExpr);
+			((ArrowExprContext)_localctx).main_expr = unaryExpr();
 			setState(662);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,63,_ctx) ) {
@@ -3729,7 +3728,7 @@ public class JsoniqParser extends Parser {
 				match(T__42);
 				}
 				setState(661);
-				functionCall();
+				((ArrowExprContext)_localctx).function_call_expr = functionCall();
 				}
 				break;
 			}
@@ -3750,7 +3749,7 @@ public class JsoniqParser extends Parser {
 		public Token s47;
 		public List<Token> op = new ArrayList<Token>();
 		public Token s46;
-		public Token _tset1325;
+		public Token _tset1327;
 		public SimpleMapExprContext main_expr;
 		public SimpleMapExprContext simpleMapExpr() {
 			return getRuleContext(SimpleMapExprContext.class,0);
@@ -3780,17 +3779,17 @@ public class JsoniqParser extends Parser {
 				{
 				{
 				setState(664);
-				((UnaryExprContext)_localctx)._tset1325 = _input.LT(1);
+				((UnaryExprContext)_localctx)._tset1327 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !(_la==T__45 || _la==T__46) ) {
-					((UnaryExprContext)_localctx)._tset1325 = (Token)_errHandler.recoverInline(this);
+					((UnaryExprContext)_localctx)._tset1327 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1325);
+				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1327);
 				}
 				}
 				setState(669);

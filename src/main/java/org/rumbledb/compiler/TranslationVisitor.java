@@ -607,25 +607,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.unaryExpr());
+        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
 
         if (ctx.functionCall() == null) {
             return mainExpression;
         }
 
         String name;
-        if (ctx.functionCall().fn_name != null) {
-            name = ctx.functionCall().fn_name.getText();
+        if (ctx.function_call_expr.fn_name != null) {
+            name = ctx.function_call_expr.fn_name.getText();
         } else {
-            name = ctx.functionCall().kw.getText();
+            name = ctx.function_call_expr.kw.getText();
         }
         if (ctx.functionCall().ns != null) {
-            name = name + ":" + ctx.functionCall().ns.getText();
+            name = name + ":" + ctx.function_call_expr.ns.getText();
         }
         List<Expression> arguments = new ArrayList<>();
         arguments.add(mainExpression);
-        if (ctx.functionCall().argumentList().args != null) {
-            for (JsoniqParser.ArgumentContext arg : ctx.functionCall().argumentList().args) {
+        if (ctx.function_call_expr.argumentList().args != null) {
+            for (JsoniqParser.ArgumentContext arg : ctx.function_call_expr.argumentList().args) {
                 Expression currentArg = (Expression) this.visitArgument(arg);
                 arguments.add(currentArg);
             }
