@@ -596,13 +596,46 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
         if (ctx.single == null || ctx.single.isEmpty()) {
             return mainExpression;
         }
         JsoniqParser.SingleTypeContext child = ctx.single;
         SequenceType sequenceType = this.processSingleType(child);
         return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.unaryExpr());
+
+        if (ctx.functionCall() == null) {
+            return mainExpression;
+        }
+
+        String name;
+        if (ctx.functionCall().fn_name != null) {
+            name = ctx.functionCall().fn_name.getText();
+        } else {
+            name = ctx.functionCall().kw.getText();
+        }
+        if (ctx.functionCall().ns != null) {
+            name = name + ":" + ctx.functionCall().ns.getText();
+        }
+        List<Expression> arguments = new ArrayList<>();
+        arguments.add(mainExpression);
+        if (ctx.functionCall().argumentList().args != null) {
+            for (JsoniqParser.ArgumentContext arg : ctx.functionCall().argumentList().args) {
+                Expression currentArg = (Expression) this.visitArgument(arg);
+                arguments.add(currentArg);
+            }
+        }
+        return new FunctionCallExpression(
+                name,
+                arguments,
+                createMetadataFromContext(ctx)
+        );
+
     }
 
     @Override
