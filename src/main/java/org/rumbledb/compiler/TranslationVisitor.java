@@ -612,32 +612,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
             FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
-            String name;
-            if (functionCallContext.fn_name != null) {
-                name = functionCallContext.fn_name.getText();
-            } else {
-                name = functionCallContext.kw.getText();
-            }
-            if (functionCallContext.ns != null) {
-                name = name + ":" + functionCallContext.ns.getText();
-            }
-            List<Expression> arguments = new ArrayList<>();
-            arguments.add(mainExpression);
-            if (functionCallContext.argumentList().args != null) {
-                for (JsoniqParser.ArgumentContext arg : functionCallContext.argumentList().args) {
-                    Expression currentArg = (Expression) this.visitArgument(arg);
-                    arguments.add(currentArg);
-                }
-            }
-            mainExpression = new FunctionCallExpression(
-                    name,
-                    arguments,
-                    createMetadataFromContext(ctx)
-            );
+            List<Expression> children = new ArrayList<Expression>();
+            children.add(mainExpression);
+            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
+            mainExpression = processFunctionCall(functionCallContext, children);
         }
         return mainExpression;
 
     }
+
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
@@ -885,8 +868,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new SequenceType(itemType);
     }
 
-    @Override
-    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+    private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         String name;
         if (ctx.fn_name != null) {
             name = ctx.fn_name.getText();
@@ -898,9 +880,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         return new FunctionCallExpression(
                 name,
-                getArgumentsFromArgumentListContext(ctx.argumentList()),
+                children,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    @Override
+    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+        return processFunctionCall(ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
