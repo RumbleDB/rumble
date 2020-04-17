@@ -1,11 +1,12 @@
-site_name: Rumble 1.5.0 "Southern Live Oak" beta
+site_name: Rumble 1.5.1 "Southern Live Oak" beta
 pages:
   - '1. Documentation home': 'index.md'
   - '2. Getting started': 'Getting started.md'
   - '3. Run on a cluster': 'Run on a cluster.md'
   - '4. The JSONiq language': 'JSONiq.md'
-  - '5. Function library': 'Function library.md'
-  - '6. Error codes': 'Error codes.md'
-  - '7. Compile from GitHub': 'install.md'
-  - '8. Licenses': 'Licenses.md'
+  - '5. Reading data': 'Input.md'
+  - '6. Function library': 'Function library.md'
+  - '7. Error codes': 'Error codes.md'
+  - '8. Compile from GitHub': 'install.md'
+  - '9. Licenses': 'Licenses.md'
 theme: readthedocs
