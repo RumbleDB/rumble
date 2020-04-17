@@ -4,8 +4,9 @@
 
 ### Installing Spark
 
-Rumble requires a spark installation on ideally Linux or Mac.
-We recommend installing 2.4.5 from [this page](https://spark.apache.org/downloads.html).
+Rumble requires a Spark installation on ideally Linux or Mac. The easiest is to install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu), etc. We recommend installing the latest Spark 2.4.5.
+
+Another way is to do a manual installation (which is also relatively easy). Then, we recommend installing 2.4.5 from [this page](https://spark.apache.org/downloads.html).
 Download the file and unzip it, which will create a directory called spark-2.4.5-bin-hadoop2.7. 
 
 Move over this directory to, for example, /usr/local/bin
