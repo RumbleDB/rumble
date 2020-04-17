@@ -4,17 +4,18 @@
 
 ### Installing Spark
 
-Rumble requires a spark installation on ideally Linux or Mac.
-We recommend installing 2.4.1 from [this page](https://spark.apache.org/downloads.html).
-Download the file and unzip it, which will create a directory called spark-2.4.1-bin-hadoop2.7. 
+Rumble requires a Spark installation on ideally Linux or Mac. The easiest is to install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu), etc. We recommend installing the latest Spark 2.4.5.
+
+Another way is to do a manual installation (which is also relatively easy). Then, we recommend installing 2.4.5 from [this page](https://spark.apache.org/downloads.html).
+Download the file and unzip it, which will create a directory called spark-2.4.5-bin-hadoop2.7. 
 
 Move over this directory to, for example, /usr/local/bin
 
-    mv spark-2.4.1-bin-hadoop2.7 /usr/local/bin
+    mv spark-2.4.5-bin-hadoop2.7 /usr/local/bin
 
-and add /usr/local/bin/spark-2.4.1-bin-hadoop2.7 to the PATH variable
+and add /usr/local/bin/spark-2.4.5-bin-hadoop2.7 to the PATH variable
 
-    export PATH=/usr/local/bin/spark-2.4.1-bin-hadoop2.7/bin:$PATH
+    export PATH=/usr/local/bin/spark-2.4.5-bin-hadoop2.7/bin:$PATH
 
 You can test that this worked with:
 
@@ -23,11 +24,11 @@ You can test that this worked with:
 ### Installing Rumble
 
 In order to run Rumble, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases)
-and put it in a directory of your choice. For Spark 2.4.1 we recommend the .jar file with ant 4.7 (not 4.5.3).
+and put it in a directory of your choice. For Spark 2.4.5 we recommend the .jar file with ant 4.7 (not 4.5.3).
 
 ### Creating some data set
 
-Create, in the same directory as Rumble, a file data.json and put the following content inside. This is a list of JSON objects in the jsonlines format.
+Create, in the same directory as Rumble, a file data.json and put the following content inside. This is a list of JSON objects in the JSON Lines format.
 
     { "product" : "broiler", "store number" : 1, "quantity" : 20  }
     { "product" : "toaster", "store number" : 2, "quantity" : 100 }
@@ -43,7 +44,7 @@ Create, in the same directory as Rumble, a file data.json and put the following 
 
 In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit --master local[*] --deploy-mode client spark-rumble-1.5.jar --shell yes
+    spark-submit spark-rumble-1.5.jar --shell yes
                  
 The Rumble shell appears:
 
