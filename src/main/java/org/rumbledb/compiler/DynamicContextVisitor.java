@@ -34,7 +34,10 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
+
+import sparksoniq.jsoniq.ExecutionMode;
 
 /**
  * Dynamic context visitor. Populates the dynamic context to evaluate the main expression.
@@ -100,17 +103,35 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
         Expression expression = variableDeclaration.getExpression();
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+        ExecutionMode treatAsMode = ExecutionMode.RDD;
+        SequenceType sequenceType = variableDeclaration.getSequenceType();
+        if (sequenceType.isEmptySequence()) {
+            treatAsMode = ExecutionMode.LOCAL;
+        } else {
+            if (sequenceType.getArity() == SequenceType.Arity.One) {
+                treatAsMode = ExecutionMode.LOCAL;
+            }
+            if (sequenceType.getArity() == SequenceType.Arity.OneOrZero) {
+                treatAsMode = ExecutionMode.LOCAL;
+            }
+        }
+        if (
+            !iterator.getHighestExecutionMode().equals(ExecutionMode.RDD)
+                && !iterator.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+        ) {
+            treatAsMode = ExecutionMode.LOCAL;
+        }
         iterator = new TreatIterator(
                 iterator,
-                variableDeclaration.getSequenceType(),
+                sequenceType,
                 false,
-                iterator.getHighestExecutionMode(),
+                treatAsMode,
                 iterator.getMetadata()
         );
         if (iterator.isDataFrame()) {
             result.addVariableValue(name, iterator.getDataFrame(argument));
         } else if (iterator.isRDD()) {
-            result.addVariableValue(name, iterator.getDataFrame(argument));
+            result.addVariableValue(name, iterator.getRDD(argument));
         } else {
             result.addVariableValue(name, iterator.materialize(argument));
         }
