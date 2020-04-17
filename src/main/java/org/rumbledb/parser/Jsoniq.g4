@@ -140,7 +140,9 @@ treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )
 
 castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )?;
 
-castExpr                : main_expr=unaryExpr ( Kcast Kas single=singleType )?;
+castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
+
+arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
 
 unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 

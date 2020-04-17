@@ -296,6 +296,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitCastExpr(JsoniqParser.CastExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#arrowExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitArrowExpr(JsoniqParser.ArrowExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#unaryExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
