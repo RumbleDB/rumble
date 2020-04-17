@@ -285,6 +285,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        this.visit(variableDeclaration.getExpression(), argument);
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);
         StaticContext result = new StaticContext(argument);
         result.addVariable(

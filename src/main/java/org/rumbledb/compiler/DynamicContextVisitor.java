@@ -28,9 +28,12 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.SequenceType.Arity;
 
 /**
@@ -62,36 +65,55 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         DynamicContext result = new DynamicContext(argument);
         String name = variableDeclaration.getVariableName();
-        String value = this.configuration.getExternalVariableValue(name);
-        List<Item> values = new ArrayList<>();
-        if (value != null) {
-            Item item = ItemFactory.getInstance().createStringItem(value);
-            values.add(item);
-            if (
-                variableDeclaration.getSequenceType().isEmptySequence()
-                    || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
-            ) {
-                throw new UnexpectedTypeException(
-                        "External variable value does not match the expected type.",
-                        variableDeclaration.getMetadata()
-                );
+        if (variableDeclaration.external()) {
+            String value = this.configuration.getExternalVariableValue(name);
+            List<Item> values = new ArrayList<>();
+            if (value != null) {
+                Item item = ItemFactory.getInstance().createStringItem(value);
+                values.add(item);
+                if (
+                    variableDeclaration.getSequenceType().isEmptySequence()
+                        || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                ) {
+                    throw new UnexpectedTypeException(
+                            "External variable value does not match the expected type.",
+                            variableDeclaration.getMetadata()
+                    );
+                }
+            } else {
+                if (
+                    !variableDeclaration.getSequenceType().isEmptySequence()
+                        && (variableDeclaration.getSequenceType().getArity().equals(Arity.One)
+                            || variableDeclaration.getSequenceType().getArity().equals(Arity.OneOrMore))
+                ) {
+                    throw new UnexpectedTypeException(
+                            "External variable value is empty and does not match the expected type.",
+                            variableDeclaration.getMetadata()
+                    );
+                }
             }
-        } else {
-            if (
-                !variableDeclaration.getSequenceType().isEmptySequence()
-                    && (variableDeclaration.getSequenceType().getArity().equals(Arity.One)
-                        || variableDeclaration.getSequenceType().getArity().equals(Arity.OneOrMore))
-            ) {
-                throw new UnexpectedTypeException(
-                        "External variable value is empty and does not match the expected type.",
-                        variableDeclaration.getMetadata()
-                );
-            }
+            result.addVariableValue(
+                name,
+                values
+            );
+            return result;
         }
-        result.addVariableValue(
-            name,
-            values
+        Expression expression = variableDeclaration.getExpression();
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+        iterator = new TreatIterator(
+                iterator,
+                variableDeclaration.getSequenceType(),
+                false,
+                iterator.getHighestExecutionMode(),
+                iterator.getMetadata()
         );
+        if (iterator.isDataFrame()) {
+            result.addVariableValue(name, iterator.getDataFrame(argument));
+        } else if (iterator.isRDD()) {
+            result.addVariableValue(name, iterator.getDataFrame(argument));
+        } else {
+            result.addVariableValue(name, iterator.materialize(argument));
+        }
         return result;
     }
 
