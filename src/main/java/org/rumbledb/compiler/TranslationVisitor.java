@@ -82,6 +82,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -596,7 +597,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
         if (ctx.single == null || ctx.single.isEmpty()) {
             return mainExpression;
         }
@@ -604,6 +605,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType sequenceType = this.processSingleType(child);
         return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
+
+    @Override
+    public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+
+        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
+            FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+            List<Expression> children = new ArrayList<Expression>();
+            children.add(mainExpression);
+            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
+            mainExpression = processFunctionCall(functionCallContext, children);
+        }
+        return mainExpression;
+
+    }
+
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
@@ -851,8 +868,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new SequenceType(itemType);
     }
 
-    @Override
-    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+    private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         String name;
         if (ctx.fn_name != null) {
             name = ctx.fn_name.getText();
@@ -864,9 +880,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         return new FunctionCallExpression(
                 name,
-                getArgumentsFromArgumentListContext(ctx.argumentList()),
+                children,
                 createMetadataFromContext(ctx)
         );
+    }
+
+    @Override
+    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+        return processFunctionCall(ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
