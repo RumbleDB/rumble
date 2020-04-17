@@ -46,10 +46,19 @@ public class ReturnClause extends Clause {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode =
-            this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()
-                ? ExecutionMode.RDD
-                : ExecutionMode.LOCAL;
+        if (this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()) {
+            this.highestExecutionMode = ExecutionMode.RDD;
+            return;
+        }
+        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isRDD()) {
+            this.highestExecutionMode = ExecutionMode.RDD;
+            return;
+        }
+        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isDataFrame()) {
+            this.highestExecutionMode = ExecutionMode.DATAFRAME;
+            return;
+        }
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override
