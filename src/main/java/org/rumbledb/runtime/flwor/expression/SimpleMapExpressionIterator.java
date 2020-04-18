@@ -82,9 +82,6 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.children.size() < 2) {
-            throw new OurBadException("Invalid simple map! Must initialize map before calling next");
-        }
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
         this.mapValues = new LinkedList<>();
         this.leftIterator.open(this.currentDynamicContextForLocalExecution);
