@@ -40,8 +40,8 @@ import java.util.TreeMap;
 public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private RuntimeIterator map;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
     private Item nextResult;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
@@ -54,8 +54,8 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(sequence, mapExpression), executionMode, iteratorMetadata);
-        this.iterator = sequence;
-        this.map = mapExpression;
+        this.leftIterator = sequence;
+        this.rightIterator = mapExpression;
         this.mapDynamicContext = null;
     }
 
@@ -76,7 +76,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
 
     @Override
     public void close() {
-        this.iterator.close();
+        this.leftIterator.close();
     }
 
     @Override
@@ -87,7 +87,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
         }
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
         this.mapValues = new LinkedList<>();
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
@@ -96,13 +96,13 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
 
         if (this.mapValues.size() > 0) {
             this.nextResult = this.mapValues.poll();
-        } else if (this.iterator.hasNext()) {
-            Item item = this.iterator.next();
+        } else if (this.leftIterator.hasNext()) {
+            Item item = this.leftIterator.next();
             List<Item> currentItems = new ArrayList<>();
             this.mapDynamicContext.addVariableValue("$$", currentItems);
             currentItems.add(item);
 
-            List<Item> mapValuesRaw = this.map.materialize(this.mapDynamicContext);
+            List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
             if (mapValuesRaw.size() == 1) {
                 this.nextResult = mapValuesRaw.get(0);
             } else {
@@ -114,7 +114,7 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
+            this.leftIterator.close();
         } else {
             this.hasNext = true;
         }
@@ -123,9 +123,9 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<String, DynamicContext.VariableDependency> result =
             new TreeMap<String, DynamicContext.VariableDependency>();
-        result.putAll(this.map.getVariableDependencies());
+        result.putAll(this.rightIterator.getVariableDependencies());
         result.remove("$");
-        result.putAll(this.iterator.getVariableDependencies());
+        result.putAll(this.leftIterator.getVariableDependencies());
         return result;
     }
 }
