@@ -52,6 +52,7 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
@@ -557,6 +558,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         return result;
     }
+
+    @Override
+    public Node visitSimpleMapExpr(JsoniqParser.SimpleMapExprContext ctx) {
+        Expression result = (Expression) this.visitPostFixExpr(ctx.main_expr);
+        if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.map_expr.size(); ++i) {
+            JsoniqParser.PostFixExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPostFixExpr(child);
+            result = new SimpleMapExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
+    }
+
 
     @Override
     public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
