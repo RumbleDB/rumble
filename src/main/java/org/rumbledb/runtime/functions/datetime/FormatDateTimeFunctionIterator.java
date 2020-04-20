@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.datetime;
 
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -13,7 +14,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
