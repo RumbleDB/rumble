@@ -1109,6 +1109,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression expr = null;
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+            expr = new TreatExpression(expr, seq, expr.getMetadata());
         }
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
