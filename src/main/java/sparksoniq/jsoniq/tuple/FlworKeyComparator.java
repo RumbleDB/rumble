@@ -20,8 +20,8 @@
 
 package sparksoniq.jsoniq.tuple;
 
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
-import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -54,7 +54,7 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
             if (key1.getKeyItems().get(expressionIndex) == null || key2.getKeyItems().get(expressionIndex) == null) {
                 // Default behavior(NONE) for empty ordering expressions is equal to FIRST(empty least)
                 // if LAST is given, empty ordering expressions are the greatest (reverse the comparison)
-                if (this.expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+                if (this.expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
                     result *= -1;
                 }
             }

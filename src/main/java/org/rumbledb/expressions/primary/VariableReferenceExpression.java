@@ -21,16 +21,21 @@
 package org.rumbledb.expressions.primary;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
-public class VariableReferenceExpression extends PrimaryExpression implements Serializable {
+public class VariableReferenceExpression extends Expression implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
@@ -59,7 +64,7 @@ public class VariableReferenceExpression extends PrimaryExpression implements Se
     }
 
     @Override
-    public final void initHighestExecutionMode() {
+    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // Variable reference execution mode can only be resolved in conjunction with a static context
         // variable reference's execution mode gets initialized in staticContextVisitor by a setter
         throw new OurBadException("Variable references do not use the highestExecutionMode initializer");
@@ -71,9 +76,20 @@ public class VariableReferenceExpression extends PrimaryExpression implements Se
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = (prefix ? "(primaryExpr " : "") + "(varRef $ " + this.name;
-        result += (prefix ? ")" : "") + ")";
-        return result;
+    public List<Node> getChildren() {
+        return new ArrayList<>();
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" ($" + this.name + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

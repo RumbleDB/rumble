@@ -20,57 +20,103 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
+import sparksoniq.jsoniq.ExecutionMode;
+
+import java.util.Collections;
 import java.util.List;
 
-public class ForClause extends FlworClause {
+public class ForClause extends Clause {
+
+    private final String variableName;
+    private final boolean allowEmpty;
+    private final String positionalVariableName;
+    protected SequenceType sequenceType;
+    protected Expression expression;
+
+    // Holds whether the for variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
 
-    private final List<ForClauseVar> forVariables;
-
-    public ForClause(List<ForClauseVar> vars, ExceptionMetadata metadataFromContext) {
-        super(FLWOR_CLAUSES.FOR, metadataFromContext);
-        if (vars == null || vars.isEmpty())
-            throw new SemanticException("For clause must have at least one variable", metadataFromContext);
-        this.forVariables = vars;
-
-        // chain forVariables with previousClause relationship
-        for (int varIndex = this.forVariables.size() - 1; varIndex > 0; varIndex--) {
-            this.forVariables.get(varIndex).setPreviousClause(this.forVariables.get(varIndex - 1));
+    public ForClause(
+            String variableName,
+            boolean allowEmpty,
+            SequenceType sequenceType,
+            String positionalVariableName,
+            Expression expression,
+            ExceptionMetadata metadata
+    ) {
+        super(FLWOR_CLAUSES.FOR, metadata);
+        if (variableName == null) {
+            throw new SemanticException("For clause must have a variable", metadata);
         }
+        this.variableName = variableName;
+        this.allowEmpty = allowEmpty;
+        this.positionalVariableName = positionalVariableName;
+        // If the sequenceType is specified, we have to "extend" its arity to *
+        // because TreatIterator is wrapping the whole assignment expression,
+        // meaning there is not one TreatIterator for each variable we loop over.
+        this.sequenceType = new SequenceType(
+                sequenceType.getItemType(),
+                SequenceType.Arity.ZeroOrMore
+        );
+        this.expression = expression;
+
     }
 
-    public List<ForClauseVar> getForVariables() {
-        return this.forVariables;
+    public String getVariableName() {
+        return this.variableName;
+    }
+
+    public boolean isAllowEmpty() {
+        return this.allowEmpty;
+    }
+
+    public String getPositionalVariableName() {
+        return this.positionalVariableName;
+    }
+
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
+    }
+
+    public Expression getExpression() {
+        return this.expression;
     }
 
     @Override
-    public void setPreviousClause(FlworClause previousClause) {
-        super.setPreviousClause(previousClause);
-        // assign the previous clause of the ForClause as the first variable definition's previous
-        this.forVariables.get(0).previousClause = this.previousClause;
-    }
-
-    @Override
-    public void initHighestExecutionMode() {
-        // call isDataFrame on the last forVariable
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
-            this.forVariables.get(this.forVariables.size() - 1).getHighestExecutionMode();
+            (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
+                || (this.previousClause != null
+                    && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
+                        ? ExecutionMode.DATAFRAME
+                        : ExecutionMode.LOCAL;
+
+        this.variableHighestStorageMode = ExecutionMode.LOCAL;
+    }
+
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("A variable storage mode is accessed without being set.");
+        }
+        return this.variableHighestStorageMode;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        this.forVariables.forEach(e -> {
-            if (e != null)
-                result.add(e);
-        });
-        return result;
+        return Collections.singletonList(this.expression);
     }
 
     @Override
@@ -78,13 +124,28 @@ public class ForClause extends FlworClause {
         return visitor.visitForClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(forClause for ";
-        for (ForClauseVar var : this.forVariables)
-            result += var.serializationString(true)
-                + (this.forVariables.indexOf(var) < this.forVariables.size() - 1 ? " , " : "");
-        result += ")";
-        return result;
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(
+            " ("
+                + (this.variableName)
+                + ", "
+                + this.sequenceType.toString()
+                + ", "
+                + (this.allowEmpty ? "allowing empty, " : "")
+                + this.positionalVariableName
+                + ") "
+        );
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 }

@@ -22,15 +22,21 @@ package org.rumbledb.runtime.postfix;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;
@@ -114,5 +120,35 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+        childDataFrame.createOrReplaceTempView("array");
+        StructType schema = childDataFrame.schema();
+        String[] fieldNames = schema.fieldNames();
+        if (
+            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
+        ) {
+            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
+            StructField field = schema.fields()[i];
+            DataType type = field.dataType();
+            if (type instanceof ArrayType) {
+                return childDataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT explode(`%s`) AS `%s` FROM array",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            SparkSessionManager.atomicJSONiqItemColumnName
+                        )
+                    );
+            }
+        }
+        return childDataFrame.sparkSession().emptyDataFrame();
     }
 }

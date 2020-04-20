@@ -28,22 +28,26 @@ import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.ml.linalg.Vector;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.ItemFactory;
-
+import org.rumbledb.types.ItemType;
+import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.Date;
 import java.sql.Timestamp;
@@ -55,11 +59,14 @@ public class ItemParser implements Serializable {
 
 
     private static final long serialVersionUID = 1L;
+    private static final DataType vectorType = new VectorUDT();
+    public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
     public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
         try {
-            if (object.whatIsNext().equals(ValueType.STRING))
+            if (object.whatIsNext().equals(ValueType.STRING)) {
                 return ItemFactory.getInstance().createStringItem(object.readString());
+            }
             if (object.whatIsNext().equals(ValueType.NUMBER)) {
                 String number = object.readNumberAsString();
                 if (number.contains("E") || number.contains("e")) {
@@ -74,8 +81,9 @@ public class ItemParser implements Serializable {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
             }
-            if (object.whatIsNext().equals(ValueType.BOOLEAN))
+            if (object.whatIsNext().equals(ValueType.BOOLEAN)) {
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
+            }
             if (object.whatIsNext().equals(ValueType.ARRAY)) {
                 List<Item> values = new ArrayList<>();
                 while (object.readArray()) {
@@ -98,9 +106,12 @@ public class ItemParser implements Serializable {
                 object.readNull();
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new SparksoniqRuntimeException("Invalid value found while parsing. JSON is not well-formed!");
-        } catch (IOException e) {
-            throw new SparksoniqRuntimeException("IO error while parsing. JSON is not well-formed!");
+            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+        } catch (Exception e) {
+            throw new ParsingException(
+                    "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata
+            );
         }
     }
 
@@ -136,102 +147,131 @@ public class ItemParser implements Serializable {
             values.add(ItemFactory.getInstance().createNullItem());
         } else if (fieldType.equals(DataTypes.StringType)) {
             String s;
-            if (row != null)
+            if (row != null) {
                 s = row.getString(i);
-            else
+            } else {
                 s = (String) o;
+            }
             values.add(ItemFactory.getInstance().createStringItem(s));
         } else if (fieldType.equals(DataTypes.BooleanType)) {
             boolean b;
-            if (row != null)
+            if (row != null) {
                 b = row.getBoolean(i);
-            else
+            } else {
                 b = (Boolean) o;
+            }
             values.add(ItemFactory.getInstance().createBooleanItem(b));
         } else if (fieldType.equals(DataTypes.DoubleType)) {
             double value;
-            if (row != null)
+            if (row != null) {
                 value = row.getDouble(i);
-            else
+            } else {
                 value = (Double) o;
+            }
             values.add(ItemFactory.getInstance().createDoubleItem(value));
         } else if (fieldType.equals(DataTypes.IntegerType)) {
             int value;
-            if (row != null)
+            if (row != null) {
                 value = row.getInt(i);
-            else
+            } else {
                 value = (Integer) o;
+            }
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
-            if (row != null)
+            if (row != null) {
                 value = row.getFloat(i);
-            else
+            } else {
                 value = (Float) o;
+            }
             values.add(ItemFactory.getInstance().createDoubleItem(value));
+        } else if (fieldType.equals(decimalType)) {
+            BigDecimal value;
+            if (row != null) {
+                value = row.getDecimal(i);
+            } else {
+                value = (BigDecimal) o;
+            }
+            values.add(ItemFactory.getInstance().createDecimalItem(value));
         } else if (fieldType.equals(DataTypes.LongType)) {
             BigDecimal value;
-            if (row != null)
+            if (row != null) {
                 value = new BigDecimal(row.getLong(i));
-            else
+            } else {
                 value = new BigDecimal((Long) o);
+            }
             values.add(ItemFactory.getInstance().createDecimalItem(value));
         } else if (fieldType.equals(DataTypes.NullType)) {
             values.add(ItemFactory.getInstance().createNullItem());
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
-            if (row != null)
+            if (row != null) {
                 value = row.getShort(i);
-            else
+            } else {
                 value = (Short) o;
+            }
             values.add(ItemFactory.getInstance().createIntegerItem(value));
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
-            if (row != null)
+            if (row != null) {
                 value = row.getTimestamp(i);
-            else
+            } else {
                 value = (Timestamp) o;
+            }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
             values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
         } else if (fieldType.equals(DataTypes.DateType)) {
             Date value;
-            if (row != null)
+            if (row != null) {
                 value = row.getDate(i);
-            else
+            } else {
                 value = (Date) o;
+            }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
             values.add(ItemFactory.getInstance().createDateItem(dt, false));
         } else if (fieldType.equals(DataTypes.BinaryType)) {
             byte[] value;
-            if (row != null)
+            if (row != null) {
                 value = (byte[]) row.get(i);
-            else
+            } else {
                 value = (byte[]) o;
+            }
             values.add(ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value)));
         } else if (fieldType instanceof StructType) {
             Row value;
-            if (row != null)
+            if (row != null) {
                 value = row.getStruct(i);
-            else
+            } else {
                 value = (Row) o;
+            }
             values.add(getItemFromRow(value, metadata));
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
             List<Item> members = new ArrayList<>();
-            List<Object> objects;
-            if (row != null)
-                objects = row.getList(i);
-            else
-                objects = (List<Object>) o;
-            for (Object object : objects) {
-                addValue(null, 0, object, dataType, members, metadata);
+            if (row != null) {
+                List<Object> objects = row.getList(i);
+                for (Object object : objects) {
+                    addValue(null, 0, object, dataType, members, metadata);
+                }
+            } else {
+                @SuppressWarnings("unchecked")
+                Object arrayObject = ((WrappedArray<Object>) o).array();
+                for (int index = 0; index < Array.getLength(arrayObject); index++) {
+                    Object value = Array.get(arrayObject, index);
+                    addValue(null, 0, value, dataType, members, metadata);
+                }
             }
             values.add(ItemFactory.getInstance().createArrayItem(members));
         } else if (fieldType instanceof VectorUDT) {
-            Vector vector = (Vector) row.get(i);
+            Vector vector;
+            if (row != null) {
+                vector = (Vector) row.get(i);
+            } else {
+                vector = (Vector) o;
+            }
             if (vector instanceof DenseVector) {
                 // a dense vector is mapped to a rumble array
                 DenseVector denseVector = (DenseVector) vector;
@@ -243,18 +283,182 @@ public class ItemParser implements Serializable {
             } else if (vector instanceof SparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
                 SparseVector sparseVector = (SparseVector) vector;
-                List<String> keyList = new ArrayList<>();
-                List<Item> valueList = new ArrayList<>();
-                for (int index : sparseVector.indices()) {
-                    keyList.add(String.valueOf(index));
-                    valueList.add(ItemFactory.getInstance().createDoubleItem(sparseVector.values()[index]));
+                List<String> objectKeyList = new ArrayList<>();
+                List<Item> objectValueList = new ArrayList<>();
+                int[] vectorIndices = sparseVector.indices();
+                double[] vectorValues = sparseVector.values();
+                for (int j = 0; j < vectorIndices.length; j++) {
+                    objectKeyList.add(String.valueOf(vectorIndices[j]));
+                    objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                values.add(ItemFactory.getInstance().createObjectItem(keyList, valueList, metadata));
+                values.add(ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata));
             } else {
                 throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }
         } else {
             throw new RuntimeException("DataFrame type unsupported: " + fieldType.json());
         }
+    }
+
+    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
+        if (itemTypeName.equals(ItemType.booleanItem.getName())) {
+            return DataTypes.BooleanType;
+        }
+        if (itemTypeName.equals(ItemType.integerItem.getName())) {
+            return DataTypes.IntegerType;
+        }
+        if (itemTypeName.equals(ItemType.doubleItem.getName())) {
+            return DataTypes.DoubleType;
+        }
+        if (itemTypeName.equals(ItemType.decimalItem.getName())) {
+            return decimalType;
+        }
+        if (itemTypeName.equals(ItemType.stringItem.getName())) {
+            return DataTypes.StringType;
+        }
+        if (itemTypeName.equals(ItemType.nullItem.getName())) {
+            return DataTypes.NullType;
+        }
+        if (itemTypeName.equals(ItemType.dateItem.getName())) {
+            return DataTypes.DateType;
+        }
+        if (itemTypeName.equals(ItemType.dateTimeItem.getName())) {
+            return DataTypes.TimestampType;
+        }
+        if (itemTypeName.equals(ItemType.hexBinaryItem.getName())) {
+            return DataTypes.BinaryType;
+        }
+        if (itemTypeName.equals("object")) {
+            return vectorType;
+        }
+        throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+    }
+
+    public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
+        if (DataTypes.BooleanType.equals(dataType)) {
+            return ItemType.booleanItem.getName();
+        }
+        if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
+            return ItemType.integerItem.getName();
+        }
+        if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+            return ItemType.doubleItem.getName();
+        }
+        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
+            return ItemType.decimalItem.getName();
+        }
+        if (DataTypes.StringType.equals(dataType)) {
+            return ItemType.stringItem.getName();
+        }
+        if (DataTypes.NullType.equals(dataType)) {
+            return ItemType.nullItem.getName();
+        }
+        if (DataTypes.DateType.equals(dataType)) {
+            return ItemType.dateItem.getName();
+        }
+        if (DataTypes.TimestampType.equals(dataType)) {
+            return ItemType.dateTimeItem.getName();
+        }
+        if (DataTypes.BinaryType.equals(dataType)) {
+            return ItemType.hexBinaryItem.getName();
+        }
+        if (vectorType.equals(dataType)) {
+            return "object";
+        }
+        throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
+    }
+
+    public static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema) {
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            Row row = getRowFromItemUsingSchema(item, schema);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    public static Row getRowFromItemUsingSchema(Item item, StructType schema) {
+        Object[] rowColumns = new Object[schema.fields().length];
+        for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+            StructField field = schema.fields()[fieldIndex];
+            Object rowColumn = getRowColumnFromItemUsingSchemaField(item, field);
+            rowColumns[fieldIndex] = rowColumn;
+        }
+        return RowFactory.create(rowColumns);
+    }
+
+    private static Object getRowColumnFromItemUsingSchemaField(Item item, StructField field) {
+        String fieldName = field.name();
+        DataType fieldDataType = field.dataType();
+        Item columnValueItem = item.getItemByKey(fieldName);
+        if (columnValueItem == null) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
+            );
+        }
+        try {
+            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Data does not fit to the given schema in field '"
+                        + fieldName
+                        + "'; "
+                        + ex.getJSONiqErrorMessage()
+            );
+        }
+    }
+
+    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+        try {
+            if (dataType instanceof ArrayType) {
+                List<Item> arrayItems = item.getItems();
+                Object[] arrayItemsForRow = new Object[arrayItems.size()];
+                DataType elementType = ((ArrayType) dataType).elementType();
+                for (int i = 0; i < arrayItems.size(); i++) {
+                    Item arrayItem = item.getItemAt(i);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
+                }
+                return arrayItemsForRow;
+            }
+
+            if (dataType instanceof StructType) {
+                return getRowFromItemUsingSchema(item, (StructType) dataType);
+            }
+
+            if (dataType.equals(DataTypes.BooleanType)) {
+                return item.getBooleanValue();
+            }
+            if (dataType.equals(DataTypes.IntegerType)) {
+                return item.castToIntegerValue();
+            }
+            if (dataType.equals(DataTypes.DoubleType)) {
+                return item.castToDoubleValue();
+            }
+            if (dataType.equals(decimalType)) {
+                return item.castToDecimalValue();
+            }
+            if (dataType.equals(DataTypes.StringType)) {
+                return item.getStringValue();
+            }
+            if (dataType.equals(DataTypes.NullType)) {
+                if (!item.isNull()) {
+                    throw new OurBadException("Item '" + item.serialize() + " is not null");
+                }
+                return null;
+            }
+            if (dataType.equals(DataTypes.DateType)) {
+                return new Date(item.getDateTimeValue().getMillis());
+            }
+            if (dataType.equals(DataTypes.TimestampType)) {
+                return new Timestamp(item.getDateTimeValue().getMillis());
+            }
+        } catch (OurBadException ex) {
+            // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
+            throw new MLInvalidDataFrameSchemaException(ex.getJSONiqErrorMessage());
+        }
+
+        throw new OurBadException(
+                "Unhandled item type found while generating rows: '" + dataType + "' ."
+        );
     }
 }

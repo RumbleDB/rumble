@@ -23,13 +23,11 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.lang3.StringEscapeUtils;
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -99,29 +97,31 @@ public class ObjectItem extends JsonItem {
     private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
         HashMap<String, Integer> frequencies = new HashMap<>();
         for (String key : keys) {
-            if (frequencies.containsKey(key))
+            if (frequencies.containsKey(key)) {
                 throw new DuplicateObjectKeyException(key, metadata);
-
-            else
+            } else {
                 frequencies.put(key, 1);
+            }
         }
     }
 
     @Override
     public Item getItemByKey(String s) {
-        if (this.keys.contains(s))
+        if (this.keys.contains(s)) {
             return this.values.get(this.keys.indexOf(s));
-        else
+        } else {
             return null;
+        }
     }
 
     @Override
     public void putItemByKey(String s, Item value) {
         this.values.replaceAll(item -> {
-            if (this.values.indexOf(item) == this.keys.indexOf(s))
+            if (this.values.indexOf(item) == this.keys.indexOf(s)) {
                 return value;
-            else
+            } else {
                 return item;
+            }
         });
     }
 
@@ -132,7 +132,7 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.ObjectItem) || super.isTypeOf(type);
+        return type.equals(ItemType.objectItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -152,10 +152,11 @@ public class ObjectItem extends JsonItem {
                 sb.append(value.serialize());
             }
 
-            if (i < this.keys.size() - 1)
+            if (i < this.keys.size() - 1) {
                 sb.append(", ");
-            else
+            } else {
                 sb.append(" ");
+            }
         }
         sb.append("}");
         return sb.toString();
@@ -210,6 +211,11 @@ public class ObjectItem extends JsonItem {
             result += getItemByKey(s).hashCode();
         }
         return result;
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.objectItem;
     }
 
 }

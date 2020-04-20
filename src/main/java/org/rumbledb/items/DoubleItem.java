@@ -27,11 +27,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 
 public class DoubleItem extends AtomicItem {
@@ -67,8 +64,9 @@ public class DoubleItem extends AtomicItem {
     }
 
     public BigDecimal castToDecimalValue() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
             return super.castToDecimalValue();
+        }
         return BigDecimal.valueOf(getDoubleValue());
     }
 
@@ -83,34 +81,36 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DoubleItem) || super.isTypeOf(type);
+        return type.equals(ItemType.doubleItem) || super.isTypeOf(type);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case BooleanItem:
-                return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
-            case DoubleItem:
-                return this;
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-            case IntegerItem:
-                return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.booleanItem)) {
+            return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
         }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
+        }
+        throw new ClassCastException();
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        if (itemType == AtomicTypes.AtomicItem || itemType == AtomicTypes.NullItem)
+    public boolean isCastableAs(ItemType itemType) {
+        if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
             return false;
-        else if (itemType == AtomicTypes.DecimalItem) {
+        } else if (itemType.equals(ItemType.decimalItem)) {
             return !Double.isInfinite(this.getValue());
-        } else if (itemType == AtomicTypes.IntegerItem) {
+        } else if (itemType.equals(ItemType.integerItem)) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;
@@ -118,8 +118,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue()))
+        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
             return String.valueOf(this.getDoubleValue());
+        }
         boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
         String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
         return negativeZero ? '-' + doubleString : doubleString;
@@ -153,7 +154,11 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isNumeric() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "Invalid args for numerics comparison "
@@ -164,7 +169,7 @@ public class DoubleItem extends AtomicItem {
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override
@@ -179,8 +184,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item multiply(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return other.multiply(this);
+        }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
     }
 
@@ -197,5 +203,10 @@ public class DoubleItem extends AtomicItem {
     @Override
     public Item idivide(Item other) {
         return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.doubleItem;
     }
 }

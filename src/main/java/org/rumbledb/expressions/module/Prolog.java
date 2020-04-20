@@ -23,19 +23,24 @@ package org.rumbledb.expressions.module;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class Prolog extends Expression {
+public class Prolog extends Node {
 
+    private final List<VariableDeclaration> variableDeclarations;
     private final List<InlineFunctionExpression> functionDeclarations;
 
-    public Prolog(List<InlineFunctionExpression> functionDeclarations, ExceptionMetadata metadata) {
+    public Prolog(
+            List<VariableDeclaration> variableDeclarations,
+            List<InlineFunctionExpression> functionDeclarations,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
+        this.variableDeclarations = variableDeclarations;
         this.functionDeclarations = functionDeclarations;
     }
 
@@ -43,32 +48,27 @@ public class Prolog extends Expression {
         return this.functionDeclarations;
     }
 
+    public List<VariableDeclaration> getVariableDeclarations() {
+        return this.variableDeclarations;
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.functionDeclarations != null)
+        result.addAll(this.variableDeclarations);
+        if (this.functionDeclarations != null) {
             this.functionDeclarations.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitProlog(this, argument);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(prolog ";
-        result += " (functionDecl ";
-        for (InlineFunctionExpression func : this.functionDeclarations) {
-            result += "(" + func.serializationString(false) + ") , ";
-        }
-        result = result.substring(0, result.length() - 1); // remove last comma
-        result += "))";
-        return result;
     }
 }
 

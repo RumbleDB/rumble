@@ -6,7 +6,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -32,10 +31,12 @@ public class SubstringAfterFunctionIterator extends LocalFunctionCallIterator {
             Item substringItem = this.children.get(1)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
-            if (stringItem == null || stringItem.getStringValue().isEmpty())
+            if (stringItem == null || stringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createStringItem("");
-            if (substringItem == null || substringItem.getStringValue().isEmpty())
+            }
+            if (substringItem == null || substringItem.getStringValue().isEmpty()) {
                 return ItemFactory.getInstance().createStringItem(stringItem.getStringValue());
+            }
 
             int indexOfOccurrence = stringItem.getStringValue().indexOf(substringItem.getStringValue());
             return indexOfOccurrence == -1
@@ -47,11 +48,12 @@ public class SubstringAfterFunctionIterator extends LocalFunctionCallIterator {
                                 indexOfOccurrence + substringItem.getStringValue().length()
                             )
                     );
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " substring-after function",
                     getMetadata()
             );
+        }
 
     }
 }

@@ -40,11 +40,13 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
-        if (!(arg0 instanceof ArrayItem))
+        if (!(arg0 instanceof ArrayItem)) {
             return results.iterator();
+        }
 
-        if (this.lookup <= 0 || this.lookup > arg0.getSize())
+        if (this.lookup <= 0 || this.lookup > arg0.getSize()) {
             return results.iterator();
+        }
 
         Item item = arg0.getItemAt(this.lookup - 1);
         if (item != null) {

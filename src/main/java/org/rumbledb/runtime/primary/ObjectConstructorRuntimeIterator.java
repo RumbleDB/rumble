@@ -28,7 +28,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -115,11 +114,12 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                         );
                     }
                     keys.add(key.getStringValue());
-                    if (keyIterator.hasNext())
+                    if (keyIterator.hasNext()) {
                         throw new IteratorFlowException(
                                 "A key cannot be a sequence of more than one item",
                                 getMetadata()
                         );
+                    }
                     keyIterator.close();
                 }
                 this.hasNext = false;

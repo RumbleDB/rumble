@@ -20,55 +20,84 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
+import sparksoniq.jsoniq.ExecutionMode;
+
+import java.util.Collections;
 import java.util.List;
 
-public class LetClause extends FlworClause {
+public class LetClause extends Clause {
 
-    private final List<LetClauseVar> letVars;
+    private final String variableName;
+    protected SequenceType sequenceType;
+    protected Expression expression;
 
-    public LetClause(List<LetClauseVar> vars, ExceptionMetadata metadataFromContext) {
+    // Holds whether the let variable will be stored in materialized(local) or native/spark(RDD or DF) format in a tuple
+    protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
+
+    public LetClause(
+            String variableName,
+            SequenceType sequenceType,
+            Expression expression,
+            ExceptionMetadata metadataFromContext
+    ) {
         super(FLWOR_CLAUSES.LET, metadataFromContext);
-        if (vars == null || vars.isEmpty())
+        if (variableName == null) {
             throw new SemanticException("Let clause must have at least one variable", metadataFromContext);
-        this.letVars = vars;
+        }
+        this.variableName = variableName;
+        this.sequenceType = sequenceType;
+        this.expression = expression;
+    }
 
-        // chain letVariables with previousClause relationship
-        for (int varIndex = this.letVars.size() - 1; varIndex > 0; varIndex--) {
-            this.letVars.get(varIndex).setPreviousClause(this.letVars.get(varIndex - 1));
+    public String getVariableName() {
+        return this.variableName;
+    }
+
+    public SequenceType getSequenceType() {
+        return this.sequenceType;
+    }
+
+    public Expression getExpression() {
+        return this.expression;
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode =
+            (this.previousClause == null)
+                ? ExecutionMode.LOCAL
+                : this.previousClause.getHighestExecutionMode(visitorConfig);
+
+        // if let clause is local, defined variables are stored according to the execution mode of the expression
+        if (this.highestExecutionMode == ExecutionMode.LOCAL) {
+            this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
+        } else {
+            this.variableHighestStorageMode = ExecutionMode.LOCAL;
         }
     }
 
-    public List<LetClauseVar> getLetVariables() {
-        return this.letVars;
-    }
-
-    @Override
-    public void setPreviousClause(FlworClause previousClause) {
-        super.setPreviousClause(previousClause);
-        // assign the previous clause of the LetClause as the first variable definition's previous
-        this.letVars.get(0).previousClause = this.previousClause;
-    }
-
-    @Override
-    public void initHighestExecutionMode() {
-        // call isDataFrame on the last letVariable
-        this.highestExecutionMode = this.letVars.get(this.letVars.size() - 1).getHighestExecutionMode();
+    public ExecutionMode getVariableHighestStorageMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.variableHighestStorageMode == ExecutionMode.UNSET
+        ) {
+            throw new OurBadException("An variable storage mode is accessed without being set.");
+        }
+        return this.variableHighestStorageMode;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        this.letVars.forEach(e -> {
-            if (e != null)
-                result.add(e);
-        });
-        return result;
+        return Collections.singletonList(this.expression);
     }
 
     @Override
@@ -76,13 +105,20 @@ public class LetClause extends FlworClause {
         return visitor.visitLetClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(letClause let ";
-        for (LetClauseVar var : this.letVars)
-            result += var.serializationString(true)
-                + (this.letVars.indexOf(var) < this.letVars.size() - 1 ? " , " : "");
-        result += ")";
-        return result;
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 }

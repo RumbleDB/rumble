@@ -20,25 +20,27 @@
 
 package org.rumbledb.expressions.primary;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
 
-public class ContextItemExpression extends PrimaryExpression {
+public class ContextItemExpression extends Expression {
 
     public ContextItemExpression(ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(contextExpr ";
-        result += "$$";
-        result += ")";
-        return result;
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitContextExpr(this, argument);
     }
 
     @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitContextExpr(this, argument);
+    public List<Node> getChildren() {
+        return new ArrayList<>();
     }
 }

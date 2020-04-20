@@ -21,13 +21,12 @@
 package org.rumbledb.runtime.functions.sequences.general;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -77,15 +76,15 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
             }
             this.hasNext = true;
             this.result = i.get(0);
-        }
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        if (this.iterator.hasNext()) {
-            this.hasNext = true;
-            this.result = this.iterator.next();
         } else {
-            this.hasNext = false;
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
+            if (this.iterator.hasNext()) {
+                this.hasNext = true;
+                this.result = this.iterator.next();
+            } else {
+                this.hasNext = false;
+            }
+            this.iterator.close();
         }
-        this.iterator.close();
     }
-
 }

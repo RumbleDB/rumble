@@ -27,8 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
-import sparksoniq.semantics.types.ItemTypes;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -49,17 +47,19 @@ public class FlworKey implements KryoSerializable {
     @Override
     public int hashCode() {
         StringBuilder result = new StringBuilder();
-        for (Item key : this.keyItems)
+        for (Item key : this.keyItems) {
             result.append(key.hashCode());
+        }
         return result.toString().hashCode();
     }
 
     @Override
     public boolean equals(Object otherKey) {
-        if (otherKey instanceof FlworKey)
+        if (otherKey instanceof FlworKey) {
             return this.compareWithFlworKey((FlworKey) otherKey) == 0;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -108,9 +108,9 @@ public class FlworKey implements KryoSerializable {
                 } catch (RuntimeException e) {
                     throw new SparksoniqRuntimeException(
                             "Invalid sort key: cannot compare item of type "
-                                + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + comparisonItem.getDynamicType().toString()
                                 + " with item of type "
-                                + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                                + currentItem.getDynamicType().toString()
                                 + "."
                     );
                 }

@@ -24,12 +24,12 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
@@ -97,7 +97,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (this.result == null) {
             this.currentResultIndex = 0;
             JavaRDD<Item> rdd = this.getRDD(this.currentDynamicContextForLocalExecution);
-            this.result = SparkSessionManager.collectRDDwithLimit(rdd);
+            this.result = SparkSessionManager.collectRDDwithLimit(rdd, this.getMetadata());
             this.hasNext = !this.result.isEmpty();
         }
         return this.hasNext;
@@ -108,16 +108,19 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         if (!isRDD()) {
             return nextLocal();
         }
-        if (!this.isOpen)
+        if (!this.isOpen) {
             throw new IteratorFlowException("Runtime iterator is not open", getMetadata());
+        }
 
-        if (!(this.currentResultIndex <= this.result.size() - 1))
+        if (!(this.currentResultIndex <= this.result.size() - 1)) {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.getClass().getSimpleName(),
                     getMetadata()
             );
-        if (this.currentResultIndex == this.result.size() - 1)
+        }
+        if (this.currentResultIndex == this.result.size() - 1) {
             this.hasNext = false;
+        }
 
         Item item = this.result.get(this.currentResultIndex);
         this.currentResultIndex++;

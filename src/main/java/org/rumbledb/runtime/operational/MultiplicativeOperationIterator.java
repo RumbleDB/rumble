@@ -20,33 +20,40 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.util.Arrays;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.BinaryOperationBaseIterator;
-
+import org.rumbledb.runtime.operational.base.ComparisonUtil;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.ItemTypes;
 
-public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator {
+public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     Item left;
     Item right;
+    MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator;
+    private RuntimeIterator leftIterator;
+    private RuntimeIterator rightIterator;
 
     public MultiplicativeOperationIterator(
-            RuntimeIterator left,
-            RuntimeIterator right,
-            OperationalExpressionBase.Operator operator,
+            RuntimeIterator leftIterator,
+            RuntimeIterator rightIterator,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(left, right, operator, executionMode, iteratorMetadata);
+        super(Arrays.asList(leftIterator, rightIterator), executionMode, iteratorMetadata);
+        this.leftIterator = leftIterator;
+        this.rightIterator = rightIterator;
+        this.multiplicativeOperator = multiplicativeOperator;
     }
 
     @Override
@@ -62,13 +69,19 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         } else {
             this.left = this.leftIterator.next();
             this.right = this.rightIterator.next();
-            this.checkBinaryOperation(this.left, this.right, this.operator);
+            ComparisonUtil.checkBinaryOperation(
+                this.left,
+                this.right,
+                this.multiplicativeOperator.toString(),
+                getMetadata()
+            );
             this.hasNext = true;
-            if (this.leftIterator.hasNext() || this.rightIterator.hasNext())
+            if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
                 throw new UnexpectedTypeException(
                         "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
                         getMetadata()
                 );
+            }
         }
         this.leftIterator.close();
         this.rightIterator.close();
@@ -79,7 +92,7 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
         if (this.hasNext) {
             this.hasNext = false;
             try {
-                switch (this.operator) {
+                switch (this.multiplicativeOperator) {
                     case MUL:
                         return this.left.multiply(this.right);
                     case DIV:
@@ -94,11 +107,11 @@ public class MultiplicativeOperationIterator extends BinaryOperationBaseIterator
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""
-                            + this.operator.name().toLowerCase()
+                            + this.multiplicativeOperator.toString()
                             + "\": operation not possible with parameters of type \""
-                            + ItemTypes.getItemTypeName(this.left.getClass().getSimpleName())
+                            + this.left.getDynamicType().toString()
                             + "\" and \""
-                            + ItemTypes.getItemTypeName(this.right.getClass().getSimpleName())
+                            + this.right.getDynamicType().toString()
                             + "\"",
                         getMetadata()
                 );

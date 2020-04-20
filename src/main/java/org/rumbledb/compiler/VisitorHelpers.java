@@ -1,12 +1,13 @@
 package org.rumbledb.compiler;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {
@@ -19,11 +20,11 @@ public class VisitorHelpers {
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(node, null);
 
-        visitor.setConfigForIntermediatePasses();
-        int prevUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+        visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
+        int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
         while (true) {
             visitor.visit(node, null);
-            int currentUnsetCount = Functions.getCurrentUnsetUserDefinedFunctionIdentifiers().size();
+            int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
@@ -37,15 +38,20 @@ public class VisitorHelpers {
             prevUnsetCount = currentUnsetCount;
         }
 
-        visitor.setConfigForFinalPass();
+        visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(node, null);
+    }
+
+    public static DynamicContext createDynamicContext(Node node, RumbleRuntimeConfiguration configuration) {
+        DynamicContextVisitor visitor = new DynamicContextVisitor(configuration);
+        return visitor.visit(node, null);
     }
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions() {
         try {
             for (
                 FunctionIdentifier functionIdentifier : Functions
-                    .getCurrentUnsetUserDefinedFunctionIdentifiers()
+                    .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
             ) {
                 Functions.addUserDefinedFunctionExecutionMode(
                     functionIdentifier,

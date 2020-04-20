@@ -26,11 +26,8 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 
 public class BooleanItem extends AtomicItem {
@@ -69,32 +66,34 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.BooleanItem) || super.isTypeOf(type);
+        return type.equals(ItemType.booleanItem) || super.isTypeOf(type);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case BooleanItem:
-                return this;
-            case DoubleItem:
-                return ItemFactory.getInstance().createDoubleItem(this.hashCode());
-            case DecimalItem:
-                return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
-            case IntegerItem:
-                return ItemFactory.getInstance().createIntegerItem(this.hashCode());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.booleanItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(this.hashCode());
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return ItemFactory.getInstance().createIntegerItem(this.hashCode());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
+        }
+        throw new ClassCastException();
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType != AtomicTypes.AtomicItem
+    public boolean isCastableAs(ItemType itemType) {
+        return !itemType.equals(ItemType.atomicItem)
             &&
-            itemType != AtomicTypes.NullItem;
+            !itemType.equals(ItemType.nullItem);
     }
 
     @Override
@@ -133,7 +132,11 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isBoolean() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "Invalid args for boolean comparison "
@@ -144,6 +147,11 @@ public class BooleanItem extends AtomicItem {
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.booleanItem;
     }
 }

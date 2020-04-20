@@ -38,7 +38,7 @@ dfPropertyName          : 'decimal-separator'
 
 moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
-varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | ('external' (':=' exprSingle)?));
+varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
 functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
                           (Kas return_type=sequenceType)?
@@ -140,7 +140,9 @@ treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )
 
 castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )?;
 
-castExpr                : main_expr=unaryExpr ( Kcast Kas single=singleType )?;
+castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
+
+arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
 
 unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
@@ -238,6 +240,8 @@ keyWordDate             : 'date';
 
 keyWordTime             : 'time';
 
+keyWordAnyURI           : 'anyURI';
+
 typesKeywords           : keyWordString
                         | keyWordInteger
                         | keyWordDecimal
@@ -250,7 +254,8 @@ typesKeywords           : keyWordString
                         | keyWordDate
                         | keyWordTime
                         | keyWordHexBinary
-                        | keyWordBase64Binary;
+                        | keyWordBase64Binary
+                        | keyWordAnyURI;
 
 singleType              : item=atomicType (question +='?')?;
 

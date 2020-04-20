@@ -20,38 +20,29 @@
 
 package org.rumbledb.expressions;
 
-import org.rumbledb.expressions.control.IfExpression;
-import org.rumbledb.expressions.control.SwitchCaseExpression;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
-import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
-import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.InstanceOfExpression;
-import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.NotExpression;
-import org.rumbledb.expressions.operational.OrExpression;
-import org.rumbledb.expressions.operational.RangeExpression;
-import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.TreatExpression;
-import org.rumbledb.expressions.operational.UnaryExpression;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -71,7 +62,10 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -128,22 +122,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitOrderByClause(OrderByClause expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitForClauseVar(ForClauseVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitLetClauseVar(LetClauseVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitGroupByClauseVar(GroupByClauseVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-
-    public T visitOrderByClauseExpr(OrderByClauseExpr expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -292,14 +270,10 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
-
-    public T visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, T argument) {
-        return defaultAction(expression, argument);
-    }
     // endregion
 
     // region control
-    public T visitIfExpression(IfExpression expression, T argument) {
+    public T visitConditionalExpression(ConditionalExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -307,16 +281,12 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitSwitchCaseExpression(SwitchCaseExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-    // endregion
-
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
-    public T visitTypeSwitchCaseExpression(TypeSwitchCaseExpression expression, T argument) {
+    public T visitVariableDeclaration(VariableDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
+
 }

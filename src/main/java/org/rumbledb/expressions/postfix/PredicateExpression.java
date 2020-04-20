@@ -21,7 +21,9 @@
 package org.rumbledb.expressions.postfix;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -30,12 +32,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class PredicateExpression extends PostfixExpression {
+public class PredicateExpression extends Expression {
 
+    private Expression mainExpression;
     private Expression predicateExpression;
 
     public PredicateExpression(Expression mainExpression, Expression predicateExpression, ExceptionMetadata metadata) {
-        super(mainExpression, metadata);
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
+        this.mainExpression = mainExpression;
         this.predicateExpression = predicateExpression;
     }
 
@@ -52,17 +59,16 @@ public class PredicateExpression extends PostfixExpression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(predicate "
-            + this.mainExpression.serializationString(false)
-            + " [["
-            + this.predicateExpression.serializationString(false)
-            + "]])";
-        return result;
+    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
+        return visitor.visitPredicateExpression(this, argument);
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
     }
 
     @Override
-    public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitPredicateExpression(this, argument);
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
     }
 }

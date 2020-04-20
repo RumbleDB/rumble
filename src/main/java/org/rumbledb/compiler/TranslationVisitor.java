@@ -32,42 +32,35 @@ import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.control.IfExpression;
-import org.rumbledb.expressions.control.SwitchCaseExpression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
-import org.rumbledb.expressions.flowr.FlworClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
-import org.rumbledb.expressions.flowr.FlworVarSingleType;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
-import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
-import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.InstanceOfExpression;
-import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.NotExpression;
-import org.rumbledb.expressions.operational.OrExpression;
-import org.rumbledb.expressions.operational.RangeExpression;
-import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.TreatExpression;
-import org.rumbledb.expressions.operational.UnaryExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -80,103 +73,97 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
-import org.rumbledb.expressions.primary.PrimaryExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
+
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
-
-// used to build AST, will override methods
-public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Void> {
-
-    private MainModule mainModule;
-
-    private Expression currentExpression;
-    private Expression otherCurrentExpression;
-
-    private FlworClause currentFlworClause;
-
+/**
+ * Translation is the phase in which the Abstract Syntax Tree is transformed
+ * into an Expression Tree, which is a JSONiq intermediate representation.
+ *
+ * @author Stefan Irimescu, Can Berker Cikis, Ghislain Fourny, Andrea Rinaldi
+ */
+public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
 
     public TranslationVisitor() {
     }
     // endregion expr
 
     // region module
-    public MainModule getMainModule() {
-        return this.mainModule;
-    }
-
     @Override
-    public Void visitModule(JsoniqParser.ModuleContext ctx) {
-        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0"))
+    public Node visitModule(JsoniqParser.ModuleContext ctx) {
+        if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
-        this.visitMainModule(ctx.mainModule());
-        return null;
+        }
+        return this.visitMainModule(ctx.mainModule());
     }
 
     @Override
-    public Void visitMainModule(JsoniqParser.MainModuleContext ctx) {
-        this.visitProlog(ctx.prolog());
-        Prolog prolog = (Prolog) this.currentExpression;
-        this.visitExpr(ctx.expr());
-        Expression commaExpression = this.currentExpression;
-        this.mainModule = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
-        this.currentExpression = this.mainModule;
-        return null;
+    public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
+        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
+        Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
+        return new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitProlog(JsoniqParser.PrologContext ctx) {
+    public Node visitProlog(JsoniqParser.PrologContext ctx) {
+        List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<InlineFunctionExpression> InlineFunctionExpressions = new ArrayList<>();
+        for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
+            VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                variable
+            );
+            globalVariables.add(variableDeclaration);
+        }
         for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
-            this.visitFunctionDecl(function);
-            InlineFunctionExpressions.add((InlineFunctionExpression) this.currentExpression);
+            InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
+                function
+            );
+            InlineFunctionExpressions.add(inlineFunctionExpression);
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
         }
 
-        this.currentExpression = new Prolog(InlineFunctionExpressions, createMetadataFromContext(ctx));
-        return null;
+        return new Prolog(globalVariables, InlineFunctionExpressions, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
+    public Node visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
         throw new ModuleDeclarationException("Modules are not supported in Sparksoniq", createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
+    public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         String fnName = ctx.fn_name.getText();
-        Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
-        FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                mostGeneralSequenceType,
-                createMetadataFromContext(ctx)
-        );
+        Map<String, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = mostGeneralSequenceType;
         String paramName;
-        FlworVarSequenceType paramType;
+        SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
-                paramType = new FlworVarSequenceType(
-                        mostGeneralSequenceType,
-                        createMetadataFromContext(ctx)
-                );
+                paramType = mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             fnName,
@@ -185,555 +172,495 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                     );
                 }
                 if (param.sequenceType() != null) {
-                    this.visitSequenceType(param.sequenceType());
-                    paramType = (FlworVarSequenceType) this.currentExpression;
+                    paramType = this.processSequenceType(param.sequenceType());
+                } else {
+                    paramType = SequenceType.mostGeneralSequenceType;
                 }
                 fnParams.put(paramName, paramType);
             }
         }
 
         if (ctx.return_type != null) {
-            this.visitSequenceType(ctx.return_type);
-            fnReturnType = (FlworVarSequenceType) this.currentExpression;
+            fnReturnType = this.processSequenceType(ctx.return_type);
+        } else {
+            fnReturnType = SequenceType.mostGeneralSequenceType;
         }
 
-        this.visitExpr(ctx.fn_body);
+        Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
 
-        this.currentExpression = new InlineFunctionExpression(
+        return new InlineFunctionExpression(
                 fnName,
                 fnParams,
                 fnReturnType,
-                this.currentExpression,
+                bodyExpression,
                 createMetadataFromContext(ctx)
         );
-        return null;
     }
     // endregion
 
     // region expr
     @Override
-    public Void visitExpr(JsoniqParser.ExprContext ctx) {
+    public Node visitExpr(JsoniqParser.ExprContext ctx) {
         List<Expression> expressions = new ArrayList<>();
-        Expression expression;
         for (JsoniqParser.ExprSingleContext expr : ctx.exprSingle()) {
-            this.visitExprSingle(expr);
-            expression = this.currentExpression;
-            expressions.add(expression);
+            expressions.add((Expression) this.visitExprSingle(expr));
 
         }
-        this.currentExpression = new CommaExpression(expressions, createMetadataFromContext(ctx));
-        return null;
+        if (expressions.size() == 1) {
+            return expressions.get(0);
+        }
+        return new CommaExpression(expressions, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
+    public Node visitExprSingle(JsoniqParser.ExprSingleContext ctx) {
         ParseTree content = ctx.children.get(0);
-        if (content instanceof JsoniqParser.OrExprContext)
-            this.visitOrExpr((JsoniqParser.OrExprContext) content);
-        else if (content instanceof JsoniqParser.FlowrExprContext)
-            this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
-        else if (content instanceof JsoniqParser.IfExprContext)
-            this.visitIfExpr((JsoniqParser.IfExprContext) content);
-        else if (content instanceof JsoniqParser.QuantifiedExprContext)
-            this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
-        else if (content instanceof JsoniqParser.SwitchExprContext)
-            this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
-        else if (content instanceof JsoniqParser.TypeSwitchExprContext)
-            this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
-        return null;
+        if (content instanceof JsoniqParser.OrExprContext) {
+            return this.visitOrExpr((JsoniqParser.OrExprContext) content);
+        }
+        if (content instanceof JsoniqParser.FlowrExprContext) {
+            return this.visitFlowrExpr((JsoniqParser.FlowrExprContext) content);
+        }
+        if (content instanceof JsoniqParser.IfExprContext) {
+            return this.visitIfExpr((JsoniqParser.IfExprContext) content);
+        }
+        if (content instanceof JsoniqParser.QuantifiedExprContext) {
+            return this.visitQuantifiedExpr((JsoniqParser.QuantifiedExprContext) content);
+        }
+        if (content instanceof JsoniqParser.SwitchExprContext) {
+            return this.visitSwitchExpr((JsoniqParser.SwitchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TypeSwitchExprContext) {
+            return this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
+        }
+        throw new OurBadException("Unrecognized ExprSingle.");
     }
     // endregion
 
     // region Flowr
-    // TODO [EXPRVISITOR] count
     @Override
-    public Void visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
-        FlworClause startClause, childClause;
-        List<FlworClause> contentClauses = new ArrayList<>();
-        ReturnClause returnClause;
+    public Node visitFlowrExpr(JsoniqParser.FlowrExprContext ctx) {
+        Clause clause;
         // check the start clause, for or let
         if (ctx.start_for == null) {
-            this.visitLetClause(ctx.start_let);
-            startClause = this.currentFlworClause;
+            clause = (Clause) this.visitLetClause(ctx.start_let);
         } else {
-            this.visitForClause(ctx.start_for);
-            startClause = this.currentFlworClause;
+            clause = (Clause) this.visitForClause(ctx.start_for);
         }
 
-        // exclude return + returnExpr
-        FlworClause previousFLWORClause = startClause;
+        Clause previousFLWORClause = clause.getLastClause();
+
         for (ParseTree child : ctx.children.subList(1, ctx.children.size() - 2)) {
             if (child instanceof JsoniqParser.ForClauseContext) {
-                this.visitForClause((JsoniqParser.ForClauseContext) child);
-                childClause = this.currentFlworClause;
+                clause = (Clause) this.visitForClause((JsoniqParser.ForClauseContext) child);
             } else if (child instanceof JsoniqParser.LetClauseContext) {
-                this.visitLetClause((JsoniqParser.LetClauseContext) child);
-                childClause = this.currentFlworClause;
+                clause = (Clause) this.visitLetClause((JsoniqParser.LetClauseContext) child);
             } else if (child instanceof JsoniqParser.WhereClauseContext) {
-                this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
-                childClause = this.currentFlworClause;
+                clause = (Clause) this.visitWhereClause((JsoniqParser.WhereClauseContext) child);
             } else if (child instanceof JsoniqParser.GroupByClauseContext) {
-                this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
-                childClause = this.currentFlworClause;
+                clause = (Clause) this.visitGroupByClause((JsoniqParser.GroupByClauseContext) child);
             } else if (child instanceof JsoniqParser.OrderByClauseContext) {
-                this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
-                childClause = this.currentFlworClause;
+                clause = (Clause) this.visitOrderByClause((JsoniqParser.OrderByClauseContext) child);
             } else if (child instanceof JsoniqParser.CountClauseContext) {
-                this.visitCountClause((JsoniqParser.CountClauseContext) child);
-                childClause = this.currentFlworClause;
-            } else
+                clause = (Clause) this.visitCountClause((JsoniqParser.CountClauseContext) child);
+            } else {
                 throw new UnsupportedFeatureException(
                         "FLOWR clause not implemented yet",
                         createMetadataFromContext(ctx)
                 );
-            childClause.setPreviousClause(previousFLWORClause);
-            previousFLWORClause = childClause;
-            contentClauses.add(childClause);
+            }
+
+            previousFLWORClause.chainWith(clause.getFirstClause());
+            previousFLWORClause = clause.getLastClause();
         }
 
-        // visit return
-        this.visitExprSingle(ctx.return_expr);
-        Expression returnExpr = this.currentExpression;
-        returnClause = new ReturnClause(
+        Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
+        ReturnClause returnClause = new ReturnClause(
                 returnExpr,
                 new ExceptionMetadata(
                         ctx.getStop().getLine(),
                         ctx.getStop().getCharPositionInLine()
                 )
         );
-        returnClause.setPreviousClause(previousFLWORClause);
+        previousFLWORClause.chainWith(returnClause);
 
-        this.currentExpression = new FlworExpression(
-                startClause,
-                contentClauses,
+        return new FlworExpression(
                 returnClause,
                 createMetadataFromContext(ctx)
         );
-        return null;
     }
 
     @Override
-    public Void visitForClause(JsoniqParser.ForClauseContext ctx) {
-        List<ForClauseVar> vars = new ArrayList<>();
-        ForClauseVar child;
+    public Node visitForClause(JsoniqParser.ForClauseContext ctx) {
+        ForClause clause = null;
         for (JsoniqParser.ForVarContext var : ctx.vars) {
-            this.visitForVar(var);
-            child = (ForClauseVar) this.currentFlworClause;
-            vars.add(child);
+            ForClause newClause = (ForClause) this.visitForVar(var);
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
+            clause = newClause;
         }
 
-        this.currentFlworClause = new ForClause(vars, createMetadataFromContext(ctx));
-        return null;
+        return clause;
     }
 
     @Override
-    public Void visitForVar(JsoniqParser.ForVarContext ctx) {
-        VariableReferenceExpression var, atVarRef = null;
-        FlworVarSequenceType seq = null;
-        Expression expr;
+    public Node visitForVar(JsoniqParser.ForVarContext ctx) {
+        SequenceType seq = null;
         boolean emptyFlag;
-        this.visitVarRef(ctx.var_ref);
-        var = (VariableReferenceExpression) this.currentExpression;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
-            this.visitSequenceType(ctx.seq);
-            seq = (FlworVarSequenceType) this.currentExpression;
+            seq = this.processSequenceType(ctx.seq);
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
         emptyFlag = (ctx.flag != null);
+        String atVar = null;
         if (ctx.at != null) {
-            this.visitVarRef(ctx.at);
-            atVarRef = (VariableReferenceExpression) this.currentExpression;
+            atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
-        this.visitExprSingle(ctx.ex);
-        expr = this.currentExpression;
+        Expression expr = (Expression) this.visitExprSingle(ctx.ex);
 
-        this.currentFlworClause = new ForClauseVar(var, seq, emptyFlag, atVarRef, expr, createMetadataFromContext(ctx));
-        return null;
+        return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitLetClause(JsoniqParser.LetClauseContext ctx) {
-        List<LetClauseVar> vars = new ArrayList<>();
-        LetClauseVar child;
+    public Node visitLetClause(JsoniqParser.LetClauseContext ctx) {
+        LetClause clause = null;
         for (JsoniqParser.LetVarContext var : ctx.vars) {
-            this.visitLetVar(var);
-            child = (LetClauseVar) this.currentFlworClause;
-            vars.add(child);
+            LetClause newClause = (LetClause) this.visitLetVar(var);
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
+            clause = newClause;
         }
 
-        this.currentFlworClause = new LetClause(vars, createMetadataFromContext(ctx));
-        return null;
+        return clause;
     }
 
     @Override
-    public Void visitLetVar(JsoniqParser.LetVarContext ctx) {
-        VariableReferenceExpression var;
-        FlworVarSequenceType seq = null;
-        Expression expr;
-        this.visitVarRef(ctx.var_ref);
-        var = (VariableReferenceExpression) this.currentExpression;
+    public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
+        SequenceType seq = null;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
-            this.visitSequenceType(ctx.seq);
-            seq = (FlworVarSequenceType) this.currentExpression;
+            seq = this.processSequenceType(ctx.seq);
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
-        this.visitExprSingle(ctx.ex);
-        expr = this.currentExpression;
 
-        this.currentFlworClause = new LetClauseVar(var, seq, expr, createMetadataFromContext(ctx));
-        return null;
+        Expression expr = (Expression) this.visitExprSingle(ctx.ex);
+
+        return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
-        List<GroupByClauseVar> vars = new ArrayList<>();
-        GroupByClauseVar child;
+    public Node visitGroupByClause(JsoniqParser.GroupByClauseContext ctx) {
+        List<GroupByVariableDeclaration> vars = new ArrayList<>();
+        GroupByVariableDeclaration child;
         for (JsoniqParser.GroupByVarContext var : ctx.vars) {
-            this.visitGroupByVar(var);
-            child = (GroupByClauseVar) this.currentFlworClause;
+            child = this.processGroupByVar(var);
             vars.add(child);
         }
-        this.currentFlworClause = new GroupByClause(vars, createMetadataFromContext(ctx));
-        return null;
-
+        return new GroupByClause(vars, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
+    public Node visitOrderByClause(JsoniqParser.OrderByClauseContext ctx) {
         boolean stable = false;
-        List<OrderByClauseExpr> exprs = new ArrayList<>();
-        OrderByClauseExpr child;
+        List<OrderByClauseSortingKey> exprs = new ArrayList<>();
+        OrderByClauseSortingKey child;
         for (JsoniqParser.OrderByExprContext var : ctx.orderByExpr()) {
-            this.visitOrderByExpr(var);
-            child = (OrderByClauseExpr) this.currentFlworClause;
+            child = this.processOrderByExpr(var);
             exprs.add(child);
         }
-        if (ctx.stb != null && !ctx.stb.getText().isEmpty())
+        if (ctx.stb != null && !ctx.stb.getText().isEmpty()) {
             stable = true;
-        this.currentFlworClause = new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
-        return null;
-
+        }
+        return new OrderByClause(exprs, stable, createMetadataFromContext(ctx));
     }
 
-    @Override
-    public Void visitOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+    public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
         boolean ascending = true;
-        if (ctx.desc != null && !ctx.desc.getText().isEmpty())
+        if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
+        }
         String uri = null;
-        if (ctx.uriLiteral() != null)
+        if (ctx.uriLiteral() != null) {
             uri = ctx.uriLiteral().getText();
-        OrderByClauseExpr.EMPTY_ORDER empty_order = OrderByClauseExpr.EMPTY_ORDER.NONE;
-        if (ctx.gr != null && !ctx.gr.getText().isEmpty())
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.LAST;
-        if (ctx.ls != null && !ctx.ls.getText().isEmpty())
-            empty_order = OrderByClauseExpr.EMPTY_ORDER.FIRST;
-        this.visitExprSingle(ctx.exprSingle());
-        Expression expression = this.currentExpression;
-        this.currentFlworClause = new OrderByClauseExpr(
+        }
+        OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
+        if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LAST;
+        }
+        if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.FIRST;
+        }
+        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new OrderByClauseSortingKey(
                 expression,
                 ascending,
                 uri,
-                empty_order,
-                createMetadataFromContext(ctx)
+                empty_order
         );
-        return null;
     }
 
-    @Override
-    public Void visitGroupByVar(JsoniqParser.GroupByVarContext ctx) {
-        VariableReferenceExpression var;
-        FlworVarSequenceType seq = null;
+    public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+        SequenceType seq = null;
         Expression expr = null;
-        String uri = null;
-        this.visitVarRef(ctx.var_ref);
-        var = (VariableReferenceExpression) this.currentExpression;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
 
         if (ctx.seq != null) {
-            this.visitSequenceType(ctx.seq);
-            seq = (FlworVarSequenceType) this.currentExpression;
+            seq = this.processSequenceType(ctx.seq);
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
         }
 
         if (ctx.ex != null) {
-            this.visitExprSingle(ctx.ex);
-            expr = this.currentExpression;
+
+            expr = (Expression) this.visitExprSingle(ctx.ex);
         }
 
-        if (ctx.uri != null)
-            uri = ctx.uri.getText();
 
-        this.currentFlworClause = new GroupByClauseVar(var, seq, expr, uri, createMetadataFromContext(ctx));
-        return null;
+        return new GroupByVariableDeclaration(var, seq, expr);
     }
 
     @Override
-    public Void visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
-        Expression expr;
-        this.visitExprSingle(ctx.exprSingle());
-        expr = this.currentExpression;
-        this.currentFlworClause = new WhereClause(expr, createMetadataFromContext(ctx));
-        return null;
+    public Node visitWhereClause(JsoniqParser.WhereClauseContext ctx) {
+        Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+        return new WhereClause(expr, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitCountClause(JsoniqParser.CountClauseContext ctx) {
-        VariableReferenceExpression child;
-        this.visitVarRef(ctx.varRef());
-        child = (VariableReferenceExpression) this.currentExpression;
-        this.currentFlworClause = new CountClause(child, createMetadataFromContext(ctx));
-        return null;
+    public Node visitCountClause(JsoniqParser.CountClauseContext ctx) {
+        VariableReferenceExpression child = (VariableReferenceExpression) this.visitVarRef(ctx.varRef());
+        return new CountClause(child, createMetadataFromContext(ctx));
     }
     // endregion
 
     // region operational
     @Override
-    public Void visitOrExpr(JsoniqParser.OrExprContext ctx) {
-        Expression mainExpression;
-        List<Expression> rhs = new ArrayList<>();
-        this.visitAndExpr(ctx.main_expr);
-        if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            for (JsoniqParser.AndExprContext child : ctx.rhs) {
-                this.visitAndExpr(child);
-                rhs.add(this.currentExpression);
-            }
-            this.currentExpression = new OrExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+    public Node visitOrExpr(JsoniqParser.OrExprContext ctx) {
+        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
         }
-        return null;
+        for (JsoniqParser.AndExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitAndExpr(child);
+            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
     }
 
     @Override
-    public Void visitAndExpr(JsoniqParser.AndExprContext ctx) {
-        Expression mainExpression;
-        List<Expression> rhs = new ArrayList<>();
-        this.visitNotExpr(ctx.main_expr);
-        if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            for (JsoniqParser.NotExprContext child : ctx.rhs) {
-                this.visitNotExpr(child);
-                rhs.add(this.currentExpression);
-            }
-            this.currentExpression = new AndExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+    public Node visitAndExpr(JsoniqParser.AndExprContext ctx) {
+        Expression result = (Expression) this.visitNotExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
         }
-        return null;
+        for (JsoniqParser.NotExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitNotExpr(child);
+            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
     }
 
     @Override
-    public Void visitNotExpr(JsoniqParser.NotExprContext ctx) {
-        Expression mainExpression;
-        this.visitComparisonExpr(ctx.main_expr);
-        if (!(ctx.op == null || ctx.op.isEmpty())) {
-            mainExpression = this.currentExpression;
-            this.currentExpression = new NotExpression(
-                    mainExpression,
+    public Node visitNotExpr(JsoniqParser.NotExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitComparisonExpr(ctx.main_expr);
+        if (ctx.op == null || ctx.op.isEmpty()) {
+            return mainExpression;
+        }
+        return new NotExpression(
+                mainExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitStringConcatExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return mainExpression;
+        }
+        JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
+        Expression childExpression = (Expression) this.visitStringConcatExpr(child);
+        return new ComparisonExpression(
+                mainExpression,
+                childExpression,
+                ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
+        Expression result = (Expression) this.visitRangeExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (JsoniqParser.RangeExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitRangeExpr(child);
+            result = new StringConcatExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
+    }
+
+    @Override
+    public Node visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitAdditiveExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return mainExpression;
+        }
+        JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
+        Expression childExpression = (Expression) this.visitAdditiveExpr(child);
+        return new RangeExpression(
+                mainExpression,
+                childExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
+        Expression result = (Expression) this.visitMultiplicativeExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            JsoniqParser.MultiplicativeExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitMultiplicativeExpr(child);
+            result = new AdditiveExpression(
+                    result,
+                    rightExpression,
+                    ctx.op.get(i).getText().equals("-"),
                     createMetadataFromContext(ctx)
             );
         }
-        return null;
+        return result;
     }
 
     @Override
-    public Void visitComparisonExpr(JsoniqParser.ComparisonExprContext ctx) {
-        Expression mainExpression, childExpression;
-        this.visitStringConcatExpr(ctx.main_expr);
-        if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
-            this.visitStringConcatExpr(child);
-            childExpression = this.currentExpression;
-
-            this.currentExpression = new ComparisonExpression(
-                    mainExpression,
-                    childExpression,
-                    OperationalExpressionBase.getOperatorFromString(ctx.op.get(0).getText()),
+    public Node visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
+        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            JsoniqParser.InstanceOfExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitInstanceOfExpr(child);
+            result = new MultiplicativeExpression(
+                    result,
+                    rightExpression,
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
                     createMetadataFromContext(ctx)
             );
         }
-        return null;
+        return result;
     }
 
     @Override
-    public Void visitStringConcatExpr(JsoniqParser.StringConcatExprContext ctx) {
-        Expression mainExpression;
-        List<Expression> rhs = new ArrayList<>();
-        this.visitRangeExpr(ctx.main_expr);
-        if (!(ctx.rhs == null) && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            for (JsoniqParser.RangeExprContext child : ctx.rhs) {
-                this.visitRangeExpr(child);
-                rhs.add(this.currentExpression);
-            }
-            this.currentExpression = new StringConcatExpression(mainExpression, rhs, createMetadataFromContext(ctx));
+    public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
         }
-        return null;
+        JsoniqParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new InstanceOfExpression(
+                mainExpression,
+                sequenceType,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
-    public Void visitRangeExpr(JsoniqParser.RangeExprContext ctx) {
-
-        Expression mainExpression, childExpression;
-        this.visitAdditiveExpr(ctx.main_expr);
-        if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.AdditiveExprContext child = ctx.rhs.get(0);
-            this.visitAdditiveExpr(child);
-            childExpression = this.currentExpression;
-            this.currentExpression = new RangeExpression(
-                    mainExpression,
-                    childExpression,
-                    createMetadataFromContext(ctx)
-            );
+    public Node visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitCastableExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
         }
-
-        return null;
+        JsoniqParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitAdditiveExpr(JsoniqParser.AdditiveExprContext ctx) {
-        Expression mainExpression, childExpression;
-        List<Expression> rhs = new ArrayList<>();
-        this.visitMultiplicativeExpr(ctx.main_expr);
-        if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            for (JsoniqParser.MultiplicativeExprContext child : ctx.rhs) {
-                this.visitMultiplicativeExpr(child);
-                childExpression = this.currentExpression;
-                rhs.add(childExpression);
-            }
-            this.currentExpression = new AdditiveExpression(
-                    mainExpression,
-                    rhs,
-                    OperationalExpressionBase.getOperatorFromOpList(ctx.op),
-                    createMetadataFromContext(ctx)
-            );
+    public Node visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitCastExpr(ctx.main_expr);
+        if (ctx.single == null || ctx.single.isEmpty()) {
+            return mainExpression;
         }
-        return null;
+        JsoniqParser.SingleTypeContext child = ctx.single;
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitMultiplicativeExpr(JsoniqParser.MultiplicativeExprContext ctx) {
-        Expression mainExpression;
-        List<Expression> rhs = new ArrayList<>();
-        this.visitInstanceOfExpr(ctx.main_expr);
-        if (ctx.rhs != null && !ctx.rhs.isEmpty()) {
-            mainExpression = this.currentExpression;
-            for (JsoniqParser.InstanceOfExprContext child : ctx.rhs) {
-                this.visitInstanceOfExpr(child);
-                rhs.add(this.currentExpression);
-            }
-            this.currentExpression = new MultiplicativeExpression(
-                    mainExpression,
-                    rhs,
-                    OperationalExpressionBase.getOperatorFromOpList(ctx.op),
-                    createMetadataFromContext(ctx)
-            );
+    public Node visitCastExpr(JsoniqParser.CastExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
+        if (ctx.single == null || ctx.single.isEmpty()) {
+            return mainExpression;
         }
-        return null;
+        JsoniqParser.SingleTypeContext child = ctx.single;
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
     @Override
-    public Void visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
-        Expression mainExpression;
-        FlworVarSequenceType sequenceType;
-        this.visitTreatExpr(ctx.main_expr);
-        if (ctx.seq != null && !ctx.seq.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.SequenceTypeContext child = ctx.seq;
-            this.visitSequenceType(child);
-            sequenceType = (FlworVarSequenceType) this.currentExpression;
-            this.currentExpression = new InstanceOfExpression(
-                    mainExpression,
-                    sequenceType,
-                    createMetadataFromContext(ctx)
-            );
+    public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+
+        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
+            FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+            List<Expression> children = new ArrayList<Expression>();
+            children.add(mainExpression);
+            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
+            mainExpression = processFunctionCall(functionCallContext, children);
         }
-        return null;
+        return mainExpression;
+
     }
 
-    @Override
-    public Void visitTreatExpr(JsoniqParser.TreatExprContext ctx) {
-        Expression mainExpression;
-        FlworVarSequenceType sequenceType;
-        this.visitCastableExpr(ctx.main_expr);
-        if (ctx.seq != null && !ctx.seq.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.SequenceTypeContext child = ctx.seq;
-            this.visitSequenceType(child);
-            sequenceType = (FlworVarSequenceType) this.currentExpression;
-            this.currentExpression = new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
-        }
-        return null;
-    }
 
     @Override
-    public Void visitCastableExpr(JsoniqParser.CastableExprContext ctx) {
-        Expression mainExpression;
-        FlworVarSingleType singleType;
-        this.visitCastExpr(ctx.main_expr);
-        if (ctx.single != null && !ctx.single.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.SingleTypeContext child = ctx.single;
-            this.visitSingleType(child);
-            singleType = (FlworVarSingleType) this.currentExpression;
-            this.currentExpression = new CastableExpression(mainExpression, singleType, createMetadataFromContext(ctx));
+    public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr);
+        if (ctx.op == null || ctx.op.isEmpty()) {
+            return mainExpression;
         }
-        return null;
-    }
-
-    @Override
-    public Void visitCastExpr(JsoniqParser.CastExprContext ctx) {
-        Expression mainExpression;
-        FlworVarSingleType singleType;
-        this.visitUnaryExpr(ctx.main_expr);
-        if (ctx.single != null && !ctx.single.isEmpty()) {
-            mainExpression = this.currentExpression;
-            JsoniqParser.SingleTypeContext child = ctx.single;
-            this.visitSingleType(child);
-            singleType = (FlworVarSingleType) this.currentExpression;
-            this.currentExpression = new CastExpression(mainExpression, singleType, createMetadataFromContext(ctx));
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        Expression mainExpression;
-        this.visitSimpleMapExpr(ctx.main_expr);
-        if (!(ctx.op == null || ctx.op.isEmpty())) {
-            mainExpression = this.currentExpression;
-            this.currentExpression = new UnaryExpression(
-                    mainExpression,
-                    OperationalExpressionBase.getOperatorFromOpList(ctx.op),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        return null;
+        boolean negated = !ctx.op.isEmpty() && ctx.op.get(0).getText().contentEquals("-");
+        return new UnaryExpression(
+                mainExpression,
+                negated,
+                createMetadataFromContext(ctx)
+        );
     }
     // endregion
 
     // region postfix
     @Override
-    public Void visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {
-        this.visitPrimaryExpr(ctx.main_expr);
-        Expression mainExpression = this.currentExpression;
+    public Node visitPostFixExpr(JsoniqParser.PostFixExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof JsoniqParser.PredicateContext) {
-                this.visitPredicate((JsoniqParser.PredicateContext) child);
+                Expression expr = (Expression) this.visitPredicate((JsoniqParser.PredicateContext) child);
                 mainExpression = new PredicateExpression(
                         mainExpression,
-                        this.currentExpression,
+                        expr,
                         createMetadataFromContext(ctx)
                 );
             } else if (child instanceof JsoniqParser.ObjectLookupContext) {
-                this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
+                Expression expr = (Expression) this.visitObjectLookup((JsoniqParser.ObjectLookupContext) child);
                 mainExpression = new ObjectLookupExpression(
                         mainExpression,
-                        this.currentExpression,
+                        expr,
                         createMetadataFromContext(ctx)
                 );
             } else if (child instanceof JsoniqParser.ArrayLookupContext) {
-                this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
+                Expression expr = (Expression) this.visitArrayLookup((JsoniqParser.ArrayLookupContext) child);
                 mainExpression = new ArrayLookupExpression(
                         mainExpression,
-                        this.currentExpression,
+                        expr,
                         createMetadataFromContext(ctx)
                 );
             } else if (child instanceof JsoniqParser.ArrayUnboxingContext) {
@@ -752,91 +679,95 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                 throw new OurBadException("Unrecognized postfix expression found.");
             }
         }
-        this.currentExpression = mainExpression;
-        return null;
+        return mainExpression;
     }
 
     @Override
-    public Void visitPredicate(JsoniqParser.PredicateContext ctx) {
-        this.visitExpr(ctx.expr());
-        return null;
+    public Node visitPredicate(JsoniqParser.PredicateContext ctx) {
+        return this.visitExpr(ctx.expr());
     }
 
     @Override
-    public Void visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
+    public Node visitObjectLookup(JsoniqParser.ObjectLookupContext ctx) {
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
-            this.currentExpression = new StringLiteralExpression(
+            return new StringLiteralExpression(
                     ValueTypeHandler.getStringValue(ctx.lt),
                     createMetadataFromContext(ctx)
             );
-        } else if (ctx.nc != null) {
-            this.currentExpression = new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
-        } else if (ctx.kw != null) {
-            this.currentExpression = new StringLiteralExpression(ctx.kw.getText(), createMetadataFromContext(ctx));
-        } else if (ctx.pe != null) {
-            this.visitParenthesizedExpr(ctx.pe);
-        } else if (ctx.vr != null) {
-            this.visitVarRef(ctx.vr);
-        } else if (ctx.ci != null) {
-            this.visitContextItemExpr(ctx.ci);
-        } else if (ctx.tkw != null) {
-            this.currentExpression = new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.nc != null) {
+            return new StringLiteralExpression(ctx.nc.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.kw != null) {
+            return new StringLiteralExpression(ctx.kw.getText(), createMetadataFromContext(ctx));
+        }
+        if (ctx.pe != null) {
+            return this.visitParenthesizedExpr(ctx.pe);
+        }
+        if (ctx.vr != null) {
+            return this.visitVarRef(ctx.vr);
+        }
+        if (ctx.ci != null) {
+            return this.visitContextItemExpr(ctx.ci);
+        }
+        if (ctx.tkw != null) {
+            return new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
         }
 
-        return null;
+        throw new OurBadException("Unrecognized object lookup.");
     }
 
     @Override
-    public Void visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
-        this.visitExpr(ctx.expr());
-        return null;
+    public Node visitArrayLookup(JsoniqParser.ArrayLookupContext ctx) {
+        return this.visitExpr(ctx.expr());
     }
 
-    @Override
-    public Void visitArrayUnboxing(JsoniqParser.ArrayUnboxingContext ctx) {
-        return null;
-    }
     // endregion
 
     // region primary
     // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
     @Override
-    public Void visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
+    public Node visitPrimaryExpr(JsoniqParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.VarRefContext) {
-            this.visitVarRef((JsoniqParser.VarRefContext) child);
-        } else if (child instanceof JsoniqParser.ObjectConstructorContext) {
-            this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
-        } else if (child instanceof JsoniqParser.ArrayConstructorContext) {
-            this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
-        } else if (child instanceof JsoniqParser.ParenthesizedExprContext) {
-            this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
-        } else if (child instanceof JsoniqParser.StringLiteralContext) {
-            this.currentExpression = new StringLiteralExpression(
+            return this.visitVarRef((JsoniqParser.VarRefContext) child);
+        }
+        if (child instanceof JsoniqParser.ObjectConstructorContext) {
+            return this.visitObjectConstructor((JsoniqParser.ObjectConstructorContext) child);
+        }
+        if (child instanceof JsoniqParser.ArrayConstructorContext) {
+            return this.visitArrayConstructor((JsoniqParser.ArrayConstructorContext) child);
+        }
+        if (child instanceof JsoniqParser.ParenthesizedExprContext) {
+            return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
+        }
+        if (child instanceof JsoniqParser.StringLiteralContext) {
+            return new StringLiteralExpression(
                     ValueTypeHandler.getStringValue((JsoniqParser.StringLiteralContext) child),
                     createMetadataFromContext(ctx)
             );
-        } else if (child instanceof TerminalNode) {
-            this.currentExpression = ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
-        } else if (child instanceof JsoniqParser.ContextItemExprContext) {
-            this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
-        } else if (child instanceof JsoniqParser.FunctionCallContext) {
-            this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
-        } else if (child instanceof JsoniqParser.FunctionItemExprContext) {
-            this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
-        } else
-            throw new UnsupportedFeatureException(
-                    "Primary expression not yet implemented",
-                    createMetadataFromContext(ctx)
-            );
-
-        return null;
-
+        }
+        if (child instanceof TerminalNode) {
+            return ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
+        }
+        if (child instanceof JsoniqParser.ContextItemExprContext) {
+            return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
+        }
+        if (child instanceof JsoniqParser.FunctionCallContext) {
+            return this.visitFunctionCall((JsoniqParser.FunctionCallContext) child);
+        }
+        if (child instanceof JsoniqParser.FunctionItemExprContext) {
+            return this.visitFunctionItemExpr((JsoniqParser.FunctionItemExprContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Primary expression not yet implemented",
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
-    public Void visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
+    public Node visitObjectConstructor(JsoniqParser.ObjectConstructorContext ctx) {
         // no merging constructor, just visit the k/v pairs
         if (
             ctx.merge_operator == null
@@ -847,149 +778,123 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
             List<Expression> keys = new ArrayList<>();
             List<Expression> values = new ArrayList<>();
             for (JsoniqParser.PairConstructorContext currentPair : ctx.pairConstructor()) {
-                this.visitPairConstructor(currentPair);
-                keys.add(this.currentExpression);
-                values.add(this.otherCurrentExpression);
+                if (currentPair.lhs != null) {
+                    keys.add((Expression) this.visitExprSingle(currentPair.lhs));
+                } else {
+                    keys.add(new StringLiteralExpression(currentPair.name.getText(), createMetadataFromContext(ctx)));
+                }
+                values.add((Expression) this.visitExprSingle(currentPair.rhs));
             }
-            this.currentExpression = new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
-        } else {
-            Expression childExpr;
-            this.visitExpr(ctx.expr());
-            childExpr = this.currentExpression;
-            this.currentExpression = new ObjectConstructorExpression(
-                    childExpr,
-                    createMetadataFromContext(ctx)
-            );
+            return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
         }
 
-        return null;
-    }
-
-    // TODO[EXPRVISITOR]? not supported in Pair constructor
-    @Override
-    public Void visitPairConstructor(JsoniqParser.PairConstructorContext ctx) {
-        Expression rhs, lhs;
-        this.visitExprSingle(ctx.rhs);
-        rhs = this.currentExpression;
-        if (ctx.lhs != null) {
-            this.visitExprSingle(ctx.lhs);
-            lhs = this.currentExpression;
-        } else {
-            lhs = new StringLiteralExpression(ctx.name.getText(), createMetadataFromContext(ctx));
-        }
-        this.currentExpression = lhs;
-        this.otherCurrentExpression = rhs;
-        return null;
-
-    }
-
-    @Override
-    public Void visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
-        Expression content;
-        if (ctx.expr() == null)
-            this.currentExpression = new ArrayConstructorExpression(createMetadataFromContext(ctx));
-        else {
-            this.visitExpr(ctx.expr());
-            content = this.currentExpression;
-            this.currentExpression = new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
-        }
-        return null;
-
-    }
-
-    @Override
-    public Void visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
-        if (ctx.expr() == null)
-            this.currentExpression = new CommaExpression(createMetadataFromContext(ctx));
-        else {
-            this.visitExpr(ctx.expr());
-            // implicit: this.currentExpression = this.currentExpression;
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitVarRef(JsoniqParser.VarRefContext ctx) {
-        String name = ctx.name.getText();
-        if (ctx.ns != null)
-            name = name + ":" + ctx.ns.getText();
-        this.currentExpression = new VariableReferenceExpression(name, createMetadataFromContext(ctx));
-        return null;
-    }
-
-    @Override
-    public Void visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
-        this.currentExpression = new ContextItemExpression(createMetadataFromContext(ctx));
-        return null;
-    }
-
-    @Override
-    public Void visitSequenceType(JsoniqParser.SequenceTypeContext ctx) {
-        if (ctx.item == null)
-            this.currentExpression = new FlworVarSequenceType(createMetadataFromContext(ctx));
-        else {
-            ItemTypes item = FlworVarSequenceType.getItemType(ctx.item.getText());
-            if (ctx.question.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.OneOrZero,
-                        createMetadataFromContext(ctx)
-                );
-            else if (ctx.star.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.ZeroOrMore,
-                        createMetadataFromContext(ctx)
-                );
-            else if (ctx.plus.size() > 0)
-                this.currentExpression = new FlworVarSequenceType(
-                        item,
-                        SequenceType.Arity.OneOrMore,
-                        createMetadataFromContext(ctx)
-                );
-            else
-                this.currentExpression = new FlworVarSequenceType(item, createMetadataFromContext(ctx));
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitSingleType(JsoniqParser.SingleTypeContext ctx) {
-        if (ctx.item == null)
-            this.currentExpression = new FlworVarSingleType(createMetadataFromContext(ctx));
-        else {
-            AtomicTypes item = FlworVarSingleType.getAtomicType(ctx.item.getText());
-            if (ctx.question.size() > 0)
-                this.currentExpression = new FlworVarSingleType(item, true, createMetadataFromContext(ctx));
-            else
-                this.currentExpression = new FlworVarSingleType(item, createMetadataFromContext(ctx));
-        }
-        return null;
-    }
-
-    @Override
-    public Void visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        String name;
-        if (ctx.fn_name != null)
-            name = ctx.fn_name.getText();
-        else
-            name = ctx.kw.getText();
-        if (ctx.ns != null)
-            name = name + ":" + ctx.ns.getText();
-        this.currentExpression = new FunctionCallExpression(
-                name,
-                getArgumentsFromArgumentListContext(ctx.argumentList()),
+        Expression childExpr;
+        childExpr = (Expression) this.visitExpr(ctx.expr());
+        return new ObjectConstructorExpression(
+                childExpr,
                 createMetadataFromContext(ctx)
         );
-        return null;
+    }
+
+    @Override
+    public Node visitArrayConstructor(JsoniqParser.ArrayConstructorContext ctx) {
+        if (ctx.expr() == null) {
+            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+        }
+        Expression content = (Expression) this.visitExpr(ctx.expr());
+        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitParenthesizedExpr(JsoniqParser.ParenthesizedExprContext ctx) {
+        if (ctx.expr() == null) {
+            return new CommaExpression(createMetadataFromContext(ctx));
+        }
+        return this.visitExpr(ctx.expr());
+    }
+
+    @Override
+    public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
+        String name = ctx.name.getText();
+        if (ctx.ns != null) {
+            name = name + ":" + ctx.ns.getText();
+        }
+        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitContextItemExpr(JsoniqParser.ContextItemExprContext ctx) {
+        return new ContextItemExpression(createMetadataFromContext(ctx));
+    }
+
+    public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
+        if (ctx.item == null) {
+            return SequenceType.emptySequence;
+        }
+        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
+        if (ctx.question.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrZero
+            );
+        }
+        if (ctx.star.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.ZeroOrMore
+            );
+        }
+        if (ctx.plus.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrMore
+            );
+        }
+        return new SequenceType(itemType);
+    }
+
+    public SequenceType processSingleType(JsoniqParser.SingleTypeContext ctx) {
+        if (ctx.item == null) {
+            return SequenceType.emptySequence;
+        }
+
+        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
+        if (ctx.question.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrZero
+            );
+        }
+        return new SequenceType(itemType);
+    }
+
+    private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
+        String name;
+        if (ctx.fn_name != null) {
+            name = ctx.fn_name.getText();
+        } else {
+            name = ctx.kw.getText();
+        }
+        if (ctx.ns != null) {
+            name = name + ":" + ctx.ns.getText();
+        }
+        return new FunctionCallExpression(
+                name,
+                children,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
+        return processFunctionCall(ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
         List<Expression> arguments = new ArrayList<>();
         if (ctx.args != null) {
             for (JsoniqParser.ArgumentContext arg : ctx.args) {
-                this.visitArgument(arg);
-                Expression currentArg = this.currentExpression;
+                Expression currentArg = (Expression) this.visitArgument(arg);
                 arguments.add(currentArg);
             }
         }
@@ -997,34 +902,31 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
     }
 
     @Override
-    public Void visitArgument(JsoniqParser.ArgumentContext ctx) {
+    public Node visitArgument(JsoniqParser.ArgumentContext ctx) {
         if (ctx.exprSingle() != null) {
-            this.visitExprSingle(ctx.exprSingle());
-        } else {
-            this.currentExpression = null;
+            return this.visitExprSingle(ctx.exprSingle());
         }
         return null;
     }
 
     @Override
-    public Void visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
+    public Node visitFunctionItemExpr(JsoniqParser.FunctionItemExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof JsoniqParser.NamedFunctionRefContext) {
-            this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
-        } else if (child instanceof JsoniqParser.InlineFunctionExprContext) {
-            this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
-        } else {
-            throw new UnsupportedFeatureException(
-                    "Function item expression not yet implemented",
-                    createMetadataFromContext(ctx)
-            );
+            return this.visitNamedFunctionRef((JsoniqParser.NamedFunctionRefContext) child);
         }
-        return null;
+        if (child instanceof JsoniqParser.InlineFunctionExprContext) {
+            return this.visitInlineFunctionExpr((JsoniqParser.InlineFunctionExprContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Function item expression not yet implemented",
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
-    public Void visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        PrimaryExpression literal = ValueTypeHandler.getValueType(
+    public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
+        Expression literal = ValueTypeHandler.getValueType(
             ctx.arity.getText(),
             createMetadataFromContext(ctx)
         );
@@ -1036,29 +938,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
 
         String name = ctx.fn_name.getText();
         int arity = ((IntegerLiteralExpression) literal).getValue();
-        this.currentExpression = new NamedFunctionReferenceExpression(
+        return new NamedFunctionReferenceExpression(
                 new FunctionIdentifier(name, arity),
                 createMetadataFromContext(ctx)
         );
-        return null;
     }
 
     @Override
-    public Void visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        Map<String, FlworVarSequenceType> fnParams = new LinkedHashMap<>();
-        FlworVarSequenceType fnReturnType = new FlworVarSequenceType(
-                mostGeneralSequenceType,
-                createMetadataFromContext(ctx)
-        );
+    public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
+        Map<String, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.mostGeneralSequenceType;
         String paramName;
-        FlworVarSequenceType paramType;
+        SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = param.NCName().getText();
-                paramType = new FlworVarSequenceType(
-                        mostGeneralSequenceType,
-                        createMetadataFromContext(ctx)
-                );
+                paramType = SequenceType.mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             "inline-function`",
@@ -1067,165 +962,130 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
                     );
                 }
                 if (param.sequenceType() != null) {
-                    this.visitSequenceType(param.sequenceType());
-                    paramType = (FlworVarSequenceType) this.currentExpression;
+                    paramType = this.processSequenceType(param.sequenceType());
+                } else {
+                    paramType = SequenceType.mostGeneralSequenceType;
                 }
                 fnParams.put(paramName, paramType);
             }
         }
 
         if (ctx.return_type != null) {
-            this.visitSequenceType(ctx.return_type);
-            fnReturnType = (FlworVarSequenceType) this.currentExpression;
+            fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        this.visitExpr(ctx.fn_body);
+        Expression expr = (Expression) this.visitExpr(ctx.fn_body);
 
-        this.currentExpression = new InlineFunctionExpression(
+        return new InlineFunctionExpression(
                 "",
                 fnParams,
                 fnReturnType,
-                this.currentExpression,
+                expr,
                 createMetadataFromContext(ctx)
         );
-        return null;
     }
     // endregion
 
     // region control
     @Override
-    public Void visitIfExpr(JsoniqParser.IfExprContext ctx) {
-        Expression condition, branch, else_branch;
-        this.visitExpr(ctx.test_condition);
-        condition = this.currentExpression;
-        this.visitExprSingle(ctx.branch);
-        branch = this.currentExpression;
-        this.visitExprSingle(ctx.else_branch);
-        else_branch = this.currentExpression;
-        this.currentExpression = new IfExpression(condition, branch, else_branch, createMetadataFromContext(ctx));
-        return null;
+    public Node visitIfExpr(JsoniqParser.IfExprContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.test_condition);
+        Expression branch = (Expression) this.visitExprSingle(ctx.branch);
+        Expression else_branch = (Expression) this.visitExprSingle(ctx.else_branch);
+        return new ConditionalExpression(
+                condition,
+                branch,
+                else_branch,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
-    public Void visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
-        Expression condition, defaultCase;
-        this.visitExpr(ctx.cond);
-        condition = this.currentExpression;
-        List<SwitchCaseExpression> cases = new ArrayList<>();
+    public Node visitSwitchExpr(JsoniqParser.SwitchExprContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.cond);
+        List<SwitchCase> cases = new ArrayList<>();
         for (JsoniqParser.SwitchCaseClauseContext expr : ctx.cases) {
-            this.visitSwitchCaseClause(expr);
-            cases.add((SwitchCaseExpression) this.currentExpression);
+            List<Expression> conditionExpressions = new ArrayList<>();
+            for (int i = 0; i < expr.cond.size(); ++i) {
+                conditionExpressions.add((Expression) this.visitExprSingle(expr.cond.get(i)));
+            }
+            SwitchCase c = new SwitchCase(conditionExpressions, (Expression) this.visitExprSingle(expr.ret));
+            cases.add(c);
         }
-        this.visitExprSingle(ctx.def);
-        defaultCase = this.currentExpression;
-        this.currentExpression = new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
-        return null;
-    }
-
-    @Override
-    public Void visitSwitchCaseClause(JsoniqParser.SwitchCaseClauseContext ctx) {
-        Expression condition, returnExpression;
-        // TODO multiple case expressions?
-        this.visitExprSingle(ctx.cond.get(0));
-        condition = this.currentExpression;
-        this.visitExprSingle(ctx.ret);
-        returnExpression = this.currentExpression;
-        this.currentExpression = new SwitchCaseExpression(condition, returnExpression, createMetadataFromContext(ctx));
-        return null;
+        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
+        return new SwitchExpression(condition, cases, defaultCase, createMetadataFromContext(ctx));
     }
     // endregion
 
     // region quantified
     @Override
-    public Void visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
-        Expression condition, defaultCase;
-        this.visitExpr(ctx.cond);
-        condition = this.currentExpression;
-        List<TypeSwitchCaseExpression> cases = new ArrayList<>();
+    public Node visitTypeSwitchExpr(JsoniqParser.TypeSwitchExprContext ctx) {
+        Expression condition = (Expression) this.visitExpr(ctx.cond);
+        List<TypeswitchCase> cases = new ArrayList<>();
         for (JsoniqParser.CaseClauseContext expr : ctx.cses) {
-            this.visitCaseClause(expr);
-            cases.add((TypeSwitchCaseExpression) this.currentExpression);
-        }
-        VariableReferenceExpression varRefDefault = null;
-        if (ctx.var_ref != null) {
-            this.visitVarRef(ctx.var_ref);
-            varRefDefault = (VariableReferenceExpression) this.currentExpression;
-        }
-        this.visitExprSingle(ctx.def);
-        defaultCase = this.currentExpression;
-        this.currentExpression = new TypeSwitchExpression(
-                condition,
-                cases,
-                defaultCase,
-                varRefDefault,
-                createMetadataFromContext(ctx)
-        );
-        return null;
-    }
-
-    @Override
-    public Void visitCaseClause(JsoniqParser.CaseClauseContext ctx) {
-        Expression returnExpression;
-
-        VariableReferenceExpression var = null;
-        List<FlworVarSequenceType> union = new ArrayList<>();
-        if (ctx.var_ref != null) {
-            this.visitVarRef(ctx.var_ref);
-            var = (VariableReferenceExpression) this.currentExpression;
-        }
-        if (ctx.union != null && !ctx.union.isEmpty()) {
-            for (JsoniqParser.SequenceTypeContext sequenceType : ctx.union) {
-                this.visitSequenceType(sequenceType);
-                union.add((FlworVarSequenceType) this.currentExpression);
+            List<SequenceType> union = new ArrayList<>();
+            String variableName = null;
+            if (expr.var_ref != null) {
+                variableName = expr.var_ref.name.getText();
             }
-        }
-        this.visitExprSingle(ctx.ret);
-        returnExpression = this.currentExpression;
-        this.currentExpression = new TypeSwitchCaseExpression(
-                var,
-                union,
-                returnExpression,
-                createMetadataFromContext(ctx)
-        );
-        return null;
-    }
-
-    @Override
-    public Void visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        List<QuantifiedExpressionVar> vars = new ArrayList<>();
-        QuantifiedExpression.QuantifiedOperators operator;
-        Expression expression;
-        this.visitExprSingle(ctx.exprSingle());
-
-        expression = this.currentExpression;
-        if (ctx.ev == null)
-            operator = QuantifiedExpression.QuantifiedOperators.SOME;
-        else
-            operator = QuantifiedExpression.QuantifiedOperators.EVERY;
-        for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
-            VariableReferenceExpression varRef;
-            Expression varExpression;
-            FlworVarSequenceType sequenceType = null;
-            this.visitVarRef(currentVariable.varRef());
-            varRef = (VariableReferenceExpression) this.currentExpression;
-            if (currentVariable.sequenceType() != null) {
-                this.visitSequenceType(currentVariable.sequenceType());
-                sequenceType = (FlworVarSequenceType) this.currentExpression;
+            if (expr.union != null && !expr.union.isEmpty()) {
+                for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
+                    union.add(this.processSequenceType(sequenceType));
+                }
             }
-
-            this.visitExprSingle(currentVariable.exprSingle());
-            varExpression = this.currentExpression;
-            vars.add(
-                new QuantifiedExpressionVar(
-                        varRef,
-                        varExpression,
-                        (sequenceType == null ? null : sequenceType.getSequence()),
-                        createMetadataFromContext(ctx)
+            Expression expression = (Expression) this.visitExprSingle(expr.ret);
+            cases.add(
+                new TypeswitchCase(
+                        variableName,
+                        union,
+                        expression
                 )
             );
         }
-        this.currentExpression = new QuantifiedExpression(operator, expression, vars, createMetadataFromContext(ctx));
-        return null;
+        String defaultVariableName = null;
+        if (ctx.var_ref != null) {
+            defaultVariableName = ctx.var_ref.name.getText();
+        }
+        Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
+        return new TypeSwitchExpression(
+                condition,
+                cases,
+                new TypeswitchCase(defaultVariableName, defaultCase),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
+        List<QuantifiedExpressionVar> vars = new ArrayList<>();
+        QuantifiedExpression.Quantification operator;
+        Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        if (ctx.ev == null) {
+            operator = QuantifiedExpression.Quantification.SOME;
+        } else {
+            operator = QuantifiedExpression.Quantification.EVERY;
+        }
+        for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
+            String variableName;
+            Expression varExpression;
+            SequenceType sequenceType = null;
+            variableName = ((VariableReferenceExpression) this.visitVarRef(currentVariable.varRef())).getVariableName();
+            if (currentVariable.sequenceType() != null) {
+                sequenceType = this.processSequenceType(currentVariable.sequenceType());
+            } else {
+                sequenceType = SequenceType.mostGeneralSequenceType;
+            }
+
+            varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
+            vars.add(
+                new QuantifiedExpressionVar(
+                        variableName,
+                        varExpression,
+                        sequenceType
+                )
+            );
+        }
+        return new QuantifiedExpression(operator, expression, vars, createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -1233,6 +1093,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Vo
         int tokenLineNumber = ctx.getStart().getLine();
         int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
         return new ExceptionMetadata(tokenLineNumber, tokenColumnNumber);
+    }
+
+    @Override
+    public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
+        SequenceType seq = null;
+        boolean external;
+        String var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        if (ctx.sequenceType() != null) {
+            seq = this.processSequenceType(ctx.sequenceType());
+        } else {
+            seq = SequenceType.mostGeneralSequenceType;
+        }
+        external = (ctx.external != null);
+        Expression expr = null;
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+        }
+
+        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
 
 }

@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -27,100 +28,54 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class FlworExpression extends Expression {
 
-    private FlworClause startClause;
-    private List<FlworClause> contentClauses;
     private ReturnClause returnClause;
 
     public FlworExpression(
-            FlworClause startClause,
-            List<FlworClause> containingClauses,
             ReturnClause returnClause,
             ExceptionMetadata metadata
     ) {
         super(metadata);
+        Clause startClause = returnClause.getFirstClause();
         if (
             startClause.getClauseType() != FLWOR_CLAUSES.FOR
                 &&
                 startClause.getClauseType() != FLWOR_CLAUSES.LET
-        )
+        ) {
             throw new SemanticException("FLOWR clause must starts with a FOR or a LET\n", this.getMetadata());
+        }
 
-        setStartClause(startClause);
-        setContentClauses(containingClauses);
-        setReturnClause(returnClause);
-    }
-
-    public FlworClause getStartClause() {
-        return this.startClause;
-    }
-
-    public List<FlworClause> getContentClauses() {
-        return this.contentClauses;
-    }
-
-    private void setContentClauses(List<FlworClause> contentClauses) {
-        this.contentClauses = new ArrayList<>();
-        this.contentClauses.addAll(contentClauses);
+        this.returnClause = returnClause;
     }
 
     public ReturnClause getReturnClause() {
         return this.returnClause;
     }
 
-    private void setReturnClause(ReturnClause returnClause) {
-        this.returnClause = returnClause;
-    }
-
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         // overall flwor expression's execution mode is never used and remains unset
         this.highestExecutionMode = ExecutionMode.UNSET;
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
         // overall flwor expression's execution mode is stored in the return clause
-        return this.returnClause.getHighestExecutionMode(ignoreUnsetError);
+        return this.returnClause.getHighestExecutionMode(visitorConfig);
     }
 
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.add(this.startClause);
-        if (this.contentClauses != null)
-            this.contentClauses.forEach(e -> {
-                if (e != null)
-                    result.add(e);
-            });
-        result.add(this.returnClause);
-        return result;
+        return Collections.singletonList(this.returnClause);
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFlowrExpression(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(flowrExpr ";
-        result += this.startClause.serializationString(true) + " ";
-        for (FlworClause clause : this.contentClauses)
-            result += clause.serializationString(true) + " ";
-        result += this.returnClause.serializationString(true);
-        result += "))";
-        return result;
-    }
-
-    private void setStartClause(FlworClause startClause) {
-        this.startClause = startClause;
-    }
-
-
 }
 
 

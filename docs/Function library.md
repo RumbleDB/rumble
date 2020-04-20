@@ -268,7 +268,7 @@ flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
 
 Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
 
-Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
 
 ## Atomic functions
 
@@ -362,6 +362,22 @@ log(100)
 log10(100)
 ```
 
+### number
+
+```
+number("15")
+```
+returns 15 as a double
+
+```
+number("foo")
+```
+returns NaN as a double
+
+```
+number(15)
+```
+returns 15 as a double
 
 ### pow
 
@@ -534,6 +550,84 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+### replace
+
+Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
+
+```
+replace("abracadabra", "bra", "*")
+```
+
+returns "a\*cada\*"
+
+```
+replace("abracadabra", "a(.)", "a$1$1")
+```
+
+returns "abbraccaddabbra"
+
+### translate
+
+```
+translate("bar","abc","ABC")
+```
+returns "BAr"
+
+```
+translate("--aaa--","abc-","ABC")
+```
+returns "AAA"
+
+### codepoint-equal
+
+```
+codepoint-equal("abcd", "abcd")
+```
+returns true
+
+```
+codepoint-equal("", ())
+```
+returns ()
+
+### string-to-codepoint
+
+```
+string-to-codepoints("Thérèse")
+```
+returns (84, 104, 233, 114, 232, 115, 101)
+
+```
+string-to-codepoints("")
+```
+returns ()
+
+### codepoints-to-string
+
+```
+codepoints-to-string((2309, 2358, 2378, 2325))
+```
+returns "अशॊक"
+
+```
+codepoints-to-string(())
+```
+returns ""
+
+### upper-case
+
+```
+upper-case("abCd0")
+```
+returns "ABCD0"
+
+### lower-case
+
+```
+lower-case("ABc!D")
+```
+returns "abc!d"
+
 ## Date and time functions
 
 ### dateTime
@@ -562,7 +656,15 @@ returns 13:20:00-05:00
 
 ## Formatting dates and times functions
 
-The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only a component specifier, according to the rules presented in the [XPath functions specification](https://www.w3.org/TR/xpath-functions-30/#rules-for-datetime-formatting).
+The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only:
+
+* One of the following component specifiers: Y, M, d, D, F, H, m, s, P
+* A first presentation modifier, for which the value can be:
+	* Nn, for all supported component specifiers, besides P
+	* N, if the component specifier is P
+	* a format token that indicates a numbering sequence of the the following form: '0001'
+* A second presentation modifier, for which the value can be t or c, which are also the default values
+* A width modifier, both minimum and maximum values
 
 ### format-dateTime
 
@@ -603,13 +705,12 @@ returns 5
 ```
 (1 to 10)[position() eq last()]
 ```
-
 returns 10
+
 
 ```
 (1 to 10)[last()]
 ```
-
 returns 10
 
 ### current-dateTime
@@ -635,7 +736,6 @@ current-time()
 ```
 
 returns 11:24:10.064+01:00
-
 
 ## I/O functions
 

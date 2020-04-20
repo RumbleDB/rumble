@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -29,7 +30,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ReturnClause extends FlworClause {
+public class ReturnClause extends Clause {
 
 
     private final Expression returnExpr;
@@ -44,30 +45,33 @@ public class ReturnClause extends FlworClause {
     }
 
     @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode =
-            this.previousClause.getHighestExecutionMode().isDataFrame()
-                ? ExecutionMode.RDD
-                : ExecutionMode.LOCAL;
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()) {
+            this.highestExecutionMode = ExecutionMode.RDD;
+            return;
+        }
+        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isRDD()) {
+            this.highestExecutionMode = ExecutionMode.RDD;
+            return;
+        }
+        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isDataFrame()) {
+            this.highestExecutionMode = ExecutionMode.DATAFRAME;
+            return;
+        }
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.returnExpr != null)
+        if (this.returnExpr != null) {
             result.add(this.returnExpr);
+        }
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitReturnClause(this, argument);
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "return " + this.returnExpr.serializationString(true);
-        // result += ")";
-        return result;
     }
 }

@@ -13,4 +13,18 @@ public enum ExecutionMode {
     public boolean isDataFrame() {
         return this == ExecutionMode.DATAFRAME;
     }
+
+    public String toString() {
+        switch (this) {
+            case UNSET:
+                return "unset";
+            case LOCAL:
+                return "local";
+            case RDD:
+                return "rdd";
+            case DATAFRAME:
+                return "dataframe";
+        }
+        return null;
+    }
 }

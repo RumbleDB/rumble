@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.numerics;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidLexicalValueException;
@@ -10,11 +11,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.List;
 
@@ -39,7 +37,7 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 if (!this.item.isAtomic()) {
                     String message = String.format(
                         "Can not atomize an %1$s item: an %1$s has probably been passed where an atomic value is expected.",
-                        ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                        this.item.getDynamicType().toString()
                     );
                     throw new NonAtomicKeyException(message, getMetadata());
                 }
@@ -47,13 +45,14 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                    + this.item.getDynamicType().toString()
                     + " is not castable to type decimal.";
-                if (atomicItem.isNull())
+                if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
-                if (atomicItem.isCastableAs(AtomicTypes.DecimalItem)) {
+                }
+                if (atomicItem.isCastableAs(ItemType.decimalItem)) {
                     try {
-                        return atomicItem.castAs(AtomicTypes.DecimalItem);
+                        return atomicItem.castAs(ItemType.decimalItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }
@@ -69,11 +68,12 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " decimal function",
                     getMetadata()
             );
+        }
     }
 
     @Override

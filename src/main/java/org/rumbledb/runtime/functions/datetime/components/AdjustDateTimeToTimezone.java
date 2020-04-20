@@ -3,15 +3,14 @@ package org.rumbledb.runtime.functions.datetime.components;
 import org.joda.time.DateTimeZone;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidTimezoneException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -33,23 +32,26 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            if (this.timezone == null && this.children.size() == 1)
+            if (this.timezone == null && this.children.size() == 1) {
                 return ItemFactory.getInstance()
                     .createDateTimeItem(this.timeItem.getDateTimeValue().withZone(DateTimeZone.UTC), true);
+            }
             if (this.timezone == null) {
-                if (this.timeItem.hasTimeZone())
+                if (this.timeItem.hasTimeZone()) {
                     return ItemFactory.getInstance()
                         .createDateTimeItem(
                             this.timeItem.getDateTimeValue()
                                 .withZoneRetainFields(this.timeItem.getDateTimeValue().getZone()),
                             false
                         );
+                }
                 return ItemFactory.getInstance()
                     .createDateTimeItem(this.timeItem.getDateTimeValue(), this.timeItem.hasTimeZone());
             } else {
-                if (this.checkTimeZoneArgument())
+                if (this.checkTimeZoneArgument()) {
                     throw new InvalidTimezoneException("Invalid timezone", getMetadata());
-                if (this.timeItem.hasTimeZone())
+                }
+                if (this.timeItem.hasTimeZone()) {
                     return ItemFactory.getInstance()
                         .createDateTimeItem(
                             this.timeItem.getDateTimeValue()
@@ -61,6 +63,7 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
                                 ),
                             true
                         );
+                }
                 return ItemFactory.getInstance()
                     .createDateTimeItem(
                         this.timeItem.getDateTimeValue()
@@ -74,11 +77,12 @@ public class AdjustDateTimeToTimezone extends LocalFunctionCallIterator {
                     );
             }
 
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " adjust-dateTime-to-timezone function",
                     getMetadata()
             );
+        }
     }
 
     @Override

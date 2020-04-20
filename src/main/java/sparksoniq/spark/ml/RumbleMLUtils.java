@@ -2,16 +2,20 @@ package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
+import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.AtomicItem;
-
-import sparksoniq.semantics.types.AtomicTypes;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.items.ItemFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -30,12 +34,13 @@ public class RumbleMLUtils {
             String paramName = paramMapItem.getKeys().get(paramIndex);
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
-            RumbleMLCatalog.validateParameterForTransformer(transformerShortName, paramName, metadata);
-            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+            RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
+                @SuppressWarnings("unchecked")
                 Param<Object> sparkMLParam = (Param<Object>) transformer.getClass()
                     .getMethod(paramName)
                     .invoke(transformer);
@@ -67,12 +72,13 @@ public class RumbleMLUtils {
             String paramName = paramMapItem.getKeys().get(paramIndex);
             Item paramValue = paramMapItem.getValues().get(paramIndex);
 
-            RumbleMLCatalog.validateParameterForEstimator(estimatorShortName, paramName, metadata);
-            String paramJavaTypeName = RumbleMLCatalog.getParamJavaTypeName(paramName, metadata);
+            RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, metadata);
+            String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, metadata);
 
             Object paramValueInJava = convertParamItemToJava(paramName, paramValue, paramJavaTypeName, metadata);
 
             try {
+                @SuppressWarnings("unchecked")
                 Param<Object> sparkMLParam = (Param<Object>) estimator.getClass()
                     .getMethod(paramName)
                     .invoke(estimator);
@@ -92,7 +98,7 @@ public class RumbleMLUtils {
         return result;
     }
 
-    private static Object convertParamItemToJava(
+    public static Object convertParamItemToJava(
             String paramName,
             Item param,
             String paramJavaTypeName,
@@ -160,21 +166,54 @@ public class RumbleMLUtils {
     private static Object convertRumbleAtomicToJava(AtomicItem atomicItem, String javaTypeName) {
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(AtomicTypes.BooleanItem).getBooleanValue();
+                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
             case "String":
-                return atomicItem.castAs(AtomicTypes.StringItem).getStringValue();
+                return atomicItem.castAs(ItemType.stringItem).getStringValue();
             case "int":
-                return atomicItem.castAs(AtomicTypes.IntegerItem).getIntegerValue();
+                return atomicItem.castAs(ItemType.integerItem).getIntegerValue();
             case "double":
-                return atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
             case "long":
-                return (long) atomicItem.castAs(AtomicTypes.DoubleItem).getDoubleValue();
+                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""
                             + javaTypeName
                             + "\" while casting from atomic parameters."
                 );
+        }
+    }
+
+    public static Item removeParameter(Item paramMapItem, String key, ExceptionMetadata metadata) {
+        List<String> keys = paramMapItem.getKeys();
+        List<Item> values = paramMapItem.getValues();
+        int indexToRemove = keys.indexOf(key);
+        keys.remove(indexToRemove);
+        values.remove(indexToRemove);
+        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+    }
+
+    public static Dataset<Row> createDataFrameContainingVectorizedColumn(
+            Dataset<Row> inputDataset,
+            String paramNameExposedToTheUser,
+            String[] arrayOfInputColumnNames,
+            String outputColumnName,
+            ExceptionMetadata metadata
+    ) {
+        VectorAssembler vectorAssembler = new VectorAssembler();
+        vectorAssembler.setInputCols(arrayOfInputColumnNames);
+        vectorAssembler.setOutputCol(outputColumnName);
+
+        try {
+            return vectorAssembler.transform(inputDataset);
+        } catch (IllegalArgumentException e) {
+            throw new InvalidRumbleMLParamException(
+                    "Parameter provided to "
+                        + paramNameExposedToTheUser
+                        + " causes the following error: "
+                        + e.getMessage(),
+                    metadata
+            );
         }
     }
 }

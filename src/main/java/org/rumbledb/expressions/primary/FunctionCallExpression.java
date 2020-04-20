@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions.primary;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -28,18 +29,15 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
+import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
-import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class FunctionCallExpression extends PrimaryExpression {
+public class FunctionCallExpression extends Expression {
 
     private final String functionName;
     private final List<Expression> arguments; // null for placeholder
@@ -67,11 +65,11 @@ public class FunctionCallExpression extends PrimaryExpression {
     }
 
     @Override
-    public final void initHighestExecutionMode() {
+    public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
     }
 
-    public void initFunctionCallHighestExecutionMode(boolean ignoreMissingFunctionError) {
+    public void initFunctionCallHighestExecutionMode(VisitorConfig visitorConfig) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.functionName, this.arguments.size());
         if (Functions.checkBuiltInFunctionExists(identifier)) {
             if (this.isPartialApplication) {
@@ -81,7 +79,7 @@ public class FunctionCallExpression extends PrimaryExpression {
                 );
             }
             BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
-            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction);
+            this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }
 
@@ -94,7 +92,7 @@ public class FunctionCallExpression extends PrimaryExpression {
             return;
         }
 
-        if (!ignoreMissingFunctionError) {
+        if (!visitorConfig.suppressErrorsForCallingMissingFunctions()) {
             throw new UnknownFunctionCallException(
                     identifier.getName(),
                     identifier.getArity(),
@@ -103,7 +101,10 @@ public class FunctionCallExpression extends PrimaryExpression {
         }
     }
 
-    private ExecutionMode getBuiltInFunctionExecutionMode(BuiltinFunction builtinFunction) {
+    private ExecutionMode getBuiltInFunctionExecutionMode(
+            BuiltinFunction builtinFunction,
+            VisitorConfig visitorConfig
+    ) {
         BuiltinFunctionExecutionMode functionExecutionMode = builtinFunction.getBuiltinFunctionExecutionMode();
         if (functionExecutionMode == BuiltinFunctionExecutionMode.LOCAL) {
             return ExecutionMode.LOCAL;
@@ -115,7 +116,7 @@ public class FunctionCallExpression extends PrimaryExpression {
             return ExecutionMode.DATAFRAME;
         }
         if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (firstArgumentExecutionMode.isDataFrame()) {
                 return ExecutionMode.DATAFRAME;
             }
@@ -127,7 +128,7 @@ public class FunctionCallExpression extends PrimaryExpression {
         if (
             functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
         ) {
-            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode();
+            ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (
                 firstArgumentExecutionMode.isRDD()
                     && !firstArgumentExecutionMode.isDataFrame()
@@ -142,26 +143,26 @@ public class FunctionCallExpression extends PrimaryExpression {
     }
 
     @Override
-    public String serializationString(boolean prefix) {
-        String result = "(primaryExpr (functionCall ";
-        List<String> names = Arrays.asList(this.functionName.split(":"));
-        Collections.reverse(names);
-        for (String name : names)
-            result += name + (names.indexOf(name) < names.size() - 1 ? " : " : " ");
-        result += "(argumentList ( ";
-        for (Expression arg : this.arguments)
-            result += "(argument (exprSingle "
-                + arg.serializationString(false)
-                +
-                (this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) ");
-        result += "))";
-        result += "))";
-        return result;
-
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFunctionCall(this, argument);
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Expression arg : this.arguments) {
+            if (arg == null) {
+                for (int i = 0; i < indent; ++i) {
+                    buffer.append("  ");
+                }
+                buffer.append("?\n");
+            } else {
+                arg.print(buffer, indent + 1);
+            }
+        }
     }
 }

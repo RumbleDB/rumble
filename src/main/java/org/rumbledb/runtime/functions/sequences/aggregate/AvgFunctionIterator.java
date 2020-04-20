@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -28,9 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -67,19 +66,21 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
             this.hasNext = false;
             results.forEach(r -> {
-                if (!r.isNumeric())
+                if (!r.isNumeric()) {
                     throw new InvalidArgumentTypeException(
                             "Average expression has non numeric args "
                                 +
                                 r.serialize(),
                             getMetadata()
                     );
+                }
             });
             try {
                 // TODO check numeric types conversions
                 BigDecimal sum = new BigDecimal(0);
-                for (Item r : results)
+                for (Item r : results) {
                     sum = sum.add(r.castToDecimalValue());
+                }
 
                 return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
 

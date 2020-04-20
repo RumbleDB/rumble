@@ -21,46 +21,43 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.control.IfExpression;
-import org.rumbledb.expressions.control.SwitchCaseExpression;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
-import org.rumbledb.expressions.control.TypeSwitchCaseExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
 import org.rumbledb.expressions.flowr.CountClause;
-import org.rumbledb.expressions.flowr.FlworClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
-import org.rumbledb.expressions.flowr.ForClauseVar;
 import org.rumbledb.expressions.flowr.GroupByClause;
-import org.rumbledb.expressions.flowr.GroupByClauseVar;
 import org.rumbledb.expressions.flowr.LetClause;
-import org.rumbledb.expressions.flowr.LetClauseVar;
 import org.rumbledb.expressions.flowr.OrderByClause;
-import org.rumbledb.expressions.flowr.OrderByClauseExpr;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.expressions.flowr.WhereClause;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.operational.AdditiveExpression;
-import org.rumbledb.expressions.operational.AndExpression;
-import org.rumbledb.expressions.operational.CastExpression;
-import org.rumbledb.expressions.operational.CastableExpression;
-import org.rumbledb.expressions.operational.ComparisonExpression;
-import org.rumbledb.expressions.operational.InstanceOfExpression;
-import org.rumbledb.expressions.operational.MultiplicativeExpression;
-import org.rumbledb.expressions.operational.NotExpression;
-import org.rumbledb.expressions.operational.OrExpression;
-import org.rumbledb.expressions.operational.RangeExpression;
-import org.rumbledb.expressions.operational.StringConcatExpression;
-import org.rumbledb.expressions.operational.TreatExpression;
-import org.rumbledb.expressions.operational.UnaryExpression;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -80,24 +77,23 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
-import org.rumbledb.runtime.control.TypeSwitchCase;
-import org.rumbledb.runtime.control.TypeSwitchRuntimeIterator;
-import org.rumbledb.runtime.flowr.CountClauseSparkIterator;
-import org.rumbledb.runtime.flowr.ForClauseSparkIterator;
-import org.rumbledb.runtime.flowr.GroupByClauseSparkIterator;
-import org.rumbledb.runtime.flowr.LetClauseSparkIterator;
-import org.rumbledb.runtime.flowr.OrderByClauseSparkIterator;
-import org.rumbledb.runtime.flowr.ReturnClauseSparkIterator;
-import org.rumbledb.runtime.flowr.WhereClauseSparkIterator;
-import org.rumbledb.runtime.flowr.expression.GroupByClauseSparkIteratorExpression;
-import org.rumbledb.runtime.flowr.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
+import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
+import org.rumbledb.runtime.flwor.clauses.CountClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
+import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
@@ -105,16 +101,16 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.CastIterator;
-import org.rumbledb.runtime.operational.CastableIterator;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.CastableIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
-import org.rumbledb.runtime.operational.InstanceOfIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
 import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.operational.RangeOperationIterator;
 import org.rumbledb.runtime.operational.StringConcatIterator;
-import org.rumbledb.runtime.operational.TreatIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.runtime.operational.UnaryOperationIterator;
 import org.rumbledb.runtime.postfix.ArrayLookupIterator;
 import org.rumbledb.runtime.postfix.ArrayUnboxingIterator;
@@ -132,10 +128,9 @@ import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.SequenceType;
-
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -143,6 +138,12 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
+
+    private VisitorConfig visitorConfig;
+
+    public RuntimeIteratorVisitor() {
+        this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
+    }
 
     @Override
     public RuntimeIterator visit(Node node, RuntimeIterator argument) {
@@ -169,7 +170,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else {
             return new CommaExpressionIterator(
                     result,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         }
@@ -190,92 +191,95 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region FLOWR
     @Override
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
-        FlworClause startClause = expression.getStartClause();
-        RuntimeTupleIterator previous = this.visitFlowrClause(startClause, argument, null);
-        for (FlworClause clause : expression.getContentClauses()) {
-            previous = this.visitFlowrClause(clause, argument, previous);
-        }
+        RuntimeTupleIterator previous = this.visitFlowrClause(
+            expression.getReturnClause().getPreviousClause(),
+            argument
+        );
         return new ReturnClauseSparkIterator(
                 previous,
                 this.visit(
                     (expression.getReturnClause()).getReturnExpr(),
                     argument
                 ),
-                expression.getReturnClause().getHighestExecutionMode(),
+                expression.getReturnClause().getHighestExecutionMode(this.visitorConfig),
                 expression.getReturnClause().getMetadata()
         );
     }
 
     private RuntimeTupleIterator visitFlowrClause(
-            FlworClause clause,
-            RuntimeIterator argument,
-            RuntimeTupleIterator previousIterator
+            Clause clause,
+            RuntimeIterator argument
     ) {
+        RuntimeTupleIterator previousIterator = null;
+        if (clause.getPreviousClause() != null) {
+            previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
+        }
         if (clause instanceof ForClause) {
-            for (ForClauseVar var : ((ForClause) clause).getForVariables()) {
-                RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
-                    ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence().getSequence(),
-                        var.getExpression()
-                    );
-                    assignmentIterator = new TreatIterator(
-                            assignmentIterator,
-                            var.getAsSequence().getSequence(),
-                            false,
-                            executionMode,
-                            clause.getMetadata()
-                    );
-                }
-
-                previousIterator = new ForClauseSparkIterator(
-                        previousIterator,
-                        var.getVariableReference().getVariableName(),
+            ForClause forClause = (ForClause) clause;
+            RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
+            if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
+                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+                    forClause.getSequenceType(),
+                    forClause.getExpression(),
+                    this.visitorConfig
+                );
+                assignmentIterator = new TreatIterator(
                         assignmentIterator,
-                        var.getHighestExecutionMode(),
+                        forClause.getSequenceType(),
+                        false,
+                        executionMode,
                         clause.getMetadata()
                 );
             }
+
+            return new ForClauseSparkIterator(
+                    previousIterator,
+                    forClause.getVariableName(),
+                    assignmentIterator,
+                    forClause.getHighestExecutionMode(this.visitorConfig),
+                    clause.getMetadata()
+            );
         } else if (clause instanceof LetClause) {
-            for (LetClauseVar var : ((LetClause) clause).getLetVariables()) {
-                RuntimeIterator assignmentIterator = this.visit(var.getExpression(), argument);
-                if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
-                    ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                        var.getAsSequence().getSequence(),
-                        var.getExpression()
-                    );
-                    assignmentIterator = new TreatIterator(
-                            assignmentIterator,
-                            var.getAsSequence().getSequence(),
-                            false,
-                            executionMode,
-                            clause.getMetadata()
-                    );
-                }
-
-                previousIterator = new LetClauseSparkIterator(
-                        previousIterator,
-                        var.getVariableReference().getVariableName(),
+            LetClause letClause = (LetClause) clause;
+            RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
+            if (letClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
+                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
+                    letClause.getSequenceType(),
+                    letClause.getExpression(),
+                    this.visitorConfig
+                );
+                assignmentIterator = new TreatIterator(
                         assignmentIterator,
-                        var.getHighestExecutionMode(),
+                        letClause.getSequenceType(),
+                        false,
+                        executionMode,
                         clause.getMetadata()
                 );
             }
+
+            return new LetClauseSparkIterator(
+                    previousIterator,
+                    letClause.getVariableName(),
+                    assignmentIterator,
+                    letClause.getHighestExecutionMode(this.visitorConfig),
+                    clause.getMetadata()
+            );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
-            for (GroupByClauseVar var : ((GroupByClause) clause).getGroupVariables()) {
+            for (GroupByVariableDeclaration var : ((GroupByClause) clause).getGroupVariables()) {
                 Expression groupByExpression = var.getExpression();
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getAsSequence() != null && var.getAsSequence().getSequence() != null) {
+                    if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
                         ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getAsSequence().getSequence(),
-                            groupByExpression
+                            var.getSequenceType(),
+                            groupByExpression,
+                            this.visitorConfig
                         );
                         groupByExpressionIterator = new TreatIterator(
                                 groupByExpressionIterator,
-                                var.getAsSequence().getSequence(),
+                                var.getSequenceType(),
                                 false,
                                 executionMode,
                                 clause.getMetadata()
@@ -283,27 +287,25 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     }
                 }
 
-                VariableReferenceExpression variableReference = var.getVariableReference();
-                VariableReferenceIterator variableReferenceIterator =
-                    (VariableReferenceIterator) this.visit(variableReference, argument);
+                String variableName = var.getVariableName();
 
                 groupingExpressions.add(
                     new GroupByClauseSparkIteratorExpression(
                             groupByExpressionIterator,
-                            variableReferenceIterator,
-                            var.getMetadata()
+                            variableName,
+                            clause.getMetadata()
                     )
                 );
             }
-            previousIterator = new GroupByClauseSparkIterator(
+            return new GroupByClauseSparkIterator(
                     previousIterator,
                     groupingExpressions,
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
-            for (OrderByClauseExpr orderExpr : ((OrderByClause) clause).getExpressions()) {
+            for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
                 expressionsWithIterator.add(
                     new OrderByClauseAnnotatedChildIterator(
                             this.visit(orderExpr.getExpression(), argument),
@@ -313,34 +315,29 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     )
                 );
             }
-            previousIterator = new OrderByClauseSparkIterator(
+            return new OrderByClauseSparkIterator(
                     previousIterator,
                     expressionsWithIterator,
                     ((OrderByClause) clause).isStable(),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof WhereClause) {
-            previousIterator = new WhereClauseSparkIterator(
+            return new WhereClauseSparkIterator(
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         } else if (clause instanceof CountClause) {
-            previousIterator = new CountClauseSparkIterator(
+            return new CountClauseSparkIterator(
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
-                    clause.getHighestExecutionMode(),
+                    clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );
         }
-        return previousIterator;
-    }
-
-    @Override
-    public RuntimeIterator visitOrderByClauseExpr(OrderByClauseExpr expression, RuntimeIterator argument) {
-        return defaultAction(expression, argument);
+        throw new OurBadException("Clause unrecognized.");
     }
 
     @Override
@@ -348,7 +345,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new VariableReferenceIterator(
                 expression.getVariableName(),
                 expression.getType(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -362,7 +359,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new PredicateIterator(
                 mainIterator,
                 filterIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -374,7 +371,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ArrayLookupIterator(
                 mainIterator,
                 lookupIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -386,7 +383,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new ObjectLookupIterator(
                 mainIterator,
                 lookupIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -408,7 +405,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new DynamicFunctionCallIterator(
                 mainIterator,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -418,7 +415,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
         return new ArrayUnboxingIterator(
                 mainIterator,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -431,7 +428,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         return new ArrayRuntimeIterator(
                 result,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -445,7 +442,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                         .stream()
                         .map(arg -> this.visit(arg, argument))
                         .collect(Collectors.toList()),
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
             return iterator;
@@ -461,7 +458,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             iterator = new ObjectConstructorRuntimeIterator(
                     keys,
                     values,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
             return iterator;
@@ -470,16 +467,19 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitContextExpr(ContextItemExpression expression, RuntimeIterator argument) {
-        return new ContextExpressionIterator(expression.getHighestExecutionMode(), expression.getMetadata());
+        return new ContextExpressionIterator(
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitFunctionDeclaration(InlineFunctionExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, FlworVarSequenceType> paramEntry : expression.getParams().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue().getSequence());
+        for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
+            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
-        SequenceType returnType = expression.getReturnType().getSequence();
+        SequenceType returnType = expression.getReturnType();
         RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
         FunctionItem function = new FunctionItem(
                 expression.getName(),
@@ -491,7 +491,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             // unnamed (inline function declaration)
             return new FunctionRuntimeIterator(
                     function,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         } else {
@@ -522,14 +522,14 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
             );
         }
         return new StaticUserDefinedFunctionCallIterator(
                 identifier,
                 arguments,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
         );
     }
@@ -550,7 +550,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             FunctionItem function = Functions.getUserDefinedFunction(identifier);
             return new FunctionRuntimeIterator(
                     function,
-                    expression.getHighestExecutionMode(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
                     expression.getMetadata()
             );
         }
@@ -567,7 +567,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitInteger(IntegerLiteralExpression expression, RuntimeIterator argument) {
         return new IntegerRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -576,7 +576,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitString(StringLiteralExpression expression, RuntimeIterator argument) {
         return new StringRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -585,7 +585,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitDouble(DoubleLiteralExpression expression, RuntimeIterator argument) {
         return new DoubleRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -594,21 +594,24 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitDecimal(DecimalLiteralExpression expression, RuntimeIterator argument) {
         return new DecimalRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitNull(NullLiteralExpression expression, RuntimeIterator argument) {
-        return new NullRuntimeIterator(expression.getHighestExecutionMode(), expression.getMetadata());
+        return new NullRuntimeIterator(
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
     public RuntimeIterator visitBoolean(BooleanLiteralExpression expression, RuntimeIterator argument) {
         return new BooleanRuntimeIterator(
                 expression.getValue(),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -617,133 +620,86 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region operational
     @Override
     public RuntimeIterator visitAdditiveExpr(AdditiveExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getOperators().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            AdditiveExpression remainingExpressions = new AdditiveExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new AdditiveOperationIterator(
                 left,
                 right,
-                expression.getOperators().get(expression.getOperators().size() - 1),
-                expression.getHighestExecutionMode(),
+                expression.isMinus(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitMultiplicativeExpr(MultiplicativeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getOperators().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            MultiplicativeExpression remainingExpressions = new MultiplicativeExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getOperators().subList(0, expression.getOperators().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new MultiplicativeOperationIterator(
                 left,
                 right,
-                expression.getOperators().get(expression.getOperators().size() - 1),
-                expression.getHighestExecutionMode(),
+                expression.getMultiplicativeOperator(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            AndExpression remainingExpressiongs = new AndExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions().subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressiongs.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressiongs,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new AndOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitOrExpr(OrExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            OrExpression remainingExpressions = new OrExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions()
-                        .subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
 
         return new OrOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -752,7 +708,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitNotExpr(NotExpression expression, RuntimeIterator argument) {
         return new NotOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -760,74 +716,47 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitUnaryExpr(UnaryExpression expression, RuntimeIterator argument) {
         // compute +- final result
-        int result = 1;
-        for (OperationalExpressionBase.Operator op : expression.getOperators()) {
-            if (op == OperationalExpressionBase.Operator.MINUS) {
-                result *= -1;
-            }
-        }
         return new UnaryOperationIterator(
                 this.visit(expression.getMainExpression(), argument),
-                result == -1 ? OperationalExpressionBase.Operator.MINUS : OperationalExpressionBase.Operator.PLUS,
-                expression.getHighestExecutionMode(),
+                expression.isNegated(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitRangeExpr(RangeExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new RangeOperationIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left = this.visit(expression.getMainExpression(), argument);
-        RuntimeIterator right = this.visit(expression.getRightExpression(), argument);
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new ComparisonOperationIterator(
                 left,
                 right,
-                expression.getOperator(),
-                expression.getHighestExecutionMode(),
+                expression.getComparisonOperator(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
 
     @Override
     public RuntimeIterator visitStringConcatExpr(StringConcatExpression expression, RuntimeIterator argument) {
-        RuntimeIterator left, right;
-        // convert nary to tree of iterators
-        if (expression.getRightExpressions().size() > 1) {
-            right = this.visit(
-                expression.getRightExpressions().get(expression.getRightExpressions().size() - 1),
-                argument
-            );
-            StringConcatExpression remainingExpressions = new StringConcatExpression(
-                    expression.getMainExpression(),
-                    expression.getRightExpressions()
-                        .subList(0, expression.getRightExpressions().size() - 1),
-                    expression.getMetadata()
-            );
-            remainingExpressions.initHighestExecutionMode();
-            left = this.visit(
-                remainingExpressions,
-                argument
-            );
-        } else {
-            left = this.visit(expression.getMainExpression(), argument);
-            right = this.visit(expression.getRightExpressions().get(0), argument);
-        }
-
+        RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
+        RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
         return new StringConcatIterator(
                 left,
                 right,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -837,8 +766,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new InstanceOfIterator(
                 childExpression,
-                expression.getsequenceType().getSequence(),
-                expression.getHighestExecutionMode(),
+                expression.getSequenceType(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -848,9 +777,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new TreatIterator(
                 childExpression,
-                expression.getsequenceType().getSequence(),
+                expression.getsequenceType(),
                 true,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -860,8 +789,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new CastableIterator(
                 childExpression,
-                expression.getAtomicType().getSingleType(),
-                expression.getHighestExecutionMode(),
+                expression.getSequenceType(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -871,8 +800,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator childExpression = this.visit(expression.getMainExpression(), argument);
         return new CastIterator(
                 childExpression,
-                expression.getFlworVarSingleType().getSingleType(),
-                expression.getHighestExecutionMode(),
+                expression.getSequenceType(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -883,24 +812,23 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
         List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
         expression.getVariables()
-            .forEach(var -> variables.add((QuantifiedExpressionVarIterator) this.visit(var, argument)));
+            .forEach(
+                var -> variables.add(
+                    new QuantifiedExpressionVarIterator(
+                            var.getVariableName(),
+                            var.getSequenceType(),
+                            this.visit(var.getExpression(), argument),
+                            expression.getHighestExecutionMode(this.visitorConfig),
+                            expression.getMetadata()
+                    )
+                )
+            );
         RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
         return new QuantifiedExpressionIterator(
                 expression.getOperator(),
                 variables,
                 evaluationExpression,
-                expression.getHighestExecutionMode(),
-                expression.getMetadata()
-        );
-    }
-
-    @Override
-    public RuntimeIterator visitQuantifiedExpressionVar(QuantifiedExpressionVar expression, RuntimeIterator argument) {
-        return new QuantifiedExpressionVarIterator(
-                expression.getVariableReference().getVariableName(),
-                expression.getSequenceType(),
-                this.visit(expression.getExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -908,12 +836,12 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     // region control
     @Override
-    public RuntimeIterator visitIfExpression(IfExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitConditionalExpression(ConditionalExpression expression, RuntimeIterator argument) {
         return new IfRuntimeIterator(
                 this.visit(expression.getCondition(), argument),
                 this.visit(expression.getBranch(), argument),
                 this.visit(expression.getElseBranch(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -921,17 +849,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
         Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
-        for (SwitchCaseExpression caseExpression : expression.getCases()) {
-            cases.put(
-                this.visit(caseExpression.getCondition(), argument),
-                this.visit(caseExpression.getReturnExpression(), argument)
-            );
+        for (SwitchCase caseExpression : expression.getCases()) {
+            RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
+            for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
+                RuntimeIterator condition = this.visit(conditionExpr, argument);
+                cases.put(condition, caseExpr);
+            }
         }
         return new SwitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 this.visit(expression.getDefaultExpression(), argument),
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }
@@ -939,36 +868,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTypeSwitchExpression(TypeSwitchExpression expression, RuntimeIterator argument) {
-        List<TypeSwitchCase> cases = new ArrayList<>();
-        for (TypeSwitchCaseExpression caseExpression : expression.getCases()) {
-            String caseVariableName = null;
-            if (caseExpression.getVariableReference() != null) {
-                caseVariableName = caseExpression.getVariableReference().getVariableName();
-            }
+        List<TypeswitchRuntimeIteratorCase> cases = new ArrayList<>();
+        for (TypeswitchCase caseExpression : expression.getCases()) {
             cases.add(
-                new TypeSwitchCase(
-                        caseVariableName,
+                new TypeswitchRuntimeIteratorCase(
+                        caseExpression.getVariableName(),
                         caseExpression.getUnion(),
                         this.visit(caseExpression.getReturnExpression(), argument)
                 )
             );
         }
 
-        TypeSwitchCase defaultCase;
-        String defaultCaseVariableName = null;
-        if (expression.getDefaultVariableReferenceExpression() != null) {
-            defaultCaseVariableName = expression.getDefaultVariableReferenceExpression().getVariableName();
-        }
-        defaultCase = new TypeSwitchCase(
-                defaultCaseVariableName,
-                this.visit(expression.getDefaultExpression(), argument)
+        TypeswitchRuntimeIteratorCase defaultCase = new TypeswitchRuntimeIteratorCase(
+                expression.getDefaultCase().getVariableName(),
+                this.visit(expression.getDefaultCase().getReturnExpression(), argument)
         );
 
-        return new TypeSwitchRuntimeIterator(
+        return new TypeswitchRuntimeIterator(
                 this.visit(expression.getTestCondition(), argument),
                 cases,
                 defaultCase,
-                expression.getHighestExecutionMode(),
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
     }

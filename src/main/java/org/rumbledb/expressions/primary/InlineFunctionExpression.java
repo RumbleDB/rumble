@@ -21,29 +21,30 @@
 package org.rumbledb.expressions.primary;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.flowr.FlworVarSequenceType;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class InlineFunctionExpression extends PrimaryExpression {
+public class InlineFunctionExpression extends Expression {
 
     private final String name;
-    private final Map<String, FlworVarSequenceType> params;
-    private final FlworVarSequenceType returnType;
+    private final Map<String, SequenceType> params;
+    private final SequenceType returnType;
     private final Expression body;
 
     public InlineFunctionExpression(
             String name,
-            Map<String, FlworVarSequenceType> params,
-            FlworVarSequenceType returnType,
+            Map<String, SequenceType> params,
+            SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
     ) {
@@ -58,11 +59,11 @@ public class InlineFunctionExpression extends PrimaryExpression {
         return this.name;
     }
 
-    public Map<String, FlworVarSequenceType> getParams() {
+    public Map<String, SequenceType> getParams() {
         return this.params;
     }
 
-    public FlworVarSequenceType getReturnType() {
+    public SequenceType getReturnType() {
         return this.returnType;
     }
 
@@ -72,21 +73,19 @@ public class InlineFunctionExpression extends PrimaryExpression {
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        return result;
+        return new ArrayList<>();
     }
 
     public void registerUserDefinedFunctionExecutionMode(
-            boolean ignoreDuplicateUserDefinedFunctionError,
-            boolean ignoreUnsetExecutionModeAccessDuringFunctionDeclaration
+            VisitorConfig visitorConfig
     ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (!this.name.equals("")) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
-                this.body.getHighestExecutionMode(ignoreUnsetExecutionModeAccessDuringFunctionDeclaration),
-                ignoreDuplicateUserDefinedFunctionError,
+                this.body.getHighestExecutionMode(visitorConfig),
+                visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                 this.getMetadata()
             );
         }
@@ -97,28 +96,24 @@ public class InlineFunctionExpression extends PrimaryExpression {
         return visitor.visitFunctionDeclaration(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(functionDeclaration ";
-        result += this.name;
-        result += " (paramList (";
-        for (Map.Entry<String, FlworVarSequenceType> entry : this.params.entrySet()) {
-            result += "param (";
-            result += "NCName "
-                + entry.getKey()
-                + " sequenceType "
-                + entry.getValue().serializationString(false)
-                + ") , ";
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
         }
-        result = result.substring(0, result.length() - 1); // remove last comma
-        result += "))";
-
-        result += " (sequenceType ( " + this.returnType.serializationString(false) + "))";
-
-        result += " (expr (" + this.body.serializationString(false) + "))";
-
-        result += ")";
-        return result;
+        buffer.append(getClass().getSimpleName());
+        buffer.append("(");
+        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
+            buffer.append(entry.getKey());
+            buffer.append(", ");
+            buffer.append(entry.getValue().toString());
+            buffer.append(", ");
+        }
+        buffer.append(this.returnType.toString());
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        buffer.append("Body:\n");
+        this.body.print(buffer, indent + 2);
     }
 }
 

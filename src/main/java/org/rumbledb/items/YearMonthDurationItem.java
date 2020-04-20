@@ -9,11 +9,8 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
@@ -53,69 +50,76 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.YearMonthDurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.yearMonthDurationItem) || super.isTypeOf(type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicTypes.YearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.YearMonthDurationItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.equals(AtomicTypes.DayTimeDurationItem)
+            itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.equals(AtomicTypes.DurationItem)
+            itemType.equals(ItemType.durationItem)
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case DurationItem:
-                return ItemFactory.getInstance().createDurationItem(this.getValue());
-            case YearMonthDurationItem:
-                return this;
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.durationItem)) {
+            return ItemFactory.getInstance().createDurationItem(this.getValue());
         }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
-            return other.compareItem(this, operator, metadata);
+            return other.compareItem(this, comparisonOperator, metadata);
         } else if (!other.isYearMonthDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override
     public Item add(Item other) {
-        if (other.isDateTime())
+        if (other.isDateTime()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        if (other.isDate())
+        }
+        if (other.isDate()) {
             return ItemFactory.getInstance()
                 .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
+        }
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().plus(other.getDurationValue()));
     }
 
@@ -150,5 +154,10 @@ public class YearMonthDurationItem extends DurationItem {
             .intValue();
         return ItemFactory.getInstance()
             .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.yearMonthDurationItem;
     }
 }

@@ -24,10 +24,10 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.ItemType;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -36,18 +36,18 @@ import java.util.List;
 
 /**
  * An instance of this class is an item in the JSONiq data model.
- * 
+ *
  * JSONiq manipulates sequences of items.
- * 
+ *
  * An item can be structured or atomic.
- * 
+ *
  * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
  * lists of items.
- * 
+ *
  * Atomic items have a lexical value and a type. Currently, Rumble only supports strings, numbers, booleans and null.
- * 
+ *
  * Numbers can be decimals, integers or doubles.
- * 
+ *
  * This class provides methods to identify what kind of item the instance is, and to access its properties.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
@@ -73,7 +73,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to a double value.
-     * 
+     *
      * @return the double value.
      */
     public double castToDoubleValue() {
@@ -82,7 +82,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to a decimal value.
-     * 
+     *
      * @return the BigDecimal value.
      */
     public BigDecimal castToDecimalValue() {
@@ -91,7 +91,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Casts the item to an integer value.
-     * 
+     *
      * @return the int value.
      */
     public int castToIntegerValue() {
@@ -100,7 +100,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Returns the effective boolean value of the item, if atomic.
-     * 
+     *
      * @return the effective boolean value.
      */
     public abstract boolean getEffectiveBooleanValue();
@@ -114,21 +114,60 @@ public abstract class Item implements SerializableItem {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         return this.serialize().compareTo(other.serialize());
     }
 
     /**
      * Function that compare two items according to the operator defined for the comparison.
-     * 
+     *
      * @param other another Item
-     * @param operator the operator used for the comparison
+     * @param comparisonOperator the operator used for the comparison
      * @param metadata Metadata useful for throwing exceptions
      * @return BooleanItem result of the comparison
      */
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
-        return operator.apply(this, other);
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
+        // Subclasses should override this method to perform additional typechecks,
+        // and then invoke it on super.
+        switch (comparisonOperator) {
+            case VC_EQ:
+            case GC_EQ: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
+            }
+            case VC_NE:
+            case GC_NE: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
+            }
+            case VC_LT:
+            case GC_LT: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
+            }
+            case VC_LE:
+            case GC_LE: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
+            }
+            case VC_GT:
+            case GC_GT: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
+            }
+            case VC_GE:
+            case GC_GE: {
+                int comparison = this.compareTo(other);
+                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
+            }
+        }
+        throw new IteratorFlowException("Unrecognized operator found", metadata);
     }
 
     /**
@@ -137,7 +176,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the array members.
      */
     public List<Item> getItems() {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -147,7 +186,7 @@ public abstract class Item implements SerializableItem {
      * @return the member at position position.
      */
     public Item getItemAt(int position) {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -156,7 +195,7 @@ public abstract class Item implements SerializableItem {
      * @param item an item.
      */
     public void putItem(Item item) {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -165,7 +204,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the keys.
      */
     public List<String> getKeys() {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -174,7 +213,7 @@ public abstract class Item implements SerializableItem {
      * @return the list of the value items.
      */
     public List<Item> getValues() {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -184,7 +223,7 @@ public abstract class Item implements SerializableItem {
      * @return the value associated with key.
      */
     public Item getItemByKey(String key) {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -194,7 +233,7 @@ public abstract class Item implements SerializableItem {
      * @param value a value.
      */
     public void putItemByKey(String key, Item value) {
-        throw new RuntimeException("Item is not an object.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 
     /**
@@ -203,7 +242,7 @@ public abstract class Item implements SerializableItem {
      * @return the size as an int.
      */
     public int getSize() {
-        throw new RuntimeException("Item is not an array.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -212,7 +251,7 @@ public abstract class Item implements SerializableItem {
      * @return the string value.
      */
     public String getStringValue() {
-        throw new RuntimeException("Item is not a string.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a string.");
     }
 
     /**
@@ -221,7 +260,7 @@ public abstract class Item implements SerializableItem {
      * @return the boolean value.
      */
     public boolean getBooleanValue() {
-        throw new RuntimeException("Item is not a boolean.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a boolean.");
     }
 
     /**
@@ -230,7 +269,7 @@ public abstract class Item implements SerializableItem {
      * @return the double value.
      */
     public double getDoubleValue() {
-        throw new RuntimeException("Item is not a double.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a double.");
     }
 
     /**
@@ -239,7 +278,7 @@ public abstract class Item implements SerializableItem {
      * @return the integer value as an int.
      */
     public int getIntegerValue() {
-        throw new RuntimeException("Item is not an integer.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
     }
 
     /**
@@ -248,7 +287,7 @@ public abstract class Item implements SerializableItem {
      * @return the decimal value as a BigDecimal.
      */
     public BigDecimal getDecimalValue() {
-        throw new RuntimeException("Item is not a big decimal.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a big decimal.");
     }
 
     /**
@@ -257,7 +296,7 @@ public abstract class Item implements SerializableItem {
      * @return the period value as a Period.
      */
     public Period getDurationValue() {
-        throw new RuntimeException("Item is not a duration.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a duration.");
     }
 
     /**
@@ -266,7 +305,7 @@ public abstract class Item implements SerializableItem {
      * @return the dateTime value as a DateTime.
      */
     public DateTime getDateTimeValue() {
-        throw new RuntimeException("Item does not have a DateTime.");
+        throw new OurBadException(" Item '" + this.serialize() + "' does not have a DateTime.");
     }
 
     /**
@@ -275,7 +314,7 @@ public abstract class Item implements SerializableItem {
      * @return the binary value as an array of bytes.
      */
     public byte[] getBinaryValue() {
-        throw new RuntimeException("Item is not a hexBinary.");
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a hexBinary.");
     }
 
     /**
@@ -287,7 +326,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Please do not use, item type API not publicly released yet.
-     * 
+     *
      * @param type an ItemType.
      * @return true if it matches the item type.
      */
@@ -295,7 +334,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Please do not use, item type API not publicly released yet.
-     * 
+     *
      * @param type an ItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
@@ -305,12 +344,13 @@ public abstract class Item implements SerializableItem {
 
 
     public Item promoteTo(ItemType type) {
-        if (!this.canBePromotedTo(type))
+        if (!this.canBePromotedTo(type)) {
             throw new RuntimeException(
-                    ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    this.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(type.getType().toString())
+                        + type.toString()
             );
+        }
         return this;
     }
 
@@ -388,7 +428,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Tests whether the item is an atomic item of type double.
-     * 
+     *
      * @return true if it is an atomic item of type double, false otherwise.
      */
     public boolean isDouble() {
@@ -468,6 +508,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type anyURI.
+     *
+     * @return true if it is an atomic item of type anyURI, false otherwise.
+     */
+    public boolean isAnyURI() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type hexBinary.
      *
      * @return true if it is an atomic item of type hexBinary, false otherwise.
@@ -516,7 +565,7 @@ public abstract class Item implements SerializableItem {
 
     /**
      * Computes a hash code.
-     * 
+     *
      * @return a hash code as an int.
      */
     @Override
@@ -544,6 +593,15 @@ public abstract class Item implements SerializableItem {
     }
 
     public Item idivide(Item other) {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    /**
+     * Returns the dynamic type of the item (for error message purposes).
+     * 
+     * @return the dynamic type as an item type.
+     */
+    public ItemType getDynamicType() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 }

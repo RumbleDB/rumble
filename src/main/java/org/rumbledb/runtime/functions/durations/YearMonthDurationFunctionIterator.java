@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.durations;
 
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -9,10 +10,9 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
 
 import java.util.List;
 
@@ -36,7 +36,7 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
             try {
                 Period period = DurationItem.getDurationFromString(
                     this.durationStringItem.getStringValue(),
-                    AtomicTypes.YearMonthDurationItem
+                    ItemType.yearMonthDurationItem
                 );
                 return ItemFactory.getInstance().createYearMonthDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {
@@ -48,11 +48,12 @@ public class YearMonthDurationFunctionIterator extends LocalFunctionCallIterator
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " yearMonthDuration function",
                     getMetadata()
             );
+        }
     }
 
     @Override

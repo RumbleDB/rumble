@@ -1,6 +1,7 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -9,11 +10,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
+import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemTypes;
 
 import java.util.List;
 
@@ -37,7 +35,7 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
             try {
                 if (!this.item.isAtomic()) {
                     throw new StringOfJSONiqItemException(
-                            ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                            this.item.getDynamicType().toString()
                                 +
                                 " items do not have string value",
                             getMetadata()
@@ -47,11 +45,11 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 String message = atomicItem.serialize()
                     +
                     ": value of type "
-                    + ItemTypes.getItemTypeName(this.item.getClass().getSimpleName())
+                    + this.item.getDynamicType().toString()
                     + " is not castable to type string.";
-                if (atomicItem.isCastableAs(AtomicTypes.StringItem)) {
+                if (atomicItem.isCastableAs(ItemType.stringItem)) {
                     try {
-                        return atomicItem.castAs(AtomicTypes.StringItem);
+                        return atomicItem.castAs(ItemType.stringItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }
@@ -67,11 +65,12 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                 );
                 throw new CastException(message, getMetadata());
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string function",
                     getMetadata()
             );
+        }
     }
 
     @Override

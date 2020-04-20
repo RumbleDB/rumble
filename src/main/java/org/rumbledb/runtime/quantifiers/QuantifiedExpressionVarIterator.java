@@ -21,14 +21,14 @@
 package org.rumbledb.runtime.quantifiers;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.SequenceType;
 
 public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 

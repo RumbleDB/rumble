@@ -20,18 +20,19 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
+import org.apache.spark.api.java.JavaPairRDD;
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
-public class TailFunctionIterator extends LocalFunctionCallIterator {
+public class TailFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -44,10 +45,11 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext()) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -57,11 +59,8 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
+    public void openLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
 
         if (!this.iterator.hasNext()) {
             this.hasNext = false;
@@ -69,6 +68,28 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.next(); // skip the first item
             setNextResult();
         }
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.iterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.iterator.reset(context);
+
+        if (!this.iterator.hasNext()) {
+            this.hasNext = false;
+        } else {
+            this.iterator.next(); // skip the first item
+            setNextResult();
+        }
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
     }
 
     public void setNextResult() {
@@ -86,4 +107,14 @@ public class TailFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        if (!childRDD.isEmpty()) {
+            JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
+            JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((input) -> input._2() != 0);
+            return filteredRDD.map(x -> x._1);
+        }
+        return childRDD;
+    }
 }

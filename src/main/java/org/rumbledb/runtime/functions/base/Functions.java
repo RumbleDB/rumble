@@ -22,7 +22,6 @@ package org.rumbledb.runtime.functions.base;
 
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -73,10 +72,12 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
@@ -89,6 +90,7 @@ import org.rumbledb.runtime.functions.numerics.IntegerFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundHalfToEvenFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Exp10FunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.ExpFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.exponential.Log10FunctionIterator;
@@ -110,6 +112,7 @@ import org.rumbledb.runtime.functions.object.ObjectKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectProjectFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
+import org.rumbledb.runtime.functions.resources.AnyURIFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -129,33 +132,35 @@ import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
+import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
+import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
 import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
+import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
+import sparksoniq.spark.ml.AnnotateFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -164,8 +169,146 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.rumbledb.runtime.functions.base.Functions.FunctionNames.*;
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.abs;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.accumulate;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.acos;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_dateTime_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_dateTime_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_date_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_date_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.annotate;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.anyURI;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.asin;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avg;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.base64Binary;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.boolean_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ceiling;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.codepoint_equal;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.codepoints_to_string;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.concat;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.contains;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.cos;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.count;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.csv_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.csv_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dayTimeDuration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.day_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.day_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.days_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.decimal_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.deep_equal;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_arrays;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_objects;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.descendant_pairs;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.distinct_values;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.double_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.empty;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ends_with;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exactly_one;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exists;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp10;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.flatten;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.floor;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_estimator;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_transformer;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.head;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hexBinary;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.hours_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.index_of;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.insert_before;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.integer_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.intersect;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_doc;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.json_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.keys;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.last;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.libsvm_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.log;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.log10;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.lower_case;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.matches;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.max;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.members;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.min;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.minutes_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.month_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.month_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.months_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.normalize_space;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.null_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.number;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.one_or_more;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parallelizeFunction1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parallelizeFunction2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.parquet_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.pi;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.position;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.pow;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.project;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.remove_keys;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.replace;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.reverse;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.root_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.root_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round_half_to_even1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.round_half_to_even2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sin;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.size;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sqrt;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.starts_with;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_function;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_join1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_join2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_length;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.string_to_codepoints;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.structured_json_file;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.subsequence2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.subsequence3;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring3;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring_after;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.substring_before;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sum1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sum2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tail;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tan;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.text_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.text_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.translate;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.upper_case;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.values;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.yearMonthDuration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.year_from_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.year_from_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.years_from_duration;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.zero_or_one;
+
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 public class Functions {
     private static final HashMap<FunctionIdentifier, BuiltinFunction> builtInFunctions;
@@ -175,98 +318,72 @@ public class Functions {
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
-    private static List<FunctionIdentifier> currentUnsetUserDefinedFunctionIdentifiers;
+    private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
-    private static final Map<String, ItemType> itemTypes;
-
-    static {
-        itemTypes = new HashMap<>();
-        itemTypes.put("item", new ItemType(ItemTypes.Item));
-
-        itemTypes.put("object", new ItemType(ItemTypes.ObjectItem));
-        itemTypes.put("array", new ItemType(ItemTypes.ArrayItem));
-
-        itemTypes.put("atomic", new ItemType(ItemTypes.AtomicItem));
-        itemTypes.put("string", new ItemType(ItemTypes.StringItem));
-        itemTypes.put("integer", new ItemType(ItemTypes.IntegerItem));
-        itemTypes.put("decimal", new ItemType(ItemTypes.DecimalItem));
-        itemTypes.put("double", new ItemType(ItemTypes.DoubleItem));
-        itemTypes.put("boolean", new ItemType(ItemTypes.BooleanItem));
-
-        itemTypes.put("duration", new ItemType(ItemTypes.DurationItem));
-        itemTypes.put("yearMonthDuration", new ItemType(ItemTypes.YearMonthDurationItem));
-        itemTypes.put("dayTimeDuration", new ItemType(ItemTypes.DayTimeDurationItem));
-
-        itemTypes.put("dateTime", new ItemType(ItemTypes.DateTimeItem));
-        itemTypes.put("date", new ItemType(ItemTypes.DateItem));
-        itemTypes.put("time", new ItemType(ItemTypes.TimeItem));
-
-        itemTypes.put("hexBinary", new ItemType(ItemTypes.HexBinaryItem));
-        itemTypes.put("base64Binary", new ItemType(ItemTypes.Base64BinaryItem));
-
-        itemTypes.put("null", new ItemType(ItemTypes.NullItem));
-
-    }
 
     private static final Map<String, SequenceType> sequenceTypes;
+
     static {
         sequenceTypes = new HashMap<>();
-        sequenceTypes.put("item", new SequenceType(itemTypes.get("item"), SequenceType.Arity.One));
-        sequenceTypes.put("item?", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(itemTypes.get("item"), SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("item+", new SequenceType(itemTypes.get("item"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("item", new SequenceType(ItemType.item, SequenceType.Arity.One));
+        sequenceTypes.put("item?", new SequenceType(ItemType.item, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("item*", new SequenceType(ItemType.item, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("item+", new SequenceType(ItemType.item, SequenceType.Arity.OneOrMore));
 
-        sequenceTypes.put("object", new SequenceType(itemTypes.get("object"), SequenceType.Arity.One));
-        sequenceTypes.put("object+", new SequenceType(itemTypes.get("object"), SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object", new SequenceType(ItemType.objectItem, SequenceType.Arity.One));
+        sequenceTypes.put("object+", new SequenceType(ItemType.objectItem, SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("array?", new SequenceType(itemTypes.get("array"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("atomic", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(itemTypes.get("atomic"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("atomic", new SequenceType(ItemType.atomicItem, SequenceType.Arity.One));
+        sequenceTypes.put("atomic?", new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("atomic*", new SequenceType(ItemType.atomicItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("string", new SequenceType(itemTypes.get("string"), SequenceType.Arity.One));
-        sequenceTypes.put("string?", new SequenceType(itemTypes.get("string"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("string*", new SequenceType(itemTypes.get("string"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("string", new SequenceType(ItemType.stringItem, SequenceType.Arity.One));
+        sequenceTypes.put("string?", new SequenceType(ItemType.stringItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("string*", new SequenceType(ItemType.stringItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("integer", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(itemTypes.get("integer"), SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("integer", new SequenceType(ItemType.integerItem, SequenceType.Arity.One));
+        sequenceTypes.put("integer?", new SequenceType(ItemType.integerItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("integer*", new SequenceType(ItemType.integerItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("decimal?", new SequenceType(itemTypes.get("decimal"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("decimal?", new SequenceType(ItemType.decimalItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("double", new SequenceType(itemTypes.get("double"), SequenceType.Arity.One));
-        sequenceTypes.put("double?", new SequenceType(itemTypes.get("double"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("double", new SequenceType(ItemType.doubleItem, SequenceType.Arity.One));
+        sequenceTypes.put("double?", new SequenceType(ItemType.doubleItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("boolean", new SequenceType(itemTypes.get("boolean"), SequenceType.Arity.One));
+        sequenceTypes.put("boolean", new SequenceType(ItemType.booleanItem, SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(ItemType.booleanItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("duration?", new SequenceType(itemTypes.get("duration"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("duration?", new SequenceType(ItemType.durationItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "yearMonthDuration?",
-            new SequenceType(itemTypes.get("yearMonthDuration"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
         );
 
         sequenceTypes.put(
             "dayTimeDuration?",
-            new SequenceType(itemTypes.get("dayTimeDuration"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("dateTime?", new SequenceType(itemTypes.get("dateTime"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("dateTime?", new SequenceType(ItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("date?", new SequenceType(itemTypes.get("date"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("date?", new SequenceType(ItemType.dateItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("time?", new SequenceType(itemTypes.get("time"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("time?", new SequenceType(ItemType.timeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("hexBinary?", new SequenceType(itemTypes.get("hexBinary"), SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("anyURI?", new SequenceType(ItemType.anyURIItem, SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("hexBinary?", new SequenceType(ItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "base64Binary?",
-            new SequenceType(itemTypes.get("base64Binary"), SequenceType.Arity.OneOrZero)
+            new SequenceType(ItemType.base64BinaryItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("null?", new SequenceType(itemTypes.get("null"), SequenceType.Arity.OneOrZero));
-
+        sequenceTypes.put("null?", new SequenceType(ItemType.nullItem, SequenceType.Arity.OneOrZero));
     }
 
 
@@ -286,6 +403,10 @@ public class Functions {
         builtInFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtInFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtInFunctions.put(parquet_file.getIdentifier(), parquet_file);
+        builtInFunctions.put(csv_file1.getIdentifier(), csv_file1);
+        builtInFunctions.put(csv_file2.getIdentifier(), csv_file2);
+        builtInFunctions.put(root_file1.getIdentifier(), root_file1);
+        builtInFunctions.put(root_file2.getIdentifier(), root_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -341,6 +462,9 @@ public class Functions {
         builtInFunctions.put(atan2.getIdentifier(), atan2);
 
         builtInFunctions.put(string_function.getIdentifier(), string_function);
+        builtInFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
+        builtInFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
+        builtInFunctions.put(replace.getIdentifier(), replace);
         builtInFunctions.put(substring2.getIdentifier(), substring2);
         builtInFunctions.put(substring3.getIdentifier(), substring3);
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
@@ -354,10 +478,15 @@ public class Functions {
         builtInFunctions.put(string_length.getIdentifier(), string_length);
         builtInFunctions.put(tokenize1.getIdentifier(), tokenize1);
         builtInFunctions.put(tokenize2.getIdentifier(), tokenize2);
+        builtInFunctions.put(lower_case.getIdentifier(), lower_case);
+        builtInFunctions.put(upper_case.getIdentifier(), upper_case);
+        builtInFunctions.put(translate.getIdentifier(), translate);
+        builtInFunctions.put(codepoint_equal.getIdentifier(), codepoint_equal);
         builtInFunctions.put(starts_with.getIdentifier(), starts_with);
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
         builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtInFunctions.put(number.getIdentifier(), number);
 
         builtInFunctions.put(duration.getIdentifier(), duration);
         builtInFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
@@ -402,6 +531,8 @@ public class Functions {
         builtInFunctions.put(adjust_time_to_timezone1.getIdentifier(), adjust_time_to_timezone1);
         builtInFunctions.put(adjust_time_to_timezone2.getIdentifier(), adjust_time_to_timezone2);
 
+        builtInFunctions.put(anyURI.getIdentifier(), anyURI);
+
         builtInFunctions.put(hexBinary.getIdentifier(), hexBinary);
         builtInFunctions.put(base64Binary.getIdentifier(), base64Binary);
 
@@ -421,12 +552,151 @@ public class Functions {
 
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
+        builtInFunctions.put(annotate.getIdentifier(), annotate);
     }
 
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
-        currentUnsetUserDefinedFunctionIdentifiers = new ArrayList<>();
+        userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
+    }
+
+    public static void clearUserDefinedFunctions() {
+        userDefinedFunctionsExecutionMode.clear();
+        userDefinedFunctions.clear();
+    }
+
+    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
+        return userDefinedFunctionsExecutionMode.containsKey(identifier);
+    }
+
+    public static ExecutionMode getUserDefinedFunctionExecutionMode(
+            FunctionIdentifier identifier,
+            ExceptionMetadata metadata
+    ) {
+        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            return userDefinedFunctionsExecutionMode.get(identifier);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static void addUserDefinedFunctionExecutionMode(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode,
+            boolean suppressErrorsForFunctionSignatureCollision,
+            ExceptionMetadata meta
+    ) {
+        if (
+            builtInFunctions.containsKey(functionIdentifier)
+                ||
+                (!suppressErrorsForFunctionSignatureCollision
+                    && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+
+        if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
+            userDefinedFunctionIdentifiersWithUnsetExecutionModes.add(functionIdentifier);
+        } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(functionIdentifier, executionMode)) {
+            userDefinedFunctionIdentifiersWithUnsetExecutionModes.remove(functionIdentifier);
+        }
+        userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
+    }
+
+    private static boolean isAddingNewUnsetUserDefinedFunction(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode
+    ) {
+        return !userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
+            && executionMode == ExecutionMode.UNSET;
+    }
+
+    private static boolean isUpdatingUnsetUserDefinedFunctionToNonUnset(
+            FunctionIdentifier functionIdentifier,
+            ExecutionMode executionMode
+    ) {
+        return userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
+            && userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
+            && executionMode != ExecutionMode.UNSET;
+    }
+
+    public static List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
+        return userDefinedFunctionIdentifiersWithUnsetExecutionModes;
+    }
+
+    public static RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        if (Functions.checkUserDefinedFunctionExists(identifier)) {
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                executionMode,
+                metadata,
+                arguments
+            );
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                executionMode,
+                metadata
+        );
+        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + (functionItem.getIdentifier().getName().equals("")
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    executionMode,
+                    metadata
+            );
+        }
+        return functionCallIterator;
+    }
+
+    public static void addUserDefinedFunction(FunctionItem function, ExceptionMetadata meta) {
+        FunctionIdentifier functionIdentifier = function.getIdentifier();
+        if (
+            builtInFunctions.containsKey(functionIdentifier)
+                || userDefinedFunctions.containsKey(functionIdentifier)
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+        userDefinedFunctions.put(functionIdentifier, function);
+    }
+
+    public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
+        return userDefinedFunctions.containsKey(identifier);
+    }
+
+    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
+        FunctionItem functionItem = userDefinedFunctions.get(identifier);
+        return functionItem.deepCopy();
     }
 
     public static boolean checkBuiltInFunctionExists(FunctionIdentifier identifier) {
@@ -486,139 +756,6 @@ public class Functions {
             );
         }
         return functionCallIterator;
-    }
-
-    public static RuntimeIterator getUserDefinedFunctionCallIterator(
-            FunctionIdentifier identifier,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(
-                getUserDefinedFunction(identifier),
-                executionMode,
-                metadata,
-                arguments
-            );
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
-    }
-
-    public static ExecutionMode getUserDefinedFunctionExecutionMode(
-            FunctionIdentifier identifier,
-            ExceptionMetadata metadata
-    ) {
-        if (userDefinedFunctionsExecutionMode.containsKey(identifier)) {
-            return userDefinedFunctionsExecutionMode.get(identifier);
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
-    }
-
-    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
-                functionItem,
-                arguments,
-                executionMode,
-                metadata
-        );
-        if (!functionItem.getSignature().getReturnType().equals(mostGeneralSequenceType)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
-                    "Invalid return type for "
-                        + (functionItem.getIdentifier().getName().equals("")
-                            ? ""
-                            : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
-                    executionMode,
-                    metadata
-            );
-        }
-        return functionCallIterator;
-    }
-
-    public static void clearUserDefinedFunctions() {
-        userDefinedFunctionsExecutionMode.clear();
-        userDefinedFunctions.clear();
-    }
-
-    public static List<FunctionIdentifier> getCurrentUnsetUserDefinedFunctionIdentifiers() {
-        return currentUnsetUserDefinedFunctionIdentifiers;
-    }
-
-    public static void addUserDefinedFunctionExecutionMode(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode,
-            boolean ignoreDuplicateUserDefinedFunctionError,
-            ExceptionMetadata meta
-    ) {
-        if (
-            builtInFunctions.containsKey(functionIdentifier)
-                ||
-                (!ignoreDuplicateUserDefinedFunctionError
-                    && userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
-        ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
-        }
-
-        if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
-            currentUnsetUserDefinedFunctionIdentifiers.add(functionIdentifier);
-        } else if (isUpdatingUnsetUserDefinedFunctionToNonUnset(functionIdentifier, executionMode)) {
-            currentUnsetUserDefinedFunctionIdentifiers.remove(functionIdentifier);
-        }
-        userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
-    }
-
-    private static boolean isAddingNewUnsetUserDefinedFunction(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
-        return !userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && executionMode == ExecutionMode.UNSET;
-    }
-
-    private static boolean isUpdatingUnsetUserDefinedFunctionToNonUnset(
-            FunctionIdentifier functionIdentifier,
-            ExecutionMode executionMode
-    ) {
-        return userDefinedFunctionsExecutionMode.containsKey(functionIdentifier)
-            && userDefinedFunctionsExecutionMode.get(functionIdentifier) == ExecutionMode.UNSET
-            && executionMode != ExecutionMode.UNSET;
-    }
-
-    public static void addUserDefinedFunction(FunctionItem function, ExceptionMetadata meta) {
-        FunctionIdentifier functionIdentifier = function.getIdentifier();
-        if (
-            builtInFunctions.containsKey(functionIdentifier)
-                || userDefinedFunctions.containsKey(functionIdentifier)
-        ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
-        }
-        userDefinedFunctions.put(functionIdentifier, function);
-    }
-
-    public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
-        return userDefinedFunctionsExecutionMode.containsKey(identifier);
-    }
-
-    public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
-        return userDefinedFunctions.containsKey(identifier);
     }
 
     private static BuiltinFunction createBuiltinFunction(
@@ -703,23 +840,7 @@ public class Functions {
         );
     }
 
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem functionItem = userDefinedFunctions.get(identifier);
-        try {
-            ByteArrayOutputStream bos = new ByteArrayOutputStream();
-            ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(functionItem);
-            oos.flush();
-            byte[] data = bos.toByteArray();
-            ByteArrayInputStream bis = new ByteArrayInputStream(data);
-            ObjectInputStream ois = new ObjectInputStream(bis);
-            return (FunctionItem) ois.readObject();
-        } catch (IOException | ClassNotFoundException e) {
-            throw new OurBadException("Error while deep copying the function body runtimeIterator");
-        }
-    }
-
-    static final class FunctionNames {
+    static final class BuiltinFunctions {
         /**
          * function that returns the context position
          */
@@ -743,14 +864,14 @@ public class Functions {
          */
         static final BuiltinFunction json_file1 = createBuiltinFunction(
             "json-file",
-            "string?",
+            "string",
             "item*",
             JsonFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction json_file2 = createBuiltinFunction(
             "json-file",
-            "string?",
+            "string",
             "integer?",
             "item*",
             JsonFileFunctionIterator.class,
@@ -761,7 +882,7 @@ public class Functions {
          */
         static final BuiltinFunction structured_json_file = createBuiltinFunction(
             "structured-json-file",
-            "string?",
+            "string",
             "item*",
             StructuredJsonFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -771,7 +892,7 @@ public class Functions {
          */
         static final BuiltinFunction libsvm_file = createBuiltinFunction(
             "libsvm-file",
-            "string?",
+            "string",
             "item*",
             LibSVMFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
@@ -781,7 +902,7 @@ public class Functions {
          */
         static final BuiltinFunction json_doc = createBuiltinFunction(
             "json-doc",
-            "string?",
+            "string",
             "item*",
             JsonDocFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -791,14 +912,14 @@ public class Functions {
          */
         static final BuiltinFunction text_file1 = createBuiltinFunction(
             "text-file",
-            "string?",
+            "string",
             "item*",
             TextFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.RDD
         );
         static final BuiltinFunction text_file2 = createBuiltinFunction(
             "text-file",
-            "string?",
+            "string",
             "integer?",
             "item*",
             TextFileFunctionIterator.class,
@@ -827,11 +948,55 @@ public class Functions {
          */
         static final BuiltinFunction parquet_file = createBuiltinFunction(
             "parquet-file",
-            "string?",
+            "string",
             "item*",
             ParquetFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
+        /**
+         * function that parses a csv file
+         */
+        static final BuiltinFunction csv_file1 = createBuiltinFunction(
+            "csv-file",
+            "string",
+            "item*",
+            CSVFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a csv file
+         */
+        static final BuiltinFunction csv_file2 = createBuiltinFunction(
+            "csv-file",
+            "string",
+            "object",
+            "item*",
+            CSVFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+
+        /**
+         * function that parses a ROOT file
+         */
+        static final BuiltinFunction root_file1 = createBuiltinFunction(
+            "root-file",
+            "string",
+            "item*",
+            RootFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses a ROOT file
+         */
+        static final BuiltinFunction root_file2 = createBuiltinFunction(
+            "root-file",
+            "string",
+            "string",
+            "item*",
+            RootFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+
         /**
          * function that returns the length of a sequence
          */
@@ -942,7 +1107,7 @@ public class Functions {
             "item*",
             "item*",
             TailFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
@@ -964,12 +1129,13 @@ public class Functions {
         static final BuiltinFunction remove = createBuiltinFunction(
             "remove",
             "item*",
-            "item*",
+            "integer",
             "item*",
             RemoveFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
+         * `
          * function that reverses the order of items in a sequence.
          */
         static final BuiltinFunction reverse = createBuiltinFunction(
@@ -977,7 +1143,7 @@ public class Functions {
             "item*",
             "item*",
             ReverseFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that applies a subsequence operation to the given sequence with the given start index and length
@@ -986,19 +1152,19 @@ public class Functions {
         static final BuiltinFunction subsequence2 = createBuiltinFunction(
             "subsequence",
             "item*",
-            "item*",
+            "double",
             "item*",
             SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         static final BuiltinFunction subsequence3 = createBuiltinFunction(
             "subsequence",
             "item*",
-            "item*",
-            "item*",
+            "double",
+            "double",
             "item*",
             SubsequenceFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
 
         /**
@@ -1019,7 +1185,7 @@ public class Functions {
             "item*",
             "item+",
             OneOrMoreIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
@@ -1047,11 +1213,11 @@ public class Functions {
          */
         static final BuiltinFunction index_of = createBuiltinFunction(
             "index-of",
-            "item*",
-            "item",
+            "atomic*",
+            "atomic",
             "integer*",
             IndexOfFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns whether two sequences are deep-equal to each other
@@ -1380,6 +1546,37 @@ public class Functions {
                     BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
             );
         /**
+         * function that converts codepoints to a string
+         */
+        static final BuiltinFunction codepoints_to_string = createBuiltinFunction(
+            "codepoints-to-string",
+            "integer*",
+            "string",
+            CodepointsToStringFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that converts a string to codepoints
+         */
+        static final BuiltinFunction string_to_codepoints = createBuiltinFunction(
+            "string-to-codepoints",
+            "string?",
+            "integer*",
+            StringToCodepointsFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that compares Strings codepoint-by-codepoint
+         */
+        static final BuiltinFunction codepoint_equal = createBuiltinFunction(
+            "codepoint-equal",
+            "string?",
+            "string?",
+            "boolean?",
+            CodepointEqualFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
          * function that returns substrings
          */
         static final BuiltinFunction string_join1 = createBuiltinFunction(
@@ -1395,6 +1592,18 @@ public class Functions {
             "string",
             "string",
             StringJoinFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that replaces parts of a string according to a regex expression
+         */
+        static final BuiltinFunction replace = createBuiltinFunction(
+            "replace",
+            "string?",
+            "string",
+            "string",
+            "string",
+            ReplaceFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
@@ -1423,6 +1632,38 @@ public class Functions {
             "string",
             "string*",
             TokenizeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to lower-case
+         */
+        static final BuiltinFunction lower_case = createBuiltinFunction(
+            "lower-case",
+            "string?",
+            "string",
+            LowerCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to upper-case
+         */
+        static final BuiltinFunction upper_case = createBuiltinFunction(
+            "upper-case",
+            "string?",
+            "string",
+            UpperCaseFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that turns all upper-case characters to upper-case
+         */
+        static final BuiltinFunction translate = createBuiltinFunction(
+            "translate",
+            "string?",
+            "string",
+            "string",
+            "string",
+            TranslateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
@@ -1477,6 +1718,16 @@ public class Functions {
             "string?",
             "string",
             NormalizeSpaceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that that returns the double representation of the input string or number
+         */
+        static final BuiltinFunction number = createBuiltinFunction(
+            "number",
+            "atomic?",
+            "double",
+            NumberFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 
@@ -1695,7 +1946,6 @@ public class Functions {
         );
 
 
-
         /**
          * function that returns the date item from the supplied string
          */
@@ -1877,6 +2127,17 @@ public class Functions {
         );
 
         /**
+         * function that returns the time item from the supplied string
+         */
+        static final BuiltinFunction anyURI = createBuiltinFunction(
+            "anyURI",
+            "atomic?",
+            "anyURI?",
+            AnyURIFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
          * function that returns the hexBinary item from the supplied string
          */
         static final BuiltinFunction hexBinary = createBuiltinFunction(
@@ -2050,6 +2311,18 @@ public class Functions {
             "item",
             GetEstimatorFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
+        /**
+         * function converts given RDD or local data to a DataFrame using a schema
+         */
+        static final BuiltinFunction annotate = createBuiltinFunction(
+            "annotate",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "object",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            AnnotateFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
     }
 }

@@ -21,18 +21,17 @@
 package org.rumbledb.expressions.postfix;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class DynamicFunctionCallExpression extends PostfixExpression {
+public class DynamicFunctionCallExpression extends Expression {
 
+    private Expression mainExpression;
     private List<Expression> arguments;
 
     public DynamicFunctionCallExpression(
@@ -40,10 +39,15 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
             List<Expression> arguments,
             ExceptionMetadata metadata
     ) {
-        super(mainExpression, metadata);
+        super(metadata);
+        if (mainExpression == null) {
+            throw new OurBadException("Main expression cannot be null in a postfix expression.");
+        }
+        this.mainExpression = mainExpression;
         this.arguments = arguments;
-        if (this.arguments == null)
+        if (this.arguments == null) {
             this.arguments = new ArrayList<>();
+        }
     }
 
     public List<Expression> getArguments() {
@@ -60,29 +64,34 @@ public class DynamicFunctionCallExpression extends PostfixExpression {
 
     /**
      * DynamicFunctionCall is always locally evaluated as execution mode cannot be determined at static analysis phase.
-     * This behavior is different from all other postfix extensions, hence this override is required.
+     * This behavior is different from all other postfix extensions, hence no override is required.
      */
-    @Override
-    public void initHighestExecutionMode() {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        StringBuilder result = new StringBuilder();
-        result.append("(dynamicFunctionCall ");
-        result.append(this.mainExpression.serializationString(false));
-        for (Expression arg : this.arguments) {
-            result.append("(argument (exprSingle ");
-            result.append(arg.serializationString(false));
-            result.append((this.arguments.indexOf(arg) < this.arguments.size() - 1 ? ")) , " : ")) "));
-        }
-        result.append("))");
-        return result.toString();
-    }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitDynamicFunctionCallExpression(this, argument);
+    }
+
+    public Expression getMainExpression() {
+        return this.mainExpression;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Expression arg : this.arguments) {
+            if (arg == null) {
+                for (int i = 0; i < indent; ++i) {
+                    buffer.append("  ");
+                }
+                buffer.append("?\n");
+            } else {
+                arg.print(buffer, indent + 1);
+            }
+        }
     }
 }

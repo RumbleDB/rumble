@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class FunctionRuntimeIterator extends LocalRuntimeIterator {
@@ -47,7 +46,9 @@ public class FunctionRuntimeIterator extends LocalRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return this.item;
+            FunctionItem result = ((FunctionItem) this.item).deepCopy();
+            result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
+            return result;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());

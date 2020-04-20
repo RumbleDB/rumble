@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -29,9 +30,7 @@ import org.rumbledb.items.ItemComparatorForSequences;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.Collections;
 import java.util.List;
@@ -90,11 +89,12 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
                     );
                 }
             }
-        } else
+        } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "MIN function",
                     getMetadata()
             );
+        }
     }
 
     public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {

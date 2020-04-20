@@ -20,26 +20,27 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.util.Collections;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.base.UnaryOperationBaseIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
 
-public class NotOperationIterator extends UnaryOperationBaseIterator {
-
+public class NotOperationIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    private final RuntimeIterator child;
 
     public NotOperationIterator(
             RuntimeIterator child,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, OperationalExpressionBase.Operator.NOT, executionMode, iteratorMetadata);
+        super(Collections.singletonList(child), executionMode, iteratorMetadata);
+        this.child = child;
     }
 
     @Override

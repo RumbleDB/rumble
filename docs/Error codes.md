@@ -16,6 +16,8 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
+- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --result-size to increase the maximum  materialization size.
+
 - [RBML0001] - Unrecognized Rumble ML Class Reference
 An unrecognized classname is used in query while accessing the Rumble ML API.
 
@@ -24,6 +26,12 @@ An unrecognized parameter is used in query while operating with a Rumble ML clas
 
 - [RBML0003] - Invalid Rumble ML Param
 Provided parameter does not match the expected type or value for the referenced Rumble ML class.
+
+- [RBML0004] - Input is not a DataFrame
+Provided input of items does not form a DataFrame as expected by RumbleML.
+
+- [RBML0005] - Invalid schema for DataFrame in annotate()
+The provided schema can not be applied to the item data while converting the data to a DataFrame
 
 - [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
@@ -36,10 +44,8 @@ big sequence of items for each binding within a big tuple,
 which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
 
 - [RBST0004] - Implementation Error.
-We should investigate this 🙈. Please contact us or file an issue on GitHub with your query.
-Link: https://github.com/RumbleDB/rumble/issues
 
-- [SENR0001] - Serialization error. Function items can not be serialized
+- [SENR0001] - Serialization error. Function items can not be serialized.
 
 - [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 

@@ -25,24 +25,23 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-
 import java.util.ArrayList;
 import java.util.List;
 
 public class QuantifiedExpression extends Expression {
     private final Expression expression;
-    private final QuantifiedOperators operator;
+    private final Quantification quantifier;
     private final List<QuantifiedExpressionVar> variables;
 
 
     public QuantifiedExpression(
-            QuantifiedOperators operator,
+            Quantification quantifier,
             Expression expression,
             List<QuantifiedExpressionVar> vars,
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this.operator = operator;
+        this.quantifier = quantifier;
         this.variables = vars;
         this.expression = expression;
     }
@@ -51,8 +50,8 @@ public class QuantifiedExpression extends Expression {
         return this.expression;
     }
 
-    public QuantifiedOperators getOperator() {
-        return this.operator;
+    public Quantification getOperator() {
+        return this.quantifier;
     }
 
     public List<QuantifiedExpressionVar> getVariables() {
@@ -62,11 +61,13 @@ public class QuantifiedExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.variables != null)
-            this.variables.forEach(e -> {
-                if (e != null)
-                    result.add(e);
+        if (this.variables != null) {
+            this.variables.forEach(v -> {
+                if (v != null) {
+                    result.add(v.getExpression());
+                }
             });
+        }
         result.add(this.expression);
         return result;
     }
@@ -76,13 +77,26 @@ public class QuantifiedExpression extends Expression {
         return visitor.visitQuantifiedExpression(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "";
-    }
-
-    public enum QuantifiedOperators {
+    public enum Quantification {
         EVERY,
         SOME
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.quantifier) + ", ");
+        for (QuantifiedExpressionVar var : this.variables) {
+            buffer.append(var.getVariableName());
+            buffer.append(", ");
+        }
+        buffer.append(")");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

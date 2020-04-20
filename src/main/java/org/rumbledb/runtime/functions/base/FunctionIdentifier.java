@@ -25,6 +25,7 @@ import java.io.Serializable;
 public class FunctionIdentifier implements Serializable {
     private int arity;
     private String name;
+    private static final long serialVersionUID = 1L;
 
     public FunctionIdentifier() {
     }
@@ -52,5 +53,10 @@ public class FunctionIdentifier implements Serializable {
     @Override
     public int hashCode() {
         return this.name.hashCode() + this.arity;
+    }
+
+    @Override
+    public String toString() {
+        return this.name + "#" + this.arity;
     }
 }

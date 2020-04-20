@@ -4,13 +4,13 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import sparksoniq.semantics.types.ItemTypes;
-import sparksoniq.semantics.types.SequenceType;
+import org.rumbledb.types.SequenceType;
 
 public class TypePromotionClosure implements Function<Item, Item> {
     private String exceptionMessage;
     private SequenceType sequenceType;
     private ExceptionMetadata metadata;
+    private static final long serialVersionUID = 1L;
 
     public TypePromotionClosure(String exceptionMessage, SequenceType sequenceType, ExceptionMetadata metadata) {
         this.exceptionMessage = exceptionMessage;
@@ -27,9 +27,9 @@ public class TypePromotionClosure implements Function<Item, Item> {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         +
-                        ItemTypes.getItemTypeName(input.getClass().getSimpleName())
+                        input.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + ItemTypes.getItemTypeName(this.sequenceType.getItemType().getType().toString())
+                        + this.sequenceType.getItemType().toString()
                         + this.sequenceType.getArity().getSymbol(),
                     this.metadata
             );

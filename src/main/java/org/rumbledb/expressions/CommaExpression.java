@@ -21,6 +21,7 @@
 package org.rumbledb.expressions;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -49,11 +50,13 @@ public class CommaExpression extends Expression {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.expressions != null)
+        if (this.expressions != null) {
             this.expressions.forEach(e -> {
-                if (e != null)
+                if (e != null) {
                     result.add(e);
+                }
             });
+        }
         return result;
     }
 
@@ -62,41 +65,25 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
             return;
         }
-        super.initHighestExecutionMode();
+        super.initHighestExecutionMode(visitorConfig);
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
         if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expressions.get(0).getHighestExecutionMode(ignoreUnsetError);
+            return this.expressions.get(0).getHighestExecutionMode(visitorConfig);
         }
-        return super.getHighestExecutionMode(ignoreUnsetError);
+        return super.getHighestExecutionMode(visitorConfig);
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(expr ";
-        for (Expression expr : this.expressions) {
-
-            result += "(exprSingle "
-                + expr.serializationString(false)
-                + (this.expressions.size() >= 2
-                    && this.expressions.indexOf(expr) < this.expressions.size() - 1 ? ") , " : ")");
-        }
-
-        result += ")";
-        return result;
-    }
-
 
 }
 

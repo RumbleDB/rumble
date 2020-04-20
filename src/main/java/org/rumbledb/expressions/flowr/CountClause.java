@@ -29,7 +29,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class CountClause extends FlworClause {
+public class CountClause extends Clause {
     private VariableReferenceExpression countClauseVar;
 
     public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {
@@ -47,13 +47,24 @@ public class CountClause extends FlworClause {
         return visitor.visitCountClause(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "(countClause count " + this.countClauseVar.serializationString(true) + ")";
-    }
-
     public VariableReferenceExpression getCountVariable() {
         return this.countClauseVar;
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + (this.countClauseVar) + ") ");
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+        if (this.previousClause != null) {
+            this.previousClause.print(buffer, indent + 1);
+        }
     }
 
 }

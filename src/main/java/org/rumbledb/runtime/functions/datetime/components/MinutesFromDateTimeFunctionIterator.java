@@ -1,14 +1,13 @@
 package org.rumbledb.runtime.functions.datetime.components;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
 
@@ -30,11 +29,12 @@ public class MinutesFromDateTimeFunctionIterator extends LocalFunctionCallIterat
         if (this.hasNext) {
             this.hasNext = false;
             return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getMinuteOfHour());
-        } else
+        } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " minutes-from-dateTime function",
                     getMetadata()
             );
+        }
     }
 
     @Override

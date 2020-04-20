@@ -39,8 +39,9 @@ public class ObjectKeysClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
-        if (!arg0.isObject())
+        if (!arg0.isObject()) {
             return results.iterator();
+        }
 
         for (String key : arg0.getKeys()) {
             results.add(new StringItem(key));

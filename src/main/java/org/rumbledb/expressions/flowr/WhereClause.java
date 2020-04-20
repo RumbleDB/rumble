@@ -29,7 +29,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class WhereClause extends FlworClause {
+public class WhereClause extends Clause {
 
     private final Expression whereExpression;
 
@@ -50,16 +50,9 @@ public class WhereClause extends FlworClause {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        if (this.whereExpression != null)
+        if (this.whereExpression != null) {
             result.add(this.whereExpression);
-        return result;
-    }
-
-    @Override
-    public String serializationString(boolean prefix) {
-        String result = "(whereClause where ";
-        result += this.whereExpression.serializationString(true);
-        result += "))";
+        }
         return result;
     }
 }

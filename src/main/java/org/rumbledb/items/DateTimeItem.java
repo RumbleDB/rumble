@@ -15,10 +15,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
@@ -69,7 +67,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, AtomicTypes.DateTimeItem);
+        this.value = parseDateTime(dateTimeString, ItemType.dateTimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -106,27 +104,28 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            case DateTimeItem:
-                return this;
-            case DateItem:
-                return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
-            case TimeItem:
-                return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
         }
+        if (itemType.equals(ItemType.dateTimeItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.dateItem)) {
+            return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
+        }
+        if (itemType.equals(ItemType.timeItem)) {
+            return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
+        }
+        throw new ClassCastException();
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DateTimeItem)
-            || itemType.equals(AtomicTypes.DateItem)
-            || itemType.equals(AtomicTypes.TimeItem)
-            || itemType.equals(AtomicTypes.StringItem);
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.equals(ItemType.dateTimeItem)
+            || itemType.equals(ItemType.dateItem)
+            || itemType.equals(ItemType.timeItem)
+            || itemType.equals(ItemType.stringItem);
     }
 
     @Override
@@ -153,7 +152,7 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DateTimeItem) || super.isTypeOf(type);
+        return type.equals(ItemType.dateTimeItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -184,33 +183,34 @@ public class DateTimeItem extends AtomicItem {
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeFormatter(AtomicTypes dateTimeType) {
-        switch (dateTimeType) {
-            case DateTimeItem:
-                return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-            case DateItem:
-                DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
-                    ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
-                ).toParser();
-                return (new DateTimeFormatterBuilder()).append(dateElementParser())
-                    .appendOptional(dtParser)
-                    .toFormatter()
-                    .withOffsetParsed();
-            case TimeItem:
-                return ISODateTimeFormat.timeParser().withOffsetParsed();
-            default:
-                throw new IllegalArgumentException();
+    private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
+        if (dateTimeType.equals(ItemType.dateItem)) {
+            DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
+                ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
+            ).toParser();
+            return (new DateTimeFormatterBuilder()).append(dateElementParser())
+                .appendOptional(dtParser)
+                .toFormatter()
+                .withOffsetParsed();
+        }
+        if (dateTimeType.equals(ItemType.timeItem)) {
+            return ISODateTimeFormat.timeParser().withOffsetParsed();
+        }
+        throw new IllegalArgumentException();
     }
 
-    private static boolean checkInvalidDateTimeFormat(String dateTime, AtomicTypes dateTimeType) {
-        switch (dateTimeType) {
-            case DateTimeItem:
-                return dateTimePattern.matcher(dateTime).matches();
-            case DateItem:
-                return datePattern.matcher(dateTime).matches();
-            case TimeItem:
-                return timePattern.matcher(dateTime).matches();
+    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+            return dateTimePattern.matcher(dateTime).matches();
+        }
+        if (dateTimeType.equals(ItemType.dateItem)) {
+            return datePattern.matcher(dateTime).matches();
+        }
+        if (dateTimeType.equals(ItemType.timeItem)) {
+            return timePattern.matcher(dateTime).matches();
         }
         return false;
     }
@@ -219,15 +219,17 @@ public class DateTimeItem extends AtomicItem {
         String endOfDay = "24:00:00";
         String startOfDay = "00:00:00";
         if (dateTime.contains(endOfDay)) {
-            if (dateTime.indexOf(endOfDay) == 0)
+            if (dateTime.indexOf(endOfDay) == 0) {
                 return startOfDay;
+            }
             int indexOfT = dateTime.indexOf('T');
             if (
                 indexOfT < 1
                     || indexOfT != dateTime.indexOf(endOfDay) - 1
                     || !Character.isDigit(dateTime.charAt(indexOfT - 1))
-            )
+            ) {
                 throw new IllegalArgumentException();
+            }
             int dayValue;
             try {
                 dayValue = Character.getNumericValue(dateTime.charAt(indexOfT - 1));
@@ -245,20 +247,22 @@ public class DateTimeItem extends AtomicItem {
         return dateTime;
     }
 
-    static DateTime parseDateTime(String dateTime, AtomicTypes dateTimeType) throws IllegalArgumentException {
-        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType))
+    static DateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
+        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
             throw new IllegalArgumentException();
+        }
         dateTime = fixEndOfDay(dateTime);
         return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
     }
 
     @Override
     public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
-        else
+        } else {
             throw new ClassCastException();
+        }
     }
 
     @Override
@@ -267,41 +271,52 @@ public class DateTimeItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
         }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration())
+        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
                 .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
-        else
+        } else {
             throw new ClassCastException();
+        }
     }
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isDateTime()) {
             return this.getValue().compareTo(other.getDateTimeValue());
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
         );
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isDateTime() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
         }
-        return operator.apply(this, other);
+        return super.compareItem(other, comparisonOperator, metadata);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.dateTimeItem;
     }
 }

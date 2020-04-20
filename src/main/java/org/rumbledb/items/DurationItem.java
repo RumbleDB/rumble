@@ -14,10 +14,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
@@ -123,34 +121,35 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.DurationItem) || super.isTypeOf(type);
+        return type.equals(ItemType.durationItem) || super.isTypeOf(type);
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.DurationItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.equals(ItemType.durationItem)
             ||
-            itemType.equals(AtomicTypes.YearMonthDurationItem)
+            itemType.equals(ItemType.yearMonthDurationItem)
             ||
-            itemType.equals(AtomicTypes.DayTimeDurationItem)
+            itemType.equals(ItemType.dayTimeDurationItem)
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case DurationItem:
-                return this;
-            case YearMonthDurationItem:
-                return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-            case DayTimeDurationItem:
-                return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.durationItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -168,75 +167,79 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicTypes.DurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), ItemType.durationItem).normalizedStandard(
             PeriodType.yearMonthDayTime()
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
-    private static PeriodFormatter getPeriodFormatter(AtomicTypes durationType) {
-        switch (durationType) {
-            case DurationItem:
-                return ISOPeriodFormat.standard();
-            case YearMonthDurationItem:
-                return new PeriodFormatterBuilder().appendLiteral("P")
-                    .appendYears()
-                    .appendSuffix("Y")
-                    .appendMonths()
-                    .appendSuffix("M")
-                    .toFormatter();
-            case DayTimeDurationItem:
-                return new PeriodFormatterBuilder().appendLiteral("P")
-                    .appendDays()
-                    .appendSuffix("D")
-                    .appendSeparatorIfFieldsAfter("T")
-                    .appendHours()
-                    .appendSuffix("H")
-                    .appendMinutes()
-                    .appendSuffix("M")
-                    .appendSecondsWithOptionalMillis()
-                    .appendSuffix("S")
-                    .toFormatter();
-            default:
-                throw new IllegalArgumentException();
+    private static PeriodFormatter getPeriodFormatter(ItemType durationType) {
+        if (durationType.equals(ItemType.durationItem)) {
+            return ISOPeriodFormat.standard();
         }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return new PeriodFormatterBuilder().appendLiteral("P")
+                .appendYears()
+                .appendSuffix("Y")
+                .appendMonths()
+                .appendSuffix("M")
+                .toFormatter();
+        }
+
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return new PeriodFormatterBuilder().appendLiteral("P")
+                .appendDays()
+                .appendSuffix("D")
+                .appendSeparatorIfFieldsAfter("T")
+                .appendHours()
+                .appendSuffix("H")
+                .appendMinutes()
+                .appendSuffix("M")
+                .appendSecondsWithOptionalMillis()
+                .appendSuffix("S")
+                .toFormatter();
+        }
+        throw new IllegalArgumentException();
     }
 
-    private static PeriodType getPeriodType(AtomicTypes durationType) {
-        switch (durationType) {
-            case DurationItem:
-                return PeriodType.yearMonthDayTime();
-            case YearMonthDurationItem:
-                return PeriodType.forFields(
-                    new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
-                );
-            case DayTimeDurationItem:
-                return PeriodType.dayTime();
-            default:
-                throw new IllegalArgumentException();
+    private static PeriodType getPeriodType(ItemType durationType) {
+        if (durationType.equals(ItemType.durationItem)) {
+            return PeriodType.yearMonthDayTime();
         }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return PeriodType.forFields(
+                new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
+            );
+        }
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return PeriodType.dayTime();
+        }
+        throw new IllegalArgumentException();
     }
 
-    private static boolean checkInvalidDurationFormat(String duration, AtomicTypes durationType) {
-        switch (durationType) {
-            case DurationItem:
-                return durationPattern.matcher(duration).matches();
-            case YearMonthDurationItem:
-                return yearMonthDurationPattern.matcher(duration).matches();
-            case DayTimeDurationItem:
-                return dayTimeDurationPattern.matcher(duration).matches();
+    private static boolean checkInvalidDurationFormat(String duration, ItemType durationType) {
+        if (durationType.equals(ItemType.durationItem)) {
+            return durationPattern.matcher(duration).matches();
+        }
+        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+            return yearMonthDurationPattern.matcher(duration).matches();
+        }
+        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+            return dayTimeDurationPattern.matcher(duration).matches();
         }
         return false;
     }
 
-    public static Period getDurationFromString(String duration, AtomicTypes durationType)
+    public static Period getDurationFromString(String duration, ItemType durationType)
             throws UnsupportedOperationException,
                 IllegalArgumentException {
-        if (durationType == null || !checkInvalidDurationFormat(duration, durationType))
+        if (durationType == null || !checkInvalidDurationFormat(duration, durationType)) {
             throw new IllegalArgumentException();
+        }
         boolean isNegative = duration.charAt(0) == '-';
-        if (isNegative)
+        if (isNegative) {
             duration = duration.substring(1);
+        }
         PeriodFormatter pf = getPeriodFormatter(durationType);
         Period period = Period.parse(duration, pf);
         return isNegative
@@ -246,49 +249,61 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         Instant now = new Instant();
         if (other.isDuration()) {
             return this.getDurationValue().toDurationFrom(now).compareTo(other.getDurationValue().toDurationFrom(now));
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
         );
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isDuration() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
         }
-        if (other.isNull())
-            return operator.apply(this, other);
-        switch (operator) {
+        if (other.isNull()) {
+            return super.compareItem(other, comparisonOperator, metadata);
+        }
+        switch (comparisonOperator) {
             case VC_EQ:
             case GC_EQ:
             case VC_NE:
             case GC_NE:
-                return operator.apply(this, other);
+                return super.compareItem(other, comparisonOperator, metadata);
+            default:
+                throw new UnexpectedTypeException(
+                        "\""
+                            + this.getDynamicType().toString()
+                            + "\": invalid type: can not compare for equality to type \""
+                            + other.getDynamicType().toString()
+                            + "\"",
+                        metadata
+                );
         }
-        throw new UnexpectedTypeException(
-                "\""
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
-                    + "\"",
-                metadata
-        );
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.durationItem;
     }
 }

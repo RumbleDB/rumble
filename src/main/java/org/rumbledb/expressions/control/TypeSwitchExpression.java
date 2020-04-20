@@ -5,7 +5,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.VariableReferenceExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,60 +12,47 @@ import java.util.List;
 public class TypeSwitchExpression extends Expression {
 
     private final Expression testCondition;
-    private final List<TypeSwitchCaseExpression> cases;
-    private final Expression defaultExpression;
-    private final VariableReferenceExpression defaultVariableReferenceExpression;
+    private final List<TypeswitchCase> cases;
+    private final TypeswitchCase defaultCase;
 
     public TypeSwitchExpression(
             Expression testCondition,
-            List<TypeSwitchCaseExpression> cases,
-            Expression defaultExpression,
-            VariableReferenceExpression defaultVariableReferenceExpression,
+            List<TypeswitchCase> cases,
+            TypeswitchCase defaultCase,
             ExceptionMetadata metadataFromContext
     ) {
 
         super(metadataFromContext);
         this.testCondition = testCondition;
         this.cases = cases;
-        this.defaultExpression = defaultExpression;
-        this.defaultVariableReferenceExpression = defaultVariableReferenceExpression;
+        this.defaultCase = defaultCase;
     }
 
     public Expression getTestCondition() {
         return this.testCondition;
     }
 
-    public List<TypeSwitchCaseExpression> getCases() {
+    public List<TypeswitchCase> getCases() {
         return this.cases;
     }
 
-    public Expression getDefaultExpression() {
-        return this.defaultExpression;
-    }
-
-    public VariableReferenceExpression getDefaultVariableReferenceExpression() {
-        return this.defaultVariableReferenceExpression;
+    public TypeswitchCase getDefaultCase() {
+        return this.defaultCase;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         result.add(this.testCondition);
-        result.addAll(this.cases);
-        result.add(this.defaultExpression);
-        if (this.defaultVariableReferenceExpression != null)
-            result.add(this.defaultVariableReferenceExpression);
+        for (TypeswitchCase c : this.cases) {
+            result.add(c.getReturnExpression());
+        }
+        result.add(this.defaultCase.getReturnExpression());
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTypeSwitchExpression(this, argument);
-    }
-
-    @Override
-    // TODO implement serialization for switch expr
-    public String serializationString(boolean prefix) {
-        return "";
     }
 }

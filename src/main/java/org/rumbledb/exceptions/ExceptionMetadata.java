@@ -23,11 +23,9 @@ package org.rumbledb.exceptions;
 import java.io.Serializable;
 
 /**
- * 
  * Metadata for error reporting (line and column number)
- * 
- * @author Stefan Irimescu, Ghislain Fourny
  *
+ * @author Stefan Irimescu, Ghislain Fourny
  */
 public class ExceptionMetadata implements Serializable {
 
@@ -37,7 +35,7 @@ public class ExceptionMetadata implements Serializable {
 
     /**
      * Builds a new metadata object
-     * 
+     *
      * @param line the line number at which the error occurred.
      * @param column the column number at which the error occurred.
      */
@@ -49,7 +47,7 @@ public class ExceptionMetadata implements Serializable {
 
     /**
      * Returns the line number.
-     * 
+     *
      * @return the line number.
      */
     public int getTokenLineNumber() {
@@ -58,7 +56,7 @@ public class ExceptionMetadata implements Serializable {
 
     /**
      * Returns the column number.
-     * 
+     *
      * @return the column number.
      */
     public int getTokenColumnNumber() {

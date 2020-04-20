@@ -22,6 +22,7 @@ package org.rumbledb.expressions.primary;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
@@ -29,7 +30,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 
-public class NamedFunctionReferenceExpression extends PrimaryExpression {
+public class NamedFunctionReferenceExpression extends Expression {
 
     private final FunctionIdentifier identifier;
 
@@ -53,12 +54,12 @@ public class NamedFunctionReferenceExpression extends PrimaryExpression {
         return visitor.visitNamedFunctionRef(this, argument);
     }
 
-    @Override
-    public String serializationString(boolean prefix) {
-        return "(namedFunctionRef(NCName "
-            + this.identifier.getName()
-            + ") (IntegerLiteral "
-            + this.identifier.getArity()
-            + "))";
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
+        buffer.append("\n");
     }
 }

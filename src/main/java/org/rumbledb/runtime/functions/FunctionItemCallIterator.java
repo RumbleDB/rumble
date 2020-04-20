@@ -24,27 +24,28 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.types.SequenceType;
+
+import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-
-import static sparksoniq.semantics.types.SequenceType.mostGeneralSequenceType;
 
 public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
@@ -91,7 +92,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 this.currentDynamicContextForLocalExecution
             );
         }
-
         this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -120,7 +120,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),
                             this.functionItem.getSignature().getParameterTypes().get(i),
-                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + "function. ",
+                            "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
                             this.functionArguments.get(i).getHighestExecutionMode(),
                             getMetadata()
                     );
@@ -137,7 +137,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      *
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
-    private FunctionRuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
+    private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
         String argName;
         RuntimeIterator argIterator;
 
@@ -185,7 +185,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-        return new FunctionRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
+        return new ConstantRuntimeIterator(partiallyAppliedFunction, ExecutionMode.LOCAL, getMetadata());
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
@@ -212,7 +212,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues.put(argName, argIterator.materialize(context));
             }
         }
-        return new DynamicContext(context, localArgumentValues, RDDArgumentValues, DFArgumentValues);
+        return new DynamicContext(null, localArgumentValues, RDDArgumentValues, DFArgumentValues);
     }
 
     @Override

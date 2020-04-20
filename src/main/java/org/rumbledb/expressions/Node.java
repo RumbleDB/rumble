@@ -20,8 +20,10 @@
 
 package org.rumbledb.expressions;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
@@ -53,7 +55,7 @@ public abstract class Node {
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
      */
-    public void initHighestExecutionMode() {
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
@@ -64,34 +66,19 @@ public abstract class Node {
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
-     * 
-     * If the mode is unset, which should not happen, an unexpected error will be thrown.
-     * 
-     * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     * 
-     * @return the highest execution mode.
-     */
-    public final ExecutionMode getHighestExecutionMode() {
-        return getHighestExecutionMode(false);
-    }
-
-    /**
-     * Gets the highest execution mode of this node, which determines
-     * whether evaluation will be done locally, with RDDs or with DataFrames.
      *
-     * This method is used during the static analysis. It is meant to be
-     * overridden by subclasses that support higher execution modes. By
-     * default, the highest execution mode is assumed to be local.
-     * 
      * When extending this method, make sure to perform a super() call to prevent UNSET accesses.
-     * 
-     * @param ignoreUnsetError if true, then an error is thrown if an UNSET mode is found.
-     *        If false, it might silently return UNSET.
+     *
+     * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
+     * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
      * 
      * @return the highest execution mode.
      */
-    public ExecutionMode getHighestExecutionMode(boolean ignoreUnsetError) {
-        if (!ignoreUnsetError && this.highestExecutionMode == ExecutionMode.UNSET) {
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (
+            !visitorConfig.suppressErrorsForAccessingUnsetExecutionModes()
+                && this.highestExecutionMode == ExecutionMode.UNSET
+        ) {
             throw new OurBadException("An execution mode is accessed without being set.");
         }
         return this.highestExecutionMode;
@@ -99,27 +86,17 @@ public abstract class Node {
 
     /**
      * Accept method for the visitor pattern.
-     * 
+     *
      * @param <T> the type of the objects returned by the visitor.
      * @param visitor the visitor.
      * @param argument the input from the visitor.
-     * 
      * @return the object returned by this visitor
      */
     public abstract <T> T accept(AbstractNodeVisitor<T> visitor, T argument);
 
     /**
-     * Serializes the node.
-     * 
-     * @param prefix for indentation purposes.
-     * 
-     * @return the serialized node.
-     */
-    public abstract String serializationString(boolean prefix);
-
-    /**
      * Returns all children nodes as a list. The list is new and can be modified at will by the caller.
-     * 
+     *
      * @return the children nodes as a list.
      */
     public abstract List<Node> getChildren();
@@ -127,7 +104,7 @@ public abstract class Node {
     /**
      * For gathering descendant nodes, as a depth-first search. The list is new and can be modified at will by the
      * caller.
-     * 
+     *
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendants() {
@@ -141,9 +118,8 @@ public abstract class Node {
 
     /**
      * For gathering descendant nodes that match a predicate. The list is new and can be modified at will by the caller.
-     * 
+     *
      * @param predicate a predicate to filter with.
-     * 
      * @return the descendant nodes as a list.
      */
     public final List<Node> getDescendantsMatching(Predicate<Node> predicate) {
@@ -156,11 +132,35 @@ public abstract class Node {
     /**
      * Access the metadata of the node, i.e., the line and column number.
      * This is used for displaying informative error messages.
-     * 
+     *
      * @return the metadata.
      */
     public ExceptionMetadata getMetadata() {
         return this.metadata;
     }
 
+    /**
+     * Prints the node tree to a string buffer.
+     *
+     * @param buffer a string buffer to write to
+     * @param indent the current level of indentation
+     */
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
+
+    @Override
+    public final String toString() {
+        StringBuffer sb = new StringBuffer();
+        this.print(sb, 0);
+        return sb.toString();
+    }
 }

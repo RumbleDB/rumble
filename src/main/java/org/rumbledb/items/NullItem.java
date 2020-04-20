@@ -25,10 +25,8 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 
 public class NullItem extends AtomicItem {
 
@@ -51,26 +49,25 @@ public class NullItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.NullItem) || super.isTypeOf(type);
+        return type.equals(ItemType.nullItem) || super.isTypeOf(type);
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType == AtomicTypes.NullItem
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.equals(ItemType.nullItem)
             ||
-            itemType == AtomicTypes.StringItem;
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case NullItem:
-                return this;
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.serialize());
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.nullItem)) {
+            return this;
         }
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.serialize());
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -103,13 +100,23 @@ public class NullItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 0;
+        }
         return -1;
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
-        return operator.apply(this, other);
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
+        return super.compareItem(other, comparisonOperator, metadata);
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.nullItem;
     }
 }

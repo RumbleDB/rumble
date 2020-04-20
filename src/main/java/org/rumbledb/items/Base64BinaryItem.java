@@ -10,11 +10,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.operational.base.OperationalExpressionBase;
-import sparksoniq.semantics.types.AtomicTypes;
-import sparksoniq.semantics.types.ItemType;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -67,14 +64,15 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     static byte[] parseBase64BinaryString(String base64BinaryString) throws IllegalArgumentException {
-        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString))
+        if (base64BinaryString == null || !checkInvalidBase64BinaryFormat(base64BinaryString)) {
             throw new IllegalArgumentException();
+        }
         return DatatypeConverter.parseBase64Binary(base64BinaryString);
     }
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.getType().equals(ItemTypes.Base64BinaryItem) || super.isTypeOf(type);
+        return type.equals(ItemType.base64BinaryItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -88,26 +86,26 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(AtomicTypes itemType) {
-        return itemType.equals(AtomicTypes.Base64BinaryItem)
+    public boolean isCastableAs(ItemType itemType) {
+        return itemType.equals(ItemType.base64BinaryItem)
             ||
-            itemType.equals(AtomicTypes.HexBinaryItem)
+            itemType.equals(ItemType.hexBinaryItem)
             ||
-            itemType.equals(AtomicTypes.StringItem);
+            itemType.equals(ItemType.stringItem);
     }
 
     @Override
-    public Item castAs(AtomicTypes itemType) {
-        switch (itemType) {
-            case StringItem:
-                return ItemFactory.getInstance().createStringItem(this.getStringValue());
-            case Base64BinaryItem:
-                return this;
-            case HexBinaryItem:
-                return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
-            default:
-                throw new ClassCastException();
+    public Item castAs(ItemType itemType) {
+        if (itemType.equals(ItemType.stringItem)) {
+            return ItemFactory.getInstance().createStringItem(this.getStringValue());
         }
+        if (itemType.equals(ItemType.base64BinaryItem)) {
+            return this;
+        }
+        if (itemType.equals(ItemType.hexBinaryItem)) {
+            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
+        }
+        throw new ClassCastException();
     }
 
     @Override
@@ -124,49 +122,56 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        if (other.isNull())
+        if (other.isNull()) {
             return 1;
+        }
         if (other.isBase64Binary()) {
             return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
         }
         throw new IteratorFlowException(
                 "Cannot compare item of type "
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                    + this.getDynamicType().toString()
                     +
                     " with item of type "
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                    + other.getDynamicType().toString()
         );
     }
 
     @Override
-    public Item compareItem(Item other, OperationalExpressionBase.Operator operator, ExceptionMetadata metadata) {
+    public Item compareItem(
+            Item other,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
         if (!other.isBase64Binary() && !other.isNull()) {
             throw new UnexpectedTypeException(
                     "\""
-                        + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
+                        + this.getDynamicType().toString()
                         + "\": invalid type: can not compare for equality to type \""
-                        + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
+                        + other.getDynamicType().toString()
                         + "\"",
                     metadata
             );
         }
-        if (other.isNull())
-            return operator.apply(this, other);
-        switch (operator) {
+        if (other.isNull()) {
+            return super.compareItem(other, comparisonOperator, metadata);
+        }
+        switch (comparisonOperator) {
             case VC_EQ:
             case GC_EQ:
             case VC_NE:
             case GC_NE:
-                return operator.apply(this, other);
+                return super.compareItem(other, comparisonOperator, metadata);
+            default:
+                throw new UnexpectedTypeException(
+                        "\""
+                            + this.getDynamicType().toString()
+                            + "\": invalid type: can not compare for equality to type \""
+                            + other.getDynamicType().toString()
+                            + "\"",
+                        metadata
+                );
         }
-        throw new UnexpectedTypeException(
-                "\""
-                    + ItemTypes.getItemTypeName(this.getClass().getSimpleName())
-                    + "\": invalid type: can not compare for equality to type \""
-                    + ItemTypes.getItemTypeName(other.getClass().getSimpleName())
-                    + "\"",
-                metadata
-        );
     }
 
     @Override
@@ -194,5 +199,10 @@ public class Base64BinaryItem extends AtomicItem {
         int bytesLength = input.readInt();
         this.value = input.readBytes(bytesLength);
         this.stringValue = StringUtils.chomp(Base64.encodeBase64String(this.value));
+    }
+
+    @Override
+    public ItemType getDynamicType() {
+        return ItemType.base64BinaryItem;
     }
 }
