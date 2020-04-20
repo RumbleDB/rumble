@@ -20,6 +20,11 @@ and add /usr/local/bin/spark-2.4.5-bin-hadoop2.7 to the PATH variable
 You can test that this worked with:
 
     spark-submit --version
+    
+Also, a very important comment: you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark only supported Java 8. If you see the error "An error has occurred: Unsupported class file major version 55" when you try to use Rumble, then your Java version is not Java 8. You can check the version that is configured with:
+
+    java -version
+
 
 ### Installing Rumble
 
