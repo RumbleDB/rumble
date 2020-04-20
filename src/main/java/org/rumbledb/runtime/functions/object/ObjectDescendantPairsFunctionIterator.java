@@ -129,7 +129,7 @@ public class ObjectDescendantPairsFunctionIterator extends HybridRuntimeIterator
     @Override
     protected void resetLocal(DynamicContext context) {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
+        this.nextResults.clear();
 
         setNextResult();
     }
