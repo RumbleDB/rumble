@@ -2215,7 +2215,7 @@ public class Functions {
             "item*",
             "item*",
             ArrayDescendantFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
@@ -2225,7 +2225,7 @@ public class Functions {
             "item*",
             "item*",
             ObjectDescendantFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns all objects contained within the supplied items, regardless of depth
@@ -2245,7 +2245,7 @@ public class Functions {
             "item*",
             "item*",
             ArrayFlattenFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns the intersection of the supplied objects, and aggregates values corresponding to the
@@ -2256,7 +2256,7 @@ public class Functions {
             "item*",
             "object+",
             ObjectIntersectFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that projects objects by filtering their pairs and leaves non-objects intact
@@ -2267,7 +2267,7 @@ public class Functions {
             "string*",
             "item*",
             ObjectProjectFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that removes the pairs with the given keys from all objects and leaves non-objects intact
@@ -2278,7 +2278,7 @@ public class Functions {
             "string*",
             "item*",
             ObjectRemoveKeysFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns the values of a Json Object
