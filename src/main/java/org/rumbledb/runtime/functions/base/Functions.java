@@ -195,6 +195,9 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.cos
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.count;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.csv_file1;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.csv_file2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.current_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.current_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.current_time;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.date;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dayTimeDuration;
@@ -217,6 +220,9 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exp10;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.flatten;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.floor;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_date;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_time;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_estimator;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_transformer;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.head;
