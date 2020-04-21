@@ -101,11 +101,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         }
         Expression expression = variableDeclaration.getExpression();
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
-        try {
-            iterator.bindToVariableInDynamicContext(result, name, argument);
-        } catch (TreatException e) {
-            throw new UnexpectedTypeException(e.getMessage(), e.getMetadata());
-        }
+        iterator.bindToVariableInDynamicContext(result, name, argument);
         return result;
     }
 
