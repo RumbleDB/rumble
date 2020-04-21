@@ -26,7 +26,6 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -34,7 +33,6 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.SequenceType.Arity;
 
 
 /**
@@ -82,16 +80,10 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     );
                 }
             } else {
-                if (
-                    !variableDeclaration.getSequenceType().isEmptySequence()
-                        && (variableDeclaration.getSequenceType().getArity().equals(Arity.One)
-                            || variableDeclaration.getSequenceType().getArity().equals(Arity.OneOrMore))
-                ) {
-                    throw new UnexpectedTypeException(
-                            "External variable value is empty and does not match the expected type.",
-                            variableDeclaration.getMetadata()
-                    );
-                }
+                Expression expression = variableDeclaration.getExpression();
+                RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+                iterator.bindToVariableInDynamicContext(result, name, argument);
+                return result;
             }
             result.addVariableValue(
                 name,
