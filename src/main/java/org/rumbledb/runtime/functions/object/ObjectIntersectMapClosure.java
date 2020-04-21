@@ -24,7 +24,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.items.ItemFactory;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 
@@ -43,16 +43,8 @@ public class ObjectIntersectMapClosure implements Function<Item, Item> {
         LinkedHashMap<String, List<Item>> keyValuePairs = new LinkedHashMap<>();
         for (String key : arg0.getKeys()) {
             Item value = arg0.getItemByKey(key);
-            Item arrayValue = ItemFactory.getInstance().createArrayItem(new ArrayList<Item>() {
-                {
-                    add(value);
-                }
-            });
-            keyValuePairs.put(key, new ArrayList<Item>() {
-                {
-                    add(arrayValue);
-                }
-            });
+            Item arrayValue = ItemFactory.getInstance().createArrayItem(Collections.singletonList(value));
+            keyValuePairs.put(key, Collections.singletonList(arrayValue));
         }
 
         return ItemFactory.getInstance().createObjectItem(keyValuePairs);
