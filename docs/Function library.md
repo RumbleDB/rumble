@@ -628,6 +628,68 @@ lower-case("ABc!D")
 ```
 returns "abc!d"
 
+## Date and time functions
+
+### dateTime
+
+```
+dateTime("2004-04-12T13:20:00+14:00")
+```
+
+returns 2004-04-12T13:20:00+14:00
+
+### date
+
+```
+date("2004-04-12+14:00")
+```
+
+returns 2004-04-12+14:00
+
+### time
+
+```
+time("13:20:00-05:00")
+```
+
+returns 13:20:00-05:00
+
+## Formatting dates and times functions
+
+The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only:
+
+* One of the following component specifiers: Y, M, d, D, F, H, m, s, P
+* A first presentation modifier, for which the value can be:
+	* Nn, for all supported component specifiers, besides P
+	* N, if the component specifier is P
+	* a format token that indicates a numbering sequence of the the following form: '0001'
+* A second presentation modifier, for which the value can be t or c, which are also the default values
+* A width modifier, both minimum and maximum values
+
+### format-dateTime
+
+```
+format-dateTime(dateTime("2004-04-12T13:20:00"), "[m]-[H]-[D]-[M]-[Y]")
+```
+
+returns 20-13-12-4-2004
+
+### format-date
+
+```
+format-date(date("2004-04-12"), "[D]-[M]-[Y]")
+```
+
+returns 12-4-2004
+
+### format-time
+
+```
+format-time(time("13:20:00"), "[H]-[m]-[s]")
+```
+
+returns 13-20-0
+
 ## Context functions
 
 ### position
@@ -650,3 +712,27 @@ returns 10
 (1 to 10)[last()]
 ```
 returns 10
+
+### current-dateTime
+
+```
+current-dateTime()
+```
+
+returns 2020-02-26T11:22:48.423+01:00
+
+### current-date
+
+```
+current-date()
+```
+
+returns 2020-02-26Europe/Zurich
+
+### current-time
+
+```
+current-time()
+```
+
+returns 11:24:10.064+01:00
