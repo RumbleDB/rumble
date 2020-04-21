@@ -26,6 +26,7 @@ import java.util.List;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -81,9 +82,15 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 }
             } else {
                 Expression expression = variableDeclaration.getExpression();
-                RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
-                iterator.bindToVariableInDynamicContext(result, name, argument);
-                return result;
+                if (expression != null) {
+                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+                    iterator.bindToVariableInDynamicContext(result, name, argument);
+                    return result;
+                }
+                throw new AbsentPartOfDynamicContextException(
+                        "External variable value is not provided!",
+                        variableDeclaration.getMetadata()
+                );
             }
             result.addVariableValue(
                 name,
