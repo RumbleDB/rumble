@@ -1,2 +1,2 @@
-(:JIQS: ShouldRun; Output="({ "foobar" : { "1" : [ 1, [ 2, 3 ] ], "2" : [ "alice", [ "bob", [ "eve" ] ] ], "3" : [ "lala", [ 1 ], { "foo" : [ "bar" ] } ] } }, { "1" : [ 1, [ 2, 3 ] ] }, { "2" : [ "alice", [ "bob", [ "eve" ] ] ] }, { "3" : [ "lala", [ 1 ], { "foo" : [ "bar" ] } ] }, { "foo" : [ "bar" ] }, { "foo" : "bar" }, { "bar" : [ [ "foo" ] ] })" :)
-descendant-pairs(parallelize(for $ i in 1 to 1000 return {"foobar": {"1": [1, [2, 3]], "2": ["alice", ["bob", ["eve"]]], "3": ["lala", [1], {"foo": ["bar"]}]}, "foo": "bar", "bar": [["foo"]]}))[position() ge 498 and position() le 504]
+(:JIQS: ShouldRun; Output="({ "foo" : "bar" })" :)
+descendant-pairs(parallelize(for $ i in 1 to 1000 return {"foo": "bar"}))[500]
