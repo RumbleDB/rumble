@@ -27,6 +27,9 @@ public class ErrorCodes {
 
     public static final String CannotRetrieveResourceErrorCode = "FODC0002";
 
+    public static final String IncorrectSyntaxFormatDateTimeErrorCode = "FOFD1340";
+    public static final String ComponentSpecifierNotAvailableErrorCode = "FOFD1350";
+
     public static final String CastErrorCode = "FORG0001";
     public static final String ZeroOrOneErrorCode = "FORG0003";
     public static final String OneOrMoreErrorCode = "FORG0004";
