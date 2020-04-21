@@ -4,6 +4,10 @@
 
 - [FODC0002] - Error retrieving resource.
 
+- [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
+
+- [FOFD1350] - This error is raised if the picture string supplied to fn:format-date selects a component that is not present in a date, or if the picture string supplied to fn:format-time selects a component that is not present in a time.
+
 - [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
  constructor or in a simple object union have the same name.
 
