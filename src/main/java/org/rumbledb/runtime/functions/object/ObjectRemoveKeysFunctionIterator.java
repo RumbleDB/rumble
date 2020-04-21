@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.functions.object;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -27,14 +29,15 @@ import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator {
+public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -48,15 +51,16 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = arguments.get(0);
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public void openLocal() {
+        startLocal();
+    }
 
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
-
+    private void startLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
         List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
@@ -77,7 +81,7 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -121,5 +125,46 @@ public class ObjectRemoveKeysFunctionIterator extends LocalFunctionCallIterator 
         }
         return ItemFactory.getInstance()
             .createObjectItem(finalKeylist, finalValueList, getMetadata());
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        startLocal();
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.iterator.close();
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        if (removalKeys.isEmpty()) {
+            throw new InvalidSelectorException(
+                    "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",
+                    getMetadata()
+            );
+        }
+
+        this.removalKeys = new ArrayList<>();
+        for (Item removalKeyItem : removalKeys) {
+            if (!removalKeyItem.isString()) {
+                throw new UnexpectedTypeException("Remove-keys function has non-string key args.", getMetadata());
+            }
+            String removalKey = removalKeyItem.getStringValue();
+            this.removalKeys.add(removalKey);
+        }
+        FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(
+                this.removalKeys,
+                getMetadata()
+        );
+        return childRDD.flatMap(transformation);
     }
 }
