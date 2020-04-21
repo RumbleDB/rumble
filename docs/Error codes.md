@@ -105,6 +105,9 @@ the same number of arguments and their expanded QNames are equal
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.
 
+- [XQST0049] - It is a static error if two or more variables
+declared or imported by a module have the same name.
+
 - [XQST0052] - Simple type error. The type must be
 the name of a type defined in the in-scope schema types,
 and the {variety} of the type must be simple.

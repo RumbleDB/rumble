@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
+import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -287,6 +288,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
         this.visit(variableDeclaration.getExpression(), argument);
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);
+        if (argument.hasVariable(variableDeclaration.getVariableName())) {
+            throw new VariableAlreadyExistsException(
+                    variableDeclaration.getVariableName(),
+                    variableDeclaration.getMetadata()
+            );
+        }
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             variableDeclaration.getVariableName(),
