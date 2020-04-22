@@ -72,6 +72,7 @@ import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFu
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
@@ -141,6 +142,7 @@ import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
@@ -178,12 +180,15 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adj
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_date_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone1;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.anyURI;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.annotate;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.anyURI;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.asin;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avg;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avro_file1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.avro_file2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.base64Binary;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.boolean_function;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ceiling;
@@ -277,6 +282,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.rou
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.seconds_from_time;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.serialize;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sin;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.size;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.sqrt;
@@ -413,6 +419,8 @@ public class Functions {
         builtInFunctions.put(csv_file2.getIdentifier(), csv_file2);
         builtInFunctions.put(root_file1.getIdentifier(), root_file1);
         builtInFunctions.put(root_file2.getIdentifier(), root_file2);
+        builtInFunctions.put(avro_file1.getIdentifier(), avro_file1);
+        builtInFunctions.put(avro_file2.getIdentifier(), avro_file2);
 
         builtInFunctions.put(count.getIdentifier(), count);
         builtInFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -492,6 +500,7 @@ public class Functions {
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
         builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtInFunctions.put(serialize.getIdentifier(), serialize);
         builtInFunctions.put(number.getIdentifier(), number);
 
         builtInFunctions.put(duration.getIdentifier(), duration);
@@ -980,6 +989,27 @@ public class Functions {
             CSVFileFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
+        /**
+         * function that parses an avro file
+         */
+        static final BuiltinFunction avro_file1 = createBuiltinFunction(
+            "avro-file",
+            "string",
+            "item*",
+            AvroFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+        /**
+         * function that parses an avro file
+         */
+        static final BuiltinFunction avro_file2 = createBuiltinFunction(
+            "avro-file",
+            "string",
+            "object",
+            "item*",
+            AvroFileFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
 
         /**
          * function that parses a ROOT file
@@ -1122,11 +1152,11 @@ public class Functions {
         static final BuiltinFunction insert_before = createBuiltinFunction(
             "insert-before",
             "item*",
-            "item*",
+            "integer",
             "item*",
             "item*",
             InsertBeforeFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
         );
         /**
          * function that returns a new sequence containing all the items of $target except the item at position
@@ -1726,6 +1756,17 @@ public class Functions {
             NormalizeSpaceFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
+        /**
+         * function that serializes a given input sequence
+         */
+        static final BuiltinFunction serialize = createBuiltinFunction(
+            "serialize",
+            "item*",
+            "string",
+            SerializeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+
         /**
          * function that that returns the double representation of the input string or number
          */
