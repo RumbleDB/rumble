@@ -320,6 +320,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
+        if(!seq.equals(SequenceType.mostGeneralSequenceType))
+        {
+            expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+        }
+
 
         return new ForClause(var, emptyFlag, seq, atVar, expr, createMetadataFromContext(ctx));
     }
@@ -349,6 +354,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
+        if(!seq.equals(SequenceType.mostGeneralSequenceType))
+        {
+            expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+        }
 
         return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
     }
@@ -416,8 +425,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         if (ctx.ex != null) {
-
             expr = (Expression) this.visitExprSingle(ctx.ex);
+            if(!seq.equals(SequenceType.mostGeneralSequenceType))
+            {
+                expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+            }
+
         }
 
 
@@ -1109,7 +1122,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression expr = null;
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+            if(!seq.equals(SequenceType.mostGeneralSequenceType))
+            {
+                expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+            }
         }
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
