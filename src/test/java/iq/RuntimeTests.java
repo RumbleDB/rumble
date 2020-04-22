@@ -147,15 +147,15 @@ public class RuntimeTests extends AnnotationsTestsBase {
             while (
                 iterator.hasNext()
                     &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
+                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap() && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
                         ||
-                        this.configuration.getResultSizeCap() == 0)
+                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
             ) {
                 sb.append(iterator.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+            if (iterator.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
