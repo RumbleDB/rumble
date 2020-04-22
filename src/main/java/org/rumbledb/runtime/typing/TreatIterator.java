@@ -134,7 +134,11 @@ public class TreatIterator extends HybridRuntimeIterator {
             checkEmptySequence(childRDD.take(2).size());
         }
 
-        Function<Item, Boolean> transformation = new TreatAsClosure(this.sequenceType, getMetadata());
+        Function<Item, Boolean> transformation = new TreatAsClosure(
+                this.sequenceType,
+                this.shouldThrowTreatException,
+                getMetadata()
+        );
         return childRDD.filter(transformation);
     }
 

@@ -40,7 +40,7 @@ public class TreatExpression extends Expression {
     }
 
     public boolean shouldThrowTreatException() {
-        return shouldThrowTreatException;
+        return this.shouldThrowTreatException;
     }
 
     @Override
