@@ -14,11 +14,7 @@ A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial
 
 A tutorial aimed at Python users can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial-python). Please keep in mind, though, that examples using not supported features may not work (see below).
 
-## Unsupported/Unimplemented features (alpha release)
-
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
-
-### Nested FLWOR expressions
+## Nested FLWOR expressions
 
 FLWOR expressions now support nestedness, for example like so:
 
@@ -40,7 +36,7 @@ return count($z)
 ```
 
 
-### Expressions pushed down to Spark
+## Expressions pushed down to Spark
 
 Many expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
 
@@ -66,6 +62,11 @@ More expressions working on sequences will be pushed down in the future, priorit
 We also started to push down some expressions to DataFrames and Spark SQL (obtained via structured-json-file, csv-file and parquet-file calls). In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() as well as object lookup, array unboxing and array lookup is also pushed down on DataFrames.
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
+
+## Unsupported/Unimplemented features (alpha release)
+
+Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
+
 
 ### Unsupported global variables, settings and modules
 
@@ -126,7 +127,7 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | yearMonthDuration | supported |
 
 
-### Unsupported functions
+### Unsupported builtin functions
 
 Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
 
