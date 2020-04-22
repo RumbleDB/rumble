@@ -146,7 +146,7 @@ arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=fun
 
 unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
 
-simpleMapExpr           : main_expr=postFixExpr ('!' postFixExpr)*;
+simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
 postFixExpr             : main_expr=primaryExpr (arrayLookup | predicate | objectLookup | arrayUnboxing | argumentList)*;
 

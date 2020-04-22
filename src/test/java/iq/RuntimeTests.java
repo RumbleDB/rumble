@@ -21,6 +21,8 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.util.Properties;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
@@ -48,6 +50,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 +
                 "/src/main/resources/test_files/runtime"
     );
+    public static final String javaVersion =
+        System.getProperty("java.version");
+    public static final String scalaVersion =
+        Properties.scalaPropOrElse("version.number", "unknown");
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
@@ -69,6 +75,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        System.err.println("Java version: " + javaVersion);
+        System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");

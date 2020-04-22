@@ -628,6 +628,15 @@ lower-case("ABc!D")
 ```
 returns "abc!d"
 
+### serialize
+
+Serializes the supplied input sequence, returning the serialized representation of the sequence as a string
+
+```
+serialize({hello: "world"})
+```
+returns "[ \\"hello\\", \\"world\\" ]"
+
 ## Date and time functions
 
 ### dateTime
