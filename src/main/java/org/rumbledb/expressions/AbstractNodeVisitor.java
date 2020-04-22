@@ -34,6 +34,7 @@ import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
@@ -218,6 +219,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitMultiplicativeExpr(MultiplicativeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitSimpleMapExpr(SimpleMapExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
