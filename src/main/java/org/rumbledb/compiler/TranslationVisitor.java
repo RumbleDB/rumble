@@ -321,11 +321,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
-        if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
-            SequenceType expressionType = new SequenceType(
-                    seq.getItemType(),
-                    SequenceType.Arity.ZeroOrMore
-            );
+        SequenceType expressionType = new SequenceType(
+                seq.getItemType(),
+                SequenceType.Arity.ZeroOrMore
+        );
+        if (!expressionType.equals(SequenceType.mostGeneralSequenceType)) {
             expr = new TreatExpression(expr, expressionType, false, expr.getMetadata());
         }
 
