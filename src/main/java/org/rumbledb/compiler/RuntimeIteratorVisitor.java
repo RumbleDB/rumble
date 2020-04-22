@@ -130,7 +130,6 @@ import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
