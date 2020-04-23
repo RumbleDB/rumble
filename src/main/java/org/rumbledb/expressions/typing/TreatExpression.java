@@ -53,7 +53,7 @@ public class TreatExpression extends Expression {
         );
     }
 
-    public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
+    private static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
             SequenceType sequenceType,
             Expression expression,
             VisitorConfig visitorConfig
