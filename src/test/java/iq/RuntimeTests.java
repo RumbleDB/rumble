@@ -147,7 +147,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
             while (
                 iterator.hasNext()
                     &&
-                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap() && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
+                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
                         ||
                         AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
             ) {
