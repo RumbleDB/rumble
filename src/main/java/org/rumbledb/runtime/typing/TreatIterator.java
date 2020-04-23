@@ -4,8 +4,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -24,7 +26,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
     private final SequenceType sequenceType;
-    private boolean shouldThrowTreatException;
+    private ErrorCode errorCode;
 
     private ItemType itemType;
     private String sequenceTypeName;
@@ -36,14 +38,14 @@ public class TreatIterator extends HybridRuntimeIterator {
     public TreatIterator(
             RuntimeIterator iterator,
             SequenceType sequenceType,
-            boolean shouldThrowTreatException,
+            ErrorCode errorCode,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
         this.iterator = iterator;
         this.sequenceType = sequenceType;
-        this.shouldThrowTreatException = shouldThrowTreatException;
+        this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
             this.sequenceTypeName = this.itemType.toString();
@@ -120,9 +122,14 @@ public class TreatIterator extends HybridRuntimeIterator {
                 + " cannot be treated as type "
                 + this.sequenceTypeName
                 + this.sequenceType.getArity().getSymbol();
-            throw this.shouldThrowTreatException
-                ? new TreatException(message, getMetadata())
-                : new UnexpectedTypeException(message, getMetadata());
+            switch (errorCode) {
+                case DynamicTypeTreatErrorCode:
+                    throw new TreatException(message, getMetadata());
+                case UnexpectedTypeErrorCode:
+                    throw new UnexpectedTypeException(message, getMetadata());
+                default:
+                    throw new OurBadException("Unexpected error code in treat as iterator.", getMetadata());
+            }
         }
     }
 
@@ -136,7 +143,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         Function<Item, Boolean> transformation = new TreatAsClosure(
                 this.sequenceType,
-                this.shouldThrowTreatException,
+                this.errorCode,
                 getMetadata()
         );
         return childRDD.filter(transformation);
@@ -153,9 +160,14 @@ public class TreatIterator extends HybridRuntimeIterator {
             String message = "Empty sequence cannot be treated as type "
                 + this.sequenceTypeName
                 + this.sequenceType.getArity().getSymbol();
-            throw this.shouldThrowTreatException
-                ? new TreatException(message, getMetadata())
-                : new UnexpectedTypeException(message, getMetadata());
+            switch (errorCode) {
+                case DynamicTypeTreatErrorCode:
+                    throw new TreatException(message, getMetadata());
+                case UnexpectedTypeErrorCode:
+                    throw new UnexpectedTypeException(message, getMetadata());
+                default:
+                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+            }
         }
     }
 
@@ -163,9 +175,14 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (size > 0 && this.sequenceType.isEmptySequence()) {
             String message = this.nextResult.getDynamicType().toString()
                 + " cannot be treated as type empty-sequence()";
-            throw this.shouldThrowTreatException
-                ? new TreatException(message, getMetadata())
-                : new UnexpectedTypeException(message, getMetadata());
+            switch (errorCode) {
+                case DynamicTypeTreatErrorCode:
+                    throw new TreatException(message, getMetadata());
+                case UnexpectedTypeErrorCode:
+                    throw new UnexpectedTypeException(message, getMetadata());
+                default:
+                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+            }
         }
     }
 
@@ -179,9 +196,15 @@ public class TreatIterator extends HybridRuntimeIterator {
             String message = "Sequences of more than one item cannot be treated as type "
                 + this.sequenceTypeName
                 + this.sequenceType.getArity().getSymbol();
-            throw this.shouldThrowTreatException
-                ? new TreatException(message, getMetadata())
-                : new UnexpectedTypeException(message, getMetadata());
+
+            switch (errorCode) {
+                case DynamicTypeTreatErrorCode:
+                    throw new TreatException(message, getMetadata());
+                case UnexpectedTypeErrorCode:
+                    throw new UnexpectedTypeException(message, getMetadata());
+                default:
+                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
+            }
         }
     }
 }

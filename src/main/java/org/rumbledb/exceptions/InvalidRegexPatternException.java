@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidRegexPatternException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     public InvalidRegexPatternException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.InvalidRegexPatternErrorCode, metadata);
+        super(message, ErrorCode.InvalidRegexPatternErrorCode, metadata);
     }
 }

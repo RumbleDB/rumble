@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class SparkRuntimeException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     public SparkRuntimeException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.RuntimeExceptionErrorCode, metadata);
+        super(message, ErrorCode.RuntimeExceptionErrorCode, metadata);
     }
 }

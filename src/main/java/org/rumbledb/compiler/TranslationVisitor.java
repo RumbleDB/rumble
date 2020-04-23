@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
@@ -329,7 +330,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 SequenceType.Arity.ZeroOrMore
         );
         if (!expressionType.equals(SequenceType.mostGeneralSequenceType)) {
-            expr = new TreatExpression(expr, expressionType, false, expr.getMetadata());
+            expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
 
@@ -362,7 +363,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
         if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
-            expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+            expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
         return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
@@ -433,7 +434,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
             if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
-                expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
 
         }
@@ -618,7 +619,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         JsoniqParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
-        return new TreatExpression(mainExpression, sequenceType, true, createMetadataFromContext(ctx));
+        return new TreatExpression(
+                mainExpression,
+                sequenceType,
+                ErrorCode.DynamicTypeTreatErrorCode,
+                createMetadataFromContext(ctx)
+        );
     }
 
     @Override
@@ -1147,7 +1153,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
             if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
-                expr = new TreatExpression(expr, seq, false, expr.getMetadata());
+                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
 

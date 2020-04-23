@@ -1,6 +1,6 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class StringOfJSONiqItemException extends SparksoniqRuntimeException {
 
@@ -9,7 +9,7 @@ public class StringOfJSONiqItemException extends SparksoniqRuntimeException {
     public StringOfJSONiqItemException(String message, ExceptionMetadata metadata) {
         super(
             message,
-            ErrorCodes.StringOfJSONiqItemsErrorCode,
+            ErrorCode.StringOfJSONiqItemsErrorCode,
             metadata
         );
     }
