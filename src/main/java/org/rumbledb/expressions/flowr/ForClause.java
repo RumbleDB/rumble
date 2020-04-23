@@ -61,9 +61,6 @@ public class ForClause extends Clause {
         this.variableName = variableName;
         this.allowEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
-        // If the sequenceType is specified, we have to "extend" its arity to *
-        // because TreatIterator is wrapping the whole assignment expression,
-        // meaning there is not one TreatIterator for each variable we loop over.
         this.sequenceType = sequenceType;
         this.expression = expression;
 

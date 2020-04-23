@@ -321,6 +321,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
+        // If the sequenceType is specified, we have to "extend" its arity to *
+        // because TreatIterator is wrapping the whole assignment expression,
+        // meaning there is not one TreatIterator for each variable we loop over.
         SequenceType expressionType = new SequenceType(
                 seq.getItemType(),
                 SequenceType.Arity.ZeroOrMore
