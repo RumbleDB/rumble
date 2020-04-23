@@ -756,7 +756,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new TreatIterator(
                 childExpression,
                 expression.getsequenceType(),
-                expression.shouldThrowTreatException(),
+                expression.errorCodeThatShouldBeThrown(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

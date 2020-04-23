@@ -24,14 +24,14 @@ public class TreatExpression extends Expression {
     public TreatExpression(
             Expression mainExpression,
             SequenceType sequenceType,
-            ErrorCode shouldThrowTreatException,
+            ErrorCode errorCode,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
         }
-        this.errorCode = shouldThrowTreatException;
+        this.errorCode = errorCode;
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
@@ -40,7 +40,7 @@ public class TreatExpression extends Expression {
         return this.sequenceType;
     }
 
-    public ErrorCode shouldThrowTreatException() {
+    public ErrorCode errorCodeThatShouldBeThrown() {
         return this.errorCode;
     }
 
