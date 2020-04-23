@@ -601,7 +601,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         JsoniqParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
-        return new TreatExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+        return new TreatExpression(mainExpression, sequenceType, true, createMetadataFromContext(ctx));
     }
 
     @Override
@@ -1129,6 +1129,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression expr = null;
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+            expr = new TreatExpression(expr, seq, false, expr.getMetadata());
         }
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
