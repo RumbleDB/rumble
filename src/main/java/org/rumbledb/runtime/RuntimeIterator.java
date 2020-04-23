@@ -267,4 +267,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             iterator.print(buffer, indent + 1);
         }
     }
+
+    public void bindToVariableInDynamicContext(
+            DynamicContext targetContext,
+            String variable,
+            DynamicContext executionContext
+    ) {
+        if (this.isDataFrame()) {
+            targetContext.addVariableValue(variable, this.getDataFrame(executionContext));
+        } else if (this.isRDD()) {
+            targetContext.addVariableValue(variable, this.getRDD(executionContext));
+        } else {
+            targetContext.addVariableValue(variable, this.materialize(executionContext));
+        }
+    }
 }

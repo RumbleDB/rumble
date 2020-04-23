@@ -141,4 +141,14 @@ public class StaticContext {
         this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
         return stringBuilder.toString();
     }
+
+    public boolean hasVariable(String variableName) {
+        if (this.inScopeVariables.containsKey(variableName)) {
+            return true;
+        }
+        if (this.parent != null) {
+            return this.parent.hasVariable(variableName);
+        }
+        return false;
+    }
 }

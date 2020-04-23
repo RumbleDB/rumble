@@ -18,22 +18,29 @@ public class TreatExpression extends Expression {
 
     private Expression mainExpression;
     private SequenceType sequenceType;
+    private boolean shouldThrowTreatException;
 
     public TreatExpression(
             Expression mainExpression,
             SequenceType sequenceType,
+            boolean shouldThrowTreatException,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
         }
+        this.shouldThrowTreatException = shouldThrowTreatException;
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
 
     public SequenceType getsequenceType() {
         return this.sequenceType;
+    }
+
+    public boolean shouldThrowTreatException() {
+        return shouldThrowTreatException;
     }
 
     @Override
