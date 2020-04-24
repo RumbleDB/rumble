@@ -24,7 +24,6 @@ package org.rumbledb.expressions.module;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -32,11 +31,11 @@ import java.util.List;
 public class Prolog extends Node {
 
     private final List<VariableDeclaration> variableDeclarations;
-    private final List<InlineFunctionExpression> functionDeclarations;
+    private final List<FunctionDeclaration> functionDeclarations;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
-            List<InlineFunctionExpression> functionDeclarations,
+            List<FunctionDeclaration> functionDeclarations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -44,7 +43,7 @@ public class Prolog extends Node {
         this.functionDeclarations = functionDeclarations;
     }
 
-    public List<InlineFunctionExpression> getFunctionDeclaration() {
+    public List<FunctionDeclaration> getFunctionDeclaration() {
         return this.functionDeclarations;
     }
 

@@ -60,6 +60,7 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -130,7 +131,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         List<VariableDeclaration> globalVariables = new ArrayList<>();
-        List<InlineFunctionExpression> InlineFunctionExpressions = new ArrayList<>();
+        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
         for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
             VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
                 variable
@@ -141,13 +142,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
                 function
             );
-            InlineFunctionExpressions.add(inlineFunctionExpression);
+            functionDeclarations.add(new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx)));
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
         }
 
-        return new Prolog(globalVariables, InlineFunctionExpressions, createMetadataFromContext(ctx));
+        return new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
     }
 
     @Override

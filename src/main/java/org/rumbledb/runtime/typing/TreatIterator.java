@@ -118,7 +118,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
         if (!this.nextResult.isTypeOf(this.itemType)) {
-            switch (errorCode) {
+            switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(
                             this.nextResult.getDynamicType().toString()
@@ -168,7 +168,7 @@ public class TreatIterator extends HybridRuntimeIterator {
             String message = "Empty sequence cannot be treated as type "
                 + this.sequenceTypeName
                 + this.sequenceType.getArity().getSymbol();
-            switch (errorCode) {
+            switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(message, getMetadata());
                 case UnexpectedTypeErrorCode:
