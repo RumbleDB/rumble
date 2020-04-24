@@ -20,15 +20,21 @@
 
 package org.rumbledb.runtime;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.runtime.functions.sequences.general.CommaExpressionClosure;
+
 import sparksoniq.jsoniq.ExecutionMode;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.List;
 
-public class CommaExpressionIterator extends LocalRuntimeIterator {
+public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator currentChild;
@@ -44,7 +50,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
@@ -53,9 +59,7 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         throw new IteratorFlowException("Invalid next() call in Comma expression", getMetadata());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    private void startLocal() {
         this.childIndex = 0;
 
         if (this.children.size() >= 1) {
@@ -66,6 +70,11 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         }
 
         setNextResult();
+    }
+
+    @Override
+    public void openLocal() {
+        startLocal();
     }
 
     public void setNextResult() {
@@ -90,5 +99,45 @@ public class CommaExpressionIterator extends LocalRuntimeIterator {
         }
 
         this.hasNext = this.nextResult != null;
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        startLocal();
+    }
+
+    @Override
+    protected void closeLocal() {
+        for (int i = 0; i < this.children.size(); i++)
+            this.children.get(i).close();
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        if (!this.children.isEmpty()) {
+            this.childIndex = 0;
+            this.currentChild = this.children.get(this.childIndex);
+
+            JavaRDD<Item> childRDD = this.currentChild.getRDD(dynamicContext);
+            this.childIndex++;
+
+            while (this.childIndex < this.children.size()) {
+                this.currentChild = this.children.get(this.childIndex);
+                JavaRDD<Item> nextChildRDD = this.currentChild.getRDD(dynamicContext);
+                childRDD = childRDD.union(nextChildRDD);
+                this.childIndex++;
+            }
+
+            FlatMapFunction<Item, Item> transformation = new CommaExpressionClosure();
+            return childRDD.flatMap(transformation);
+        } else {
+            JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
+            return sparkContext.emptyRDD();
+        }
     }
 }
