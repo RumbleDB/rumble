@@ -118,17 +118,25 @@ public class TreatIterator extends HybridRuntimeIterator {
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
         if (!this.nextResult.isTypeOf(this.itemType)) {
-            String message = this.nextResult.getDynamicType().toString()
-                + " cannot be treated as type "
-                + this.sequenceTypeName
-                + this.sequenceType.getArity().getSymbol();
             switch (errorCode) {
                 case DynamicTypeTreatErrorCode:
-                    throw new TreatException(message, getMetadata());
+                    throw new TreatException(
+                            this.nextResult.getDynamicType().toString()
+                                + " cannot be treated as type "
+                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getArity().getSymbol(),
+                            this.getMetadata()
+                    );
                 case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(message, getMetadata());
+                    throw new UnexpectedTypeException(
+                            this.nextResult.getDynamicType().toString()
+                                + " is not expected here. The expected type is "
+                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getArity().getSymbol(),
+                            this.getMetadata()
+                    );
                 default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", getMetadata());
+                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
             }
         }
     }
