@@ -222,7 +222,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                     );
                 case UnexpectedTypeErrorCode:
                     throw new UnexpectedTypeException(
-                            "A sequence of more than one item cannot be treated as type "
+                            "A sequence of more than one item is not expected here. Expected type: "
                                 + this.sequenceType.getItemType().toString()
                                 + this.sequenceType.getArity().getSymbol(),
                             this.getMetadata()
