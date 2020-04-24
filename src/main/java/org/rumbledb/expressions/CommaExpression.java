@@ -62,13 +62,18 @@ public class CommaExpression extends Expression {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        ExecutionMode currentMode = ExecutionMode.RDD;
+        ExecutionMode currentMode = ExecutionMode.LOCAL;
 
-        for (Expression expression : this.expressions)
-            if (!expression.getHighestExecutionMode(visitorConfig).isRDD()) {
-                currentMode = ExecutionMode.LOCAL;
-                break;
-            }
+        if (!this.expressions.isEmpty()) {
+            currentMode = ExecutionMode.RDD;
+
+            for (Expression expression : this.expressions)
+                if (!expression.getHighestExecutionMode(visitorConfig).isRDD()) {
+                    currentMode = ExecutionMode.LOCAL;
+                    break;
+                }
+        }
+
         this.highestExecutionMode = currentMode;
     }
 
