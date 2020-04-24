@@ -71,7 +71,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        System.out.println("Visiting function declaration.");
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
