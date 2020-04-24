@@ -60,23 +60,20 @@ public class CommaExpression extends Expression {
         return result;
     }
 
-    private boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return this.expressions.size() == 1;
-    }
-
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return;
-        }
-        super.initHighestExecutionMode(visitorConfig);
+        ExecutionMode currentMode = ExecutionMode.RDD;
+
+        for (Expression expression : this.expressions)
+            if (!expression.getHighestExecutionMode(visitorConfig).isRDD()) {
+                currentMode = ExecutionMode.LOCAL;
+                break;
+            }
+        this.highestExecutionMode = currentMode;
     }
 
     @Override
     public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expressions.get(0).getHighestExecutionMode(visitorConfig);
-        }
         return super.getHighestExecutionMode(visitorConfig);
     }
 
