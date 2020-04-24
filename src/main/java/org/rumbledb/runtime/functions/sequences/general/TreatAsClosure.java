@@ -24,7 +24,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
     @Override
     public Boolean call(Item input) throws Exception {
         if (!input.isTypeOf(this.sequenceType.getItemType())) {
-            switch (errorCode) {
+            switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(
                             input.getDynamicType().toString()
@@ -46,7 +46,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
             }
         }
         if (this.sequenceType.isEmptySequence()) {
-            switch (errorCode) {
+            switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(
                             input.getDynamicType().toString()
