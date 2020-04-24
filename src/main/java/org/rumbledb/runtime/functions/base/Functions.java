@@ -182,7 +182,6 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adj
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.adjust_time_to_timezone2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.anyURI;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.annotate;
-import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.anyURI;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.asin;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.atan2;

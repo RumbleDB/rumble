@@ -81,7 +81,7 @@ public class AnnotationsTestsBase {
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
             VisitorHelpers.populateStaticContext(mainModule);
-            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, configuration);
+            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING
         } catch (ParsingException exception) {
