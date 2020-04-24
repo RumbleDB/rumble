@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class JsoniqVersionException extends ParsingException {
 
@@ -29,7 +29,7 @@ public class JsoniqVersionException extends ParsingException {
     public JsoniqVersionException(ExceptionMetadata expressionMetadata) {
         super(
             "Static error; The version number specified in a version declaration is not supported by the implementation.",
-            ErrorCodes.InvalidJsoniqVersionErrorCode,
+            ErrorCode.InvalidJsoniqVersionErrorCode,
             expressionMetadata
         );
     }

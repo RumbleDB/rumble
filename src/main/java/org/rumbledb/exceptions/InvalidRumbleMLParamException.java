@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class InvalidRumbleMLParamException extends SparksoniqRuntimeException {
 
@@ -29,7 +29,7 @@ public class InvalidRumbleMLParamException extends SparksoniqRuntimeException {
     public InvalidRumbleMLParamException(String message, ExceptionMetadata metadata) {
         super(
             "Invalid Param; " + message,
-            ErrorCodes.InvalidRumbleMLParamErrorCode,
+            ErrorCode.InvalidRumbleMLParamErrorCode,
             metadata
         );
     }

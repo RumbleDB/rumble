@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class VariableAlreadyExistsException extends SparksoniqRuntimeException {
 
@@ -29,7 +29,7 @@ public class VariableAlreadyExistsException extends SparksoniqRuntimeException {
     public VariableAlreadyExistsException(String name, ExceptionMetadata metadata) {
         super(
             "Variable name already exists: " + name,
-            ErrorCodes.VariableAlreadyExists,
+            ErrorCode.VariableAlreadyExists,
             metadata
         );
     }

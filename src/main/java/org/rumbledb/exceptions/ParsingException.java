@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class ParsingException extends SparksoniqRuntimeException {
 
@@ -28,10 +28,10 @@ public class ParsingException extends SparksoniqRuntimeException {
     private static final long serialVersionUID = 1L;
 
     public ParsingException(String message, ExceptionMetadata metadata) {
-        super(String.format("Parser failed. %s", message), ErrorCodes.ParsingErrorCode, metadata);
+        super(String.format("Parser failed. %s", message), ErrorCode.ParsingErrorCode, metadata);
     }
 
-    public ParsingException(String message, String code, ExceptionMetadata metadata) {
+    public ParsingException(String message, ErrorCode code, ExceptionMetadata metadata) {
         super(String.format("Parser failed. %s", message), code, metadata);
     }
 

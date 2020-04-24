@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class SequenceExceptionExactlyOne extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     public SequenceExceptionExactlyOne(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.ExactlyOneErrorCode, metadata);
+        super(message, ErrorCode.ExactlyOneErrorCode, metadata);
     }
 }

@@ -20,7 +20,7 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class UnrecognizedRumbleMLClassReferenceException extends SparksoniqRuntimeException {
 
@@ -29,7 +29,7 @@ public class UnrecognizedRumbleMLClassReferenceException extends SparksoniqRunti
     public UnrecognizedRumbleMLClassReferenceException(String message, ExceptionMetadata metadata) {
         super(
             message,
-            ErrorCodes.UnrecognizedRumbleMLClassReferenceErrorCode,
+            ErrorCode.UnrecognizedRumbleMLClassReferenceErrorCode,
             metadata
         );
     }

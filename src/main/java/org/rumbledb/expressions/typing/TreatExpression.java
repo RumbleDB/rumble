@@ -4,6 +4,7 @@ import java.util.Collections;
 import java.util.List;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -18,19 +19,19 @@ public class TreatExpression extends Expression {
 
     private Expression mainExpression;
     private SequenceType sequenceType;
-    private boolean shouldThrowTreatException;
+    private ErrorCode errorCode;
 
     public TreatExpression(
             Expression mainExpression,
             SequenceType sequenceType,
-            boolean shouldThrowTreatException,
+            ErrorCode errorCode,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
         }
-        this.shouldThrowTreatException = shouldThrowTreatException;
+        this.errorCode = errorCode;
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
@@ -39,8 +40,8 @@ public class TreatExpression extends Expression {
         return this.sequenceType;
     }
 
-    public boolean shouldThrowTreatException() {
-        return shouldThrowTreatException;
+    public ErrorCode errorCodeThatShouldBeThrown() {
+        return this.errorCode;
     }
 
     @Override
@@ -52,7 +53,7 @@ public class TreatExpression extends Expression {
         );
     }
 
-    public static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
+    private static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
             SequenceType sequenceType,
             Expression expression,
             VisitorConfig visitorConfig

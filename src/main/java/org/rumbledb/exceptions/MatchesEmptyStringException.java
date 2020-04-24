@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 public class MatchesEmptyStringException extends SparksoniqRuntimeException {
 
     private static final long serialVersionUID = 1L;
 
     public MatchesEmptyStringException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.MatchesEmptyStringErrorCode, metadata);
+        super(message, ErrorCode.MatchesEmptyStringErrorCode, metadata);
     }
 }

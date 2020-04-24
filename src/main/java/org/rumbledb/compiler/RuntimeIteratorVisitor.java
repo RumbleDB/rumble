@@ -132,7 +132,6 @@ import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -219,21 +218,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause instanceof ForClause) {
             ForClause forClause = (ForClause) clause;
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
-            if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                    forClause.getSequenceType(),
-                    forClause.getExpression(),
-                    this.visitorConfig
-                );
-                assignmentIterator = new TreatIterator(
-                        assignmentIterator,
-                        forClause.getSequenceType(),
-                        false,
-                        executionMode,
-                        clause.getMetadata()
-                );
-            }
-
             return new ForClauseSparkIterator(
                     previousIterator,
                     forClause.getVariableName(),
@@ -244,21 +228,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof LetClause) {
             LetClause letClause = (LetClause) clause;
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
-            if (letClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                    letClause.getSequenceType(),
-                    letClause.getExpression(),
-                    this.visitorConfig
-                );
-                assignmentIterator = new TreatIterator(
-                        assignmentIterator,
-                        letClause.getSequenceType(),
-                        false,
-                        executionMode,
-                        clause.getMetadata()
-                );
-            }
-
             return new LetClauseSparkIterator(
                     previousIterator,
                     letClause.getVariableName(),
@@ -273,20 +242,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                        ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getSequenceType(),
-                            groupByExpression,
-                            this.visitorConfig
-                        );
-                        groupByExpressionIterator = new TreatIterator(
-                                groupByExpressionIterator,
-                                var.getSequenceType(),
-                                false,
-                                executionMode,
-                                clause.getMetadata()
-                        );
-                    }
                 }
 
                 String variableName = var.getVariableName();
@@ -801,7 +756,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new TreatIterator(
                 childExpression,
                 expression.getsequenceType(),
-                expression.shouldThrowTreatException(),
+                expression.errorCodeThatShouldBeThrown(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
