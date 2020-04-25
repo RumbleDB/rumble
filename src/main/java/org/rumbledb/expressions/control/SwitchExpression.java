@@ -21,10 +21,13 @@
 package org.rumbledb.expressions.control;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+
+import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -68,6 +71,25 @@ public class SwitchExpression extends Expression {
         }
         result.add(this.defaultExpression);
         return result;
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.defaultExpression.getHighestExecutionMode(visitorConfig);
+
+        if (this.highestExecutionMode == ExecutionMode.RDD) {
+            for (SwitchCase c : this.cases) {
+                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDD()) {
+                    this.highestExecutionMode = ExecutionMode.LOCAL;
+                    break;
+                }
+            }
+        }
+    }
+
+    @Override
+    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
+        return super.getHighestExecutionMode(visitorConfig);
     }
 
     @Override
