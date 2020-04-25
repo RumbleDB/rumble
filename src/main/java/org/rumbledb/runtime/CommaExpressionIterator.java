@@ -22,12 +22,10 @@ package org.rumbledb.runtime;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
-import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.functions.sequences.general.CommaExpressionClosure;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
@@ -132,9 +130,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
                 childRDD = childRDD.union(nextChildRDD);
                 this.childIndex++;
             }
-
-            FlatMapFunction<Item, Item> transformation = new CommaExpressionClosure();
-            return childRDD.flatMap(transformation);
+            return childRDD;
         } else {
             JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
             return sparkContext.emptyRDD();
