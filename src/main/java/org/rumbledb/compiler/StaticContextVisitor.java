@@ -35,6 +35,7 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -97,7 +98,30 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitFunctionDeclaration(InlineFunctionExpression expression, StaticContext argument) {
+    public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
+        InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        // define a static context for the function body, add params to the context and visit the body expression
+        StaticContext functionDeclarationContext = new StaticContext(argument);
+        expression.getParams()
+            .forEach(
+                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
+                    paramName,
+                    sequenceType,
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                )
+            );
+        // visit the body first to make its execution mode available while adding the function to the catalog
+        this.visit(expression.getBody(), functionDeclarationContext);
+        expression.initHighestExecutionMode(this.visitorConfig);
+        expression.registerUserDefinedFunctionExecutionMode(
+            this.visitorConfig
+        );
+        return functionDeclarationContext;
+    }
+
+    @Override
+    public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
         expression.getParams()

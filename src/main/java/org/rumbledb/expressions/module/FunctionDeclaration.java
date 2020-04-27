@@ -21,53 +21,46 @@
 package org.rumbledb.expressions.module;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
-import java.util.ArrayList;
+import sparksoniq.jsoniq.ExecutionMode;
+
+import java.util.Collections;
 import java.util.List;
 
-public class Prolog extends Node {
+public class FunctionDeclaration extends Node {
 
-    private final List<VariableDeclaration> variableDeclarations;
-    private final List<FunctionDeclaration> functionDeclarations;
+    private final Expression functionExpression;
 
-    public Prolog(
-            List<VariableDeclaration> variableDeclarations,
-            List<FunctionDeclaration> functionDeclarations,
+    public FunctionDeclaration(
+            Expression functionExpression,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.variableDeclarations = variableDeclarations;
-        this.functionDeclarations = functionDeclarations;
+        this.functionExpression = functionExpression;
     }
 
-    public List<FunctionDeclaration> getFunctionDeclaration() {
-        return this.functionDeclarations;
-    }
-
-    public List<VariableDeclaration> getVariableDeclarations() {
-        return this.variableDeclarations;
+    public Expression getExpression() {
+        return this.functionExpression;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.addAll(this.variableDeclarations);
-        if (this.functionDeclarations != null) {
-            this.functionDeclarations.forEach(e -> {
-                if (e != null) {
-                    result.add(e);
-                }
-            });
-        }
-        return result;
+        return Collections.singletonList(this.functionExpression);
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitProlog(this, argument);
+        return visitor.visitFunctionDeclaration(this, argument);
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 }
 

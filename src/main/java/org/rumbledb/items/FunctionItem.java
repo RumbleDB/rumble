@@ -119,14 +119,17 @@ public class FunctionItem extends Item {
         this.dataFrameVariablesInClosure = new HashMap<>();
     }
 
+    @Override
     public FunctionIdentifier getIdentifier() {
         return this.identifier;
     }
 
+    @Override
     public List<String> getParameterNames() {
         return this.parameterNames;
     }
 
+    @Override
     public FunctionSignature getSignature() {
         return this.signature;
     }

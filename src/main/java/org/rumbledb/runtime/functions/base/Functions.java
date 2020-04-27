@@ -20,8 +20,10 @@
 
 package org.rumbledb.runtime.functions.base;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -693,7 +695,10 @@ public class Functions {
         return functionCallIterator;
     }
 
-    public static void addUserDefinedFunction(FunctionItem function, ExceptionMetadata meta) {
+    public static void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
+        if (!function.isFunction()) {
+            throw new OurBadException("Only a function item can be added as a user-defined function.");
+        }
         FunctionIdentifier functionIdentifier = function.getIdentifier();
         if (
             builtInFunctions.containsKey(functionIdentifier)
@@ -701,7 +706,7 @@ public class Functions {
         ) {
             throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
         }
-        userDefinedFunctions.put(functionIdentifier, function);
+        userDefinedFunctions.put(functionIdentifier, (FunctionItem) function);
     }
 
     public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {

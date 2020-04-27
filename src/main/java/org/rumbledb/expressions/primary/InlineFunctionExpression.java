@@ -93,7 +93,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitFunctionDeclaration(this, argument);
+        return visitor.visitInlineFunctionExpr(this, argument);
     }
 
     public void print(StringBuffer buffer, int indent) {

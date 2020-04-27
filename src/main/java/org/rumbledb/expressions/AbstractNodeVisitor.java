@@ -41,6 +41,7 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -178,7 +179,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitFunctionDeclaration(InlineFunctionExpression expression, T argument) {
+    public T visitInlineFunctionExpr(InlineFunctionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -289,9 +290,16 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
 
+    // region prolog
     public T visitVariableDeclaration(VariableDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
+
+    public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+    // endregion
 
 }

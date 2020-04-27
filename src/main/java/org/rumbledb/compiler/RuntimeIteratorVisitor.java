@@ -161,6 +161,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
+        return argument;
+    }
+
+    @Override
     public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
         List<RuntimeIterator> result = new ArrayList<>();
         for (Expression childExpr : expression.getExpressions()) {
@@ -181,11 +186,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
         return super.visitMainModule(expression, argument);
-    }
-
-    @Override
-    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
-        return super.visitProlog(expression, argument);
     }
     // endregion
 
@@ -431,7 +431,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitFunctionDeclaration(InlineFunctionExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
@@ -444,19 +444,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 returnType,
                 bodyIterator
         );
-        if (expression.getName().equals("")) {
-            // unnamed (inline function declaration)
-            return new FunctionRuntimeIterator(
-                    function,
-                    expression.getHighestExecutionMode(this.visitorConfig),
-                    expression.getMetadata()
-            );
-        } else {
-            // named (static function declaration)
-            Functions.addUserDefinedFunction(function, expression.getMetadata());
-        }
-
-        return defaultAction(expression, argument);
+        return new FunctionRuntimeIterator(
+                function,
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
