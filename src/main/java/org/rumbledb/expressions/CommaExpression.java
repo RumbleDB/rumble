@@ -78,11 +78,6 @@ public class CommaExpression extends Expression {
     }
 
     @Override
-    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        return super.getHighestExecutionMode(visitorConfig);
-    }
-
-    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitCommaExpression(this, argument);
     }
