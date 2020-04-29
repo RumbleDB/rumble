@@ -43,7 +43,7 @@ public class Prolog extends Node {
         this.functionDeclarations = functionDeclarations;
     }
 
-    public List<FunctionDeclaration> getFunctionDeclaration() {
+    public List<FunctionDeclaration> getFunctionDeclarations() {
         return this.functionDeclarations;
     }
 

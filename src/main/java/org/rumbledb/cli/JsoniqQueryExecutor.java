@@ -79,7 +79,8 @@ public class JsoniqQueryExecutor {
 
         long startTime = System.currentTimeMillis();
         MainModule mainModule = this.parse(lexer);
-        generateStaticContext(mainModule);
+        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
+        VisitorHelpers.populateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             System.out.println(mainModule);
         }
@@ -118,7 +119,8 @@ public class JsoniqQueryExecutor {
         // create temp file
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
-        generateStaticContext(mainModule);
+        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
+        VisitorHelpers.populateStaticContext(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             System.out.println(mainModule);
         }
@@ -158,10 +160,6 @@ public class JsoniqQueryExecutor {
             e.initCause(ex);
             throw e;
         }
-    }
-
-    private void generateStaticContext(MainModule mainModule) {
-        VisitorHelpers.populateStaticContext(mainModule);
     }
 
     private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {

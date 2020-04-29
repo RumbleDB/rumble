@@ -80,6 +80,7 @@ public class AnnotationsTestsBase {
             mainModule = this.parse(path);
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
+            VisitorHelpers.resolveDependencies(mainModule, AnnotationsTestsBase.configuration);
             VisitorHelpers.populateStaticContext(mainModule);
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);

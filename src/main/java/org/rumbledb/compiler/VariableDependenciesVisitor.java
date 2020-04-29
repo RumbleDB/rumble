@@ -21,11 +21,14 @@
 package org.rumbledb.compiler;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.Map;
+
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
@@ -42,6 +45,7 @@ import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.PredicateExpression;
@@ -59,10 +63,15 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
+    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+
     Map<Node, Set<String>> inputVariableDependencies;
     Map<Node, Set<String>> outputVariableDependencies;
 
     private void addInputVariableDependencies(Node node, Set<String> variables) {
+        if (variables == null) {
+            return;
+        }
         if (!inputVariableDependencies.keySet().contains(node)) {
             inputVariableDependencies.put(node, new TreeSet<String>());
         }
@@ -70,12 +79,21 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void removeInputVariableDependencies(Node node, Set<String> variables) {
+        if (variables == null) {
+            return;
+        }
+        if (!inputVariableDependencies.keySet().contains(node)) {
+            return;
+        }
         for (String v : variables) {
             inputVariableDependencies.get(node).remove(v);
         }
     }
 
     private void addInputVariableDependency(Node node, String variable) {
+        if (variable == null) {
+            return;
+        }
         if (!inputVariableDependencies.keySet().contains(node)) {
             inputVariableDependencies.put(node, new TreeSet<String>());
         }
@@ -83,10 +101,19 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void removeInputVariableDependency(Node node, String variable) {
+        if (variable == null) {
+            return;
+        }
+        if (!inputVariableDependencies.keySet().contains(node)) {
+            return;
+        }
         inputVariableDependencies.get(node).remove(variable);
     }
 
     private void addOutputVariableDependencies(Node node, Set<String> variables) {
+        if (variables == null) {
+            return;
+        }
         if (!outputVariableDependencies.keySet().contains(node)) {
             outputVariableDependencies.put(node, new TreeSet<String>());
         }
@@ -94,6 +121,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void addOutputVariableDependency(Node node, String variable) {
+        if (variable == null) {
+            return;
+        }
         if (!outputVariableDependencies.keySet().contains(node)) {
             outputVariableDependencies.put(node, new TreeSet<String>());
         }
@@ -102,9 +132,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
 
 
-    VariableDependenciesVisitor() {
-        outputVariableDependencies = new TreeMap<>();
-        inputVariableDependencies = new TreeMap<>();
+    VariableDependenciesVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
+        this.outputVariableDependencies = new HashMap<>();
+        this.inputVariableDependencies = new HashMap<>();
+        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
     }
 
     @Override
@@ -191,12 +222,11 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
-    @SuppressWarnings("unchecked")
     public Void visitCountClause(CountClause expression, Void argument) {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, outputVariableDependencies.get(expression.getPreviousClause()));
 
-        addInputVariableDependencies(expression, (Set<String>) Collections.EMPTY_SET);
+        addInputVariableDependencies(expression, Collections.emptySet());
 
         removeInputVariableDependencies(expression, outputVariableDependencies.get(expression.getPreviousClause()));
         return null;
@@ -292,20 +322,58 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         visit(expression.getMainExpression(), null);
         addInputVariableDependencies(expression, inputVariableDependencies.get(expression.getMainExpression()));
         for (Expression e : expression.getArguments()) {
+            if (e == null) {
+                continue;
+            }
             visit(e, null);
             addInputVariableDependencies(expression, inputVariableDependencies.get(e));
         }
         return null;
     }
 
+    @Override
+    public Void visitProlog(Prolog prolog, Void argument) {
+        Map<String, Node> nameToNodeMap = new TreeMap<>();
+        for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
+            visit(variableDeclaration, null);
+            nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
+            if (rumbleRuntimeConfiguration.isPrintIteratorTree()) {
+                System.out.print(variableDeclaration.getVariableName());
+                for (String d : inputVariableDependencies.get(variableDeclaration)) {
+                    System.out.print(" " + d);
+                }
+                System.out.println("");
+            }
+        }
+        for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
+            visit(functionDeclaration, null);
+            nameToNodeMap.put(functionDeclaration.getFunctionIdentifier().toString(), functionDeclaration);
+            if (rumbleRuntimeConfiguration.isPrintIteratorTree()) {
+                System.out.print(functionDeclaration.getFunctionIdentifier().toString());
+                for (String d : inputVariableDependencies.get(functionDeclaration)) {
+                    System.out.print(" " + d);
+                }
+                System.out.println("");
+            }
+        }
+        return null;
+    }
 
     @Override
     public Void visitVariableDeclaration(VariableDeclaration expression, Void argument) {
-        return defaultAction(expression, argument);
+        if (expression.getExpression() != null) {
+            visit(expression.getExpression(), null);
+            addInputVariableDependencies(expression, inputVariableDependencies.get(expression.getExpression()));
+            return null;
+        }
+        addInputVariableDependencies(expression, Collections.emptySet());
+        return null;
     }
 
     @Override
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
-        return defaultAction(expression, argument);
+        visit(expression.getExpression(), null);
+        addInputVariableDependencies(expression, inputVariableDependencies.get(expression.getExpression()));
+        return null;
     }
 }
