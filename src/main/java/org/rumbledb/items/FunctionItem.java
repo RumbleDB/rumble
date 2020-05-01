@@ -34,7 +34,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
-import org.rumbledb.shell.ANSIColor;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
