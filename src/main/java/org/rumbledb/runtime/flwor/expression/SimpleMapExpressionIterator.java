@@ -20,11 +20,12 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -36,7 +37,7 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.TreeMap;
 
-public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
+public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
@@ -59,32 +60,52 @@ public class SimpleMapExpressionIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
+        return childRDD.flatMap((item) -> {
+            List<Item> currentItems = new ArrayList<>();
+            dynamicContext.addVariableValue("$$", currentItems);
+            currentItems.add(item);
+            List<Item> mapValuesRaw = this.rightIterator.materialize(dynamicContext);
+            dynamicContext.removeVariable("$$");
+            return mapValuesRaw.iterator();
+        });
+    }
+
+    @Override
+    protected void openLocal() {
+        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        this.mapValues = new LinkedList<>();
+        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.leftIterator.close();
+    }
+
+    @Override
+    protected void resetLocal(DynamicContext context) {
+        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
+        this.mapValues = new LinkedList<>();
+        this.leftIterator.reset(this.currentDynamicContextForLocalExecution);
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult; // save the result to be returned
             setNextResult(); // calculate and store the next result
             return result;
         }
         throw new IteratorFlowException("Invalid next() call in simple map expression", getMetadata());
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.hasNext;
-    }
-
-    @Override
-    public void close() {
-        this.leftIterator.close();
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        this.mapValues = new LinkedList<>();
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
     }
 
     private void setNextResult() {

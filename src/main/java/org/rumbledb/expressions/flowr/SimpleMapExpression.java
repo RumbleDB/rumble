@@ -21,10 +21,12 @@
 package org.rumbledb.expressions.flowr;
 
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.Arrays;
 import java.util.List;
@@ -46,6 +48,11 @@ public class SimpleMapExpression extends Expression {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitSimpleMapExpr(this, argument);
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        this.highestExecutionMode = this.leftExpression.getHighestExecutionMode(visitorConfig);
     }
 
     @Override
