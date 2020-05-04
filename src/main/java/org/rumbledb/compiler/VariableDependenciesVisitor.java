@@ -88,7 +88,7 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
  * 
  * Note that a function cannot depend on a function, as mutually recursive calls are allowed.
  * 
- * Once all dependencies have been determined, the visited builds a DAG, builds a topological ordering
+ * Once all dependencies have been determined, the visitor builds a DAG, builds a topological ordering
  * thereof, and re-sorts declarations in the prolog for further processing by other visitors.
  * 
  */
@@ -103,7 +103,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     /**
      * Output variable dependencies are lists of variables in the tuples that a clause produces.
      */
-    Map<Node, Set<String>> outputVariableDependencies;
+    Map<Node, Set<String>> outputVariableDependenciesForClauses;
 
     /**
      * Builds a new visitor.
@@ -111,7 +111,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
      * @param rumbleRuntimeConfiguration the configuration. This is used for trigerring or not debug output.
      */
     VariableDependenciesVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
-        this.outputVariableDependencies = new HashMap<>();
+        this.outputVariableDependenciesForClauses = new HashMap<>();
         this.inputVariableDependencies = new HashMap<>();
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
     }
@@ -162,8 +162,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         if (variables == null || variables.isEmpty()) {
             return;
         }
-        if (!this.outputVariableDependencies.keySet().contains(node)) {
-            this.outputVariableDependencies.put(node, new TreeSet<String>());
+        if (!this.outputVariableDependenciesForClauses.keySet().contains(node)) {
+            this.outputVariableDependenciesForClauses.put(node, new TreeSet<String>());
         }
         getOutputVariableDependencies(node).addAll(variables);
     }
@@ -172,8 +172,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         if (variable == null) {
             return;
         }
-        if (!this.outputVariableDependencies.keySet().contains(node)) {
-            this.outputVariableDependencies.put(node, new TreeSet<String>());
+        if (!this.outputVariableDependenciesForClauses.keySet().contains(node)) {
+            this.outputVariableDependenciesForClauses.put(node, new TreeSet<String>());
         }
         getOutputVariableDependencies(node).add(variable);
     }
@@ -182,10 +182,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         if (node == null) {
             return Collections.emptySet();
         }
-        if (!this.outputVariableDependencies.containsKey(node)) {
+        if (!this.outputVariableDependenciesForClauses.containsKey(node)) {
             return Collections.emptySet();
         }
-        return this.outputVariableDependencies.get(node);
+        return this.outputVariableDependenciesForClauses.get(node);
     }
 
     private Set<String> getInputVariableDependencies(Node node) {
