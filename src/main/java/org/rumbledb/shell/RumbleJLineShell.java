@@ -40,7 +40,7 @@ import java.io.IOException;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
-    private static final String PROMPT = "rumble$ ";
+    private static final String PROMPT = ANSIColor.CYAN + "rumble$ " + ANSIColor.RESET;
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean printTime;
     private final RumbleRuntimeConfiguration configuration;
@@ -130,14 +130,14 @@ public class RumbleJLineShell {
                     handleException(new OurBadException(ex.getMessage()), showErrorInfo);
                 }
             } else if (ex instanceof RumbleException) {
-                System.err.println("⚠️  ️" + ex.getMessage());
+                System.err.println("⚠️  ️" + ANSIColor.RED + ex.getMessage() + ANSIColor.RESET);
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
             } else if (!(ex instanceof UserInterruptException)) {
                 System.out.println("An error has occurred: " + ex.getMessage());
                 System.out.println(
-                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
+                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query. "
                 );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
                 if (showErrorInfo) {
@@ -148,7 +148,7 @@ public class RumbleJLineShell {
     }
 
     public void output(String message) {
-        System.out.println(message);
+        System.out.println(ANSIColor.YELLOW + message + ANSIColor.RESET);
     }
 
     private String getPrompt() {
