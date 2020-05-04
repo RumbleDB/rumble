@@ -51,7 +51,7 @@ public class FunctionDeclaration extends Node {
     }
 
     public FunctionIdentifier getFunctionIdentifier() {
-        return new FunctionIdentifier(this.functionExpression.getName(), this.functionExpression.getParams().size());
+        return functionExpression.getFunctionIdentifier();
     }
 
     @Override
