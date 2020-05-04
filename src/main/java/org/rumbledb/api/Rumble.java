@@ -69,8 +69,7 @@ public class Rumble {
             e.initCause(ex);
             throw e;
         }
-        String[] args = new String[0];
-        VisitorHelpers.resolveDependencies(mainModule, new RumbleRuntimeConfiguration(args));
+        VisitorHelpers.resolveDependencies(mainModule, RumbleRuntimeConfiguration.getDefaultConfiguration());
         VisitorHelpers.populateStaticContext(mainModule);
 
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);
