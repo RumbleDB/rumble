@@ -32,7 +32,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
@@ -121,7 +121,7 @@ public class AnnotationsTestsBase {
             }
 
             // RUNTIME
-        } catch (SparksoniqRuntimeException exception) {
+        } catch (RumbleException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(
                 errorOutput,
@@ -162,7 +162,7 @@ public class AnnotationsTestsBase {
         ) {
             try {
                 checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
-            } catch (SparksoniqRuntimeException exception) {
+            } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 exception.printStackTrace();
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");

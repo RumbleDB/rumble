@@ -23,7 +23,7 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class NonAtomicKeyException extends SparksoniqRuntimeException {
+public class NonAtomicKeyException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 

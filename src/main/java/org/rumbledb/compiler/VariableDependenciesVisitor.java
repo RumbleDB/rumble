@@ -34,6 +34,7 @@ import java.util.TreeSet;
 import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -413,7 +414,14 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 Node declaration = nameToNodeMap.get(name);
                 if (declaration != null) {
                     dependencyGraph.addVertex(declaration);
-                    dependencyGraph.addEdge(declaration, variableDeclaration);
+                    try {
+                        dependencyGraph.addEdge(declaration, variableDeclaration);
+                    } catch (IllegalArgumentException e) {
+                        throw new CycleInVariableDeclarationsException(
+                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
+                                variableDeclaration.getMetadata()
+                        );
+                    }
                 }
             }
         }
@@ -430,7 +438,14 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 Node declaration = nameToNodeMap.get(name);
                 if (declaration != null) {
                     dependencyGraph.addVertex(declaration);
-                    dependencyGraph.addEdge(declaration, functionDeclaration);
+                    try {
+                        dependencyGraph.addEdge(declaration, functionDeclaration);
+                    } catch (IllegalArgumentException e) {
+                        throw new CycleInVariableDeclarationsException(
+                                "There is a cycle in the dependencies in the variable and function declarations. It is thus impossible to build the dynamic context.",
+                                functionDeclaration.getMetadata()
+                        );
+                    }
                 }
             }
         }
