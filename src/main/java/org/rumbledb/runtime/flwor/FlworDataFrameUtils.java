@@ -257,11 +257,11 @@ public class FlworDataFrameUtils {
     /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
-     * @param trailingComma boolean field to have a trailing comma
-     * @param serializerUdfName
-     * @param groupbyVariableNames
-     * @param dependencies
-     * @param columnNamesByType
+     * @param trailingComma field to have a trailing comma
+     * @param serializerUdfName name of the serializer function
+     * @param groupbyVariableNames names of group by variables
+     * @param dependencies variable dependencies of the group by clause
+     * @param columnNamesByType mapping from types(eg. Long) to columnNames(eg. [testColumn1, testColumn2])
      * @return comma separated variables to be used in spark SQL
      */
     public static String getGroupbyProjectSQL(
@@ -276,53 +276,35 @@ public class FlworDataFrameUtils {
         String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String columnName = columnNames[columnIndex];
-
-            boolean groupingKey = false;
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
-            if (groupbyVariableNames.contains(columnName)) {
-                groupingKey = true;
-            }
-            boolean precomputedCount = false;
-            if (columnNamesByType.get("Long").contains(columnName)) {
-                precomputedCount = true;
-            }
 
-            boolean applyCount = false;
-            if (
-                dependencies.containsKey(columnName)
-                    && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT
-            ) {
-                applyCount = true;
-            }
-            if (precomputedCount) {
+            String columnName = columnNames[columnIndex];
+
+            if (isCountPreComputed(columnNamesByType, columnName)) {
                 queryColumnString.append("sum(`");
-            } else if (applyCount) {
+                queryColumnString.append(columnName);
+                queryColumnString.append("`)");
+            } else if (shouldCalculateCount(dependencies, columnName)) {
                 queryColumnString.append("count(`");
-            } else {
+                queryColumnString.append(columnName);
+                queryColumnString.append("`)");
+            } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
+                // rows that end up in the same group have the same value for the grouping column
+                // return a single instance of this value in the grouping column
                 queryColumnString.append(serializerUdfName);
-                queryColumnString.append("(");
-                if (groupingKey) {
-                    queryColumnString.append("array(");
-                    queryColumnString.append("first(`");
-                } else {
-                    queryColumnString.append("collect_list(`");
-                }
-            }
-
-            queryColumnString.append(columnName);
-
-            if (precomputedCount || applyCount) {
-                queryColumnString.append("`)");
+                queryColumnString.append("(array(first(`");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`)))");
             } else {
-                queryColumnString.append("`)");
-                if (groupingKey) {
-                    queryColumnString.append(")");
-                }
-                queryColumnString.append(")");
+                // aggregate the column values for each row in the group
+                queryColumnString.append(serializerUdfName);
+                queryColumnString.append("(collect_list(`");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`))");
             }
+
             queryColumnString.append(" as `");
             queryColumnString.append(columnName);
             queryColumnString.append("`");
@@ -333,6 +315,22 @@ public class FlworDataFrameUtils {
         }
 
         return queryColumnString.toString();
+    }
+
+    private static boolean isCountPreComputed(Map<String, List<String>> columnNamesByType, String columnName) {
+        return columnNamesByType.get("Long").contains(columnName);
+    }
+
+    private static boolean shouldCalculateCount(
+            Map<String, DynamicContext.VariableDependency> dependencies,
+            String columnName
+    ) {
+        return dependencies.containsKey(columnName)
+            && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT;
+    }
+
+    private static boolean isProcessingGroupingColumn(List<String> groupbyVariableNames, String columnName) {
+        return groupbyVariableNames.contains(columnName);
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
