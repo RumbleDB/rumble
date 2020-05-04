@@ -73,8 +73,8 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
  * 
  * Example:
  * 
- * declare variable $x := 1;
- * declare variable $y := $x;
+ * declare variable $y := 1;
+ * declare variable $x := $y;
  * 
  * If a variable $x depends on a function f, then f's closure must be built before $x is evaluated.
  * 
@@ -86,7 +86,7 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
  * declare variable $x := 1;
  * declare function f() { $x };
  * 
- * Note that a function cannot depend of a function, as mutually recursive calls are allowed.
+ * Note that a function cannot depend on a function, as mutually recursive calls are allowed.
  * 
  * Once all dependencies have been determined, the visited builds a DAG, builds a topological ordering
  * thereof, and re-sorts declarations in the prolog for further processing by other visitors.
