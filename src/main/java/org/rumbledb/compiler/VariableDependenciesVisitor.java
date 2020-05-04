@@ -303,8 +303,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         visit(expression.getPreviousClause(), null);
         addOutputVariableDependencies(expression, getOutputVariableDependencies(expression.getPreviousClause()));
 
-        addInputVariableDependencies(expression, new HashSet<String>());
-
         removeInputVariableDependencies(
             expression,
             getOutputVariableDependencies(expression.getPreviousClause())
@@ -513,7 +511,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             System.out.println(String.join(", ", getInputVariableDependencies(expression)));
             return null;
         }
-        addInputVariableDependencies(expression, new HashSet<String>());
         System.out.println(String.join(", ", getInputVariableDependencies(expression)));
         return null;
     }
