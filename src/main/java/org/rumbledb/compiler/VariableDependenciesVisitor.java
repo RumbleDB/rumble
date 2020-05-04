@@ -408,12 +408,12 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                             + variableDeclaration.getVariableName()
                 );
             }
+            dependencyGraph.addVertex(variableDeclaration);
             for (String name : names) {
                 Node declaration = nameToNodeMap.get(name);
                 if (declaration != null) {
-                    dependencyGraph.addVertex(variableDeclaration);
                     dependencyGraph.addVertex(declaration);
-                    dependencyGraph.addEdge(variableDeclaration, declaration);
+                    dependencyGraph.addEdge(declaration, variableDeclaration);
                 }
             }
         }
@@ -425,26 +425,27 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                             + functionDeclaration.getFunctionIdentifier()
                 );
             }
+            dependencyGraph.addVertex(functionDeclaration);
             for (String name : names) {
                 Node declaration = nameToNodeMap.get(name);
                 if (declaration != null) {
-                    dependencyGraph.addVertex(functionDeclaration);
                     dependencyGraph.addVertex(declaration);
-                    dependencyGraph.addEdge(functionDeclaration, declaration);
+                    dependencyGraph.addEdge(declaration, functionDeclaration);
                 }
             }
         }
         List<Node> resolvedList = new ArrayList<>();
         Iterator<Node> iterator = dependencyGraph.iterator();
         while (iterator.hasNext()) {
-            resolvedList.add(iterator.next());
+            Node nextDeclaration = iterator.next();
+            resolvedList.add(nextDeclaration);
         }
+        prolog.setDeclarations(resolvedList);
         return null;
     }
 
     @Override
     public Void visitVariableDeclaration(VariableDeclaration expression, Void argument) {
-        System.out.println("Visiting variable declaration " + expression.getVariableName());
         if (expression.getExpression() != null) {
             visit(expression.getExpression(), null);
             addInputVariableDependencies(expression, this.inputVariableDependencies.get(expression.getExpression()));
@@ -458,7 +459,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
-        System.out.println("Visiting function declaration " + expression.getFunctionIdentifier());
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, this.inputVariableDependencies.get(expression));
         return null;
