@@ -36,7 +36,6 @@ import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -455,12 +454,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = new DirectedAcyclicGraph<>(DefaultEdge.class);
         for (VariableDeclaration variableDeclaration : prolog.getVariableDeclarations()) {
             Set<String> names = getInputVariableDependencies(variableDeclaration);
-            if (names == null) {
-                throw new OurBadException(
-                        "Error while resolving dependencies! Dependencies not found for "
-                            + variableDeclaration.getVariableName()
-                );
-            }
             dependencyGraph.addVertex(variableDeclaration);
             for (String name : names) {
                 Node declaration = nameToNodeMap.get(name);
@@ -479,12 +472,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         }
         for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
             Set<String> names = getInputVariableDependencies(functionDeclaration);
-            if (names == null) {
-                throw new OurBadException(
-                        "Error while resolving dependencies! Dependencies not found for "
-                            + functionDeclaration.getFunctionIdentifier()
-                );
-            }
             dependencyGraph.addVertex(functionDeclaration);
             for (String name : names) {
                 Node declaration = nameToNodeMap.get(name);

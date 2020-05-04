@@ -60,9 +60,8 @@ public class InlineFunctionExpression extends Expression {
     public String getName() {
         return this.name;
     }
-    
-    public FunctionIdentifier getFunctionIdentifier()
-    {
+
+    public FunctionIdentifier getFunctionIdentifier() {
         return this.functionIdentifier;
     }
 
