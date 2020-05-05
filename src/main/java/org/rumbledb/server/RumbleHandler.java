@@ -4,37 +4,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.net.URI;
 import java.net.URLDecoder;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.spark.api.java.JavaRDD;
-import org.rumbledb.api.Item;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.rumbledb.cli.JsoniqQueryExecutor;
-import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import com.sun.net.httpserver.Headers;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import edu.vanderbilt.accre.laurelin.array.Array;
 import sparksoniq.spark.SparkSessionManager;
 
 public class RumbleHandler implements HttpHandler {
-    
+
     public RumbleHandler() {
     }
 
@@ -46,39 +30,64 @@ public class RumbleHandler implements HttpHandler {
             Map<String, String> queryParameters = new HashMap<String, String>();
             for (String pair : query.split("&")) {
                 int index = pair.indexOf("=");
-                queryParameters.put(URLDecoder.decode(pair.substring(0, index), "UTF-8"), URLDecoder.decode(pair.substring(index + 1), "UTF-8"));
+                queryParameters.put(
+                    URLDecoder.decode(pair.substring(0, index), "UTF-8"),
+                    URLDecoder.decode(pair.substring(index + 1), "UTF-8")
+                );
             }
             String[] args = new String[queryParameters.keySet().size() * 2];
             int i = 0;
-            for(String param : queryParameters.keySet())
-            {
+            for (String param : queryParameters.keySet()) {
                 args[i++] = "--" + param;
                 args[i++] = queryParameters.get(param);
-                System.out.println(param);
-                System.out.println(queryParameters.get(param));
             }
-            System.out.println(args.length);
-            System.out.println(args[0]);
-            System.out.println(args[1]);
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
-            System.out.println(configuration.getQueryPath());
-            System.out.println(configuration.getOutputPath());
-            
-            JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
-            String response = translator.runQuery(configuration.getQueryPath(), configuration.getOutputPath());
-            System.out.println(response);
-            
-            exchange.sendResponseHeaders(200, response.getBytes().length);
-            OutputStream stream = exchange.getResponseBody();
-            stream.write(response.getBytes());
-            stream.close();
-        } catch (Exception e)
-        {
-            e.printStackTrace();
-            exchange.sendResponseHeaders(500, 0);
 
+            JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
+            List<String> responseString = translator.runQuery(
+                configuration.getQueryPath(),
+                configuration.getOutputPath()
+            );
+
+            JSONObject result = new JSONObject();
+            if (responseString != null) {
+                JSONArray results = new JSONArray();
+                for (String s : responseString) {
+                    try {
+                        JSONObject value = new JSONObject(s);
+                        results.put(value);
+                    } catch (Exception e) {
+                        try {
+                            JSONArray array = new JSONArray(s);
+                            results.put(array);
+                        } catch (Exception f) {
+                            results.put(s);
+                        }
+                    }
+                }
+                result.put("values", results);
+            }
+            result.put("status", 200);
+            if (configuration.getOutputPath() != null) {
+                result.put("output-path", configuration.getOutputPath());
+            }
+            if (configuration.getLogPath() != null) {
+                result.put("log-path", configuration.getLogPath());
+            }
+
+            exchange.sendResponseHeaders(200, result.toString().getBytes().length);
+            OutputStream stream = exchange.getResponseBody();
+            stream.write(result.toString().getBytes());
+            stream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+            String error = e.getMessage();
+            exchange.sendResponseHeaders(500, error.getBytes().length);
+            OutputStream stream = exchange.getResponseBody();
+            stream.write(error.getBytes());
+            stream.close();
         }
     }
-    
+
 }

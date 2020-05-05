@@ -42,7 +42,7 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
@@ -59,17 +59,16 @@ public class JsoniqQueryExecutor {
         if (outputPath != null) {
             if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
                 if (!this.configuration.getOverwrite()) {
-                    System.err.println(
-                        "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
+                    throw new RuntimeException(
+                            "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
-                    System.exit(1);
                 }
             }
         }
     }
 
-    public String runQuery(String queryFile, String outputPath) throws IOException {
-        String output = "";
+    public List<String> runQuery(String queryFile, String outputPath) throws IOException {
+        List<String> outputList = null;
         checkOutputFile(outputPath);
         ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
         if (!FileSystemUtil.exists(queryFile, metadata)) {
@@ -97,12 +96,11 @@ public class JsoniqQueryExecutor {
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
             outputRDD.saveAsTextFile(outputPath);
         } else {
-            output = getIteratorOutput(result, dynamicContext);
+            outputList = getIteratorOutput(result, dynamicContext);
             if (outputPath != null) {
-                List<String> lines = Arrays.asList(output);
-                FileSystemUtil.write(outputPath, lines, metadata);
+                FileSystemUtil.write(outputPath, outputList, metadata);
             } else {
-                System.out.println(output);
+                System.out.println(String.join("\n", outputList));
             }
         }
 
@@ -113,7 +111,7 @@ public class JsoniqQueryExecutor {
             String time = "[ExecTime] " + totalTime;
             FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
         }
-        return output;
+        return outputList;
     }
 
     public String runInteractive(String query) throws IOException {
@@ -133,7 +131,7 @@ public class JsoniqQueryExecutor {
             System.out.println(sb);
         }
         if (!runtimeIterator.isRDD()) {
-            String localOutput = this.getIteratorOutput(runtimeIterator, dynamicContext);
+            String localOutput = String.join("\n", this.getIteratorOutput(runtimeIterator, dynamicContext));
             return localOutput;
         }
         String rddOutput = this.getRDDResults(runtimeIterator, dynamicContext);
@@ -170,23 +168,24 @@ public class JsoniqQueryExecutor {
         return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    private String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+    private List<String> getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        List<String> resultList = new ArrayList<>();
         iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
         }
         if (result == null) {
-            return "";
+            return resultList;
         }
         String singleOutput = result.serialize();
         if (!iterator.hasNext()) {
-            return singleOutput;
+            resultList.add(singleOutput);
+            return resultList;
         } else {
             int itemCount = 1;
             StringBuilder sb = new StringBuilder();
-            sb.append(result.serialize());
-            sb.append("\n");
+            resultList.add(result.serialize());
             while (
                 iterator.hasNext()
                     &&
@@ -194,8 +193,7 @@ public class JsoniqQueryExecutor {
                         ||
                         this.configuration.getResultSizeCap() == 0)
             ) {
-                sb.append(iterator.next().serialize());
-                sb.append("\n");
+                resultList.add(iterator.next().serialize());
                 itemCount++;
             }
             if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
@@ -206,7 +204,7 @@ public class JsoniqQueryExecutor {
                 );
             }
             // remove last comma
-            return sb.toString();
+            return resultList;
         }
     }
 
