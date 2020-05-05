@@ -13,18 +13,14 @@ import sparksoniq.spark.SparkSessionManager;
 
 public class RumbleServer {
     
-    private RumbleRuntimeConfiguration configuration;
-    
-    public RumbleServer(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+    public RumbleServer() {
     }
     
     public void start() {
         try {
             HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 8001), 0);
             HttpContext context = server.createContext("/jsoniq");
-            context.setHandler(new RumbleHandler(configuration));
+            context.setHandler(new RumbleHandler());
             server.start();
         } catch (IOException e)
         {

@@ -68,7 +68,8 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public void runQuery(String queryFile, String outputPath) throws IOException {
+    public String runQuery(String queryFile, String outputPath) throws IOException {
+        String output = "";
         checkOutputFile(outputPath);
         ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
         if (!FileSystemUtil.exists(queryFile, metadata)) {
@@ -93,10 +94,10 @@ public class JsoniqQueryExecutor {
 
         if (result.isRDD() && outputPath != null) {
             JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            output.saveAsTextFile(outputPath);
+            JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
+            outputRDD.saveAsTextFile(outputPath);
         } else {
-            String output = getIteratorOutput(result, dynamicContext);
+            output = getIteratorOutput(result, dynamicContext);
             if (outputPath != null) {
                 List<String> lines = Arrays.asList(output);
                 FileSystemUtil.write(outputPath, lines, metadata);
@@ -112,6 +113,7 @@ public class JsoniqQueryExecutor {
             String time = "[ExecTime] " + totalTime;
             FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
         }
+        return output;
     }
 
     public String runInteractive(String query) throws IOException {
