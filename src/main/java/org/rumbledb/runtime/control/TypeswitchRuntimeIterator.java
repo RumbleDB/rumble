@@ -138,6 +138,30 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        return null;
+        this.testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
+        RuntimeIterator localMatchingIterator;
+
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
+            if (localMatchingIterator != null) {
+                if (typeSwitchCase.getVariableName() != null) {
+                    dynamicContext.addVariableValue(
+                        typeSwitchCase.getVariableName(),
+                        Collections.singletonList(this.testValue)
+                    );
+                }
+
+                return localMatchingIterator.getRDD(dynamicContext);
+            }
+        }
+
+        if (this.defaultCase.getVariableName() != null) {
+            dynamicContext.addVariableValue(
+                this.defaultCase.getVariableName(),
+                Collections.singletonList(this.testValue)
+            );
+        }
+
+        return this.defaultCase.getReturnIterator().getRDD(dynamicContext);
     }
 }
