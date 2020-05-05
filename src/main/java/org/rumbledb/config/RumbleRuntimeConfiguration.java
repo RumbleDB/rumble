@@ -120,6 +120,14 @@ public class RumbleRuntimeConfiguration {
         }
     }
 
+    public boolean isServer() {
+        if (this.arguments.containsKey("server")) {
+            return this.arguments.get("server").equals("yes");
+        } else {
+            return false;
+        }
+    }
+
     public boolean isPrintIteratorTree() {
         if (this.arguments.containsKey("print-iterator-tree")) {
             return this.arguments.get("print-iterator-tree").equals("yes");

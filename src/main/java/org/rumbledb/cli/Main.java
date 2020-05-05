@@ -24,6 +24,7 @@ import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -41,6 +42,9 @@ public class Main {
             if (sparksoniqConf.isShell()) {
                 initializeApplication();
                 launchShell(sparksoniqConf);
+            } else if (sparksoniqConf.isServer()) {
+                initializeApplication();
+                launchServer(sparksoniqConf);
             } else if (sparksoniqConf.getQueryPath() != null) {
                 initializeApplication();
                 runQueryExecutor(sparksoniqConf);
@@ -122,6 +126,11 @@ public class Main {
     private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
         terminal = new RumbleJLineShell(sparksoniqConf);
         terminal.launch();
+    }
+
+    private static void launchServer(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
+        RumbleServer server = new RumbleServer(sparksoniqConf);
+        server.start();
     }
 
     public static void printMessageToLog(String message) {
