@@ -54,9 +54,11 @@ public class RumbleHandler implements HttpHandler {
                 configuration.getOutputPath()
             );
 
-            Item values = ItemFactory.getInstance().createArrayItem(items);
             Item output = ItemFactory.getInstance().createObjectItem();
-            output.putItemByKey("values", values);
+            if (items != null) {
+                Item values = ItemFactory.getInstance().createArrayItem(items);
+                output.putItemByKey("values", values);
+            }
             output.putItemByKey("status", ItemFactory.getInstance().createIntegerItem(200));
             if (configuration.getOutputPath() != null) {
                 output.putItemByKey(
