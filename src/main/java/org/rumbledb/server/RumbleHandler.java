@@ -131,9 +131,7 @@ public class RumbleHandler implements HttpHandler {
                 "error-message",
                 ItemFactory.getInstance()
                     .createStringItem(
-                        "Unexpected error: "
-                            + ex.getMessage()
-                            + " We should investigate this. Please contact us or file an issue on GitHub with your query."
+                        "Unexpected error. We should investigate this. Please contact us or file an issue on GitHub with your query."
                     )
             );
             output.putItemByKey("error-code", ItemFactory.getInstance().createStringItem("RBST0004"));
