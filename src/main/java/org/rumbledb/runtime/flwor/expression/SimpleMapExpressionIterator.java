@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.flwor.expression;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -62,14 +63,8 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        return childRDD.flatMap((item) -> {
-            List<Item> currentItems = new ArrayList<>();
-            dynamicContext.addVariableValue("$$", currentItems);
-            currentItems.add(item);
-            List<Item> mapValuesRaw = this.rightIterator.materialize(dynamicContext);
-            dynamicContext.removeVariable("$$");
-            return mapValuesRaw.iterator();
-        });
+        FlatMapFunction<Item, Item> transformation = new SimpleMapExpressionClosure(this.rightIterator, dynamicContext);
+        return childRDD.flatMap(transformation);
     }
 
     @Override
