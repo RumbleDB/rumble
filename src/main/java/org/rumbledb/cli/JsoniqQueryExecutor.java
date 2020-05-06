@@ -192,7 +192,6 @@ public class JsoniqQueryExecutor {
             return resultList;
         } else {
             int itemCount = 1;
-            StringBuilder sb = new StringBuilder();
             resultList.add(result);
             while (
                 iterator.hasNext()
