@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class JsoniqQueryExecutor {
@@ -67,8 +68,8 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    public List<String> runQuery(String queryFile, String outputPath) throws IOException {
-        List<String> outputList = null;
+    public List<Item> runQuery(String queryFile, String outputPath) throws IOException {
+        List<Item> outputList = null;
         checkOutputFile(outputPath);
         ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
         if (!FileSystemUtil.exists(queryFile, metadata)) {
@@ -97,10 +98,11 @@ public class JsoniqQueryExecutor {
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = getIteratorOutput(result, dynamicContext);
+            List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                FileSystemUtil.write(outputPath, outputList, metadata);
+                FileSystemUtil.write(outputPath, lines, metadata);
             } else {
-                System.out.println(String.join("\n", outputList));
+                System.out.println(String.join("\n", lines));
             }
         }
 
@@ -131,7 +133,13 @@ public class JsoniqQueryExecutor {
             System.out.println(sb);
         }
         if (!runtimeIterator.isRDD()) {
-            String localOutput = String.join("\n", this.getIteratorOutput(runtimeIterator, dynamicContext));
+            String localOutput = String.join(
+                "\n",
+                this.getIteratorOutput(runtimeIterator, dynamicContext)
+                    .stream()
+                    .map(x -> x.serialize())
+                    .collect(Collectors.toList())
+            );
             return localOutput;
         }
         String rddOutput = this.getRDDResults(runtimeIterator, dynamicContext);
@@ -168,8 +176,8 @@ public class JsoniqQueryExecutor {
         return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    private List<String> getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        List<String> resultList = new ArrayList<>();
+    private List<Item> getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        List<Item> resultList = new ArrayList<>();
         iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
@@ -178,14 +186,14 @@ public class JsoniqQueryExecutor {
         if (result == null) {
             return resultList;
         }
-        String singleOutput = result.serialize();
+        Item singleOutput = result;
         if (!iterator.hasNext()) {
             resultList.add(singleOutput);
             return resultList;
         } else {
             int itemCount = 1;
             StringBuilder sb = new StringBuilder();
-            resultList.add(result.serialize());
+            resultList.add(result);
             while (
                 iterator.hasNext()
                     &&
@@ -193,7 +201,7 @@ public class JsoniqQueryExecutor {
                         ||
                         this.configuration.getResultSizeCap() == 0)
             ) {
-                resultList.add(iterator.next().serialize());
+                resultList.add(iterator.next());
                 itemCount++;
             }
             if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {

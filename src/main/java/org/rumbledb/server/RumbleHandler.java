@@ -8,10 +8,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
+import org.apache.spark.SparkException;
+import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.items.ItemFactory;
+
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -45,48 +49,96 @@ public class RumbleHandler implements HttpHandler {
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
-            List<String> responseString = translator.runQuery(
+            List<Item> items = translator.runQuery(
                 configuration.getQueryPath(),
                 configuration.getOutputPath()
             );
 
-            JSONObject result = new JSONObject();
-            if (responseString != null) {
-                JSONArray results = new JSONArray();
-                for (String s : responseString) {
-                    try {
-                        JSONObject value = new JSONObject(s);
-                        results.put(value);
-                    } catch (Exception e) {
-                        try {
-                            JSONArray array = new JSONArray(s);
-                            results.put(array);
-                        } catch (Exception f) {
-                            results.put(s);
-                        }
-                    }
-                }
-                result.put("values", results);
-            }
-            result.put("status", 200);
+            Item values = ItemFactory.getInstance().createArrayItem(items);
+            Item output = ItemFactory.getInstance().createObjectItem();
+            output.putItemByKey("values", values);
+            output.putItemByKey("status", ItemFactory.getInstance().createIntegerItem(200));
             if (configuration.getOutputPath() != null) {
-                result.put("output-path", configuration.getOutputPath());
+                output.putItemByKey(
+                    "output-path",
+                    ItemFactory.getInstance().createStringItem(configuration.getOutputPath())
+                );
             }
             if (configuration.getLogPath() != null) {
-                result.put("log-path", configuration.getLogPath());
+                output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
             }
 
-            exchange.sendResponseHeaders(200, result.toString().getBytes().length);
+            exchange.sendResponseHeaders(200, output.serialize().getBytes().length);
             OutputStream stream = exchange.getResponseBody();
-            stream.write(result.toString().getBytes());
+            stream.write(output.serialize().getBytes());
             stream.close();
         } catch (Exception e) {
-            e.printStackTrace();
-            String error = e.getMessage();
-            exchange.sendResponseHeaders(500, error.getBytes().length);
+            Item output = handleException(e);
+            exchange.sendResponseHeaders(500, output.serialize().getBytes().length);
             OutputStream stream = exchange.getResponseBody();
-            stream.write(error.getBytes());
+            stream.write(output.serialize().getBytes());
             stream.close();
+        }
+    }
+
+
+    private static Item handleException(Throwable ex) {
+        try {
+            if (ex != null) {
+                if (ex instanceof SparkException) {
+                    Throwable sparkExceptionCause = ex.getCause();
+                    if (sparkExceptionCause != null) {
+                        return handleException(sparkExceptionCause);
+                    }
+                    return handleException(new SparksoniqRuntimeException(ex.getMessage()));
+                } else if (ex instanceof SparksoniqRuntimeException && !(ex instanceof OurBadException)) {
+                    Item output = ItemFactory.getInstance().createObjectItem();
+                    output.putItemByKey("error-message", ItemFactory.getInstance().createStringItem(ex.getMessage()));
+                    output.putItemByKey(
+                        "error-code",
+                        ItemFactory.getInstance().createStringItem(((SparksoniqRuntimeException) ex).getErrorCode())
+                    );
+                    Item stackTrace = ItemFactory.getInstance().createArrayItem();
+                    output.putItemByKey("stack-trace", stackTrace);
+                    for (StackTraceElement e : ex.getStackTrace()) {
+                        stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
+                    }
+                    return output;
+                } else {
+                    Item output = ItemFactory.getInstance().createObjectItem();
+                    output.putItemByKey(
+                        "error-message",
+                        ItemFactory.getInstance()
+                            .createStringItem(
+                                "Unexpected error: "
+                                    + ex.getMessage()
+                                    + " We should investigate this. Please contact us or file an issue on GitHub with your query."
+                            )
+                    );
+                    output.putItemByKey("error-code", ItemFactory.getInstance().createStringItem("RBST0004"));
+                    Item stackTrace = ItemFactory.getInstance().createArrayItem();
+                    output.putItemByKey("stack-trace", stackTrace);
+                    for (StackTraceElement e : ex.getStackTrace()) {
+                        stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
+                    }
+                    return output;
+                }
+            }
+            Item output = ItemFactory.getInstance().createObjectItem();
+            output.putItemByKey(
+                "error-message",
+                ItemFactory.getInstance()
+                    .createStringItem(
+                        "Unexpected error: "
+                            + ex.getMessage()
+                            + " We should investigate this. Please contact us or file an issue on GitHub with your query."
+                    )
+            );
+            output.putItemByKey("error-code", ItemFactory.getInstance().createStringItem("RBST0004"));
+            return output;
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
         }
     }
 

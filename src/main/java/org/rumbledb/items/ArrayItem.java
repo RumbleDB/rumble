@@ -37,12 +37,18 @@ public class ArrayItem extends JsonItem {
 
     public ArrayItem() {
         super();
+        this.arrayItems = new ArrayList<>();
     }
 
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
     }
+
+    public void append(Item other) {
+        this.arrayItems.add(other);
+    }
+
 
     public List<Item> getItems() {
         return this.arrayItems;

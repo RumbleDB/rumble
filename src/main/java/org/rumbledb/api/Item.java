@@ -229,6 +229,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Adds a value pair, if it is an array item.
+     *
+     * @param value a value.
+     */
+    public void append(Item value) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
+    }
+
+    /**
      * Adds a key-value pair, if it is an object item.
      *
      * @param key a key.
