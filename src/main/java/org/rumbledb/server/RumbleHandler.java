@@ -2,6 +2,7 @@ package org.rumbledb.server;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.HashMap;
@@ -21,9 +22,51 @@ import com.sun.net.httpserver.HttpHandler;
 
 import sparksoniq.spark.SparkSessionManager;
 
+@SuppressWarnings("restriction")
 public class RumbleHandler implements HttpHandler {
+    
+    private enum StatusCode {
+        SUCCESS(200),
+        SERVER_ERROR(500);
+        private int code;
+        StatusCode(int code)
+        {
+            this.code = code;
+        }
+        public int getCode()
+        {
+            return this.code;
+        }
+    }
 
     public RumbleHandler() {
+    }
+    
+    private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException
+    {
+        exchange.sendResponseHeaders(code.getCode(), response.getBytes().length);
+        OutputStream stream = exchange.getResponseBody();
+        stream.write(response.getBytes());
+        stream.close();
+    }
+    
+    public String[] getCLIArguments(String query) throws UnsupportedEncodingException
+    {
+        Map<String, String> queryParameters = new HashMap<String, String>();
+        for (String pair : query.split("&")) {
+            int index = pair.indexOf("=");
+            queryParameters.put(
+                URLDecoder.decode(pair.substring(0, index), "UTF-8"),
+                URLDecoder.decode(pair.substring(index + 1), "UTF-8")
+            );
+        }
+        String[] args = new String[queryParameters.keySet().size() * 2];
+        int i = 0;
+        for (String param : queryParameters.keySet()) {
+            args[i++] = "--" + param;
+            args[i++] = queryParameters.get(param);
+        }
+        return args;
     }
 
     @Override
@@ -31,20 +74,8 @@ public class RumbleHandler implements HttpHandler {
         try {
             URI uri = exchange.getRequestURI();
             String query = uri.getQuery();
-            Map<String, String> queryParameters = new HashMap<String, String>();
-            for (String pair : query.split("&")) {
-                int index = pair.indexOf("=");
-                queryParameters.put(
-                    URLDecoder.decode(pair.substring(0, index), "UTF-8"),
-                    URLDecoder.decode(pair.substring(index + 1), "UTF-8")
-                );
-            }
-            String[] args = new String[queryParameters.keySet().size() * 2];
-            int i = 0;
-            for (String param : queryParameters.keySet()) {
-                args[i++] = "--" + param;
-                args[i++] = queryParameters.get(param);
-            }
+            String args[] = getCLIArguments(query);
+
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
@@ -70,16 +101,10 @@ public class RumbleHandler implements HttpHandler {
                 output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
             }
 
-            exchange.sendResponseHeaders(200, output.serialize().getBytes().length);
-            OutputStream stream = exchange.getResponseBody();
-            stream.write(output.serialize().getBytes());
-            stream.close();
+            sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
         } catch (Exception e) {
             Item output = handleException(e);
-            exchange.sendResponseHeaders(500, output.serialize().getBytes().length);
-            OutputStream stream = exchange.getResponseBody();
-            stream.write(output.serialize().getBytes());
-            stream.close();
+            sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
         }
     }
 

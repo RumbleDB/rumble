@@ -129,7 +129,7 @@ public class Main {
     }
 
     private static void launchServer(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
-        RumbleServer server = new RumbleServer();
+        RumbleServer server = new RumbleServer(sparksoniqConf);
         server.start();
     }
 
