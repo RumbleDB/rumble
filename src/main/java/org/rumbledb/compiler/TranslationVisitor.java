@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -975,7 +975,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             createMetadataFromContext(ctx)
         );
         if (!(literal instanceof IntegerLiteralExpression)) {
-            throw new SparksoniqRuntimeException(
+            throw new RumbleException(
                     "Parser error: In a named function reference, arity must be an integer."
             );
         }

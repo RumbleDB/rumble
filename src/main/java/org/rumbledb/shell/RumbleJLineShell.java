@@ -34,7 +34,7 @@ import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 
 import java.io.IOException;
 
@@ -129,7 +129,7 @@ public class RumbleJLineShell {
                     }
                     handleException(new OurBadException(ex.getMessage()), showErrorInfo);
                 }
-            } else if (ex instanceof SparksoniqRuntimeException) {
+            } else if (ex instanceof RumbleException) {
                 System.err.println("⚠️  ️" + ANSIColor.RED + ex.getMessage() + ANSIColor.RESET);
                 if (showErrorInfo) {
                     ex.printStackTrace();

@@ -22,7 +22,7 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class DuplicateObjectKeyException extends SparksoniqRuntimeException {
+public class DuplicateObjectKeyException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 

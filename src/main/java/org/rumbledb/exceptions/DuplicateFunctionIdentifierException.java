@@ -23,7 +23,7 @@ package org.rumbledb.exceptions;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
-public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
+public class DuplicateFunctionIdentifierException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 

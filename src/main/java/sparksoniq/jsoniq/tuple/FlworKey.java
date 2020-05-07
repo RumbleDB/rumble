@@ -26,7 +26,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -89,7 +89,7 @@ public class FlworKey implements KryoSerializable {
                     (comparisonItem != null && comparisonItem.isArray())
                     || (comparisonItem != null && comparisonItem.isObject())
             ) {
-                throw new SparksoniqRuntimeException("Non atomic key not allowed");
+                throw new RumbleException("Non atomic key not allowed");
             }
 
             // handle the Java null placeholder used in orderByClauseSparkIterator
@@ -106,7 +106,7 @@ public class FlworKey implements KryoSerializable {
                 try {
                     result = currentItem.compareTo(comparisonItem);
                 } catch (RuntimeException e) {
-                    throw new SparksoniqRuntimeException(
+                    throw new RumbleException(
                             "Invalid sort key: cannot compare item of type "
                                 + comparisonItem.getDynamicType().toString()
                                 + " with item of type "

@@ -37,6 +37,7 @@ import java.util.Map;
 public class InlineFunctionExpression extends Expression {
 
     private final String name;
+    private final FunctionIdentifier functionIdentifier;
     private final Map<String, SequenceType> params;
     private final SequenceType returnType;
     private final Expression body;
@@ -53,10 +54,15 @@ public class InlineFunctionExpression extends Expression {
         this.params = params;
         this.returnType = returnType;
         this.body = body;
+        this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
     public String getName() {
         return this.name;
+    }
+
+    public FunctionIdentifier getFunctionIdentifier() {
+        return this.functionIdentifier;
     }
 
     public Map<String, SequenceType> getParams() {
