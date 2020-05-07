@@ -386,8 +386,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         for (TypeswitchCase v : expression.getCases()) {
             visit(v.getReturnExpression(), null);
             addInputVariableDependencies(expression, getInputVariableDependencies(v.getReturnExpression()));
-            if(v.getVariableName() != null)
-            {
+            if (v.getVariableName() != null) {
                 removeInputVariableDependency(expression, v.getVariableName());
             }
         }
