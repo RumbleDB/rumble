@@ -68,7 +68,7 @@ When an expression does not support pushdown, it will materialize automaticaly. 
 Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
 
-## Unsupported/Unimplemented features (alpha release)
+## Unsupported/Unimplemented features (beta release)
 
 Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
 
