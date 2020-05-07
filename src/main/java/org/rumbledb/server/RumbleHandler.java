@@ -89,21 +89,22 @@ public class RumbleHandler implements HttpHandler {
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
             List<Item> items;
             if (configuration.getQueryPath() != null) {
-                if(configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST"))
-                {
-                    throw new CliException("The POST method must be used if specifying an output path, as this has side effects.");
+                if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
+                    throw new CliException(
+                            "The POST method must be used if specifying an output path, as this has side effects."
+                    );
                 }
                 items = translator.runQuery(
                     configuration.getQueryPath(),
                     configuration.getOutputPath()
                 );
             } else {
-                if(configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST"))
-                {
-                    throw new CliException("The POST method must be used if specifying an output path, as this has side effects.");
+                if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
+                    throw new CliException(
+                            "The POST method must be used if specifying an output path, as this has side effects."
+                    );
                 }
-                if(!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST"))
-                {
+                if (!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST")) {
                     throw new CliException("Only the GET and POST methods are supported.");
                 }
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
