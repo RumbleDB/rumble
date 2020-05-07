@@ -14,3 +14,5 @@ The parameters that can be used on the command line as well as on the planned HT
 | --print-iterator-tree | N/A | For debugging purposes, prints out the expression tree and runtime interator tree. |
 | --show-error-info | show-error-info | yes, no | For debugging purposes. If you want to report a bug, you can use this to get the full exception stack. If no, then only a short message is shown in case of error. |
 | --server  | N/A  |  yes, no |  yes runs Rumble as a server on port 8001. Run queries with http://localhost:8001/jsoniq?query-path=/folder/foo.json |
+| --variable:foo  | variable:foo  |  bar |  --variable:foo bar initialize the global variable $foo to "bar". The query must contain the corresponding global variable declaration, e.g., "declare variable $foo external;" |
+

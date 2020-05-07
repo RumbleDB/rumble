@@ -68,15 +68,11 @@ When an expression does not support pushdown, it will materialize automaticaly. 
 Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
 
 
-### Unsupported global variables, settings and modules
+### Unsupported settings and modules
 
-Prologs with user-defined functions are now supported, but not yet global global variables, settings and library modules.
+Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
-Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
-
-Dynamic functions (aka, function items that can be passed as values and dynamically called) are supported.
-
-All function calls are type-checked.
+Prolog settings and library modules are not supported yet.
 
 ### Unsupported try/catch
 
