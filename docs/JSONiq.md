@@ -63,26 +63,28 @@ We also started to push down some expressions to DataFrames and Spark SQL (obtai
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
 
-## Unsupported/Unimplemented features (alpha release)
-
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
-
-
-### Unsupported settings and modules
+## External global variables.
 
 Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
+
+## Unsupported/Unimplemented features (alpha release)
+
+Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
+
+### Settings and modules
+
 Prolog settings and library modules are not supported yet.
 
-### Unsupported try/catch
+### Try/catch
 
-Try/catch expressions. Exceptions raised remotely may not be displayed in a user-friendly way yet, but we are working on it.
+Try/catch expressions are not supported yet but this is planned.
 
-### Unsupported nested expressions in object lookups (rhs)
+### Nested expressions in object lookups (rhs)
 
 Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
 
-### Unsupported types
+### Types
 
 The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
 
@@ -123,10 +125,10 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | yearMonthDuration | supported |
 
 
-### Unsupported builtin functions
+### Builtin functions
 
 Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
 
-### Unsupported updates and scripting
+### Updates and scripting
 
 JSON updates are not supported. Scripting features (assignment, while loop, ...) are not supported yet either.
