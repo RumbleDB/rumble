@@ -1,6 +1,8 @@
 package org.rumbledb.server;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
@@ -24,41 +26,45 @@ import sparksoniq.spark.SparkSessionManager;
 
 @SuppressWarnings("restriction")
 public class RumbleHandler implements HttpHandler {
-    
+
     private enum StatusCode {
         SUCCESS(200),
         SERVER_ERROR(500);
+
         private int code;
-        StatusCode(int code)
-        {
+
+        StatusCode(int code) {
             this.code = code;
         }
-        public int getCode()
-        {
+
+        public int getCode() {
             return this.code;
         }
     }
 
     public RumbleHandler() {
     }
-    
-    private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException
-    {
+
+    private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException {
         exchange.sendResponseHeaders(code.getCode(), response.getBytes().length);
         OutputStream stream = exchange.getResponseBody();
         stream.write(response.getBytes());
         stream.close();
     }
-    
-    public String[] getCLIArguments(String query) throws UnsupportedEncodingException
-    {
+
+    public String[] getCLIArguments(String query) throws UnsupportedEncodingException {
         Map<String, String> queryParameters = new HashMap<String, String>();
+        if (query == null) {
+            query = "";
+        }
         for (String pair : query.split("&")) {
             int index = pair.indexOf("=");
-            queryParameters.put(
-                URLDecoder.decode(pair.substring(0, index), "UTF-8"),
-                URLDecoder.decode(pair.substring(index + 1), "UTF-8")
-            );
+            if (index != -1) {
+                queryParameters.put(
+                    URLDecoder.decode(pair.substring(0, index), "UTF-8"),
+                    URLDecoder.decode(pair.substring(index + 1), "UTF-8")
+                );
+            }
         }
         String[] args = new String[queryParameters.keySet().size() * 2];
         int i = 0;
@@ -73,17 +79,30 @@ public class RumbleHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         try {
             URI uri = exchange.getRequestURI();
-            String query = uri.getQuery();
-            String args[] = getCLIArguments(query);
+            String queryString = uri.getQuery();
+            String args[] = getCLIArguments(queryString);
 
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
-            List<Item> items = translator.runQuery(
-                configuration.getQueryPath(),
-                configuration.getOutputPath()
-            );
+            List<Item> items;
+            if (configuration.getQueryPath() != null) {
+                items = translator.runQuery(
+                    configuration.getQueryPath(),
+                    configuration.getOutputPath()
+                );
+            } else {
+                InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
+                BufferedReader r2 = new BufferedReader(r);
+                StringBuffer sb = new StringBuffer();
+                String s;
+                while ((s = r2.readLine()) != null) {
+                    sb.append(s);
+                }
+                String JSONiqQuery = sb.toString();
+                items = translator.runInteractive(JSONiqQuery);
+            }
 
             Item output = ItemFactory.getInstance().createObjectItem();
             if (items != null) {

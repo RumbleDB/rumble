@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SparksoniqRuntimeException;
 
 import java.io.IOException;
+import java.util.stream.Collectors;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
@@ -85,7 +86,13 @@ public class RumbleJLineShell {
         String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
         try {
-            String result = this.jsoniqQueryExecutor.runInteractive(query);
+            String result = String.join(
+                "\n",
+                this.jsoniqQueryExecutor.runInteractive(query)
+                    .stream()
+                    .map(x -> x.serialize())
+                    .collect(Collectors.toList())
+            );
             output(result);
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {

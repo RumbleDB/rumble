@@ -12,7 +12,7 @@ import com.sun.net.httpserver.HttpServer;
 
 @SuppressWarnings("restriction")
 public class RumbleServer {
-    
+
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     public RumbleServer(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
@@ -21,7 +21,10 @@ public class RumbleServer {
 
     public void start() {
         try {
-            HttpServer server = HttpServer.create(new InetSocketAddress("localhost", rumbleRuntimeConfiguration.getPort()), 0);
+            HttpServer server = HttpServer.create(
+                new InetSocketAddress("localhost", this.rumbleRuntimeConfiguration.getPort()),
+                0
+            );
             HttpContext context = server.createContext("/jsoniq");
             context.setHandler(new RumbleHandler());
             server.start();

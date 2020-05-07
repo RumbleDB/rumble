@@ -116,7 +116,7 @@ public class JsoniqQueryExecutor {
         return outputList;
     }
 
-    public String runInteractive(String query) throws IOException {
+    public List<Item> runInteractive(String query) throws IOException {
         // create temp file
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
@@ -133,17 +133,9 @@ public class JsoniqQueryExecutor {
             System.out.println(sb);
         }
         if (!runtimeIterator.isRDD()) {
-            String localOutput = String.join(
-                "\n",
-                this.getIteratorOutput(runtimeIterator, dynamicContext)
-                    .stream()
-                    .map(x -> x.serialize())
-                    .collect(Collectors.toList())
-            );
-            return localOutput;
+            return this.getIteratorOutput(runtimeIterator, dynamicContext);
         }
-        String rddOutput = this.getRDDResults(runtimeIterator, dynamicContext);
-        return rddOutput;
+        return this.getRDDResults(runtimeIterator, dynamicContext);
     }
 
     private MainModule parse(JsoniqLexer lexer) {
@@ -215,17 +207,8 @@ public class JsoniqQueryExecutor {
         }
     }
 
-    private String getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
+    private List<Item> getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
         JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
-
-        StringBuilder sb = new StringBuilder();
-        for (String item : collectedOutput) {
-            sb.append(item);
-            sb.append("\n");
-        }
-
-        return sb.toString();
+        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd);
     }
 }
