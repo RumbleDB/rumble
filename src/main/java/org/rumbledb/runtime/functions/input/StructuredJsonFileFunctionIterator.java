@@ -27,7 +27,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -64,7 +64,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
             }
             if (e instanceof SparkException) {
-                throw new SparksoniqRuntimeException(
+                throw new RumbleException(
                         "File "
                             + url
                             + " contains a malformed JSON document that does not fit into the JSON lines format.",
