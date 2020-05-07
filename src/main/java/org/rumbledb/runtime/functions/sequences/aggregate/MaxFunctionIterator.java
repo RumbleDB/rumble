@@ -25,7 +25,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemComparatorForSequences;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -71,7 +71,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
 
                 try {
                     return Collections.max(results, comparator);
-                } catch (SparksoniqRuntimeException e) {
+                } catch (RumbleException e) {
                     throw new InvalidArgumentTypeException(
                             "Max expression input error. Input has to be non-null atomics of matching types: "
                                 + e.getMessage(),
@@ -81,7 +81,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
             } else {
                 try {
                     return this.iterator.getRDD(this.currentDynamicContextForLocalExecution).max(comparator);
-                } catch (SparksoniqRuntimeException e) {
+                } catch (RumbleException e) {
                     throw new InvalidArgumentTypeException(
                             "Max expression input error. Input has to be non-null atomics of matching types: "
                                 + e.getMessage(),

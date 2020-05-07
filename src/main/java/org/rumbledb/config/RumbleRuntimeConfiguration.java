@@ -31,6 +31,11 @@ public class RumbleRuntimeConfiguration {
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
     private HashMap<String, String> arguments;
+    private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
+
+    public RumbleRuntimeConfiguration() {
+        this.arguments = new HashMap<>();
+    }
 
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
@@ -45,6 +50,10 @@ public class RumbleRuntimeConfiguration {
             String argumentValue = args[i + 1];
             this.arguments.put(argumentName, argumentValue);
         }
+    }
+
+    public static RumbleRuntimeConfiguration getDefaultConfiguration() {
+        return RumbleRuntimeConfiguration.defaultConfiguration;
     }
 
     public String getConfigurationArgument(String key) {

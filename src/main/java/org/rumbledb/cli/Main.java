@@ -23,8 +23,8 @@ package org.rumbledb.cli;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
 import org.rumbledb.server.RumbleServer;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.shell.RumbleJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -94,9 +94,9 @@ public class Main {
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
-                    handleException(new SparksoniqRuntimeException(ex.getMessage()), showErrorInfo);
+                    handleException(new RumbleException(ex.getMessage()), showErrorInfo);
                 }
-            } else if (ex instanceof SparksoniqRuntimeException && !(ex instanceof OurBadException)) {
+            } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {
                     ex.printStackTrace();

@@ -7,6 +7,7 @@ import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.module.MainModule;
@@ -68,6 +69,7 @@ public class Rumble {
             e.initCause(ex);
             throw e;
         }
+        VisitorHelpers.resolveDependencies(mainModule, RumbleRuntimeConfiguration.getDefaultConfiguration());
         VisitorHelpers.populateStaticContext(mainModule);
 
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);

@@ -30,7 +30,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -178,7 +178,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             );
         }
 
-        throw new SparksoniqRuntimeException(
+        throw new RumbleException(
                 "Runtime error retrieving variable " + varName + " value",
                 metadata
         );
