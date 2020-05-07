@@ -6,7 +6,8 @@ pages:
   - '4. The JSONiq language': 'JSONiq.md'
   - '5. Reading data': 'Input.md'
   - '6. Function library': 'Function library.md'
-  - '7. Error codes': 'Error codes.md'
-  - '8. Compile from GitHub': 'install.md'
-  - '9. Licenses': 'Licenses.md'
+  - '7. CLI and HTTP parameters': 'CLI.md'
+  - '8. Error codes': 'Error codes.md'
+  - '9. Compile from GitHub': 'install.md'
+  - '10. Licenses': 'Licenses.md'
 theme: readthedocs
