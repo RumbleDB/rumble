@@ -35,6 +35,7 @@ import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CycleInVariableDeclarationsException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -116,7 +117,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void addInputVariableDependencies(Node node, Set<String> variables) {
-        if (variables == null || variables.isEmpty()) {
+        if (variables == null) {
+            throw new OurBadException("Unexpected null set while resolving variable dependencies.");
+        }
+        if (variables.isEmpty()) {
             return;
         }
         if (!this.inputVariableDependencies.keySet().contains(node)) {
@@ -126,7 +130,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void removeInputVariableDependencies(Node node, Set<String> variables) {
-        if (variables == null || variables.isEmpty()) {
+        if (variables == null) {
+            throw new OurBadException("Unexpected null set while resolving variable dependencies.");
+        }
+        if (variables.isEmpty()) {
             return;
         }
         if (!this.inputVariableDependencies.keySet().contains(node)) {
@@ -139,7 +146,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     private void addInputVariableDependency(Node node, String variable) {
         if (variable == null) {
-            return;
+            throw new OurBadException("Unexpected null string while resolving variable dependencies.");
         }
         if (!this.inputVariableDependencies.keySet().contains(node)) {
             this.inputVariableDependencies.put(node, new TreeSet<String>());
@@ -149,7 +156,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     private void removeInputVariableDependency(Node node, String variable) {
         if (variable == null) {
-            return;
+            throw new OurBadException("Unexpected null string while resolving variable dependencies.");
         }
         if (!this.inputVariableDependencies.keySet().contains(node)) {
             return;
@@ -158,7 +165,10 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     }
 
     private void addOutputVariableDependencies(Node node, Set<String> variables) {
-        if (variables == null || variables.isEmpty()) {
+        if (variables == null) {
+            throw new OurBadException("Unexpected null set while resolving variable dependencies.");
+        }
+        if (variables.isEmpty()) {
             return;
         }
         if (!this.outputVariableDependenciesForClauses.keySet().contains(node)) {
@@ -169,7 +179,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     private void addOutputVariableDependency(Node node, String variable) {
         if (variable == null) {
-            return;
+            throw new OurBadException("Unexpected null string while resolving variable dependencies.");
         }
         if (!this.outputVariableDependenciesForClauses.keySet().contains(node)) {
             this.outputVariableDependenciesForClauses.put(node, new TreeSet<String>());
@@ -179,7 +189,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     private Set<String> getOutputVariableDependencies(Node node) {
         if (node == null) {
-            return Collections.emptySet();
+            throw new OurBadException("Unexpected null string while resolving variable dependencies.");
         }
         if (!this.outputVariableDependenciesForClauses.containsKey(node)) {
             return Collections.emptySet();
@@ -189,7 +199,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     private Set<String> getInputVariableDependencies(Node node) {
         if (node == null) {
-            return Collections.emptySet();
+            throw new OurBadException("Unexpected null string while resolving variable dependencies.");
         }
         if (!this.inputVariableDependencies.containsKey(node)) {
             return Collections.emptySet();
