@@ -15,8 +15,9 @@ import org.apache.spark.SparkException;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
 import com.sun.net.httpserver.HttpExchange;
@@ -88,11 +89,23 @@ public class RumbleHandler implements HttpHandler {
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
             List<Item> items;
             if (configuration.getQueryPath() != null) {
+                if(configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST"))
+                {
+                    throw new CliException("The POST method must be used if specifying an output path, as this has side effects.");
+                }
                 items = translator.runQuery(
                     configuration.getQueryPath(),
                     configuration.getOutputPath()
                 );
             } else {
+                if(configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST"))
+                {
+                    throw new CliException("The POST method must be used if specifying an output path, as this has side effects.");
+                }
+                if(!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST"))
+                {
+                    throw new CliException("Only the GET and POST methods are supported.");
+                }
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);
                 StringBuffer sb = new StringBuffer();
@@ -136,13 +149,13 @@ public class RumbleHandler implements HttpHandler {
                     if (sparkExceptionCause != null) {
                         return handleException(sparkExceptionCause);
                     }
-                    return handleException(new SparksoniqRuntimeException(ex.getMessage()));
-                } else if (ex instanceof SparksoniqRuntimeException && !(ex instanceof OurBadException)) {
+                    return handleException(new RumbleException(ex.getMessage()));
+                } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                     Item output = ItemFactory.getInstance().createObjectItem();
                     output.putItemByKey("error-message", ItemFactory.getInstance().createStringItem(ex.getMessage()));
                     output.putItemByKey(
                         "error-code",
-                        ItemFactory.getInstance().createStringItem(((SparksoniqRuntimeException) ex).getErrorCode())
+                        ItemFactory.getInstance().createStringItem(((RumbleException) ex).getErrorCode())
                     );
                     Item stackTrace = ItemFactory.getInstance().createArrayItem();
                     output.putItemByKey("stack-trace", stackTrace);
