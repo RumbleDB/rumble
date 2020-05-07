@@ -91,6 +91,10 @@ or during the dynamic evaluation phase, the dynamic type of
 a value does not match a required type. 
 Example: using subtraction on strings.
 
+- [XQDY0054] - It is a dynamic error if a cycle is encountered
+in the definition of a module's dynamic context components,
+for example because of a cycle in variable declarations.
+
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 
 raises a static error if it encounters a module declaration 
