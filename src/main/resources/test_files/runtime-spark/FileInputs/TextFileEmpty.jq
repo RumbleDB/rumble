@@ -1,2 +1,2 @@
 (:JIQS: ShouldRun; Output="" :)
-text-file("./src/main/resources/queries/emptyFile.txt", 10)
+text-file("./src/test/resources/queries/emptyFile.txt", 10)

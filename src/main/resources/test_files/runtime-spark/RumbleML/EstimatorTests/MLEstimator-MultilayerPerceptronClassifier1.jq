@@ -1,5 +1,5 @@
 (:JIQS: ShouldRun; Output="({ "label" : 1, "features" : { "0" : -0.222222, "1" : 0.5, "2" : -0.762712, "3" : -0.833333 }, "prediction" : 1 }, { "label" : 1, "features" : { "0" : -0.555556, "1" : 0.25, "2" : -0.864407, "3" : -0.916667 }, "prediction" : 1 }, { "label" : 1, "features" : { "0" : -0.722222, "1" : -0.166667, "2" : -0.864407, "3" : -0.833333 }, "prediction" : 1 }, { "label" : 1, "features" : { "0" : -0.722222, "1" : 0.166667, "2" : -0.694915, "3" : -0.916667 }, "prediction" : 1 })" :)
-let $data := libsvm-file("./src/main/resources/queries/rumbleML/sample-libsvm-data-multiclass-classification.txt")
+let $data := libsvm-file("./src/test/resources/queries/rumbleML/sample-libsvm-data-multiclass-classification.txt")
 
 let $est := get-estimator("MultilayerPerceptronClassifier")
 let $tra := $est(

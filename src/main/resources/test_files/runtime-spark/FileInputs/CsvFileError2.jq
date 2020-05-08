@@ -1,2 +1,2 @@
 (:JIQS: ShouldCrash; ErrorCode="XPTY0004":)
-csv-file("./src/main/resources/queries/cities.csv", {"header": [true]})
+csv-file("./src/test/resources/queries/cities.csv", {"header": [true]})

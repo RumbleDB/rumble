@@ -1,6 +1,6 @@
 (:JIQS: ShouldCrash; ErrorCode="RBML0004"; :)
 let $transformer := get-transformer("VectorAssembler")
-let $rdd-data := json-file("./src/main/resources/queries/rumbleML/sample-ml-data-age-weight.json")
+let $rdd-data := json-file("./src/test/resources/queries/rumbleML/sample-ml-data-age-weight.json")
 for $i in $transformer(
   $rdd-data,
   {"inputCols": ["age", "weight"], "outputCol": "features"}

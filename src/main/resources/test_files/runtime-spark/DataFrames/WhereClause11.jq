@@ -3,7 +3,7 @@ for $rank in 1 to 4
 return {
   "Rank" : $rank,
   "Count" : count(
-  for $i in json-file("./src/main/resources/queries/conf-ex.json", 100)
+  for $i in json-file("./src/test/resources/queries/conf-ex.json", 100)
   where $i.target eq $i.choices[[$rank]]
   return 1)
 }

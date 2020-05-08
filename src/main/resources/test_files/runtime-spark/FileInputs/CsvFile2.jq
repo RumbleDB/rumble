@@ -1,2 +1,2 @@
 (:JIQS: ShouldRun; Output="131" :)
-count(csv-file("./src/main/resources/queries/cities*.csv"))
+count(csv-file("./src/test/resources/queries/cities*.csv"))
