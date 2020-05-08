@@ -15,7 +15,7 @@ import org.apache.spark.SparkException;
 import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.exceptions.CliException;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
@@ -26,10 +26,11 @@ import com.sun.net.httpserver.HttpHandler;
 import sparksoniq.spark.SparkSessionManager;
 
 @SuppressWarnings("restriction")
-public class RumbleHandler implements HttpHandler {
+public class RumbleHttpHandler implements HttpHandler {
 
     private enum StatusCode {
         SUCCESS(200),
+        METHOD_NOT_SUPPORTED(405),
         SERVER_ERROR(500);
 
         private int code;
@@ -43,7 +44,7 @@ public class RumbleHandler implements HttpHandler {
         }
     }
 
-    public RumbleHandler() {
+    public RumbleHttpHandler() {
     }
 
     private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException {
@@ -81,7 +82,7 @@ public class RumbleHandler implements HttpHandler {
         try {
             URI uri = exchange.getRequestURI();
             String queryString = uri.getQuery();
-            String args[] = getCLIArguments(queryString);
+            String[] args = getCLIArguments(queryString);
 
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
@@ -90,9 +91,12 @@ public class RumbleHandler implements HttpHandler {
             List<Item> items;
             if (configuration.getQueryPath() != null) {
                 if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
-                    throw new CliException(
-                            "The POST method must be used if specifying an output path, as this has side effects."
+                    this.sendResponse(
+                        exchange,
+                        StatusCode.METHOD_NOT_SUPPORTED,
+                        "The POST method must be used if specifying an output path, as this has side effects."
                     );
+                    return;
                 }
                 items = translator.runQuery(
                     configuration.getQueryPath(),
@@ -100,12 +104,20 @@ public class RumbleHandler implements HttpHandler {
                 );
             } else {
                 if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
-                    throw new CliException(
-                            "The POST method must be used if specifying an output path, as this has side effects."
+                    this.sendResponse(
+                        exchange,
+                        StatusCode.METHOD_NOT_SUPPORTED,
+                        "Only the GET and POST methods are supported."
                     );
+                    return;
                 }
                 if (!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST")) {
-                    throw new CliException("Only the GET and POST methods are supported.");
+                    this.sendResponse(
+                        exchange,
+                        StatusCode.METHOD_NOT_SUPPORTED,
+                        "Only the GET and POST methods are supported."
+                    );
+                    return;
                 }
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);
@@ -118,21 +130,7 @@ public class RumbleHandler implements HttpHandler {
                 items = translator.runInteractive(JSONiqQuery);
             }
 
-            Item output = ItemFactory.getInstance().createObjectItem();
-            if (items != null) {
-                Item values = ItemFactory.getInstance().createArrayItem(items);
-                output.putItemByKey("values", values);
-            }
-            output.putItemByKey("status", ItemFactory.getInstance().createIntegerItem(200));
-            if (configuration.getOutputPath() != null) {
-                output.putItemByKey(
-                    "output-path",
-                    ItemFactory.getInstance().createStringItem(configuration.getOutputPath())
-                );
-            }
-            if (configuration.getLogPath() != null) {
-                output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
-            }
+            Item output = assembleResponse(configuration, items);
 
             sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
         } catch (Exception e) {
@@ -141,7 +139,45 @@ public class RumbleHandler implements HttpHandler {
         }
     }
 
+    public static Item assembleResponse(RumbleRuntimeConfiguration configuration, List<Item> results) {
+        Item output = ItemFactory.getInstance().createObjectItem();
+        if (configuration.getOutputPath() != null) {
+            output.putItemByKey(
+                "output-path",
+                ItemFactory.getInstance().createStringItem(configuration.getOutputPath())
+            );
+        } else {
+            if (results != null) {
+                Item values = ItemFactory.getInstance().createArrayItem(results);
+                output.putItemByKey("values", values);
+            }
+        }
+        if (configuration.getLogPath() != null) {
+            output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
+        }
+        return output;
+    }
 
+    public static Item assembleErrorReponse(String message, String code, StackTraceElement[] stackTraceElements) {
+        Item output = ItemFactory.getInstance().createObjectItem();
+        output.putItemByKey("error-message", ItemFactory.getInstance().createStringItem(message));
+        output.putItemByKey(
+            "error-code",
+            ItemFactory.getInstance().createStringItem(code)
+        );
+        Item stackTrace = ItemFactory.getInstance().createArrayItem();
+        if (stackTrace == null) {
+            return output;
+        }
+        output.putItemByKey("stack-trace", stackTrace);
+        for (StackTraceElement e : stackTraceElements) {
+            stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
+        }
+        return output;
+    }
+
+
+    @SuppressWarnings("null")
     private static Item handleException(Throwable ex) {
         try {
             if (ex != null) {
@@ -152,48 +188,26 @@ public class RumbleHandler implements HttpHandler {
                     }
                     return handleException(new RumbleException(ex.getMessage()));
                 } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
-                    Item output = ItemFactory.getInstance().createObjectItem();
-                    output.putItemByKey("error-message", ItemFactory.getInstance().createStringItem(ex.getMessage()));
-                    output.putItemByKey(
-                        "error-code",
-                        ItemFactory.getInstance().createStringItem(((RumbleException) ex).getErrorCode())
+                    return assembleErrorReponse(
+                        ex.getMessage(),
+                        ((RumbleException) ex).getErrorCode(),
+                        ex.getStackTrace()
                     );
-                    Item stackTrace = ItemFactory.getInstance().createArrayItem();
-                    output.putItemByKey("stack-trace", stackTrace);
-                    for (StackTraceElement e : ex.getStackTrace()) {
-                        stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
-                    }
-                    return output;
                 } else {
-                    Item output = ItemFactory.getInstance().createObjectItem();
-                    output.putItemByKey(
-                        "error-message",
-                        ItemFactory.getInstance()
-                            .createStringItem(
-                                "Unexpected error: "
-                                    + ex.getMessage()
-                                    + " We should investigate this. Please contact us or file an issue on GitHub with your query."
-                            )
+                    return assembleErrorReponse(
+                        "Unexpected error. We should investigate this. Please contact us or file an issue on GitHub with your query.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
                     );
-                    output.putItemByKey("error-code", ItemFactory.getInstance().createStringItem("RBST0004"));
-                    Item stackTrace = ItemFactory.getInstance().createArrayItem();
-                    output.putItemByKey("stack-trace", stackTrace);
-                    for (StackTraceElement e : ex.getStackTrace()) {
-                        stackTrace.append(ItemFactory.getInstance().createStringItem(e.toString()));
-                    }
-                    return output;
                 }
             }
-            Item output = ItemFactory.getInstance().createObjectItem();
-            output.putItemByKey(
-                "error-message",
-                ItemFactory.getInstance()
-                    .createStringItem(
-                        "Unexpected error. We should investigate this. Please contact us or file an issue on GitHub with your query."
-                    )
+            return assembleErrorReponse(
+                "Unexpected error: "
+                    + ex.getMessage()
+                    + " We should investigate this. Please contact us or file an issue on GitHub with your query.",
+                ErrorCode.OurBadErrorCode.toString(),
+                null
             );
-            output.putItemByKey("error-code", ItemFactory.getInstance().createStringItem("RBST0004"));
-            return output;
         } catch (Exception e) {
             e.printStackTrace();
             return null;

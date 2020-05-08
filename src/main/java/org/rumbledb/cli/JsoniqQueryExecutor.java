@@ -200,7 +200,6 @@ public class JsoniqQueryExecutor {
                         + " items. This value can be configured with the --result-size parameter at startup"
                 );
             }
-            // remove last comma
             return resultList;
         }
     }

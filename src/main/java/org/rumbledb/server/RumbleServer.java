@@ -26,7 +26,7 @@ public class RumbleServer {
                 0
             );
             HttpContext context = server.createContext("/jsoniq");
-            context.setHandler(new RumbleHandler());
+            context.setHandler(new RumbleHttpHandler());
             server.start();
         } catch (IOException e) {
             throw new OurBadException(e.getMessage(), new ExceptionMetadata(0, 0));
