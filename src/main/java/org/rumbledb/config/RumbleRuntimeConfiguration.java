@@ -72,6 +72,14 @@ public class RumbleRuntimeConfiguration {
         }
     }
 
+    public int getPort() {
+        if (this.arguments.containsKey("port")) {
+            return Integer.parseInt(this.arguments.get("port"));
+        } else {
+            return 8001;
+        }
+    }
+
     public boolean getOverwrite() {
         if (this.arguments.containsKey("overwrite")) {
             return this.arguments.get("overwrite").equals("yes");
@@ -124,6 +132,14 @@ public class RumbleRuntimeConfiguration {
     public boolean isShell() {
         if (this.arguments.containsKey("shell")) {
             return this.arguments.get("shell").equals("yes");
+        } else {
+            return false;
+        }
+    }
+
+    public boolean isServer() {
+        if (this.arguments.containsKey("server")) {
+            return this.arguments.get("server").equals("yes");
         } else {
             return false;
         }
