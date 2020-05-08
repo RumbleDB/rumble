@@ -1,0 +1,15 @@
+(:JIQS: ShouldRun; Output="(false, false, true, true, false, true, true, false, true, false, false, true, true, false)" :)
+("ab", 1, 4e1, 0.2, true) = null,
+null = ("ab"),
+null = null,
+(null, "ac") != ("ab", "ac"),
+(null) != (null),
+null != ("ab", "ab"),
+("ab", null) < ("1", "ce"),
+("ab", 1) < (null, null),
+("ab", null) <= (null),
+(1) <= (null),
+(null) > ("ab", "ac"),
+(null, "ab") > ("1", "ac"),
+(null) >= ("ac", null),
+(null) >= ("xy", "xz")
