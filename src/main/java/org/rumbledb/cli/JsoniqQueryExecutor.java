@@ -32,6 +32,7 @@ import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.module.MainModule;
@@ -60,7 +61,7 @@ public class JsoniqQueryExecutor {
         if (outputPath != null) {
             if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
                 if (!this.configuration.getOverwrite()) {
-                    throw new RuntimeException(
+                    throw new CliException(
                             "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
                 }
