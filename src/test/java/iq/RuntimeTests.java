@@ -48,7 +48,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     public static final File runtimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/runtime"
+                "/src/test/resources/test_files/runtime"
     );
     public static final String javaVersion =
         System.getProperty("java.version");
