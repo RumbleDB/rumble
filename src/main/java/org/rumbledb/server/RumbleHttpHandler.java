@@ -54,7 +54,7 @@ public class RumbleHttpHandler implements HttpHandler {
         stream.close();
     }
 
-    public String[] getCLIArguments(String query) throws UnsupportedEncodingException {
+    private String[] getCLIArguments(String query) throws UnsupportedEncodingException {
         Map<String, String> queryParameters = new HashMap<String, String>();
         if (query == null) {
             query = "";
@@ -139,7 +139,7 @@ public class RumbleHttpHandler implements HttpHandler {
         }
     }
 
-    public static Item assembleResponse(RumbleRuntimeConfiguration configuration, List<Item> results) {
+    private static Item assembleResponse(RumbleRuntimeConfiguration configuration, List<Item> results) {
         Item output = ItemFactory.getInstance().createObjectItem();
         if (configuration.getOutputPath() != null) {
             output.putItemByKey(
@@ -158,7 +158,7 @@ public class RumbleHttpHandler implements HttpHandler {
         return output;
     }
 
-    public static Item assembleErrorReponse(String message, String code, StackTraceElement[] stackTraceElements) {
+    private static Item assembleErrorReponse(String message, String code, StackTraceElement[] stackTraceElements) {
         Item output = ItemFactory.getInstance().createObjectItem();
         output.putItemByKey("error-message", ItemFactory.getInstance().createStringItem(message));
         output.putItemByKey(
