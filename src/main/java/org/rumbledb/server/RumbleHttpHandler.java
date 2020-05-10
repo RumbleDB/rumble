@@ -81,47 +81,25 @@ public class RumbleHttpHandler implements HttpHandler {
     public void handle(HttpExchange exchange) throws IOException {
         try {
             URI uri = exchange.getRequestURI();
+            validateRequest(exchange);
             String queryString = uri.getQuery();
             String[] args = getCLIArguments(queryString);
 
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
+            validateConfiguration(exchange, configuration);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
             List<Item> items;
             if (configuration.getQueryPath() != null) {
-                if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
-                    this.sendResponse(
-                        exchange,
-                        StatusCode.METHOD_NOT_SUPPORTED,
-                        "The POST method must be used if specifying an output path, as this has side effects."
-                    );
-                    return;
-                }
                 items = translator.runQuery(
                     configuration.getQueryPath(),
                     configuration.getOutputPath()
                 );
             } else {
-                if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
-                    this.sendResponse(
-                        exchange,
-                        StatusCode.METHOD_NOT_SUPPORTED,
-                        "Only the GET and POST methods are supported."
-                    );
-                    return;
-                }
-                if (!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST")) {
-                    this.sendResponse(
-                        exchange,
-                        StatusCode.METHOD_NOT_SUPPORTED,
-                        "Only the GET and POST methods are supported."
-                    );
-                    return;
-                }
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);
-                StringBuffer sb = new StringBuffer();
+                StringBuilder sb = new StringBuilder();
                 String s;
                 while ((s = r2.readLine()) != null) {
                     sb.append(s);
@@ -132,10 +110,32 @@ public class RumbleHttpHandler implements HttpHandler {
 
             Item output = assembleResponse(configuration, items);
 
-            sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
+            this.sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
         } catch (Exception e) {
             Item output = handleException(e);
-            sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
+            this.sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
+        }
+    }
+
+
+    private void validateRequest(HttpExchange exchange) throws IOException {
+        if (!exchange.getRequestMethod().equals("GET") && !exchange.getRequestMethod().equals("POST")) {
+            this.sendResponse(
+                exchange,
+                StatusCode.METHOD_NOT_SUPPORTED,
+                "Only the GET and POST methods are supported."
+            );
+        }
+    }
+
+    private void validateConfiguration(HttpExchange exchange, RumbleRuntimeConfiguration configuration)
+            throws IOException {
+        if (configuration.getOutputPath() != null && !exchange.getRequestMethod().equals("POST")) {
+            this.sendResponse(
+                exchange,
+                StatusCode.METHOD_NOT_SUPPORTED,
+                "The POST method must be used if specifying an output path, as this has side effects."
+            );
         }
     }
 
