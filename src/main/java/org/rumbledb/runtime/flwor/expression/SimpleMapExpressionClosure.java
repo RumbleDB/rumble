@@ -38,17 +38,16 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
 
     public SimpleMapExpressionClosure(RuntimeIterator rightIterator, DynamicContext dynamicContext) {
         this.rightIterator = rightIterator;
-        this.dynamicContext = dynamicContext;
+        this.dynamicContext = new DynamicContext(dynamicContext);
     }
 
     public Iterator<Item> call(Item item) throws Exception {
         List<Item> currentItems = new ArrayList<>();
 
-        DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
-        dynamicContext.addVariableValue("$$", currentItems);
+        this.dynamicContext.addVariableValue("$$", currentItems);
         currentItems.add(item);
-        List<Item> mapValuesRaw = this.rightIterator.materialize(dynamicContext);
-        dynamicContext.removeVariable("$$");
+        List<Item> mapValuesRaw = this.rightIterator.materialize(this.dynamicContext);
+        this.dynamicContext.removeVariable("$$");
         return mapValuesRaw.iterator();
     }
 }
