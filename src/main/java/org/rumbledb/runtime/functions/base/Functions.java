@@ -143,6 +143,7 @@ import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
 import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.NormalizeUnicodeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
@@ -260,6 +261,8 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.mon
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.month_from_dateTime;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.months_from_duration;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.normalize_space;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.normalize_unicode1;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.normalize_unicode2;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.null_function;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.number;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.one_or_more;
@@ -501,6 +504,8 @@ public class Functions {
         builtInFunctions.put(matches.getIdentifier(), matches);
         builtInFunctions.put(contains.getIdentifier(), contains);
         builtInFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtInFunctions.put(normalize_unicode1.getIdentifier(), normalize_unicode1);
+        builtInFunctions.put(normalize_unicode2.getIdentifier(), normalize_unicode2);
         builtInFunctions.put(serialize.getIdentifier(), serialize);
         builtInFunctions.put(number.getIdentifier(), number);
 
@@ -1705,6 +1710,24 @@ public class Functions {
             "string",
             TranslateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that performs Unicode normalization
+         */
+        static final BuiltinFunction normalize_unicode1 = createBuiltinFunction(
+                "normalize-unicode",
+                "string?",
+                "string",
+                NormalizeUnicodeFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        static final BuiltinFunction normalize_unicode2 = createBuiltinFunction(
+                "normalize-unicode",
+                "string?",
+                "string",
+                "string",
+                NormalizeUnicodeFunctionIterator.class,
+                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring
