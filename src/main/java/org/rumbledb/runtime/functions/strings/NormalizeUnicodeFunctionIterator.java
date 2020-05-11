@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidNormalizationException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -29,9 +30,7 @@ import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.text.Normalizer;
-import java.util.HashMap;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class NormalizeUnicodeFunctionIterator extends LocalFunctionCallIterator {
 
@@ -60,17 +59,27 @@ public class NormalizeUnicodeFunctionIterator extends LocalFunctionCallIterator 
 
             if (this.children.size() > 1) {
                 Item normalizationFormItem = this.children.get(1)
-                        .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
                 String normalizationFormRaw = normalizationFormItem.getStringValue();
                 if (normalizationFormRaw.length() == 0) {
                     return inputItem;
                 }
 
-                if (normalizationFormRaw.equals("NFC") || normalizationFormRaw.equals("NFD") || normalizationFormRaw.equals("NFKC") || normalizationFormRaw.equals("NFKD")) {
+                if (
+                    normalizationFormRaw.equals("NFC")
+                        || normalizationFormRaw.equals("NFD")
+                        || normalizationFormRaw.equals("NFKC")
+                        || normalizationFormRaw.equals("NFKD")
+                ) {
                     normalizationForm = Normalizer.Form.valueOf(normalizationFormItem.getStringValue());
                 } else if (normalizationFormRaw.equals("FULLY-NORMALIZED")) {
                     normalizationForm = Normalizer.Form.NFC;
+                } else {
+                    throw new InvalidNormalizationException(
+                            normalizationFormRaw + " is not a valid normalization form",
+                            getMetadata()
+                    );
                 }
             }
 

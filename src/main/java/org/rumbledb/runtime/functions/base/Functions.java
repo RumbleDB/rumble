@@ -1715,19 +1715,19 @@ public class Functions {
          * function that performs Unicode normalization
          */
         static final BuiltinFunction normalize_unicode1 = createBuiltinFunction(
-                "normalize-unicode",
-                "string?",
-                "string",
-                NormalizeUnicodeFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "normalize-unicode",
+            "string?",
+            "string",
+            NormalizeUnicodeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         static final BuiltinFunction normalize_unicode2 = createBuiltinFunction(
-                "normalize-unicode",
-                "string?",
-                "string",
-                "string",
-                NormalizeUnicodeFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "normalize-unicode",
+            "string?",
+            "string",
+            "string",
+            NormalizeUnicodeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring
