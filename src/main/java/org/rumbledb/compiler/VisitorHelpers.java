@@ -16,6 +16,10 @@ public class VisitorHelpers {
         return new RuntimeIteratorVisitor().visit(node, null);
     }
 
+    public static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
+        new VariableDependenciesVisitor(conf).visit(node, null);
+    }
+
     public static void populateStaticContext(Node node) {
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(node, null);

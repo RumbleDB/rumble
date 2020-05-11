@@ -42,6 +42,8 @@ public class ObjectItem extends JsonItem {
 
     public ObjectItem() {
         super();
+        this.keys = new ArrayList<>();
+        this.values = new ArrayList<>();
     }
 
     public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
@@ -116,13 +118,9 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public void putItemByKey(String s, Item value) {
-        this.values.replaceAll(item -> {
-            if (this.values.indexOf(item) == this.keys.indexOf(s)) {
-                return value;
-            } else {
-                return item;
-            }
-        });
+        this.keys.add(s);
+        this.values.add(value);
+        checkForDuplicateKeys(this.keys, new ExceptionMetadata(0, 0));
     }
 
     @Override

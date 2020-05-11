@@ -33,7 +33,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.SparksoniqRuntimeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -338,7 +338,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             ) {
                 columnType = DataTypes.LongType;
             } else {
-                throw new SparksoniqRuntimeException(
+                throw new RumbleException(
                         "Unexpected ordering type found while determining UDF return type."
                 );
             }

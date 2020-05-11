@@ -24,7 +24,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 import java.util.Arrays;
 
-public class SparksoniqRuntimeException extends RuntimeException {
+public class RumbleException extends RuntimeException {
 
 
     private static final long serialVersionUID = 1L;
@@ -32,13 +32,13 @@ public class SparksoniqRuntimeException extends RuntimeException {
     private final String errorMessage;
     private ExceptionMetadata metadata;
 
-    public SparksoniqRuntimeException(String message) {
+    public RumbleException(String message) {
         super("Error [err: " + ErrorCode.RuntimeExceptionErrorCode + " ] " + message);
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message, ErrorCode errorCode) {
+    public RumbleException(String message, ErrorCode errorCode) {
         super("Error [err: " + errorCode + " ] " + message);
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
@@ -55,7 +55,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
 
-    public SparksoniqRuntimeException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(
             "Error [err: "
                 + errorCode
@@ -85,7 +85,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message, ExceptionMetadata metadata) {
+    public RumbleException(String message, ExceptionMetadata metadata) {
         super(
             "Error [err: "
                 + ErrorCode.RuntimeExceptionErrorCode

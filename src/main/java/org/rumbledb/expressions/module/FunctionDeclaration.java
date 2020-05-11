@@ -26,6 +26,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -34,10 +36,10 @@ import java.util.List;
 
 public class FunctionDeclaration extends Node {
 
-    private final Expression functionExpression;
+    private final InlineFunctionExpression functionExpression;
 
     public FunctionDeclaration(
-            Expression functionExpression,
+            InlineFunctionExpression functionExpression,
             ExceptionMetadata metadata
     ) {
         super(metadata);
@@ -46,6 +48,10 @@ public class FunctionDeclaration extends Node {
 
     public Expression getExpression() {
         return this.functionExpression;
+    }
+
+    public FunctionIdentifier getFunctionIdentifier() {
+        return this.functionExpression.getFunctionIdentifier();
     }
 
     @Override

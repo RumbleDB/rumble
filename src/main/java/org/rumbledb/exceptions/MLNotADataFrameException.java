@@ -22,7 +22,7 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class MLNotADataFrameException extends SparksoniqRuntimeException {
+public class MLNotADataFrameException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 

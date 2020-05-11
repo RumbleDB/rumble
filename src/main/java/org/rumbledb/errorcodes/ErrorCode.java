@@ -82,6 +82,7 @@ public enum ErrorCode {
 
     UnexpectedTypeErrorCode("XPTY0004"),
 
+    CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),

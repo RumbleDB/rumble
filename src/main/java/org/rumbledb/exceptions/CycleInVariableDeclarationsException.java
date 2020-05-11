@@ -18,20 +18,16 @@
  *
  */
 
+
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class UnrecognizedRumbleMLParamReferenceException extends RumbleException {
+public class CycleInVariableDeclarationsException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnrecognizedRumbleMLParamReferenceException(String message, ExceptionMetadata metadata) {
-        super(
-            "Unrecognized Rumble ML parameter; "
-                + message,
-            ErrorCode.UnrecognizedRumbleMLParamReferenceErrorCode,
-            metadata
-        );
+    public CycleInVariableDeclarationsException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.CycleInVariableDeclarationsErrorCode, metadata);
     }
 }
