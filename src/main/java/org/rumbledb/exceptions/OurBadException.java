@@ -20,17 +20,17 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class OurBadException extends SparksoniqRuntimeException {
+public class OurBadException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public OurBadException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.OurBadErrorCode, metadata);
+        super(message, ErrorCode.OurBadErrorCode, metadata);
     }
 
     public OurBadException(String message) {
-        super(message, ErrorCodes.OurBadErrorCode);
+        super(message, ErrorCode.OurBadErrorCode);
     }
 }

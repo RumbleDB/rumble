@@ -21,6 +21,8 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.util.Properties;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
@@ -48,6 +50,10 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 +
                 "/src/main/resources/test_files/runtime"
     );
+    public static final String javaVersion =
+        System.getProperty("java.version");
+    public static final String scalaVersion =
+        Properties.scalaPropOrElse("version.number", "unknown");
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
@@ -69,6 +75,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        System.err.println("Java version: " + javaVersion);
+        System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");
@@ -139,15 +147,16 @@ public class RuntimeTests extends AnnotationsTestsBase {
             while (
                 iterator.hasNext()
                     &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
+                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
+                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
                         ||
-                        this.configuration.getResultSizeCap() == 0)
+                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
             ) {
                 sb.append(iterator.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+            if (iterator.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT

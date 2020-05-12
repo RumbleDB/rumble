@@ -4,6 +4,10 @@
 
 - [FODC0002] - Error retrieving resource.
 
+- [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
+
+- [FOFD1350] - This error is raised if the picture string supplied to fn:format-date selects a component that is not present in a date, or if the picture string supplied to fn:format-time selects a component that is not present in a time.
+
 - [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
  constructor or in a simple object union have the same name.
 
@@ -87,6 +91,10 @@ or during the dynamic evaluation phase, the dynamic type of
 a value does not match a required type. 
 Example: using subtraction on strings.
 
+- [XQDY0054] - It is a dynamic error if a cycle is encountered
+in the definition of a module's dynamic context components,
+for example because of a cycle in variable declarations.
+
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 
 raises a static error if it encounters a module declaration 
@@ -104,6 +112,9 @@ the same number of arguments and their expanded QNames are equal
 - [XQST0039] - Duplicate parameter name. It is a static error
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.
+
+- [XQST0049] - It is a static error if two or more variables
+declared or imported by a module have the same name.
 
 - [XQST0052] - Simple type error. The type must be
 the name of a type defined in the in-scope schema types,

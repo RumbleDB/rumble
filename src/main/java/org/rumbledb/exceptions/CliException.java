@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class CliException extends SparksoniqRuntimeException {
+public class CliException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public CliException(String message) {
-        super(message, ErrorCodes.CliErrorCode);
+        super(message, ErrorCode.CliErrorCode);
     }
 }

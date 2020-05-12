@@ -27,6 +27,8 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -224,6 +226,15 @@ public abstract class Item implements SerializableItem {
      */
     public Item getItemByKey(String key) {
         throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
+    }
+
+    /**
+     * Adds a value pair, if it is an array item.
+     *
+     * @param value a value.
+     */
+    public void append(Item value) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
     }
 
     /**
@@ -602,6 +613,18 @@ public abstract class Item implements SerializableItem {
      * @return the dynamic type as an item type.
      */
     public ItemType getDynamicType() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public FunctionIdentifier getIdentifier() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public List<String> getParameterNames() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public FunctionSignature getSignature() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 }

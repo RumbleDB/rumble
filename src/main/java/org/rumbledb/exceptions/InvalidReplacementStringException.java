@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class InvalidReplacementStringException extends SparksoniqRuntimeException {
+public class InvalidReplacementStringException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public InvalidReplacementStringException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.InvalidReplacementStringErrorCode, metadata);
+        super(message, ErrorCode.InvalidReplacementStringErrorCode, metadata);
     }
 }

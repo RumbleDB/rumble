@@ -24,46 +24,46 @@ package org.rumbledb.expressions.module;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.primary.InlineFunctionExpression;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class Prolog extends Node {
 
-    private final List<VariableDeclaration> variableDeclarations;
-    private final List<InlineFunctionExpression> functionDeclarations;
+    private List<Node> declarations;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
-            List<InlineFunctionExpression> functionDeclarations,
+            List<FunctionDeclaration> functionDeclarations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.variableDeclarations = variableDeclarations;
-        this.functionDeclarations = functionDeclarations;
+        this.declarations = new ArrayList<Node>(variableDeclarations);
+        this.declarations.addAll(functionDeclarations);
     }
 
-    public List<InlineFunctionExpression> getFunctionDeclaration() {
-        return this.functionDeclarations;
+    public List<FunctionDeclaration> getFunctionDeclarations() {
+        return this.declarations.stream()
+            .filter(x -> x instanceof FunctionDeclaration)
+            .map(x -> (FunctionDeclaration) x)
+            .collect(Collectors.toList());
     }
 
     public List<VariableDeclaration> getVariableDeclarations() {
-        return this.variableDeclarations;
+        return this.declarations.stream()
+            .filter(x -> x instanceof VariableDeclaration)
+            .map(x -> (VariableDeclaration) x)
+            .collect(Collectors.toList());
+    }
+
+    public void setDeclarations(List<Node> declarations) {
+        this.declarations = declarations;
     }
 
     @Override
     public List<Node> getChildren() {
-        List<Node> result = new ArrayList<>();
-        result.addAll(this.variableDeclarations);
-        if (this.functionDeclarations != null) {
-            this.functionDeclarations.forEach(e -> {
-                if (e != null) {
-                    result.add(e);
-                }
-            });
-        }
-        return result;
+        return this.declarations.stream().filter(x -> x != null).collect(Collectors.toList());
     }
 
     @Override

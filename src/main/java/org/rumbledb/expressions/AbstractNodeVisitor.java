@@ -34,12 +34,14 @@ import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -177,7 +179,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitFunctionDeclaration(InlineFunctionExpression expression, T argument) {
+    public T visitInlineFunctionExpr(InlineFunctionExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -218,6 +220,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitMultiplicativeExpr(MultiplicativeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitSimpleMapExpr(SimpleMapExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -284,9 +290,16 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
+    // endregion
 
+    // region prolog
     public T visitVariableDeclaration(VariableDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
+
+    public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+    // endregion
 
 }

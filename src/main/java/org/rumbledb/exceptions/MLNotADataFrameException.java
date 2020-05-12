@@ -20,16 +20,16 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class MLNotADataFrameException extends SparksoniqRuntimeException {
+public class MLNotADataFrameException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public MLNotADataFrameException(String message, ExceptionMetadata metadata) {
         super(
             "Invalid Param; " + message,
-            ErrorCodes.MLNotADataFrameErrorCode,
+            ErrorCode.MLNotADataFrameErrorCode,
             metadata
         );
     }

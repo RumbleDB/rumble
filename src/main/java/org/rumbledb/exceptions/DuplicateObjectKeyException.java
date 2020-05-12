@@ -20,16 +20,16 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class DuplicateObjectKeyException extends SparksoniqRuntimeException {
+public class DuplicateObjectKeyException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public DuplicateObjectKeyException(String keyName, ExceptionMetadata metadata) {
         super(
             "Dynamic error; Two pairs in an object have the same key name: " + keyName + ".",
-            ErrorCodes.DuplicatePairNameErrorCode,
+            ErrorCode.DuplicatePairNameErrorCode,
             metadata
         );
     }

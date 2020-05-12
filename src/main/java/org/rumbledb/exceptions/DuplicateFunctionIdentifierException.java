@@ -20,17 +20,17 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
-public class DuplicateFunctionIdentifierException extends SparksoniqRuntimeException {
+public class DuplicateFunctionIdentifierException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public DuplicateFunctionIdentifierException(FunctionIdentifier identifier, ExceptionMetadata metadata) {
         super(
             "Function already exists; \"" + identifier.getName() + "\" with arity: " + identifier.getArity(),
-            ErrorCodes.DuplicateFunctionIdentifier,
+            ErrorCode.DuplicateFunctionIdentifier,
             metadata
         );
     }

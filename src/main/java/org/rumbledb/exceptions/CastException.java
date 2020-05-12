@@ -1,13 +1,13 @@
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class CastException extends SparksoniqRuntimeException {
+public class CastException extends RumbleException {
 
 
     private static final long serialVersionUID = 1L;
 
     public CastException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.CastErrorCode, metadata);
+        super(message, ErrorCode.CastErrorCode, metadata);
     }
 }

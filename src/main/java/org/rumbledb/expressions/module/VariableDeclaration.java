@@ -58,11 +58,6 @@ public class VariableDeclaration extends Node {
         if (!this.external && this.expression == null) {
             throw new OurBadException("If a variable is not external, an expression must be provided.");
         }
-        if (!this.external) {
-            throw new OurBadException(
-                    "Non-external variables are not supported at the moment. Please contact us if you need this feature."
-            );
-        }
     }
 
     public String getVariableName() {

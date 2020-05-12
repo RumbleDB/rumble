@@ -14,11 +14,7 @@ A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial
 
 A tutorial aimed at Python users can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial-python). Please keep in mind, though, that examples using not supported features may not work (see below).
 
-## Unsupported/Unimplemented features (alpha release)
-
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
-
-### Nested FLWOR expressions
+## Nested FLWOR expressions
 
 FLWOR expressions now support nestedness, for example like so:
 
@@ -40,7 +36,7 @@ return count($z)
 ```
 
 
-### Expressions pushed down to Spark
+## Expressions pushed down to Spark
 
 Many expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
 
@@ -67,25 +63,28 @@ We also started to push down some expressions to DataFrames and Spark SQL (obtai
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
 
-### Unsupported global variables, settings and modules
+## External global variables.
 
-Prologs with user-defined functions are now supported, but not yet global global variables, settings and library modules.
+Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
-Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
-Dynamic functions (aka, function items that can be passed as values and dynamically called) are supported.
+## Unsupported/Unimplemented features (beta release)
 
-All function calls are type-checked.
+Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
 
-### Unsupported try/catch
+### Settings and modules
 
-Try/catch expressions. Exceptions raised remotely may not be displayed in a user-friendly way yet, but we are working on it.
+Prolog settings and library modules are not supported yet.
 
-### Unsupported nested expressions in object lookups (rhs)
+### Try/catch
+
+Try/catch expressions are not supported yet but this is planned.
+
+### Nested expressions in object lookups (rhs)
 
 Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
 
-### Unsupported types
+### Types
 
 The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
 
@@ -126,10 +125,10 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | yearMonthDuration | supported |
 
 
-### Unsupported functions
+### Builtin functions
 
 Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
 
-### Unsupported updates and scripting
+### Updates and scripting
 
 JSON updates are not supported. Scripting features (assignment, while loop, ...) are not supported yet either.

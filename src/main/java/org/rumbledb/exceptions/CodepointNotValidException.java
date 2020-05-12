@@ -20,13 +20,13 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class CodepointNotValidException extends SparksoniqRuntimeException {
+public class CodepointNotValidException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public CodepointNotValidException(String message, ExceptionMetadata metadata) {
-        super(message, ErrorCodes.CodepointNotValidErrorCode, metadata);
+        super(message, ErrorCode.CodepointNotValidErrorCode, metadata);
     }
 }

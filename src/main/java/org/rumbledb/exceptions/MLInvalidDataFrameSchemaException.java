@@ -20,23 +20,23 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class MLInvalidDataFrameSchemaException extends SparksoniqRuntimeException {
+public class MLInvalidDataFrameSchemaException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public MLInvalidDataFrameSchemaException(String message) {
         super(
             message,
-            ErrorCodes.MLInvalidDataFrameSchemaErrorCode
+            ErrorCode.MLInvalidDataFrameSchemaErrorCode
         );
     }
 
     public MLInvalidDataFrameSchemaException(String message, ExceptionMetadata metadata) {
         super(
             message,
-            ErrorCodes.MLInvalidDataFrameSchemaErrorCode,
+            ErrorCode.MLInvalidDataFrameSchemaErrorCode,
             metadata
         );
     }

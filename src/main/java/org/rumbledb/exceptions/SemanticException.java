@@ -20,8 +20,9 @@
 
 package org.rumbledb.exceptions;
 
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class SemanticException extends SparksoniqRuntimeException {
+public class SemanticException extends RumbleException {
 
 
     private static final long serialVersionUID = 1L;
@@ -30,7 +31,7 @@ public class SemanticException extends SparksoniqRuntimeException {
         super(message, metadata);
     }
 
-    public SemanticException(String message, String errorCode, ExceptionMetadata metadata) {
+    public SemanticException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(message, errorCode, metadata);
     }
 }

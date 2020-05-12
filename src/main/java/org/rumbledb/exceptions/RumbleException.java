@@ -20,34 +20,34 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
 import java.util.Arrays;
 
-public class SparksoniqRuntimeException extends RuntimeException {
+public class RumbleException extends RuntimeException {
 
 
     private static final long serialVersionUID = 1L;
-    private final String errorCode;
+    private final ErrorCode errorCode;
     private final String errorMessage;
     private ExceptionMetadata metadata;
 
-    public SparksoniqRuntimeException(String message) {
-        super("Error [err: " + ErrorCodes.RuntimeExceptionErrorCode + " ] " + message);
-        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+    public RumbleException(String message) {
+        super("Error [err: " + ErrorCode.RuntimeExceptionErrorCode + " ] " + message);
+        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message, String errorCode) {
+    public RumbleException(String message, ErrorCode errorCode) {
         super("Error [err: " + errorCode + " ] " + message);
-        if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
+        if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
             } catch (IllegalAccessException e) {
                 return true;
             }
         })) {
-            this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+            this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         } else {
             this.errorCode = errorCode;
         }
@@ -55,7 +55,7 @@ public class SparksoniqRuntimeException extends RuntimeException {
     }
 
 
-    public SparksoniqRuntimeException(String message, String errorCode, ExceptionMetadata metadata) {
+    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(
             "Error [err: "
                 + errorCode
@@ -70,14 +70,14 @@ public class SparksoniqRuntimeException extends RuntimeException {
                     : "")
                 + message
         );
-        if (!Arrays.asList(ErrorCodes.class.getFields()).stream().anyMatch(f -> {
+        if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
             } catch (IllegalAccessException e) {
                 return true;
             }
         })) {
-            this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;
+            this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         } else {
             this.errorCode = errorCode;
         }
@@ -85,10 +85,10 @@ public class SparksoniqRuntimeException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    public SparksoniqRuntimeException(String message, ExceptionMetadata metadata) {
+    public RumbleException(String message, ExceptionMetadata metadata) {
         super(
             "Error [err: "
-                + ErrorCodes.RuntimeExceptionErrorCode
+                + ErrorCode.RuntimeExceptionErrorCode
                 + "]"
                 + (metadata != null
                     ? "LINE:"
@@ -100,13 +100,13 @@ public class SparksoniqRuntimeException extends RuntimeException {
                     : "")
                 + message
         );
-        this.errorCode = ErrorCodes.RuntimeExceptionErrorCode;;
+        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;;
         this.metadata = metadata;
         this.errorMessage = message;
     }
 
     public String getErrorCode() {
-        return this.errorCode;
+        return this.errorCode.toString();
     }
 
     public ExceptionMetadata getMetadata() {

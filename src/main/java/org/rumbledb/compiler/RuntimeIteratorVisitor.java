@@ -24,6 +24,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -91,6 +92,7 @@ import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.ReturnClauseSparkIterator;
+import org.rumbledb.runtime.flwor.expression.SimpleMapExpressionIterator;
 import org.rumbledb.runtime.flwor.clauses.WhereClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
@@ -130,7 +132,6 @@ import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
 import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
-import sparksoniq.jsoniq.ExecutionMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -160,6 +161,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
+        return argument;
+    }
+
+    @Override
     public RuntimeIterator visitCommaExpression(CommaExpression expression, RuntimeIterator argument) {
         List<RuntimeIterator> result = new ArrayList<>();
         for (Expression childExpr : expression.getExpressions()) {
@@ -180,11 +186,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitMainModule(MainModule expression, RuntimeIterator argument) {
         return super.visitMainModule(expression, argument);
-    }
-
-    @Override
-    public RuntimeIterator visitProlog(Prolog expression, RuntimeIterator argument) {
-        return super.visitProlog(expression, argument);
     }
     // endregion
 
@@ -217,21 +218,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         if (clause instanceof ForClause) {
             ForClause forClause = (ForClause) clause;
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
-            if (forClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                    forClause.getSequenceType(),
-                    forClause.getExpression(),
-                    this.visitorConfig
-                );
-                assignmentIterator = new TreatIterator(
-                        assignmentIterator,
-                        forClause.getSequenceType(),
-                        false,
-                        executionMode,
-                        clause.getMetadata()
-                );
-            }
-
             return new ForClauseSparkIterator(
                     previousIterator,
                     forClause.getVariableName(),
@@ -242,21 +228,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof LetClause) {
             LetClause letClause = (LetClause) clause;
             RuntimeIterator assignmentIterator = this.visit(letClause.getExpression(), argument);
-            if (letClause.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                    letClause.getSequenceType(),
-                    letClause.getExpression(),
-                    this.visitorConfig
-                );
-                assignmentIterator = new TreatIterator(
-                        assignmentIterator,
-                        letClause.getSequenceType(),
-                        false,
-                        executionMode,
-                        clause.getMetadata()
-                );
-            }
-
             return new LetClauseSparkIterator(
                     previousIterator,
                     letClause.getVariableName(),
@@ -271,20 +242,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 RuntimeIterator groupByExpressionIterator = null;
                 if (groupByExpression != null) {
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
-                    if (var.getSequenceType() != SequenceType.mostGeneralSequenceType) {
-                        ExecutionMode executionMode = TreatExpression.calculateIsRDDFromSequenceTypeAndExpression(
-                            var.getSequenceType(),
-                            groupByExpression,
-                            this.visitorConfig
-                        );
-                        groupByExpressionIterator = new TreatIterator(
-                                groupByExpressionIterator,
-                                var.getSequenceType(),
-                                false,
-                                executionMode,
-                                clause.getMetadata()
-                        );
-                    }
                 }
 
                 String variableName = var.getVariableName();
@@ -474,7 +431,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
-    public RuntimeIterator visitFunctionDeclaration(InlineFunctionExpression expression, RuntimeIterator argument) {
+    public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
         Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
@@ -487,19 +444,11 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 returnType,
                 bodyIterator
         );
-        if (expression.getName().equals("")) {
-            // unnamed (inline function declaration)
-            return new FunctionRuntimeIterator(
-                    function,
-                    expression.getHighestExecutionMode(this.visitorConfig),
-                    expression.getMetadata()
-            );
-        } else {
-            // named (static function declaration)
-            Functions.addUserDefinedFunction(function, expression.getMetadata());
-        }
-
-        return defaultAction(expression, argument);
+        return new FunctionRuntimeIterator(
+                function,
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
     }
 
     @Override
@@ -663,6 +612,27 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     }
 
     @Override
+    public RuntimeIterator visitSimpleMapExpr(SimpleMapExpression expression, RuntimeIterator argument) {
+        Expression leftExpression = (Expression) expression.getChildren().get(0);
+        Expression rightExpression = (Expression) expression.getChildren().get(1);
+        RuntimeIterator left = this.visit(
+            leftExpression,
+            argument
+        );
+        RuntimeIterator right = this.visit(
+            rightExpression,
+            argument
+        );
+
+        return new SimpleMapExpressionIterator(
+                left,
+                right,
+                expression.getHighestExecutionMode(this.visitorConfig),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
     public RuntimeIterator visitAndExpr(AndExpression expression, RuntimeIterator argument) {
         Expression leftExpression = (Expression) expression.getChildren().get(0);
         Expression rightExpression = (Expression) expression.getChildren().get(1);
@@ -778,7 +748,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         return new TreatIterator(
                 childExpression,
                 expression.getsequenceType(),
-                true,
+                expression.errorCodeThatShouldBeThrown(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

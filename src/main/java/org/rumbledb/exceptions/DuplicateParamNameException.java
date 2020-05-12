@@ -20,16 +20,16 @@
 
 package org.rumbledb.exceptions;
 
-import org.rumbledb.errorcodes.ErrorCodes;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class DuplicateParamNameException extends SparksoniqRuntimeException {
+public class DuplicateParamNameException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public DuplicateParamNameException(String fnName, String message, ExceptionMetadata metadata) {
         super(
             "Duplicate parameter name; Function: " + fnName + " - parameter name: " + message,
-            ErrorCodes.DuplicateParamName,
+            ErrorCode.DuplicateParamName,
             metadata
         );
     }
