@@ -224,6 +224,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#catchClause}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitCatchClause(JsoniqParser.CatchClauseContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#orExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
