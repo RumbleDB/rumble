@@ -20,15 +20,16 @@
 
 package org.rumbledb.runtime.control;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
-public class IfRuntimeIterator extends LocalRuntimeIterator {
+public class IfRuntimeIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -49,21 +50,19 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
+    public void resetLocal(DynamicContext context) {
         this.selectedIterator = null;
         setNextResult();
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public void openLocal() {
         this.selectedIterator = null;
         setNextResult();
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.nextResult == null) {
             throw new IteratorFlowException("No next item.");
         }
@@ -73,7 +72,7 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public boolean hasNext() {
+    public boolean hasNextLocal() {
         return this.nextResult != null;
     }
 
@@ -98,6 +97,25 @@ public class IfRuntimeIterator extends LocalRuntimeIterator {
         } else {
             this.nextResult = null;
             this.selectedIterator.close();
+        }
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.selectedIterator.close();
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        RuntimeIterator condition = this.children.get(0);
+        condition.open(this.currentDynamicContextForLocalExecution);
+        boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
+        condition.close();
+
+        if (effectiveBooleanValue) {
+            return this.children.get(1).getRDD(dynamicContext);
+        } else {
+            return this.children.get(2).getRDD(dynamicContext);
         }
     }
 }

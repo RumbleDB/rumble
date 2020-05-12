@@ -60,24 +60,21 @@ public class CommaExpression extends Expression {
         return result;
     }
 
-    private boolean bypassCurrentExpressionForExecutionModeOperations() {
-        return this.expressions.size() == 1;
-    }
-
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
+        if (this.expressions.isEmpty()) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
             return;
         }
-        super.initHighestExecutionMode(visitorConfig);
-    }
 
-    @Override
-    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (bypassCurrentExpressionForExecutionModeOperations()) {
-            return this.expressions.get(0).getHighestExecutionMode(visitorConfig);
+        for (Expression expression : this.expressions) {
+            if (!expression.getHighestExecutionMode(visitorConfig).isRDD()) {
+                this.highestExecutionMode = ExecutionMode.LOCAL;
+                return;
+            }
         }
-        return super.getHighestExecutionMode(visitorConfig);
+
+        this.highestExecutionMode = ExecutionMode.RDD;
     }
 
     @Override
