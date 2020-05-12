@@ -134,8 +134,11 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             Dataset<Row> df = this.getDataFrame(context);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(getMetadata()));
-        } else {
+        } else if (isRDD()) {
             return getRDDAux(context);
+        } else {
+            List<Item> contents = this.materialize(context);
+            return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
     }
 
