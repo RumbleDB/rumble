@@ -20,8 +20,8 @@
 
 package sparksoniq.jsoniq.tuple;
 
-import sparksoniq.jsoniq.compiler.translator.expr.flowr.OrderByClauseExpr;
-import sparksoniq.spark.iterator.flowr.expression.OrderByClauseSparkIteratorExpression;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -30,12 +30,12 @@ import java.util.List;
 public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     private static final long serialVersionUID = 1L;
-    // private final boolean _isStable;
-    private final List<OrderByClauseSparkIteratorExpression> _expressions;
+    // private final boolean isStable;
+    private final List<OrderByClauseAnnotatedChildIterator> expressions;
 
-    public FlworKeyComparator(List<OrderByClauseSparkIteratorExpression> expressions, boolean isStable) {
+    public FlworKeyComparator(List<OrderByClauseAnnotatedChildIterator> expressions, boolean isStable) {
         // this._isStable = isStable;
-        this._expressions = expressions;
+        this.expressions = expressions;
     }
 
     @Override
@@ -54,7 +54,7 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
             if (key1.getKeyItems().get(expressionIndex) == null || key2.getKeyItems().get(expressionIndex) == null) {
                 // Default behavior(NONE) for empty ordering expressions is equal to FIRST(empty least)
                 // if LAST is given, empty ordering expressions are the greatest (reverse the comparison)
-                if (_expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseExpr.EMPTY_ORDER.LAST) {
+                if (this.expressions.get(expressionIndex).getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
                     result *= -1;
                 }
             }
@@ -67,6 +67,6 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
     }
 
     private int getSortOrder(int index) {
-        return (_expressions.get(index).isAscending() ? 1 : -1);
+        return (this.expressions.get(index).isAscending() ? 1 : -1);
     }
 }

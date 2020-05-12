@@ -21,25 +21,30 @@ package org.rumbledb.cli;
 
 
 import org.apache.spark.SparkException;
-import org.rumbledb.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.io.shell.JiqsJLineShell;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.server.RumbleServer;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.shell.RumbleJLineShell;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 
 public class Main {
-    public static JiqsJLineShell terminal = null;
+    public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
-        SparksoniqRuntimeConfiguration sparksoniqConf = null;
+        RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
         try {
-            sparksoniqConf = new SparksoniqRuntimeConfiguration(args);
+            sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
             if (sparksoniqConf.isShell()) {
                 initializeApplication();
                 launchShell(sparksoniqConf);
+            } else if (sparksoniqConf.isServer()) {
+                initializeApplication();
+                launchServer(sparksoniqConf);
             } else if (sparksoniqConf.getQueryPath() != null) {
                 initializeApplication();
                 runQueryExecutor(sparksoniqConf);
@@ -74,48 +79,58 @@ public class Main {
                 );
             }
         } catch (Exception ex) {
-            handleException(ex);
+            boolean showErrorInfo = false;
+            if (sparksoniqConf != null) {
+                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            }
+            handleException(ex, showErrorInfo);
         }
     }
 
-    private static void handleException(Throwable ex) {
+    private static void handleException(Throwable ex, boolean showErrorInfo) {
         if (ex != null) {
             if (ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
-                handleException(sparkExceptionCause);;
-            } else if (ex instanceof SparksoniqRuntimeException) {
+                if (sparkExceptionCause != null) {
+                    handleException(sparkExceptionCause, showErrorInfo);
+                } else {
+                    handleException(new RumbleException(ex.getMessage()), showErrorInfo);
+                }
+            } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
                 System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
-                ex.printStackTrace();
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             }
         }
     }
 
-    private static void runQueryExecutor(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
-
-        JsoniqQueryExecutor translator;
-        translator = new JsoniqQueryExecutor(sparksoniqConf.isLocal(), sparksoniqConf);
-        if (sparksoniqConf.isLocal()) {
-            System.out.println("Running in local mode");
-            translator.runLocal(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
-        } else {
-            System.out.println("Running in remote mode");
-            translator.run(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
-        }
+    private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
+        JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
+        translator.runQuery(sparksoniqConf.getQueryPath(), sparksoniqConf.getOutputPath());
     }
 
     private static void initializeApplication() {
         SparkSessionManager.getInstance().initializeConfigurationAndSession();
     }
 
-    private static void launchShell(SparksoniqRuntimeConfiguration sparksoniqConf) throws IOException {
-        terminal = new JiqsJLineShell(sparksoniqConf);
+    private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
+        terminal = new RumbleJLineShell(sparksoniqConf);
         terminal.launch();
+    }
+
+    private static void launchServer(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
+        RumbleServer server = new RumbleServer(sparksoniqConf);
+        server.start();
     }
 
     public static void printMessageToLog(String message) {

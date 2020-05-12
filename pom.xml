@@ -26,7 +26,7 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>spark-rumble</artifactId>
-    <version>1.4</version>
+    <version>1.6.0</version>
     <packaging>jar</packaging>
     <name>Rumble</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
@@ -41,10 +41,27 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <version>3.8.1</version>
+                <!-- Holy grail of eclipse configuration:  https://stackoverflow.com/a/49599478/10707488   -->
                 <configuration>
+                    <compilerId>eclipse</compilerId>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <compilerArguments>
+                        <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
+                    </compilerArguments>
                 </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.plexus</groupId>
+                        <artifactId>plexus-compiler-eclipse</artifactId>
+                        <version>2.8.5</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.eclipse.jdt</groupId>
+                        <artifactId>ecj</artifactId>
+                        <version>3.20.0</version>
+                    </dependency>
+                </dependencies>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -61,7 +78,7 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-assembly-plugin</artifactId>
-                <version>3.1.1</version>
+                <version>3.1.1</version><!--$NO-MVN-MAN-VER$-->
                 <configuration>
                     <archive>
                         <manifest>
@@ -133,7 +150,6 @@
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-release-plugin</artifactId>
-                <version>2.5.3</version>
                 <configuration>
                     <localCheckout>true</localCheckout>
                     <pushChanges>false</pushChanges>
@@ -162,9 +178,18 @@
                 </executions>
                 <configuration>
                     <java>
+                        <includes>
+                            <!-- include all java files in "java" folders under "src" -->
+                            <include>src/**/java/**/*.java</include>
+                        </includes>
+
+                        <excludes>
+                            <exclude>src/main/java/org/rumbledb/parser/*</exclude>
+                        </excludes>
                         <eclipse>
-                            <file>${basedir}/codetemplates-eclipse.xml</file>
+                            <file>${project.basedir}/spotless-formatter-eclipse-jdt-configurations.xml</file>
                         </eclipse>
+                        <removeUnusedImports/>
                     </java>
                 </configuration>
             </plugin>
@@ -174,17 +199,33 @@
     <dependencies>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-core_2.12</artifactId>
-            <version>2.4.3</version>
+            <artifactId>spark-core_2.11</artifactId>
+            <version>2.4.4</version>
             <scope>provided</scope>
         </dependency>
         <dependency>
             <groupId>org.apache.spark</groupId>
-            <artifactId>spark-sql_2.12</artifactId>
-            <version>2.4.3</version>
+            <artifactId>spark-sql_2.11</artifactId>
+            <version>2.4.4</version>
             <scope>provided</scope>
         </dependency>
-
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-mllib_2.11</artifactId>
+            <version>2.4.4</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.hadoop</groupId>
+             <artifactId>hadoop-aws</artifactId>
+            <version>3.2.1</version>
+            <scope>provided</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.spark</groupId>
+            <artifactId>spark-avro_2.11</artifactId>
+            <version>2.4.4</version>
+        </dependency>
         <dependency>
             <groupId>org.antlr</groupId>
             <artifactId>antlr4-runtime</artifactId>
@@ -221,11 +262,16 @@
             <artifactId>commons-lang3</artifactId>
             <version>3.9</version>
         </dependency>
-        <dependency>
-            <groupId>commons-io</groupId>
-            <artifactId>commons-io</artifactId>
-            <version>2.6</version>
-        </dependency>
+		<dependency>
+		    <groupId>edu.vanderbilt.accre</groupId>
+		    <artifactId>laurelin</artifactId>
+		    <version>1.0.1</version>
+		</dependency>
+		<dependency>
+			<groupId>org.jgrapht</groupId>
+			<artifactId>jgrapht-core</artifactId>
+			<version>1.4.0</version>
+		</dependency>
     </dependencies>
 
     <distributionManagement>

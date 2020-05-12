@@ -20,14 +20,15 @@
 
 package sparksoniq.jsoniq.compiler;
 
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.BooleanLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.DecimalLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.DoubleLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.IntegerLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.NullLiteral;
-import sparksoniq.jsoniq.compiler.translator.expr.primary.PrimaryExpression;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
+
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.parser.JsoniqParser;
 
 import java.math.BigDecimal;
 
@@ -38,26 +39,28 @@ public class ValueTypeHandler {
         return ctx.getText().substring(1, ctx.getText().length() - 1);
     }
 
-    public static PrimaryExpression getValueType(String token, ExpressionMetadata metadataFromContext) {
+    public static Expression getValueType(String token, ExceptionMetadata metadataFromContext) {
         switch (token) {
             case "null":
-                return new NullLiteral(metadataFromContext);
+                return new NullLiteralExpression(metadataFromContext);
             case "true":
-                return new BooleanLiteral(true, metadataFromContext);
+                return new BooleanLiteralExpression(true, metadataFromContext);
             case "false":
-                return new BooleanLiteral(false, metadataFromContext);
+                return new BooleanLiteralExpression(false, metadataFromContext);
             default:
                 return ValueTypeHandler.getNumericLiteral(token, metadataFromContext);
         }
     }
 
     // TODO think of beter way to distinguish numeric literals
-    private static PrimaryExpression getNumericLiteral(String token, ExpressionMetadata metadataFromContext) {
-        if (!token.contains(".") && !token.contains("e") && !token.contains("E"))
-            return new IntegerLiteral(Integer.parseInt(token), metadataFromContext);
-        if (!token.contains("e") && !token.contains("E"))
-            return new DecimalLiteral(new BigDecimal(token), metadataFromContext);
-        return new DoubleLiteral(Double.parseDouble(token), metadataFromContext);
+    private static Expression getNumericLiteral(String token, ExceptionMetadata metadataFromContext) {
+        if (!token.contains(".") && !token.contains("e") && !token.contains("E")) {
+            return new IntegerLiteralExpression(Integer.parseInt(token), metadataFromContext);
+        }
+        if (!token.contains("e") && !token.contains("E")) {
+            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
+        }
+        return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
 
     }
 

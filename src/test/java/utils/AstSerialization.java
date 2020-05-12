@@ -20,8 +20,8 @@
 
 package utils;
 
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.parser.JsoniqParser;
 
 import java.util.Arrays;
 
@@ -177,13 +177,13 @@ public class AstSerialization {
         "stringLiteral" };
 
     public static boolean checkSerialization(
-            JsoniqExpressionTreeVisitor visitor,
+            MainModule mainModule,
             JsoniqParser.MainModuleContext context
     ) {
 
         String antlrSerializedTree = context.expr().toStringTree(Arrays.asList(SERIALIZATION_RULES_PARTIAL));
         antlrSerializedTree = filterNotSupportedFeatures(antlrSerializedTree);
-        String expressionTree = visitor.getMainModule().serializationString(true);
+        String expressionTree = mainModule.toString();
         boolean isEqual = antlrSerializedTree.equals(expressionTree);
         if (!isEqual)
             System.out.println("Expected :" + antlrSerializedTree + ";ACTUAL: " + expressionTree);

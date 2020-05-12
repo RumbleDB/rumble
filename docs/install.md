@@ -6,8 +6,8 @@ We show here how to install Rumble from the github repository if you wish to do 
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8+ (last tested on 8u221). The JDK is needed here, but the JRE is enough with the packaged jar file.
-- [Spark](https://spark.apache.org/), version 2.4.3 (for example)
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 (and Scala 11 as of Spark 2.4.5).
+- [Spark](https://spark.apache.org/), version 2.4.5 (for example)
 - [Ant](http://www.ant.org/), version 1.10.1
 - [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
 - [Maven](https://maven.apache.org/) 3.6.0
@@ -46,11 +46,11 @@ Go to the root of this repository:
 
 ### ANTLRv4
 
-For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license).
+For convenience, we have included the ANTLRv4 files for 4.5.3 and 4.7 in the lib directory of the repository (see corresponding license). In the most recent and supported Spark versions, 4.7 is the correct ANTLR version to use.
 
 From the root directory of the rumble local checkout, you first need to build the parser:
 
-    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=/lib/antlr-4.7-complete.jar
+    $ ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
     
 ### Rumble
 
@@ -58,13 +58,13 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.4-jar-with-dependencies.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.6.0.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit --master local[2] --deploy-mode client target/spark-rumble-1.4-jar-with-dependencies.jar --shell yes
+    $ spark-submit target/spark-rumble-1.6.0.jar --shell yes
 
 The Rumble shell should start:
 
@@ -82,27 +82,27 @@ The Rumble shell should start:
     Log Path: -
     Query Path : -
 
-    jiqs$
+    rumble$
     
 You can now start typing interactive queries. Queries can span over multiple lines. You need to press return 3 times to confirm.
     
-    jiqs$ "Hello, world!"
+    rumble$ "Hello, world!"
 
 This produces the following results (`>>>` show the extra, empty lines that appear on the first two presses of the return key).
 
-    jiqs$ "Hello, world!"
+    rumble$ "Hello, world!"
     >>> 
     >>> 
     Hello, world
     
 You can try a few more queries.
     
-    jiqs$ 2 + 2
+    rumble$ 2 + 2
     >>> 
     >>> 
     4
     
-    jiqs$ 1 to 10
+    rumble$ 1 to 10
     >>> 
     >>> 
     ( 1, 2, 3, 4, 5, 6, 7, 8, 9, 10)
@@ -111,8 +111,4 @@ This is it. Rumble is step and ready to go locally. You can now move on to a JSO
 
 ## Running on a cluster
 
-You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done in the same way as any other `spark-submit` command:
-
-    $ spark-submit --master yarn --deploy-mode client --num-executors 40 spark-rumble-1.4.jar
-    
-More details are provided in the rest of the documentation.
+You can also try to run the Rumble shell on a cluster if you have one available and configured -- this is done with the same command, as the master and deployment mode are usually already set up in cloud-managed clusters. More details are provided in the rest of the documentation.

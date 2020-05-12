@@ -28,9 +28,9 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.io.json.RowToItemMapper;
-import sparksoniq.jsoniq.runtime.metadata.IteratorMetadata;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.parsing.RowToItemMapper;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
@@ -44,100 +44,100 @@ public class FlworTuple implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<String, List<Item>> localVariables;
     private LinkedHashMap<String, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<String, Dataset<Row>> dfVariables;
+    private LinkedHashMap<String, Dataset<Row>> dataFrameVariables;
 
     public FlworTuple() {
-        localVariables = new LinkedHashMap<>(1, 1);
-        rddVariables = new LinkedHashMap<>(1, 1);
-        dfVariables = new LinkedHashMap<>(1, 1);
+        this.localVariables = new LinkedHashMap<>(1, 1);
+        this.rddVariables = new LinkedHashMap<>(1, 1);
+        this.dataFrameVariables = new LinkedHashMap<>(1, 1);
     }
 
     public FlworTuple(int nb) {
-        localVariables = new LinkedHashMap<>(nb, 1);
-        rddVariables = new LinkedHashMap<>(nb, 1);
-        dfVariables = new LinkedHashMap<>(nb, 1);
+        this.localVariables = new LinkedHashMap<>(nb, 1);
+        this.rddVariables = new LinkedHashMap<>(nb, 1);
+        this.dataFrameVariables = new LinkedHashMap<>(nb, 1);
     }
 
     /**
      * Deep copy constructor
      */
     public FlworTuple(FlworTuple toCopy) {
-        localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
-        rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
-        dfVariables = new LinkedHashMap<>(toCopy.dfVariables.size(), 1);
+        this.localVariables = new LinkedHashMap<>(toCopy.localVariables.size(), 1);
+        this.rddVariables = new LinkedHashMap<>(toCopy.rddVariables.size(), 1);
+        this.dataFrameVariables = new LinkedHashMap<>(toCopy.dataFrameVariables.size(), 1);
         for (String key : toCopy.localVariables.keySet()) {
             this.putValue(key, toCopy.localVariables.get(key));
         }
         for (String key : toCopy.rddVariables.keySet()) {
             this.putValue(key, toCopy.rddVariables.get(key));
         }
-        for (String key : toCopy.dfVariables.keySet()) {
-            this.putValue(key, toCopy.dfVariables.get(key));
+        for (String key : toCopy.dataFrameVariables.keySet()) {
+            this.putValue(key, toCopy.dataFrameVariables.get(key));
         }
     }
 
     public Set<String> getLocalKeys() {
-        return localVariables.keySet();
+        return this.localVariables.keySet();
     }
 
     public Set<String> getRDDKeys() {
-        return rddVariables.keySet();
+        return this.rddVariables.keySet();
     }
 
-    public Set<String> getDFKeys() {
-        return dfVariables.keySet();
+    public Set<String> getDataFrameKeys() {
+        return this.dataFrameVariables.keySet();
     }
 
     public boolean contains(String key) {
-        return localVariables.containsKey(key)
-            || rddVariables.containsKey(key)
-            || dfVariables.containsKey(key);
+        return this.localVariables.containsKey(key)
+            || this.rddVariables.containsKey(key)
+            || this.dataFrameVariables.containsKey(key);
     }
 
-    public boolean isRDD(String key, IteratorMetadata metadata) {
+    public boolean isRDD(String key, ExceptionMetadata metadata) {
         if (!contains(key)) {
-            throw new SparksoniqRuntimeException("Undeclared FLWOR variable", metadata.getExpressionMetadata());
+            throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return rddVariables.containsKey(key)
-            || dfVariables.containsKey(key);
+        return this.rddVariables.containsKey(key)
+            || this.dataFrameVariables.containsKey(key);
     }
 
-    public boolean isDF(String key, IteratorMetadata metadata) {
+    public boolean isDataFrame(String key, ExceptionMetadata metadata) {
         if (!contains(key)) {
-            throw new SparksoniqRuntimeException("Undeclared FLWOR variable", metadata.getExpressionMetadata());
+            throw new OurBadException("Undeclared FLWOR variable", metadata);
         }
-        return dfVariables.containsKey(key);
+        return this.dataFrameVariables.containsKey(key);
     }
 
-    public List<Item> getLocalValue(String key, IteratorMetadata metadata) {
-        if (localVariables.containsKey(key)) {
-            return localVariables.get(key);
+    public List<Item> getLocalValue(String key, ExceptionMetadata metadata) {
+        if (this.localVariables.containsKey(key)) {
+            return this.localVariables.get(key);
         }
-        if (rddVariables.containsKey(key)) {
+        if (this.rddVariables.containsKey(key)) {
             JavaRDD<Item> rdd = this.getRDDValue(key, metadata);
-            return SparkSessionManager.collectRDDwithLimit(rdd);
+            return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
         }
 
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public JavaRDD<Item> getRDDValue(String key, IteratorMetadata metadata) {
-        if (rddVariables.containsKey(key)) {
-            return rddVariables.get(key);
+    public JavaRDD<Item> getRDDValue(String key, ExceptionMetadata metadata) {
+        if (this.rddVariables.containsKey(key)) {
+            return this.rddVariables.get(key);
         }
-        if (dfVariables.containsKey(key)) {
-            Dataset<Row> df = dfVariables.get(key);
+        if (this.dataFrameVariables.containsKey(key)) {
+            Dataset<Row> df = this.dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDFValue(String key, IteratorMetadata metadata) {
-        if (dfVariables.containsKey(key)) {
-            return dfVariables.get(key);
+    public Dataset<Row> getDataFrameValue(String key, ExceptionMetadata metadata) {
+        if (this.dataFrameVariables.containsKey(key)) {
+            return this.dataFrameVariables.get(key);
         }
-        throw new SparksoniqRuntimeException("Undeclared FLOWR variable", metadata.getExpressionMetadata());
+        throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
     public void putValue(String key, Item value) {
@@ -147,36 +147,38 @@ public class FlworTuple implements Serializable, KryoSerializable {
     }
 
     public FlworTuple putValue(String key, List<Item> value) {
-        rddVariables.remove(key);
-        dfVariables.remove(key);
-        localVariables.put(key, value);
+        this.rddVariables.remove(key);
+        this.dataFrameVariables.remove(key);
+        this.localVariables.put(key, value);
         return this;
     }
 
     public FlworTuple putValue(String key, JavaRDD<Item> value) {
-        localVariables.remove(key);
-        dfVariables.remove(key);
-        rddVariables.put(key, value);
+        this.localVariables.remove(key);
+        this.dataFrameVariables.remove(key);
+        this.rddVariables.put(key, value);
         return this;
     }
 
     public FlworTuple putValue(String key, Dataset<Row> value) {
-        localVariables.remove(key);
-        rddVariables.remove(key);
-        dfVariables.put(key, value);
+        this.localVariables.remove(key);
+        this.rddVariables.remove(key);
+        this.dataFrameVariables.put(key, value);
         return this;
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, localVariables);
-        kryo.writeObject(output, rddVariables);
+        kryo.writeObject(output, this.localVariables);
+        kryo.writeObject(output, this.rddVariables);
+        kryo.writeObject(output, this.dataFrameVariables);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        localVariables = kryo.readObject(input, LinkedHashMap.class);
-        rddVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.localVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
+        this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
     }
 }

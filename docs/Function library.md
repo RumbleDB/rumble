@@ -268,7 +268,7 @@ flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
 
 Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
 
-Returns (1, 2, 3, 4, 5, 6, 7, 8, 9, 10).
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
 
 ## Atomic functions
 
@@ -362,6 +362,22 @@ log(100)
 log10(100)
 ```
 
+### number
+
+```
+number("15")
+```
+returns 15 as a double
+
+```
+number("foo")
+```
+returns NaN as a double
+
+```
+number(15)
+```
+returns 15 as a double
 
 ### pow
 
@@ -534,6 +550,155 @@ tokenize("aa;bb;cc;dd", ";")
 
 returns ("aa", "bb", "cc", "dd")
 
+### replace
+
+Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
+
+```
+replace("abracadabra", "bra", "*")
+```
+
+returns "a\*cada\*"
+
+```
+replace("abracadabra", "a(.)", "a$1$1")
+```
+
+returns "abbraccaddabbra"
+
+### translate
+
+```
+translate("bar","abc","ABC")
+```
+returns "BAr"
+
+```
+translate("--aaa--","abc-","ABC")
+```
+returns "AAA"
+
+### codepoint-equal
+
+```
+codepoint-equal("abcd", "abcd")
+```
+returns true
+
+```
+codepoint-equal("", ())
+```
+returns ()
+
+### string-to-codepoint
+
+```
+string-to-codepoints("Thérèse")
+```
+returns (84, 104, 233, 114, 232, 115, 101)
+
+```
+string-to-codepoints("")
+```
+returns ()
+
+### codepoints-to-string
+
+```
+codepoints-to-string((2309, 2358, 2378, 2325))
+```
+returns "अशॊक"
+
+```
+codepoints-to-string(())
+```
+returns ""
+
+### upper-case
+
+```
+upper-case("abCd0")
+```
+returns "ABCD0"
+
+### lower-case
+
+```
+lower-case("ABc!D")
+```
+returns "abc!d"
+
+### serialize
+
+Serializes the supplied input sequence, returning the serialized representation of the sequence as a string
+
+```
+serialize({hello: "world"})
+```
+returns "[ \\"hello\\", \\"world\\" ]"
+
+## Date and time functions
+
+### dateTime
+
+```
+dateTime("2004-04-12T13:20:00+14:00")
+```
+
+returns 2004-04-12T13:20:00+14:00
+
+### date
+
+```
+date("2004-04-12+14:00")
+```
+
+returns 2004-04-12+14:00
+
+### time
+
+```
+time("13:20:00-05:00")
+```
+
+returns 13:20:00-05:00
+
+## Formatting dates and times functions
+
+The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only:
+
+* One of the following component specifiers: Y, M, d, D, F, H, m, s, P
+* A first presentation modifier, for which the value can be:
+	* Nn, for all supported component specifiers, besides P
+	* N, if the component specifier is P
+	* a format token that indicates a numbering sequence of the the following form: '0001'
+* A second presentation modifier, for which the value can be t or c, which are also the default values
+* A width modifier, both minimum and maximum values
+
+### format-dateTime
+
+```
+format-dateTime(dateTime("2004-04-12T13:20:00"), "[m]-[H]-[D]-[M]-[Y]")
+```
+
+returns 20-13-12-4-2004
+
+### format-date
+
+```
+format-date(date("2004-04-12"), "[D]-[M]-[Y]")
+```
+
+returns 12-4-2004
+
+### format-time
+
+```
+format-time(time("13:20:00"), "[H]-[m]-[s]")
+```
+
+returns 13-20-0
+
 ## Context functions
 
 ### position
@@ -557,128 +722,26 @@ returns 10
 ```
 returns 10
 
-## I/O functions
-
-### json-doc
+### current-dateTime
 
 ```
-json-doc("file.json")
+current-dateTime()
 ```
 
-returns the (single) JSON value read from the supplied JSON file. This will also work for structures spread over multiple lines, as the read is local and not sharded.
+returns 2020-02-26T11:22:48.423+01:00
 
-## Integration with HDFS and Spark
-
-We support two more functions to read a JSON file from HDFS or send a large sequence to the cluster:
-
-### json-file (Rumble specific)
-
-Exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
-The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
-
-Example of usage:
-```
-for $my-json in json-file("hdfs://host:port/directory/file.json")
-where $my-json.property eq "some value"
-return $my-json
-```
-
-If a host and port are set:
+### current-date
 
 ```
-for $my-json in json-file("/absolute/directory/file.json")
-where $my-json.property eq "some value"
-return $my-json
+current-date()
 ```
 
-For a set of files:
+returns 2020-02-26Europe/Zurich
+
+### current-time
 
 ```
-for $my-json in json-file("/absolute/directory/file-*.json")
-where $my-json.property eq "some value"
-return $my-json
+current-time()
 ```
 
-If a working directory is set:
-
-```
-for $my-json in json-file("file.json")
-where $my-json.property eq "some value"
-return $my-json
-```
-
-Several files or whole directories can be read with the same pattern syntax as in Spark.
-
-
-```
-for $my-json in json-file("*.json")
-where $my-json.property eq "some value"
-return $my-json
-```
-
-### structured-json-file (Rumble specific)
-
-Parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use only when such data is available. When data has multiple types for the same field, this field and contained values will be treated as strings. This is also similar to Spark's spark.read.json().
-
-Example of usage:
-```
-for $my-structured-json in structured-json-file("hdfs://host:port/directory/structured-file.json")
-where $my-structured-json.property eq "some value"
-return $my-structured-json
-```
-
-### text-file (Rumble specific)
-
-Exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
-The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
-
-Example of usage:
-```
-count(
-  for $my-string in text-file("hdfs://host:port/directory/file.txt")
-  for $token in tokenize($my-string, ";")
-  where $token eq "some value"
-  return $token
-)
-```
-
-Several files or whole directories can be read with the same pattern syntax as in Spark.
-
-(Also see examples for json-file for host and port, sets of files and working directory).
-
-### parquet-file (Rumble specific)
-
-Parses one or more parquet files and returns a sequence of objects. This is also similar to Spark's spark.read.parquet()
-
-```
-for $my-object in parquet-file("file.parquet")
-where $my-object.property eq "some value"
-return $my-json
-```
-
-Several files or whole directories can be read with the same pattern syntax as in Spark.
-
-```
-for $my-object in parquet-file("*.parquet")
-where $my-object.property eq "some value"
-return $my-json
-```
-
-### parallelize (Rumble specific)
-
-This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
-The rest of the FLWOR expression is then evaluated with Spark transformations on the cluster.
-
-```
-for $i in parallelize(1 to 1000000)
-where $i mod 1000 eq 0
-return $i
-```
-
-There is also be a second, optional parameter that specifies the minimum number of partitions.
-
-```
-for $i in parallelize(1 to 1000000, 100)
-where $i mod 1000 eq 0
-return $i
-```
+returns 11:24:10.064+01:00

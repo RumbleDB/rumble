@@ -14,11 +14,7 @@ A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial
 
 A tutorial aimed at Python users can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial-python). Please keep in mind, though, that examples using not supported features may not work (see below).
 
-## Unsupported/Unimplemented features (alpha release)
-
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases.
-
-### Nested FLWOR expressions
+## Nested FLWOR expressions
 
 FLWOR expressions now support nestedness, for example like so:
 
@@ -40,9 +36,9 @@ return count($z)
 ```
 
 
-### Expressions pushed down to Spark
+## Expressions pushed down to Spark
 
-Some expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
+Many expressions are pushed down to Spark out of the box. For example, this will work on a large file leveraging the parallelism of Spark:
 
 ```
 count(json-file("file.json")[$$.field eq "foo"].bar[].foo[[1]])
@@ -54,6 +50,8 @@ What is pushed down so far is:
 - aggregation functions such as count
 - JSON navigation expressions: object lookup (as well as keys() call), array lookup, array unboxing, filtering predicates
 - predicates on positions, include use of context-dependent functions position() and last(), e.g.,
+- type checking (instance of, treat as)
+- many builtin function calls (head, tail, exist, etc)
 
 ```
 json-file("file.json")[position() ge 10 and position() le last() - 2]
@@ -61,33 +59,39 @@ json-file("file.json")[position() ge 10 and position() le last() - 2]
 
 More expressions working on sequences will be pushed down in the future, prioritized on the feedback we receive.
 
-We also started to push down some expressions to DataFrames and Spark SQL. In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() on these is also pushed down.
+We also started to push down some expressions to DataFrames and Spark SQL (obtained via structured-json-file, csv-file and parquet-file calls). In particular, keys() pushes down the schema lookup if used on parquet-file() and structured-json-file(). Likewise, count() as well as object lookup, array unboxing and array lookup is also pushed down on DataFrames.
 
 When an expression does not support pushdown, it will materialize automaticaly. To avoid issues, the materializion is capped by default at 100 items, but this can be changed on the command line with --result-size. A warning is issued if a materialization happened and the sequence was truncated.
 
-### Unsupported global variables, settings and modules
+## External global variables.
 
-Prologs with user-defined functions are now supported, but not yet global global variables, settings and library modules.
+Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
-Dynamic functions (aka, function items that can be passed as values and dynamically called) are now supported.
 
-Builtin function calls are type-checked, but user-defined function calls and dynamic calls are not type-checked yet.
+## Unsupported/Unimplemented features (beta release)
 
-### Unsupported try/catch
+Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
 
-Try/catch expressions. Exceptions raised remotely may not be displayed in a user-friendly way yet, but we are working on it.
+### Settings and modules
 
-### Unsupported nested expressions in object lookups (rhs)
+Prolog settings and library modules are not supported yet.
+
+### Try/catch
+
+Try/catch expressions are not supported yet but this is planned.
+
+### Nested expressions in object lookups (rhs)
 
 Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
 
-### Unsupported types
+### Types
 
 The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
 
 |  Type | Status |
 |-------|--------|
 | atomic | supported |
+| anyURI | supported |
 | base64Binary | supported |
 | boolean | supported |
 | byte | not supported |
@@ -121,10 +125,10 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | yearMonthDuration | supported |
 
 
-### Unsupported functions
+### Builtin functions
 
 Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
 
-### Unsupported updates and scripting
+### Updates and scripting
 
 JSON updates are not supported. Scripting features (assignment, while loop, ...) are not supported yet either.

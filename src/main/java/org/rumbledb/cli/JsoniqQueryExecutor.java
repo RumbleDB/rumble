@@ -21,211 +21,139 @@
 package org.rumbledb.cli;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.FSDataOutputStream;
-import org.apache.hadoop.fs.Path;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.config.SparksoniqRuntimeConfiguration;
-import sparksoniq.exceptions.ParsingException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.expr.Expression;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
-import sparksoniq.spark.SparkSessionManager;
-import sparksoniq.utils.FileUtils;
+import org.rumbledb.compiler.TranslationVisitor;
+import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.CliException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
-import java.io.BufferedOutputStream;
-import java.io.File;
+import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.Charset;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 
 public class JsoniqQueryExecutor {
-    public static final String TEMP_QUERY_FILE_NAME = "Temp_Query";
-    private SparksoniqRuntimeConfiguration _configuration;
-    private boolean _useLocalOutputLog;
+    private RumbleRuntimeConfiguration configuration;
 
-    public JsoniqQueryExecutor(boolean useLocalOutputLog, SparksoniqRuntimeConfiguration configuration) {
-        _configuration = configuration;
-        _useLocalOutputLog = useLocalOutputLog;
+    public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
+        this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
-    public void runLocal(String queryFile, String outputPath) throws IOException {
-        File outputFile = null;
+    private void checkOutputFile(String outputPath) throws IOException {
         if (outputPath != null) {
-            outputFile = new File(outputPath);
-            if (outputFile.exists()) {
-                if (!_configuration.getOverwrite()) {
-                    System.err.println(
-                        "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
+            if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
+                if (!this.configuration.getOverwrite()) {
+                    throw new CliException(
+                            "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
-                    System.exit(1);
-                } else if (outputFile.isDirectory()) {
-                    org.apache.commons.io.FileUtils.deleteDirectory(outputFile);
-                } else {
-                    outputFile.delete();
                 }
             }
         }
+    }
 
-        CharStream charStream = CharStreams.fromFileName(queryFile);
+    public List<Item> runQuery(String queryFile, String outputPath) throws IOException {
+        List<Item> outputList = null;
+        checkOutputFile(outputPath);
+        ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
+        if (!FileSystemUtil.exists(queryFile, metadata)) {
+            throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
+        }
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, metadata);
+        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
+
         long startTime = System.currentTimeMillis();
-        JsoniqExpressionTreeVisitor visitor = this.parse(new JsoniqLexer(charStream));
-        // generate static context
-        generateStaticContext(visitor.getMainModule());
-        // generate iterators
-        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
-        if (_configuration.isPrintIteratorTree()) {
+        MainModule mainModule = this.parse(lexer);
+        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
+        VisitorHelpers.populateStaticContext(mainModule);
+        if (this.configuration.isPrintIteratorTree()) {
+            System.out.println(mainModule);
+        }
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        RuntimeIterator result = generateRuntimeIterators(mainModule);
+        if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
             System.out.println(sb);
-            return;
         }
+
         if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            output.saveAsTextFile(outputPath);
+            JavaRDD<Item> rdd = result.getRDD(dynamicContext);
+            JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
+            outputRDD.saveAsTextFile(outputPath);
         } else {
-            String output = runIterators(result);
+            outputList = getIteratorOutput(result, dynamicContext);
+            List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                List<String> lines = Arrays.asList(output);
-                org.apache.commons.io.FileUtils.writeLines(outputFile, "UTF-8", lines);
+                FileSystemUtil.write(outputPath, lines, metadata);
             } else {
-                System.out.println(output);
+                System.out.println(String.join("\n", lines));
             }
         }
+
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        if (_configuration.getLogPath() != null) {
-            writeTimeLog(totalTime);
+        String logPath = this.configuration.getLogPath();
+        if (logPath != null) {
+            String time = "[ExecTime] " + totalTime;
+            FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
         }
+        return outputList;
     }
 
-    public void run(String queryFile, String outputPath) throws IOException {
-        JsoniqLexer lexer = getInputSource(queryFile);
-        long startTime = System.currentTimeMillis();
-        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
-        generateStaticContext(visitor.getMainModule());
-        // generate iterators
-        RuntimeIterator result = generateRuntimeIterators(visitor.getMainModule());
-        // collect output in memory and write to filesystem from java
-        if (_useLocalOutputLog) {
-            String output = runIterators(result);
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(outputPath));
-            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
-            stream.write(output.getBytes());
-            stream.close();
-            // else write from Spark RDD
-        } else {
-            if (!result.isRDD())
-                throw new SparksoniqRuntimeException("Could not find any RDD iterators in executor");
-            JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
-            JavaRDD<String> output = rdd.map(o -> o.serialize());
-            output.saveAsTextFile(outputPath);
-        }
-        long endTime = System.currentTimeMillis();
-        long totalTime = endTime - startTime;
-        if (_configuration.getLogPath() != null) {
-            writeTimeLog(totalTime);
-        }
-    }
-
-    private void writeTimeLog(long totalTime) throws IOException {
-        String result = "[ExecTime]" + totalTime;
-        if (_configuration.getLogPath().startsWith("file://") || _configuration.getLogPath().startsWith("/")) {
-            String timeLogPath = _configuration.getLogPath().substring(0, _configuration.getLogPath().lastIndexOf("/"));
-            timeLogPath += Path.SEPARATOR + "time_log_";
-            java.nio.file.Path finalPath = FileUtils.getUniqueFileName(timeLogPath);
-            java.nio.file.Files.write(finalPath, result.getBytes());
-        }
-        if (_configuration.getLogPath().startsWith("hdfs://")) {
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                .get(SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataOutputStream fsDataOutputStream = fileSystem.create(new Path(_configuration.getLogPath()));
-            BufferedOutputStream stream = new BufferedOutputStream(fsDataOutputStream);
-            stream.write(result.getBytes());
-            stream.close();
-        }
-        if (_configuration.getLogPath().startsWith("./")) {
-            List<String> lines = Arrays.asList(result);
-            java.nio.file.Path file = Paths.get(_configuration.getLogPath());
-            Files.write(file, lines, Charset.forName("UTF-8"));
-        }
-    }
-
-    public String runInteractive(java.nio.file.Path queryFile) throws IOException {
+    public List<Item> runInteractive(String query) throws IOException {
         // create temp file
-        JsoniqLexer lexer = getInputSource(queryFile.toString());
-        JsoniqExpressionTreeVisitor visitor = this.parse(lexer);
-        // generate static context
-        generateStaticContext(visitor.getMainModule());
-        // generate iterators
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(visitor.getMainModule());
+        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
+        MainModule mainModule = this.parse(lexer);
+        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
+        VisitorHelpers.populateStaticContext(mainModule);
+        if (this.configuration.isPrintIteratorTree()) {
+            System.out.println(mainModule);
+        }
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions
+        if (this.configuration.isPrintIteratorTree()) {
+            StringBuffer sb = new StringBuffer();
+            runtimeIterator.print(sb, 0);
+            System.out.println(sb);
+        }
         if (!runtimeIterator.isRDD()) {
-            String localOutput = this.runIterators(runtimeIterator);
-            return localOutput;
+            return this.getIteratorOutput(runtimeIterator, dynamicContext);
         }
-        String rddOutput = this.getRDDResults(runtimeIterator);
-        return rddOutput;
+        return this.getRDDResults(runtimeIterator, dynamicContext);
     }
 
-    private JsoniqLexer getInputSource(String arg) throws IOException {
-        arg = arg.trim();
-        // return embedded file
-        if (arg.isEmpty())
-            new JsoniqLexer(CharStreams.fromStream(Main.class.getResourceAsStream("/queries/runQuery.iq")));
-        if (arg.startsWith("file://") || arg.startsWith("/")) {
-            return new JsoniqLexer(CharStreams.fromFileName(arg));
-        }
-        if (arg.startsWith("hdfs://")) {
-            org.apache.hadoop.fs.FileSystem fileSystem = org.apache.hadoop.fs.FileSystem
-                .get(URI.create(arg), SparkSessionManager.getInstance().getJavaSparkContext().hadoopConfiguration());
-            FSDataInputStream in;
-            try {
-                in = fileSystem.open(new Path(arg));
-            } catch (Exception ex) {
-                // ex.printStackTrace();
-                throw ex;
-            }
-            return new JsoniqLexer(CharStreams.fromStream(in));
-        }
-        throw new RuntimeException("Unknown url protocol");
-    }
-
-    private JsoniqExpressionTreeVisitor parse(JsoniqLexer lexer) {
+    private MainModule parse(JsoniqLexer lexer) {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
+        TranslationVisitor visitor = new TranslationVisitor();
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            visitor.visit(main);
+            return (MainModule) visitor.visit(main);
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExpressionMetadata(
+                    new ExceptionMetadata(
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )
@@ -233,77 +161,52 @@ public class JsoniqQueryExecutor {
             e.initCause(ex);
             throw e;
         }
-        return visitor;
     }
 
-    private void generateStaticContext(Expression expression) {
-        new StaticContextVisitor().visit(expression, expression.getStaticContext());
+    private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {
+        return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    private RuntimeIterator generateRuntimeIterators(Expression expression) {
-        RuntimeIterator result = new RuntimeIteratorVisitor().visit(expression, null);
-        return result;
-    }
-
-    protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
-        return actualOutput;
-    }
-
-    private String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    private List<Item> getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        List<Item> resultList = new ArrayList<>();
+        iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
         }
         if (result == null) {
-            return "";
+            return resultList;
         }
-        String singleOutput = result.serialize();
-        if (!iterator.hasNext())
-            return singleOutput;
-        else {
-            int itemCount = 0;
-            StringBuilder sb = new StringBuilder();
-            sb.append(result.serialize());
-            sb.append("\n");
+        Item singleOutput = result;
+        if (!iterator.hasNext()) {
+            resultList.add(singleOutput);
+            return resultList;
+        } else {
+            int itemCount = 1;
+            resultList.add(result);
             while (
                 iterator.hasNext()
                     &&
-                    ((itemCount < _configuration.getResultSizeCap() && _configuration.getResultSizeCap() > 0)
+                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
                         ||
-                        _configuration.getResultSizeCap() == 0)
+                        this.configuration.getResultSizeCap() == 0)
             ) {
-                sb.append(iterator.next().serialize());
-                sb.append("\n");
+                resultList.add(iterator.next());
                 itemCount++;
             }
-            // remove last comma
-            return sb.toString();
+            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+            return resultList;
         }
     }
 
-    private String getRDDResults(RuntimeIterator result) {
-        JavaRDD<Item> rdd = result.getRDD(new DynamicContext());
-        JavaRDD<String> output = rdd.map(o -> o.serialize());
-        long resultCount = output.take(2).size();
-        if (resultCount == 0) {
-            return "";
-        }
-        if (resultCount == 1) {
-            return output.collect().get(0);
-        }
-        if (resultCount > 1) {
-            List<String> collectedOutput = SparkSessionManager.collectRDDwithLimit(output);
-
-            StringBuilder sb = new StringBuilder();
-            for (String item : collectedOutput) {
-                sb.append(item);
-                sb.append("\n");
-            }
-
-            return sb.toString();
-        }
-        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+    private List<Item> getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
+        JavaRDD<Item> rdd = result.getRDD(dynamicContext);
+        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd);
     }
 }

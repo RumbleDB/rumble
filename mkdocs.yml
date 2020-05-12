@@ -1,11 +1,13 @@
-site_name: Rumble 1.4.0 "Willow Oak" beta
+site_name: Rumble 1.6.0 "Yucca" beta
 pages:
   - '1. Documentation home': 'index.md'
   - '2. Getting started': 'Getting started.md'
   - '3. Run on a cluster': 'Run on a cluster.md'
   - '4. The JSONiq language': 'JSONiq.md'
-  - '5. Function library': 'Function library.md'
-  - '6. Error codes': 'Error codes.md'
-  - '7. Compile from GitHub': 'install.md'
-  - '8. Licenses': 'Licenses.md'
+  - '5. Reading data': 'Input.md'
+  - '6. Function library': 'Function library.md'
+  - '7. CLI and HTTP parameters': 'CLI.md'
+  - '8. Error codes': 'Error codes.md'
+  - '9. Compile from GitHub': 'install.md'
+  - '10. Licenses': 'Licenses.md'
 theme: readthedocs

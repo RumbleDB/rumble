@@ -4,6 +4,10 @@
 
 - [FODC0002] - Error retrieving resource.
 
+- [FOFD1340] -This error is raised if the picture string or calendar supplied to fn:format-date, fn:format-time, or fn:format-dateTime has invalid syntax.
+
+- [FOFD1350] - This error is raised if the picture string supplied to fn:format-date selects a component that is not present in a date, or if the picture string supplied to fn:format-time selects a component that is not present in a time.
+
 - [JNDY0003] - Duplicate pair name. It is a dynamic error if two pairs in an object
  constructor or in a simple object union have the same name.
 
@@ -16,12 +20,36 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
-- [SENR0001] - Serialization error. Function items can not be serialized
+- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --result-size to increase the maximum  materialization size.
 
-- [SPRKIQ0001] - CLI error. Raised when invalid parameters are supplied at launch.
+- [RBML0001] - Unrecognized Rumble ML Class Reference
+An unrecognized classname is used in query while accessing the Rumble ML API.
 
-- [SPRKIQ0002] - CLI error. Unimplemented feature error.
+- [RBML0002] - Unrecognized Rumble ML Param Reference
+An unrecognized parameter is used in query while operating with a Rumble ML class.
+
+- [RBML0003] - Invalid Rumble ML Param
+Provided parameter does not match the expected type or value for the referenced Rumble ML class.
+
+- [RBML0004] - Input is not a DataFrame
+Provided input of items does not form a DataFrame as expected by RumbleML.
+
+- [RBML0005] - Invalid schema for DataFrame in annotate()
+The provided schema can not be applied to the item data while converting the data to a DataFrame
+
+- [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
+
+- [RBST0002] - Unimplemented feature error.
 Raised when a JSONiq feature that is not yet implemented in Rumble is used.
+
+- [RBST0003] - Invalid for clause expression error.
+Raised when an expression produces a different,
+big sequence of items for each binding within a big tuple,
+which would lead to a data flow explosion and to a nesting of jobs on the Spark cluster.
+
+- [RBST0004] - Implementation Error.
+
+- [SENR0001] - Serialization error. Function items can not be serialized.
 
 - [XPDY0002] - It is a dynamic error if evaluation of an expression relies on some part of the dynamic context that is absent.
 
@@ -63,6 +91,10 @@ or during the dynamic evaluation phase, the dynamic type of
 a value does not match a required type. 
 Example: using subtraction on strings.
 
+- [XQDY0054] - It is a dynamic error if a cycle is encountered
+in the definition of a module's dynamic context components,
+for example because of a cycle in variable declarations.
+
 - [XQST0016] - Module declaration error. 
 Current implementation does not support the Module Feature 
 raises a static error if it encounters a module declaration 
@@ -80,6 +112,9 @@ the same number of arguments and their expanded QNames are equal
 - [XQST0039] - Duplicate parameter name. It is a static error
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.
+
+- [XQST0049] - It is a static error if two or more variables
+declared or imported by a module have the same name.
 
 - [XQST0052] - Simple type error. The type must be
 the name of a type defined in the in-scope schema types,

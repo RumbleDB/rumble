@@ -25,9 +25,8 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.semantics.types.ItemTypes;
-
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,23 +41,25 @@ public class FlworKey implements KryoSerializable {
     }
 
     List<Item> getKeyItems() {
-        return keyItems;
+        return this.keyItems;
     }
 
     @Override
     public int hashCode() {
         StringBuilder result = new StringBuilder();
-        for (Item key : this.keyItems)
+        for (Item key : this.keyItems) {
             result.append(key.hashCode());
+        }
         return result.toString().hashCode();
     }
 
     @Override
     public boolean equals(Object otherKey) {
-        if (otherKey instanceof FlworKey)
+        if (otherKey instanceof FlworKey) {
             return this.compareWithFlworKey((FlworKey) otherKey) == 0;
-        else
+        } else {
             return false;
+        }
     }
 
     /**
@@ -69,7 +70,7 @@ public class FlworKey implements KryoSerializable {
      */
     public int compareWithFlworKey(FlworKey flworKey) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
-            throw new SparksoniqRuntimeException("Invalid sort key: Key sizes can't be different.");
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.");
         }
 
         int result = 0;
@@ -88,7 +89,7 @@ public class FlworKey implements KryoSerializable {
                     (comparisonItem != null && comparisonItem.isArray())
                     || (comparisonItem != null && comparisonItem.isObject())
             ) {
-                throw new SparksoniqRuntimeException("Non atomic key not allowed");
+                throw new RumbleException("Non atomic key not allowed");
             }
 
             // handle the Java null placeholder used in orderByClauseSparkIterator
@@ -105,11 +106,11 @@ public class FlworKey implements KryoSerializable {
                 try {
                     result = currentItem.compareTo(comparisonItem);
                 } catch (RuntimeException e) {
-                    throw new SparksoniqRuntimeException(
+                    throw new RumbleException(
                             "Invalid sort key: cannot compare item of type "
-                                + ItemTypes.getItemTypeName(comparisonItem.getClass().getSimpleName())
+                                + comparisonItem.getDynamicType().toString()
                                 + " with item of type "
-                                + ItemTypes.getItemTypeName(currentItem.getClass().getSimpleName())
+                                + currentItem.getDynamicType().toString()
                                 + "."
                     );
                 }
@@ -130,13 +131,13 @@ public class FlworKey implements KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, keyItems);
+        kryo.writeObject(output, this.keyItems);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        keyItems = kryo.readObject(input, ArrayList.class);
+        this.keyItems = kryo.readObject(input, ArrayList.class);
     }
 
 

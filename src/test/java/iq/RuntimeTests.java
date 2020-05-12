@@ -21,6 +21,8 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import scala.util.Properties;
+
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
@@ -29,10 +31,9 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.semantics.DynamicContext;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.runtime.RuntimeIterator;
+
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -49,11 +50,15 @@ public class RuntimeTests extends AnnotationsTestsBase {
                 +
                 "/src/main/resources/test_files/runtime"
     );
+    public static final String javaVersion =
+        System.getProperty("java.version");
+    public static final String scalaVersion =
+        Properties.scalaPropOrElse("version.number", "unknown");
     protected static List<File> _testFiles = new ArrayList<>();
-    protected final File _testFile;
+    protected final File testFile;
 
     public RuntimeTests(File testFile) {
-        this._testFile = testFile;
+        this.testFile = testFile;
     }
 
     public static void readFileList(File dir) {
@@ -70,49 +75,59 @@ public class RuntimeTests extends AnnotationsTestsBase {
 
     @BeforeClass
     public static void setupSparkSession() {
+        System.err.println("Java version: " + javaVersion);
+        System.err.println("Scala version: " + scalaVersion);
         SparkConf sparkConfiguration = new SparkConf();
         sparkConfiguration.setMaster("local[*]");
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+
+        // prevents spark from failing to start on MacOS when disconnected from the internet
+        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+
 
         // sparkConfiguration.set("spark.driver.memory", "2g");
         // sparkConfiguration.set("spark.executor.memory", "2g");
         // sparkConfiguration.set("spark.speculation", "true");
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
-
+        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
-        System.err.println(AnnotationsTestsBase.counter++ + " : " + _testFile);
-        JsoniqExpressionTreeVisitor visitor = new JsoniqExpressionTreeVisitor();
-        testAnnotations(_testFile.getAbsolutePath(), visitor);
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        testAnnotations(this.testFile.getAbsolutePath());
     }
 
     @Override
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+    protected void checkExpectedOutput(
+            String expectedOutput,
+            RuntimeIterator runtimeIterator,
+            DynamicContext dynamicContext
+    ) {
         String actualOutput;
         if (!runtimeIterator.isRDD()) {
-            actualOutput = runIterators(runtimeIterator);
+            actualOutput = runIterators(runtimeIterator, dynamicContext);
         } else {
-            actualOutput = getRDDResults(runtimeIterator);
+            actualOutput = getRDDResults(runtimeIterator, dynamicContext);
         }
         Assert.assertTrue(
-            "Expected output: " + expectedOutput + " Actual result: " + actualOutput,
+            "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
             expectedOutput.equals(actualOutput)
         );
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
-    protected String runIterators(RuntimeIterator iterator) {
-        String actualOutput = getIteratorOutput(iterator);
+    protected String runIterators(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        String actualOutput = getIteratorOutput(iterator, dynamicContext);
         return actualOutput;
     }
 
-    protected String getIteratorOutput(RuntimeIterator iterator) {
-        iterator.open(new DynamicContext());
+    protected String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
+        iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
@@ -121,57 +136,64 @@ public class RuntimeTests extends AnnotationsTestsBase {
             return "";
         }
         String singleOutput = result.serialize();
-        if (!iterator.hasNext())
+        if (!iterator.hasNext()) {
             return singleOutput;
-        else {
-            String output = "(" + result.serialize() + ", ";
-            while (iterator.hasNext()) {
-                result = iterator.next();
-                if (result != null)
-                    output += result.serialize() + ", ";
+        } else {
+            int itemCount = 1;
+            StringBuilder sb = new StringBuilder();
+            sb.append("(");
+            sb.append(result.serialize());
+            sb.append(", ");
+            while (
+                iterator.hasNext()
+                    &&
+                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
+                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                        ||
+                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
+            ) {
+                sb.append(iterator.next().serialize());
+                sb.append(", ");
+                itemCount++;
+            }
+            if (iterator.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
+                System.err.println(
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
             }
             // remove last comma
+            String output = sb.toString();
             output = output.substring(0, output.length() - 2);
             output += ")";
             return output;
         }
     }
 
-    private String getRDDResults(RuntimeIterator runtimeIterator) {
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(new DynamicContext());
+    private String getRDDResults(RuntimeIterator runtimeIterator, DynamicContext dynamicContext) {
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        int resultCount = output.take(2).size();
-        if (resultCount == 0) {
+        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
+
+        if (collectedOutput.isEmpty()) {
             return "";
         }
-        if (resultCount == 1) {
-            return output.collect().get(0);
-        }
-        if (resultCount > 1) {
-            List<String> collectedOutput;
-            /*
-             * if (SparkSessionManager.LIMIT_COLLECT()) {
-             * collectedOutput = output.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-             * if (collectedOutput.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-             * ShellStart.terminal.output("\nWarning: Results have been truncated to: " +
-             * SparkSessionManager.COLLECT_ITEM_LIMIT
-             * + " items. This value can be configured with the --result-size parameter at startup.\n");
-             * }
-             * } else {
-             */
-            collectedOutput = output.collect();
-            // }
 
-            StringBuilder sb = new StringBuilder();
-            sb.append("(");
-            for (String item : collectedOutput) {
-                sb.append(item + ", ");
-            }
-
-            sb.delete(sb.length() - 2, sb.length());
-            sb.append(")");
-            return sb.toString();
+        if (collectedOutput.size() == 1) {
+            return collectedOutput.get(0);
         }
-        throw new SparksoniqRuntimeException("Unexpected rdd result count in getRDDResults()");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(");
+        for (String item : collectedOutput) {
+            sb.append(item);
+            sb.append(", ");
+        }
+
+        String result = sb.toString();
+        result = result.substring(0, result.length() - 2);
+        result += ")";
+        return result;
     }
 }

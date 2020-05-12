@@ -25,18 +25,20 @@ import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
-import sparksoniq.exceptions.ParsingException;
-import sparksoniq.exceptions.SemanticException;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.compiler.JsoniqExpressionTreeVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqBaseVisitor;
-import sparksoniq.jsoniq.compiler.parser.JsoniqLexer;
-import sparksoniq.jsoniq.compiler.parser.JsoniqParser;
-import sparksoniq.jsoniq.compiler.translator.metadata.ExpressionMetadata;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.iterator.functions.base.Functions;
-import sparksoniq.semantics.visitor.RuntimeIteratorVisitor;
-import sparksoniq.semantics.visitor.StaticContextVisitor;
+import org.rumbledb.compiler.TranslationVisitor;
+import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.base.Functions;
+
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
 import utils.annotations.AnnotationProcessor;
@@ -52,135 +54,145 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] {});
 
 
     public void initializeTests(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> testFiles.add(file));
-        testFiles.sort(Comparator.comparing(File::getName));
+        FileManager.loadJiqFiles(dir).forEach(file -> this.testFiles.add(file));
+        this.testFiles.sort(Comparator.comparing(File::getName));
     }
 
     /**
      * Tests annotations
      */
-    protected JsoniqParser.MainModuleContext testAnnotations(String path, JsoniqBaseVisitor<Void> visitor)
+    protected MainModule testAnnotations(String path)
             throws IOException {
-        JsoniqParser.MainModuleContext context = null;
         RuntimeIterator runtimeIterator = null;
         try {
-            currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
+            this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
         }
-
+        MainModule mainModule = null;
+        DynamicContext dynamicContext = null;
         try {
-            context = this.parse(path, visitor);
+            mainModule = this.parse(path);
+            Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
-            // generate static context and runtime iterators
-            if (visitor instanceof JsoniqExpressionTreeVisitor) {
-                JsoniqExpressionTreeVisitor completeVisitor = ((JsoniqExpressionTreeVisitor) visitor);
-                // generate static context
-                new StaticContextVisitor().visit(
-                    completeVisitor.getMainModule(),
-                    completeVisitor.getMainModule().getStaticContext()
-                );
-                // generate iterators
-                Functions.clearUserDefinedFunctions();
-                runtimeIterator = new RuntimeIteratorVisitor().visit(completeVisitor.getMainModule(), null);
-            }
+            VisitorHelpers.resolveDependencies(mainModule, AnnotationsTestsBase.configuration);
+            VisitorHelpers.populateStaticContext(mainModule);
+            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
+            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-            if (currentAnnotation.shouldParse()) {
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
+            if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return context;
+                return mainModule;
             } else {
                 System.out.println(errorOutput);
-                Assert.assertTrue(true);
-                return context;
+                return mainModule;
             }
 
             // SEMANTIC
         } catch (SemanticException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
             try {
-                if (currentAnnotation.shouldCompile()) {
+                if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return context;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
 
             // RUNTIME
-        } catch (SparksoniqRuntimeException exception) {
+        } catch (RumbleException exception) {
             String errorOutput = exception.getMessage();
-            checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
+            checkErrorCode(
+                errorOutput,
+                this.currentAnnotation.getErrorCode(),
+                this.currentAnnotation.getErrorMetadata()
+            );
             try {
-                if (currentAnnotation.shouldRun()) {
+                if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return context;
+                    return mainModule;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return context;
+                    return mainModule;
                 }
             } catch (Exception ex) {
             }
         }
 
         try {
-            if (!currentAnnotation.shouldCompile()) {
+            if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
-                return context;
+                return mainModule;
             }
         } catch (Exception ex) {
         }
 
-        if (!currentAnnotation.shouldParse()) {
+        if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
-            return context;
+            return mainModule;
         }
 
         // PROGRAM SHOULD RUN
         if (
-            currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
+            this.currentAnnotation instanceof AnnotationProcessor.RunnableTestAnnotation
                 &&
-                currentAnnotation.shouldRun()
+                this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
-            } catch (SparksoniqRuntimeException exception) {
+                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+            } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
+                exception.printStackTrace();
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {
             // PROGRAM SHOULD CRASH
             if (
-                currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
+                this.currentAnnotation instanceof AnnotationProcessor.UnrunnableTestAnnotation
                     &&
-                    !currentAnnotation.shouldRun()
+                    !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(currentAnnotation.getOutput(), runtimeIterator);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
-                    checkErrorCode(errorOutput, currentAnnotation.getErrorCode(), currentAnnotation.getErrorMetadata());
-                    return context;
+                    checkErrorCode(
+                        errorOutput,
+                        this.currentAnnotation.getErrorCode(),
+                        this.currentAnnotation.getErrorMetadata()
+                    );
+                    return mainModule;
                 }
 
                 Assert.fail("Program executed when not expected to");
             }
         }
-        return context;
+        return mainModule;
     }
 
-    private JsoniqParser.MainModuleContext parse(String path, JsoniqBaseVisitor<Void> visitor) throws IOException {
+    private MainModule parse(String path) throws IOException {
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
@@ -195,14 +207,12 @@ public class AnnotationsTestsBase {
 
             JsoniqParser.ModuleContext module = parser.module();
             JsoniqParser.MainModuleContext main = module.main;
-            visitor.visit(main);
-
-            return main;
-
+            MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
+            return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
                     lexer.getText(),
-                    new ExpressionMetadata(
+                    new ExceptionMetadata(
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )
@@ -212,7 +222,11 @@ public class AnnotationsTestsBase {
         }
     }
 
-    protected void checkExpectedOutput(String expectedOutput, RuntimeIterator runtimeIterator) {
+    protected void checkExpectedOutput(
+            String expectedOutput,
+            RuntimeIterator runtimeIterator,
+            DynamicContext dynamicContext
+    ) {
         Assert.assertTrue(true);
     }
 

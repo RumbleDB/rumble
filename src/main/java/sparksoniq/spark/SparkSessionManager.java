@@ -27,35 +27,38 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
-import org.rumbledb.cli.Main;
-import sparksoniq.exceptions.SparksoniqRuntimeException;
-import sparksoniq.jsoniq.item.ArrayItem;
-import sparksoniq.jsoniq.item.BooleanItem;
-import sparksoniq.jsoniq.item.DecimalItem;
-import sparksoniq.jsoniq.item.DoubleItem;
-import sparksoniq.jsoniq.item.IntegerItem;
-import sparksoniq.jsoniq.item.NullItem;
-import sparksoniq.jsoniq.item.ObjectItem;
-import sparksoniq.jsoniq.item.StringItem;
-import sparksoniq.jsoniq.runtime.iterator.RuntimeIterator;
-import sparksoniq.jsoniq.runtime.tupleiterator.RuntimeTupleIterator;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.CannotMaterializeException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ArrayItem;
+import org.rumbledb.items.BooleanItem;
+import org.rumbledb.items.DecimalItem;
+import org.rumbledb.items.DoubleItem;
+import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.NullItem;
+import org.rumbledb.items.ObjectItem;
+import org.rumbledb.items.StringItem;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.RuntimeTupleIterator;
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.semantics.DynamicContext;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class SparkSessionManager {
 
     private static final String APP_NAME = "jsoniq-on-spark";
     public static int COLLECT_ITEM_LIMIT = 0;
-    private static SparkSessionManager _instance;
+    private static SparkSessionManager instance;
     private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
 
     public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
 
     private SparkSessionManager() {
     }
@@ -65,56 +68,61 @@ public class SparkSessionManager {
     }
 
     public static SparkSessionManager getInstance() {
-        if (_instance == null)
-            _instance = new SparkSessionManager();
-        return _instance;
+        if (instance == null) {
+            instance = new SparkSessionManager();
+        }
+        return instance;
     }
 
     public SparkSession getOrCreateSession() {
-        if (session == null) {
+        if (this.session == null) {
             if (this.configuration == null) {
                 setDefaultConfiguration();
             }
             initialize();
         }
-        return session;
+        return this.session;
     }
 
     private void setDefaultConfiguration() {
-        configuration = new SparkConf().setAppName(APP_NAME);
+        this.configuration = new SparkConf()
+            .setAppName(APP_NAME)
+            .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
     }
 
     private void initialize() {
-        if (session == null) {
+        if (this.session == null) {
             initializeKryoSerialization();
             Logger.getLogger("org").setLevel(LOG_LEVEL);
             Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
-            session = SparkSession.builder().config(this.configuration).getOrCreate();
+            this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
-            throw new SparksoniqRuntimeException("Session already exists: new session initialization prevented.");
+            throw new OurBadException("Session already exists: new session initialization prevented.");
         }
     }
 
     private void initializeKryoSerialization() {
-        configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
-        Class<?>[] serializedClasses = new Class[] {
-            Item.class,
-            ArrayItem.class,
-            ObjectItem.class,
-            StringItem.class,
-            IntegerItem.class,
-            DoubleItem.class,
-            DecimalItem.class,
-            NullItem.class,
-            BooleanItem.class,
-            DynamicContext.class,
-            FlworTuple.class,
-            FlworKey.class,
-            RuntimeIterator.class,
-            RuntimeTupleIterator.class };
+        if (!this.configuration.contains("spark.serializer")) {
+            this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            Class<?>[] serializedClasses = new Class[] {
+                Item.class,
+                ArrayItem.class,
+                ObjectItem.class,
+                StringItem.class,
+                IntegerItem.class,
+                DoubleItem.class,
+                DecimalItem.class,
+                NullItem.class,
+                BooleanItem.class,
+                DynamicContext.class,
+                FlworTuple.class,
+                FlworKey.class,
+                RuntimeIterator.class,
+                RuntimeTupleIterator.class };
 
-        configuration.registerKryoClasses(serializedClasses);
+            this.configuration.registerKryoClasses(serializedClasses);
+        }
     }
 
 
@@ -124,33 +132,55 @@ public class SparkSessionManager {
     }
 
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
-        if (setAppName)
+        if (setAppName) {
             conf.setAppName(APP_NAME);
+        }
         this.configuration = conf;
         initializeKryoSerialization();
         initialize();
     }
 
     public JavaSparkContext getJavaSparkContext() {
-        if (javaSparkContext == null) {
-            javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
+        if (this.javaSparkContext == null) {
+            this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
-        return javaSparkContext;
+        return this.javaSparkContext;
     }
 
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd) {
-        String truncationMessage = "Results have been truncated to:"
-            + SparkSessionManager.COLLECT_ITEM_LIMIT
-            + " items. This value can be configured with the --result-size parameter at startup.\n";
-        return collectRDDwithLimit(rdd, truncationMessage);
-    }
-
-    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, String customTruncationMessage) {
+    public static <T> List<T> collectRDDwithLimit(JavaRDD<T> rdd, ExceptionMetadata metadata) {
         if (SparkSessionManager.LIMIT_COLLECT()) {
-            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT);
-            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT) {
-                Main.printMessageToLog(customTruncationMessage);
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
+                long count = rdd.count();
+                throw new CannotMaterializeException(
+                        "Cannot materialize a sequence of "
+                            + count
+                            + " items because the limit is set to "
+                            + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + ". This value can be configured with the --result-size parameter at startup",
+                        metadata
+                );
             }
+            return result;
+        } else {
+            return rdd.collect();
+        }
+    }
+
+    public static <T> List<T> collectRDDwithLimitWarningOnly(JavaRDD<T> rdd) {
+        if (SparkSessionManager.LIMIT_COLLECT()) {
+            List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
+            if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
+                long count = rdd.count();
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + count
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
+            result = result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList());
             return result;
         } else {
             return rdd.collect();

@@ -10,5 +10,3 @@ declare function udf2 () {
 for $i in udf1()
 for $j in udf2()
 return $i + $j
-
-(: Functions calling each other :)

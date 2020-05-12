@@ -1,0 +1,90 @@
+/*
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements. See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ *
+ * Authors: Stefan Irimescu, Can Berker Cikis
+ *
+ */
+
+package org.rumbledb.runtime.functions.numerics.trigonometric;
+
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import sparksoniq.jsoniq.ExecutionMode;
+
+import java.util.List;
+
+public class ATan2FunctionIterator extends LocalFunctionCallIterator {
+
+    private static final long serialVersionUID = 1L;
+
+    public ATan2FunctionIterator(
+            List<RuntimeIterator> arguments,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
+        super(arguments, executionMode, iteratorMetadata);
+    }
+
+    @Override
+    public Item next() {
+        if (this.hasNext) {
+            Item y;
+            RuntimeIterator yIterator = this.children.get(0);
+            yIterator.open(this.currentDynamicContextForLocalExecution);
+            if (yIterator.hasNext()) {
+                y = yIterator.next();
+            } else {
+                throw new UnexpectedTypeException("Type error; y parameter can't be empty sequence ", getMetadata());
+            }
+
+            Item x;
+            RuntimeIterator xIterator = this.children.get(1);
+            xIterator.open(this.currentDynamicContextForLocalExecution);
+            if (xIterator.hasNext()) {
+                x = xIterator.next();
+            } else {
+                throw new UnexpectedTypeException("Type error; x parameter can't be empty sequence ", getMetadata());
+            }
+
+            if (y.isNumeric() && x.isNumeric()) {
+                try {
+                    this.hasNext = false;
+                    return ItemFactory.getInstance()
+                        .createDoubleItem(Math.atan2(y.castToDoubleValue(), x.castToDoubleValue()));
+
+                } catch (IteratorFlowException e) {
+                    throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                }
+            } else {
+                throw new UnexpectedTypeException(
+                        "ATan2 expression has non numeric args "
+                            +
+                            y.serialize()
+                            + ", "
+                            + x.serialize(),
+                        getMetadata()
+                );
+            }
+        } else {
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " atan2 function", getMetadata());
+        }
+    }
+}
