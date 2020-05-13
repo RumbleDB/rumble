@@ -103,6 +103,7 @@ public class RumbleHttpHandler implements HttpHandler {
                 String s;
                 while ((s = r2.readLine()) != null) {
                     sb.append(s);
+                    sb.append("\n");
                 }
                 String JSONiqQuery = sb.toString();
                 items = translator.runInteractive(JSONiqQuery);
