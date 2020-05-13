@@ -10,6 +10,8 @@ This command will not return until you force it to (Ctrl+C on Linux and Mac). Th
 
 Most users will not have to do anything beyond running the above command. For most of them, the next step would be to open a Jupyter notebook that connects to this server automatically.
 
+Caution! Launching a server always has consequences on security, especially as Rumble can read from and write to your disk; So make sure you activate your firewall. In later versions, we may support authentication tokens.
+
 ## Testing that it works (not necessary for most end users)
 
 The HTTP server is meant not to be used directly by end users, but instead to make it possible to integrate Rumble in other languages and environments, such as Python and Jupyter notebooks. 
@@ -30,7 +32,7 @@ A query can also be submitted in the request body:
     
 ## Use with Jupyter notebooks
 
-With the HTTP server running, if you have installed PySpark and Jupyter notebooks (for example with the Anaconda data science package that does all of it automatically), you can create a Rumble magic by just executing the following code in a cell:
+With the HTTP server running, if you have installed Python and Jupyter notebooks (for example with the Anaconda data science package that does all of it automatically), you can create a Rumble magic by just executing the following code in a cell:
 
     import requests
     import json
@@ -47,3 +49,21 @@ Where, of course, you need to adapt the port (8001) to the one you picked previo
 Then, you can execute queries in subsequent cells with
 
     %rumble 1 + 1
+
+    
+## Use with clusters
+
+You can also let Rumble run as an HTTP server on the master node of a cluster, e.g. on Amazon EMR or Azure. You just need to:
+
+- Create the cluster (it is usually just the push of a few buttons in Amazon or Azure)
+- Wait for a few minutes
+- Connect to the master with SSH with an extra parameter for securely tunneling the HTTP connection (for example `-L 8001:localhost:8001` or any port of your choosing)
+- Download the Rumble jar to the master node
+
+    wget https://github.com/RumbleDB/rumble/releases/download/v1.6.0/spark-rumble-1.6.0.jar
+    
+- Launch the HTTP server on the master node
+
+    spark-submit spark-rumble-1.6.0.jar --server yes --port 8001
+
+- And then use Jupyter notebooks in the same way you would do it locally (it magically works because of the tunneling)
