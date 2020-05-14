@@ -10,7 +10,65 @@ A **transformer** is an abstraction which either performs a feature transformati
 An **estimator** abstracts the concept of a learning algorithm or any algorithm that fits or trains on data. For example, a learning algorithm such as KMeans is implemented as an Estimator. Calling this estimator on data essentially trains a KMeansModel, which is a Model and hence a Transformer.
 
 ## Parameters:
-Transformers and estimators can be executed as functions since they are defined as function items in the Rumble Data Model. Parameters can be provided as the second argument while executing estimators and transformers. This second argument is expected to be an object item. The machine learning parameters form the fields of the said item as key value pairs
+Transformers and estimators can be executed as functions since they are defined as function items in the Rumble Data Model. Parameters can be provided as the second argument while executing estimators and transformers. This second argument is expected to be an object item. The machine learning parameters form the fields of the said item as key-value pairs.
+
+
+
+## Examples:
+- Tokenizer Example:
+```
+let $local-data := (
+    {"id": 1, "sentence": "Hi I heard about Spark"},
+    {"id": 2, "sentence": "I wish Java could use case classes"},
+    {"id": 3, "sentence": "Logistic regression models are neat"}
+)
+let $df-data := annotate($local-data, {"id": "integer", "sentence": "string"})
+
+let $transformer := get-transformer("Tokenizer")
+for $i in $transformer(
+    $df-data,
+    {"inputCol": "sentence", "outputCol": "output"}
+)
+return $i
+
+// returns
+//{ "id" : 1, "sentence" : "Hi I heard about Spark", "output" : [ "hi", "i", "heard", "about", "spark" ] }
+// { "id" : 2, "sentence" : "I wish Java could use case classes", "output" : [ "i", "wish", "java", "could", "use", "case", "classes" ] }
+// { "id" : 3, "sentence" : "Logistic regression models are neat", "output" : [ "logistic", "regression", "models", "are", "neat" ] }
+```
+
+- KMeans Example:
+```
+let $local-data := (
+    {"id": 0, "col1": 0.0, "col2": 0.0, "col3": 0.0},
+    {"id": 1, "col1": 0.1, "col2": 0.1, "col3": 0.1},
+    {"id": 2, "col1": 0.2, "col2": 0.2, "col3": 0.2},
+    {"id": 3, "col1": 9.0, "col2": 9.0, "col3": 9.0},
+    {"id": 4, "col1": 9.1, "col2": 9.1, "col3": 9.1},
+    {"id": 5, "col1": 9.2, "col2": 9.2, "col3": 9.2}
+)
+let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal", "col2": "decimal", "col3": "decimal"})
+
+let $est := get-estimator("KMeans")
+let $tra := $est(
+    $df-data,
+    {"featuresCol": ["col1", "col2", "col3"]}
+)
+
+for $i in $tra(
+    $df-data,
+    {"featuresCol": ["col1", "col2", "col3"]}
+)
+return $i
+
+// returns
+// { "id" : 0, "col1" : 0, "col2" : 0, "col3" : 0, "prediction" : 0 }
+// { "id" : 1, "col1" : 0.1, "col2" : 0.1, "col3" : 0.1, "prediction" : 0 }
+// { "id" : 2, "col1" : 0.2, "col2" : 0.2, "col3" : 0.2, "prediction" : 0 }
+// { "id" : 3, "col1" : 9, "col2" : 9, "col3" : 9, "prediction" : 1 }
+// { "id" : 4, "col1" : 9.1, "col2" : 9.1, "col3" : 9.1, "prediction" : 1 }
+// { "id" : 5, "col1" : 9.2, "col2" : 9.2, "col3" : 9.2, "prediction" : 1 }
+```
 
 # RumbleML Functionality Overview:
 ## RumbleML - Catalogue of Estimators:
