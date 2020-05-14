@@ -12,6 +12,8 @@ An **estimator** abstracts the concept of a learning algorithm or any algorithm 
 ## Parameters:
 Transformers and estimators can be executed as functions since they are defined as function items in the Rumble Data Model. Parameters can be provided as the second argument while executing estimators and transformers. This second argument is expected to be an object item. The machine learning parameters form the fields of the said item as key-value pairs.
 
+## Type Annotations:
+RumbleML requires full type information to be available for the input data. While it is on our development plan, Rumble does not support a full type system yet. annotate() function has been introduced as a temporary remedy which facilitates specifying a schema for the structured data. This annotation operation is required to be applied on any dataset that will be used with RumbleML.
 
 
 ## Examples:
