@@ -65,9 +65,16 @@ as well as (in another cell)
 
 Where, of course, you need to adapt the port (8001) to the one you picked previously.
 
-Then, you can execute queries in subsequent cells with
+Then, you can execute queries in subsequent cells with:
 
     %rumble 1 + 1
+
+or on multiple lines:
+
+    %%rumble
+    for $doc in json-file("my-file")
+    where $doc.foo eq "bar"
+    return $doc
 
     
 ## Use with clusters
