@@ -26,11 +26,7 @@
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
         <fileSet>
-            <directory>${project.basedir}/src/main/java</directory>
-            <useDefaultExcludes>true</useDefaultExcludes>
-        </fileSet>
-        <fileSet>
-            <directory>${project.basedir}/src/main/resources/assets</directory>
+            <directory>${project.basedir}/src/main</directory>
             <useDefaultExcludes>true</useDefaultExcludes>
         </fileSet>
     </fileSets>

@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun; Output="test1" :)
+json-doc("./src/test/resources/test_data/SpreadOverMultipleLinesDocument.json").foobar[[1]]
