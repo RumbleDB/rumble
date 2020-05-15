@@ -58,13 +58,13 @@ Once the ANTLR sources have been generated, you can compile the entire project l
 
     $ mvn clean compile assembly:single
     
-After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.6.1.jar`.
+After successful completion, you can check the `target` directory, which should contain the compiled classes as well as the JAR file `spark-rumble-1.62.jar`.
     
 ## Running locally
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit target/spark-rumble-1.6.1.jar --shell yes
+    $ spark-submit target/spark-rumble-1.6.2.jar --shell yes
 
 The Rumble shell should start:
 
