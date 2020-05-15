@@ -7,6 +7,7 @@ import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
 import java.net.URI;
 import java.net.URLDecoder;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -90,7 +91,8 @@ public class RumbleHttpHandler implements HttpHandler {
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
             JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
-            List<Item> items;
+            List<Item> items = null;
+            long count = -1;
             if (configuration.getQueryPath() != null) {
                 items = translator.runQuery(
                     configuration.getQueryPath(),
@@ -106,10 +108,11 @@ public class RumbleHttpHandler implements HttpHandler {
                     sb.append("\n");
                 }
                 String JSONiqQuery = sb.toString();
-                items = translator.runInteractive(JSONiqQuery);
+                items = new ArrayList<Item>();
+                count = translator.runInteractive(JSONiqQuery, items);
             }
 
-            Item output = assembleResponse(configuration, items);
+            Item output = assembleResponse(configuration, items, count);
 
             this.sendResponse(exchange, StatusCode.SUCCESS, output.serialize());
         } catch (Exception e) {
@@ -140,7 +143,7 @@ public class RumbleHttpHandler implements HttpHandler {
         }
     }
 
-    private static Item assembleResponse(RumbleRuntimeConfiguration configuration, List<Item> results) {
+    private static Item assembleResponse(RumbleRuntimeConfiguration configuration, List<Item> results, long count) {
         Item output = ItemFactory.getInstance().createObjectItem();
         if (configuration.getOutputPath() != null) {
             output.putItemByKey(
@@ -155,6 +158,14 @@ public class RumbleHttpHandler implements HttpHandler {
         }
         if (configuration.getLogPath() != null) {
             output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
+        }
+        if(count != -1)
+        {
+            output.putItemByKey("warning", ItemFactory.getInstance().createStringItem(
+                "Warning! The output sequence contains " + count + " items but its materialization was capped at "
+                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + " items. This value can be configured with the --result-size parameter at startup"
+            ));
         }
         return output;
     }

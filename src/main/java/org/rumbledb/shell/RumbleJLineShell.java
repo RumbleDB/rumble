@@ -30,13 +30,18 @@ import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 
+import sparksoniq.spark.SparkSessionManager;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class RumbleJLineShell {
@@ -85,15 +90,25 @@ public class RumbleJLineShell {
     private void processQuery() throws IOException {
         String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
+        List<Item> results = new ArrayList<>();
+        long count = this.jsoniqQueryExecutor.runInteractive(query, results)
+                ;
         try {
             String result = String.join(
                 "\n",
-                this.jsoniqQueryExecutor.runInteractive(query)
-                    .stream()
-                    .map(x -> x.serialize())
-                    .collect(Collectors.toList())
+                results.stream()
+                .map(x -> x.serialize())
+                .collect(Collectors.toList())
             );
             output(result);
+            if(count != -1)
+            {
+                System.err.println(
+                    "Warning! The output sequence contains " + count + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
                 output("The query took " + time + " milliseconds to execute.");

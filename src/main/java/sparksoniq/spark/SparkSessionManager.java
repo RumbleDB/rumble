@@ -167,23 +167,19 @@ public class SparkSessionManager {
         }
     }
 
-    public static <T> List<T> collectRDDwithLimitWarningOnly(JavaRDD<T> rdd) {
+    public static <T> long collectRDDwithLimitWarningOnly(JavaRDD<T> rdd, List<T> outputList) {
+        outputList.clear();
+        long count = -1;
         if (SparkSessionManager.LIMIT_COLLECT()) {
             List<T> result = rdd.take(SparkSessionManager.COLLECT_ITEM_LIMIT + 1);
             if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
-                long count = rdd.count();
-                System.err.println(
-                    "Warning! The output sequence contains "
-                        + count
-                        + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
+                count = rdd.count();
             }
-            result = result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList());
-            return result;
+            outputList.addAll(result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList()));
+            return count;
         } else {
-            return rdd.collect();
+            outputList.addAll(rdd.collect());
+            return count;
         }
     }
 }
