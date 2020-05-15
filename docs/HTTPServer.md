@@ -61,7 +61,7 @@ With the HTTP server running, if you have installed Python and Jupyter notebooks
 
 as well as (in another cell)
 
-    server = http://localhost:8001/jsoniq
+    server='http://localhost:8001/jsoniq'
 
 Where, of course, you need to adapt the port (8001) to the one you picked previously.
 
