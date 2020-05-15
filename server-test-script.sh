@@ -90,13 +90,14 @@ fi
 rm -rf /tmp/output
 curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?query-path=/tmp/query.jq&output-path=/tmp/output" > /dev/null 
 result=$(curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?query-path=/tmp/query.jq&output-path=/tmp/output")
-expected_result='{ "error-message" : "Error [err: RBST0001 ] Output path \/tmp\/output already exists. Please use --overwrite yes to overwrite.", "error-code" : "RBST0001", "stack-trace" : [ "org.rumbledb.cli.JsoniqQueryExecutor.checkOutputFile(JsoniqQueryExecutor.java:64)", "org.rumbledb.cli.JsoniqQueryExecutor.runQuery(JsoniqQueryExecutor.java:74)", "org.rumbledb.server.RumbleHttpHandler.handle(RumbleHttpHandler.java:95)", "com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:79)", "sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:83)", "com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:82)", "sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:675)", "com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:79)", "sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:647)", "sun.net.httpserver.ServerImpl$DefaultExecutor.execute(ServerImpl.java:158)", "sun.net.httpserver.ServerImpl$Dispatcher.handle(ServerImpl.java:431)", "sun.net.httpserver.ServerImpl$Dispatcher.run(ServerImpl.java:396)", "java.lang.Thread.run(Thread.java:748)" ] }'
-if [[ "$result" = "$expected_result" ]]
+result_without_stack_trace=${result:2:152}
+expected_result_without_stack_trace='"error-message" : "Error [err: RBST0001 ] Output path \/tmp\/output already exists. Please use --overwrite yes to overwrite.", "error-code" : "RBST0001"'
+if [[ "$result_without_stack_trace" = "$expected_result_without_stack_trace" ]]
 then
     echo 'Test 5: Success'
     success_count=$((success_count+1))
 else
-    echo "Test 5: Fail. Expected: $expected_result - Actual: $result. Expected file output: $expected_file_output - Actual file output: $file_output"
+    echo "Test 5: Fail. Expected: $expected_result_without_stack_trace - Actual: $result_without_stack_trace."
     fail_count=$((fail_count+1))
 fi
 
