@@ -3,7 +3,7 @@ RumbleML is a Machine Learning library built on top of the Rumble engine that ma
 
 The machine learning capabilities are exposed through JSONiq function items. The concepts of "estimator" and "transformer", which are core to Machine Learning, are naturally function items and fit seamlessly in the JSONiq data model.
 
-Training sets, test sets and validation sets, which containing features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
+Training sets, test sets, and validation sets, which containing features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
 
 The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on: we chose not to reinvent the wheel.
 
@@ -29,7 +29,7 @@ Transformers and estimators are function items in the Rumble Data Model. Their f
 
 ## Type Annotations
 
-RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. While it is on our development plan to automate the detection of these types when the sequence of object gets created in the fly, Rumble does not support a full object type system yet. Thus, the annotate() function has been introduced as a temporary remedy which facilitates the manual annotation of data against a schema for structured data. This annotation operation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
+RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. While it is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly, Rumble does not support a full object type system yet. Thus, the annotate() function has been introduced as a temporary remedy which facilitates the manual annotation of data against a schema for structured data. This annotation operation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
 
 
 ## Examples
@@ -51,7 +51,7 @@ for $i in $transformer(
 return $i
 
 // returns
-//{ "id" : 1, "sentence" : "Hi I heard about Spark", "output" : [ "hi", "i", "heard", "about", "spark" ] }
+// { "id" : 1, "sentence" : "Hi I heard about Spark", "output" : [ "hi", "i", "heard", "about", "spark" ] }
 // { "id" : 2, "sentence" : "I wish Java could use case classes", "output" : [ "i", "wish", "java", "could", "use", "case", "classes" ] }
 // { "id" : 3, "sentence" : "Logistic regression models are neat", "output" : [ "logistic", "regression", "models", "are", "neat" ] }
 ```
