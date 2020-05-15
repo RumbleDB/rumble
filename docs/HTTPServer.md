@@ -36,14 +36,33 @@ With the HTTP server running, if you have installed Python and Jupyter notebooks
 
     import requests
     import json
-    from IPython.core.magic import register_line_magic
+    import ast
+    from IPython.core.magic import register_line_cell_magic
 
-    server='http://localhost:8001/jsoniq'
+    @register_line_cell_magic
+    def rumble(line, cell=None):
 
-    @register_line_magic
-    def rumble(query):
-        return json.loads(requests.post(server, data=query).text)['values']
-        
+    if cell is None:
+        data = line
+    else:   
+        data = cell
+
+    response = json.loads(requests.post(server, data=data).text)
+
+    if 'warning' in response:
+        print(ast.literal_eval(json.dumps(response['warning'])))
+    if 'values' in response:
+        for e in response['values']:
+            print(ast.literal_eval(json.dumps(e)))
+    elif 'error-message' in response:
+        return response['error-message']
+    else:
+        return response
+
+as well as (in another cell)
+
+    server = http://localhost:8001/jsoniq
+
 Where, of course, you need to adapt the port (8001) to the one you picked previously.
 
 Then, you can execute queries in subsequent cells with
