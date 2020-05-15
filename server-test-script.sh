@@ -92,6 +92,7 @@ curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?quer
 result=$(curl --silent --show-error --stderr - -X POST "http://localhost:8000/jsoniq?query-path=/tmp/query.jq&output-path=/tmp/output")
 result_without_stack_trace=${result:2:152}
 expected_result_without_stack_trace='"error-message" : "Error [err: RBST0001 ] Output path \/tmp\/output already exists. Please use --overwrite yes to overwrite.", "error-code" : "RBST0001"'
+
 if [[ "$result_without_stack_trace" = "$expected_result_without_stack_trace" ]]
 then
     echo 'Test 5: Success'
@@ -114,6 +115,30 @@ then
     success_count=$((success_count+1))
 else
     echo "Test 6: Fail. Expected: $expected_result - Actual: $result. Expected file output: $expected_file_output - Actual file output: $file_output"
+    fail_count=$((fail_count+1))
+fi
+
+### TEST 7 ###
+result=$(curl --silent --show-error --stderr - --data 'let $x := parallelize(1 to 10)[2] return $x' -X GET "http://localhost:8000/jsoniq")
+expected_result='{ "values" : [ 2 ] }'
+if [[ "$result" = "$expected_result" ]];
+then
+    echo 'Test 7: Success'
+    success_count=$((success_count+1))
+else
+    echo "Test 7: Fail. Expected: $expected_result - Actual: $result"
+    fail_count=$((fail_count+1))
+fi
+
+### TEST 7 ###
+result=$(curl --silent --show-error --stderr - --data 'let $x := parallelize(1 to 10)[2] \n return $x' -X GET "http://localhost:8000/jsoniq")
+expected_result='{ "values" : [ 2 ] }'
+if [[ "$result" = "$expected_result" ]];
+then
+    echo 'Test 8: Success'
+    success_count=$((success_count+1))
+else
+    echo "Test 8: Fail. Expected: $expected_result - Actual: $result"
     fail_count=$((fail_count+1))
 fi
 
