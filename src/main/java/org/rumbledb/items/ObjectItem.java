@@ -204,7 +204,7 @@ public class ObjectItem extends JsonItem {
 
     public int hashCode() {
         int result = 0;
-        result += getSize();
+        result += getKeys().size();
         for (String s : getKeys()) {
             result += getItemByKey(s).hashCode();
         }
