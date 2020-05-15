@@ -168,7 +168,7 @@ public class RumbleHttpHandler implements HttpHandler {
                             + count
                             + " items but its materialization was capped at "
                             + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + " items. This value can be configured with the --result-size parameter at startup"
+                            + " items. This value can be configured with the result-size parameter in the query string of the HTTP request."
                     )
             );
         }
