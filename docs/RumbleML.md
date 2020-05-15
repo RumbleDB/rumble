@@ -1,22 +1,35 @@
-# RumbleML Fundamental Concepts:
-RumbleML is the machine learning extension built on top of the Rumble engine. The machine learning capabilities are exposed through the core concepts of "estimators" and "transformers". At their core, estimators and transformers are simply function items which can be executed. Their names and the functionality they encapsulate are inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on.
+# RumbleML
+RumbleML is a Machine Learning library built on top of the Rumble engine that makes it more productive and easier to perform ML tasks thanks to the abstraction layer provided by JSONiq.
 
-## Transformer:
-A **transformer** is an abstraction which either performs a feature transformation or generates predictions based on trained models. For example:
+The machine learning capabilities are exposed through JSONiq function items. The concepts of "estimator" and "transformer", which are core to Machine Learning, are naturally function items and fit seamlessly in the JSONiq data model.
+
+The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on: we chose to not reinvent the wheel.
+
+## Transformers
+
+A **transformer** is a function item that maps a sequence of objects to a sequence of obects.
+
+It is an abstraction that either performs a feature transformation or generates predictions based on trained models. For example:
+
 - _Tokenizer_ is a feature transformer that receives textual input data and splits it into individual terms(usually words) which are called tokens.
+
 - _KMeansModel_ is a trained model and a transformer that can read a dataset containing features and generate predictions as its output.
 
-## Estimator:
-An **estimator** abstracts the concept of a learning algorithm or any algorithm that fits or trains on data. For example, a learning algorithm such as KMeans is implemented as an Estimator. Calling this estimator on data essentially trains a KMeansModel, which is a Model and hence a Transformer.
+## Estimators
 
-## Parameters:
+An **estimator** is a function item that maps a sequence of objects to a transformer (yes, you got it right: that's a function item. This is why they are also called higher-order functions!).
+
+Estimators abstract the concept of a Machine Learning algorithm or any algorithm that fits or trains on data. For example, a learning algorithm such as _KMeans_ is implemented as an Estimator. Calling this estimator on data essentially trains a KMeansModel, which is a Model and hence a Transformer.
+
+## Parameters
 Transformers and estimators can be executed as functions since they are defined as function items in the Rumble Data Model. Parameters can be provided as the second argument while executing estimators and transformers. This second argument is expected to be an object item. The machine learning parameters form the fields of the said item as key-value pairs.
 
-## Type Annotations:
+## Type Annotations
 RumbleML requires full type information to be available for the input data. While it is on our development plan, Rumble does not support a full type system yet. annotate() function has been introduced as a temporary remedy which facilitates specifying a schema for the structured data. This annotation operation is required to be applied on any dataset that will be used with RumbleML.
 
 
-## Examples:
+## Examples
+
 - Tokenizer Example:
 ```
 let $local-data := (
