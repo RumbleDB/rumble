@@ -3,6 +3,8 @@ RumbleML is a Machine Learning library built on top of the Rumble engine that ma
 
 The machine learning capabilities are exposed through JSONiq function items. The concepts of "estimator" and "transformer", which are core to Machine Learning, are naturally function items and fit seamlessly in the JSONiq data model.
 
+Training sets, test sets and validation sets, which containing features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
+
 The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on: we chose not to reinvent the wheel.
 
 ## Transformers
