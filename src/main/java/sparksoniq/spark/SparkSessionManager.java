@@ -175,7 +175,9 @@ public class SparkSessionManager {
             if (result.size() == SparkSessionManager.COLLECT_ITEM_LIMIT + 1) {
                 count = rdd.count();
             }
-            outputList.addAll(result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList()));
+            outputList.addAll(
+                result.stream().limit(SparkSessionManager.COLLECT_ITEM_LIMIT).collect(Collectors.toList())
+            );
             return count;
         } else {
             outputList.addAll(rdd.collect());

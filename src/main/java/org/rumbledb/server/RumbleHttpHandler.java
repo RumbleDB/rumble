@@ -159,13 +159,18 @@ public class RumbleHttpHandler implements HttpHandler {
         if (configuration.getLogPath() != null) {
             output.putItemByKey("log-path", ItemFactory.getInstance().createStringItem(configuration.getLogPath()));
         }
-        if(count != -1)
-        {
-            output.putItemByKey("warning", ItemFactory.getInstance().createStringItem(
-                "Warning! The output sequence contains " + count + " items but its materialization was capped at "
-                    + SparkSessionManager.COLLECT_ITEM_LIMIT
-                    + " items. This value can be configured with the --result-size parameter at startup"
-            ));
+        if (count != -1) {
+            output.putItemByKey(
+                "warning",
+                ItemFactory.getInstance()
+                    .createStringItem(
+                        "Warning! The output sequence contains "
+                            + count
+                            + " items but its materialization was capped at "
+                            + SparkSessionManager.COLLECT_ITEM_LIMIT
+                            + " items. This value can be configured with the --result-size parameter at startup"
+                    )
+            );
         }
         return output;
     }

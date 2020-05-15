@@ -101,19 +101,20 @@ public class JsoniqQueryExecutor {
         } else {
             outputList = new ArrayList<>();
             long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
-            if(materializationCount != -1)
-            {
-                System.err.println(
-                    "Warning! The output sequence contains " + materializationCount + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
-            }
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputPath, lines, metadata);
             } else {
                 System.out.println(String.join("\n", lines));
+            }
+            if (materializationCount != -1) {
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + materializationCount
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
             }
         }
 
@@ -148,7 +149,8 @@ public class JsoniqQueryExecutor {
             return this.getIteratorOutput(runtimeIterator, dynamicContext, resultList);
         }
         resultList.clear();
-        return this.getRDDResults(runtimeIterator, dynamicContext, resultList);
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
+        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
     }
 
     private MainModule parse(JsoniqLexer lexer) {
@@ -209,10 +211,5 @@ public class JsoniqQueryExecutor {
             }
             return -1;
         }
-    }
-
-    private long getRDDResults(RuntimeIterator result, DynamicContext dynamicContext, List<Item> outputList) {
-        JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, outputList);
     }
 }

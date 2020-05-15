@@ -91,20 +91,20 @@ public class RumbleJLineShell {
         String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
         List<Item> results = new ArrayList<>();
-        long count = this.jsoniqQueryExecutor.runInteractive(query, results)
-                ;
+        long count = this.jsoniqQueryExecutor.runInteractive(query, results);
         try {
             String result = String.join(
                 "\n",
                 results.stream()
-                .map(x -> x.serialize())
-                .collect(Collectors.toList())
+                    .map(x -> x.serialize())
+                    .collect(Collectors.toList())
             );
             output(result);
-            if(count != -1)
-            {
+            if (count != -1) {
                 System.err.println(
-                    "Warning! The output sequence contains " + count + " items but its materialization was capped at "
+                    "Warning! The output sequence contains "
+                        + count
+                        + " items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
                         + " items. This value can be configured with the --result-size parameter at startup"
                 );
