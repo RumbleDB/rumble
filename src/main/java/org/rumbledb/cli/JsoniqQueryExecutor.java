@@ -99,12 +99,22 @@ public class JsoniqQueryExecutor {
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
             outputRDD.saveAsTextFile(outputPath);
         } else {
-            outputList = getIteratorOutput(result, dynamicContext);
+            outputList = new ArrayList<>();
+            long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputPath, lines, metadata);
             } else {
                 System.out.println(String.join("\n", lines));
+            }
+            if (materializationCount != -1) {
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + materializationCount
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
             }
         }
 
@@ -118,7 +128,7 @@ public class JsoniqQueryExecutor {
         return outputList;
     }
 
-    public List<Item> runInteractive(String query) throws IOException {
+    public long runInteractive(String query, List<Item> resultList) throws IOException {
         // create temp file
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
@@ -136,9 +146,11 @@ public class JsoniqQueryExecutor {
             System.out.println(sb);
         }
         if (!runtimeIterator.isRDD()) {
-            return this.getIteratorOutput(runtimeIterator, dynamicContext);
+            return this.getIteratorOutput(runtimeIterator, dynamicContext, resultList);
         }
-        return this.getRDDResults(runtimeIterator, dynamicContext);
+        resultList.clear();
+        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
+        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
     }
 
     private MainModule parse(JsoniqLexer lexer) {
@@ -167,20 +179,20 @@ public class JsoniqQueryExecutor {
         return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
-    private List<Item> getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        List<Item> resultList = new ArrayList<>();
+    private long getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext, List<Item> resultList) {
+        resultList.clear();
         iterator.open(dynamicContext);
         Item result = null;
         if (iterator.hasNext()) {
             result = iterator.next();
         }
         if (result == null) {
-            return resultList;
+            return -1;
         }
         Item singleOutput = result;
         if (!iterator.hasNext()) {
             resultList.add(singleOutput);
-            return resultList;
+            return -1;
         } else {
             int itemCount = 1;
             resultList.add(result);
@@ -195,18 +207,9 @@ public class JsoniqQueryExecutor {
                 itemCount++;
             }
             if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
-                System.err.println(
-                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
+                return Long.MAX_VALUE;
             }
-            return resultList;
+            return -1;
         }
-    }
-
-    private List<Item> getRDDResults(RuntimeIterator result, DynamicContext dynamicContext) {
-        JavaRDD<Item> rdd = result.getRDD(dynamicContext);
-        return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd);
     }
 }

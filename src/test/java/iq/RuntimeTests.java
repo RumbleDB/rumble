@@ -174,7 +174,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
     private String getRDDResults(RuntimeIterator runtimeIterator, DynamicContext dynamicContext) {
         JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
         JavaRDD<String> output = rdd.map(o -> o.serialize());
-        List<String> collectedOutput = SparkSessionManager.collectRDDwithLimitWarningOnly(output);
+        List<String> collectedOutput = new ArrayList<String>();
+        SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
 
         if (collectedOutput.isEmpty()) {
             return "";
