@@ -121,6 +121,7 @@ public class NormalizeUnicodeFunctionIterator extends LocalFunctionCallIterator 
                 0x0001D1BF,
                 0x0001D1C0
             )
+            // https://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt
     );
 
     public NormalizeUnicodeFunctionIterator(
