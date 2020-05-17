@@ -1,5 +1,5 @@
-(:JIQS: ShouldRun; Output="(BAr, AAA, ABdAB, )" :)
+(:JIQS: ShouldRun; Output="(, )" :)
 normalize-unicode("", "NFC"),
-normalize-unicode()
+normalize-unicode(())
 
-(: empty tests :)
+(: empty sequence and string tests :)
