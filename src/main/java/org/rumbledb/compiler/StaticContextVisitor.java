@@ -117,7 +117,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 name,
                 expression.getParams().get(name),
                 expression.getMetadata(),
-                ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                modes.get(i) // static udf currently supports materialized(local) params, not RDDs or DFs
             );
             ++i;
         }
