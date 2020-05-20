@@ -20,6 +20,9 @@
 
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
@@ -42,6 +45,8 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -145,6 +150,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        FunctionIdentifier identifier = new FunctionIdentifier(expression.getFunctionName(), expression.getArguments().size());
+        List<ExecutionMode> modes = new ArrayList<>();
+        if(expression.isPartialApplication())
+        {
+            for(@SuppressWarnings("unused") Expression parameter : expression.getArguments())
+            {
+                modes.add(ExecutionMode.LOCAL);
+            }
+        } else {
+            for(Expression parameter : expression.getArguments())
+            {
+                modes.add(parameter.getHighestExecutionMode(visitorConfig));
+            }
+        }
+        Functions.addUserDefinedFunctionParametersStorageMode(identifier, modes, visitorConfig.suppressErrorsForFunctionSignatureCollision(), expression.getMetadata());
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;
     }

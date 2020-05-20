@@ -329,6 +329,7 @@ public class Functions {
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
+    private static HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
@@ -573,12 +574,14 @@ public class Functions {
 
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
+        userDefinedFunctionsParametersStorageMode = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
         userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
     public static void clearUserDefinedFunctions() {
         userDefinedFunctionsExecutionMode.clear();
+        userDefinedFunctionsParametersStorageMode.clear();
         userDefinedFunctions.clear();
     }
 
@@ -622,6 +625,39 @@ public class Functions {
             userDefinedFunctionIdentifiersWithUnsetExecutionModes.remove(functionIdentifier);
         }
         userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
+    }
+    
+    public static List<ExecutionMode> getUserDefinedFunctionParametersStorageMode(
+            FunctionIdentifier identifier,
+            ExceptionMetadata metadata
+    ) {
+        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            return userDefinedFunctionsParametersStorageMode.get(identifier);
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static void addUserDefinedFunctionParametersStorageMode(
+            FunctionIdentifier functionIdentifier,
+            List<ExecutionMode> executionModes,
+            boolean suppressErrorsForFunctionSignatureCollision,
+            ExceptionMetadata meta
+    ) {
+        if (
+            builtInFunctions.containsKey(functionIdentifier)
+                ||
+                (!suppressErrorsForFunctionSignatureCollision
+                    && userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier))
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+
+        userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
     }
 
     private static boolean isAddingNewUnsetUserDefinedFunction(

@@ -50,6 +50,7 @@ public class FunctionCallExpression extends Expression {
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
     }
 
+    // some may be null for partial application
     public List<Expression> getArguments() {
         return this.arguments;
     }
@@ -62,6 +63,10 @@ public class FunctionCallExpression extends Expression {
     public List<Node> getChildren() {
         List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
+    }
+    
+    public boolean isPartialApplication() {
+        return this.isPartialApplication;
     }
 
     @Override
