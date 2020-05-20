@@ -24,6 +24,7 @@ public enum ErrorCode {
 
     InvalidLexicalValueErrorCode("FOCA0002"),
     CodepointNotValidErrorCode("FOCH0001"),
+    InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
