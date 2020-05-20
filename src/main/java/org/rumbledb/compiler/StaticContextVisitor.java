@@ -107,15 +107,20 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.getParams()
-            .forEach(
-                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
-                    paramName,
-                    sequenceType,
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
-                )
+        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
+            expression.getFunctionIdentifier(),
+            expression.getMetadata()
+        );
+        int i = 0;
+        for (String name : expression.getParams().keySet()) {
+            functionDeclarationContext.addVariable(
+                name,
+                expression.getParams().get(name),
+                expression.getMetadata(),
+                ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
             );
+            ++i;
+        }
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
