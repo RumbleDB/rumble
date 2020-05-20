@@ -155,27 +155,26 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        FunctionIdentifier identifier = new FunctionIdentifier(
-                expression.getFunctionName(),
-                expression.getArguments().size()
-        );
-        List<ExecutionMode> modes = new ArrayList<>();
-        if (expression.isPartialApplication()) {
-            for (@SuppressWarnings("unused")
-            Expression parameter : expression.getArguments()) {
-                modes.add(ExecutionMode.LOCAL);
+        FunctionIdentifier identifier = expression.getFunctionIdentifier();
+        if (!Functions.checkBuiltInFunctionExists(identifier)) {
+            List<ExecutionMode> modes = new ArrayList<>();
+            if (expression.isPartialApplication()) {
+                for (@SuppressWarnings("unused")
+                Expression parameter : expression.getArguments()) {
+                    modes.add(ExecutionMode.LOCAL);
+                }
+            } else {
+                for (Expression parameter : expression.getArguments()) {
+                    modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
+                }
             }
-        } else {
-            for (Expression parameter : expression.getArguments()) {
-                modes.add(parameter.getHighestExecutionMode(visitorConfig));
-            }
+            Functions.addUserDefinedFunctionParametersStorageMode(
+                identifier,
+                modes,
+                this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                expression.getMetadata()
+            );
         }
-        Functions.addUserDefinedFunctionParametersStorageMode(
-            identifier,
-            modes,
-            visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-            expression.getMetadata()
-        );
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;
     }

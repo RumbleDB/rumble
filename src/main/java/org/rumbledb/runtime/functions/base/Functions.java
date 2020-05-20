@@ -170,6 +170,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -634,12 +635,12 @@ public class Functions {
         if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
             return userDefinedFunctionsParametersStorageMode.get(identifier);
         }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
+        List<ExecutionMode> newModes = new ArrayList<>();
+        for (int i = 0; i < identifier.getArity(); ++i) {
+            newModes.add(ExecutionMode.UNSET);
+        }
+        userDefinedFunctionsParametersStorageMode.put(identifier, newModes);
+        return newModes;
     }
 
     public static void addUserDefinedFunctionParametersStorageMode(
@@ -648,16 +649,32 @@ public class Functions {
             boolean suppressErrorsForFunctionSignatureCollision,
             ExceptionMetadata meta
     ) {
-        if (
-            builtInFunctions.containsKey(functionIdentifier)
-                ||
-                (!suppressErrorsForFunctionSignatureCollision
-                    && userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier))
-        ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        List<ExecutionMode> newModes = new ArrayList<>();
+        if (!userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier)) {
+            userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
         }
-
-        userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
+        Iterator<ExecutionMode> oldModes = userDefinedFunctionsParametersStorageMode.get(functionIdentifier).iterator();
+        Iterator<ExecutionMode> updatedModes = executionModes.iterator();
+        while (oldModes.hasNext() && updatedModes.hasNext()) {
+            ExecutionMode oldMode = oldModes.next();
+            ExecutionMode updatedMode = updatedModes.next();
+            if (oldMode == ExecutionMode.UNSET) {
+                newModes.add(updatedMode);
+                continue;
+            }
+            if (updatedMode == ExecutionMode.UNSET) {
+                throw new OurBadException("Trying to unset an execution mode that was already set.");
+            }
+            if (oldMode == updatedMode) {
+                newModes.add(oldMode);
+                continue;
+            }
+            throw new OurBadException("Conflicting execution modes in user-defined function parameters.");
+        }
+        if (oldModes.hasNext() || updatedModes.hasNext()) {
+            throw new OurBadException("Inconsistent parameter execution modes.");
+        }
+        userDefinedFunctionsParametersStorageMode.put(functionIdentifier, newModes);
     }
 
     private static boolean isAddingNewUnsetUserDefinedFunction(
