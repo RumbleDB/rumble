@@ -64,7 +64,7 @@ public class FunctionCallExpression extends Expression {
         List<Node> result = this.arguments.stream().filter(arg -> arg != null).collect(Collectors.toList());
         return result;
     }
-    
+
     public boolean isPartialApplication() {
         return this.isPartialApplication;
     }

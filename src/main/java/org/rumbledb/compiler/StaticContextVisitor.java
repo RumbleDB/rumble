@@ -150,21 +150,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        FunctionIdentifier identifier = new FunctionIdentifier(expression.getFunctionName(), expression.getArguments().size());
+        FunctionIdentifier identifier = new FunctionIdentifier(
+                expression.getFunctionName(),
+                expression.getArguments().size()
+        );
         List<ExecutionMode> modes = new ArrayList<>();
-        if(expression.isPartialApplication())
-        {
-            for(@SuppressWarnings("unused") Expression parameter : expression.getArguments())
-            {
+        if (expression.isPartialApplication()) {
+            for (@SuppressWarnings("unused")
+            Expression parameter : expression.getArguments()) {
                 modes.add(ExecutionMode.LOCAL);
             }
         } else {
-            for(Expression parameter : expression.getArguments())
-            {
+            for (Expression parameter : expression.getArguments()) {
                 modes.add(parameter.getHighestExecutionMode(visitorConfig));
             }
         }
-        Functions.addUserDefinedFunctionParametersStorageMode(identifier, modes, visitorConfig.suppressErrorsForFunctionSignatureCollision(), expression.getMetadata());
+        Functions.addUserDefinedFunctionParametersStorageMode(
+            identifier,
+            modes,
+            visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+            expression.getMetadata()
+        );
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;
     }

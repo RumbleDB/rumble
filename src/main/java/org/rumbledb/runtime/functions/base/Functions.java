@@ -626,7 +626,7 @@ public class Functions {
         }
         userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
-    
+
     public static List<ExecutionMode> getUserDefinedFunctionParametersStorageMode(
             FunctionIdentifier identifier,
             ExceptionMetadata metadata
