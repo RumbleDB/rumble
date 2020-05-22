@@ -121,7 +121,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 name,
                 expression.getParams().get(name),
                 expression.getMetadata(),
-                modes.get(i) // static udf currently supports materialized(local) params, not RDDs or DFs
+                modes.get(i)
             );
             ++i;
         }
@@ -145,7 +145,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     paramName,
                     sequenceType,
                     expression.getMetadata(),
-                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                    ExecutionMode.LOCAL
                 )
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
