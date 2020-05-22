@@ -194,6 +194,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
+        expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
 
