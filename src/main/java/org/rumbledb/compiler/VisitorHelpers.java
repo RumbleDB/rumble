@@ -22,8 +22,9 @@ public class VisitorHelpers {
     public static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
-
-    public static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+    
+    private static void printTree(Node node, RumbleRuntimeConfiguration conf)
+    {
         if (conf.isPrintIteratorTree()) {
             System.out.println("***********************");
             System.out.println("Initial expression tree");
@@ -32,34 +33,23 @@ public class VisitorHelpers {
             System.out.println(node);
             System.out.println();
         }
+   }
 
+    public static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+        printTree(node, conf);
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(node, null);
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
-        if (conf.isPrintIteratorTree()) {
-            System.out.println("**********************************");
-            System.out.println("Initial expression tree (1st pass)");
-            System.out.println("**********************************");
-            System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
-            System.out.println(node);
-            System.out.println();
-        }
+        printTree(node, conf);
 
         while (true) {
             visitor.visit(node, null);
             int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
-            if (conf.isPrintIteratorTree()) {
-                System.out.println("*******************************************");
-                System.out.println("Initial expression tree (intermediate pass)");
-                System.out.println("*******************************************");
-                System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
-                System.out.println(node);
-                System.out.println();
-            }
+            printTree(node, conf);
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
@@ -75,14 +65,7 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(node, null);
-        if (conf.isPrintIteratorTree()) {
-            System.out.println("***********************************");
-            System.out.println("Initial expression tree (last pass)");
-            System.out.println("***********************************");
-            System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
-            System.out.println(node);
-            System.out.println();
-        }
+        printTree(node, conf);
         if (node.numberOfUnsetExecutionModes() > 0) {
             System.err.println(
                 "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
