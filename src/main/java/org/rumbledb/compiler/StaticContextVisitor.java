@@ -49,6 +49,7 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -117,11 +118,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         );
         int i = 0;
         for (String name : expression.getParams().keySet()) {
+            ExecutionMode mode = modes.get(i);
+            SequenceType type = expression.getParams().get(name);
+            if (type.isEmptySequence()) {
+                mode = ExecutionMode.LOCAL;
+            } else if (type.getArity().equals(Arity.OneOrZero) || type.getArity().equals(Arity.One)) {
+                mode = ExecutionMode.LOCAL;
+            }
             functionDeclarationContext.addVariable(
                 name,
                 expression.getParams().get(name),
                 expression.getMetadata(),
-                modes.get(i)
+                mode
             );
             ++i;
         }
