@@ -82,10 +82,7 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         MainModule mainModule = this.parse(lexer);
         VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule);
-        }
+        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = generateRuntimeIterators(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
@@ -133,10 +130,7 @@ public class JsoniqQueryExecutor {
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
         MainModule mainModule = this.parse(lexer);
         VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule);
-        if (this.configuration.isPrintIteratorTree()) {
-            System.out.println(mainModule);
-        }
+        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
         // execute locally for simple expressions

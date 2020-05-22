@@ -519,10 +519,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         if (expression.getExpression() != null) {
             visit(expression.getExpression(), null);
             addInputVariableDependencies(expression, getInputVariableDependencies(expression.getExpression()));
-            System.out.println(String.join(", ", getInputVariableDependencies(expression)));
             return null;
         }
-        System.out.println(String.join(", ", getInputVariableDependencies(expression)));
         return null;
     }
 

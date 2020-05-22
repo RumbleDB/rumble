@@ -97,7 +97,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         } else {
             expression.setType(argument.getVariableSequenceType(variableName));
-            expression.setHighestExecutionMode(argument.getVariableStorageMode(variableName));
+            ExecutionMode mode = argument.getVariableStorageMode(variableName);
+            if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
+                mode = ExecutionMode.LOCAL;
+            }
+            expression.setHighestExecutionMode(mode);
             return argument;
         }
     }
@@ -124,6 +128,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
+        declaration.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
         );
