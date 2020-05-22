@@ -22,9 +22,8 @@ public class VisitorHelpers {
     public static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
-    
-    private static void printTree(Node node, RumbleRuntimeConfiguration conf)
-    {
+
+    private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
             System.out.println("***********************");
             System.out.println("Initial expression tree");
@@ -33,7 +32,7 @@ public class VisitorHelpers {
             System.out.println(node);
             System.out.println();
         }
-   }
+    }
 
     public static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
         printTree(node, conf);
