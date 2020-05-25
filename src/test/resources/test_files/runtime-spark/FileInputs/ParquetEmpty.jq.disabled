@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="" :)
+parquet-file("./src/test/resources/test_data/emptyFile.parquet")
+
+(: TODO: Empty Parquet file needs to be added :)

@@ -86,9 +86,12 @@
                             <mainClass>org.rumbledb.cli.Main</mainClass>
                         </manifest>
                     </archive>
-                    <descriptorRefs>
+                    <!-- <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>
+                    </descriptorRefs> -->
+                    <descriptors>
+                        <descriptor>src/assembly/custom-jar-with-dependencies-assembly.xml</descriptor>
+                    </descriptors>
                 </configuration>
             </plugin>
             <plugin>
