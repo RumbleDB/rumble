@@ -107,15 +107,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
     }
 
-    @Override
-    public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
-        InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        // define a static context for the function body, add params to the context and visit the body expression
-        StaticContext functionDeclarationContext = new StaticContext(argument);
-        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
-            expression.getFunctionIdentifier(),
-            expression.getMetadata()
-        );
+    private void populateFunctionDeclarationStaticContext(
+            StaticContext functionDeclarationContext,
+            List<ExecutionMode> modes,
+            InlineFunctionExpression expression
+    ) {
         int i = 0;
         for (String name : expression.getParams().keySet()) {
             ExecutionMode mode = modes.get(i);
@@ -133,6 +129,18 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
             ++i;
         }
+    }
+
+    @Override
+    public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
+        InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        // define a static context for the function body, add params to the context and visit the body expression
+        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
+            expression.getFunctionIdentifier(),
+            expression.getMetadata()
+        );
+        StaticContext functionDeclarationContext = new StaticContext(argument);
+        populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
