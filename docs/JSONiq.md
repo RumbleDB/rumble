@@ -4,7 +4,7 @@ Rumble relies on the JSONiq language.
 
 ## JSONiq reference
 
-The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html) on the [JSONiq.org](http://jsoniq.org) website. Note that it is not fully implemented yet (see below).
+The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq/webhelp/index.html) on the [JSONiq.org](http://www.jsoniq.org) website. Note that it is not fully implemented yet (see below).
 
 ## JSONiq tutorial
 

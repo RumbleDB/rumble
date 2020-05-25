@@ -83,36 +83,43 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
         }
+        this.localTupleResults = new ArrayList<>();
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.child != null) {
-            this.child.open(this.currentDynamicContext);
-
-            this.hasNext = this.child.hasNext();
-        } else {
-            throw new OurBadException("Invalid where clause.");
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
         }
+        this.child.open(this.currentDynamicContext);
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
+        this.hasNext = this.child.hasNext();
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        this.child.reset(this.currentDynamicContext);
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
+        this.hasNext = this.child.hasNext();
     }
 
     @Override
     public FlworTuple next() {
         if (this.hasNext) {
-            if (this.localTupleResults == null) {
-                this.localTupleResults = new ArrayList<>();
-                this.resultIndex = 0;
+            if (this.resultIndex == 0) {
                 setAllLocalResults();
             }
-
             FlworTuple result = this.localTupleResults.get(this.resultIndex++);
             if (this.resultIndex == this.localTupleResults.size()) {
                 this.hasNext = false;
             }
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
+        throw new IteratorFlowException("Invalid next() call in order-by clause", getMetadata());
     }
 
     /**
