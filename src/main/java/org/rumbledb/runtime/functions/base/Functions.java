@@ -669,7 +669,9 @@ public class Functions {
                 newModes.add(oldMode);
                 continue;
             }
-            throw new OurBadException("Conflicting execution modes in user-defined function parameters.");
+            throw new OurBadException(
+                    "Conflicting execution modes in user-defined function parameters. This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
+            );
         }
         if (oldModes.hasNext() || updatedModes.hasNext()) {
             throw new OurBadException("Inconsistent parameter execution modes.");
