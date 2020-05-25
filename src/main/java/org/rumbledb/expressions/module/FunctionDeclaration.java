@@ -29,8 +29,6 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.Collections;
 import java.util.List;
 
@@ -66,7 +64,7 @@ public class FunctionDeclaration extends Node {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.LOCAL;
+        this.highestExecutionMode = this.functionExpression.getBody().getHighestExecutionMode(visitorConfig);
     }
 }
 

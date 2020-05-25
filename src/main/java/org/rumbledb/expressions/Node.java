@@ -84,6 +84,17 @@ public abstract class Node {
         return this.highestExecutionMode;
     }
 
+    public int numberOfUnsetExecutionModes() {
+        int result = 0;
+        for (Node n : this.getChildren()) {
+            result += n.numberOfUnsetExecutionModes();
+        }
+        if (this.highestExecutionMode.equals(ExecutionMode.UNSET)) {
+            ++result;
+        }
+        return result;
+    }
+
     /**
      * Accept method for the visitor pattern.
      *
