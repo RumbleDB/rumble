@@ -156,6 +156,15 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+            } else if (ex instanceof IllegalArgumentException) {
+                System.err.println("⚠️  It seems that you are not using Java 8. Spark only works with Java 8.");
+                System.err.println(
+                    "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
+                );
+                System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
             } else if (!(ex instanceof UserInterruptException)) {
                 System.out.println("An error has occurred: " + ex.getMessage());
                 System.out.println(
