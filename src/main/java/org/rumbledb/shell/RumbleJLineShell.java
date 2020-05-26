@@ -91,8 +91,8 @@ public class RumbleJLineShell {
         String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
         List<Item> results = new ArrayList<>();
-        long count = this.jsoniqQueryExecutor.runInteractive(query, results);
         try {
+            long count = this.jsoniqQueryExecutor.runInteractive(query, results);
             String result = String.join(
                 "\n",
                 results.stream()
