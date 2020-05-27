@@ -21,15 +21,16 @@
 package org.rumbledb.expressions.quantifiers;
 
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 public class QuantifiedExpressionVar {
-    private final String variableName;
+    private final FunctionOrVariableName variableName;
     private final Expression expression;
     private final SequenceType sequenceType;
 
     public QuantifiedExpressionVar(
-            String variableName,
+            FunctionOrVariableName variableName,
             Expression varExpression,
             SequenceType sequenceType
     ) {
@@ -42,7 +43,7 @@ public class QuantifiedExpressionVar {
         return this.expression;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
 
         return this.variableName;
     }

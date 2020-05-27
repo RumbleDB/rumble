@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -38,11 +39,11 @@ import java.util.List;
 public class VariableReferenceExpression extends Expression implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private String name;
+    private FunctionOrVariableName name;
     private SequenceType type;
 
 
-    public VariableReferenceExpression(String name, ExceptionMetadata metadata) {
+    public VariableReferenceExpression(FunctionOrVariableName name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = name;
     }
@@ -51,7 +52,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         this.highestExecutionMode = highestExecutionMode;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.name;
     }
 

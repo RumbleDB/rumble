@@ -61,6 +61,7 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -859,10 +860,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        String name = ctx.name.getText();
+        String localName = ctx.name.getText();
+        String prefix = null;
         if (ctx.ns != null) {
-            name = name + ":" + ctx.ns.getText();
+            prefix = ctx.ns.getText();
         }
+        FunctionOrVariableName name = new FunctionOrVariableName(null, prefix, localName);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 

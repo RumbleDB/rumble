@@ -2,6 +2,7 @@ package org.rumbledb.expressions.control;
 
 
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -14,12 +15,12 @@ import java.util.List;
  */
 public class TypeswitchCase {
 
-    private String variableName;
+    private FunctionOrVariableName variableName;
     private List<SequenceType> union;
     private final Expression returnExpression;
 
     public TypeswitchCase(
-            String variableName,
+            FunctionOrVariableName variableName,
             List<SequenceType> union,
             Expression returnExpression
     ) {
@@ -29,7 +30,7 @@ public class TypeswitchCase {
     }
 
     public TypeswitchCase(
-            String variableName,
+            FunctionOrVariableName variableName,
             Expression returnExpression
     ) {
         this.variableName = variableName;
@@ -37,7 +38,7 @@ public class TypeswitchCase {
         this.returnExpression = returnExpression;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 

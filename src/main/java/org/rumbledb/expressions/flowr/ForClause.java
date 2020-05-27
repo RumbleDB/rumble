@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -36,9 +37,9 @@ import java.util.List;
 
 public class ForClause extends Clause {
 
-    private final String variableName;
+    private final FunctionOrVariableName variableName;
     private final boolean allowEmpty;
-    private final String positionalVariableName;
+    private final FunctionOrVariableName positionalVariableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -47,10 +48,10 @@ public class ForClause extends Clause {
 
 
     public ForClause(
-            String variableName,
+            FunctionOrVariableName variableName,
             boolean allowEmpty,
             SequenceType sequenceType,
-            String positionalVariableName,
+            FunctionOrVariableName positionalVariableName,
             Expression expression,
             ExceptionMetadata metadata
     ) {
@@ -66,7 +67,7 @@ public class ForClause extends Clause {
 
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 
@@ -74,7 +75,7 @@ public class ForClause extends Clause {
         return this.allowEmpty;
     }
 
-    public String getPositionalVariableName() {
+    public FunctionOrVariableName getPositionalVariableName() {
         return this.positionalVariableName;
     }
 

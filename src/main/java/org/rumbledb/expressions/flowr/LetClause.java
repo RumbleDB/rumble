@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public class LetClause extends Clause {
 
-    private final String variableName;
+    private final FunctionOrVariableName variableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -44,7 +45,7 @@ public class LetClause extends Clause {
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public LetClause(
-            String variableName,
+            FunctionOrVariableName variableName,
             SequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadataFromContext
@@ -58,7 +59,7 @@ public class LetClause extends Clause {
         this.expression = expression;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 

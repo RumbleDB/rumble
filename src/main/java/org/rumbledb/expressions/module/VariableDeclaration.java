@@ -36,7 +36,7 @@ import java.util.List;
 
 public class VariableDeclaration extends Node {
 
-    private final String variableName;
+    private final FunctionOrVariableName variableName;
     private final boolean external;
     protected SequenceType sequenceType;
     protected Expression expression;
@@ -44,7 +44,7 @@ public class VariableDeclaration extends Node {
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public VariableDeclaration(
-            String variableName,
+            FunctionOrVariableName variableName,
             boolean external,
             SequenceType sequenceType,
             Expression expression,
@@ -60,7 +60,7 @@ public class VariableDeclaration extends Node {
         }
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 

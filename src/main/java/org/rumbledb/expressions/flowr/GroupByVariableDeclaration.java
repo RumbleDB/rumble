@@ -22,16 +22,17 @@ package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 public class GroupByVariableDeclaration {
 
-    protected String variableName;
+    protected FunctionOrVariableName variableName;
     protected Expression expression;
     protected SequenceType sequenceType;
 
     public GroupByVariableDeclaration(
-            String variableName,
+            FunctionOrVariableName variableName,
             SequenceType sequenceType,
             Expression expression
     ) {
@@ -48,7 +49,7 @@ public class GroupByVariableDeclaration {
         sequenceType = this.sequenceType;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 

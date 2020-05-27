@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
@@ -42,12 +43,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private SequenceType sequence;
-    private String variableName;
+    private FunctionOrVariableName variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
     public VariableReferenceIterator(
-            String variableName,
+            FunctionOrVariableName variableName,
             SequenceType seq,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -118,7 +119,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         return this.sequence;
     }
 
-    public String getVariableName() {
+    public FunctionOrVariableName getVariableName() {
         return this.variableName;
     }
 
