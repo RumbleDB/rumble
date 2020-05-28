@@ -28,6 +28,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
 import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -43,7 +44,11 @@ public class FunctionCallExpression extends Expression {
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
 
-    public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
+    public FunctionCallExpression(
+            FunctionOrVariableName functionName,
+            List<Expression> arguments,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
@@ -62,7 +67,7 @@ public class FunctionCallExpression extends Expression {
         return this.identifier;
     }
 
-    public String getFunctionName() {
+    public FunctionOrVariableName getFunctionName() {
         return this.identifier.getName();
     }
 

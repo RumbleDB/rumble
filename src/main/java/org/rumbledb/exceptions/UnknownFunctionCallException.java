@@ -21,12 +21,13 @@
 package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 
 public class UnknownFunctionCallException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public UnknownFunctionCallException(String fnName, int arity, ExceptionMetadata metadata) {
+    public UnknownFunctionCallException(FunctionOrVariableName fnName, int arity, ExceptionMetadata metadata) {
         super(
             "Undefined function call; Entered function name and arity doesn't match a defined function signature: \""
                 +

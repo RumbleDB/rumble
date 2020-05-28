@@ -31,6 +31,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -53,16 +54,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private String variableName; // for efficient use in local iteration
+    private FunctionOrVariableName variableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
+    private Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
     private FlworTuple inputTuple; // tuple received from child, used for tuple creation
 
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
-            String variableName,
+            FunctionOrVariableName variableName,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -201,7 +202,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
 
                 if (duplicateVariableIndex == -1) {
-                    columnsToSelect.add(this.variableName);
+                    columnsToSelect.add(this.variableName.toString());
                 } else {
                     columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
                 }
@@ -290,7 +291,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private StructType generateSchema() {
         Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
         List<String> newColumnNames = new ArrayList<>(oldColumnNames);
-        newColumnNames.add(this.variableName);
+        newColumnNames.add(this.variableName.toString());
 
         List<StructField> fields = new ArrayList<>();
         for (String columnName : newColumnNames) {
@@ -310,7 +311,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {
         // define a schema
         List<StructField> fields = new ArrayList<>();
-        StructField field = DataTypes.createStructField(this.variableName, DataTypes.BinaryType, true);
+        StructField field = DataTypes.createStructField(this.variableName.toString(), DataTypes.BinaryType, true);
         fields.add(field);
         StructType schema = DataTypes.createStructType(fields);
 
@@ -337,7 +338,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child != null) {
             result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         }
-        result.add(this.variableName);
+        result.add(this.variableName.toString());
         return result;
     }
 

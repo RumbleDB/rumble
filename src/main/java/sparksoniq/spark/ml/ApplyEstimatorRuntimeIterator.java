@@ -16,6 +16,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -257,7 +258,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         );
 
         return new FunctionItem(
-                new FunctionIdentifier(fittedModel.getClass().getName(), 2),
+                new FunctionIdentifier(new FunctionOrVariableName(null, null, fittedModel.getClass().getName()), 2),
                 GetTransformerFunctionIterator.transformerParameterNames,
                 new FunctionSignature(
                         paramTypes,
