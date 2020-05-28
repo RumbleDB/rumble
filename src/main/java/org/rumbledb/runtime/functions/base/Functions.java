@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
@@ -487,7 +488,7 @@ public class Functions {
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
         builtInFunctions.put(substring_after.getIdentifier(), substring_after);
         for (int i = 0; i < 100; i++) {
-            builtInFunctions.put(new FunctionIdentifier("concat", i), concat);
+            builtInFunctions.put(new FunctionIdentifier(new FunctionOrVariableName(null, null, "concat"), i), concat);
         }
         builtInFunctions.put(ends_with.getIdentifier(), ends_with);
         builtInFunctions.put(string_join1.getIdentifier(), string_join1);
@@ -833,13 +834,13 @@ public class Functions {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionName,
+            String functionLocalName,
             String returnType,
             Class<? extends RuntimeIterator> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 0),
+                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 0),
                 new FunctionSignature(
                         Collections.emptyList(),
                         sequenceTypes.get(returnType)
@@ -850,14 +851,14 @@ public class Functions {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionName,
+            String functionLocalName,
             String param1Type,
             String returnType,
             Class<? extends RuntimeIterator> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 1),
+                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 1),
                 new FunctionSignature(
                         Collections.singletonList(sequenceTypes.get(param1Type)),
                         sequenceTypes.get(returnType)
@@ -868,7 +869,7 @@ public class Functions {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionName,
+            String functionLocalName,
             String param1Type,
             String param2Type,
             String returnType,
@@ -876,7 +877,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 2),
+                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(sequenceTypes.get(param1Type), sequenceTypes.get(param2Type))
@@ -889,7 +890,7 @@ public class Functions {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionName,
+            String functionLocalName,
             String param1Type,
             String param2Type,
             String param3Type,
@@ -898,7 +899,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(functionName, 3),
+                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 3),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -1629,7 +1630,7 @@ public class Functions {
          */
         static final BuiltinFunction concat =
             new BuiltinFunction(
-                    new FunctionIdentifier("concat", 100),
+                    new FunctionIdentifier(new FunctionOrVariableName(null, null, "concat"), 100),
                     new FunctionSignature(
                             Collections.nCopies(
                                 100,

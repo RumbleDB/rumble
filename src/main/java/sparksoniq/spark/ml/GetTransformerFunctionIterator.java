@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -45,10 +46,10 @@ import java.util.List;
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<String> transformerParameterNames = new ArrayList<>(
+    public static final List<FunctionOrVariableName> transformerParameterNames = new ArrayList<>(
             Arrays.asList(
-                "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224",
-                "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
+                new FunctionOrVariableName(null, null, "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224"),
+                new FunctionOrVariableName(null, null, "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129")
             )
     );
     private String transformerShortName;
@@ -127,7 +128,10 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(this.transformerSparkMLClass.getName(), 2),
+                        new FunctionIdentifier(
+                                new FunctionOrVariableName(null, null, this.transformerSparkMLClass.getName()),
+                                2
+                        ),
                         transformerParameterNames,
                         new FunctionSignature(
                                 paramTypes,

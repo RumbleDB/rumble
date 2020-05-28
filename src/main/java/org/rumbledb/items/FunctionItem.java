@@ -31,6 +31,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
@@ -51,14 +52,14 @@ public class FunctionItem extends Item {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
-    private List<String> parameterNames;
+    private List<FunctionOrVariableName> parameterNames;
 
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private Map<String, List<Item>> localVariablesInClosure;
-    private Map<String, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<String, Dataset<Row>> dataFrameVariablesInClosure;
+    private Map<FunctionOrVariableName, List<Item>> localVariablesInClosure;
+    private Map<FunctionOrVariableName, JavaRDD<Item>> RDDVariablesInClosure;
+    private Map<FunctionOrVariableName, Dataset<Row>> dataFrameVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -66,7 +67,7 @@ public class FunctionItem extends Item {
 
     public FunctionItem(
             FunctionIdentifier identifier,
-            List<String> parameterNames,
+            List<FunctionOrVariableName> parameterNames,
             FunctionSignature signature,
             RuntimeIterator bodyIterator
     ) {
@@ -81,12 +82,12 @@ public class FunctionItem extends Item {
 
     public FunctionItem(
             FunctionIdentifier identifier,
-            List<String> parameterNames,
+            List<FunctionOrVariableName> parameterNames,
             FunctionSignature signature,
             RuntimeIterator bodyIterator,
-            Map<String, List<Item>> localVariablesInClosure,
-            Map<String, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<String, Dataset<Row>> DFVariablesInClosure
+            Map<FunctionOrVariableName, List<Item>> localVariablesInClosure,
+            Map<FunctionOrVariableName, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<FunctionOrVariableName, Dataset<Row>> DFVariablesInClosure
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -98,14 +99,14 @@ public class FunctionItem extends Item {
     }
 
     public FunctionItem(
-            String name,
-            Map<String, SequenceType> paramNameToSequenceTypes,
+            FunctionOrVariableName name,
+            Map<FunctionOrVariableName, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator
     ) {
-        List<String> paramNames = new ArrayList<>();
+        List<FunctionOrVariableName> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
-        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
+        for (Map.Entry<FunctionOrVariableName, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
             paramNames.add(paramEntry.getKey());
             parameters.add(paramEntry.getValue());
         }
@@ -125,7 +126,7 @@ public class FunctionItem extends Item {
     }
 
     @Override
-    public List<String> getParameterNames() {
+    public List<FunctionOrVariableName> getParameterNames() {
         return this.parameterNames;
     }
 
@@ -138,15 +139,15 @@ public class FunctionItem extends Item {
         return this.bodyIterator;
     }
 
-    public Map<String, List<Item>> getLocalVariablesInClosure() {
+    public Map<FunctionOrVariableName, List<Item>> getLocalVariablesInClosure() {
         return this.localVariablesInClosure;
     }
 
-    public Map<String, JavaRDD<Item>> getRDDVariablesInClosure() {
+    public Map<FunctionOrVariableName, JavaRDD<Item>> getRDDVariablesInClosure() {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<String, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<FunctionOrVariableName, Dataset<Row>> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
@@ -187,25 +188,25 @@ public class FunctionItem extends Item {
         sb.append("Function\n");
         sb.append("Identifier:" + this.identifier + "\n");
         sb.append("Parameters: ");
-        for (String param : this.parameterNames) {
+        for (FunctionOrVariableName param : this.parameterNames) {
             sb.append(param + " ");
         }
         sb.append("Signature: " + this.signature + "\n");
         sb.append("Body:\n" + this.bodyIterator + "\n");
         sb.append("Closure:\n");
         sb.append("  Local:\n");
-        for (String name : this.localVariablesInClosure.keySet()) {
+        for (FunctionOrVariableName name : this.localVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)\n");
             if (this.localVariablesInClosure.get(name).size() == 1) {
                 sb.append("      " + this.localVariablesInClosure.get(name).get(0).serialize() + "\n");
             }
         }
         sb.append("  RDD:\n");
-        for (String name : this.RDDVariablesInClosure.keySet()) {
+        for (FunctionOrVariableName name : this.RDDVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)\n");
         }
         sb.append("  Data Frames:\n");
-        for (String name : this.dataFrameVariablesInClosure.keySet()) {
+        for (FunctionOrVariableName name : this.dataFrameVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)\n");
         }
         return sb.toString();
@@ -213,7 +214,9 @@ public class FunctionItem extends Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode() + this.signature.hashCode();
+        return this.identifier.hashCode()
+            + String.join("", this.parameterNames.toString()).hashCode()
+            + this.signature.hashCode();
     }
 
     @Override
@@ -290,13 +293,13 @@ public class FunctionItem extends Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        for (String variable : dynamicContext.getLocalVariableNames()) {
+        for (FunctionOrVariableName variable : dynamicContext.getLocalVariableNames()) {
             this.localVariablesInClosure.put(variable, dynamicContext.getLocalVariableValue(variable, metadata));
         }
-        for (String variable : dynamicContext.getRDDVariableNames()) {
+        for (FunctionOrVariableName variable : dynamicContext.getRDDVariableNames()) {
             this.RDDVariablesInClosure.put(variable, dynamicContext.getRDDVariableValue(variable, metadata));
         }
-        for (String variable : dynamicContext.getDataFrameVariableNames()) {
+        for (FunctionOrVariableName variable : dynamicContext.getDataFrameVariableNames()) {
             this.dataFrameVariablesInClosure.put(
                 variable,
                 dynamicContext.getDataFrameVariableValue(variable, metadata)
