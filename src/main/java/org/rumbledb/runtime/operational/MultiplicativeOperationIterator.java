@@ -24,6 +24,7 @@ import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -104,6 +105,8 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     default:
                         throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
                 }
+            } catch (DivisionByZeroException e) {
+                throw new DivisionByZeroException(getMetadata());
             } catch (RuntimeException e) {
                 throw new UnexpectedTypeException(
                         " \""

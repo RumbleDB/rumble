@@ -15,6 +15,7 @@ public class ItemFactory {
     private Item nullItem;
     private Item trueBooleanItem;
     private Item falseBooleanItem;
+    private Item zeroItem;
 
     public static ItemFactory getInstance() {
         if (instance == null) {
@@ -22,6 +23,7 @@ public class ItemFactory {
             instance.nullItem = new NullItem();
             instance.trueBooleanItem = new BooleanItem(true);
             instance.falseBooleanItem = new BooleanItem(false);
+            instance.zeroItem = new IntegerItem(0);
         }
         return instance;
     }
@@ -39,6 +41,9 @@ public class ItemFactory {
     }
 
     public Item createIntegerItem(int i) {
+        if (i == 0) {
+            return this.zeroItem;
+        }
         return new IntegerItem(i);
     }
 
