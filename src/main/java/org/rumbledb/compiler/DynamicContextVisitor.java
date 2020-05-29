@@ -35,6 +35,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
@@ -71,8 +72,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
+        Map<FunctionOrVariableName, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        for (Map.Entry<FunctionOrVariableName, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression);
@@ -94,7 +95,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         DynamicContext result = new DynamicContext(argument);
-        String name = variableDeclaration.getVariableName();
+        FunctionOrVariableName name = variableDeclaration.getVariableName();
         if (variableDeclaration.external()) {
             String value = this.configuration.getExternalVariableValue(name);
             List<Item> values = new ArrayList<>();

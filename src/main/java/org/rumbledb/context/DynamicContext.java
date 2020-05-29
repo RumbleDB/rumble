@@ -158,7 +158,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableCounts.put(varName, count);
     }
 
-    public List<Item> getLocalVariableValue(String varName, ExceptionMetadata metadata) {
+    public List<Item> getLocalVariableValue(FunctionOrVariableName varName, ExceptionMetadata metadata) {
         if (this.localVariableValues.containsKey(varName)) {
             return this.localVariableValues.get(varName);
         }
@@ -185,7 +185,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public JavaRDD<Item> getRDDVariableValue(String varName, ExceptionMetadata metadata) {
+    public JavaRDD<Item> getRDDVariableValue(FunctionOrVariableName varName, ExceptionMetadata metadata) {
         if (this.rddVariableValues.containsKey(varName)) {
             return this.rddVariableValues.get(varName);
         }
@@ -206,7 +206,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public Dataset<Row> getDataFrameVariableValue(String varName, ExceptionMetadata metadata) {
+    public Dataset<Row> getDataFrameVariableValue(FunctionOrVariableName varName, ExceptionMetadata metadata) {
         if (this.dataFrameVariableValues.containsKey(varName)) {
             return this.dataFrameVariableValues.get(varName);
         }
@@ -221,7 +221,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         );
     }
 
-    public Item getVariableCount(String varName) {
+    public Item getVariableCount(FunctionOrVariableName varName) {
         if (this.localVariableCounts.containsKey(varName)) {
             return this.localVariableCounts.get(varName);
         }
@@ -335,10 +335,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public static void mergeVariableDependencies(
-            Map<String, DynamicContext.VariableDependency> into,
-            Map<String, DynamicContext.VariableDependency> from
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> into,
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> from
     ) {
-        for (String v : from.keySet()) {
+        for (FunctionOrVariableName v : from.keySet()) {
             if (into.containsKey(v)) {
                 into.put(v, DynamicContext.mergeSingleVariableDependency(into.get(v), from.get(v)));
             } else {

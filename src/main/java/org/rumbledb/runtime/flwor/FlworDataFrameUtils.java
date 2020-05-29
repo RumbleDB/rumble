@@ -34,6 +34,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
@@ -161,7 +162,7 @@ public class FlworDataFrameUtils {
     public static Map<String, List<String>> getColumnNamesByType(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Map<String, DynamicContext.VariableDependency> dependencies
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies
     ) {
         Map<String, List<String>> result = new HashMap<>();
         result.put("byte[]", new ArrayList<>());
@@ -211,7 +212,10 @@ public class FlworDataFrameUtils {
             List<List<Item>> deserializedParams
     ) {
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-            context.addVariableValue(columnNames.get(columnIndex), deserializedParams.get(columnIndex));
+            context.addVariableValue(
+                new FunctionOrVariableName(null, null, columnNames.get(columnIndex)),
+                deserializedParams.get(columnIndex)
+            );
         }
     }
 
@@ -223,10 +227,16 @@ public class FlworDataFrameUtils {
             List<Item> counts
     ) {
         for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
-            context.addVariableValue(fullColumnNames.get(columnIndex), deserializedParams.get(columnIndex));
+            context.addVariableValue(
+                new FunctionOrVariableName(null, null, fullColumnNames.get(columnIndex)),
+                deserializedParams.get(columnIndex)
+            );
         }
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
-            context.addVariableCount(countColumnNames.get(columnIndex), counts.get(columnIndex));
+            context.addVariableCount(
+                new FunctionOrVariableName(null, null, countColumnNames.get(columnIndex)),
+                counts.get(columnIndex)
+            );
         }
     }
 

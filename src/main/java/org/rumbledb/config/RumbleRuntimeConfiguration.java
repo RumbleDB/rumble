@@ -21,6 +21,8 @@
 package org.rumbledb.config;
 
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.HashMap;
@@ -120,7 +122,7 @@ public class RumbleRuntimeConfiguration {
         }
     }
 
-    public String getExternalVariableValue(String name) {
+    public String getExternalVariableValue(FunctionOrVariableName name) {
         for (String s : this.arguments.keySet()) {
             if (s.equals("variable:" + name)) {
                 return this.arguments.get(s);

@@ -30,6 +30,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -49,15 +50,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private String variableName; // for efficient use in local iteration
+    private FunctionOrVariableName variableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
+    private Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
-            String variableName,
+            FunctionOrVariableName variableName,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -146,7 +147,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public Dataset<Row> getDataFrame(
             DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child != null) {
             Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
@@ -197,11 +198,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         );
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null) {
-            for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+            for (FunctionOrVariableName var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
             }
             result.putAll(this.child.getVariableDependencies());
@@ -209,8 +210,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<>();
+    public Set<FunctionOrVariableName> getVariablesBoundInCurrentFLWORExpression() {
+        Set<FunctionOrVariableName> result = new HashSet<>();
         if (this.child != null) {
             result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         }
@@ -227,8 +228,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getProjection(
-            Map<String, DynamicContext.VariableDependency> parentProjection
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getProjection(
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
             return null;
@@ -237,16 +238,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // start with an empty projection.
 
         // copy over the projection needed by the parent clause.
-        Map<String, DynamicContext.VariableDependency> projection =
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> projection =
             new TreeMap<>(parentProjection);
 
         // remove the variable that this clause binds.
         projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<String, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
             .getVariableDependencies();
-        for (String variable : exprDependency.keySet()) {
+        for (FunctionOrVariableName variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
                     projection.put(variable, DynamicContext.VariableDependency.FULL);

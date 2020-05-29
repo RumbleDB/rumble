@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -241,8 +242,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<>();
         for (RuntimeIterator iterator : this.children) {
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
@@ -258,8 +259,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for (String v : dependencies.keySet()) {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (FunctionOrVariableName v : dependencies.keySet()) {
             buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
         buffer.append("\n");
@@ -270,7 +271,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void bindToVariableInDynamicContext(
             DynamicContext targetContext,
-            String variable,
+            FunctionOrVariableName variable,
             DynamicContext executionContext
     ) {
         if (this.isDataFrame()) {

@@ -110,7 +110,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return this.dataFrameVariables.containsKey(key);
     }
 
-    public List<Item> getLocalValue(String key, ExceptionMetadata metadata) {
+    public List<Item> getLocalValue(FunctionOrVariableName key, ExceptionMetadata metadata) {
         if (this.localVariables.containsKey(key)) {
             return this.localVariables.get(key);
         }
@@ -122,7 +122,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public JavaRDD<Item> getRDDValue(String key, ExceptionMetadata metadata) {
+    public JavaRDD<Item> getRDDValue(FunctionOrVariableName key, ExceptionMetadata metadata) {
         if (this.rddVariables.containsKey(key)) {
             return this.rddVariables.get(key);
         }
@@ -134,7 +134,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDataFrameValue(String key, ExceptionMetadata metadata) {
+    public Dataset<Row> getDataFrameValue(FunctionOrVariableName key, ExceptionMetadata metadata) {
         if (this.dataFrameVariables.containsKey(key)) {
             return this.dataFrameVariables.get(key);
         }

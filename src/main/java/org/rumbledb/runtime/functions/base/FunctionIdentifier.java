@@ -45,6 +45,10 @@ public class FunctionIdentifier implements Serializable {
         return this.name;
     }
 
+    public FunctionOrVariableName getNameWithArity() {
+        return this.name.addArityToFunctionName(this.getArity());
+    }
+
     @Override
     public boolean equals(Object instance) {
         return instance instanceof FunctionIdentifier
