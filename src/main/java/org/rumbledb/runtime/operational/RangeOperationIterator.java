@@ -85,11 +85,11 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
                     || !(right.isInteger())
             ) {
                 throw new UnexpectedTypeException(
-                        "Range expression has non numeric args "
+                        "Range expression must have integer input, but instead received "
                             +
-                            left.serialize()
-                            + ", "
-                            + right.serialize(),
+                            left.getDynamicType()
+                            + " and "
+                            + right.getDynamicType(),
                         getMetadata()
                 );
             }
