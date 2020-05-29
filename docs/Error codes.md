@@ -1,5 +1,7 @@
 # Error codes
 
+- [FOAR0001] - Division by zero.
+
 - [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
 
 - [FODC0002] - Error retrieving resource.
