@@ -23,7 +23,6 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -31,16 +30,12 @@ import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.UnsupportedEncodingException;
-import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import org.apache.http.client.utils.URIBuilder;
 
-import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-import static org.rumbledb.errorcodes.ErrorCode.InvalidReplacementStringErrorCode;
 
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
@@ -72,9 +67,12 @@ public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
             String encodedURI;
             try {
-                encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8").replace("+", "%20").replace("%7E", "~");
+                encodedURI = URLEncoder.encode(inputItem.getStringValue(), "UTF-8")
+                    .replace("+", "%20")
+                    .replace("%7E", "~");
             } catch (UnsupportedEncodingException e) {
-                throw new OurBadException(e.getMessage(), getMetadata());  // Will only get here if "UTF-8" is changed or method deprecates
+                throw new OurBadException(e.getMessage(), getMetadata()); // Will only get here if "UTF-8" is changed or
+                                                                          // method deprecates
             }
 
             return ItemFactory.getInstance().createStringItem(encodedURI);

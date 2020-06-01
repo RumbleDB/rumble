@@ -1736,11 +1736,11 @@ public class Functions {
          * function that encodes reserved characters
          */
         static final BuiltinFunction encode_for_uri = createBuiltinFunction(
-                "encode-for-uri",
-                "string?",
-                "string",
-                EncodeForURIFunctionIterator.class,
-                BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+            "encode-for-uri",
+            "string?",
+            "string",
+            EncodeForURIFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**
          * function that checks whether a string ends with a substring
