@@ -70,7 +70,7 @@ public class Rumble {
             throw e;
         }
         VisitorHelpers.resolveDependencies(mainModule, RumbleRuntimeConfiguration.getDefaultConfiguration());
-        VisitorHelpers.populateStaticContext(mainModule);
+        VisitorHelpers.populateStaticContext(mainModule, RumbleRuntimeConfiguration.getDefaultConfiguration());
 
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         return new SequenceOfItems(iterator);

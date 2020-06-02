@@ -171,6 +171,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -332,6 +333,7 @@ public class Functions {
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
+    private static HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
@@ -578,12 +580,14 @@ public class Functions {
 
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
+        userDefinedFunctionsParametersStorageMode = new HashMap<>();
         userDefinedFunctions = new HashMap<>();
         userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
     public static void clearUserDefinedFunctions() {
         userDefinedFunctionsExecutionMode.clear();
+        userDefinedFunctionsParametersStorageMode.clear();
         userDefinedFunctions.clear();
     }
 
@@ -627,6 +631,57 @@ public class Functions {
             userDefinedFunctionIdentifiersWithUnsetExecutionModes.remove(functionIdentifier);
         }
         userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
+    }
+
+    public static List<ExecutionMode> getUserDefinedFunctionParametersStorageMode(
+            FunctionIdentifier identifier,
+            ExceptionMetadata metadata
+    ) {
+        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
+            return userDefinedFunctionsParametersStorageMode.get(identifier);
+        }
+        List<ExecutionMode> newModes = new ArrayList<>();
+        for (int i = 0; i < identifier.getArity(); ++i) {
+            newModes.add(ExecutionMode.UNSET);
+        }
+        userDefinedFunctionsParametersStorageMode.put(identifier, newModes);
+        return newModes;
+    }
+
+    public static void addUserDefinedFunctionParametersStorageMode(
+            FunctionIdentifier functionIdentifier,
+            List<ExecutionMode> executionModes,
+            boolean suppressErrorsForFunctionSignatureCollision,
+            ExceptionMetadata meta
+    ) {
+        List<ExecutionMode> newModes = new ArrayList<>();
+        if (!userDefinedFunctionsParametersStorageMode.containsKey(functionIdentifier)) {
+            userDefinedFunctionsParametersStorageMode.put(functionIdentifier, executionModes);
+        }
+        Iterator<ExecutionMode> oldModes = userDefinedFunctionsParametersStorageMode.get(functionIdentifier).iterator();
+        Iterator<ExecutionMode> updatedModes = executionModes.iterator();
+        while (oldModes.hasNext() && updatedModes.hasNext()) {
+            ExecutionMode oldMode = oldModes.next();
+            ExecutionMode updatedMode = updatedModes.next();
+            if (oldMode == ExecutionMode.UNSET) {
+                newModes.add(updatedMode);
+                continue;
+            }
+            if (updatedMode == ExecutionMode.UNSET) {
+                throw new OurBadException("Trying to unset an execution mode that was already set.");
+            }
+            if (oldMode == updatedMode) {
+                newModes.add(oldMode);
+                continue;
+            }
+            throw new OurBadException(
+                    "Conflicting execution modes in user-defined function parameters. This happens when the same function is used in a setting with big sequences and another with small sequences, which is an unsupported feature. If you need this, please let us know so we can prioritize."
+            );
+        }
+        if (oldModes.hasNext() || updatedModes.hasNext()) {
+            throw new OurBadException("Inconsistent parameter execution modes.");
+        }
+        userDefinedFunctionsParametersStorageMode.put(functionIdentifier, newModes);
     }
 
     private static boolean isAddingNewUnsetUserDefinedFunction(

@@ -20,6 +20,9 @@
 
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
@@ -42,8 +45,11 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -92,8 +98,36 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         } else {
             expression.setType(argument.getVariableSequenceType(variableName));
-            expression.setHighestExecutionMode(argument.getVariableStorageMode(variableName));
+            ExecutionMode mode = argument.getVariableStorageMode(variableName);
+            if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
+                mode = ExecutionMode.LOCAL;
+            }
+            expression.setHighestExecutionMode(mode);
             return argument;
+        }
+    }
+
+    private void populateFunctionDeclarationStaticContext(
+            StaticContext functionDeclarationContext,
+            List<ExecutionMode> modes,
+            InlineFunctionExpression expression
+    ) {
+        int i = 0;
+        for (String name : expression.getParams().keySet()) {
+            ExecutionMode mode = modes.get(i);
+            SequenceType type = expression.getParams().get(name);
+            if (type.isEmptySequence()) {
+                mode = ExecutionMode.LOCAL;
+            } else if (type.getArity().equals(Arity.OneOrZero) || type.getArity().equals(Arity.One)) {
+                mode = ExecutionMode.LOCAL;
+            }
+            functionDeclarationContext.addVariable(
+                name,
+                expression.getParams().get(name),
+                expression.getMetadata(),
+                mode
+            );
+            ++i;
         }
     }
 
@@ -101,19 +135,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
+        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
+            expression.getFunctionIdentifier(),
+            expression.getMetadata()
+        );
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.getParams()
-            .forEach(
-                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
-                    paramName,
-                    sequenceType,
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
-                )
-            );
+        populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
+        declaration.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
         );
@@ -130,7 +161,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     paramName,
                     sequenceType,
                     expression.getMetadata(),
-                    ExecutionMode.LOCAL // static udf currently supports materialized(local) params, not RDDs or DFs
+                    ExecutionMode.LOCAL
                 )
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
@@ -145,6 +176,26 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
+        FunctionIdentifier identifier = expression.getFunctionIdentifier();
+        if (!Functions.checkBuiltInFunctionExists(identifier)) {
+            List<ExecutionMode> modes = new ArrayList<>();
+            if (expression.isPartialApplication()) {
+                for (@SuppressWarnings("unused")
+                Expression parameter : expression.getArguments()) {
+                    modes.add(ExecutionMode.LOCAL);
+                }
+            } else {
+                for (Expression parameter : expression.getArguments()) {
+                    modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
+                }
+            }
+            Functions.addUserDefinedFunctionParametersStorageMode(
+                identifier,
+                modes,
+                this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                expression.getMetadata()
+            );
+        }
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;
     }
@@ -159,6 +210,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
+        expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
 

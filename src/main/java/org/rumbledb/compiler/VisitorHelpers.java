@@ -1,5 +1,8 @@
 package org.rumbledb.compiler;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
@@ -20,15 +23,36 @@ public class VisitorHelpers {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
 
-    public static void populateStaticContext(Node node) {
+    private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
+        System.out.println("***********************");
+        System.out.println("Initial expression tree");
+        System.out.println("***********************");
+        System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
+        System.out.println(node);
+        System.out.println();
+    }
+
+    public static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+        if (conf.isPrintIteratorTree()) {
+            printTree(node, conf);
+        }
         StaticContextVisitor visitor = new StaticContextVisitor();
         visitor.visit(node, null);
 
+
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+        if (conf.isPrintIteratorTree()) {
+            printTree(node, conf);
+        }
+
         while (true) {
             visitor.visit(node, null);
             int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+
+            if (conf.isPrintIteratorTree()) {
+                printTree(node, conf);
+            }
 
             if (currentUnsetCount > prevUnsetCount) {
                 throw new OurBadException(
@@ -44,6 +68,15 @@ public class VisitorHelpers {
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
         visitor.visit(node, null);
+        if (conf.isPrintIteratorTree()) {
+            printTree(node, conf);
+        }
+        if (node.numberOfUnsetExecutionModes() > 0) {
+            System.err.println(
+                "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
+            );
+        }
+
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleRuntimeConfiguration configuration) {
@@ -53,9 +86,13 @@ public class VisitorHelpers {
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions() {
         try {
-            for (
-                FunctionIdentifier functionIdentifier : Functions
+            List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
+            unsetFunctionIdentifiers.addAll(
+                Functions
                     .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
+            );
+            for (
+                FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
             ) {
                 Functions.addUserDefinedFunctionExecutionMode(
                     functionIdentifier,

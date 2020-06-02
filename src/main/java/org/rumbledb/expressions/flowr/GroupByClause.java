@@ -55,7 +55,7 @@ public class GroupByClause extends Clause {
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         this.variables.forEach(e -> {
-            if (e != null) {
+            if (e != null && e.getExpression() != null) {
                 result.add(e.getExpression());
             }
         });
