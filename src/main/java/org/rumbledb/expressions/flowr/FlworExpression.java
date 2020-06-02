@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.Collections;
 import java.util.List;
@@ -58,14 +57,7 @@ public class FlworExpression extends Expression {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        // overall flwor expression's execution mode is never used and remains unset
-        this.highestExecutionMode = ExecutionMode.UNSET;
-    }
-
-    @Override
-    public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {
-        // overall flwor expression's execution mode is stored in the return clause
-        return this.returnClause.getHighestExecutionMode(visitorConfig);
+        this.highestExecutionMode = this.returnClause.getHighestExecutionMode(visitorConfig);
     }
 
     public List<Node> getChildren() {
