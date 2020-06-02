@@ -164,7 +164,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public Dataset<Row> getDataFrame(
             DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
     ) {
         // if it's a starting clause
         if (this.child == null) {
@@ -173,7 +173,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         if (this.child.isDataFrame()) {
             if (this.assignmentIterator.isRDD()) {
-                Set<String> intersection = new HashSet<>(this.assignmentIterator.getVariableDependencies().keySet());
+                Set<FunctionOrVariableName> intersection = new HashSet<>(
+                        this.assignmentIterator.getVariableDependencies().keySet()
+                );
                 intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
                 boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
 
@@ -289,14 +291,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     private StructType generateSchema() {
-        Set<String> oldColumnNames = this.inputTuple.getLocalKeys();
-        List<String> newColumnNames = new ArrayList<>(oldColumnNames);
-        newColumnNames.add(this.variableName.toString());
+        Set<FunctionOrVariableName> oldColumnNames = this.inputTuple.getLocalKeys();
+        List<FunctionOrVariableName> newColumnNames = new ArrayList<>(oldColumnNames);
+        newColumnNames.add(this.variableName);
 
         List<StructField> fields = new ArrayList<>();
-        for (String columnName : newColumnNames) {
+        for (FunctionOrVariableName columnName : newColumnNames) {
             // all columns store items serialized to binary format
-            StructField field = DataTypes.createStructField(columnName, DataTypes.BinaryType, true);
+            StructField field = DataTypes.createStructField(columnName.toString(), DataTypes.BinaryType, true);
             fields.add(field);
         }
         return DataTypes.createStructType(fields);
@@ -321,11 +323,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null) {
-            for (String var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+            for (FunctionOrVariableName var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
                 result.remove(var);
             }
             result.putAll(this.child.getVariableDependencies());
@@ -333,12 +335,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<>();
+    public Set<FunctionOrVariableName> getVariablesBoundInCurrentFLWORExpression() {
+        Set<FunctionOrVariableName> result = new HashSet<>();
         if (this.child != null) {
             result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         }
-        result.add(this.variableName.toString());
+        result.add(this.variableName);
         return result;
     }
 
@@ -347,12 +349,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
-        buffer.append("Variable ").append(this.variableName).append("\n");
+        buffer.append("Variable ").append(this.variableName.toString()).append("\n");
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getProjection(
-            Map<String, DynamicContext.VariableDependency> parentProjection
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getProjection(
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
             return null;
@@ -361,16 +363,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // start with an empty projection.
 
         // copy over the projection needed by the parent clause.
-        Map<String, DynamicContext.VariableDependency> projection =
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> projection =
             new TreeMap<>(parentProjection);
 
         // remove the variable that this for clause binds.
         projection.remove(this.variableName);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<String, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
             .getVariableDependencies();
-        for (String variable : exprDependency.keySet()) {
+        for (FunctionOrVariableName variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
                     // If the projection already needed a different kind of dependency, we fall back to the full

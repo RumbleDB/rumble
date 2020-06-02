@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -211,10 +212,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextResult();
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
-        for (String variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (FunctionOrVariableName variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }
         result.putAll(this.child.getVariableDependencies());

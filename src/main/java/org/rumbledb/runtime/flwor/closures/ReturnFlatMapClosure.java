@@ -27,6 +27,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
@@ -63,7 +64,8 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     @Override
     public Iterator<Item> call(Row row) {
         String[] columnNames = this.oldSchema.fieldNames();
-        Map<String, DynamicContext.VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies = this.expression
+            .getVariableDependencies();
         this.context.removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {

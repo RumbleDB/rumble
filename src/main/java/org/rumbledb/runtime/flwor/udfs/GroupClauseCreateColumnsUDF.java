@@ -30,6 +30,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
@@ -42,7 +43,7 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<String> variableNames;
+    private List<FunctionOrVariableName> variableNames;
     private Map<String, List<String>> columnNamesByType;
 
     private List<List<Item>> deserializedParams;
@@ -56,7 +57,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input input;
 
     public GroupClauseCreateColumnsUDF(
-            List<String> variableNames,
+            List<FunctionOrVariableName> variableNames,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType,
             ExceptionMetadata metadata
@@ -97,7 +98,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.longParams.add(count);
         }
 
-        for (String variableName : this.variableNames) {
+        for (FunctionOrVariableName variableName : this.variableNames) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
             // The second column is used for strings, with a special value in the first column.
             // The third column is used for numbers (as a double), with a special value in the first column.
@@ -114,13 +115,17 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.context.removeAllVariables();
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("byte[]").size(); columnIndex++) {
                 this.context.addVariableValue(
-                    this.columnNamesByType.get("byte[]").get(columnIndex),
+                    FunctionOrVariableName.createVariableInNoNamespace(
+                        this.columnNamesByType.get("byte[]").get(columnIndex)
+                    ),
                     this.deserializedParams.get(columnIndex)
                 );
             }
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("Long").size(); columnIndex++) {
                 this.context.addVariableCount(
-                    this.columnNamesByType.get("Long").get(columnIndex),
+                    FunctionOrVariableName.createVariableInNoNamespace(
+                        this.columnNamesByType.get("Long").get(columnIndex)
+                    ),
                     this.longParams.get(columnIndex)
                 );
             }

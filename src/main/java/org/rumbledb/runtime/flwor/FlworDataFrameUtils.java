@@ -279,8 +279,8 @@ public class FlworDataFrameUtils {
             int duplicateVariableIndex,
             boolean trailingComma,
             String serializerUdfName,
-            List<String> groupbyVariableNames,
-            Map<String, DynamicContext.VariableDependency> dependencies,
+            List<FunctionOrVariableName> groupbyVariableNames,
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies,
             Map<String, List<String>> columnNamesByType
     ) {
         String[] columnNames = inputSchema.fieldNames();
@@ -332,15 +332,20 @@ public class FlworDataFrameUtils {
     }
 
     private static boolean shouldCalculateCount(
-            Map<String, DynamicContext.VariableDependency> dependencies,
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies,
             String columnName
     ) {
-        return dependencies.containsKey(columnName)
-            && dependencies.get(columnName) == DynamicContext.VariableDependency.COUNT;
+        return dependencies.containsKey(FunctionOrVariableName.createVariableInNoNamespace(columnName))
+            && dependencies.get(
+                FunctionOrVariableName.createVariableInNoNamespace(columnName)
+            ) == DynamicContext.VariableDependency.COUNT;
     }
 
-    private static boolean isProcessingGroupingColumn(List<String> groupbyVariableNames, String columnName) {
-        return groupbyVariableNames.contains(columnName);
+    private static boolean isProcessingGroupingColumn(
+            List<FunctionOrVariableName> groupbyVariableNames,
+            String columnName
+    ) {
+        return groupbyVariableNames.contains(FunctionOrVariableName.createVariableInNoNamespace(columnName));
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {
