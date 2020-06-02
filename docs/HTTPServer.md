@@ -4,7 +4,7 @@
 
 Rumble can be run as an HTTP server that listens for queries. In order to do so, you can use the --server and --port parameters:
 
-    spark-submit spark-rumble-1.6.2.jar --server yes --port 8001
+    spark-submit spark-rumble-1.6.4.jar --server yes --port 8001
     
 This command will not return until you force it to (Ctrl+C on Linux and Mac). This is because the server has to run permanently to listen to incoming requests.
 
@@ -86,10 +86,10 @@ You can also let Rumble run as an HTTP server on the master node of a cluster, e
 - Connect to the master with SSH with an extra parameter for securely tunneling the HTTP connection (for example `-L 8001:localhost:8001` or any port of your choosing)
 - Download the Rumble jar to the master node
 
-    wget https://github.com/RumbleDB/rumble/releases/download/v1.6.2/spark-rumble-1.6.2.jar
+    wget https://github.com/RumbleDB/rumble/releases/download/v1.6.4/spark-rumble-1.6.4.jar
     
 - Launch the HTTP server on the master node
 
-    spark-submit spark-rumble-1.6.2.jar --server yes --port 8001
+    spark-submit spark-rumble-1.6.4.jar --server yes --port 8001
 
 - And then use Jupyter notebooks in the same way you would do it locally (it magically works because of the tunneling)
