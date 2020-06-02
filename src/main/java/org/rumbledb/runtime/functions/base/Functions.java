@@ -140,6 +140,7 @@ import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
 import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
+import org.rumbledb.runtime.functions.strings.EncodeForURIFunctionIterator;
 import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
 import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
 import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
@@ -222,6 +223,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.dis
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.double_function;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.duration;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.empty;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.encode_for_uri;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.ends_with;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exactly_one;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.exists;
@@ -513,6 +515,7 @@ public class Functions {
         builtInFunctions.put(normalize_unicode2.getIdentifier(), normalize_unicode2);
         builtInFunctions.put(serialize.getIdentifier(), serialize);
         builtInFunctions.put(number.getIdentifier(), number);
+        builtInFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
 
         builtInFunctions.put(duration.getIdentifier(), duration);
         builtInFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
@@ -1796,6 +1799,16 @@ public class Functions {
             "string",
             "string",
             NormalizeUnicodeFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that encodes reserved characters
+         */
+        static final BuiltinFunction encode_for_uri = createBuiltinFunction(
+            "encode-for-uri",
+            "string?",
+            "string",
+            EncodeForURIFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
         /**

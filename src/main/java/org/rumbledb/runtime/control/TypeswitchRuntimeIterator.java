@@ -1,10 +1,11 @@
 package org.rumbledb.runtime.control;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -13,7 +14,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import java.util.Collections;
 import java.util.List;
 
-public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
+public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator testField;
@@ -44,8 +45,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public void openLocal() {
         // this.matchingIterator is null at that point;
         if (this.matchingIterator != null) {
             throw new IteratorFlowException(
@@ -63,7 +63,7 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
+    public Item nextLocal() {
         if (this.hasNext) {
             Item nextItem = this.matchingIterator.next();
             this.hasNext = this.matchingIterator.hasNext();
@@ -79,14 +79,12 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void close() {
-        super.close();
+    public void closeLocal() {
         resetMatchingIteratorToNull();
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
+    public void resetLocal(DynamicContext context) {
         resetMatchingIteratorToNull();
         initializeIterator();
     }
@@ -131,5 +129,39 @@ public class TypeswitchRuntimeIterator extends LocalRuntimeIterator {
             }
         }
         return null;
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        this.testValue = this.testField.materializeFirstItemOrNull(dynamicContext);
+        RuntimeIterator localMatchingIterator;
+
+        for (TypeswitchRuntimeIteratorCase typeSwitchCase : this.cases) {
+            localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
+            if (localMatchingIterator != null) {
+                if (typeSwitchCase.getVariableName() != null) {
+                    dynamicContext.addVariableValue(
+                        typeSwitchCase.getVariableName(),
+                        Collections.singletonList(this.testValue)
+                    );
+                }
+
+                return localMatchingIterator.getRDD(dynamicContext);
+            }
+        }
+
+        if (this.defaultCase.getVariableName() != null) {
+            dynamicContext.addVariableValue(
+                this.defaultCase.getVariableName(),
+                Collections.singletonList(this.testValue)
+            );
+        }
+
+        return this.defaultCase.getReturnIterator().getRDD(dynamicContext);
     }
 }
