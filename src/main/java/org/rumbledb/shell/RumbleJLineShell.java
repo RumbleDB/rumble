@@ -30,13 +30,18 @@ import org.jline.reader.impl.DefaultHighlighter;
 import org.jline.reader.impl.DefaultParser;
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+import org.rumbledb.api.Item;
 import org.rumbledb.cli.JsoniqQueryExecutor;
 import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 
+import sparksoniq.spark.SparkSessionManager;
+
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.stream.Collectors;
 
 public class RumbleJLineShell {
@@ -85,15 +90,25 @@ public class RumbleJLineShell {
     private void processQuery() throws IOException {
         String query = this.currentQueryContent.trim();
         long startTime = System.currentTimeMillis();
+        List<Item> results = new ArrayList<>();
         try {
+            long count = this.jsoniqQueryExecutor.runInteractive(query, results);
             String result = String.join(
                 "\n",
-                this.jsoniqQueryExecutor.runInteractive(query)
-                    .stream()
+                results.stream()
                     .map(x -> x.serialize())
                     .collect(Collectors.toList())
             );
             output(result);
+            if (count != -1) {
+                System.err.println(
+                    "Warning! The output sequence contains "
+                        + count
+                        + " items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
+                );
+            }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
                 output("The query took " + time + " milliseconds to execute.");
@@ -138,6 +153,15 @@ public class RumbleJLineShell {
                 }
             } else if (ex instanceof RumbleException) {
                 System.err.println("⚠️  ️" + ANSIColor.RED + ex.getMessage() + ANSIColor.RESET);
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+            } else if (ex instanceof IllegalArgumentException) {
+                System.err.println("⚠️  It seems that you are not using Java 8. Spark only works with Java 8.");
+                System.err.println(
+                    "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
+                );
+                System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }

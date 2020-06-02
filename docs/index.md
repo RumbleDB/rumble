@@ -1,6 +1,6 @@
 # Rumble documentation
 
-Rumble is a Java library that can be used to query JSON-like files including JSON, Parquet, AVRO, SVM, CSV, ROOT as well as text files on HDFS, S3, Azure or any other storage layer supported by Spark. It also can read Parquet files, and more input formats will be added.
+Rumble is a Java library that can be used to query JSON-like files including JSON, Parquet, AVRO, SVM, CSV, ROOT as well as text files on HDFS, S3, Azure or any other storage layer supported by Spark.
 
 With Rumble, queries can be written in the tailor-made and expressive JSONiq language. Users can write their queries declaratively and start with just a few lines. No need for complex JSON parsing machinery as JSONiq supports the JSON data model natively.
 
