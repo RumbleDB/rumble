@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -192,11 +193,17 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
     }
 
     @Override
     public Item modulo(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
     }
 
