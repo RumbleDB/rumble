@@ -67,7 +67,7 @@ public class FormatIntegerFunctionIterator extends LocalFunctionCallIterator {
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String picture = pictureItem.getStringValue();
 
-            if (picture.matches(".*\\d.*") && picture.matches("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$")) {
+            if (picture.matches(".*\\p{Nd}.*") && !picture.matches("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$")) {
                 throw new InvalidDecimalFormatPictureStringException(
                         picture + " contains a digit but is not of the right form.",
                         getMetadata()
