@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -42,14 +43,17 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
     public Item next() {
         if (hasNext()) {
             this.hasNext = false;
-            return this.currentDynamicContextForLocalExecution.getLocalVariableValue("$$", getMetadata()).get(0);
+            return this.currentDynamicContextForLocalExecution.getLocalVariableValue(
+                FunctionOrVariableName.createVariableInNoNamespace("$$"),
+                getMetadata()
+            ).get(0);
         }
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put("$", DynamicContext.VariableDependency.FULL);
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result = new TreeMap<>();
+        result.put(FunctionOrVariableName.createVariableInNoNamespace("$"), DynamicContext.VariableDependency.FULL);
         return result;
     }
 }

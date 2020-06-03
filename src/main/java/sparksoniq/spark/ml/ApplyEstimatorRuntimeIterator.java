@@ -91,7 +91,8 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        String estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0);
+        FunctionOrVariableName estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
+            .get(0);
 
         if (!context.contains(estimatorInputVariableName)) {
             throw new OurBadException("Estimator's input data is not available in the dynamic context");

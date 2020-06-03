@@ -69,7 +69,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         this.context.removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            String field = columnNames[columnIndex];
+            FunctionOrVariableName field = FunctionOrVariableName.createVariableInNoNamespace(columnNames[columnIndex]);
             if (dependencies.containsKey(field)) {
                 List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
                 if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {

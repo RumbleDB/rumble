@@ -82,7 +82,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration should produce exactly one function");
         }
         Item function = functionInList.get(0);
-        if (expression.getName().equals("")) {
+        if (expression.getName() == null) {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)

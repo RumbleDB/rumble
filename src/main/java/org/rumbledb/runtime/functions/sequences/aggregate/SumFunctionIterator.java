@@ -26,6 +26,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -121,11 +122,11 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
+                new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {

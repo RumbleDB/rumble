@@ -108,7 +108,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return this.dataFrameVariableValues.keySet();
     }
 
-    public boolean contains(String varName) {
+    public boolean contains(FunctionOrVariableName varName) {
         boolean localContains = this.localVariableValues.containsKey(varName)
             || this.rddVariableValues.containsKey(varName)
             || this.dataFrameVariableValues.containsKey(varName);
@@ -121,7 +121,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return false;
     }
 
-    public boolean isRDD(String varName, ExceptionMetadata metadata) {
+    public boolean isRDD(FunctionOrVariableName varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
@@ -132,7 +132,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             || this.dataFrameVariableValues.containsKey(varName);
     }
 
-    public boolean isDataFrame(String varName, ExceptionMetadata metadata) {
+    public boolean isDataFrame(FunctionOrVariableName varName, ExceptionMetadata metadata) {
         if (!contains(varName)) {
             throw new OurBadException(
                     "Runtime error retrieving variable " + varName + " value.",
@@ -241,7 +241,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         throw new OurBadException("Runtime error retrieving variable " + varName + " value");
     }
 
-    public void removeVariable(String varName) {
+    public void removeVariable(FunctionOrVariableName varName) {
         this.localVariableValues.remove(varName);
         this.localVariableCounts.remove(varName);
         this.rddVariableValues.remove(varName);
@@ -274,8 +274,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public Item getPosition() {
-        if (this.localVariableValues.containsKey("$position")) {
-            return this.localVariableValues.get("$position").get(0);
+        if (this.localVariableValues.containsKey(FunctionOrVariableName.CONTEXT_POSITION)) {
+            return this.localVariableValues.get(FunctionOrVariableName.CONTEXT_POSITION).get(0);
         }
         if (this.parent != null) {
             return this.parent.getPosition();
@@ -297,8 +297,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public Item getLast() {
-        if (this.localVariableValues.containsKey("$last")) {
-            return this.localVariableValues.get("$last").get(0);
+        if (this.localVariableValues.containsKey(FunctionOrVariableName.CONTEXT_COUNT)) {
+            return this.localVariableValues.get(FunctionOrVariableName.CONTEXT_COUNT).get(0);
         }
         if (this.parent != null) {
             return this.parent.getLast();

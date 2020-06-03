@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -130,8 +131,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
         for (RuntimeIterator iterator : this.functionArguments) {
             if (iterator == null) {

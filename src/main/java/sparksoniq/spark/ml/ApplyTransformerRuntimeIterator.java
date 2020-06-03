@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -88,7 +89,8 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        String transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames.get(0);
+        FunctionOrVariableName transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
+            .get(0);
 
         if (!context.contains(transformerInputVariableName)) {
             throw new OurBadException("Transformer's input data is not available in the dynamic context");

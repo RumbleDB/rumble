@@ -25,6 +25,7 @@ import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.ItemType;
@@ -185,7 +186,8 @@ public class FrontendTests extends AnnotationsTestsBase {
         List<Node> vars = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("var")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(FunctionOrVariableName.createVariableInNoNamespace("var"))
             );
         vars.forEach(
             var -> Assert.assertTrue(
@@ -196,7 +198,8 @@ public class FrontendTests extends AnnotationsTestsBase {
         List<Node> js = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("j")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(FunctionOrVariableName.createVariableInNoNamespace("j"))
             );
         js.forEach(
             j -> Assert.assertTrue(
@@ -209,7 +212,8 @@ public class FrontendTests extends AnnotationsTestsBase {
         List<Node> internals = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("internal")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(FunctionOrVariableName.createVariableInNoNamespace("internal"))
             );
         internals.forEach(
             j -> Assert.assertTrue(
@@ -220,7 +224,8 @@ public class FrontendTests extends AnnotationsTestsBase {
         List<Node> arry = mainModule
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
-                    && ((VariableReferenceExpression) d).getVariableName().equals("arry")
+                    && ((VariableReferenceExpression) d).getVariableName()
+                        .equals(FunctionOrVariableName.createVariableInNoNamespace("arry"))
             );
         arry.forEach(
             j -> Assert.assertTrue(

@@ -740,7 +740,7 @@ public class Functions {
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
                     "Invalid return type for "
-                        + (functionItem.getIdentifier().getName().equals("")
+                        + ((functionItem.getIdentifier().getName() == null)
                             ? ""
                             : (functionItem.getIdentifier().getName()) + " ")
                         + "function. ",

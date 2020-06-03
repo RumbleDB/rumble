@@ -26,6 +26,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -133,18 +134,18 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private List<Item> getRightIteratorValues() {
         Item item = this.leftIterator.next();
         List<Item> currentItems = new ArrayList<>();
-        this.mapDynamicContext.addVariableValue("$$", currentItems);
+        this.mapDynamicContext.addVariableValue(FunctionOrVariableName.createVariableInNoNamespace("$$"), currentItems);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
-        this.mapDynamicContext.removeVariable("$$");
+        this.mapDynamicContext.removeVariable(FunctionOrVariableName.CONTEXT_ITEM);
         return mapValuesRaw;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
+            new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
         result.putAll(this.rightIterator.getVariableDependencies());
-        result.remove("$");
+        result.remove(FunctionOrVariableName.CONTEXT_ITEM);
         result.putAll(this.leftIterator.getVariableDependencies());
         return result;
     }

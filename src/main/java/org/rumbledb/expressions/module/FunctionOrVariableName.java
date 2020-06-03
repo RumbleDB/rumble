@@ -7,6 +7,9 @@ public class FunctionOrVariableName {
     private String prefix;
     private String localName;
     private static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
+    public static final FunctionOrVariableName CONTEXT_ITEM = createVariableInNoNamespace("$");
+    public static final FunctionOrVariableName CONTEXT_POSITION = createVariableInNoNamespace("$position");
+    public static final FunctionOrVariableName CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
     public FunctionOrVariableName(String namespace, String prefix, String localName) {
         this.namespace = namespace;

@@ -254,7 +254,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 variableAccessNames.add(expression.getVariableName());
                 FunctionOrVariableName newVariableName = expression.getVariableName();
                 RuntimeIterator newVariableExpression = expression.getExpression();
-                int duplicateVariableIndex = columnNames.indexOf(newVariableName);
+                int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
 
                 List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
                 Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
@@ -287,7 +287,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
 
             } else {
-                if (!columnNames.contains(expression.getVariableName())) {
+                if (!columnNames.contains(expression.getVariableName().toString())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
                                 + expression.getVariableName()

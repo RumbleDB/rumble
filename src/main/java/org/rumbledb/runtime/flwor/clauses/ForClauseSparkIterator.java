@@ -196,7 +196,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
                 Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
                 StructType inputSchema = inputDF.schema();
-                int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
+                int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
+                    .indexOf(this.variableName.toString());
                 List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
                     inputSchema,
                     duplicateVariableIndex,
@@ -227,7 +228,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             // the expression is locally evaluated
             Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
             StructType inputSchema = df.schema();
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
             List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
             Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                 inputSchema,

@@ -30,6 +30,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -48,7 +49,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
     private static final long serialVersionUID = 1L;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
-    private Map<String, DynamicContext.VariableDependency> dependencies;
+    private Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> columnNamesByType;
     private Map<Integer, String> allColumnTypes;

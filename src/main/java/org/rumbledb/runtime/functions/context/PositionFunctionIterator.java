@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -64,10 +65,13 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
         return null;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.put("$position", DynamicContext.VariableDependency.FULL);
+    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
+            new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
+        result.put(
+            FunctionOrVariableName.createVariableInNoNamespace("$position"),
+            DynamicContext.VariableDependency.FULL
+        );
         return result;
     }
 
