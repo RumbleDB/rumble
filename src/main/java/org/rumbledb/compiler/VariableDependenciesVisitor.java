@@ -340,14 +340,14 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             expression,
             getInputVariableDependencies(expression.getPredicateExpression())
         );
-        removeInputVariableDependency(expression, new FunctionOrVariableName(null, null, "$"));
+        removeInputVariableDependency(expression, FunctionOrVariableName.CONTEXT_ITEM);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getMainExpression()));
         return null;
     }
 
     @Override
     public Void visitContextExpr(ContextItemExpression expression, Void argument) {
-        addInputVariableDependency(expression, new FunctionOrVariableName(null, null, "$"));
+        addInputVariableDependency(expression, FunctionOrVariableName.CONTEXT_ITEM);
         return null;
     }
 

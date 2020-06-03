@@ -134,7 +134,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private List<Item> getRightIteratorValues() {
         Item item = this.leftIterator.next();
         List<Item> currentItems = new ArrayList<>();
-        this.mapDynamicContext.addVariableValue(FunctionOrVariableName.createVariableInNoNamespace("$$"), currentItems);
+        this.mapDynamicContext.addVariableValue(FunctionOrVariableName.CONTEXT_ITEM, currentItems);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.mapDynamicContext);
         this.mapDynamicContext.removeVariable(FunctionOrVariableName.CONTEXT_ITEM);

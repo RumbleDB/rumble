@@ -213,7 +213,7 @@ public class FlworDataFrameUtils {
     ) {
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
             context.addVariableValue(
-                new FunctionOrVariableName(null, null, columnNames.get(columnIndex)),
+                FunctionOrVariableName.createVariableInNoNamespace(columnNames.get(columnIndex)),
                 deserializedParams.get(columnIndex)
             );
         }
@@ -228,13 +228,13 @@ public class FlworDataFrameUtils {
     ) {
         for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
             context.addVariableValue(
-                new FunctionOrVariableName(null, null, fullColumnNames.get(columnIndex)),
+                FunctionOrVariableName.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
                 deserializedParams.get(columnIndex)
             );
         }
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
             context.addVariableCount(
-                new FunctionOrVariableName(null, null, countColumnNames.get(columnIndex)),
+                FunctionOrVariableName.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
                 counts.get(columnIndex)
             );
         }

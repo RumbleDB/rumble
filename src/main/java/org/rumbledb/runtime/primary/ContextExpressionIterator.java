@@ -44,7 +44,7 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
         if (hasNext()) {
             this.hasNext = false;
             return this.currentDynamicContextForLocalExecution.getLocalVariableValue(
-                FunctionOrVariableName.createVariableInNoNamespace("$$"),
+                FunctionOrVariableName.CONTEXT_ITEM,
                 getMetadata()
             ).get(0);
         }

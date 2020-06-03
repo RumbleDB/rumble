@@ -293,7 +293,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
         }
         list.add(item);
-        this.localVariableValues.put(new FunctionOrVariableName(null, null, "$position"), list);
+        this.localVariableValues.put(FunctionOrVariableName.CONTEXT_POSITION, list);
     }
 
     public Item getLast() {
@@ -315,7 +315,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
         }
         list.add(item);
-        this.localVariableValues.put(new FunctionOrVariableName(null, null, "$last"), list);
+        this.localVariableValues.put(FunctionOrVariableName.CONTEXT_COUNT, list);
     }
 
     public enum VariableDependency {

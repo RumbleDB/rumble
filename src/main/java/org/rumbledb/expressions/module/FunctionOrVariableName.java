@@ -2,7 +2,7 @@ package org.rumbledb.expressions.module;
 
 import org.rumbledb.exceptions.OurBadException;
 
-public class FunctionOrVariableName {
+public class FunctionOrVariableName implements Comparable<FunctionOrVariableName> {
     private String namespace;
     private String prefix;
     private String localName;
@@ -52,4 +52,43 @@ public class FunctionOrVariableName {
         return this.localName;
     }
 
+    @Override
+    public int compareTo(FunctionOrVariableName o) {
+        FunctionOrVariableName other = (FunctionOrVariableName) o;
+        if (this.namespace == null && other.namespace != null) {
+            return -1;
+        }
+        if (this.namespace != null && other.namespace == null) {
+            return 1;
+        }
+        if (this.namespace == null && other.namespace == null) {
+            return this.localName.compareTo(other.localName);
+        }
+        int compare = this.namespace.compareTo(other.namespace);
+        if (compare != 0) {
+            return compare;
+        }
+        return this.localName.compareTo(other.localName);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (!(o instanceof FunctionOrVariableName)) {
+            return false;
+        }
+        FunctionOrVariableName other = (FunctionOrVariableName) o;
+        if (this.namespace == null && other.namespace != null) {
+            return false;
+        }
+        if (this.namespace != null && other.namespace == null) {
+            return false;
+        }
+        if (this.namespace == null && other.namespace == null) {
+            return this.localName.equals(other.localName);
+        }
+        if (!this.namespace.equals(other.namespace)) {
+            return false;
+        }
+        return this.localName.equals(other.localName);
+    }
 }

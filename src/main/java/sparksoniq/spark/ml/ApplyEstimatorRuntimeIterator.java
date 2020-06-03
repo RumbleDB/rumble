@@ -259,7 +259,10 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         );
 
         return new FunctionItem(
-                new FunctionIdentifier(new FunctionOrVariableName(null, null, fittedModel.getClass().getName()), 2),
+                new FunctionIdentifier(
+                        FunctionOrVariableName.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
+                        2
+                ),
                 GetTransformerFunctionIterator.transformerParameterNames,
                 new FunctionSignature(
                         paramTypes,

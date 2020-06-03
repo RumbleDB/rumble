@@ -493,7 +493,10 @@ public class Functions {
         builtInFunctions.put(substring_before.getIdentifier(), substring_before);
         builtInFunctions.put(substring_after.getIdentifier(), substring_after);
         for (int i = 0; i < 100; i++) {
-            builtInFunctions.put(new FunctionIdentifier(new FunctionOrVariableName(null, null, "concat"), i), concat);
+            builtInFunctions.put(
+                new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace("concat"), i),
+                concat
+            );
         }
         builtInFunctions.put(ends_with.getIdentifier(), ends_with);
         builtInFunctions.put(string_join1.getIdentifier(), string_join1);
@@ -848,7 +851,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 0),
+                new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace(functionLocalName), 0),
                 new FunctionSignature(
                         Collections.emptyList(),
                         sequenceTypes.get(returnType)
@@ -866,7 +869,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 1),
+                new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace(functionLocalName), 1),
                 new FunctionSignature(
                         Collections.singletonList(sequenceTypes.get(param1Type)),
                         sequenceTypes.get(returnType)
@@ -885,7 +888,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 2),
+                new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace(functionLocalName), 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(sequenceTypes.get(param1Type), sequenceTypes.get(param2Type))
@@ -907,7 +910,7 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(new FunctionOrVariableName(null, null, functionLocalName), 3),
+                new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace(functionLocalName), 3),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -1638,7 +1641,7 @@ public class Functions {
          */
         static final BuiltinFunction concat =
             new BuiltinFunction(
-                    new FunctionIdentifier(new FunctionOrVariableName(null, null, "concat"), 100),
+                    new FunctionIdentifier(FunctionOrVariableName.createVariableInRumbleNamespace("concat"), 100),
                     new FunctionSignature(
                             Collections.nCopies(
                                 100,

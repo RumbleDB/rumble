@@ -45,7 +45,7 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item item) throws Exception {
         List<Item> currentItems = new ArrayList<>();
 
-        this.dynamicContext.addVariableValue(FunctionOrVariableName.createVariableInNoNamespace("$$"), currentItems);
+        this.dynamicContext.addVariableValue(FunctionOrVariableName.CONTEXT_ITEM, currentItems);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.dynamicContext);
         this.dynamicContext.removeVariable(FunctionOrVariableName.CONTEXT_ITEM);
