@@ -22,8 +22,11 @@ package org.rumbledb.errorcodes;
 
 public enum ErrorCode {
 
+    DivisionByZero("FOAR0001"),
+
     InvalidLexicalValueErrorCode("FOCA0002"),
     CodepointNotValidErrorCode("FOCH0001"),
+    InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),

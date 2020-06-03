@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -216,6 +217,9 @@ public class IntegerItem extends AtomicItem {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
         }
+        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         BigDecimal bdResult = this.castToDecimalValue()
             .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
         if (bdResult.stripTrailingZeros().scale() <= 0) {
@@ -233,6 +237,9 @@ public class IntegerItem extends AtomicItem {
         if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
+        }
+        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance().createIntegerItem(this.getIntegerValue() % other.castToIntegerValue());
     }
