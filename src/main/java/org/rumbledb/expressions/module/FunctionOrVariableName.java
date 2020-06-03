@@ -94,6 +94,10 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     @Override
     public int hashCode() {
+        if(this.namespace == null)
+        {
+            return this.localName.hashCode();
+        }
         return this.localName.hashCode() + this.namespace.hashCode();
     }
 }
