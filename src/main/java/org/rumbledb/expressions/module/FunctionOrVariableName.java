@@ -11,7 +11,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
     public static final FunctionOrVariableName CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final FunctionOrVariableName CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
-    public FunctionOrVariableName(String namespace, String prefix, String localName) {
+    private FunctionOrVariableName(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;
         this.localName = localName;
@@ -90,5 +90,10 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
             return false;
         }
         return this.localName.equals(other.localName);
+    }
+
+    @Override
+    public int hashCode() {
+        return this.localName.hashCode() + this.namespace.hashCode();
     }
 }
