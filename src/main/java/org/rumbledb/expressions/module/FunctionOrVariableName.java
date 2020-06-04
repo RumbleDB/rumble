@@ -70,6 +70,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
     /**
      * Creates an expanded name that has no namespace. In JSONiq, unprefixed variables are never in
      * a namespace.
+     * 
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -82,6 +83,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
      * function names live in the Rumble namespace. This namespace is for convenience and includes
      * all functions in XQuery's fn namespace, JSONiq's jn and jnlib namespaces, as well as any
      * user-defined functions with unprefixed names.
+     * 
      * @param localName the name of the variable
      * @return the expanded name
      */
@@ -90,11 +92,13 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
     }
 
     /**
-     * Creates an expanded name whose local name has a #n suffix, where n is the arity of the function,
+     * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is the arity of the
+     * function,
      * in order to encode the whole function identifier as an expanded name.
      * This is only used to keep track of dependencies between functions and variables in the dependency
      * resolution mechanism, and it should not be used for other purposes.
-     * @param localName the name of the variable
+     * 
+     * @param arity the arity of the function.
      * @return the expanded name
      */
     public FunctionOrVariableName addArityToFunctionName(int arity) {
@@ -103,6 +107,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     /**
      * Returns the namespace.
+     * 
      * @return the namespace, or null.
      */
     public String getNamespace() {
@@ -111,6 +116,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     /**
      * Returns the namespace prefix.
+     * 
      * @return the namespace prefix, or null.
      */
     public String getPrefix() {
@@ -119,6 +125,7 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     /**
      * Returns the local name.
+     * 
      * @return the local name.
      */
     public String getLocalName() {
@@ -129,12 +136,13 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
      * Converts to a string. If there is a prefix, it is used. Otherwise, if there is a namespace, the Clark notation of
      * the expanded name is returned.
      * Otherwise, the local name is returned.
+     * 
      * @return The converted string.
      */
     @Override
     public String toString() {
-        if (this.prefix!= null) {
-            return "this.prefix"+":" + this.localName;
+        if (this.prefix != null) {
+            return "this.prefix" + ":" + this.localName;
         }
         if (this.namespace != null) {
             return "{" + this.namespace + "}" + this.localName;
