@@ -1031,7 +1031,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression expr = (Expression) this.visitExpr(ctx.fn_body);
 
         return new InlineFunctionExpression(
-                FunctionOrVariableName.createVariableInNoNamespace("inline-function"),
+                null,
                 fnParams,
                 fnReturnType,
                 expr,
