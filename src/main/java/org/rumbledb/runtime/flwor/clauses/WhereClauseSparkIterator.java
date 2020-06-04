@@ -25,11 +25,11 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -47,7 +47,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies;
+    private Map<Name, DynamicContext.VariableDependency> dependencies;
     private RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -116,7 +116,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public Dataset<Row> getDataFrame(
             DynamicContext context,
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
@@ -159,18 +159,18 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         return df;
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result = new TreeMap<>(
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
                 this.expression.getVariableDependencies()
         );
-        for (FunctionOrVariableName var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(var);
         }
         result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
-    public Set<FunctionOrVariableName> getVariablesBoundInCurrentFLWORExpression() {
+    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
         return new HashSet<>(this.child.getVariablesBoundInCurrentFLWORExpression());
     }
 
@@ -179,16 +179,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         this.expression.print(buffer, indent + 1);
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getProjection(
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
+    public Map<Name, DynamicContext.VariableDependency> getProjection(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // copy over the projection needed by the parent clause.
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
+        Map<Name, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
 
         // add the variable dependencies needed by this for clause's expression.
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> exprDependency = this.expression
+        Map<Name, DynamicContext.VariableDependency> exprDependency = this.expression
             .getVariableDependencies();
-        for (FunctionOrVariableName variable : exprDependency.keySet()) {
+        for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
                     projection.put(variable, DynamicContext.VariableDependency.FULL);

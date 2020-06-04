@@ -24,8 +24,8 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.ItemType;
@@ -187,7 +187,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName()
-                        .equals(FunctionOrVariableName.createVariableInNoNamespace("var"))
+                        .equals(Name.createVariableInNoNamespace("var"))
             );
         vars.forEach(
             var -> Assert.assertTrue(
@@ -199,7 +199,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName()
-                        .equals(FunctionOrVariableName.createVariableInNoNamespace("j"))
+                        .equals(Name.createVariableInNoNamespace("j"))
             );
         js.forEach(
             j -> Assert.assertTrue(
@@ -213,7 +213,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName()
-                        .equals(FunctionOrVariableName.createVariableInNoNamespace("internal"))
+                        .equals(Name.createVariableInNoNamespace("internal"))
             );
         internals.forEach(
             j -> Assert.assertTrue(
@@ -225,7 +225,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             .getDescendantsMatching(
                 d -> d instanceof VariableReferenceExpression
                     && ((VariableReferenceExpression) d).getVariableName()
-                        .equals(FunctionOrVariableName.createVariableInNoNamespace("arry"))
+                        .equals(Name.createVariableInNoNamespace("arry"))
             );
         arry.forEach(
             j -> Assert.assertTrue(

@@ -10,11 +10,11 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -89,7 +89,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        FunctionOrVariableName transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
+        Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
 
         if (!context.contains(transformerInputVariableName)) {

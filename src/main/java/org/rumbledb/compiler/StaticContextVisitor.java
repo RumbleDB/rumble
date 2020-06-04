@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
@@ -39,7 +40,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -91,7 +91,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region primary
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
-        FunctionOrVariableName variableName = expression.getVariableName();
+        Name variableName = expression.getVariableName();
         if (!argument.isInScope(variableName)) {
             throw new UndeclaredVariableException(
                     "Uninitialized variable reference: " + variableName,
@@ -114,7 +114,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             InlineFunctionExpression expression
     ) {
         int i = 0;
-        for (FunctionOrVariableName name : expression.getParams().keySet()) {
+        for (Name name : expression.getParams().keySet()) {
             ExecutionMode mode = modes.get(i);
             SequenceType type = expression.getParams().get(name);
             if (type.isEmptySequence()) {
@@ -329,7 +329,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getTestCondition(), argument);
         for (TypeswitchCase c : expression.getCases()) {
             StaticContext caseContext = new StaticContext(argument);
-            FunctionOrVariableName variableName = c.getVariableName();
+            Name variableName = c.getVariableName();
             if (variableName != null) {
                 caseContext.addVariable(
                     variableName,
@@ -341,7 +341,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(c.getReturnExpression(), caseContext);
         }
 
-        FunctionOrVariableName defaultCaseVariableName = expression.getDefaultCase().getVariableName();
+        Name defaultCaseVariableName = expression.getDefaultCase().getVariableName();
         if (defaultCaseVariableName == null) {
             this.visit(expression.getDefaultCase().getReturnExpression(), argument);
         } else {

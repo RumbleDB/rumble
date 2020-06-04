@@ -22,9 +22,9 @@ package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -44,16 +44,16 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
         if (hasNext()) {
             this.hasNext = false;
             return this.currentDynamicContextForLocalExecution.getLocalVariableValue(
-                FunctionOrVariableName.CONTEXT_ITEM,
+                Name.CONTEXT_ITEM,
                 getMetadata()
             ).get(0);
         }
         throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put(FunctionOrVariableName.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
+        result.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         return result;
     }
 }

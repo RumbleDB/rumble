@@ -22,11 +22,11 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.SequenceType;
@@ -37,15 +37,15 @@ import java.util.Map;
 
 public class InlineFunctionExpression extends Expression {
 
-    private final FunctionOrVariableName name;
+    private final Name name;
     private final FunctionIdentifier functionIdentifier;
-    private final Map<FunctionOrVariableName, SequenceType> params;
+    private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
     private final Expression body;
 
     public InlineFunctionExpression(
-            FunctionOrVariableName name,
-            Map<FunctionOrVariableName, SequenceType> params,
+            Name name,
+            Map<Name, SequenceType> params,
             SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
@@ -58,7 +58,7 @@ public class InlineFunctionExpression extends Expression {
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
-    public FunctionOrVariableName getName() {
+    public Name getName() {
         return this.name;
     }
 
@@ -66,7 +66,7 @@ public class InlineFunctionExpression extends Expression {
         return this.functionIdentifier;
     }
 
-    public Map<FunctionOrVariableName, SequenceType> getParams() {
+    public Map<Name, SequenceType> getParams() {
         return this.params;
     }
 
@@ -109,7 +109,7 @@ public class InlineFunctionExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append("(");
-        for (Map.Entry<FunctionOrVariableName, SequenceType> entry : this.params.entrySet()) {
+        for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(", ");
             buffer.append(entry.getValue().toString());

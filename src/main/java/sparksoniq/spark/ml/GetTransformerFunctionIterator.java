@@ -23,11 +23,11 @@ package sparksoniq.spark.ml;
 import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -46,12 +46,12 @@ import java.util.List;
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<FunctionOrVariableName> transformerParameterNames = new ArrayList<>(
+    public static final List<Name> transformerParameterNames = new ArrayList<>(
             Arrays.asList(
-                FunctionOrVariableName.createVariableInRumbleNamespace(
+                Name.createVariableInRumbleNamespace(
                     "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224"
                 ),
-                FunctionOrVariableName.createVariableInRumbleNamespace(
+                Name.createVariableInRumbleNamespace(
                     "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
                 )
             )
@@ -133,7 +133,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                FunctionOrVariableName.createVariableInRumbleNamespace(
+                                Name.createVariableInRumbleNamespace(
                                     this.transformerSparkMLClass.getName()
                                 ),
                                 2

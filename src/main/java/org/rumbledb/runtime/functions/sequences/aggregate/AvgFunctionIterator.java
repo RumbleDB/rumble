@@ -22,10 +22,10 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
@@ -95,11 +95,11 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
         );
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
-                new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
+            Map<Name, DynamicContext.VariableDependency> result =
+                new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);
             return result;
         } else {

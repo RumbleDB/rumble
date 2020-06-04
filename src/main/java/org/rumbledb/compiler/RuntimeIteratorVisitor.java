@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -55,7 +56,6 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -245,7 +245,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
                 }
 
-                FunctionOrVariableName variableName = var.getVariableName();
+                Name variableName = var.getVariableName();
 
                 groupingExpressions.add(
                     new GroupByClauseSparkIteratorExpression(
@@ -433,8 +433,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
-        Map<FunctionOrVariableName, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<FunctionOrVariableName, SequenceType> paramEntry : expression.getParams().entrySet()) {
+        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
@@ -464,7 +464,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments.add(argumentIterator);
             }
         }
-        FunctionOrVariableName fnName = expression.getFunctionName();
+        Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 

@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.expressions.module;
+package org.rumbledb.context;
 
 import java.io.Serializable;
 
@@ -42,23 +42,23 @@ import com.esotericsoftware.kryo.io.Output;
  * @author Ghislain Fourny
  *
  */
-public class FunctionOrVariableName implements Comparable<FunctionOrVariableName>, Serializable, KryoSerializable {
+public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
     private String namespace;
     private String prefix;
     private String localName;
     private static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
-    public static final FunctionOrVariableName CONTEXT_ITEM = createVariableInNoNamespace("$");
-    public static final FunctionOrVariableName CONTEXT_POSITION = createVariableInNoNamespace("$position");
-    public static final FunctionOrVariableName CONTEXT_COUNT = createVariableInNoNamespace("$count");
+    public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
+    public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
+    public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
-    private FunctionOrVariableName() {
+    private Name() {
         this.namespace = null;
         this.prefix = null;
         this.localName = null;
     }
 
-    private FunctionOrVariableName(String namespace, String prefix, String localName) {
+    private Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;
         this.localName = localName;
@@ -74,8 +74,8 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
      * @param localName the name of the variable
      * @return the expanded name
      */
-    public static FunctionOrVariableName createVariableInNoNamespace(String localName) {
-        return new FunctionOrVariableName(null, null, localName);
+    public static Name createVariableInNoNamespace(String localName) {
+        return new Name(null, null, localName);
     }
 
     /**
@@ -87,8 +87,8 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
      * @param localName the name of the variable
      * @return the expanded name
      */
-    public static FunctionOrVariableName createVariableInRumbleNamespace(String localName) {
-        return new FunctionOrVariableName(RUMBLE_NS, "", localName);
+    public static Name createVariableInRumbleNamespace(String localName) {
+        return new Name(RUMBLE_NS, "", localName);
     }
 
     /**
@@ -101,8 +101,8 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
      * @param arity the arity of the function.
      * @return the expanded name
      */
-    public FunctionOrVariableName addArityToFunctionName(int arity) {
-        return new FunctionOrVariableName(this.namespace, this.prefix, this.localName + "#" + arity);
+    public Name addArityToFunctionName(int arity) {
+        return new Name(this.namespace, this.prefix, this.localName + "#" + arity);
     }
 
     /**
@@ -151,8 +151,8 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
     }
 
     @Override
-    public int compareTo(FunctionOrVariableName o) {
-        FunctionOrVariableName other = (FunctionOrVariableName) o;
+    public int compareTo(Name o) {
+        Name other = (Name) o;
         if (this.namespace == null && other.namespace != null) {
             return -1;
         }
@@ -171,10 +171,10 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     @Override
     public boolean equals(Object o) {
-        if (!(o instanceof FunctionOrVariableName)) {
+        if (!(o instanceof Name)) {
             return false;
         }
-        FunctionOrVariableName other = (FunctionOrVariableName) o;
+        Name other = (Name) o;
         if (this.namespace == null && other.namespace != null) {
             return false;
         }

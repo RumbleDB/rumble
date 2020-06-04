@@ -34,7 +34,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
@@ -93,7 +93,7 @@ public class FlworDataFrameUtils {
 
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
-        kryo.register(FunctionOrVariableName.class);
+        kryo.register(Name.class);
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
@@ -163,7 +163,7 @@ public class FlworDataFrameUtils {
     public static Map<String, List<String>> getColumnNamesByType(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies
+            Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
         Map<String, List<String>> result = new HashMap<>();
         result.put("byte[]", new ArrayList<>());
@@ -214,7 +214,7 @@ public class FlworDataFrameUtils {
     ) {
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
             context.addVariableValue(
-                FunctionOrVariableName.createVariableInNoNamespace(columnNames.get(columnIndex)),
+                Name.createVariableInNoNamespace(columnNames.get(columnIndex)),
                 deserializedParams.get(columnIndex)
             );
         }
@@ -229,13 +229,13 @@ public class FlworDataFrameUtils {
     ) {
         for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
             context.addVariableValue(
-                FunctionOrVariableName.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
+                Name.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
                 deserializedParams.get(columnIndex)
             );
         }
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
             context.addVariableCount(
-                FunctionOrVariableName.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
+                Name.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
                 counts.get(columnIndex)
             );
         }
@@ -280,8 +280,8 @@ public class FlworDataFrameUtils {
             int duplicateVariableIndex,
             boolean trailingComma,
             String serializerUdfName,
-            List<FunctionOrVariableName> groupbyVariableNames,
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies,
+            List<Name> groupbyVariableNames,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
             Map<String, List<String>> columnNamesByType
     ) {
         String[] columnNames = inputSchema.fieldNames();
@@ -333,20 +333,20 @@ public class FlworDataFrameUtils {
     }
 
     private static boolean shouldCalculateCount(
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
             String columnName
     ) {
-        return dependencies.containsKey(FunctionOrVariableName.createVariableInNoNamespace(columnName))
+        return dependencies.containsKey(Name.createVariableInNoNamespace(columnName))
             && dependencies.get(
-                FunctionOrVariableName.createVariableInNoNamespace(columnName)
+                Name.createVariableInNoNamespace(columnName)
             ) == DynamicContext.VariableDependency.COUNT;
     }
 
     private static boolean isProcessingGroupingColumn(
-            List<FunctionOrVariableName> groupbyVariableNames,
+            List<Name> groupbyVariableNames,
             String columnName
     ) {
-        return groupbyVariableNames.contains(FunctionOrVariableName.createVariableInNoNamespace(columnName));
+        return groupbyVariableNames.contains(Name.createVariableInNoNamespace(columnName));
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {

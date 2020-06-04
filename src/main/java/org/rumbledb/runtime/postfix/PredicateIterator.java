@@ -25,10 +25,10 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -88,10 +88,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
     protected void resetLocal(DynamicContext context) {
         this.iterator.close();
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_COUNT)) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (this.filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_POSITION)) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -110,10 +110,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_COUNT)) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (this.filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_POSITION)) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -140,7 +140,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
             this.filterDynamicContext.addVariableValue(
-                FunctionOrVariableName.CONTEXT_ITEM,
+                Name.CONTEXT_ITEM,
                 currentItems
             );
             if (this.mustMaintainPosition) {
@@ -170,7 +170,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             }
             this.filter.close();
         }
-        this.filterDynamicContext.removeVariable(FunctionOrVariableName.CONTEXT_ITEM);
+        this.filterDynamicContext.removeVariable(Name.CONTEXT_ITEM);
 
         if (this.nextResult == null) {
             this.hasNext = false;
@@ -186,8 +186,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator filter = this.children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
         if (
-            !filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_POSITION)
-                && !filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_COUNT)
+            !filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)
+                && !filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
                 && (filter instanceof BooleanRuntimeIterator
                     || filter instanceof AndOperationIterator
                     || filter instanceof OrOperationIterator
@@ -200,7 +200,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (filter.getVariableDependencies().containsKey(FunctionOrVariableName.CONTEXT_COUNT)) {
+            if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -213,11 +213,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
         }
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
-            new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.filter.getVariableDependencies());
-        result.remove(FunctionOrVariableName.CONTEXT_ITEM);
+        result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
         return result;
     }

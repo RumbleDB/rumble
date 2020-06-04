@@ -23,6 +23,7 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -61,7 +62,6 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -160,14 +160,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         // TODO namespace
-        FunctionOrVariableName fnName = FunctionOrVariableName.createVariableInRumbleNamespace(ctx.fn_name.getText());
-        Map<FunctionOrVariableName, SequenceType> fnParams = new LinkedHashMap<>();
+        Name fnName = Name.createVariableInRumbleNamespace(ctx.fn_name.getText());
+        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = mostGeneralSequenceType;
-        FunctionOrVariableName paramName;
+        Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = FunctionOrVariableName.createVariableInNoNamespace(param.NCName().getText());
+                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
                 paramType = mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -313,14 +313,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitForVar(JsoniqParser.ForVarContext ctx) {
         SequenceType seq = null;
         boolean emptyFlag;
-        FunctionOrVariableName var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
             seq = SequenceType.mostGeneralSequenceType;
         }
         emptyFlag = (ctx.flag != null);
-        FunctionOrVariableName atVar = null;
+        Name atVar = null;
         if (ctx.at != null) {
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
         }
@@ -357,7 +357,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitLetVar(JsoniqParser.LetVarContext ctx) {
         SequenceType seq = null;
-        FunctionOrVariableName var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
@@ -426,7 +426,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
         SequenceType seq = null;
         Expression expr = null;
-        FunctionOrVariableName var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
@@ -867,7 +867,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             prefix = ctx.ns.getText();
         }
         // TODO resolved namespace
-        FunctionOrVariableName name = FunctionOrVariableName.createVariableInNoNamespace(localName);
+        Name name = Name.createVariableInNoNamespace(localName);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -929,7 +929,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             prefix = ctx.ns.getText();
         }
         // TODO resolve namespace
-        FunctionOrVariableName name = FunctionOrVariableName.createVariableInRumbleNamespace(localName);
+        Name name = Name.createVariableInRumbleNamespace(localName);
         return new FunctionCallExpression(
                 name,
                 children,
@@ -989,7 +989,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         // TODO namespace
-        FunctionOrVariableName name = FunctionOrVariableName.createVariableInRumbleNamespace(ctx.fn_name.getText());
+        Name name = Name.createVariableInRumbleNamespace(ctx.fn_name.getText());
         int arity = ((IntegerLiteralExpression) literal).getValue();
         return new NamedFunctionReferenceExpression(
                 new FunctionIdentifier(name, arity),
@@ -999,18 +999,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        Map<FunctionOrVariableName, SequenceType> fnParams = new LinkedHashMap<>();
+        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.mostGeneralSequenceType;
-        FunctionOrVariableName paramName;
+        Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 // TODO namespace
-                paramName = FunctionOrVariableName.createVariableInNoNamespace(param.NCName().getText());
+                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
                 paramType = SequenceType.mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
-                            FunctionOrVariableName.createVariableInRumbleNamespace("inline-function`"),
+                            Name.createVariableInRumbleNamespace("inline-function`"),
                             paramName,
                             createMetadataFromContext(param)
                     );
@@ -1078,10 +1078,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         List<TypeswitchCase> cases = new ArrayList<>();
         for (JsoniqParser.CaseClauseContext expr : ctx.cses) {
             List<SequenceType> union = new ArrayList<>();
-            FunctionOrVariableName variableName = null;
+            Name variableName = null;
             if (expr.var_ref != null) {
                 // TODO namespace
-                variableName = FunctionOrVariableName.createVariableInNoNamespace(expr.var_ref.name.getText());
+                variableName = Name.createVariableInNoNamespace(expr.var_ref.name.getText());
             }
             if (expr.union != null && !expr.union.isEmpty()) {
                 for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
@@ -1097,10 +1097,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 )
             );
         }
-        FunctionOrVariableName defaultVariableName = null;
+        Name defaultVariableName = null;
         if (ctx.var_ref != null) {
             // TODO namespace
-            defaultVariableName = FunctionOrVariableName.createVariableInNoNamespace(ctx.var_ref.name.getText());
+            defaultVariableName = Name.createVariableInNoNamespace(ctx.var_ref.name.getText());
         }
         Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
         return new TypeSwitchExpression(
@@ -1124,7 +1124,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
             SequenceType sequenceType = null;
-            FunctionOrVariableName variableName = ((VariableReferenceExpression) this.visitVarRef(
+            Name variableName = ((VariableReferenceExpression) this.visitVarRef(
                 currentVariable.varRef()
             )).getVariableName();
             if (currentVariable.sequenceType() != null) {
@@ -1156,7 +1156,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
         SequenceType seq = null;
         boolean external;
-        FunctionOrVariableName var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
         } else {

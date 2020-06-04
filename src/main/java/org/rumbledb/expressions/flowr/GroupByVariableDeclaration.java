@@ -20,19 +20,19 @@
 
 package org.rumbledb.expressions.flowr;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 public class GroupByVariableDeclaration {
 
-    protected FunctionOrVariableName variableName;
+    protected Name variableName;
     protected Expression expression;
     protected SequenceType sequenceType;
 
     public GroupByVariableDeclaration(
-            FunctionOrVariableName variableName,
+            Name variableName,
             SequenceType sequenceType,
             Expression expression
     ) {
@@ -49,7 +49,7 @@ public class GroupByVariableDeclaration {
         sequenceType = this.sequenceType;
     }
 
-    public FunctionOrVariableName getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 

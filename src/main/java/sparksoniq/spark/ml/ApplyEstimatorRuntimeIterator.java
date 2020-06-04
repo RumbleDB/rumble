@@ -11,12 +11,12 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -91,7 +91,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        FunctionOrVariableName estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
+        Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
 
         if (!context.contains(estimatorInputVariableName)) {
@@ -260,7 +260,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
         return new FunctionItem(
                 new FunctionIdentifier(
-                        FunctionOrVariableName.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
+                        Name.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
                         2
                 ),
                 GetTransformerFunctionIterator.transformerParameterNames,

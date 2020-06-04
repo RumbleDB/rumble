@@ -20,14 +20,14 @@
 
 package org.rumbledb.exceptions;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 
 public class VariableAlreadyExistsException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public VariableAlreadyExistsException(FunctionOrVariableName name, ExceptionMetadata metadata) {
+    public VariableAlreadyExistsException(Name name, ExceptionMetadata metadata) {
         super(
             "Variable name already exists: " + name,
             ErrorCode.VariableAlreadyExists,

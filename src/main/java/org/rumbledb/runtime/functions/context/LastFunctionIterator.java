@@ -22,9 +22,9 @@ package org.rumbledb.runtime.functions.context;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -65,10 +65,10 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
         return null;
     }
 
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
-            new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
-        result.put(FunctionOrVariableName.CONTEXT_COUNT, DynamicContext.VariableDependency.FULL);
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
+        result.put(Name.CONTEXT_COUNT, DynamicContext.VariableDependency.FULL);
         return result;
     }
 

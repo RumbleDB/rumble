@@ -22,11 +22,11 @@ package org.rumbledb.api;
 
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
@@ -621,7 +621,7 @@ public abstract class Item implements SerializableItem {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
-    public List<FunctionOrVariableName> getParameterNames() {
+    public List<Name> getParameterNames() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 

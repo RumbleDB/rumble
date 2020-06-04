@@ -25,11 +25,11 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -139,20 +139,20 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
     private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
-        FunctionOrVariableName argName;
+        Name argName;
         RuntimeIterator argIterator;
 
-        Map<FunctionOrVariableName, List<Item>> localArgumentValues = new LinkedHashMap<>(
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
-        Map<FunctionOrVariableName, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<FunctionOrVariableName, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 
-        List<FunctionOrVariableName> partialApplicationParamNames = new ArrayList<>();
+        List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
 
         for (int i = 0; i < this.functionArguments.size(); i++) {
@@ -192,16 +192,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
-        FunctionOrVariableName argName;
+        Name argName;
         RuntimeIterator argIterator;
 
-        Map<FunctionOrVariableName, List<Item>> localArgumentValues = new LinkedHashMap<>(
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
-        Map<FunctionOrVariableName, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<FunctionOrVariableName, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 

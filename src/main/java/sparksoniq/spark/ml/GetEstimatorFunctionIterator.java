@@ -23,11 +23,11 @@ package sparksoniq.spark.ml;
 import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -46,12 +46,12 @@ import java.util.List;
 public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<FunctionOrVariableName> estimatorFunctionParameterNames = new ArrayList<>(
+    public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(
-                FunctionOrVariableName.createVariableInRumbleNamespace(
+                Name.createVariableInRumbleNamespace(
                     "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
                 ),
-                FunctionOrVariableName.createVariableInRumbleNamespace(
+                Name.createVariableInRumbleNamespace(
                     "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
                 )
             )
@@ -133,7 +133,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                FunctionOrVariableName.createVariableInRumbleNamespace(
+                                Name.createVariableInRumbleNamespace(
                                     this.estimatorSparkMLClass.getName()
                                 ),
                                 2

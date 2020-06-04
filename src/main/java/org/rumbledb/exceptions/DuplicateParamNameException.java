@@ -20,16 +20,16 @@
 
 package org.rumbledb.exceptions;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 
 public class DuplicateParamNameException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
     public DuplicateParamNameException(
-            FunctionOrVariableName fnName,
-            FunctionOrVariableName paramName,
+            Name fnName,
+            Name paramName,
             ExceptionMetadata metadata
     ) {
         super(

@@ -27,10 +27,10 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -137,7 +137,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      */
     public abstract Dataset<Row> getDataFrame(
             DynamicContext context,
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     );
 
     /**
@@ -148,8 +148,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<FunctionOrVariableName, DynamicContext.VariableDependency> getProjection(
-            Map<FunctionOrVariableName, DynamicContext.VariableDependency> parentProjection
+    public abstract Map<Name, DynamicContext.VariableDependency> getProjection(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     );
 
     /**
@@ -167,9 +167,9 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
-    public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
-            new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.child.getVariableDependencies());
         return result;
     }
@@ -181,8 +181,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      *
      * @return the set of variable names that are bound by descendant clauses.
      */
-    public Set<FunctionOrVariableName> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<FunctionOrVariableName>();
+    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+        return new HashSet<Name>();
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -193,14 +193,14 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for (FunctionOrVariableName v : dependencies.keySet()) {
+        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (Name v : dependencies.keySet()) {
             buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
         buffer.append(" | ");
 
         buffer.append("Variables bound in current FLWOR: ");
-        for (FunctionOrVariableName v : getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name v : getVariablesBoundInCurrentFLWORExpression()) {
             buffer.append(v + " ");
         }
         buffer.append("\n");

@@ -25,8 +25,8 @@ import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -42,7 +42,7 @@ import java.util.TreeMap;
 
 public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<String>> {
     private static final long serialVersionUID = 1L;
-    private Map<FunctionOrVariableName, DynamicContext.VariableDependency> dependencies;
+    private Map<Name, DynamicContext.VariableDependency> dependencies;
     private Map<String, List<String>> columnNamesByType;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private List<List<Item>> deserializedParams;
@@ -68,7 +68,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
         this.context = new DynamicContext(this.parentContext);
         this.result = new ArrayList<>();
 
-        this.dependencies = new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
+        this.dependencies = new TreeMap<Name, DynamicContext.VariableDependency>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             this.dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }

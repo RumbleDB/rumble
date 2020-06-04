@@ -21,13 +21,13 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -37,9 +37,9 @@ import java.util.List;
 
 public class ForClause extends Clause {
 
-    private final FunctionOrVariableName variableName;
+    private final Name variableName;
     private final boolean allowEmpty;
-    private final FunctionOrVariableName positionalVariableName;
+    private final Name positionalVariableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -48,10 +48,10 @@ public class ForClause extends Clause {
 
 
     public ForClause(
-            FunctionOrVariableName variableName,
+            Name variableName,
             boolean allowEmpty,
             SequenceType sequenceType,
-            FunctionOrVariableName positionalVariableName,
+            Name positionalVariableName,
             Expression expression,
             ExceptionMetadata metadata
     ) {
@@ -67,7 +67,7 @@ public class ForClause extends Clause {
 
     }
 
-    public FunctionOrVariableName getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
@@ -75,7 +75,7 @@ public class ForClause extends Clause {
         return this.allowEmpty;
     }
 
-    public FunctionOrVariableName getPositionalVariableName() {
+    public Name getPositionalVariableName() {
         return this.positionalVariableName;
     }
 

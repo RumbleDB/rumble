@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -28,7 +29,6 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
 import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -45,7 +45,7 @@ public class FunctionCallExpression extends Expression {
     private final boolean isPartialApplication;
 
     public FunctionCallExpression(
-            FunctionOrVariableName functionName,
+            Name functionName,
             List<Expression> arguments,
             ExceptionMetadata metadata
     ) {
@@ -67,7 +67,7 @@ public class FunctionCallExpression extends Expression {
         return this.identifier;
     }
 
-    public FunctionOrVariableName getFunctionName() {
+    public Name getFunctionName() {
         return this.identifier.getName();
     }
 

@@ -23,7 +23,7 @@ package org.rumbledb.runtime.flwor.expression;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.expressions.module.FunctionOrVariableName;
+import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
@@ -45,10 +45,10 @@ public class SimpleMapExpressionClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item item) throws Exception {
         List<Item> currentItems = new ArrayList<>();
 
-        this.dynamicContext.addVariableValue(FunctionOrVariableName.CONTEXT_ITEM, currentItems);
+        this.dynamicContext.addVariableValue(Name.CONTEXT_ITEM, currentItems);
         currentItems.add(item);
         List<Item> mapValuesRaw = this.rightIterator.materialize(this.dynamicContext);
-        this.dynamicContext.removeVariable(FunctionOrVariableName.CONTEXT_ITEM);
+        this.dynamicContext.removeVariable(Name.CONTEXT_ITEM);
         return mapValuesRaw.iterator();
     }
 }
