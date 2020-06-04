@@ -48,7 +48,7 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1._1());
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
-        dynamicContext.addVariableValue(FunctionOrVariableName.createVariableInNoNamespace("$$"), currentItems);
+        dynamicContext.addVariableValue(FunctionOrVariableName.CONTEXT_ITEM, currentItems);
         dynamicContext.setPosition(v1._2() + 1);
         dynamicContext.setLast(this.contextSize);
 

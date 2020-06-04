@@ -1,8 +1,16 @@
 package org.rumbledb.expressions.module;
 
+import java.io.Serializable;
+
 import org.rumbledb.exceptions.OurBadException;
 
-public class FunctionOrVariableName implements Comparable<FunctionOrVariableName> {
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
+public class FunctionOrVariableName implements Comparable<FunctionOrVariableName>, Serializable, KryoSerializable {
+    private static final long serialVersionUID = 1L;
     private String namespace;
     private String prefix;
     private String localName;
@@ -94,10 +102,23 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
 
     @Override
     public int hashCode() {
-        if(this.namespace == null)
-        {
+        if (this.namespace == null) {
             return this.localName.hashCode();
         }
         return this.localName.hashCode() + this.namespace.hashCode();
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        output.writeString(this.namespace);
+        output.writeString(this.prefix);
+        output.writeString(this.localName);
+    }
+
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.namespace = input.readString();
+        this.prefix = input.readString();
+        this.localName = input.readString();
     }
 }

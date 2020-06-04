@@ -68,7 +68,7 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
     public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
-        result.put(FunctionOrVariableName.createVariableInNoNamespace("$last"), DynamicContext.VariableDependency.FULL);
+        result.put(FunctionOrVariableName.CONTEXT_COUNT, DynamicContext.VariableDependency.FULL);
         return result;
     }
 

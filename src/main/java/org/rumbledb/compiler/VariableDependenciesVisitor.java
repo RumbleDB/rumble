@@ -398,8 +398,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Void argument) {
-        // TODO add arity
-        addInputVariableDependency(expression, expression.getIdentifier().getName());
+        addInputVariableDependency(expression, expression.getIdentifier().getNameWithArity());
         return null;
     }
 
@@ -407,7 +406,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionCall(FunctionCallExpression expression, Void argument) {
         addInputVariableDependency(
             expression,
-            expression.getFunctionName().addArityToFunctionName(expression.getFunctionIdentifier().getArity())
+            expression.getFunctionIdentifier().getNameWithArity()
         );
         for (Expression e : expression.getArguments()) {
             if (e != null) {

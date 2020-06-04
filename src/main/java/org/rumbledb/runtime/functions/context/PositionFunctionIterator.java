@@ -69,7 +69,7 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
         Map<FunctionOrVariableName, DynamicContext.VariableDependency> result =
             new TreeMap<FunctionOrVariableName, DynamicContext.VariableDependency>();
         result.put(
-            FunctionOrVariableName.createVariableInNoNamespace("$position"),
+            FunctionOrVariableName.CONTEXT_POSITION,
             DynamicContext.VariableDependency.FULL
         );
         return result;

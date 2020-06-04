@@ -53,7 +53,7 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
 
     public Map<FunctionOrVariableName, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<FunctionOrVariableName, DynamicContext.VariableDependency> result = new TreeMap<>();
-        result.put(FunctionOrVariableName.createVariableInNoNamespace("$"), DynamicContext.VariableDependency.FULL);
+        result.put(FunctionOrVariableName.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         return result;
     }
 }
