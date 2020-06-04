@@ -52,6 +52,12 @@ public class FunctionOrVariableName implements Comparable<FunctionOrVariableName
     public static final FunctionOrVariableName CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final FunctionOrVariableName CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
+    private FunctionOrVariableName() {
+        this.namespace = null;
+        this.prefix = null;
+        this.localName = null;
+    }
+
     private FunctionOrVariableName(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;

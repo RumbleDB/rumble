@@ -93,6 +93,7 @@ public class FlworDataFrameUtils {
 
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
+        kryo.register(FunctionOrVariableName.class);
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
