@@ -20,6 +20,7 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -34,6 +35,7 @@ import java.util.HashMap;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
+    private static final long serialVersionUID = 1L;
     private static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
@@ -127,7 +129,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
-    public String getExternalVariableValue(String name) {
+    public String getExternalVariableValue(Name name) {
         for (String s : this.arguments.keySet()) {
             if (s.equals("variable:" + name)) {
                 return this.arguments.get(s);

@@ -22,6 +22,7 @@ package org.rumbledb.expressions.module;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public class VariableDeclaration extends Node {
 
-    private final String variableName;
+    private final Name variableName;
     private final boolean external;
     protected SequenceType sequenceType;
     protected Expression expression;
@@ -44,7 +45,7 @@ public class VariableDeclaration extends Node {
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public VariableDeclaration(
-            String variableName,
+            Name variableName,
             boolean external,
             SequenceType sequenceType,
             Expression expression,
@@ -60,7 +61,7 @@ public class VariableDeclaration extends Node {
         }
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 

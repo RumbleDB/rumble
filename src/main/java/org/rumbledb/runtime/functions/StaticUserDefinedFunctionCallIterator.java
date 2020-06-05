@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -130,8 +131,8 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(super.getVariableDependencies());
         for (RuntimeIterator iterator : this.functionArguments) {
             if (iterator == null) {

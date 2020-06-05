@@ -25,6 +25,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -54,6 +55,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     private long position;
     private boolean mustMaintainPosition;
     private DynamicContext filterDynamicContext;
+    private boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
@@ -66,6 +68,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         this.iterator = sequence;
         this.filter = filterExpression;
         this.filterDynamicContext = null;
+        this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
     @Override
@@ -87,10 +90,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
     protected void resetLocal(DynamicContext context) {
         this.iterator.close();
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey("$last")) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (this.filter.getVariableDependencies().containsKey("$position")) {
+        if (!this.isBooleanOnlyFilter) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -103,16 +106,26 @@ public class PredicateIterator extends HybridRuntimeIterator {
         this.iterator.close();
     }
 
+    private boolean isBooleanOnlyFilter() {
+        return !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)
+            && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
+            && (this.filter instanceof BooleanRuntimeIterator
+                || this.filter instanceof AndOperationIterator
+                || this.filter instanceof OrOperationIterator
+                || this.filter instanceof NotOperationIterator
+                || this.filter instanceof ComparisonOperationIterator);
+    }
+
     @Override
     protected void openLocal() {
         if (this.children.size() < 2) {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey("$last")) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (this.filter.getVariableDependencies().containsKey("$position")) {
+        if (!this.isBooleanOnlyFilter) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -138,7 +151,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
-            this.filterDynamicContext.addVariableValue("$$", currentItems);
+            this.filterDynamicContext.addVariableValue(
+                Name.CONTEXT_ITEM,
+                currentItems
+            );
             if (this.mustMaintainPosition) {
                 this.filterDynamicContext.setPosition(++this.position);
             }
@@ -149,24 +165,19 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 fil = this.filter.next();
             }
             this.filter.close();
-            // if filter is an integer, it is used to return the element with the index equal to the given integer
+            // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
             if (fil instanceof IntegerItem) {
-                this.iterator.close();
-                List<Item> sequence = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
                 int index = ((IntegerItem) fil).getIntegerValue();
-                // less than or equal to size -> b/c of -1
-                if (index >= 1 && index <= sequence.size()) {
-                    // -1 for Jsoniq convention, arrays start from 1
-                    this.nextResult = sequence.get(index - 1);
+                if (index == this.position) {
+                    this.nextResult = item;
+                    break;
                 }
-                break;
             } else if (fil != null && fil.getEffectiveBooleanValue()) {
                 this.nextResult = item;
                 break;
             }
-            this.filter.close();
         }
-        this.filterDynamicContext.removeVariable("$$");
+        this.filterDynamicContext.removeVariable(Name.CONTEXT_ITEM);
 
         if (this.nextResult == null) {
             this.hasNext = false;
@@ -181,22 +192,14 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = this.children.get(0);
         RuntimeIterator filter = this.children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        if (
-            !filter.getVariableDependencies().containsKey("$position")
-                && !filter.getVariableDependencies().containsKey("$last")
-                && (filter instanceof BooleanRuntimeIterator
-                    || filter instanceof AndOperationIterator
-                    || filter instanceof OrOperationIterator
-                    || filter instanceof NotOperationIterator
-                    || filter instanceof ComparisonOperationIterator)
-        ) {
+        if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
             JavaRDD<Item> resultRDD = childRDD.filter(transformation);
             return resultRDD;
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (filter.getVariableDependencies().containsKey("$last")) {
+            if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -209,11 +212,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.filter.getVariableDependencies());
-        result.remove("$");
+        result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
         return result;
     }
