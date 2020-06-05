@@ -84,6 +84,7 @@ import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
+import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
@@ -318,6 +319,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tim
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.timezone_from_time;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize1;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.tokenize2;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.trace;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.translate;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.upper_case;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.values;
@@ -579,6 +581,9 @@ public class Functions {
         builtInFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtInFunctions.put(get_estimator.getIdentifier(), get_estimator);
         builtInFunctions.put(annotate.getIdentifier(), annotate);
+
+        builtInFunctions.put(trace.getIdentifier(), trace);
+
     }
 
     static {
@@ -2465,6 +2470,18 @@ public class Functions {
             "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
             AnnotateFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
+        );
+
+        /**
+         * function converts given RDD or local data to a DataFrame using a schema
+         */
+        static final BuiltinFunction trace = createBuiltinFunction(
+            "trace",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            "string",
+            "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+            TraceFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
     }
 }

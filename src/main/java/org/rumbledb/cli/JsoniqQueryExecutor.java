@@ -76,6 +76,10 @@ public class JsoniqQueryExecutor {
         if (!FileSystemUtil.exists(queryFile, metadata)) {
             throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
         }
+        String logPath = this.configuration.getLogPath();
+        if (logPath != null) {
+            FileSystemUtil.delete(logPath, metadata);
+        }
         FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, metadata);
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
 
@@ -117,10 +121,9 @@ public class JsoniqQueryExecutor {
 
         long endTime = System.currentTimeMillis();
         long totalTime = endTime - startTime;
-        String logPath = this.configuration.getLogPath();
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            FileSystemUtil.write(logPath, Collections.singletonList(time), metadata);
+            FileSystemUtil.append(logPath, Collections.singletonList(time), metadata);
         }
         return outputList;
     }

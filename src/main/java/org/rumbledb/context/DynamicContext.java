@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
@@ -52,6 +53,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private Map<String, JavaRDD<Item>> rddVariableValues;
     private Map<String, Dataset<Row>> dataFrameVariableValues;
     private DynamicContext parent;
+    private RumbleRuntimeConfiguration conf;
 
     public DynamicContext() {
         this.parent = null;
@@ -59,6 +61,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+    }
+
+    public DynamicContext(RumbleRuntimeConfiguration conf) {
+        this.parent = null;
+        this.localVariableCounts = new HashMap<>();
+        this.localVariableValues = new HashMap<>();
+        this.rddVariableValues = new HashMap<>();
+        this.dataFrameVariableValues = new HashMap<>();
+        this.conf = conf;
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -81,6 +92,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
 
+    }
+
+    public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
+        if (this.conf != null) {
+            return this.conf;
+        }
+        if (this.parent != null) {
+            return this.parent.getRumbleRuntimeConfiguration();
+        }
+        return null;
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
