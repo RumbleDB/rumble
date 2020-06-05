@@ -81,7 +81,8 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     /**
      * Creates an expanded name that has the Rumble namespace. By default, in Rumble, unprefixed
      * function names live in the Rumble namespace. This namespace is for convenience and includes
-     * all functions in XQuery's fn namespace, JSONiq's jn and jnlib namespaces, as well as any
+     * all functions in XQuery's fn namespace, JSONiq's jn (JSONiq core) and jnlib (JSONiq library)
+     * namespaces, as well as any
      * user-defined functions with unprefixed names.
      * 
      * @param localName the name of the variable
@@ -105,29 +106,14 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return new Name(this.namespace, this.prefix, this.localName + "#" + arity);
     }
 
-    /**
-     * Returns the namespace.
-     * 
-     * @return the namespace, or null.
-     */
     public String getNamespace() {
         return this.namespace;
     }
 
-    /**
-     * Returns the namespace prefix.
-     * 
-     * @return the namespace prefix, or null.
-     */
     public String getPrefix() {
         return this.prefix;
     }
 
-    /**
-     * Returns the local name.
-     * 
-     * @return the local name.
-     */
     public String getLocalName() {
         return this.localName;
     }
