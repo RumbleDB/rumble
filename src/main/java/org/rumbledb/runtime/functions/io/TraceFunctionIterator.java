@@ -87,12 +87,14 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 .getRumbleRuntimeConfiguration();
             if (conf != null) {
                 String path = conf.getLogPath();
-                System.out.println(path);
-                FileSystemUtil.append(
-                    path,
-                    Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
-                    getMetadata()
-                );
+                if(path != null)
+                {
+                    FileSystemUtil.append(
+                        path,
+                        Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
+                        getMetadata()
+                    );
+                }
             }
             this.hasNext = this.valueIterator.hasNext();
             return result;
