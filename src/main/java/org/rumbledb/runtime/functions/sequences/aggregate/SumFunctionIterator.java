@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -121,11 +122,11 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<String, DynamicContext.VariableDependency> result =
-                new TreeMap<String, DynamicContext.VariableDependency>();
+            Map<Name, DynamicContext.VariableDependency> result =
+                new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {

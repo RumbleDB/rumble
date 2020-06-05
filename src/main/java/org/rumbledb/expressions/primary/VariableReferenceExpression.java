@@ -22,6 +22,7 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -38,11 +39,11 @@ import java.util.List;
 public class VariableReferenceExpression extends Expression implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private String name;
+    private Name name;
     private SequenceType type;
 
 
-    public VariableReferenceExpression(String name, ExceptionMetadata metadata) {
+    public VariableReferenceExpression(Name name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = name;
     }
@@ -51,7 +52,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         this.highestExecutionMode = highestExecutionMode;
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.name;
     }
 

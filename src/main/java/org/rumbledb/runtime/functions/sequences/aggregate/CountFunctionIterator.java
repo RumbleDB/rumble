@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -90,10 +91,10 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
-            Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
+            Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.COUNT);
             return result;
         } else {

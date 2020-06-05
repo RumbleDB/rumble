@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -90,7 +91,8 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Dataset<Row> getInputDataset(DynamicContext context) {
-        String estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(0);
+        Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
+            .get(0);
 
         if (!context.contains(estimatorInputVariableName)) {
             throw new OurBadException("Estimator's input data is not available in the dynamic context");
@@ -257,7 +259,10 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         );
 
         return new FunctionItem(
-                new FunctionIdentifier(fittedModel.getClass().getName(), 2),
+                new FunctionIdentifier(
+                        Name.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
+                        2
+                ),
                 GetTransformerFunctionIterator.transformerParameterNames,
                 new FunctionSignature(
                         paramTypes,

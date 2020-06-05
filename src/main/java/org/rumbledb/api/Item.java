@@ -22,6 +22,7 @@ package org.rumbledb.api;
 
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -620,7 +621,7 @@ public abstract class Item implements SerializableItem {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
-    public List<String> getParameterNames() {
+    public List<Name> getParameterNames() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 

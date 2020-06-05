@@ -28,6 +28,7 @@ import java.util.Map;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -71,8 +72,8 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
+        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression);
@@ -81,7 +82,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration should produce exactly one function");
         }
         Item function = functionInList.get(0);
-        if (expression.getName().equals("")) {
+        if (expression.getName() == null) {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)
@@ -94,7 +95,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         DynamicContext result = new DynamicContext(argument);
-        String name = variableDeclaration.getVariableName();
+        Name name = variableDeclaration.getVariableName();
         if (variableDeclaration.external()) {
             String value = this.configuration.getExternalVariableValue(name);
             List<Item> values = new ArrayList<>();

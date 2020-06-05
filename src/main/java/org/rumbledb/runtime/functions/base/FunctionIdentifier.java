@@ -22,15 +22,17 @@ package org.rumbledb.runtime.functions.base;
 
 import java.io.Serializable;
 
+import org.rumbledb.context.Name;
+
 public class FunctionIdentifier implements Serializable {
     private int arity;
-    private String name;
+    private Name name;
     private static final long serialVersionUID = 1L;
 
     public FunctionIdentifier() {
     }
 
-    public FunctionIdentifier(String functionName, int arity) {
+    public FunctionIdentifier(Name functionName, int arity) {
         this.name = functionName;
         this.arity = arity;
     }
@@ -39,8 +41,12 @@ public class FunctionIdentifier implements Serializable {
         return this.arity;
     }
 
-    public String getName() {
+    public Name getName() {
         return this.name;
+    }
+
+    public Name getNameWithArity() {
+        return this.name.addArityToFunctionName(this.getArity());
     }
 
     @Override

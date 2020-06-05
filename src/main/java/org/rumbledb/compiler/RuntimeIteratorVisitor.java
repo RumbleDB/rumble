@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -244,7 +245,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     groupByExpressionIterator = this.visit(groupByExpression, argument);
                 }
 
-                String variableName = var.getVariableName();
+                Name variableName = var.getVariableName();
 
                 groupingExpressions.add(
                     new GroupByClauseSparkIteratorExpression(
@@ -432,8 +433,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
-        Map<String, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
-        for (Map.Entry<String, SequenceType> paramEntry : expression.getParams().entrySet()) {
+        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
@@ -463,7 +464,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 arguments.add(argumentIterator);
             }
         }
-        String fnName = expression.getFunctionName();
+        Name fnName = expression.getFunctionName();
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 

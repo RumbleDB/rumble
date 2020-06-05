@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -43,7 +44,11 @@ public class FunctionCallExpression extends Expression {
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
 
-    public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
+    public FunctionCallExpression(
+            Name functionName,
+            List<Expression> arguments,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
@@ -62,7 +67,7 @@ public class FunctionCallExpression extends Expression {
         return this.identifier;
     }
 
-    public String getFunctionName() {
+    public Name getFunctionName() {
         return this.identifier.getName();
     }
 

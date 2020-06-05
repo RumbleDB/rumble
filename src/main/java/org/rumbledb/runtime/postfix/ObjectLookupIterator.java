@@ -29,6 +29,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -170,7 +171,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     }
                 } else {
                     Item contextItem = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
-                        "$$",
+                        Name.CONTEXT_ITEM,
                         getMetadata()
                     ).get(0);
                     this.nextResult = item.getItemByKey(contextItem.getStringValue());
@@ -193,7 +194,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = dynamicContext.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
+            key = dynamicContext.getLocalVariableValue(
+                Name.CONTEXT_ITEM,
+                getMetadata()
+            ).get(0).getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }
@@ -213,7 +217,9 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = context.getLocalVariableValue("$$", getMetadata()).get(0).getStringValue();
+            key = context.getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+                .get(0)
+                .getStringValue();
         } else {
             key = this.lookupKey.getStringValue();
         }

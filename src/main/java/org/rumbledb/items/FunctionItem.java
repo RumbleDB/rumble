@@ -28,6 +28,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
@@ -51,14 +52,14 @@ public class FunctionItem extends Item {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
-    private List<String> parameterNames;
+    private List<Name> parameterNames;
 
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private Map<String, List<Item>> localVariablesInClosure;
-    private Map<String, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<String, Dataset<Row>> dataFrameVariablesInClosure;
+    private Map<Name, List<Item>> localVariablesInClosure;
+    private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
+    private Map<Name, Dataset<Row>> dataFrameVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -66,7 +67,7 @@ public class FunctionItem extends Item {
 
     public FunctionItem(
             FunctionIdentifier identifier,
-            List<String> parameterNames,
+            List<Name> parameterNames,
             FunctionSignature signature,
             RuntimeIterator bodyIterator
     ) {
@@ -81,12 +82,12 @@ public class FunctionItem extends Item {
 
     public FunctionItem(
             FunctionIdentifier identifier,
-            List<String> parameterNames,
+            List<Name> parameterNames,
             FunctionSignature signature,
             RuntimeIterator bodyIterator,
-            Map<String, List<Item>> localVariablesInClosure,
-            Map<String, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<String, Dataset<Row>> DFVariablesInClosure
+            Map<Name, List<Item>> localVariablesInClosure,
+            Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
+            Map<Name, Dataset<Row>> DFVariablesInClosure
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -98,14 +99,14 @@ public class FunctionItem extends Item {
     }
 
     public FunctionItem(
-            String name,
-            Map<String, SequenceType> paramNameToSequenceTypes,
+            Name name,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator
     ) {
-        List<String> paramNames = new ArrayList<>();
+        List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
-        for (Map.Entry<String, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
+        for (Map.Entry<Name, SequenceType> paramEntry : paramNameToSequenceTypes.entrySet()) {
             paramNames.add(paramEntry.getKey());
             parameters.add(paramEntry.getValue());
         }
@@ -125,7 +126,7 @@ public class FunctionItem extends Item {
     }
 
     @Override
-    public List<String> getParameterNames() {
+    public List<Name> getParameterNames() {
         return this.parameterNames;
     }
 
@@ -138,15 +139,15 @@ public class FunctionItem extends Item {
         return this.bodyIterator;
     }
 
-    public Map<String, List<Item>> getLocalVariablesInClosure() {
+    public Map<Name, List<Item>> getLocalVariablesInClosure() {
         return this.localVariablesInClosure;
     }
 
-    public Map<String, JavaRDD<Item>> getRDDVariablesInClosure() {
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<String, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
@@ -187,25 +188,25 @@ public class FunctionItem extends Item {
         sb.append("Function\n");
         sb.append("Identifier:" + this.identifier + "\n");
         sb.append("Parameters: ");
-        for (String param : this.parameterNames) {
+        for (Name param : this.parameterNames) {
             sb.append(param + " ");
         }
         sb.append("Signature: " + this.signature + "\n");
         sb.append("Body:\n" + this.bodyIterator + "\n");
         sb.append("Closure:\n");
         sb.append("  Local:\n");
-        for (String name : this.localVariablesInClosure.keySet()) {
+        for (Name name : this.localVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.localVariablesInClosure.get(name).size() + " items)\n");
             if (this.localVariablesInClosure.get(name).size() == 1) {
                 sb.append("      " + this.localVariablesInClosure.get(name).get(0).serialize() + "\n");
             }
         }
         sb.append("  RDD:\n");
-        for (String name : this.RDDVariablesInClosure.keySet()) {
+        for (Name name : this.RDDVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.RDDVariablesInClosure.get(name).count() + " items)\n");
         }
         sb.append("  Data Frames:\n");
-        for (String name : this.dataFrameVariablesInClosure.keySet()) {
+        for (Name name : this.dataFrameVariablesInClosure.keySet()) {
             sb.append("    " + name + " (" + this.dataFrameVariablesInClosure.get(name).count() + " items)\n");
         }
         return sb.toString();
@@ -213,7 +214,9 @@ public class FunctionItem extends Item {
 
     @Override
     public int hashCode() {
-        return this.identifier.hashCode() + String.join("", this.parameterNames).hashCode() + this.signature.hashCode();
+        return this.identifier.hashCode()
+            + String.join("", this.parameterNames.toString()).hashCode()
+            + this.signature.hashCode();
     }
 
     @Override
@@ -290,13 +293,13 @@ public class FunctionItem extends Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        for (String variable : dynamicContext.getLocalVariableNames()) {
+        for (Name variable : dynamicContext.getLocalVariableNames()) {
             this.localVariablesInClosure.put(variable, dynamicContext.getLocalVariableValue(variable, metadata));
         }
-        for (String variable : dynamicContext.getRDDVariableNames()) {
+        for (Name variable : dynamicContext.getRDDVariableNames()) {
             this.RDDVariablesInClosure.put(variable, dynamicContext.getRDDVariableValue(variable, metadata));
         }
-        for (String variable : dynamicContext.getDataFrameVariableNames()) {
+        for (Name variable : dynamicContext.getDataFrameVariableNames()) {
             this.dataFrameVariablesInClosure.put(
                 variable,
                 dynamicContext.getDataFrameVariableValue(variable, metadata)
