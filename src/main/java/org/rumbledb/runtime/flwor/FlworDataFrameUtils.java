@@ -113,7 +113,7 @@ public class FlworDataFrameUtils {
         kryo.register(ArrayList.class);
 
         kryo.register(RumbleRuntimeConfiguration.class);
-}
+    }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
         output.clear();

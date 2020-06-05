@@ -87,8 +87,7 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
                 .getRumbleRuntimeConfiguration();
             if (conf != null) {
                 String path = conf.getLogPath();
-                if(path != null)
-                {
+                if (path != null) {
                     FileSystemUtil.append(
                         path,
                         Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
