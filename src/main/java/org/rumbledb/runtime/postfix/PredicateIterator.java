@@ -55,6 +55,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     private long position;
     private boolean mustMaintainPosition;
     private DynamicContext filterDynamicContext;
+    private boolean isBooleanOnlyFilter;
 
 
     public PredicateIterator(
@@ -67,6 +68,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         this.iterator = sequence;
         this.filter = filterExpression;
         this.filterDynamicContext = null;
+        this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
     @Override
@@ -91,7 +93,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (!this.isBooleanOnlyFilter()) {
+        if (!this.isBooleanOnlyFilter) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -123,7 +125,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
-        if (!this.isBooleanOnlyFilter()) {
+        if (!this.isBooleanOnlyFilter) {
             this.position = 0;
             this.mustMaintainPosition = true;
         }
@@ -190,7 +192,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         RuntimeIterator iterator = this.children.get(0);
         RuntimeIterator filter = this.children.get(1);
         JavaRDD<Item> childRDD = iterator.getRDD(dynamicContext);
-        if (this.isBooleanOnlyFilter()) {
+        if (this.isBooleanOnlyFilter) {
             Function<Item, Boolean> transformation = new PredicateClosure(filter, dynamicContext);
             JavaRDD<Item> resultRDD = childRDD.filter(transformation);
             return resultRDD;
