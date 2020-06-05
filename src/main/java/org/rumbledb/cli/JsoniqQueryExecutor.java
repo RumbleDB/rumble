@@ -64,6 +64,8 @@ public class JsoniqQueryExecutor {
                     throw new CliException(
                             "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
                     );
+                } else {
+                    FileSystemUtil.delete(outputPath, ExceptionMetadata.EMPTY_METADATA);
                 }
             }
         }
@@ -72,15 +74,14 @@ public class JsoniqQueryExecutor {
     public List<Item> runQuery(String queryFile, String outputPath) throws IOException {
         List<Item> outputList = null;
         checkOutputFile(outputPath);
-        ExceptionMetadata metadata = new ExceptionMetadata(0, 0);
-        if (!FileSystemUtil.exists(queryFile, metadata)) {
-            throw new CannotRetrieveResourceException("Query file does not exist.", metadata);
+        if (!FileSystemUtil.exists(queryFile, ExceptionMetadata.EMPTY_METADATA)) {
+            throw new CannotRetrieveResourceException("Query file does not exist.", ExceptionMetadata.EMPTY_METADATA);
         }
         String logPath = this.configuration.getLogPath();
         if (logPath != null) {
-            FileSystemUtil.delete(logPath, metadata);
+            FileSystemUtil.delete(logPath, ExceptionMetadata.EMPTY_METADATA);
         }
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, metadata);
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, ExceptionMetadata.EMPTY_METADATA);
         JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
 
         long startTime = System.currentTimeMillis();
@@ -104,7 +105,7 @@ public class JsoniqQueryExecutor {
             long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                FileSystemUtil.write(outputPath, lines, metadata);
+                FileSystemUtil.write(outputPath, lines, ExceptionMetadata.EMPTY_METADATA);
             } else {
                 System.out.println(String.join("\n", lines));
             }
@@ -123,7 +124,7 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            FileSystemUtil.append(logPath, Collections.singletonList(time), metadata);
+            FileSystemUtil.append(logPath, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }
