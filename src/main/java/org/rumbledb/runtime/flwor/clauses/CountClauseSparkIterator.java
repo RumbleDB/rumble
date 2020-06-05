@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -49,7 +50,7 @@ import java.util.TreeMap;
 public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
-    private String variableName;
+    private Name variableName;
     private FlworTuple nextLocalTupleResult;
     private int currentCountIndex;
 
@@ -110,20 +111,20 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public Dataset<Row> getDataFrame(
             DynamicContext context,
-            Map<String, DynamicContext.VariableDependency> parentProjection
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName);
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
 
         String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.variableName);
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.variableName.toString());
 
         df.sparkSession()
             .udf()
@@ -146,15 +147,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
-    public Set<String> getVariablesBoundInCurrentFLWORExpression() {
-        Set<String> result = new HashSet<String>();
+    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+        Set<Name> result = new HashSet<>();
         result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         result.add(this.variableName);
         return result;
@@ -169,12 +170,12 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         buffer.append("\n");
     }
 
-    public Map<String, DynamicContext.VariableDependency> getProjection(
-            Map<String, DynamicContext.VariableDependency> parentProjection
+    public Map<Name, DynamicContext.VariableDependency> getProjection(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.
-        Map<String, DynamicContext.VariableDependency> projection =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+        Map<Name, DynamicContext.VariableDependency> projection =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
 
         // copy over the projection needed by the parent clause.
         projection.putAll(parentProjection);

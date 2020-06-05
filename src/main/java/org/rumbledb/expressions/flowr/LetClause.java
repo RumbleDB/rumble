@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -36,7 +37,7 @@ import java.util.List;
 
 public class LetClause extends Clause {
 
-    private final String variableName;
+    private final Name variableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -44,7 +45,7 @@ public class LetClause extends Clause {
     protected ExecutionMode variableHighestStorageMode = ExecutionMode.UNSET;
 
     public LetClause(
-            String variableName,
+            Name variableName,
             SequenceType sequenceType,
             Expression expression,
             ExceptionMetadata metadataFromContext
@@ -58,7 +59,7 @@ public class LetClause extends Clause {
         this.expression = expression;
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 

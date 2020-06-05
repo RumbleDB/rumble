@@ -25,6 +25,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -87,7 +88,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     protected void resetLocal(DynamicContext context) {
         this.iterator.close();
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey("$last")) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
         if (!this.isBooleanOnlyFilter()) {
@@ -104,8 +105,8 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     private boolean isBooleanOnlyFilter() {
-        return !this.filter.getVariableDependencies().containsKey("$position")
-            && !this.filter.getVariableDependencies().containsKey("$last")
+        return !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_POSITION)
+            && !this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)
             && (this.filter instanceof BooleanRuntimeIterator
                 || this.filter instanceof AndOperationIterator
                 || this.filter instanceof OrOperationIterator
@@ -119,7 +120,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             throw new OurBadException("Invalid Predicate! Must initialize filter before calling next");
         }
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
-        if (this.filter.getVariableDependencies().containsKey("$last")) {
+        if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
             setLast();
         }
         if (!this.isBooleanOnlyFilter()) {
@@ -148,7 +149,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
-            this.filterDynamicContext.addVariableValue("$$", currentItems);
+            this.filterDynamicContext.addVariableValue(
+                Name.CONTEXT_ITEM,
+                currentItems
+            );
             if (this.mustMaintainPosition) {
                 this.filterDynamicContext.setPosition(++this.position);
             }
@@ -171,7 +175,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 break;
             }
         }
-        this.filterDynamicContext.removeVariable("$$");
+        this.filterDynamicContext.removeVariable(Name.CONTEXT_ITEM);
 
         if (this.nextResult == null) {
             this.hasNext = false;
@@ -193,7 +197,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         } else {
             JavaPairRDD<Item, Long> zippedChildRDD = childRDD.zipWithIndex();
             long last = 0;
-            if (filter.getVariableDependencies().containsKey("$last")) {
+            if (filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {
                 last = childRDD.count();
             }
             Function<Tuple2<Item, Long>, Boolean> transformation = new PredicateClosureZipped(
@@ -206,11 +210,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
         }
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
         result.putAll(this.filter.getVariableDependencies());
-        result.remove("$");
+        result.remove(Name.CONTEXT_ITEM);
         result.putAll(this.iterator.getVariableDependencies());
         return result;
     }

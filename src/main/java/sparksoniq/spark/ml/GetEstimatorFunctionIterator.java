@@ -23,6 +23,7 @@ package sparksoniq.spark.ml;
 import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -45,10 +46,14 @@ import java.util.List;
 public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    public static final List<String> estimatorFunctionParameterNames = new ArrayList<>(
+    public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(
-                "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab",
-                "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
+                Name.createVariableInRumbleNamespace(
+                    "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
+                ),
+                Name.createVariableInRumbleNamespace(
+                    "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
+                )
             )
     );
     private String estimatorShortName;
@@ -127,7 +132,12 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                 );
 
                 return new FunctionItem(
-                        new FunctionIdentifier(this.estimatorSparkMLClass.getName(), 2),
+                        new FunctionIdentifier(
+                                Name.createVariableInRumbleNamespace(
+                                    this.estimatorSparkMLClass.getName()
+                                ),
+                                2
+                        ),
                         estimatorFunctionParameterNames,
                         new FunctionSignature(
                                 paramTypes,

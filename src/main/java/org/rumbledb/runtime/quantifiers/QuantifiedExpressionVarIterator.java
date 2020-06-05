@@ -22,6 +22,7 @@ package org.rumbledb.runtime.quantifiers;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.LocalRuntimeIterator;
@@ -34,7 +35,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final String variableReference;
+    private final Name variableReference;
     // private final SequenceType sequenceType;
     private RuntimeIterator iterator;
     private Item nextResult;
@@ -45,7 +46,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
      */
 
     public QuantifiedExpressionVarIterator(
-            String variableReference,
+            Name variableReference,
             SequenceType sequenceType,
             RuntimeIterator expression,
             ExecutionMode executionMode,
@@ -57,7 +58,7 @@ public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
         // this.sequenceType = sequenceType;
     }
 
-    public String getVariableReference() {
+    public Name getVariableReference() {
         return this.variableReference;
     }
 

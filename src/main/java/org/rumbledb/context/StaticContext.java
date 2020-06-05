@@ -32,13 +32,13 @@ import java.util.Map;
 public class StaticContext {
 
     private static class InScopeVariable {
-        private String name;
+        private Name name;
         private SequenceType sequenceType;
         private ExceptionMetadata metadata;
         private ExecutionMode storageMode;
 
         public InScopeVariable(
-                String name,
+                Name name,
                 SequenceType sequenceType,
                 ExceptionMetadata metadata,
                 ExecutionMode storageMode
@@ -50,7 +50,7 @@ public class StaticContext {
         }
 
         @SuppressWarnings("unused")
-        public String getName() {
+        public Name getName() {
             return this.name;
         }
 
@@ -63,7 +63,7 @@ public class StaticContext {
         }
     }
 
-    private Map<String, InScopeVariable> inScopeVariables;
+    private Map<Name, InScopeVariable> inScopeVariables;
     private StaticContext parent;
 
     public StaticContext() {
@@ -80,7 +80,7 @@ public class StaticContext {
         return this.parent;
     }
 
-    public boolean isInScope(String varName) {
+    public boolean isInScope(Name varName) {
         boolean found = false;
         if (this.inScopeVariables.containsKey(varName)) {
             return true;
@@ -94,7 +94,7 @@ public class StaticContext {
         return found;
     }
 
-    private InScopeVariable getInScopeVariable(String varName) {
+    private InScopeVariable getInScopeVariable(Name varName) {
         if (this.inScopeVariables.containsKey(varName)) {
             return this.inScopeVariables.get(varName);
         } else {
@@ -109,20 +109,20 @@ public class StaticContext {
         }
     }
 
-    public SequenceType getVariableSequenceType(String varName) {
+    public SequenceType getVariableSequenceType(Name varName) {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExceptionMetadata getVariableMetadata(String varName) {
+    public ExceptionMetadata getVariableMetadata(Name varName) {
         return getInScopeVariable(varName).getMetadata();
     }
 
-    public ExecutionMode getVariableStorageMode(String varName) {
+    public ExecutionMode getVariableStorageMode(Name varName) {
         return getInScopeVariable(varName).storageMode;
     }
 
     public void addVariable(
-            String varName,
+            Name varName,
             SequenceType type,
             ExceptionMetadata metadata,
             ExecutionMode storageMode
@@ -130,7 +130,7 @@ public class StaticContext {
         this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
     }
 
-    protected Map<String, InScopeVariable> getInScopeVariables() {
+    protected Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
     }
 
@@ -142,7 +142,7 @@ public class StaticContext {
         return stringBuilder.toString();
     }
 
-    public boolean hasVariable(String variableName) {
+    public boolean hasVariable(Name variableName) {
         if (this.inScopeVariables.containsKey(variableName)) {
             return true;
         }

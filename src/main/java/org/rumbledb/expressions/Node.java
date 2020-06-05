@@ -54,6 +54,8 @@ public abstract class Node {
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
+     * 
+     * @param visitorConfig the configuration of the visitor.
      */
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = ExecutionMode.LOCAL;
@@ -72,6 +74,7 @@ public abstract class Node {
      * if Node.suppressUnsetExecutionModeAccessedErrors is false, then an error is thrown if an UNSET mode is found.
      * if Node.suppressUnsetExecutionModeAccessedErrors is true, it might silently return UNSET.
      * 
+     * @param visitorConfig the configuration of the visitor.
      * @return the highest execution mode.
      */
     public ExecutionMode getHighestExecutionMode(VisitorConfig visitorConfig) {

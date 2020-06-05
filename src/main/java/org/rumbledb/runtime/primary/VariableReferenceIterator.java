@@ -25,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -42,12 +43,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private SequenceType sequence;
-    private String variableName;
+    private Name variableName;
     private List<Item> items = null;
     private int currentIndex = 0;
 
     public VariableReferenceIterator(
-            String variableName,
+            Name variableName,
             SequenceType seq,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -118,12 +119,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         return this.sequence;
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result = new TreeMap<>();
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         result.put(this.variableName, DynamicContext.VariableDependency.FULL);
         return result;
     }
