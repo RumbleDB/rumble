@@ -38,6 +38,24 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProlog(JsoniqParser.PrologContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#setter}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSetter(JsoniqParser.SetterContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#namespaceDecl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#annotatedDecl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnnotatedDecl(JsoniqParser.AnnotatedDeclContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#defaultCollationDecl}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

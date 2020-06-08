@@ -63,6 +63,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.NamespaceDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -133,17 +134,24 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
-            VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
-                variable
-            );
-            globalVariables.add(variableDeclaration);
+        for(JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl())
+        {
+            NamespaceDeclaration namespaceDeclaration = (NamespaceDeclaration) this.visitNamespaceDecl(namespace);
         }
-        for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
-            InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
-                function
-            );
-            functionDeclarations.add(new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx)));
+        for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
+            if(annotatedDeclaration.varDecl() != null)
+            {
+                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                    annotatedDeclaration.varDecl()
+                );
+                globalVariables.add(variableDeclaration);
+            } else if (annotatedDeclaration.functionDecl() != null)
+            {
+                InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
+                    annotatedDeclaration.functionDecl()
+                );
+                functionDeclarations.add(new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx)));
+            }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
@@ -1172,6 +1180,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+    }
+    
+    @Override
+    public Node visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
+        return new NamespaceDeclaration(ctx.NCName().getText(), ctx.uriLiteral().getText());
     }
 
 }

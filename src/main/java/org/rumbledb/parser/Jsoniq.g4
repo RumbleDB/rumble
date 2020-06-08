@@ -12,8 +12,18 @@ mainModule              : prolog expr;
 
 libraryModule           : 'module' 'namespace' NCName '=' uriLiteral ';' prolog;
 
-prolog                  : ((defaultCollationDecl | orderingModeDecl | emptyOrderDecl | decimalFormatDecl | moduleImport) ';')*
-                          ((functionDecl | varDecl ) ';')* ;
+prolog                  : ((setter | namespaceDecl | moduleImport) ';')*
+                          (annotatedDecl ';')*;
+                         
+setter                  : defaultCollationDecl
+                        | orderingModeDecl
+                        | emptyOrderDecl
+                        | decimalFormatDecl;
+                        
+namespaceDecl           : 'declare' 'namespace' NCName '=' uriLiteral;
+                        
+annotatedDecl           : functionDecl
+                        | varDecl;
 
 defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
 
