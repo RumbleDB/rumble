@@ -134,23 +134,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        for(JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl())
-        {
+        for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             NamespaceDeclaration namespaceDeclaration = (NamespaceDeclaration) this.visitNamespaceDecl(namespace);
         }
         for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
-            if(annotatedDeclaration.varDecl() != null)
-            {
+            if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
                     annotatedDeclaration.varDecl()
                 );
                 globalVariables.add(variableDeclaration);
-            } else if (annotatedDeclaration.functionDecl() != null)
-            {
+            } else if (annotatedDeclaration.functionDecl() != null) {
                 InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
                     annotatedDeclaration.functionDecl()
                 );
-                functionDeclarations.add(new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx)));
+                functionDeclarations.add(
+                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                );
             }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
@@ -1181,7 +1180,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
-    
+
     @Override
     public Node visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
         return new NamespaceDeclaration(ctx.NCName().getText(), ctx.uriLiteral().getText());

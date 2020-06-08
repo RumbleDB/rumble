@@ -9,17 +9,16 @@ import org.rumbledb.expressions.Node;
 public class NamespaceDeclaration extends Node {
     private String prefix;
     private String namespace;
-    
-    public NamespaceDeclaration(String prefix, String namespace)
-    {
+
+    public NamespaceDeclaration(String prefix, String namespace) {
         this.prefix = prefix;
         this.namespace = namespace;
     }
-    
+
     public String getNamespace() {
         return this.namespace;
     }
-    
+
     public String getPrefix() {
         return this.prefix;
     }
