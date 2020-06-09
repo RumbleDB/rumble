@@ -127,10 +127,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
+        this.moduleContext = new StaticContext();
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
-        this.moduleContext = new StaticContext();
         module.setStaticContext(this.moduleContext);
         return module;
     }
