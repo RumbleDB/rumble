@@ -29,6 +29,7 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
+import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -139,7 +140,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         // bind namespaces
         for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            NamespaceDeclaration namespaceDeclaration = (NamespaceDeclaration) this.visitNamespaceDecl(namespace);
+            this.visitNamespaceDecl(namespace);
         }
 
         // parse variables and function
@@ -169,7 +170,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-        throw new UnsupportedFeatureException("Modules are not supported in Rumble", createMetadataFromContext(ctx));
+        throw new ModuleDeclarationException("Modules are not supported in Rumble", createMetadataFromContext(ctx));
     }
 
     public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction) {
