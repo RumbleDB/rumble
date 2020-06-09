@@ -32,8 +32,11 @@ orderingModeDecl        : 'declare' 'ordering' ('ordered' | 'unordered');
 emptyOrderDecl          : 'declare' Kdefault 'order' Kempty (Kgreatest | Kleast);
 
 decimalFormatDecl       : 'declare'
-                          (('decimal-format' (NCName ':')? NCName) | (Kdefault 'decimal-format'))
+                          (('decimal-format' qname) | (Kdefault 'decimal-format'))
                           (dfPropertyName '=' stringLiteral)*;
+
+qname                   : ((ns=NCName | nskw=keyWords)':')?
+                          (fn_name=nCNameOrKeyWord | fn_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -50,7 +53,7 @@ moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral
 
 varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : 'declare' 'function' (namespace=NCName ':')? fn_name=NCName '(' paramList? ')'
+functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' fn_body=expr '}' | 'external');
 
@@ -183,7 +186,7 @@ primaryExpr             : NullLiteral
                         ;
 
 
-varRef                  : '$' (ns=NCName ':')? name=NCName;
+varRef                  : '$' var_name=qname;
 
 parenthesizedExpr       : '(' expr? ')';
 
@@ -193,8 +196,7 @@ orderedExpr             : 'ordered' '{' expr '}';
 
 unorderedExpr           : 'unordered' '{' expr '}';
 
-functionCall            : ((ns=NCName | kw=keyWords |  )':')?
-                          (fn_name=nCNameOrKeyWord | kw = keyWords) argumentList;
+functionCall            : fn_name=qname argumentList;
 
 argumentList            : '('  (args+=argument ','?)* ')';
 
@@ -202,7 +204,7 @@ argument                : exprSingle | ArgumentPlaceholder;
 
 functionItemExpr        : namedFunctionRef | inlineFunctionExpr;
 
-namedFunctionRef        : fn_name=NCName '#' arity=Literal;
+namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
@@ -275,7 +277,7 @@ atomicType              : 'atomic'
 
 nCNameOrKeyWord         : NCName
                         | typesKeywords;
-
+                        
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
 arrayConstructor        :  '[' expr? ']';

@@ -93,6 +93,23 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     }
 
     /**
+     * Creates an expanded name resolving the prefix from namespace bindings.
+     * 
+     * @param prefix the prefix
+     * @param localName the local name
+     * @param moduleContext the module context containing the bindings.
+     * @return the expanded name.
+     */
+    public static Name createVariableResolvingPrefix(String prefix, String localName, StaticContext moduleContext) {
+        String namespace = moduleContext.resolveNamespace(prefix);
+        if (namespace != null) {
+            return new Name(namespace, prefix, localName);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is the arity of the
      * function,
      * in order to encode the whole function identifier as an expanded name.

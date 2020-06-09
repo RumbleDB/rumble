@@ -33,6 +33,9 @@ import java.util.function.Predicate;
 /**
  * This is the top-level class for nodes in the intermediate representation of a
  * JSONiq query. Nodes include expressions, clauses, function declarations, etc.
+ *
+ * Expressions and modules are associated with a static context containing information such as
+ * the in-scope variables.
  */
 public abstract class Node {
 

@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XQST0016" :)
+(:JIQS: ShouldNotParse; ErrorCode="RBST0002" :)
 import module "test" ;
 
 2+2

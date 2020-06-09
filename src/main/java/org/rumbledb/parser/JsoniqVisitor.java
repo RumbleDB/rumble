@@ -80,6 +80,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitDecimalFormatDecl(JsoniqParser.DecimalFormatDeclContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#qname}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitQname(JsoniqParser.QnameContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#dfPropertyName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
