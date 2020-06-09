@@ -149,4 +149,40 @@ public class FileSystemUtil {
             );
         }
     }
+
+    public static void append(String url, List<String> content, ExceptionMetadata metadata) {
+        URI locator = validateURI(url, metadata);
+        if (url.contains("*")) {
+            throw new CannotRetrieveResourceException(
+                    "Path cannot contain *!",
+                    metadata
+            );
+        }
+        try {
+            locator = new URI(url);
+            FileContext fileContext = FileContext.getFileContext();
+            Path path = new Path(url);
+            FSDataOutputStream outputStream = fileContext.create(
+                path,
+                EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND)
+            );
+            for (String s : content) {
+                outputStream.writeBytes(s);
+                outputStream.writeBytes("\n");
+            }
+            outputStream.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    metadata
+            );
+        } catch (Exception e) {
+            e.printStackTrace();
+            throw new OurBadException(
+                    "An unexpected exception happened while appending to the file.",
+                    metadata
+            );
+        }
+    }
 }

@@ -64,7 +64,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visit(Node node, DynamicContext argument) {
         if (argument == null) {
-            argument = new DynamicContext();
+            argument = new DynamicContext(this.configuration);
         }
         return node.accept(this, argument);
     }

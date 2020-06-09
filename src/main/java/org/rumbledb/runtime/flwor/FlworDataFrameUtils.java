@@ -33,6 +33,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ArrayItem;
@@ -110,6 +111,8 @@ public class FlworDataFrameUtils {
         kryo.register(HexBinaryItem.class);
 
         kryo.register(ArrayList.class);
+
+        kryo.register(RumbleRuntimeConfiguration.class);
     }
 
     public static byte[] serializeItem(Item toSerialize, Kryo kryo, Output output) {
