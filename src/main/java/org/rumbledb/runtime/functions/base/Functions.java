@@ -2476,9 +2476,6 @@ public class Functions {
             BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
         );
 
-        /**
-         * function converts given RDD or local data to a DataFrame using a schema
-         */
         static final BuiltinFunction trace = createBuiltinFunction(
             "trace",
             "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
