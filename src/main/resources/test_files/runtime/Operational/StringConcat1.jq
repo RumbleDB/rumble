@@ -3,5 +3,5 @@
 "Captain" || () || "Kirk",
 "aa" || "bb" || "cc" || "" || "dd"
 
-(: string values)
+(: string values :)
 

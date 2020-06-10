@@ -205,8 +205,8 @@ public class AnnotationsTestsBase {
              * visitor.visit(unit);
              */
 
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
+            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            JsoniqParser.MainModuleContext main = module.module().main;
             MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
             return mainModule;
         } catch (ParseCancellationException ex) {
