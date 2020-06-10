@@ -14,6 +14,12 @@ import org.antlr.v4.runtime.tree.ParseTreeVisitor;
  */
 public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#moduleAndThisIsIt}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitModuleAndThisIsIt(JsoniqParser.ModuleAndThisIsItContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#module}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
