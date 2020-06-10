@@ -218,7 +218,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
+                paramName = parseName(param.qname(), false);
                 paramType = mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1038,8 +1038,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                // TODO namespace
-                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
+                paramName = parseName(param.qname(), false);
                 paramType = SequenceType.mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(

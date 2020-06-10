@@ -59,7 +59,7 @@ functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
 
 paramList               : param (',' param)*;
 
-param                   : '$' NCName (Kas sequenceType)?;
+param                   : '$' qname (Kas sequenceType)?;
 
 ///////////////////////// constructs, expression
 
