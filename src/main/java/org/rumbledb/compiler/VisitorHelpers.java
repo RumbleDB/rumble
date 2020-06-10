@@ -3,11 +3,20 @@ package org.rumbledb.compiler;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.antlr.v4.runtime.BailErrorStrategy;
+import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CommonTokenStream;
+import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.parser.JsoniqLexer;
+import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
@@ -19,7 +28,7 @@ public class VisitorHelpers {
         return new RuntimeIteratorVisitor().visit(node, null);
     }
 
-    public static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
+    private static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
 
@@ -32,7 +41,33 @@ public class VisitorHelpers {
         System.out.println();
     }
 
-    public static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+    public static MainModule parseMainModule(CharStream stream, RumbleRuntimeConfiguration configuration) {
+        JsoniqLexer lexer = new JsoniqLexer(stream);
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+        TranslationVisitor visitor = new TranslationVisitor();
+        try {
+            // TODO Handle module extras
+            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            JsoniqParser.MainModuleContext main = module.module().main;
+            MainModule mainModule = (MainModule) visitor.visit(main);
+            resolveDependencies(mainModule, configuration);
+            populateStaticContext(mainModule, configuration);
+            return mainModule;
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExceptionMetadata(
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    private static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
             printTree(node, conf);
         }
