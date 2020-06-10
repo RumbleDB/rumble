@@ -279,7 +279,7 @@ atomicType              : 'atomic'
 
 nCNameOrKeyWord         : NCName
                         | typesKeywords;
-                        
+
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
 arrayConstructor        :  '[' expr? ']';
