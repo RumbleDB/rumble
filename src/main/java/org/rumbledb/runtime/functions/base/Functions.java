@@ -89,6 +89,7 @@ import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DoubleFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.FormatNumberFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.IntegerFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
@@ -232,6 +233,7 @@ import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.fla
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.floor;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_date;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_dateTime;
+import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_number;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.format_time;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_estimator;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.get_transformer;
@@ -467,6 +469,7 @@ public class Functions {
         builtInFunctions.put(round2.getIdentifier(), round2);
         builtInFunctions.put(round_half_to_even1.getIdentifier(), round_half_to_even1);
         builtInFunctions.put(round_half_to_even2.getIdentifier(), round_half_to_even2);
+        builtInFunctions.put(format_number.getIdentifier(), format_number);
 
         builtInFunctions.put(pi.getIdentifier(), pi);
         builtInFunctions.put(exp.getIdentifier(), exp);
@@ -1431,6 +1434,17 @@ public class Functions {
             "integer",
             "double?",
             RoundHalfToEvenFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        );
+        /**
+         * function that returns the approximation the mathematical constant
+         */
+        static final BuiltinFunction format_number = createBuiltinFunction(
+            "format-number",
+            "double?",
+            "string",
+            "string",
+            FormatNumberFunctionIterator.class,
             BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
         );
 

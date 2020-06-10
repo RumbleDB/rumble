@@ -94,6 +94,7 @@ public enum ErrorCode {
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
     InvalidGroupVariableErrorCode("XQST0094"),
+    InvalidDecimalFormatPictureStringErrorCode("FODF1310"),
 
     InvalidTimezoneValue("FODT0003");
 
