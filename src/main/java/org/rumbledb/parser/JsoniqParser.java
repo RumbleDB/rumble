@@ -996,8 +996,8 @@ public class JsoniqParser extends Parser {
 	public static class QnameContext extends ParserRuleContext {
 		public Token ns;
 		public KeyWordsContext nskw;
-		public NCNameOrKeyWordContext fn_name;
-		public KeyWordsContext fn_namekw;
+		public NCNameOrKeyWordContext local_name;
+		public KeyWordsContext local_namekw;
 		public NCNameOrKeyWordContext nCNameOrKeyWord() {
 			return getRuleContext(NCNameOrKeyWordContext.class,0);
 		}
@@ -1115,7 +1115,7 @@ public class JsoniqParser extends Parser {
 			case NCName:
 				{
 				setState(297);
-				((QnameContext)_localctx).fn_name = nCNameOrKeyWord();
+				((QnameContext)_localctx).local_name = nCNameOrKeyWord();
 				}
 				break;
 			case Kfor:
@@ -1163,7 +1163,7 @@ public class JsoniqParser extends Parser {
 			case Kjson:
 				{
 				setState(298);
-				((QnameContext)_localctx).fn_namekw = keyWords();
+				((QnameContext)_localctx).local_namekw = keyWords();
 				}
 				break;
 			default:

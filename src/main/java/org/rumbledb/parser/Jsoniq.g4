@@ -38,7 +38,7 @@ decimalFormatDecl       : 'declare'
                           (dfPropertyName '=' stringLiteral)*;
 
 qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (fn_name=nCNameOrKeyWord | fn_namekw = keyWords);
+                          (local_name=nCNameOrKeyWord | local_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'

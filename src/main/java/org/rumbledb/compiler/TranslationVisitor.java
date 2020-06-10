@@ -179,10 +179,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         String localName = null;
         String prefix = null;
         Name name = null;
-        if (ctx.fn_name != null) {
-            localName = ctx.fn_name.getText();
+        if (ctx.local_name != null) {
+            localName = ctx.local_name.getText();
         } else {
-            localName = ctx.fn_namekw.getText();
+            localName = ctx.local_namekw.getText();
         }
         if (ctx.ns != null) {
             prefix = ctx.ns.getText();
