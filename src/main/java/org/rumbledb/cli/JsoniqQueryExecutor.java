@@ -20,24 +20,17 @@
 
 package org.rumbledb.cli;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -82,14 +75,11 @@ public class JsoniqQueryExecutor {
             FileSystemUtil.delete(logPath, ExceptionMetadata.EMPTY_METADATA);
         }
         FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, ExceptionMetadata.EMPTY_METADATA);
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
 
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = this.parse(lexer);
-        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModule(CharStreams.fromStream(in), this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = generateRuntimeIterators(mainModule);
+        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -131,12 +121,9 @@ public class JsoniqQueryExecutor {
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         // create temp file
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
-        MainModule mainModule = this.parse(lexer);
-        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModule(CharStreams.fromString(query), this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
+        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         // execute locally for simple expressions
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
@@ -149,32 +136,6 @@ public class JsoniqQueryExecutor {
         resultList.clear();
         JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
-    }
-
-    private MainModule parse(JsoniqLexer lexer) {
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor();
-        try {
-            // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
-            return (MainModule) visitor.visit(main);
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    new ExceptionMetadata(
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine()
-                    )
-            );
-            e.initCause(ex);
-            throw e;
-        }
-    }
-
-    private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {
-        return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
     private long getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext, List<Item> resultList) {

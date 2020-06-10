@@ -24,7 +24,6 @@ import iq.base.AnnotationsTestsBase;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
-import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
