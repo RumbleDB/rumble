@@ -157,8 +157,8 @@ public class JsoniqQueryExecutor {
         TranslationVisitor visitor = new TranslationVisitor();
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
+            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            JsoniqParser.MainModuleContext main = module.module().main;
             return (MainModule) visitor.visit(main);
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(

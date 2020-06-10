@@ -5,6 +5,8 @@ grammar Jsoniq;
 package org.rumbledb.parser;
 }
 
+moduleAndThisIsIt       : module EOF;
+
 module                  : (Kjsoniq Kversion vers=stringLiteral ';')?
                           (libraryModule | main=mainModule);
 
