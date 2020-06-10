@@ -80,7 +80,7 @@ public enum ErrorCode {
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
     CastableErrorCode("XPST0080"),
-    InvalidExceptionErrorCode("XPST0081"),
+    PrefixCannotBeExpandedErrorCode("XPST0081"),
 
 
     UnexpectedTypeErrorCode("XPTY0004"),

@@ -22,7 +22,6 @@ package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.expressions.module.NamespaceDeclaration;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -154,12 +153,12 @@ public class StaticContext {
         return false;
     }
 
-    public boolean bindNamespace(NamespaceDeclaration namespaceDeclaration) {
+    public boolean bindNamespace(String prefix, String namespace) {
         if (this.namespaceBindings == null) {
             this.namespaceBindings = new HashMap<>();
         }
-        if (!this.namespaceBindings.containsKey(namespaceDeclaration.getPrefix())) {
-            this.namespaceBindings.put(namespaceDeclaration.getPrefix(), namespaceDeclaration.getNamespace());
+        if (!this.namespaceBindings.containsKey(prefix)) {
+            this.namespaceBindings.put(prefix, namespace);
             return true;
         }
         return false;

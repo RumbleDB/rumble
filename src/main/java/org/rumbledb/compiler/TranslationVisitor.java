@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
@@ -64,7 +65,6 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.expressions.module.NamespaceDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
@@ -129,6 +129,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
         this.moduleContext = new StaticContext();
+        this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
@@ -140,7 +141,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
         // bind namespaces
         for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-            this.visitNamespaceDecl(namespace);
+            this.processNamespaceDecl(namespace);
         }
 
         // parse variables and function
@@ -176,6 +177,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction) {
         String localName = null;
         String prefix = null;
+        Name name = null;
         if (ctx.fn_name != null) {
             localName = ctx.fn_name.getText();
         } else {
@@ -188,13 +190,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (prefix == null) {
             if (isFunction) {
-                return Name.createVariableInRumbleNamespace(localName);
+                name = Name.createVariableInRumbleNamespace(localName);
             } else {
-                return Name.createVariableInNoNamespace(localName);
+                name = Name.createVariableInNoNamespace(localName);
             }
         } else {
-            return Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
+            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
         }
+        if (name != null) {
+            return name;
+        }
+        throw new PrefixCannotBeExpandedException(
+                "Cannot expand prefix " + prefix,
+                new ExceptionMetadata(
+                        ctx.getStop().getLine(),
+                        ctx.getStop().getCharPositionInLine()
+                )
+        );
     }
 
     @Override
@@ -1197,14 +1209,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
     }
 
-    @Override
-    public Node visitNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
-        NamespaceDeclaration namespaceDeclaration = new NamespaceDeclaration(
-                ctx.NCName().getText(),
-                ctx.uriLiteral().getText()
+    public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
+        this.moduleContext.bindNamespace(
+            ctx.NCName().getText(),
+            ctx.uriLiteral().getText()
         );
-        this.moduleContext.bindNamespace(namespaceDeclaration);
-        return namespaceDeclaration;
     }
 
 }
