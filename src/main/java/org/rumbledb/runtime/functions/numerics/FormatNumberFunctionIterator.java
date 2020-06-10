@@ -34,11 +34,11 @@ import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.List;
 
-public class FormatIntegerFunctionIterator extends LocalFunctionCallIterator {
+public class FormatNumberFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public FormatIntegerFunctionIterator(
+    public FormatNumberFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -56,7 +56,7 @@ public class FormatIntegerFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createStringItem("");
             }
 
-            int source = integerItem.getIntegerValue();
+            double source = integerItem.getDoubleValue();
             boolean isNegative = false;
             if (source < 0) {
                 isNegative = true;
@@ -66,13 +66,6 @@ public class FormatIntegerFunctionIterator extends LocalFunctionCallIterator {
             Item pictureItem = this.children.get(1)
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             String picture = pictureItem.getStringValue();
-
-            if (picture.matches(".*\\p{Nd}.*") && !picture.matches("^((\\p{Nd}|#|[^\\p{N}\\p{L}])+?)$")) {
-                throw new InvalidDecimalFormatPictureStringException(
-                        picture + " contains a digit but is not of the right form.",
-                        getMetadata()
-                );
-            }
 
             NumberFormat nf = NumberFormat.getInstance();
             if (nf instanceof DecimalFormat) {
