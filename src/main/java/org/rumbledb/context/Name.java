@@ -47,7 +47,8 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     private String namespace;
     private String prefix;
     private String localName;
-    private static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
+    public static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
+    public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
@@ -93,6 +94,23 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     }
 
     /**
+     * Creates an expanded name resolving the prefix from namespace bindings.
+     * 
+     * @param prefix the prefix
+     * @param localName the local name
+     * @param moduleContext the module context containing the bindings.
+     * @return the expanded name.
+     */
+    public static Name createVariableResolvingPrefix(String prefix, String localName, StaticContext moduleContext) {
+        String namespace = moduleContext.resolveNamespace(prefix);
+        if (namespace != null) {
+            return new Name(namespace, prefix, localName);
+        } else {
+            return null;
+        }
+    }
+
+    /**
      * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is the arity of the
      * function,
      * in order to encode the whole function identifier as an expanded name.
@@ -128,7 +146,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     @Override
     public String toString() {
         if (this.prefix != null) {
-            return "this.prefix" + ":" + this.localName;
+            return this.prefix + ":" + this.localName;
         }
         if (this.namespace != null) {
             return "{" + this.namespace + "}" + this.localName;

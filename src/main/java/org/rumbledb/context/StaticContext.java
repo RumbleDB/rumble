@@ -64,6 +64,7 @@ public class StaticContext {
     }
 
     private Map<Name, InScopeVariable> inScopeVariables;
+    private Map<String, String> namespaceBindings;
     private StaticContext parent;
 
     public StaticContext() {
@@ -150,5 +151,30 @@ public class StaticContext {
             return this.parent.hasVariable(variableName);
         }
         return false;
+    }
+
+    public boolean bindNamespace(String prefix, String namespace) {
+        if (this.namespaceBindings == null) {
+            this.namespaceBindings = new HashMap<>();
+        }
+        if (!this.namespaceBindings.containsKey(prefix)) {
+            this.namespaceBindings.put(prefix, namespace);
+            return true;
+        }
+        return false;
+    }
+
+    public String resolveNamespace(String prefix) {
+        if (this.namespaceBindings != null) {
+            if (this.namespaceBindings.containsKey(prefix)) {
+                return this.namespaceBindings.get(prefix);
+            } else {
+                return null;
+            }
+        }
+        if (this.parent != null) {
+            return this.parent.resolveNamespace(prefix);
+        }
+        return null;
     }
 }

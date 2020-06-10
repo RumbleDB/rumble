@@ -106,6 +106,9 @@ or a module import.
 if the version number specified in a version declaration 
 is not supported by the implementation. For now, only version 1.0 is supported.
 
+- [XQST0033] - Namespace prefix bound twice. It is a static error if
+a module contains multiple bindings for the same namespace prefix.
+
 - [XQST0034] - Function already exists. It is a static error
 if multiple functions declared or imported by a module have
 the same number of arguments and their expanded QNames are equal

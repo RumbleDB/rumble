@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.module;
 
 
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -32,6 +33,7 @@ import java.util.List;
 
 public class MainModule extends Node {
 
+    protected StaticContext staticContext;
     private final Prolog prolog;
     private final Expression expression;
 
@@ -42,6 +44,14 @@ public class MainModule extends Node {
             throw new OurBadException("The main module must have a non-null expression");
         }
         this.expression = expression;
+    }
+
+    public StaticContext getStaticContext() {
+        return this.staticContext;
+    }
+
+    public void setStaticContext(StaticContext staticContext) {
+        this.staticContext = staticContext;
     }
 
     public Prolog getProlog() {

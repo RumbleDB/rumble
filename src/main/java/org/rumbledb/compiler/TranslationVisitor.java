@@ -24,12 +24,15 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
+import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.CommaExpression;
@@ -109,6 +112,8 @@ import java.util.Map;
  */
 public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
 
+    private StaticContext moduleContext;
+
     public TranslationVisitor() {
     }
     // endregion expr
@@ -124,26 +129,39 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
+        this.moduleContext = new StaticContext();
+        this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
-        return new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        module.setStaticContext(this.moduleContext);
+        return module;
     }
 
     @Override
     public Node visitProlog(JsoniqParser.PrologContext ctx) {
+        // bind namespaces
+        for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
+            this.processNamespaceDecl(namespace);
+        }
+
+        // parse variables and function
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-        for (JsoniqParser.VarDeclContext variable : ctx.varDecl()) {
-            VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
-                variable
-            );
-            globalVariables.add(variableDeclaration);
-        }
-        for (JsoniqParser.FunctionDeclContext function : ctx.functionDecl()) {
-            InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
-                function
-            );
-            functionDeclarations.add(new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx)));
+        for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
+            if (annotatedDeclaration.varDecl() != null) {
+                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                    annotatedDeclaration.varDecl()
+                );
+                globalVariables.add(variableDeclaration);
+            } else if (annotatedDeclaration.functionDecl() != null) {
+                InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
+                    annotatedDeclaration.functionDecl()
+                );
+                functionDeclarations.add(
+                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                );
+            }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
@@ -154,24 +172,58 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitModuleImport(JsoniqParser.ModuleImportContext ctx) {
-        throw new ModuleDeclarationException("Modules are not supported in Sparksoniq", createMetadataFromContext(ctx));
+        throw new ModuleDeclarationException("Modules are not supported in Rumble", createMetadataFromContext(ctx));
+    }
+
+    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction) {
+        String localName = null;
+        String prefix = null;
+        Name name = null;
+        if (ctx.local_name != null) {
+            localName = ctx.local_name.getText();
+        } else {
+            localName = ctx.local_namekw.getText();
+        }
+        if (ctx.ns != null) {
+            prefix = ctx.ns.getText();
+        } else if (ctx.nskw != null) {
+            prefix = ctx.nskw.getText();
+        }
+        if (prefix == null) {
+            if (isFunction) {
+                name = Name.createVariableInRumbleNamespace(localName);
+            } else {
+                name = Name.createVariableInNoNamespace(localName);
+            }
+        } else {
+            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
+        }
+        if (name != null) {
+            return name;
+        }
+        throw new PrefixCannotBeExpandedException(
+                "Cannot expand prefix " + prefix,
+                new ExceptionMetadata(
+                        ctx.getStop().getLine(),
+                        ctx.getStop().getCharPositionInLine()
+                )
+        );
     }
 
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-        // TODO namespace
-        Name fnName = Name.createVariableInRumbleNamespace(ctx.fn_name.getText());
+        Name name = parseName(ctx.qname(), true);
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = mostGeneralSequenceType;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
+                paramName = parseName(param.qname(), false);
                 paramType = mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
-                            fnName,
+                            name,
                             paramName,
                             createMetadataFromContext(param)
                     );
@@ -194,7 +246,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
 
         return new InlineFunctionExpression(
-                fnName,
+                name,
                 fnParams,
                 fnReturnType,
                 bodyExpression,
@@ -861,13 +913,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        String localName = ctx.name.getText();
-        String prefix = null;
-        if (ctx.ns != null) {
-            prefix = ctx.ns.getText();
-        }
-        // TODO resolved namespace
-        Name name = Name.createVariableInNoNamespace(localName);
+        Name name = parseName(ctx.qname(), false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -918,18 +964,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
-        String localName = null;
-        String prefix = null;
-        if (ctx.fn_name != null) {
-            localName = ctx.fn_name.getText();
-        } else {
-            localName = ctx.kw.getText();
-        }
-        if (ctx.ns != null) {
-            prefix = ctx.ns.getText();
-        }
-        // TODO resolve namespace
-        Name name = Name.createVariableInRumbleNamespace(localName);
+        Name name = parseName(ctx.fn_name, true);
         return new FunctionCallExpression(
                 name,
                 children,
@@ -988,8 +1023,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
 
-        // TODO namespace
-        Name name = Name.createVariableInRumbleNamespace(ctx.fn_name.getText());
+        Name name = parseName(ctx.fn_name, true);
         int arity = ((IntegerLiteralExpression) literal).getValue();
         return new NamedFunctionReferenceExpression(
                 new FunctionIdentifier(name, arity),
@@ -1005,8 +1039,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                // TODO namespace
-                paramName = Name.createVariableInNoNamespace(param.NCName().getText());
+                paramName = parseName(param.qname(), false);
                 paramType = SequenceType.mostGeneralSequenceType;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -1080,8 +1113,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             List<SequenceType> union = new ArrayList<>();
             Name variableName = null;
             if (expr.var_ref != null) {
-                // TODO namespace
-                variableName = Name.createVariableInNoNamespace(expr.var_ref.name.getText());
+                variableName = ((VariableReferenceExpression) this.visitVarRef(
+                    expr.var_ref
+                )).getVariableName();
             }
             if (expr.union != null && !expr.union.isEmpty()) {
                 for (JsoniqParser.SequenceTypeContext sequenceType : expr.union) {
@@ -1099,8 +1133,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
-            // TODO namespace
-            defaultVariableName = Name.createVariableInNoNamespace(ctx.var_ref.name.getText());
+            defaultVariableName = ((VariableReferenceExpression) this.visitVarRef(
+                ctx.var_ref
+            )).getVariableName();
         }
         Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
         return new TypeSwitchExpression(
@@ -1172,6 +1207,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+    }
+
+    public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
+        boolean success = this.moduleContext.bindNamespace(
+            ctx.NCName().getText(),
+            ctx.uriLiteral().getText()
+        );
+        if (!success) {
+            throw new NamespacePrefixBoundTwiceException(
+                    "Prefix " + ctx.NCName().getText() + " is bound twice.",
+                    new ExceptionMetadata(
+                            ctx.getStop().getLine(),
+                            ctx.getStop().getCharPositionInLine()
+                    )
+            );
+        }
     }
 
 }
