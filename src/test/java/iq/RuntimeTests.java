@@ -24,6 +24,7 @@ import iq.base.AnnotationsTestsBase;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
+import org.apache.spark.SparkContext;
 import org.apache.spark.api.java.JavaRDD;
 import org.junit.Assert;
 import org.junit.BeforeClass;
@@ -94,6 +95,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)
