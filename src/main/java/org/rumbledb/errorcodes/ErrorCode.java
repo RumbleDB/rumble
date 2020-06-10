@@ -89,6 +89,7 @@ public enum ErrorCode {
 
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
+    NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
     DuplicateParamName("XQST0039"),
     VariableAlreadyExists("XQST0049"),

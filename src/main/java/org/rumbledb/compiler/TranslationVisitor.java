@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleDeclarationException;
+import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.RumbleException;
@@ -1209,10 +1210,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
-        this.moduleContext.bindNamespace(
+        boolean success = this.moduleContext.bindNamespace(
             ctx.NCName().getText(),
             ctx.uriLiteral().getText()
         );
+        if (!success) {
+            throw new NamespacePrefixBoundTwiceException(
+                    "Prefix " + ctx.NCName().getText() + " is bound twice.",
+                    new ExceptionMetadata(
+                            ctx.getStop().getLine(),
+                            ctx.getStop().getCharPositionInLine()
+                    )
+            );
+        }
     }
 
 }
