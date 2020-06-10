@@ -72,7 +72,10 @@ public class AnnotationsTestsBase {
         try {
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
-            mainModule = VisitorHelpers.parseMainModule(CharStreams.fromFileName(path), AnnotationsTestsBase.configuration);
+            mainModule = VisitorHelpers.parseMainModule(
+                CharStreams.fromFileName(path),
+                AnnotationsTestsBase.configuration
+            );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING

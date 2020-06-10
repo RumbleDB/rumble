@@ -40,9 +40,8 @@ public class VisitorHelpers {
         System.out.println(node);
         System.out.println();
     }
-    
-    public static MainModule parseMainModule(CharStream stream, RumbleRuntimeConfiguration configuration)
-    {
+
+    public static MainModule parseMainModule(CharStream stream, RumbleRuntimeConfiguration configuration) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());

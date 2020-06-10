@@ -38,7 +38,10 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
-        MainModule mainModule = VisitorHelpers.parseMainModule(CharStreams.fromString(query), RumbleRuntimeConfiguration.getDefaultConfiguration());
+        MainModule mainModule = VisitorHelpers.parseMainModule(
+            CharStreams.fromString(query),
+            RumbleRuntimeConfiguration.getDefaultConfiguration()
+        );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         return new SequenceOfItems(iterator);
     }
