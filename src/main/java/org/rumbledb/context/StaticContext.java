@@ -34,7 +34,6 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
