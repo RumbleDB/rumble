@@ -26,7 +26,7 @@ public class FileSystemUtil {
             );
         }
         if (base.isAbsolute()) {
-            throw new CannotRetrieveResourceException(
+            throw new OurBadException(
                     "The base URI is not absolute!",
                     new ExceptionMetadata(0, 0)
             );
@@ -90,7 +90,7 @@ public class FileSystemUtil {
 
     public static boolean delete(URI locator, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
-            throw new OurBadException("Unresolved uri passed to exists()");
+            throw new OurBadException("Unresolved uri passed to delete()");
         }
         if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
@@ -113,7 +113,7 @@ public class FileSystemUtil {
             );
         } catch (Exception e) {
             e.printStackTrace();
-            throw new OurBadException(
+            throw new CannotRetrieveResourceException(
                     "An unexpected exception happened while deleting.",
                     metadata
             );
@@ -122,7 +122,7 @@ public class FileSystemUtil {
 
     public static FSDataInputStream getDataInputStream(URI locator, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
-            throw new OurBadException("Unresolved uri passed to exists()");
+            throw new OurBadException("Unresolved uri passed to getDataInputStream()");
         }
         if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
@@ -154,7 +154,7 @@ public class FileSystemUtil {
 
     public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
-            throw new OurBadException("Unresolved uri passed to exists()");
+            throw new OurBadException("Unresolved uri passed to write()");
         }
         if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
@@ -191,7 +191,7 @@ public class FileSystemUtil {
 
     public static void append(URI locator, List<String> content, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
-            throw new OurBadException("Unresolved uri passed to exists()");
+            throw new OurBadException("Unresolved uri passed to append()");
         }
         if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
@@ -219,7 +219,7 @@ public class FileSystemUtil {
             );
         } catch (Exception e) {
             e.printStackTrace();
-            throw new OurBadException(
+            throw new CannotRetrieveResourceException(
                     "An unexpected exception happened while appending to the file.",
                     metadata
             );
