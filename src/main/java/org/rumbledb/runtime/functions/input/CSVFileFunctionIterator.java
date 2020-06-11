@@ -35,6 +35,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -54,6 +55,10 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         Item optionsObjectItem;
         try {
             DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
@@ -81,7 +86,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     }
                 }
             }
-            return dfr.csv(url);
+            return dfr.csv(uri.toString());
         } catch (Exception e) {
             if (e instanceof AnalysisException || e instanceof IllegalArgumentException) {
                 throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
