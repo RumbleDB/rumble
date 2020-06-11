@@ -53,23 +53,22 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        // TODO resolve URI
-        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
-            throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
 
         if (this.children.size() == 1) {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
-                .textFile(url);
+                .textFile(uri.toString());
         } else {
             RuntimeIterator partitionsIterator = this.children.get(1);
             partitionsIterator.open(this.currentDynamicContextForLocalExecution);
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .textFile(
-                    url,
+                    uri.toString(),
                     partitionsIterator.next().getIntegerValue()
                 );
             partitionsIterator.close();

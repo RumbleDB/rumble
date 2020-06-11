@@ -35,6 +35,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.List;
@@ -56,6 +57,10 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
@@ -91,7 +96,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     }
                 }
             }
-            return dfr.format("avro").load(url);
+            return dfr.format("avro").load(uri.toString());
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
                 throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());
