@@ -492,20 +492,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         int arity = arguments.size();
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
+        RuntimeIterator runtimeIterator = null;
         if (Functions.checkBuiltInFunctionExists(identifier)) {
-            return Functions.getBuiltInFunctionIterator(
+            runtimeIterator = Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
             );
+        } else {
+            runtimeIterator = new StaticUserDefinedFunctionCallIterator(
+                    identifier,
+                    arguments,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    iteratorMetadata
+            );
         }
-        RuntimeIterator runtimeIterator = new StaticUserDefinedFunctionCallIterator(
-                identifier,
-                arguments,
-                expression.getHighestExecutionMode(this.visitorConfig),
-                iteratorMetadata
-        );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }

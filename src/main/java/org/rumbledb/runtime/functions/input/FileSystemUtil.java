@@ -12,20 +12,19 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
 public class FileSystemUtil {
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
-        if (url.isEmpty()) {
+        if (url == null || url.isEmpty()) {
             throw new CannotRetrieveResourceException(
                     "No path provided!",
                     new ExceptionMetadata(0, 0)
             );
         }
-        if (base.isAbsolute()) {
+        if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",
                     new ExceptionMetadata(0, 0)
@@ -39,22 +38,13 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURIAgainstWorkingDirectory(String url, ExceptionMetadata metadata) {
-        if (url.isEmpty()) {
-            throw new CannotRetrieveResourceException(
-                    "No path provided!",
-                    new ExceptionMetadata(0, 0)
-            );
-        }
         try {
-            URI uri = new URI(url);
-            if (uri.isAbsolute()) {
-                return uri;
-            }
             FileContext fileContext = FileContext.getFileContext();
             Path workingDirectory = fileContext.getWorkingDirectory();
+            if (url == null || url.isEmpty()) {
+                return new Path(workingDirectory, ".").toUri();
+            }
             return new Path(workingDirectory, url).toUri();
-        } catch (URISyntaxException e) {
-            throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
