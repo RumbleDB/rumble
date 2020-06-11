@@ -21,13 +21,13 @@ public class FileSystemUtil {
         if (url == null || url.isEmpty()) {
             throw new CannotRetrieveResourceException(
                     "No path provided!",
-                    new ExceptionMetadata(0, 0)
+                    metadata
             );
         }
         if (!base.isAbsolute()) {
             throw new OurBadException(
                     "The base URI is not absolute!",
-                    new ExceptionMetadata(0, 0)
+                    metadata
             );
         }
         try {
