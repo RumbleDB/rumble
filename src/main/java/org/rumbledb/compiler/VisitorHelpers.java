@@ -1,12 +1,15 @@
 package org.rumbledb.compiler;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
@@ -20,6 +23,8 @@ import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {
@@ -40,12 +45,22 @@ public class VisitorHelpers {
         System.out.println(node);
         System.out.println();
     }
+    
+    public static MainModule parseMainModuleFromLocation(String location, RumbleRuntimeConfiguration configuration) throws IOException {
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
+        return parseMainModule(CharStreams.fromStream(in), location, configuration);
+    }
 
-    public static MainModule parseMainModule(CharStream stream, RumbleRuntimeConfiguration configuration) {
+    public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+        String location = null; // working directory
+        return parseMainModule(CharStreams.fromString(query), location, configuration);
+    }
+
+    public static MainModule parseMainModule(CharStream stream, String uri, RumbleRuntimeConfiguration configuration) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor();
+        TranslationVisitor visitor = new TranslationVisitor(uri);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();

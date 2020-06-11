@@ -66,9 +66,11 @@ public class StaticContext {
     private Map<Name, InScopeVariable> inScopeVariables;
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
+    private String staticBaseURI;
 
-    public StaticContext() {
+    public StaticContext(String staticBaseURI) {
         this.parent = null;
+        this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
     }
 

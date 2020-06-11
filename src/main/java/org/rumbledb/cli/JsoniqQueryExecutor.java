@@ -20,8 +20,6 @@
 
 package org.rumbledb.cli;
 
-import org.antlr.v4.runtime.CharStreams;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -74,10 +72,9 @@ public class JsoniqQueryExecutor {
         if (logPath != null) {
             FileSystemUtil.delete(logPath, ExceptionMetadata.EMPTY_METADATA);
         }
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, ExceptionMetadata.EMPTY_METADATA);
 
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = VisitorHelpers.parseMainModule(CharStreams.fromStream(in), this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryFile, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
@@ -121,7 +118,7 @@ public class JsoniqQueryExecutor {
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         // create temp file
-        MainModule mainModule = VisitorHelpers.parseMainModule(CharStreams.fromString(query), this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         // execute locally for simple expressions

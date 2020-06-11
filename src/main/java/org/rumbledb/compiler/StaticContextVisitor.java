@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -40,6 +41,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -78,9 +80,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitMainModule(MainModule node, StaticContext argument) {
+        return visitDescendants(node, node.getStaticContext());
+    }
+
+    @Override
     public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
-            argument = new StaticContext();
+            throw new OurBadException("No static context provided!");
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);

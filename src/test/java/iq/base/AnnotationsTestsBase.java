@@ -20,7 +20,6 @@
 
 package iq.base;
 
-import org.antlr.v4.runtime.CharStreams;
 import org.junit.Assert;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -72,8 +71,8 @@ public class AnnotationsTestsBase {
         try {
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
-            mainModule = VisitorHelpers.parseMainModule(
-                CharStreams.fromFileName(path),
+            mainModule = VisitorHelpers.parseMainModuleFromLocation(
+                path,
                 AnnotationsTestsBase.configuration
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
