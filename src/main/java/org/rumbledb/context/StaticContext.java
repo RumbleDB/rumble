@@ -21,6 +21,7 @@
 package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.types.SequenceType;
 
@@ -82,6 +83,16 @@ public class StaticContext {
 
     public StaticContext getParent() {
         return this.parent;
+    }
+
+    public URI getStaticBaseURI() {
+        if (this.staticBaseURI != null) {
+            return this.staticBaseURI;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseURI();
+        }
+        throw new OurBadException("Static context not set.");
     }
 
     public boolean isInScope(Name varName) {

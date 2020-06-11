@@ -30,6 +30,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -52,6 +53,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
+    private StaticContext staticContext;
 
     protected ExecutionMode highestExecutionMode;
 
@@ -63,6 +65,20 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
         }
+    }
+
+    public void setStaticContext(StaticContext staticContext) {
+        if (this.staticContext != null) {
+            throw new OurBadException("Attempt to overwrite an existing static context");
+        }
+        this.staticContext = staticContext;
+    }
+
+    public StaticContext getStaticContext() {
+        if (this.staticContext == null) {
+            throw new OurBadException("Static context is not set.");
+        }
+        return this.staticContext;
     }
 
     /**
