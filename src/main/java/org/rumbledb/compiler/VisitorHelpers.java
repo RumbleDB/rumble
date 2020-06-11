@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -45,9 +46,11 @@ public class VisitorHelpers {
         System.out.println(node);
         System.out.println();
     }
-    
-    public static MainModule parseMainModuleFromLocation(String location, RumbleRuntimeConfiguration configuration) throws IOException {
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
+
+    public static MainModule parseMainModuleFromLocation(String location, RumbleRuntimeConfiguration configuration)
+            throws IOException {
+        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(location, ExceptionMetadata.EMPTY_METADATA);
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(uri, ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(CharStreams.fromStream(in), location, configuration);
     }
 
@@ -82,26 +85,26 @@ public class VisitorHelpers {
         }
     }
 
-    private static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+    private static void populateStaticContext(MainModule mainModule, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(node, null);
+        visitor.visit(mainModule, mainModule.getStaticContext());
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
 
         while (true) {
-            visitor.visit(node, null);
+            visitor.visit(mainModule, mainModule.getStaticContext());
             int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
             if (conf.isPrintIteratorTree()) {
-                printTree(node, conf);
+                printTree(mainModule, conf);
             }
 
             if (currentUnsetCount > prevUnsetCount) {
@@ -117,11 +120,11 @@ public class VisitorHelpers {
         }
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
-        visitor.visit(node, null);
+        visitor.visit(mainModule, mainModule.getStaticContext());
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
-        if (node.numberOfUnsetExecutionModes() > 0) {
+        if (mainModule.numberOfUnsetExecutionModes() > 0) {
             System.err.println(
                 "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );

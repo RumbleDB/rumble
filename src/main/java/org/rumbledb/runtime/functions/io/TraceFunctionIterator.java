@@ -32,6 +32,7 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.net.URI;
 import java.util.Collections;
 import java.util.List;
 
@@ -88,8 +89,9 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
             if (conf != null) {
                 String path = conf.getLogPath();
                 if (path != null) {
+                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, getMetadata());
                     FileSystemUtil.append(
-                        path,
+                        uri,
                         Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
                         getMetadata()
                     );

@@ -18,7 +18,27 @@ import java.util.List;
 
 public class FileSystemUtil {
 
-    public static URI validateURI(String url, ExceptionMetadata metadata) {
+    public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
+        if (url.isEmpty()) {
+            throw new CannotRetrieveResourceException(
+                    "No path provided!",
+                    new ExceptionMetadata(0, 0)
+            );
+        }
+        if (base.isAbsolute()) {
+            throw new CannotRetrieveResourceException(
+                    "The base URI is not absolute!",
+                    new ExceptionMetadata(0, 0)
+            );
+        }
+        try {
+            return base.resolve(url);
+        } catch (IllegalArgumentException e) {
+            throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
+        }
+    }
+
+    public static URI resolveURIAgainstWorkingDirectory(String url, ExceptionMetadata metadata) {
         if (url.isEmpty()) {
             throw new CannotRetrieveResourceException(
                     "No path provided!",
@@ -26,22 +46,37 @@ public class FileSystemUtil {
             );
         }
         try {
-            return new URI(url);
+            URI uri = new URI(url);
+            if (uri.isAbsolute()) {
+                return uri;
+            }
+            FileContext fileContext = FileContext.getFileContext();
+            Path workingDirectory = fileContext.getWorkingDirectory();
+            return new Path(workingDirectory, url).toUri();
         } catch (URISyntaxException e) {
-            throw new CannotRetrieveResourceException("Malformed URL: " + url, metadata);
+            throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
+        } catch (UnsupportedFileSystemException e) {
+            throw new CannotRetrieveResourceException(
+                    "The default file system is not supported!",
+                    metadata
+            );
+        } catch (IllegalArgumentException e) {
+            throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
         }
     }
 
-    public static boolean exists(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
+    public static boolean exists(URI locator, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
         try {
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
-            return url.contains("*") || fileContext.util().exists(path);
+            Path path = new Path(locator);
+            return locator.toString().contains("*") || fileContext.util().exists(path);
 
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
-                    "No file system is configured for scheme " + url + "!",
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
                     metadata
             );
         } catch (Exception e) {
@@ -53,9 +88,11 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean delete(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
+    public static boolean delete(URI locator, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
+        if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
                     "Path cannot contain *!",
                     metadata
@@ -63,9 +100,9 @@ public class FileSystemUtil {
         }
         try {
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot delete file that does not exist: " + url);
+                throw new OurBadException("Cannot delete file that does not exist: " + locator);
             }
             return fileContext.delete(path, true);
         } catch (IOException e) {
@@ -83,20 +120,21 @@ public class FileSystemUtil {
         }
     }
 
-    public static FSDataInputStream getDataInputStream(String url, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
+    public static FSDataInputStream getDataInputStream(URI locator, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
+        if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
                     "Path cannot contain *!",
                     metadata
             );
         }
         try {
-            locator = new URI(url);
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot read file that does not exist: " + url);
+                throw new OurBadException("Cannot read file that does not exist: " + locator);
             }
             return fileContext.open(path);
         } catch (IOException e) {
@@ -114,18 +152,19 @@ public class FileSystemUtil {
         }
     }
 
-    public static void write(String url, List<String> content, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
+    public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
+        if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
                     "Path cannot contain *!",
                     metadata
             );
         }
         try {
-            locator = new URI(url);
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
             FSDataOutputStream outputStream = fileContext.create(
                 path,
                 EnumSet.of(CreateFlag.CREATE, CreateFlag.OVERWRITE)
@@ -150,18 +189,19 @@ public class FileSystemUtil {
         }
     }
 
-    public static void append(String url, List<String> content, ExceptionMetadata metadata) {
-        URI locator = validateURI(url, metadata);
-        if (url.contains("*")) {
+    public static void append(URI locator, List<String> content, ExceptionMetadata metadata) {
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
+        if (locator.toString().contains("*")) {
             throw new CannotRetrieveResourceException(
                     "Path cannot contain *!",
                     metadata
             );
         }
         try {
-            locator = new URI(url);
             FileContext fileContext = FileContext.getFileContext();
-            Path path = new Path(url);
+            Path path = new Path(locator);
             FSDataOutputStream outputStream = fileContext.create(
                 path,
                 EnumSet.of(CreateFlag.CREATE, CreateFlag.APPEND)

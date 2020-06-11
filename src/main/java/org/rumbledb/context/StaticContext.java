@@ -26,6 +26,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -66,9 +67,9 @@ public class StaticContext {
     private Map<Name, InScopeVariable> inScopeVariables;
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
-    private String staticBaseURI;
+    private URI staticBaseURI;
 
-    public StaticContext(String staticBaseURI) {
+    public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();

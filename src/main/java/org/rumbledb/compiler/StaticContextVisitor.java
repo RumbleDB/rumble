@@ -41,7 +41,6 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -77,11 +76,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         // initialize execution mode by visiting children and expressions first, then calling initialize methods
         node.initHighestExecutionMode(this.visitorConfig);
         return generatedContext;
-    }
-
-    @Override
-    public StaticContext visitMainModule(MainModule node, StaticContext argument) {
-        return visitDescendants(node, node.getStaticContext());
     }
 
     @Override
