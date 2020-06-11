@@ -230,8 +230,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.inScopeVariables = kryo.readObject(input, Map.class);
-        this.namespaceBindings = kryo.readObject(input, Map.class);
+        this.inScopeVariables = kryo.readObject(input, HashMap.class);
+        this.namespaceBindings = kryo.readObject(input, HashMap.class);
         this.parent = kryo.readObject(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
     }
