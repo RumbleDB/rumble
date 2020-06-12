@@ -54,7 +54,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
-        String location = null; // working directory
+        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(".", ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(CharStreams.fromString(query), location, configuration);
     }
 
