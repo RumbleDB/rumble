@@ -54,6 +54,8 @@ public class FileSystemUtil {
                     "The default file system is not supported!",
                     metadata
             );
+        } catch (IllegalArgumentException e) {
+            throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
         } catch (URISyntaxException e) {
             throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
         }
