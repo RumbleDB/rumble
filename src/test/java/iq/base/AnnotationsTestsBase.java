@@ -24,12 +24,14 @@ import org.junit.Assert;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
@@ -38,6 +40,7 @@ import utils.annotations.AnnotationProcessor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -71,8 +74,9 @@ public class AnnotationsTestsBase {
         try {
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
             mainModule = VisitorHelpers.parseMainModuleFromLocation(
-                path,
+                uri,
                 AnnotationsTestsBase.configuration
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
