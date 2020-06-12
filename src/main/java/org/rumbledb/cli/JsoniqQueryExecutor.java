@@ -49,15 +49,13 @@ public class JsoniqQueryExecutor {
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
-        if (outputUri != null) {
-            if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
-                if (!this.configuration.getOverwrite()) {
-                    throw new CliException(
-                            "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
-                    );
-                } else {
-                    FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
-                }
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+            if (!this.configuration.getOverwrite()) {
+                throw new CliException(
+                        "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
+                );
+            } else {
+                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
@@ -72,6 +70,7 @@ public class JsoniqQueryExecutor {
         URI outputUri = null;
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
+            checkOutputFile(outputUri);
         }
 
         String logPath = this.configuration.getLogPath();
@@ -82,7 +81,6 @@ public class JsoniqQueryExecutor {
         }
 
         List<Item> outputList = null;
-        checkOutputFile(outputUri);
 
         long startTime = System.currentTimeMillis();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
