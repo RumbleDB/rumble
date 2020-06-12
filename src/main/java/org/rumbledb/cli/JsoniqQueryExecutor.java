@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
@@ -70,12 +69,6 @@ public class JsoniqQueryExecutor {
         URI outputUri = null;
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
-            if (!FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
-                throw new CannotRetrieveResourceException(
-                        "Query file does not exist.",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
-            }
         }
 
         String logPath = this.configuration.getLogPath();

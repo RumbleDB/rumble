@@ -71,10 +71,9 @@ public class FileSystemUtil {
                     "No file system is configured for scheme " + locator.getScheme() + "!",
                     metadata
             );
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
             throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    "I/O error while accessing the " + locator.getScheme() + " filesystem. File: " + locator,
                     metadata
             );
         }
@@ -94,19 +93,21 @@ public class FileSystemUtil {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot delete file that does not exist: " + locator);
+                throw new CannotRetrieveResourceException(
+                        "Cannot delete file that does not exist: " + locator,
+                        metadata
+                );
             }
             return fileContext.delete(path, true);
+        } catch (UnsupportedFileSystemException e) {
+            throw new CannotRetrieveResourceException(
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
+                    metadata
+            );
         } catch (IOException e) {
             e.printStackTrace();
             throw new CannotRetrieveResourceException(
                     "Error while accessing the " + locator.getScheme() + " filesystem.",
-                    metadata
-            );
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new CannotRetrieveResourceException(
-                    "An unexpected exception happened while deleting.",
                     metadata
             );
         }
@@ -129,16 +130,14 @@ public class FileSystemUtil {
                 throw new CannotRetrieveResourceException("File does not exist: " + locator, metadata);
             }
             return fileContext.open(path);
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
                     metadata
             );
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "An unexpected exception happened while reading the file.",
+        } catch (IOException e) {
+            throw new CannotRetrieveResourceException(
+                    "I/O error while accessing the " + locator.getScheme() + " filesystem. File: " + locator,
                     metadata
             );
         }
@@ -154,10 +153,14 @@ public class FileSystemUtil {
                 sb.append(line);
             }
             return sb.toString();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
+                    metadata
+            );
+        } catch (IOException e) {
+            throw new CannotRetrieveResourceException(
+                    "I/O error while accessing the " + locator.getScheme() + " filesystem. File: " + locator,
                     metadata
             );
         }
@@ -185,16 +188,14 @@ public class FileSystemUtil {
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
                     metadata
             );
-        } catch (Exception e) {
-            e.printStackTrace();
-            throw new OurBadException(
-                    "An unexpected exception happened while writing the file.",
+        } catch (IOException e) {
+            throw new CannotRetrieveResourceException(
+                    "I/O error while accessing the " + locator.getScheme() + " filesystem. File: " + locator,
                     metadata
             );
         }
@@ -222,16 +223,14 @@ public class FileSystemUtil {
                 outputStream.writeBytes("\n");
             }
             outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
+        } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
-                    "Error while accessing the " + locator.getScheme() + " filesystem.",
+                    "No file system is configured for scheme " + locator.getScheme() + "!",
                     metadata
             );
-        } catch (Exception e) {
-            e.printStackTrace();
+        } catch (IOException e) {
             throw new CannotRetrieveResourceException(
-                    "An unexpected exception happened while appending to the file.",
+                    "I/O error while accessing the " + locator.getScheme() + " filesystem. File: " + locator,
                     metadata
             );
         }
