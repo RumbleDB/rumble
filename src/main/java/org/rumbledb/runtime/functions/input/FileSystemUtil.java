@@ -10,7 +10,9 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.EnumSet;
 import java.util.List;
@@ -124,7 +126,7 @@ public class FileSystemUtil {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
             if (!fileContext.util().exists(path)) {
-                throw new OurBadException("Cannot read file that does not exist: " + locator);
+                throw new CannotRetrieveResourceException("File does not exist: " + locator, metadata);
             }
             return fileContext.open(path);
         } catch (IOException e) {
@@ -137,6 +139,25 @@ public class FileSystemUtil {
             e.printStackTrace();
             throw new OurBadException(
                     "An unexpected exception happened while reading the file.",
+                    metadata
+            );
+        }
+    }
+
+    public static String readContent(URI locator, ExceptionMetadata metadata) {
+        FSDataInputStream inputStream = getDataInputStream(locator, metadata);
+        BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
+        StringBuffer sb = new StringBuffer();
+        String line;
+        try {
+            while ((line = reader.readLine()) != null) {
+                sb.append(line);
+            }
+            return sb.toString();
+        } catch (IOException e) {
+            e.printStackTrace();
+            throw new CannotRetrieveResourceException(
+                    "Error while accessing the " + locator.getScheme() + " filesystem.",
                     metadata
             );
         }

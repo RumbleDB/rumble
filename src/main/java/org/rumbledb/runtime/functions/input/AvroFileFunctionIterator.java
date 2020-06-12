@@ -34,10 +34,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.IOException;
 import java.net.URI;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.List;
 
 public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -72,17 +69,13 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     Item value = values.get(i);
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
-                            try {
-                                String jsonFormatSchema = new String(
-                                        Files.readAllBytes(Paths.get(value.getStringValue()))
-                                );
-                                dfr.option(keys.get(i), jsonFormatSchema);
-                            } catch (IOException e) {
-                                throw new CannotRetrieveResourceException(
-                                        "File " + value.getStringValue() + " not found.",
-                                        this.getMetadata()
-                                );
-                            }
+                            URI schemaURI = FileSystemUtil.resolveURI(
+                                getStaticContext().getStaticBaseURI(),
+                                value.getStringValue(),
+                                getMetadata()
+                            );
+                            String jsonFormatSchema = FileSystemUtil.readContent(schemaURI, getMetadata());
+                            dfr.option(keys.get(i), jsonFormatSchema);
                         } else {
                             dfr.option(keys.get(i), value.getStringValue());
                         }
