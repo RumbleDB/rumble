@@ -14,6 +14,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.EnumSet;
 import java.util.List;
 
@@ -43,16 +44,17 @@ public class FileSystemUtil {
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path workingDirectory = fileContext.getWorkingDirectory();
+            URI baseUri = new URI(workingDirectory.toString() + Path.SEPARATOR + "foo");
             if (url == null || url.isEmpty()) {
-                return new Path(workingDirectory, ".").toUri();
+                return baseUri.resolve(".");
             }
-            return new Path(workingDirectory, url).toUri();
+            return baseUri.resolve(url);
         } catch (UnsupportedFileSystemException e) {
             throw new CannotRetrieveResourceException(
                     "The default file system is not supported!",
                     metadata
             );
-        } catch (IllegalArgumentException e) {
+        } catch (URISyntaxException e) {
             throw new CannotRetrieveResourceException("Malformed URI: " + url, metadata);
         }
     }
