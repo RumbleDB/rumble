@@ -91,7 +91,6 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -99,6 +98,7 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -115,10 +115,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private StaticContext moduleContext;
 
-    public TranslationVisitor(String staticBaseURI) {
-        this.moduleContext = new StaticContext(
-                FileSystemUtil.resolveURIAgainstWorkingDirectory(staticBaseURI, ExceptionMetadata.EMPTY_METADATA)
-        );
+    public TranslationVisitor(URI staticBaseURI) {
+        this.moduleContext = new StaticContext(staticBaseURI);
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
     }
 

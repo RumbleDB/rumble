@@ -48,24 +48,27 @@ public class JsoniqQueryExecutor {
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
-    private void checkOutputFile(String outputPath) throws IOException {
-        if (outputPath != null) {
-            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
-            if (FileSystemUtil.exists(uri, ExceptionMetadata.EMPTY_METADATA)) {
+    private void checkOutputFile(URI outputUri) throws IOException {
+        if (outputUri != null) {
+            if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
                 if (!this.configuration.getOverwrite()) {
                     throw new CliException(
-                            "Output path " + uri + " already exists. Please use --overwrite yes to overwrite."
+                            "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
                     );
                 } else {
-                    FileSystemUtil.delete(uri, ExceptionMetadata.EMPTY_METADATA);
+                    FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
                 }
             }
         }
     }
 
-    public List<Item> runQuery(String queryFile, String outputPath) throws IOException {
-        List<Item> outputList = null;
-        checkOutputFile(outputPath);
+    public List<Item> runQuery() throws IOException {
+        String queryFile = this.configuration.getQueryPath();
+        URI queryUri = null;
+        if (queryFile != null) {
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
+        }
+        String outputPath = this.configuration.getOutputPath();
         URI outputUri = null;
         if (outputPath != null) {
             outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
@@ -74,12 +77,15 @@ public class JsoniqQueryExecutor {
         String logPath = this.configuration.getLogPath();
         URI logUri = null;
         if (logPath != null) {
-            FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
             FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
         }
 
+        List<Item> outputList = null;
+        checkOutputFile(outputUri);
+
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryFile, this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
@@ -116,8 +122,7 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
-            FileSystemUtil.append(uri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }

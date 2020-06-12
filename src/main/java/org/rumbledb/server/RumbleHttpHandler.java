@@ -94,10 +94,7 @@ public class RumbleHttpHandler implements HttpHandler {
             List<Item> items = null;
             long count = -1;
             if (configuration.getQueryPath() != null) {
-                items = translator.runQuery(
-                    configuration.getQueryPath(),
-                    configuration.getOutputPath()
-                );
+                items = translator.runQuery();
             } else {
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);

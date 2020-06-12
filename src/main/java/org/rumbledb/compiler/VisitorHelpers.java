@@ -47,10 +47,9 @@ public class VisitorHelpers {
         System.out.println();
     }
 
-    public static MainModule parseMainModuleFromLocation(String location, RumbleRuntimeConfiguration configuration)
+    public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
             throws IOException {
-        URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(location, ExceptionMetadata.EMPTY_METADATA);
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(uri, ExceptionMetadata.EMPTY_METADATA);
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(CharStreams.fromStream(in), location, configuration);
     }
 
@@ -59,7 +58,7 @@ public class VisitorHelpers {
         return parseMainModule(CharStreams.fromString(query), location, configuration);
     }
 
-    public static MainModule parseMainModule(CharStream stream, String uri, RumbleRuntimeConfiguration configuration) {
+    public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
