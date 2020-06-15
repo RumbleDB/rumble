@@ -39,7 +39,12 @@ public class FileSystemUtil {
         try {
             return base.resolve(url);
         } catch (IllegalArgumentException e) {
-            throw new CannotRetrieveResourceException("Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
+                    metadata
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 
@@ -58,9 +63,19 @@ public class FileSystemUtil {
                     metadata
             );
         } catch (IllegalArgumentException e) {
-            throw new CannotRetrieveResourceException("Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
+                    metadata
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         } catch (URISyntaxException e) {
-            throw new CannotRetrieveResourceException("Malformed URI: " + url + " Cause: " + e.getMessage(), metadata);
+            RumbleException rumbleException = new CannotRetrieveResourceException(
+                    "Malformed URI: " + url + " Cause: " + e.getMessage(),
+                    metadata
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 
@@ -184,6 +199,7 @@ public class FileSystemUtil {
                     "No file system is configured for scheme " + locator.getScheme() + "! Cause: " + e.getMessage(),
                     metadata
             );
+            rumbleException.initCause(e);
             throw rumbleException;
         }
         if (e instanceof IOException) {
@@ -196,6 +212,7 @@ public class FileSystemUtil {
                         + e.getMessage(),
                     metadata
             );
+            rumbleException.initCause(e);
             throw rumbleException;
         }
         if (e instanceof InvocationTargetException) {
@@ -203,6 +220,7 @@ public class FileSystemUtil {
             if (cause == null) {
                 throw new OurBadException("Unrecognized invocation target exception: no cause.");
             }
+
             handleException(cause, locator, metadata);
         }
         if (e instanceof HadoopIllegalArgumentException) {
@@ -210,6 +228,7 @@ public class FileSystemUtil {
                     "Illegal argument. File: " + locator + " Cause: " + e.getMessage(),
                     metadata
             );
+            rumbleException.initCause(e);
             throw rumbleException;
         }
         if (e instanceof RumbleException) {
@@ -222,7 +241,8 @@ public class FileSystemUtil {
             }
             handleException(cause, locator, metadata);
         }
-        e.printStackTrace();
-        throw new OurBadException("Unrecognized exception. Message: " + e.getMessage());
+        RumbleException rumbleException = new OurBadException("Unrecognized exception. Message: " + e.getMessage());
+        rumbleException.initCause(e);
+        throw rumbleException;
     }
 }
