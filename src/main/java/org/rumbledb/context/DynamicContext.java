@@ -82,6 +82,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.namedFunctions = new HashMap<>();
         this.conf = conf;
     }
 
@@ -410,6 +411,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
+        if (this.namedFunctions == null && this.parent == null) {
+            throw new OurBadException("No named functions set in dynamic context.");
+        }
+        if (this.namedFunctions != null && this.parent != null) {
+            throw new OurBadException("Named functions can only be set in root dynamic context.");
+        }
+        if (this.parent != null) {
+            parent.addUserDefinedFunction(function, meta);
+        }
         if (!function.isFunction()) {
             throw new OurBadException("Only a function item can be added as a user-defined function.");
         }
@@ -424,10 +434,28 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
+        if (this.namedFunctions == null && this.parent == null) {
+            throw new OurBadException("No named functions set in dynamic context.");
+        }
+        if (this.namedFunctions != null && this.parent != null) {
+            throw new OurBadException("Named functions can only be set in root dynamic context.");
+        }
+        if (this.parent != null) {
+            return parent.checkUserDefinedFunctionExists(identifier);
+        }
         return namedFunctions.containsKey(identifier);
     }
 
     public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
+        if (this.namedFunctions == null && this.parent == null) {
+            throw new OurBadException("No named functions set in dynamic context.");
+        }
+        if (this.namedFunctions != null && this.parent != null) {
+            throw new OurBadException("Named functions can only be set in root dynamic context.");
+        }
+        if (this.parent != null) {
+            return parent.getUserDefinedFunction(identifier);
+        }
         if (!namedFunctions.containsKey(identifier)) {
             throw new OurBadException("Unknown function:" + identifier);
         }
@@ -441,6 +469,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
             ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
+        if (this.namedFunctions == null && this.parent == null) {
+            throw new OurBadException("No named functions set in dynamic context.");
+        }
+        if (this.namedFunctions != null && this.parent != null) {
+            throw new OurBadException("Named functions can only be set in root dynamic context.");
+        }
+        if (this.parent != null) {
+            return parent.getUserDefinedFunctionCallIterator(identifier, executionMode, metadata, arguments);
+        }
         if (checkUserDefinedFunctionExists(identifier)) {
             return buildUserDefinedFunctionCallIterator(
                 getUserDefinedFunction(identifier),
