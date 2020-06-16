@@ -34,9 +34,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.net.URI;
 import java.util.List;
 
 public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -56,6 +54,10 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
@@ -67,17 +69,13 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     Item value = values.get(i);
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
-                            try {
-                                String jsonFormatSchema = new String(
-                                        Files.readAllBytes(Paths.get(value.getStringValue()))
-                                );
-                                dfr.option(keys.get(i), jsonFormatSchema);
-                            } catch (IOException e) {
-                                throw new CannotRetrieveResourceException(
-                                        "File " + value.getStringValue() + " not found.",
-                                        this.getMetadata()
-                                );
-                            }
+                            URI schemaURI = FileSystemUtil.resolveURI(
+                                getStaticContext().getStaticBaseURI(),
+                                value.getStringValue(),
+                                getMetadata()
+                            );
+                            String jsonFormatSchema = FileSystemUtil.readContent(schemaURI, getMetadata());
+                            dfr.option(keys.get(i), jsonFormatSchema);
                         } else {
                             dfr.option(keys.get(i), value.getStringValue());
                         }
@@ -91,7 +89,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     }
                 }
             }
-            return dfr.format("avro").load(url);
+            return dfr.format("avro").load(uri.toString());
         } catch (Exception e) {
             if (e instanceof UnexpectedTypeException) {
                 throw new UnexpectedTypeException(e.getMessage(), this.getMetadata());

@@ -21,17 +21,29 @@
 package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.io.Serializable;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StaticContext {
+public class StaticContext implements Serializable, KryoSerializable {
 
-    private static class InScopeVariable {
+    private static final long serialVersionUID = 1L;
+
+    private static class InScopeVariable implements Serializable, KryoSerializable {
+        private static final long serialVersionUID = 1L;
+
         private Name name;
         private SequenceType sequenceType;
         private ExceptionMetadata metadata;
@@ -61,13 +73,32 @@ public class StaticContext {
         public ExceptionMetadata getMetadata() {
             return this.metadata;
         }
+
+        @Override
+        public void write(Kryo kryo, Output output) {
+            kryo.writeObject(output, this.name);
+            kryo.writeObject(output, this.sequenceType);
+            kryo.writeObject(output, this.metadata);
+            kryo.writeObject(output, this.storageMode);
+        }
+
+        @Override
+        public void read(Kryo kryo, Input input) {
+            this.name = kryo.readObject(input, Name.class);
+            this.sequenceType = kryo.readObject(input, SequenceType.class);
+            this.metadata = kryo.readObject(input, ExceptionMetadata.class);
+            this.storageMode = kryo.readObject(input, ExecutionMode.class);
+        }
     }
 
     private Map<Name, InScopeVariable> inScopeVariables;
+    private Map<String, String> namespaceBindings;
     private StaticContext parent;
+    private URI staticBaseURI;
 
-    public StaticContext() {
+    public StaticContext(URI staticBaseURI) {
         this.parent = null;
+        this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
     }
 
@@ -78,6 +109,16 @@ public class StaticContext {
 
     public StaticContext getParent() {
         return this.parent;
+    }
+
+    public URI getStaticBaseURI() {
+        if (this.staticBaseURI != null) {
+            return this.staticBaseURI;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseURI();
+        }
+        throw new OurBadException("Static context not set.");
     }
 
     public boolean isInScope(Name varName) {
@@ -150,5 +191,47 @@ public class StaticContext {
             return this.parent.hasVariable(variableName);
         }
         return false;
+    }
+
+    public boolean bindNamespace(String prefix, String namespace) {
+        if (this.namespaceBindings == null) {
+            this.namespaceBindings = new HashMap<>();
+        }
+        if (!this.namespaceBindings.containsKey(prefix)) {
+            this.namespaceBindings.put(prefix, namespace);
+            return true;
+        }
+        return false;
+    }
+
+    public String resolveNamespace(String prefix) {
+        if (this.namespaceBindings != null) {
+            if (this.namespaceBindings.containsKey(prefix)) {
+                return this.namespaceBindings.get(prefix);
+            } else {
+                return null;
+            }
+        }
+        if (this.parent != null) {
+            return this.parent.resolveNamespace(prefix);
+        }
+        return null;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.inScopeVariables);
+        kryo.writeObject(output, this.namespaceBindings);
+        kryo.writeObject(output, this.parent);
+        kryo.writeObject(output, this.staticBaseURI);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.inScopeVariables = kryo.readObject(input, HashMap.class);
+        this.namespaceBindings = kryo.readObject(input, HashMap.class);
+        this.parent = kryo.readObject(input, StaticContext.class);
+        this.staticBaseURI = kryo.readObject(input, URI.class);
     }
 }

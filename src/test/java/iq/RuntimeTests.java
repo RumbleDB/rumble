@@ -94,6 +94,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         // sparkConfiguration.set("spark.speculation.quantile", "0.5");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
     }
 
     @Test(timeout = 1000000)

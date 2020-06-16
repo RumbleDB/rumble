@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -46,6 +47,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
@@ -80,7 +82,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
-            argument = new StaticContext();
+            throw new OurBadException("No static context provided!");
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
@@ -178,7 +180,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        if (!Functions.checkBuiltInFunctionExists(identifier)) {
+        if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
             if (expression.isPartialApplication()) {
                 for (@SuppressWarnings("unused")

@@ -41,7 +41,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
-import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -116,7 +116,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             for (int i = 0; i < this.functionArguments.size(); i++) {
                 if (
                     this.functionArguments.get(i) != null
-                        && !this.functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
+                        && !this.functionItem.getSignature()
+                            .getParameterTypes()
+                            .get(i)
+                            .equals(MOST_GENERAL_SEQUENCE_TYPE)
                 ) {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),

@@ -20,29 +20,20 @@
 
 package org.rumbledb.cli;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
-import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -57,39 +48,44 @@ public class JsoniqQueryExecutor {
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
-    private void checkOutputFile(String outputPath) throws IOException {
-        if (outputPath != null) {
-            if (FileSystemUtil.exists(outputPath, new ExceptionMetadata(0, 0))) {
-                if (!this.configuration.getOverwrite()) {
-                    throw new CliException(
-                            "Output path " + outputPath + " already exists. Please use --overwrite yes to overwrite."
-                    );
-                } else {
-                    FileSystemUtil.delete(outputPath, ExceptionMetadata.EMPTY_METADATA);
-                }
+    private void checkOutputFile(URI outputUri) throws IOException {
+        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+            if (!this.configuration.getOverwrite()) {
+                throw new CliException(
+                        "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
+                );
+            } else {
+                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
 
-    public List<Item> runQuery(String queryFile, String outputPath) throws IOException {
-        List<Item> outputList = null;
-        checkOutputFile(outputPath);
-        if (!FileSystemUtil.exists(queryFile, ExceptionMetadata.EMPTY_METADATA)) {
-            throw new CannotRetrieveResourceException("Query file does not exist.", ExceptionMetadata.EMPTY_METADATA);
+    public List<Item> runQuery() throws IOException {
+        String queryFile = this.configuration.getQueryPath();
+        URI queryUri = null;
+        if (queryFile != null) {
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
         }
+        String outputPath = this.configuration.getOutputPath();
+        URI outputUri = null;
+        if (outputPath != null) {
+            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
+            checkOutputFile(outputUri);
+        }
+
         String logPath = this.configuration.getLogPath();
+        URI logUri = null;
         if (logPath != null) {
-            FileSystemUtil.delete(logPath, ExceptionMetadata.EMPTY_METADATA);
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
         }
-        FSDataInputStream in = FileSystemUtil.getDataInputStream(queryFile, ExceptionMetadata.EMPTY_METADATA);
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromStream(in));
+
+        List<Item> outputList = null;
 
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = this.parse(lexer);
-        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = generateRuntimeIterators(mainModule);
+        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -105,7 +101,7 @@ public class JsoniqQueryExecutor {
             long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                FileSystemUtil.write(outputPath, lines, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
             } else {
                 System.out.println(String.join("\n", lines));
             }
@@ -124,19 +120,16 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
-            FileSystemUtil.append(logPath, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         // create temp file
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromString(query));
-        MainModule mainModule = this.parse(lexer);
-        VisitorHelpers.resolveDependencies(mainModule, this.configuration);
-        VisitorHelpers.populateStaticContext(mainModule, this.configuration);
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = generateRuntimeIterators(mainModule);
+        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
         // execute locally for simple expressions
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
@@ -149,32 +142,6 @@ public class JsoniqQueryExecutor {
         resultList.clear();
         JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
-    }
-
-    private MainModule parse(JsoniqLexer lexer) {
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor();
-        try {
-            // TODO Handle module extras
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
-            return (MainModule) visitor.visit(main);
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    new ExceptionMetadata(
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine()
-                    )
-            );
-            e.initCause(ex);
-            throw e;
-        }
-    }
-
-    private RuntimeIterator generateRuntimeIterators(MainModule mainModule) {
-        return VisitorHelpers.generateRuntimeIterator(mainModule);
     }
 
     private long getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext, List<Item> resultList) {
