@@ -161,7 +161,6 @@ import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -176,8 +175,6 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.abs;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.accumulate;
 import static org.rumbledb.runtime.functions.base.Functions.BuiltinFunctions.acos;
@@ -342,72 +339,6 @@ public class Functions {
     private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
     private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
-
-
-    private static final Map<String, SequenceType> sequenceTypes;
-
-    static {
-        sequenceTypes = new HashMap<>();
-        sequenceTypes.put("item", new SequenceType(ItemType.item, SequenceType.Arity.One));
-        sequenceTypes.put("item?", new SequenceType(ItemType.item, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(ItemType.item, SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("item+", new SequenceType(ItemType.item, SequenceType.Arity.OneOrMore));
-
-        sequenceTypes.put("object", new SequenceType(ItemType.objectItem, SequenceType.Arity.One));
-        sequenceTypes.put("object+", new SequenceType(ItemType.objectItem, SequenceType.Arity.OneOrMore));
-        sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("atomic", new SequenceType(ItemType.atomicItem, SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(ItemType.atomicItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("string", new SequenceType(ItemType.stringItem, SequenceType.Arity.One));
-        sequenceTypes.put("string?", new SequenceType(ItemType.stringItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("string*", new SequenceType(ItemType.stringItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("integer", new SequenceType(ItemType.integerItem, SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(ItemType.integerItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(ItemType.integerItem, SequenceType.Arity.ZeroOrMore));
-
-        sequenceTypes.put("decimal?", new SequenceType(ItemType.decimalItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("double", new SequenceType(ItemType.doubleItem, SequenceType.Arity.One));
-        sequenceTypes.put("double?", new SequenceType(ItemType.doubleItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("boolean", new SequenceType(ItemType.booleanItem, SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(ItemType.booleanItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("duration?", new SequenceType(ItemType.durationItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put(
-            "yearMonthDuration?",
-            new SequenceType(ItemType.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put(
-            "dayTimeDuration?",
-            new SequenceType(ItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put("dateTime?", new SequenceType(ItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("date?", new SequenceType(ItemType.dateItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("time?", new SequenceType(ItemType.timeItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("anyURI?", new SequenceType(ItemType.anyURIItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put("hexBinary?", new SequenceType(ItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
-
-        sequenceTypes.put(
-            "base64Binary?",
-            new SequenceType(ItemType.base64BinaryItem, SequenceType.Arity.OneOrZero)
-        );
-
-        sequenceTypes.put("null?", new SequenceType(ItemType.nullItem, SequenceType.Arity.OneOrZero));
-    }
 
 
     static {
@@ -859,7 +790,7 @@ public class Functions {
                 new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 0),
                 new FunctionSignature(
                         Collections.emptyList(),
-                        sequenceTypes.get(returnType)
+                        SequenceType.createSequenceType(returnType)
                 ),
                 functionIteratorClass,
                 builtInFunctionExecutionMode
@@ -876,8 +807,8 @@ public class Functions {
         return new BuiltinFunction(
                 new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 1),
                 new FunctionSignature(
-                        Collections.singletonList(sequenceTypes.get(param1Type)),
-                        sequenceTypes.get(returnType)
+                        Collections.singletonList(SequenceType.createSequenceType(param1Type)),
+                        SequenceType.createSequenceType(returnType)
                 ),
                 functionIteratorClass,
                 builtInFunctionExecutionMode
@@ -896,9 +827,12 @@ public class Functions {
                 new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
-                            Arrays.asList(sequenceTypes.get(param1Type), sequenceTypes.get(param2Type))
+                            Arrays.asList(
+                                SequenceType.createSequenceType(param1Type),
+                                SequenceType.createSequenceType(param2Type)
+                            )
                         ),
-                        sequenceTypes.get(returnType)
+                        SequenceType.createSequenceType(returnType)
                 ),
                 functionIteratorClass,
                 builtInFunctionExecutionMode
@@ -919,12 +853,12 @@ public class Functions {
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
-                                sequenceTypes.get(param1Type),
-                                sequenceTypes.get(param2Type),
-                                sequenceTypes.get(param3Type)
+                                SequenceType.createSequenceType(param1Type),
+                                SequenceType.createSequenceType(param2Type),
+                                SequenceType.createSequenceType(param3Type)
                             )
                         ),
-                        sequenceTypes.get(returnType)
+                        SequenceType.createSequenceType(returnType)
                 ),
                 functionIteratorClass,
                 builtInFunctionExecutionMode
@@ -1650,9 +1584,9 @@ public class Functions {
                     new FunctionSignature(
                             Collections.nCopies(
                                 100,
-                                sequenceTypes.get("atomic*")
+                                SequenceType.createSequenceType("atomic*")
                             ),
-                            sequenceTypes.get("string")
+                            SequenceType.createSequenceType("string")
                     ),
                     ConcatFunctionIterator.class,
                     BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
