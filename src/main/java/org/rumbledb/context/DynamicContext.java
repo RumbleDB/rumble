@@ -29,11 +29,22 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
+import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.FunctionItemCallIterator;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.SequenceType;
+
+import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -52,6 +63,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
     private Map<Name, Dataset<Row>> dataFrameVariableValues;
+    private HashMap<FunctionIdentifier, FunctionItem> namedFunctions;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;
 
@@ -61,6 +73,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.namedFunctions = new HashMap<>();
     }
 
     public DynamicContext(RumbleRuntimeConfiguration conf) {
@@ -395,6 +408,83 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
         return sb.toString();
     }
+
+    public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
+        if (!function.isFunction()) {
+            throw new OurBadException("Only a function item can be added as a user-defined function.");
+        }
+        FunctionIdentifier functionIdentifier = function.getIdentifier();
+        if (
+            BuiltinFunctionCatalogue.exists(functionIdentifier)
+                || namedFunctions.containsKey(functionIdentifier)
+        ) {
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+        }
+        namedFunctions.put(functionIdentifier, (FunctionItem) function);
+    }
+
+    public boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
+        return namedFunctions.containsKey(identifier);
+    }
+
+    public FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
+        if (!namedFunctions.containsKey(identifier)) {
+            throw new OurBadException("Unknown function:" + identifier);
+        }
+        FunctionItem functionItem = namedFunctions.get(identifier);
+        return functionItem.deepCopy();
+    }
+
+    public RuntimeIterator getUserDefinedFunctionCallIterator(
+            FunctionIdentifier identifier,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        if (checkUserDefinedFunctionExists(identifier)) {
+            return buildUserDefinedFunctionCallIterator(
+                getUserDefinedFunction(identifier),
+                executionMode,
+                metadata,
+                arguments
+            );
+        }
+        throw new UnknownFunctionCallException(
+                identifier.getName(),
+                identifier.getArity(),
+                metadata
+        );
+
+    }
+
+    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
+            FunctionItem functionItem,
+            ExecutionMode executionMode,
+            ExceptionMetadata metadata,
+            List<RuntimeIterator> arguments
+    ) {
+        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
+                functionItem,
+                arguments,
+                executionMode,
+                metadata
+        );
+        if (!functionItem.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + ((functionItem.getIdentifier().getName() == null)
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    executionMode,
+                    metadata
+            );
+        }
+        return functionCallIterator;
+    }
+
 
 }
 

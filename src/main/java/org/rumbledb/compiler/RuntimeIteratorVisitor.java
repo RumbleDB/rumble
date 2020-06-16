@@ -23,8 +23,6 @@ package org.rumbledb.compiler;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -99,6 +97,7 @@ import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpressio
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
+import org.rumbledb.runtime.functions.NamedFunctionReferenceRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
 import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
@@ -519,27 +518,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         FunctionIdentifier identifier = expression.getIdentifier();
-        if (BuiltinFunctionCatalogue.exists(identifier)) {
-            throw new UnsupportedFeatureException(
-                    "Higher order functions using builtin functions are not supported.",
-                    expression.getMetadata()
-            );
-        }
-        if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            FunctionItem function = Functions.getUserDefinedFunction(identifier);
-            RuntimeIterator runtimeIterator = new FunctionRuntimeIterator(
-                    function,
-                    expression.getHighestExecutionMode(this.visitorConfig),
-                    expression.getMetadata()
-            );
-            runtimeIterator.setStaticContext(expression.getStaticContext());
-            return runtimeIterator;
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
+        RuntimeIterator runtimeIterator = new NamedFunctionReferenceRuntimeIterator(
+                identifier,
+                expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
+        runtimeIterator.setStaticContext(expression.getStaticContext());
+        return runtimeIterator;
     }
     // endregion
 

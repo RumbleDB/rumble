@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -123,7 +122,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
                     getMetadata()
             );
         }
-        this.functionCallIterator = Functions.buildUserDefinedFunctionCallIterator(
+        this.functionCallIterator = DynamicContext.buildUserDefinedFunctionCallIterator(
             this.functionItem,
             this.functionItem.getBodyIterator().getHighestExecutionMode(),
             getMetadata(),

@@ -40,7 +40,6 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.SequenceType;
 
 
@@ -86,7 +85,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)
-            Functions.addUserDefinedFunction(function, expression.getMetadata());
+            argument.addUserDefinedFunction(function, expression.getMetadata());
         }
 
         return defaultAction(expression, argument);

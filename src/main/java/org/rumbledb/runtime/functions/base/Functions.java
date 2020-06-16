@@ -20,14 +20,11 @@
 
 package org.rumbledb.runtime.functions.base;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -44,7 +41,7 @@ public class Functions {
     // but functions items are fully known at runtimeIterator generation
     private static HashMap<FunctionIdentifier, ExecutionMode> userDefinedFunctionsExecutionMode;
     private static HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
-    private static HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
+
 
     private static List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
@@ -53,14 +50,12 @@ public class Functions {
     static {
         userDefinedFunctionsExecutionMode = new HashMap<>();
         userDefinedFunctionsParametersStorageMode = new HashMap<>();
-        userDefinedFunctions = new HashMap<>();
         userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
     public static void clearUserDefinedFunctions() {
         userDefinedFunctionsExecutionMode.clear();
         userDefinedFunctionsParametersStorageMode.clear();
-        userDefinedFunctions.clear();
     }
 
     public static boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
@@ -177,78 +172,6 @@ public class Functions {
         return userDefinedFunctionIdentifiersWithUnsetExecutionModes;
     }
 
-    public static RuntimeIterator getUserDefinedFunctionCallIterator(
-            FunctionIdentifier identifier,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        if (Functions.checkUserDefinedFunctionExists(identifier)) {
-            return buildUserDefinedFunctionCallIterator(
-                getUserDefinedFunction(identifier),
-                executionMode,
-                metadata,
-                arguments
-            );
-        }
-        throw new UnknownFunctionCallException(
-                identifier.getName(),
-                identifier.getArity(),
-                metadata
-        );
-
-    }
-
-    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
-                functionItem,
-                arguments,
-                executionMode,
-                metadata
-        );
-        if (!functionItem.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
-                    "Invalid return type for "
-                        + ((functionItem.getIdentifier().getName() == null)
-                            ? ""
-                            : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
-                    executionMode,
-                    metadata
-            );
-        }
-        return functionCallIterator;
-    }
-
-    public static void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
-        if (!function.isFunction()) {
-            throw new OurBadException("Only a function item can be added as a user-defined function.");
-        }
-        FunctionIdentifier functionIdentifier = function.getIdentifier();
-        if (
-            BuiltinFunctionCatalogue.exists(functionIdentifier)
-                || userDefinedFunctions.containsKey(functionIdentifier)
-        ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
-        }
-        userDefinedFunctions.put(functionIdentifier, (FunctionItem) function);
-    }
-
-    public static boolean checkUserDefinedFunctionExists(FunctionIdentifier identifier) {
-        return userDefinedFunctions.containsKey(identifier);
-    }
-
-    public static FunctionItem getUserDefinedFunction(FunctionIdentifier identifier) {
-        FunctionItem functionItem = userDefinedFunctions.get(identifier);
-        return functionItem.deepCopy();
-    }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
             FunctionIdentifier identifier,
