@@ -31,6 +31,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
 import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -87,14 +88,14 @@ public class FunctionCallExpression extends Expression {
     }
 
     public void initFunctionCallHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (Functions.checkBuiltInFunctionExists(this.identifier)) {
+        if (BuiltinFunctionCatalogue.exists(this.identifier)) {
             if (this.isPartialApplication) {
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         this.getMetadata()
                 );
             }
-            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(this.identifier);
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(this.identifier);
             this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }

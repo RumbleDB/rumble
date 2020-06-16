@@ -96,7 +96,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 
-import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -216,13 +216,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.qname(), true);
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = mostGeneralSequenceType;
+        SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false);
-                paramType = mostGeneralSequenceType;
+                paramType = MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -233,7 +233,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.mostGeneralSequenceType;
+                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -242,7 +242,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.return_type != null) {
             fnReturnType = this.processSequenceType(ctx.return_type);
         } else {
-            fnReturnType = SequenceType.mostGeneralSequenceType;
+            fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
         Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
@@ -371,7 +371,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
-            seq = SequenceType.mostGeneralSequenceType;
+            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
         emptyFlag = (ctx.flag != null);
         Name atVar = null;
@@ -386,7 +386,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 seq.getItemType(),
                 SequenceType.Arity.ZeroOrMore
         );
-        if (!expressionType.equals(SequenceType.mostGeneralSequenceType)) {
+        if (!expressionType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
@@ -415,11 +415,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
-            seq = SequenceType.mostGeneralSequenceType;
+            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
-        if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
+        if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
             expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
@@ -485,12 +485,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
         } else {
-            seq = SequenceType.mostGeneralSequenceType;
+            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
-            if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
+            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
 
@@ -926,7 +926,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     public SequenceType processSequenceType(JsoniqParser.SequenceTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.emptySequence;
+            return SequenceType.EMPTY_SEQUENCE;
         }
         ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
         if (ctx.question.size() > 0) {
@@ -952,7 +952,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     public SequenceType processSingleType(JsoniqParser.SingleTypeContext ctx) {
         if (ctx.item == null) {
-            return SequenceType.emptySequence;
+            return SequenceType.EMPTY_SEQUENCE;
         }
 
         ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
@@ -1036,13 +1036,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.mostGeneralSequenceType;
+        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false);
-                paramType = SequenceType.mostGeneralSequenceType;
+                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInRumbleNamespace("inline-function`"),
@@ -1053,7 +1053,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.mostGeneralSequenceType;
+                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1167,7 +1167,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             if (currentVariable.sequenceType() != null) {
                 sequenceType = this.processSequenceType(currentVariable.sequenceType());
             } else {
-                sequenceType = SequenceType.mostGeneralSequenceType;
+                sequenceType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
             }
 
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
@@ -1197,13 +1197,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
         } else {
-            seq = SequenceType.mostGeneralSequenceType;
+            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
         external = (ctx.external != null);
         Expression expr = null;
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (!seq.equals(SequenceType.mostGeneralSequenceType)) {
+            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }

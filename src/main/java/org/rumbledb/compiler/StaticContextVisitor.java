@@ -47,6 +47,7 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
@@ -179,7 +180,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        if (!Functions.checkBuiltInFunctionExists(identifier)) {
+        if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
             if (expression.isPartialApplication()) {
                 for (@SuppressWarnings("unused")

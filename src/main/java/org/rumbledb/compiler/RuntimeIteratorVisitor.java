@@ -100,6 +100,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.operational.AdditiveOperationIterator;
@@ -493,7 +494,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         FunctionIdentifier identifier = new FunctionIdentifier(fnName, arity);
 
         RuntimeIterator runtimeIterator = null;
-        if (Functions.checkBuiltInFunctionExists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(identifier)) {
             runtimeIterator = Functions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
@@ -518,7 +519,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         FunctionIdentifier identifier = expression.getIdentifier();
-        if (Functions.checkBuiltInFunctionExists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(identifier)) {
             throw new UnsupportedFeatureException(
                     "Higher order functions using builtin functions are not supported.",
                     expression.getMetadata()

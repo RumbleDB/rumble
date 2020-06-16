@@ -33,12 +33,12 @@ public class SequenceType implements Serializable {
     private ItemType itemType;
     private boolean isEmptySequence = false;
 
-    public final static SequenceType mostGeneralSequenceType = new SequenceType(
+    public final static SequenceType MOST_GENERAL_SEQUENCE_TYPE = new SequenceType(
             ItemType.item,
             Arity.ZeroOrMore
     );
 
-    public final static SequenceType emptySequence = new SequenceType();
+    public final static SequenceType EMPTY_SEQUENCE = new SequenceType();
 
 
     public SequenceType(ItemType itemType, Arity arity) {
