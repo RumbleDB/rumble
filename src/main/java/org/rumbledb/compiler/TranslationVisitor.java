@@ -98,6 +98,7 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 
 import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -114,8 +115,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private StaticContext moduleContext;
 
-    public TranslationVisitor() {
+    public TranslationVisitor(URI staticBaseURI) {
+        this.moduleContext = new StaticContext(staticBaseURI);
+        this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
     }
+
     // endregion expr
 
     // region module
@@ -129,8 +133,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
-        this.moduleContext = new StaticContext();
-        this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));

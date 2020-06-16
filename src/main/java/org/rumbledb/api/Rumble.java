@@ -1,6 +1,5 @@
 package org.rumbledb.api;
 
-import org.antlr.v4.runtime.CharStreams;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.expressions.module.MainModule;
@@ -38,8 +37,8 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
-        MainModule mainModule = VisitorHelpers.parseMainModule(
-            CharStreams.fromString(query),
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            query,
             RumbleRuntimeConfiguration.getDefaultConfiguration()
         );
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);

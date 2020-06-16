@@ -1,12 +1,16 @@
 package org.rumbledb.compiler;
 
+import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 
 import org.antlr.v4.runtime.BailErrorStrategy;
 import org.antlr.v4.runtime.CharStream;
+import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
@@ -20,6 +24,8 @@ import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {
@@ -41,11 +47,22 @@ public class VisitorHelpers {
         System.out.println();
     }
 
-    public static MainModule parseMainModule(CharStream stream, RumbleRuntimeConfiguration configuration) {
+    public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
+            throws IOException {
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
+        return parseMainModule(CharStreams.fromStream(in), location, configuration);
+    }
+
+    public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(".", ExceptionMetadata.EMPTY_METADATA);
+        return parseMainModule(CharStreams.fromString(query), location, configuration);
+    }
+
+    public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor();
+        TranslationVisitor visitor = new TranslationVisitor(uri);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -67,26 +84,26 @@ public class VisitorHelpers {
         }
     }
 
-    private static void populateStaticContext(Node node, RumbleRuntimeConfiguration conf) {
+    private static void populateStaticContext(MainModule mainModule, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(node, null);
+        visitor.visit(mainModule, mainModule.getStaticContext());
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
 
         while (true) {
-            visitor.visit(node, null);
+            visitor.visit(mainModule, mainModule.getStaticContext());
             int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
             if (conf.isPrintIteratorTree()) {
-                printTree(node, conf);
+                printTree(mainModule, conf);
             }
 
             if (currentUnsetCount > prevUnsetCount) {
@@ -102,11 +119,11 @@ public class VisitorHelpers {
         }
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
-        visitor.visit(node, null);
+        visitor.visit(mainModule, mainModule.getStaticContext());
         if (conf.isPrintIteratorTree()) {
-            printTree(node, conf);
+            printTree(mainModule, conf);
         }
-        if (node.numberOfUnsetExecutionModes() > 0) {
+        if (mainModule.numberOfUnsetExecutionModes() > 0) {
             System.err.println(
                 "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );

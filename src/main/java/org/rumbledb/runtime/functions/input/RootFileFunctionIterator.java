@@ -33,6 +33,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -59,6 +60,10 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         try {
             DataFrameReader reader = SparkSessionManager.getInstance()
                 .getOrCreateSession()
@@ -67,10 +72,10 @@ public class RootFileFunctionIterator extends DataFrameRuntimeIterator {
             if (path != null) {
                 reader.option("tree", path);
             }
-            return reader.load(url);
+            return reader.load(uri.toString());
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             throw e;
         }

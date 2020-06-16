@@ -25,6 +25,7 @@ import java.util.List;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -80,7 +81,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visit(Node node, StaticContext argument) {
         if (argument == null) {
-            argument = new StaticContext();
+            throw new OurBadException("No static context provided!");
         }
         if (node instanceof Expression) {
             ((Expression) node).setStaticContext(argument);
