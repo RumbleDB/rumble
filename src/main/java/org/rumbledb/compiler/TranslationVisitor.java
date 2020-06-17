@@ -21,11 +21,14 @@
 package org.rumbledb.compiler;
 
 import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
@@ -92,6 +95,7 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -99,6 +103,7 @@ import sparksoniq.jsoniq.compiler.ValueTypeHandler;
 
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
+import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -115,10 +120,12 @@ import java.util.Map;
 public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<Node> {
 
     private StaticContext moduleContext;
+    private RumbleRuntimeConfiguration configuration;
 
-    public TranslationVisitor(URI staticBaseURI) {
+    public TranslationVisitor(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.moduleContext = new StaticContext(staticBaseURI);
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
+        this.configuration = configuration;
     }
 
     // endregion expr
@@ -129,12 +136,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
         }
-        if(ctx.mainModule() != null)
-        {
+        if (ctx.mainModule() != null) {
             return this.visitMainModule(ctx.mainModule());
         }
-        if(ctx.libraryModule() != null)
-        {
+        if (ctx.libraryModule() != null) {
             return this.visitLibraryModule(ctx.libraryModule());
         }
         throw new OurBadException("No main or library module foudn.");
@@ -162,6 +167,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // bind namespaces
         for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             this.processNamespaceDecl(namespace);
+        }
+        for (JsoniqParser.ModuleImportContext namespace : ctx.moduleImport()) {
+            this.processModuleImport(namespace);
         }
 
         // parse variables and function
@@ -1242,6 +1250,49 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     )
             );
         }
+    }
+
+    public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {
+        String namespace = ctx.targetNamespace.getText();
+        URI resolvedURI = FileSystemUtil.resolveURI(
+            this.moduleContext.getStaticBaseURI(),
+            namespace,
+            generateMetadata(ctx.getStop())
+        );
+        LibraryModule libraryModule = null;
+        try {
+            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
+                resolvedURI,
+                this.configuration,
+                generateMetadata(ctx.getStop())
+            );
+        } catch (IOException e) {
+            RumbleException exception = new CannotRetrieveResourceException(
+                    "Cannot import module " + namespace + " Cause: " + e.getMessage(),
+                    generateMetadata(ctx.getStop())
+            );
+            exception.initCause(e);
+        }
+        if (ctx.NCName() != null) {
+            boolean success = this.moduleContext.bindNamespace(
+                ctx.NCName().getText(),
+                namespace
+            );
+            if (!success) {
+                throw new NamespacePrefixBoundTwiceException(
+                        "Prefix " + ctx.NCName().getText() + " is bound twice.",
+                        generateMetadata(ctx.getStop())
+                );
+            }
+        }
+        return libraryModule;
+    }
+
+    public static ExceptionMetadata generateMetadata(Token token) {
+        return new ExceptionMetadata(
+                token.getLine(),
+                token.getCharPositionInLine()
+        );
     }
 
 }

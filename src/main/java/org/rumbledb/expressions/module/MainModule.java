@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainModule extends Node {
+public class MainModule extends Module {
 
     protected StaticContext staticContext;
     private final Prolog prolog;

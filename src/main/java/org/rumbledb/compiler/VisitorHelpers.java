@@ -18,7 +18,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Module;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -53,6 +55,16 @@ public class VisitorHelpers {
         return parseMainModule(CharStreams.fromStream(in), location, configuration);
     }
 
+    public static LibraryModule parseLibraryModuleFromLocation(
+            URI location,
+            RumbleRuntimeConfiguration configuration,
+            ExceptionMetadata metadata
+    )
+            throws IOException {
+        FSDataInputStream in = FileSystemUtil.getDataInputStream(location, metadata);
+        return parseLibraryModule(CharStreams.fromStream(in), location, configuration);
+    }
+
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(".", ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(CharStreams.fromString(query), location, configuration);
@@ -62,7 +74,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri);
+        TranslationVisitor visitor = new TranslationVisitor(uri, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -84,26 +96,56 @@ public class VisitorHelpers {
         }
     }
 
-    private static void populateStaticContext(MainModule mainModule, RumbleRuntimeConfiguration conf) {
+    public static LibraryModule parseLibraryModule(
+            CharStream stream,
+            URI uri,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        JsoniqLexer lexer = new JsoniqLexer(stream);
+        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+        TranslationVisitor visitor = new TranslationVisitor(uri, configuration);
+        try {
+            // TODO Handle module extras
+            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
+            JsoniqParser.MainModuleContext main = module.module().main;
+            LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            resolveDependencies(libraryModule, configuration);
+            populateStaticContext(libraryModule, configuration);
+            return libraryModule;
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExceptionMetadata(
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
-            printTree(mainModule, conf);
+            printTree(module, conf);
         }
         StaticContextVisitor visitor = new StaticContextVisitor();
-        visitor.visit(mainModule, mainModule.getStaticContext());
+        visitor.visit(module, module.getStaticContext());
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
         int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
         if (conf.isPrintIteratorTree()) {
-            printTree(mainModule, conf);
+            printTree(module, conf);
         }
 
         while (true) {
-            visitor.visit(mainModule, mainModule.getStaticContext());
+            visitor.visit(module, module.getStaticContext());
             int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
 
             if (conf.isPrintIteratorTree()) {
-                printTree(mainModule, conf);
+                printTree(module, conf);
             }
 
             if (currentUnsetCount > prevUnsetCount) {
@@ -119,11 +161,11 @@ public class VisitorHelpers {
         }
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorFinalPassConfig);
-        visitor.visit(mainModule, mainModule.getStaticContext());
+        visitor.visit(module, module.getStaticContext());
         if (conf.isPrintIteratorTree()) {
-            printTree(mainModule, conf);
+            printTree(module, conf);
         }
-        if (mainModule.numberOfUnsetExecutionModes() > 0) {
+        if (module.numberOfUnsetExecutionModes() > 0) {
             System.err.println(
                 "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
