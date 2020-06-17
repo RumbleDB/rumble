@@ -36,6 +36,7 @@ public class MainModule extends Node {
     protected StaticContext staticContext;
     private final Prolog prolog;
     private final Expression expression;
+    private List<LibraryModule> importedModules;
 
     public MainModule(Prolog prolog, Expression expression, ExceptionMetadata metadata) {
         super(metadata);
@@ -44,6 +45,7 @@ public class MainModule extends Node {
             throw new OurBadException("The main module must have a non-null expression");
         }
         this.expression = expression;
+        this.importedModules = new ArrayList<>();
     }
 
     public StaticContext getStaticContext() {
@@ -58,6 +60,14 @@ public class MainModule extends Node {
         return this.prolog;
     }
 
+    public void addImportedModule(LibraryModule importedModule) {
+        this.importedModules.add(importedModule);
+    }
+
+    public List<LibraryModule> getImportedModules() {
+        return this.importedModules;
+    }
+
     public Expression getExpression() {
         return this.expression;
     }
@@ -65,6 +75,7 @@ public class MainModule extends Node {
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
+        result.addAll(importedModules);
         if (this.prolog != null) {
             result.add(this.prolog);
         }

@@ -128,7 +128,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (!(ctx.vers == null) && !ctx.vers.isEmpty() && !ctx.vers.getText().trim().equals("1.0")) {
             throw new JsoniqVersionException(createMetadataFromContext(ctx));
         }
-        return this.visitMainModule(ctx.mainModule());
+        if(ctx.mainModule() != null)
+        {
+            return this.visitMainModule(ctx.mainModule());
+        }
+        if(ctx.libraryModule() != null)
+        {
+            return this.visitLibraryModule(ctx.libraryModule());
+        }
+        throw new OurBadException("No main or library module foudn.");
     }
 
     @Override
