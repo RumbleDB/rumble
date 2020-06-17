@@ -65,6 +65,7 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -144,6 +145,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
+        module.setStaticContext(this.moduleContext);
+        return module;
+    }
+
+    @Override
+    public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
+        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
+        LibraryModule module = new LibraryModule(prolog, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
