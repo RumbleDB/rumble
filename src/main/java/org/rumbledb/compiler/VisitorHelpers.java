@@ -79,6 +79,9 @@ public class VisitorHelpers {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
             JsoniqParser.MainModuleContext main = module.module().main;
+            if (main == null) {
+                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+            }
             MainModule mainModule = (MainModule) visitor.visit(main);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
@@ -108,7 +111,7 @@ public class VisitorHelpers {
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
+            JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             populateStaticContext(libraryModule, configuration);

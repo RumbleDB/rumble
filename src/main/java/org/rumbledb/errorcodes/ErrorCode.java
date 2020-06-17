@@ -94,6 +94,8 @@ public enum ErrorCode {
     DuplicateParamName("XQST0039"),
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
+    ModuleNotFoundErrorCode("XQST0059"),
+    EmptyModuleURIErrorCode("XQST0088"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
     InvalidTimezoneValue("FODT0003");
