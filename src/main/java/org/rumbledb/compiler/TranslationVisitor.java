@@ -30,6 +30,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
+import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
@@ -159,6 +160,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         String prefix = ctx.NCName().getText();
         String namespace = processURILiteral(ctx.uriLiteral());
+        System.out.println("URI literal: -" + namespace+ "-");
+        if(namespace.equals(""))
+        {
+            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
+        }
         URI resolvedURI = FileSystemUtil.resolveURI(
             this.moduleContext.getStaticBaseURI(),
             namespace,
