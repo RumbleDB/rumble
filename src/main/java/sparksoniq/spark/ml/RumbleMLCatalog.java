@@ -150,7 +150,6 @@ public class RumbleMLCatalog {
         transformerFullClassNames.put("NGram", "org.apache.spark.ml.feature.NGram");
         transformerFullClassNames.put("NaiveBayesModel", "org.apache.spark.ml.classification.NaiveBayesModel");
         transformerFullClassNames.put("Normalizer", "org.apache.spark.ml.feature.Normalizer");
-        transformerFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         transformerFullClassNames.put("OneHotEncoderModel", "org.apache.spark.ml.feature.OneHotEncoderModel");
         transformerFullClassNames.put("OneVsRestModel", "org.apache.spark.ml.classification.OneVsRestModel");
         transformerFullClassNames.put("PCAModel", "org.apache.spark.ml.feature.PCAModel");
@@ -1089,7 +1088,6 @@ public class RumbleMLCatalog {
             )
         );
         transformerParams.put("Normalizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "p")));
-        transformerParams.put("OneHotEncoder", new ArrayList<>(Arrays.asList("dropLast", "inputCol", "outputCol")));
         transformerParams.put(
             "OneHotEncoderModel",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols", "parent"))
