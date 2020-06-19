@@ -718,7 +718,7 @@ public class RumbleMLCatalog {
             )
         );
         estimatorParams.put(
-            "OneHotEncoderEstimator",
+            "OneHotEncoder",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols"))
         );
         estimatorParams.put(
