@@ -29,6 +29,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -108,9 +109,11 @@ import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 
 /**
@@ -160,9 +163,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         String prefix = ctx.NCName().getText();
         String namespace = processURILiteral(ctx.uriLiteral());
-        System.out.println("URI literal: -" + namespace+ "-");
-        if(namespace.equals(""))
-        {
+        System.out.println("URI literal: -" + namespace + "-");
+        if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
         URI resolvedURI = FileSystemUtil.resolveURI(
@@ -189,8 +191,17 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.processNamespaceDecl(namespace);
         }
         List<LibraryModule> libraryModules = new ArrayList<>();
+        Set<String> namespaces = new HashSet<>();
         for (JsoniqParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            libraryModules.add(this.processModuleImport(namespace));
+            LibraryModule libraryModule = this.processModuleImport(namespace);
+            libraryModules.add(libraryModule);
+            if (namespaces.contains(libraryModule.getNamespace())) {
+                throw new DuplicateModuleTargetNamespaceException(
+                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                        createMetadataFromContext(namespace)
+                );
+            }
+            namespaces.add(libraryModule.getNamespace());
         }
 
         // parse variables and function
