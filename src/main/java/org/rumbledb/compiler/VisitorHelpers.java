@@ -114,7 +114,7 @@ public class VisitorHelpers {
             JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
-            populateStaticContext(libraryModule, configuration);
+            // no static context population, as this is done in a single shot via the importing main module.
             return libraryModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(

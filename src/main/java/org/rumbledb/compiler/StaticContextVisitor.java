@@ -41,6 +41,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -383,6 +384,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
         );
         return result;
+    }
+
+    public StaticContext processImportedModule(LibraryModule libraryModule, StaticContext argument) {
+        System.out.println("Processing imported module " + libraryModule.getNamespace());
+        StaticContext moduleContext = libraryModule.getStaticContext();
+        System.out.println(moduleContext);
+        argument.importModuleContext(moduleContext, libraryModule.getNamespace());
+        System.out.println(argument);
+        return argument;
     }
 
 }

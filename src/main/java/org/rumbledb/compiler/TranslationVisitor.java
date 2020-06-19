@@ -157,8 +157,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
+        String prefix = ctx.NCName().getText();
+        String namespace = processURILiteral(ctx.uriLiteral());
+        URI resolvedURI = FileSystemUtil.resolveURI(
+            this.moduleContext.getStaticBaseURI(),
+            namespace,
+            generateMetadata(ctx.getStop())
+        );
+        bindNamespace(
+            prefix,
+            resolvedURI.toString(),
+            generateMetadata(ctx.getStop())
+        );
+
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-        LibraryModule module = new LibraryModule(prolog, createMetadataFromContext(ctx));
+        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
     }
@@ -169,8 +182,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             this.processNamespaceDecl(namespace);
         }
+        List<LibraryModule> libraryModules = new ArrayList<>();
         for (JsoniqParser.ModuleImportContext namespace : ctx.moduleImport()) {
-            this.processModuleImport(namespace);
+            libraryModules.add(this.processModuleImport(namespace));
         }
 
         // parse variables and function
@@ -195,7 +209,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.visitModuleImport(module);
         }
 
-        return new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        for (LibraryModule libraryModule : libraryModules) {
+            prolog.addImportedModule(libraryModule);
+        }
+        return prolog;
     }
 
     public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction) {
@@ -1233,17 +1251,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public void processNamespaceDecl(JsoniqParser.NamespaceDeclContext ctx) {
-        boolean success = this.moduleContext.bindNamespace(
+        bindNamespace(
             ctx.NCName().getText(),
-            processURILiteral(ctx.uriLiteral())
+            processURILiteral(ctx.uriLiteral()),
+            generateMetadata(ctx.getStop())
+        );
+    }
+
+    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
+        boolean success = this.moduleContext.bindNamespace(
+            prefix,
+            namespace
         );
         if (!success) {
             throw new NamespacePrefixBoundTwiceException(
-                    "Prefix " + ctx.NCName().getText() + " is bound twice.",
-                    new ExceptionMetadata(
-                            ctx.getStop().getLine(),
-                            ctx.getStop().getCharPositionInLine()
-                    )
+                    "Prefix " + prefix + " is bound twice.",
+                    metadata
             );
         }
     }
@@ -1266,6 +1289,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 this.configuration,
                 generateMetadata(ctx.getStop())
             );
+            System.out.println(libraryModule.getStaticContext());
         } catch (IOException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
@@ -1282,16 +1306,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             throw exception;
         }
         if (ctx.NCName() != null) {
-            boolean success = this.moduleContext.bindNamespace(
+            bindNamespace(
                 ctx.NCName().getText(),
-                namespace
+                resolvedURI.toString(),
+                generateMetadata(ctx.getStop())
             );
-            if (!success) {
-                throw new NamespacePrefixBoundTwiceException(
-                        "Prefix " + ctx.NCName().getText() + " is bound twice.",
-                        generateMetadata(ctx.getStop())
-                );
-            }
         }
         return libraryModule;
     }

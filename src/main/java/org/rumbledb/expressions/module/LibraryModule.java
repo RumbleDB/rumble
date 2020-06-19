@@ -32,15 +32,21 @@ import java.util.List;
 public class LibraryModule extends Module {
 
     protected StaticContext staticContext;
+    private String namespace;
     private final Prolog prolog;
 
-    public LibraryModule(Prolog prolog, ExceptionMetadata metadata) {
+    public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
         super(metadata);
         this.prolog = prolog;
+        this.namespace = namespace;
     }
 
     public StaticContext getStaticContext() {
         return this.staticContext;
+    }
+
+    public String getNamespace() {
+        return this.namespace;
     }
 
     public void setStaticContext(StaticContext staticContext) {
@@ -63,6 +69,18 @@ public class LibraryModule extends Module {
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitLibraryModule(this, argument);
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Library module " + this.namespace);
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }
 
