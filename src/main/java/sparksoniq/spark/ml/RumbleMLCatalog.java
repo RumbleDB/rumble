@@ -66,7 +66,7 @@ public class RumbleMLCatalog {
             "org.apache.spark.ml.classification.MultilayerPerceptronClassifier"
         );
         estimatorFullClassNames.put("NaiveBayes", "org.apache.spark.ml.classification.NaiveBayes");
-        estimatorFullClassNames.put("OneHotEncoderEstimator", "org.apache.spark.ml.feature.OneHotEncoderEstimator");
+        estimatorFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         estimatorFullClassNames.put("OneVsRest", "org.apache.spark.ml.classification.OneVsRest");
         estimatorFullClassNames.put("PCA", "org.apache.spark.ml.feature.PCA");
         estimatorFullClassNames.put("Pipeline", "org.apache.spark.ml.Pipeline");
