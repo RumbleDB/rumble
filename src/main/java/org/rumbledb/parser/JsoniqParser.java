@@ -3,14 +3,25 @@
 // Java header
 package org.rumbledb.parser;
 
-import org.antlr.v4.runtime.atn.*;
-import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.*;
-import org.antlr.v4.runtime.misc.*;
-import org.antlr.v4.runtime.tree.*;
-import java.util.List;
-import java.util.Iterator;
 import java.util.ArrayList;
+import java.util.List;
+
+import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.Parser;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.RuntimeMetaData;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.TokenStream;
+import org.antlr.v4.runtime.Vocabulary;
+import org.antlr.v4.runtime.VocabularyImpl;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNDeserializer;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
+import org.antlr.v4.runtime.tree.ParseTreeVisitor;
+import org.antlr.v4.runtime.tree.TerminalNode;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class JsoniqParser extends Parser {
@@ -3266,18 +3277,18 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class CatchClauseContext extends ParserRuleContext {
-		public StringLiteralContext stringLiteral;
-		public List<StringLiteralContext> errors = new ArrayList<StringLiteralContext>();
+		public QnameContext qname;
+		public List<QnameContext> errors = new ArrayList<QnameContext>();
 		public ExprContext catch_expression;
 		public TerminalNode Kcatch() { return getToken(JsoniqParser.Kcatch, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
-		public List<StringLiteralContext> stringLiteral() {
-			return getRuleContexts(StringLiteralContext.class);
+		public List<QnameContext> qname() {
+			return getRuleContexts(QnameContext.class);
 		}
-		public StringLiteralContext stringLiteral(int i) {
-			return getRuleContext(StringLiteralContext.class,i);
+		public QnameContext qname(int i) {
+			return getRuleContext(QnameContext.class,i);
 		}
 		public CatchClauseContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -3308,11 +3319,68 @@ public class JsoniqParser extends Parser {
 				match(T__32);
 				}
 				break;
-			case STRING:
+			case T__61:
+			case T__62:
+			case T__63:
+			case T__64:
+			case T__65:
+			case T__66:
+			case T__67:
+			case T__68:
+			case T__69:
+			case T__70:
+			case T__71:
+			case T__72:
+			case T__73:
+			case T__74:
+			case Kfor:
+			case Klet:
+			case Kwhere:
+			case Kgroup:
+			case Kby:
+			case Korder:
+			case Kreturn:
+			case Kif:
+			case Kin:
+			case Kas:
+			case Kat:
+			case Kallowing:
+			case Kempty:
+			case Kcount:
+			case Kstable:
+			case Kascending:
+			case Kdescending:
+			case Ksome:
+			case Kevery:
+			case Ksatisfies:
+			case Kcollation:
+			case Kgreatest:
+			case Kleast:
+			case Kswitch:
+			case Kcase:
+			case Ktry:
+			case Kcatch:
+			case Kdefault:
+			case Kthen:
+			case Kelse:
+			case Ktypeswitch:
+			case Kor:
+			case Kand:
+			case Knot:
+			case Kto:
+			case Kinstance:
+			case Kof:
+			case Ktreat:
+			case Kcast:
+			case Kcastable:
+			case Kversion:
+			case Kjsoniq:
+			case Kjson:
+			case NCName:
 				{
 				setState(608);
-				((CatchClauseContext)_localctx).stringLiteral = stringLiteral();
-				((CatchClauseContext)_localctx).errors.add(((CatchClauseContext)_localctx).stringLiteral);
+				((CatchClauseContext)_localctx).qname = qname();
+				((CatchClauseContext)_localctx).errors.add(((CatchClauseContext)_localctx).qname);
 				}
 				break;
 			default:
@@ -3335,11 +3403,68 @@ public class JsoniqParser extends Parser {
 					match(T__32);
 					}
 					break;
-				case STRING:
+				case T__61:
+				case T__62:
+				case T__63:
+				case T__64:
+				case T__65:
+				case T__66:
+				case T__67:
+				case T__68:
+				case T__69:
+				case T__70:
+				case T__71:
+				case T__72:
+				case T__73:
+				case T__74:
+				case Kfor:
+				case Klet:
+				case Kwhere:
+				case Kgroup:
+				case Kby:
+				case Korder:
+				case Kreturn:
+				case Kif:
+				case Kin:
+				case Kas:
+				case Kat:
+				case Kallowing:
+				case Kempty:
+				case Kcount:
+				case Kstable:
+				case Kascending:
+				case Kdescending:
+				case Ksome:
+				case Kevery:
+				case Ksatisfies:
+				case Kcollation:
+				case Kgreatest:
+				case Kleast:
+				case Kswitch:
+				case Kcase:
+				case Ktry:
+				case Kcatch:
+				case Kdefault:
+				case Kthen:
+				case Kelse:
+				case Ktypeswitch:
+				case Kor:
+				case Kand:
+				case Knot:
+				case Kto:
+				case Kinstance:
+				case Kof:
+				case Ktreat:
+				case Kcast:
+				case Kcastable:
+				case Kversion:
+				case Kjsoniq:
+				case Kjson:
+				case NCName:
 					{
 					setState(613);
-					((CatchClauseContext)_localctx).stringLiteral = stringLiteral();
-					((CatchClauseContext)_localctx).errors.add(((CatchClauseContext)_localctx).stringLiteral);
+					((CatchClauseContext)_localctx).qname = qname();
+					((CatchClauseContext)_localctx).errors.add(((CatchClauseContext)_localctx).qname);
 					}
 					break;
 				default:
@@ -7183,11 +7308,11 @@ public class JsoniqParser extends Parser {
 		"\5*\26\2\u0256O\3\2\2\2\u0257\u0258\7h\2\2\u0258\u0259\7\37\2\2\u0259"+
 		"\u025a\5(\25\2\u025a\u025c\7 \2\2\u025b\u025d\5R*\2\u025c\u025b\3\2\2"+
 		"\2\u025d\u025e\3\2\2\2\u025e\u025c\3\2\2\2\u025e\u025f\3\2\2\2\u025fQ"+
-		"\3\2\2\2\u0260\u0263\7i\2\2\u0261\u0264\7#\2\2\u0262\u0264\5\u00c6d\2"+
-		"\u0263\u0261\3\2\2\2\u0263\u0262\3\2\2\2\u0264\u026c\3\2\2\2\u0265\u0268"+
-		"\7\"\2\2\u0266\u0269\7#\2\2\u0267\u0269\5\u00c6d\2\u0268\u0266\3\2\2\2"+
-		"\u0268\u0267\3\2\2\2\u0269\u026b\3\2\2\2\u026a\u0265\3\2\2\2\u026b\u026e"+
-		"\3\2\2\2\u026c\u026a\3\2\2\2\u026c\u026d\3\2\2\2\u026d\u026f\3\2\2\2\u026e"+
+		"\3\2\2\2\u0260\u0263\7i\2\2\u0261\u0264\7#\2\2\u0262\u0264\5\32\16\2\u0263"+
+		"\u0261\3\2\2\2\u0263\u0262\3\2\2\2\u0264\u026c\3\2\2\2\u0265\u0268\7\""+
+		"\2\2\u0266\u0269\7#\2\2\u0267\u0269\5\32\16\2\u0268\u0266\3\2\2\2\u0268"+
+		"\u0267\3\2\2\2\u0269\u026b\3\2\2\2\u026a\u0265\3\2\2\2\u026b\u026e\3\2"+
+		"\2\2\u026c\u026a\3\2\2\2\u026c\u026d\3\2\2\2\u026d\u026f\3\2\2\2\u026e"+
 		"\u026c\3\2\2\2\u026f\u0270\7\37\2\2\u0270\u0271\5(\25\2\u0271\u0272\7"+
 		" \2\2\u0272S\3\2\2\2\u0273\u0278\5V,\2\u0274\u0275\7n\2\2\u0275\u0277"+
 		"\5V,\2\u0276\u0274\3\2\2\2\u0277\u027a\3\2\2\2\u0278\u0276\3\2\2\2\u0278"+
