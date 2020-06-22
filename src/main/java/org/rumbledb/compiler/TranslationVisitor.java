@@ -50,6 +50,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -109,6 +110,7 @@ import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -346,6 +348,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (content instanceof JsoniqParser.TypeSwitchExprContext) {
             return this.visitTypeSwitchExpr((JsoniqParser.TypeSwitchExprContext) content);
+        }
+        if (content instanceof JsoniqParser.TryCatchExprContext) {
+            return this.visitTryCatchExpr((JsoniqParser.TryCatchExprContext) content);
         }
         throw new OurBadException("Unrecognized ExprSingle.");
     }
@@ -1236,6 +1241,33 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         return new QuantifiedExpression(operator, expression, vars, createMetadataFromContext(ctx));
     }
+
+    @Override
+    public Node visitTryCatchExpr(JsoniqParser.TryCatchExprContext ctx) {
+        Expression tryExpression = (Expression) this.visitExpr(ctx.try_expression);
+        Map<String, Expression> catchExpressions = new HashMap<>();
+        Expression catchAllExpression = null;
+        for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
+            Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
+            for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
+                Name name = parseName(qnameCtx, false);
+                if (!catchExpressions.containsKey(name.getLocalName())) {
+                    catchExpressions.put(name.getLocalName(), catchExpression);
+                }
+            }
+            boolean doesCatchAll = !catchCtx.jokers.isEmpty();
+            if (doesCatchAll && catchAllExpression == null) {
+                catchAllExpression = catchExpression;
+            }
+        }
+        return new TryCatchExpression(
+                tryExpression,
+                catchExpressions,
+                catchAllExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
     // endregion
 
     private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {

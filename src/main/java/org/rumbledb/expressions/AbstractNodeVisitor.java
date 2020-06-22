@@ -26,6 +26,7 @@ import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.flowr.CountClause;
 import org.rumbledb.expressions.flowr.FlworExpression;
@@ -293,6 +294,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitTypeSwitchExpression(TypeSwitchExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitTryCatchExpression(TryCatchExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
     // endregion

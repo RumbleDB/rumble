@@ -126,8 +126,9 @@ ifExpr                  : Kif '(' test_condition=expr ')'
                           Kthen branch=exprSingle
                           Kelse else_branch=exprSingle;
 
-tryCatchExpr            : Ktry '{' expr '}'
-                          Kcatch '*' '{' expr '}';
+tryCatchExpr            : Ktry '{' try_expression=expr '}' catches+=catchClause+;
+
+catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
 
 ///////////////////////// expression
 

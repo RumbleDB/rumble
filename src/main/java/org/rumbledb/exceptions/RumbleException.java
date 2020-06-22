@@ -24,6 +24,8 @@ import org.rumbledb.errorcodes.ErrorCode;
 
 import java.util.Arrays;
 
+import org.apache.spark.SparkException;
+
 public class RumbleException extends RuntimeException {
 
 
@@ -115,5 +117,16 @@ public class RumbleException extends RuntimeException {
 
     public String getJSONiqErrorMessage() {
         return this.errorMessage;
+    }
+
+    public static RumbleException unnestException(Throwable ex) {
+        if (ex instanceof SparkException) {
+            Throwable sparkExceptionCause = ex.getCause();
+            return unnestException(sparkExceptionCause);
+        } else if (ex instanceof RumbleException) {
+            return (RumbleException) ex;
+        } else {
+            return null;
+        }
     }
 }
