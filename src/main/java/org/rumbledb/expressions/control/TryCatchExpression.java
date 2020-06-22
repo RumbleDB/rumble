@@ -77,12 +77,15 @@ public class TryCatchExpression extends Expression {
         List<Node> result = new ArrayList<>();
         result.add(this.tryExpression);
         result.addAll(this.catchExpressions.values());
+        if(this.catchAllExpression != null)
+        {
+            result.add(this.catchAllExpression);
+        }
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        System.out.println("Accept!");
         return visitor.visitTryCatchExpression(this, argument);
     }
 }

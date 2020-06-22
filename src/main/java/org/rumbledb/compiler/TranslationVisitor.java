@@ -1251,7 +1251,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
                 Name name = parseName(qnameCtx, false);
-                catchExpressions.put(name.getLocalName(), catchExpression);
+                if (!catchExpressions.containsKey(name.getLocalName())) {
+                    catchExpressions.put(name.getLocalName(), catchExpression);
+                }
             }
             boolean doesCatchAll = !catchCtx.jokers.isEmpty();
             if (doesCatchAll && catchAllExpression == null) {
