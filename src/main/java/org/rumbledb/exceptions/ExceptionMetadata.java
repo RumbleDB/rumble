@@ -32,6 +32,7 @@ public class ExceptionMetadata implements Serializable {
     private static final long serialVersionUID = 1L;
     private final int tokenLineNumber;
     private final int tokenColumnNumber;
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(0, 0);
 
     /**
      * Builds a new metadata object

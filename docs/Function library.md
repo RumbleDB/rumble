@@ -635,7 +635,17 @@ Serializes the supplied input sequence, returning the serialized representation 
 ```
 serialize({hello: "world"})
 ```
-returns "[ \\"hello\\", \\"world\\" ]"
+returns { "hello" : "world" }
+
+### normalize-unicode
+
+Returns the value of the input after applying Unicode normalization.
+
+```
+normalize-unicode("hello world", "NFC")
+```
+
+returns the unicode-normalized version of the input string. Normalization forms NFC, NFD, NFKC, and NFKD are supported. "FULLY-NORMALIZED" though supported, should be used with caution as only the composition exclusion characters supported FULLY-NORMALIZED are which are uncommented in the [following file](https://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt).
 
 ## Date and time functions
 

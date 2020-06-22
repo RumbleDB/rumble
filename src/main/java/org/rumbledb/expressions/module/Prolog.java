@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 public class Prolog extends Node {
 
     private List<Node> declarations;
+    private List<LibraryModule> importedModules;
 
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
@@ -41,6 +42,15 @@ public class Prolog extends Node {
         super(metadata);
         this.declarations = new ArrayList<Node>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
+        this.importedModules = new ArrayList<>();
+    }
+
+    public void addImportedModule(LibraryModule importedModule) {
+        this.importedModules.add(importedModule);
+    }
+
+    public List<LibraryModule> getImportedModules() {
+        return this.importedModules;
     }
 
     public List<FunctionDeclaration> getFunctionDeclarations() {
@@ -63,7 +73,10 @@ public class Prolog extends Node {
 
     @Override
     public List<Node> getChildren() {
-        return this.declarations.stream().filter(x -> x != null).collect(Collectors.toList());
+        List<Node> result = new ArrayList<>();
+        result.addAll(this.importedModules);
+        result.addAll(this.declarations);
+        return result;
     }
 
     @Override

@@ -79,6 +79,7 @@ public class ConditionalExpression extends Expression {
                 && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()
         ) {
             this.highestExecutionMode = ExecutionMode.RDD;
+            return;
         }
         this.highestExecutionMode = ExecutionMode.LOCAL;
     }

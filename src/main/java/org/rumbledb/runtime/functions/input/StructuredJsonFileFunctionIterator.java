@@ -33,6 +33,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.List;
 
 public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator {
@@ -53,20 +54,24 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
+        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        if (!FileSystemUtil.exists(uri, getMetadata())) {
+            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        }
         try {
             return SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .read()
                 .option("mode", "FAILFAST")
-                .json(url);
+                .json(uri.toString());
         } catch (Exception e) {
             if (e instanceof AnalysisException) {
-                throw new CannotRetrieveResourceException("File " + url + " not found.", getMetadata());
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
             if (e instanceof SparkException) {
                 throw new RumbleException(
                         "File "
-                            + url
+                            + uri
                             + " contains a malformed JSON document that does not fit into the JSON lines format.",
                         getMetadata()
                 );

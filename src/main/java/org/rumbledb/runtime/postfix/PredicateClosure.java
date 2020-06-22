@@ -23,6 +23,7 @@ package org.rumbledb.runtime.postfix;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
@@ -44,7 +45,7 @@ public class PredicateClosure implements Function<Item, Boolean> {
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1);
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
-        dynamicContext.addVariableValue("$$", currentItems);
+        dynamicContext.addVariableValue(Name.CONTEXT_ITEM, currentItems);
 
         this.expression.open(dynamicContext);
         boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);

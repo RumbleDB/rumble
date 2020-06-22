@@ -20,12 +20,7 @@
 
 package iq.base;
 
-import org.antlr.v4.runtime.BailErrorStrategy;
-import org.antlr.v4.runtime.CharStreams;
-import org.antlr.v4.runtime.CommonTokenStream;
-import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.junit.Assert;
-import org.rumbledb.compiler.TranslationVisitor;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -34,10 +29,9 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
 import utils.annotations.AnnotationParseException;
@@ -46,6 +40,7 @@ import utils.annotations.AnnotationProcessor;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -77,11 +72,13 @@ public class AnnotationsTestsBase {
         MainModule mainModule = null;
         DynamicContext dynamicContext = null;
         try {
-            mainModule = this.parse(path);
             Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
 
-            VisitorHelpers.resolveDependencies(mainModule, AnnotationsTestsBase.configuration);
-            VisitorHelpers.populateStaticContext(mainModule);
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
+            mainModule = VisitorHelpers.parseMainModuleFromLocation(
+                uri,
+                AnnotationsTestsBase.configuration
+            );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
             // PARSING
@@ -190,36 +187,6 @@ public class AnnotationsTestsBase {
             }
         }
         return mainModule;
-    }
-
-    private MainModule parse(String path) throws IOException {
-        JsoniqLexer lexer = new JsoniqLexer(CharStreams.fromFileName(path));
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
-        parser.setErrorHandler(new BailErrorStrategy());
-
-        try {
-            // the original
-            /*
-             * JsoniqParser.ModuleContext unit = parser.module();
-             * JsoniqParser.MainModuleContext main = unit.main;
-             * visitor.visit(unit);
-             */
-
-            JsoniqParser.ModuleContext module = parser.module();
-            JsoniqParser.MainModuleContext main = module.main;
-            MainModule mainModule = (MainModule) new TranslationVisitor().visit(main);
-            return mainModule;
-        } catch (ParseCancellationException ex) {
-            ParsingException e = new ParsingException(
-                    lexer.getText(),
-                    new ExceptionMetadata(
-                            lexer.getLine(),
-                            lexer.getCharPositionInLine()
-                    )
-            );
-            e.initCause(ex);
-            throw e;
-        }
     }
 
     protected void checkExpectedOutput(

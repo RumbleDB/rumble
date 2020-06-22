@@ -24,17 +24,17 @@ package org.rumbledb.runtime.functions.io;
 import com.jsoniter.JsonIterator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.net.URI;
 import java.util.List;
 
 public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
@@ -65,17 +65,16 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
-                File f = new File(path.getStringValue());
-                FileInputStream fis = new FileInputStream(f);
-                JsonIterator object = JsonIterator.parse(fis, 1024);
+                URI uri = FileSystemUtil.resolveURI(
+                    getStaticContext().getStaticBaseURI(),
+                    path.getStringValue(),
+                    getMetadata()
+                );
+                InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
+                JsonIterator object = JsonIterator.parse(is, 1024);
                 return ItemParser.getItemFromObject(object, getMetadata());
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            } catch (FileNotFoundException e) {
-                throw new CannotRetrieveResourceException(
-                        "File " + path.getStringValue() + " not found.",
-                        getMetadata()
-                );
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-doc function", getMetadata());

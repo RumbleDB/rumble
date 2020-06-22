@@ -22,6 +22,7 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -36,15 +37,15 @@ import java.util.Map;
 
 public class InlineFunctionExpression extends Expression {
 
-    private final String name;
+    private final Name name;
     private final FunctionIdentifier functionIdentifier;
-    private final Map<String, SequenceType> params;
+    private final Map<Name, SequenceType> params;
     private final SequenceType returnType;
     private final Expression body;
 
     public InlineFunctionExpression(
-            String name,
-            Map<String, SequenceType> params,
+            Name name,
+            Map<Name, SequenceType> params,
             SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
@@ -57,7 +58,7 @@ public class InlineFunctionExpression extends Expression {
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
-    public String getName() {
+    public Name getName() {
         return this.name;
     }
 
@@ -65,7 +66,7 @@ public class InlineFunctionExpression extends Expression {
         return this.functionIdentifier;
     }
 
-    public Map<String, SequenceType> getParams() {
+    public Map<Name, SequenceType> getParams() {
         return this.params;
     }
 
@@ -87,7 +88,7 @@ public class InlineFunctionExpression extends Expression {
     ) {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
-        if (!this.name.equals("")) {
+        if (this.name != null) {
             Functions.addUserDefinedFunctionExecutionMode(
                 identifier,
                 this.body.getHighestExecutionMode(visitorConfig),
@@ -108,7 +109,7 @@ public class InlineFunctionExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append("(");
-        for (Map.Entry<String, SequenceType> entry : this.params.entrySet()) {
+        for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(", ");
             buffer.append(entry.getValue().toString());
@@ -118,6 +119,9 @@ public class InlineFunctionExpression extends Expression {
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
+        for (int i = 0; i < indent + 2; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Body:\n");
         this.body.print(buffer, indent + 2);
     }

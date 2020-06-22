@@ -20,13 +20,22 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.Serializable;
 import java.util.HashMap;
 
-public class RumbleRuntimeConfiguration {
+public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
+    private static final long serialVersionUID = 1L;
     private static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
@@ -120,7 +129,7 @@ public class RumbleRuntimeConfiguration {
         }
     }
 
-    public String getExternalVariableValue(String name) {
+    public String getExternalVariableValue(Name name) {
         for (String s : this.arguments.keySet()) {
             if (s.equals("variable:" + name)) {
                 return this.arguments.get(s);
@@ -181,5 +190,16 @@ public class RumbleRuntimeConfiguration {
             + (this.arguments.getOrDefault("query-path", "-"))
             + "\n";
         return result;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.arguments);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.arguments = kryo.readObject(input, HashMap.class);
     }
 }

@@ -29,6 +29,8 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -51,6 +53,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
+    private StaticContext staticContext;
 
     protected ExecutionMode highestExecutionMode;
 
@@ -62,6 +65,20 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         if (children != null && !children.isEmpty()) {
             this.children.addAll(children);
         }
+    }
+
+    public void setStaticContext(StaticContext staticContext) {
+        if (this.staticContext != null) {
+            throw new OurBadException("Attempt to overwrite an existing static context");
+        }
+        this.staticContext = staticContext;
+    }
+
+    public StaticContext getStaticContext() {
+        if (this.staticContext == null) {
+            throw new OurBadException("Static context is not set.");
+        }
+        return this.staticContext;
     }
 
     /**
@@ -241,8 +258,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>();
         for (RuntimeIterator iterator : this.children) {
             DynamicContext.mergeVariableDependencies(result, iterator.getVariableDependencies());
@@ -258,8 +275,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
-        Map<String, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
-        for (String v : dependencies.keySet()) {
+        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (Name v : dependencies.keySet()) {
             buffer.append(v).append("(").append(dependencies.get(v)).append(")").append(" ");
         }
         buffer.append("\n");
@@ -270,7 +287,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void bindToVariableInDynamicContext(
             DynamicContext targetContext,
-            String variable,
+            Name variable,
             DynamicContext executionContext
     ) {
         if (this.isDataFrame()) {

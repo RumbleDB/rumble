@@ -21,24 +21,36 @@
 package org.rumbledb.context;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.io.Serializable;
+import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-public class StaticContext {
+public class StaticContext implements Serializable, KryoSerializable {
 
-    private static class InScopeVariable {
-        private String name;
+    private static final long serialVersionUID = 1L;
+
+    private static class InScopeVariable implements Serializable, KryoSerializable {
+        private static final long serialVersionUID = 1L;
+
+        private Name name;
         private SequenceType sequenceType;
         private ExceptionMetadata metadata;
         private ExecutionMode storageMode;
 
         public InScopeVariable(
-                String name,
+                Name name,
                 SequenceType sequenceType,
                 ExceptionMetadata metadata,
                 ExecutionMode storageMode
@@ -50,7 +62,7 @@ public class StaticContext {
         }
 
         @SuppressWarnings("unused")
-        public String getName() {
+        public Name getName() {
             return this.name;
         }
 
@@ -61,13 +73,32 @@ public class StaticContext {
         public ExceptionMetadata getMetadata() {
             return this.metadata;
         }
+
+        @Override
+        public void write(Kryo kryo, Output output) {
+            kryo.writeObject(output, this.name);
+            kryo.writeObject(output, this.sequenceType);
+            kryo.writeObject(output, this.metadata);
+            kryo.writeObject(output, this.storageMode);
+        }
+
+        @Override
+        public void read(Kryo kryo, Input input) {
+            this.name = kryo.readObject(input, Name.class);
+            this.sequenceType = kryo.readObject(input, SequenceType.class);
+            this.metadata = kryo.readObject(input, ExceptionMetadata.class);
+            this.storageMode = kryo.readObject(input, ExecutionMode.class);
+        }
     }
 
-    private Map<String, InScopeVariable> inScopeVariables;
+    private Map<Name, InScopeVariable> inScopeVariables;
+    private Map<String, String> namespaceBindings;
     private StaticContext parent;
+    private URI staticBaseURI;
 
-    public StaticContext() {
+    public StaticContext(URI staticBaseURI) {
         this.parent = null;
+        this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
     }
 
@@ -80,7 +111,17 @@ public class StaticContext {
         return this.parent;
     }
 
-    public boolean isInScope(String varName) {
+    public URI getStaticBaseURI() {
+        if (this.staticBaseURI != null) {
+            return this.staticBaseURI;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticBaseURI();
+        }
+        throw new OurBadException("Static context not set.");
+    }
+
+    public boolean isInScope(Name varName) {
         boolean found = false;
         if (this.inScopeVariables.containsKey(varName)) {
             return true;
@@ -94,7 +135,7 @@ public class StaticContext {
         return found;
     }
 
-    private InScopeVariable getInScopeVariable(String varName) {
+    private InScopeVariable getInScopeVariable(Name varName) {
         if (this.inScopeVariables.containsKey(varName)) {
             return this.inScopeVariables.get(varName);
         } else {
@@ -109,20 +150,20 @@ public class StaticContext {
         }
     }
 
-    public SequenceType getVariableSequenceType(String varName) {
+    public SequenceType getVariableSequenceType(Name varName) {
         return getInScopeVariable(varName).getSequenceType();
     }
 
-    public ExceptionMetadata getVariableMetadata(String varName) {
+    public ExceptionMetadata getVariableMetadata(Name varName) {
         return getInScopeVariable(varName).getMetadata();
     }
 
-    public ExecutionMode getVariableStorageMode(String varName) {
+    public ExecutionMode getVariableStorageMode(Name varName) {
         return getInScopeVariable(varName).storageMode;
     }
 
     public void addVariable(
-            String varName,
+            Name varName,
             SequenceType type,
             ExceptionMetadata metadata,
             ExecutionMode storageMode
@@ -130,7 +171,7 @@ public class StaticContext {
         this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
     }
 
-    protected Map<String, InScopeVariable> getInScopeVariables() {
+    protected Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
     }
 
@@ -142,7 +183,7 @@ public class StaticContext {
         return stringBuilder.toString();
     }
 
-    public boolean hasVariable(String variableName) {
+    public boolean hasVariable(Name variableName) {
         if (this.inScopeVariables.containsKey(variableName)) {
             return true;
         }
@@ -150,5 +191,56 @@ public class StaticContext {
             return this.parent.hasVariable(variableName);
         }
         return false;
+    }
+
+    public boolean bindNamespace(String prefix, String namespace) {
+        if (this.namespaceBindings == null) {
+            this.namespaceBindings = new HashMap<>();
+        }
+        if (!this.namespaceBindings.containsKey(prefix)) {
+            this.namespaceBindings.put(prefix, namespace);
+            return true;
+        }
+        return false;
+    }
+
+    public String resolveNamespace(String prefix) {
+        if (this.namespaceBindings != null) {
+            if (this.namespaceBindings.containsKey(prefix)) {
+                return this.namespaceBindings.get(prefix);
+            } else {
+                return null;
+            }
+        }
+        if (this.parent != null) {
+            return this.parent.resolveNamespace(prefix);
+        }
+        return null;
+    }
+
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.inScopeVariables);
+        kryo.writeObject(output, this.namespaceBindings);
+        kryo.writeObject(output, this.parent);
+        kryo.writeObject(output, this.staticBaseURI);
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.inScopeVariables = kryo.readObject(input, HashMap.class);
+        this.namespaceBindings = kryo.readObject(input, HashMap.class);
+        this.parent = kryo.readObject(input, StaticContext.class);
+        this.staticBaseURI = kryo.readObject(input, URI.class);
+    }
+
+    public void importModuleContext(StaticContext moduleContext, String targetNamespace) {
+        for (Name name : moduleContext.inScopeVariables.keySet()) {
+            if (name.getNamespace().contentEquals(targetNamespace)) {
+                InScopeVariable variable = moduleContext.inScopeVariables.get(name);
+                this.inScopeVariables.put(name, variable);
+            }
+        }
     }
 }

@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit target/spark-rumble-1.6.2.jar --shell yes
+    $ spark-submit target/spark-rumble-1.6.4.jar --shell yes
 
 The Rumble shell should start:
 

@@ -23,6 +23,7 @@ package org.rumbledb.runtime.postfix;
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
@@ -47,7 +48,7 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
         List<Item> currentItems = new ArrayList<>();
         currentItems.add(v1._1());
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
-        dynamicContext.addVariableValue("$$", currentItems);
+        dynamicContext.addVariableValue(Name.CONTEXT_ITEM, currentItems);
         dynamicContext.setPosition(v1._2() + 1);
         dynamicContext.setLast(this.contextSize);
 

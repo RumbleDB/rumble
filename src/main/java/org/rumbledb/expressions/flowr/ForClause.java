@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -36,9 +37,9 @@ import java.util.List;
 
 public class ForClause extends Clause {
 
-    private final String variableName;
+    private final Name variableName;
     private final boolean allowEmpty;
-    private final String positionalVariableName;
+    private final Name positionalVariableName;
     protected SequenceType sequenceType;
     protected Expression expression;
 
@@ -47,10 +48,10 @@ public class ForClause extends Clause {
 
 
     public ForClause(
-            String variableName,
+            Name variableName,
             boolean allowEmpty,
             SequenceType sequenceType,
-            String positionalVariableName,
+            Name positionalVariableName,
             Expression expression,
             ExceptionMetadata metadata
     ) {
@@ -66,7 +67,7 @@ public class ForClause extends Clause {
 
     }
 
-    public String getVariableName() {
+    public Name getVariableName() {
         return this.variableName;
     }
 
@@ -74,7 +75,7 @@ public class ForClause extends Clause {
         return this.allowEmpty;
     }
 
-    public String getPositionalVariableName() {
+    public Name getPositionalVariableName() {
         return this.positionalVariableName;
     }
 

@@ -26,6 +26,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -211,10 +212,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         setNextResult();
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
-        for (String variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
             result.remove(variable);
         }
         result.putAll(this.child.getVariableDependencies());

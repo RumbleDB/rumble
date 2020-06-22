@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.context;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -64,10 +65,13 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
         return null;
     }
 
-    public Map<String, DynamicContext.VariableDependency> getVariableDependencies() {
-        Map<String, DynamicContext.VariableDependency> result =
-            new TreeMap<String, DynamicContext.VariableDependency>();
-        result.put("$position", DynamicContext.VariableDependency.FULL);
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<Name, DynamicContext.VariableDependency>();
+        result.put(
+            Name.CONTEXT_POSITION,
+            DynamicContext.VariableDependency.FULL
+        );
         return result;
     }
 

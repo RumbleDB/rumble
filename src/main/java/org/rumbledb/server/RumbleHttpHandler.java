@@ -94,10 +94,7 @@ public class RumbleHttpHandler implements HttpHandler {
             List<Item> items = null;
             long count = -1;
             if (configuration.getQueryPath() != null) {
-                items = translator.runQuery(
-                    configuration.getQueryPath(),
-                    configuration.getOutputPath()
-                );
+                items = translator.runQuery();
             } else {
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);
@@ -210,9 +207,17 @@ public class RumbleHttpHandler implements HttpHandler {
                         ((RumbleException) ex).getErrorCode(),
                         ex.getStackTrace()
                     );
+                } else if (ex instanceof IllegalArgumentException) {
+                    return assembleErrorReponse(
+                        "It seems that you are not using Java 8. Spark only works with Java 8. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
                 } else {
                     return assembleErrorReponse(
-                        "Unexpected error. We should investigate this. Please contact us or file an issue on GitHub with your query.",
+                        "An error has occured: "
+                            + ex.getMessage()
+                            + " We should investigate this 🙈. Please contact us or file an issue on GitHub with your query. Link: https://github.com/RumbleDB/rumble/issues",
                         ErrorCode.OurBadErrorCode.toString(),
                         ex.getStackTrace()
                     );

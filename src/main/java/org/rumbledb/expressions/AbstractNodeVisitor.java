@@ -43,6 +43,7 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
@@ -94,6 +95,10 @@ public abstract class AbstractNodeVisitor<T> {
 
     // region module
     public T visitMainModule(MainModule expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitLibraryModule(LibraryModule expression, T argument) {
         return defaultAction(expression, argument);
     }
 

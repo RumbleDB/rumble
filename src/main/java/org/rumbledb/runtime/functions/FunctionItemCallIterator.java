@@ -25,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -40,7 +41,7 @@ import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
-import static org.rumbledb.types.SequenceType.mostGeneralSequenceType;
+import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -115,7 +116,10 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             for (int i = 0; i < this.functionArguments.size(); i++) {
                 if (
                     this.functionArguments.get(i) != null
-                        && !this.functionItem.getSignature().getParameterTypes().get(i).equals(mostGeneralSequenceType)
+                        && !this.functionItem.getSignature()
+                            .getParameterTypes()
+                            .get(i)
+                            .equals(MOST_GENERAL_SEQUENCE_TYPE)
                 ) {
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),
@@ -138,18 +142,20 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
      * @return FunctionRuntimeIterator that contains the newly generated FunctionItem
      */
     private RuntimeIterator generatePartiallyAppliedFunction(DynamicContext context) {
-        String argName;
+        Name argName;
         RuntimeIterator argIterator;
 
-        Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
-        Map<String, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<String, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(this.functionItem.getDFVariablesInClosure());
+        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+                this.functionItem.getDFVariablesInClosure()
+        );
 
-        List<String> partialApplicationParamNames = new ArrayList<>();
+        List<Name> partialApplicationParamNames = new ArrayList<>();
         List<SequenceType> partialApplicationParamTypes = new ArrayList<>();
 
         for (int i = 0; i < this.functionArguments.size(); i++) {
@@ -172,7 +178,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
         FunctionItem partiallyAppliedFunction = new FunctionItem(
                 new FunctionIdentifier(
-                        "partially applied " + this.functionItem.getIdentifier().getName(),
+                        this.functionItem.getIdentifier().getName(),
                         partialApplicationParamNames.size()
                 ),
                 partialApplicationParamNames,
@@ -189,16 +195,18 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     private DynamicContext createNewDynamicContextWithArguments(DynamicContext context) {
-        String argName;
+        Name argName;
         RuntimeIterator argIterator;
 
-        Map<String, List<Item>> localArgumentValues = new LinkedHashMap<>(
+        Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
         );
-        Map<String, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
+        Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<String, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(this.functionItem.getDFVariablesInClosure());
+        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+                this.functionItem.getDFVariablesInClosure()
+        );
 
         for (int i = 0; i < this.functionArguments.size(); i++) {
             argName = this.functionItem.getParameterNames().get(i);

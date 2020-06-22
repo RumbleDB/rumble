@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -30,6 +31,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
 import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
+import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.Functions;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -39,23 +41,35 @@ import java.util.stream.Collectors;
 
 public class FunctionCallExpression extends Expression {
 
-    private final String functionName;
+    private final FunctionIdentifier identifier;
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;
 
-    public FunctionCallExpression(String functionName, List<Expression> arguments, ExceptionMetadata metadata) {
+    public FunctionCallExpression(
+            Name functionName,
+            List<Expression> arguments,
+            ExceptionMetadata metadata
+    ) {
         super(metadata);
-        this.functionName = functionName;
         this.arguments = arguments;
         this.isPartialApplication = arguments.stream().anyMatch(arg -> arg == null);
+        this.identifier = new FunctionIdentifier(
+                functionName,
+                this.arguments.size()
+        );
     }
 
+    // some may be null for partial application
     public List<Expression> getArguments() {
         return this.arguments;
     }
 
-    public String getFunctionName() {
-        return this.functionName;
+    public FunctionIdentifier getFunctionIdentifier() {
+        return this.identifier;
+    }
+
+    public Name getFunctionName() {
+        return this.identifier.getName();
     }
 
     @Override
@@ -64,38 +78,41 @@ public class FunctionCallExpression extends Expression {
         return result;
     }
 
+    public boolean isPartialApplication() {
+        return this.isPartialApplication;
+    }
+
     @Override
     public final void initHighestExecutionMode(VisitorConfig visitorConfig) {
         throw new OurBadException("Function call expressions do not use the highestExecutionMode initializer");
     }
 
     public void initFunctionCallHighestExecutionMode(VisitorConfig visitorConfig) {
-        FunctionIdentifier identifier = new FunctionIdentifier(this.functionName, this.arguments.size());
-        if (Functions.checkBuiltInFunctionExists(identifier)) {
+        if (BuiltinFunctionCatalogue.exists(this.identifier)) {
             if (this.isPartialApplication) {
                 throw new UnsupportedFeatureException(
                         "Partial application on built-in functions are not supported.",
                         this.getMetadata()
                 );
             }
-            BuiltinFunction builtinFunction = Functions.getBuiltInFunction(identifier);
+            BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(this.identifier);
             this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }
 
-        if (Functions.checkUserDefinedFunctionExecutionModeExists(identifier)) {
+        if (Functions.checkUserDefinedFunctionExecutionModeExists(this.identifier)) {
             if (this.isPartialApplication) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(identifier, getMetadata());
+            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
             return;
         }
 
         if (!visitorConfig.suppressErrorsForCallingMissingFunctions()) {
             throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    identifier.getArity(),
+                    this.identifier.getName(),
+                    this.identifier.getArity(),
                     this.getMetadata()
             );
         }

@@ -22,8 +22,11 @@ package org.rumbledb.errorcodes;
 
 public enum ErrorCode {
 
+    DivisionByZero("FOAR0001"),
+
     InvalidLexicalValueErrorCode("FOCA0002"),
     CodepointNotValidErrorCode("FOCH0001"),
+    InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
@@ -77,7 +80,7 @@ public enum ErrorCode {
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
     CastableErrorCode("XPST0080"),
-    InvalidExceptionErrorCode("XPST0081"),
+    PrefixCannotBeExpandedErrorCode("XPST0081"),
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
@@ -86,10 +89,14 @@ public enum ErrorCode {
 
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
+    NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
     DuplicateParamName("XQST0039"),
+    DuplicateModuleTargetNamespace("XQST0047"),
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
+    ModuleNotFoundErrorCode("XQST0059"),
+    EmptyModuleURIErrorCode("XQST0088"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
     InvalidTimezoneValue("FODT0003");

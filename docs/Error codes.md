@@ -1,5 +1,7 @@
 # Error codes
 
+- [FOAR0001] - Division by zero.
+
 - [FOCA0002] - A value that is not lexically valid for a particular type has been encountered.
 
 - [FODC0002] - Error retrieving resource.
@@ -104,6 +106,9 @@ or a module import.
 if the version number specified in a version declaration 
 is not supported by the implementation. For now, only version 1.0 is supported.
 
+- [XQST0033] - Namespace prefix bound twice. It is a static error if
+a module contains multiple bindings for the same namespace prefix.
+
 - [XQST0034] - Function already exists. It is a static error
 if multiple functions declared or imported by a module have
 the same number of arguments and their expanded QNames are equal
@@ -113,12 +118,23 @@ the same number of arguments and their expanded QNames are equal
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.
 
+- [XQST0047] - It is a static error if multiple module imports
+in the same Prolog specify the same target namespace.
+
 - [XQST0049] - It is a static error if two or more variables
 declared or imported by a module have the same name.
 
 - [XQST0052] - Simple type error. The type must be
 the name of a type defined in the in-scope schema types,
 and the {variety} of the type must be simple.
+
+- [XQST0059] - It is a static error if an implementation is unable
+to process a schema or module import by finding a schema or module with
+the specified target namespace.
+
+- [XQST0088] - It is a static error if the literal that specifies
+the target namespace in a module import or a module declaration is of
+zero length.
 
 - [XQST0094] - Invalid variable in group-by clause. 
 The name of each grouping variable must be equal 
