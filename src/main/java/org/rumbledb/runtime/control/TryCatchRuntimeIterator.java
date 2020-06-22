@@ -40,12 +40,12 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator _tryExpression;
-    private final Map<String, RuntimeIterator> _catchExpressions;
-    private final RuntimeIterator _catchAllExpression;
-    private List<Item> _results = null;
-    private Item _nextResult = null;
-    private int _nextPosition = 0;
+    private final RuntimeIterator tryExpression;
+    private final Map<String, RuntimeIterator> catchExpressions;
+    private final RuntimeIterator catchAllExpression;
+    private List<Item> results = null;
+    private Item nextResult = null;
+    private int nextPosition = 0;
 
     public TryCatchRuntimeIterator(
             RuntimeIterator tryExpression,
@@ -59,9 +59,9 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
         for (RuntimeIterator value : catchExpressions.values())
             this.children.add(value);
         this.children.add(catchAllExpression);
-        _tryExpression = tryExpression;
-        _catchExpressions = catchExpressions;
-        _catchAllExpression = catchAllExpression;
+        this.tryExpression = tryExpression;
+        this.catchExpressions = catchExpressions;
+        this.catchAllExpression = catchAllExpression;
     }
 
     @Override
@@ -73,7 +73,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            Item nextItem = _nextResult;
+            Item nextItem = this.nextResult;
             setNextResult();
             return nextItem;
         }
@@ -86,53 +86,53 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        _results = null;
+        this.results = null;
         setNextResult();
     }
 
     @Override
     public void close() {
         super.close();
-        _results = null;
+        this.results = null;
     }
 
     private void setNextResult() {
-        if (_results == null) {
-            _nextPosition = 0;
-            _results = new ArrayList<>();
+        if (this.results == null) {
+            this.nextPosition = 0;
+            results = new ArrayList<>();
             try {
-                _tryExpression.open(this.currentDynamicContextForLocalExecution);
-                while (_tryExpression.hasNext()) {
-                    _results.add(_tryExpression.next());
+                this.tryExpression.open(this.currentDynamicContextForLocalExecution);
+                while (this.tryExpression.hasNext()) {
+                    this.results.add(tryExpression.next());
                 }
-                _tryExpression.close();
+                this.tryExpression.close();
 
             } catch (Throwable throwable) {
                 RumbleException exception = RumbleException.unnestException(throwable);
                 String code = exception.getErrorCode();
-                _results.clear();
-                if (_catchExpressions.containsKey(code)) {
-                    RuntimeIterator catchingExpression = _catchExpressions.get(code);
+                this.results.clear();
+                if (this.catchExpressions.containsKey(code)) {
+                    RuntimeIterator catchingExpression = this.catchExpressions.get(code);
                     catchingExpression.open(this.currentDynamicContextForLocalExecution);
                     while (catchingExpression.hasNext()) {
-                        _results.add(catchingExpression.next());
+                        this.results.add(catchingExpression.next());
                     }
                     catchingExpression.close();
-                } else if (_catchAllExpression != null) {
-                    _catchAllExpression.open(this.currentDynamicContextForLocalExecution);
-                    while (_catchAllExpression.hasNext()) {
-                        _results.add(_catchAllExpression.next());
+                } else if (this.catchAllExpression != null) {
+                    this.catchAllExpression.open(this.currentDynamicContextForLocalExecution);
+                    while (catchAllExpression.hasNext()) {
+                        this.results.add(catchAllExpression.next());
                     }
-                    _catchAllExpression.close();
+                    this.catchAllExpression.close();
                 } else {
                     throw throwable;
                 }
             }
         }
-        if (_nextPosition < _results.size()) {
-            _nextResult = _results.get(_nextPosition++);
+        if (this.nextPosition < this.results.size()) {
+            this.nextResult = results.get(this.nextPosition++);
         } else {
-            hasNext = false;
+            this.hasNext = false;
         }
     }
 }

@@ -32,9 +32,9 @@ import org.rumbledb.expressions.Node;
 
 public class TryCatchExpression extends Expression {
 
-    private final Expression _tryExpression;
-    private final Map<String, Expression> _catchExpressions;
-    private final Expression _catchAllExpression;
+    private final Expression tryExpression;
+    private final Map<String, Expression> catchExpressions;
+    private final Expression catchAllExpression;
 
     public TryCatchExpression(
             Expression tryExpression,
@@ -43,40 +43,40 @@ public class TryCatchExpression extends Expression {
             ExceptionMetadata metadataFromContext
     ) {
         super(metadataFromContext);
-        this._tryExpression = tryExpression;
-        this._catchExpressions = catchExpressions;
-        this._catchAllExpression = catchAllExpression;
+        this.tryExpression = tryExpression;
+        this.catchExpressions = catchExpressions;
+        this.catchAllExpression = catchAllExpression;
     }
 
     public Expression getTryExpression() {
-        return _tryExpression;
+        return this.tryExpression;
     }
 
     public List<String> getErrorsCaught() {
-        return new ArrayList<>(_catchExpressions.keySet());
+        return new ArrayList<>(this.catchExpressions.keySet());
     }
 
     public boolean catches(String error) {
-        return _catchExpressions.containsKey(error);
+        return this.catchExpressions.containsKey(error);
     }
 
     public boolean catchesAll() {
-        return _catchAllExpression != null;
+        return this.catchAllExpression != null;
     }
 
     public Expression getExpressionCatching(String error) {
-        return _catchExpressions.get(error);
+        return this.catchExpressions.get(error);
     }
 
     public Expression getExpressionCatchingAll() {
-        return _catchAllExpression;
+        return this.catchAllExpression;
     }
 
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
-        result.add(_tryExpression);
-        result.addAll(_catchExpressions.values());
+        result.add(this.tryExpression);
+        result.addAll(this.catchExpressions.values());
         return result;
     }
 
