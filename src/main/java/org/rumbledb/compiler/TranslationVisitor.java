@@ -147,7 +147,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.libraryModule() != null) {
             return this.visitLibraryModule(ctx.libraryModule());
         }
-        throw new OurBadException("No main or library module foudn.");
+        throw new OurBadException("No main or library module found.");
     }
 
     @Override
