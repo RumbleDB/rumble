@@ -39,6 +39,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.ConditionalExpression;
 import org.rumbledb.expressions.control.SwitchCase;
 import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
 import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.flowr.Clause;
@@ -87,6 +88,7 @@ import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIteratorCase;
+import org.rumbledb.runtime.control.TryCatchRuntimeIterator;
 import org.rumbledb.runtime.flwor.clauses.CountClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.GroupByClauseSparkIterator;
@@ -941,6 +943,35 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
+    }
+
+    @Override
+    public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
+        System.out.println("Visiting!");
+        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
+        for (String code : expression.getErrorsCaught()) {
+            cases.put(
+                code,
+                this.visit(expression.getExpressionCatching(code), argument)
+            );
+        }
+        if (expression.getExpressionCatchingAll() == null) {
+            return new TryCatchRuntimeIterator(
+                    this.visit(expression.getTryExpression(), argument),
+                    cases,
+                    null,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        } else {
+            return new TryCatchRuntimeIterator(
+                    this.visit(expression.getTryExpression(), argument),
+                    cases,
+                    this.visit(expression.getExpressionCatchingAll(), argument),
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        }
     }
 
 }

@@ -94,6 +94,15 @@ import module namespace mod = "library-module.jq";
 mod:func($mod:x)
 ```
 
+### Try/catch
+
+Try/catch expressions are supported. Error codes are in the default, Rumble namespace and do not need prefixes.
+
+```
+try { 1 div 0 } catch FOAR0001 { "Division by zero!" }
+```
+
+
 ### Supported types
 
 The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
@@ -141,10 +150,6 @@ Many core features of JSONiq are in place, but please be aware that some feature
 ### Settings
 
 Some prolog settings (mostly about changing the default behavior) are not supported yet.
-
-### Try/catch
-
-Try/catch expressions are not supported yet but this is planned.
 
 ### Nested expressions in object lookups (rhs)
 
