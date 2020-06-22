@@ -128,7 +128,7 @@ ifExpr                  : Kif '(' test_condition=expr ')'
 
 tryCatchExpr            : Ktry '{' try_expression=expr '}' catches+=catchClause+;
 
-catchClause             : Kcatch ('*' | errors+=qname) ('|' ('*' | errors+=qname))* '{' catch_expression=expr '}';
+catchClause             : Kcatch (jokers+='*' | errors+=qname) ('|' (jokers+='*' | errors+=qname))* '{' catch_expression=expr '}';
 
 ///////////////////////// expression
 

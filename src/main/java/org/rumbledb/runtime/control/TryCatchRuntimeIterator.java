@@ -99,11 +99,11 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
     private void setNextResult() {
         if (this.results == null) {
             this.nextPosition = 0;
-            results = new ArrayList<>();
+            this.results = new ArrayList<>();
             try {
                 this.tryExpression.open(this.currentDynamicContextForLocalExecution);
                 while (this.tryExpression.hasNext()) {
-                    this.results.add(tryExpression.next());
+                    this.results.add(this.tryExpression.next());
                 }
                 this.tryExpression.close();
 
@@ -120,8 +120,8 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
                     catchingExpression.close();
                 } else if (this.catchAllExpression != null) {
                     this.catchAllExpression.open(this.currentDynamicContextForLocalExecution);
-                    while (catchAllExpression.hasNext()) {
-                        this.results.add(catchAllExpression.next());
+                    while (this.catchAllExpression.hasNext()) {
+                        this.results.add(this.catchAllExpression.next());
                     }
                     this.catchAllExpression.close();
                 } else {
@@ -130,7 +130,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
             }
         }
         if (this.nextPosition < this.results.size()) {
-            this.nextResult = results.get(this.nextPosition++);
+            this.nextResult = this.results.get(this.nextPosition++);
         } else {
             this.hasNext = false;
         }
