@@ -51,7 +51,7 @@ dfPropertyName          : 'decimal-separator'
                         | 'digit'
                         | 'pattern-separator';
 
-moduleImport            : 'import' 'module' ('namespace' NCName '=')? uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
+moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
 varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 

@@ -36,6 +36,7 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
@@ -135,4 +136,10 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         return result;
     }
 
+    @Override
+    public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
+        DynamicContext importedContext = visitDescendants(module, argument);
+        argument.importModuleContext(importedContext, module.getNamespace());
+        return argument;
+    }
 }

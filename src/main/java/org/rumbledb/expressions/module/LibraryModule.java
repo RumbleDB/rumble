@@ -23,31 +23,30 @@ package org.rumbledb.expressions.module;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainModule extends Module {
+public class LibraryModule extends Module {
 
     protected StaticContext staticContext;
+    private String namespace;
     private final Prolog prolog;
-    private final Expression expression;
 
-    public MainModule(Prolog prolog, Expression expression, ExceptionMetadata metadata) {
+    public LibraryModule(Prolog prolog, String namespace, ExceptionMetadata metadata) {
         super(metadata);
         this.prolog = prolog;
-        if (expression == null) {
-            throw new OurBadException("The main module must have a non-null expression");
-        }
-        this.expression = expression;
+        this.namespace = namespace;
     }
 
     public StaticContext getStaticContext() {
         return this.staticContext;
+    }
+
+    public String getNamespace() {
+        return this.namespace;
     }
 
     public void setStaticContext(StaticContext staticContext) {
@@ -58,23 +57,30 @@ public class MainModule extends Module {
         return this.prolog;
     }
 
-    public Expression getExpression() {
-        return this.expression;
-    }
-
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();
         if (this.prolog != null) {
             result.add(this.prolog);
         }
-        result.add(this.expression);
         return result;
     }
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitMainModule(this, argument);
+        return visitor.visitLibraryModule(this, argument);
+    }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Library module " + this.namespace);
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }
 

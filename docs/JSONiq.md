@@ -68,23 +68,33 @@ When an expression does not support pushdown, it will materialize automaticaly. 
 Prologs with user-defined functions and global variables are now fully supported. Global external variables with string values are supported (use "--variable:foo bar" on the command line to assign values to them).
 
 
-## Unsupported/Unimplemented features (beta release)
+## Library modules
 
-Many core features of JSONiq are in place, but please be aware that some features (less and less, though) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
+Library modules are now supported (experimental, please report bugs), and their namespace URI is used for resolution. If it is relative, it is resolved against the importing module location.
 
-### Settings and modules
+The same schemes are supported as for reading queries and data: file, hdfs, and so on. Http is not supported yet and may also be supported in the future.
 
-Prolog settings and library modules are not supported yet.
+Example of library module (the file name is library-module.jq):
 
-### Try/catch
+```
+module namespace m = "library-module.jq";
 
-Try/catch expressions are not supported yet but this is planned.
+declare variable $m:x := 2;
 
-### Nested expressions in object lookups (rhs)
+declare function mod:func($v) {
+  $m:x + $v
+);
+```
 
-Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet.
+Example of importing module (assuming it is in the same directory):
 
-### Types
+```
+import module namespace mod = "library-module.jq";
+
+mod:func($mod:x)
+```
+
+### Supported types
 
 The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
 
@@ -124,6 +134,21 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | unsignedShort | not supported |
 | yearMonthDuration | supported |
 
+## Unsupported/Unimplemented features (beta release)
+
+Many core features of JSONiq are in place, but please be aware that some features (less and less at every release) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
+
+### Settings
+
+Some prolog settings (mostly about changing the default behavior) are not supported yet.
+
+### Try/catch
+
+Try/catch expressions are not supported yet but this is planned.
+
+### Nested expressions in object lookups (rhs)
+
+Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet but this is planned.
 
 ### Builtin functions
 
@@ -131,4 +156,4 @@ Not all JSONiq functions in the library are supported (see function documentatio
 
 ### Updates and scripting
 
-JSON updates are not supported. Scripting features (assignment, while loop, ...) are not supported yet either.
+JSON updates are not supported yet. Scripting features (assignment, while loop, ...) are not supported yet.
