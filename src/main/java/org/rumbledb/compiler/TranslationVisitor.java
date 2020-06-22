@@ -1337,6 +1337,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 this.configuration,
                 generateMetadata(ctx.getStop())
             );
+            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
+                throw new ModuleNotFoundException(
+                        "A module with namespace "
+                            + resolvedURI.toString()
+                            + " was not found. The namespace of the module at this location was: "
+                            + libraryModule.getNamespace(),
+                        generateMetadata(ctx.getStop())
+                );
+            }
         } catch (IOException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
