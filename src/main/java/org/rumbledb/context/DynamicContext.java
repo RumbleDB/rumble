@@ -396,5 +396,32 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return sb.toString();
     }
 
+    public void importModuleContext(DynamicContext moduleContext, String targetNamespace) {
+        for (Name name : moduleContext.localVariableValues.keySet()) {
+            if (name.getNamespace().contentEquals(targetNamespace)) {
+                List<Item> items = moduleContext.localVariableValues.get(name);
+                this.localVariableValues.put(name, items);
+            }
+        }
+        for (Name name : moduleContext.localVariableCounts.keySet()) {
+            if (name.getNamespace().contentEquals(targetNamespace)) {
+                Item item = moduleContext.localVariableCounts.get(name);
+                this.localVariableCounts.put(name, item);
+            }
+        }
+        for (Name name : moduleContext.rddVariableValues.keySet()) {
+            if (name.getNamespace().contentEquals(targetNamespace)) {
+                JavaRDD<Item> items = moduleContext.rddVariableValues.get(name);
+                this.rddVariableValues.put(name, items);
+            }
+        }
+        for (Name name : moduleContext.dataFrameVariableValues.keySet()) {
+            if (name.getNamespace().contentEquals(targetNamespace)) {
+                Dataset<Row> items = moduleContext.dataFrameVariableValues.get(name);
+                this.dataFrameVariableValues.put(name, items);
+            }
+        }
+    }
+
 }
 
