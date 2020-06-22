@@ -163,7 +163,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
         String prefix = ctx.NCName().getText();
         String namespace = processURILiteral(ctx.uriLiteral());
-        System.out.println("URI literal: -" + namespace + "-");
         if (namespace.equals("")) {
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
@@ -1306,7 +1305,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 this.configuration,
                 generateMetadata(ctx.getStop())
             );
-            System.out.println(libraryModule.getStaticContext());
         } catch (IOException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),

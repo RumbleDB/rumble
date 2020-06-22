@@ -387,11 +387,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     public StaticContext processImportedModule(LibraryModule libraryModule, StaticContext argument) {
-        System.out.println("Processing imported module " + libraryModule.getNamespace());
         StaticContext moduleContext = libraryModule.getStaticContext();
-        System.out.println(moduleContext);
         argument.importModuleContext(moduleContext, libraryModule.getNamespace());
-        System.out.println(argument);
         return argument;
     }
 
