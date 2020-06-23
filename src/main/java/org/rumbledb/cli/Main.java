@@ -78,6 +78,7 @@ public class Main {
                     "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
                 );
             }
+            System.exit(0);
         } catch (Exception ex) {
             boolean showErrorInfo = false;
             if (sparksoniqConf != null) {
@@ -101,6 +102,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(42);
             } else if (ex instanceof IllegalArgumentException) {
                 System.err.println("⚠️  It seems that you are not using Java 8. Spark only works with Java 8.");
                 System.err.println(
@@ -110,6 +112,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(43);
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
@@ -119,6 +122,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(-42);
             }
         }
     }
