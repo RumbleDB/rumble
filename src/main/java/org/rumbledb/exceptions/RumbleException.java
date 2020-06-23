@@ -83,17 +83,17 @@ public class RumbleException extends RuntimeException {
         this.errorMessage = message;
     }
 
-    private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message)
-    {
+    private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
         return "There was an error.\n\nCode: ["
-                + errorCode
-                + "] (this code can be looked up in the documentation and specifications).\n\nLocation information: "
-                + (metadata != null
-                    ? metadata.toString()
-                    : "")
-                + "\n\n" + message;
+            + errorCode
+            + "] (this code can be looked up in the documentation and specifications).\n\nLocation information: "
+            + (metadata != null
+                ? metadata.toString()
+                : "")
+            + "\n\n"
+            + message;
     }
-    
+
     public String getErrorCode() {
         return this.errorCode.toString();
     }

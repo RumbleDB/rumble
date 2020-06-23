@@ -65,14 +65,15 @@ public class ExceptionMetadata implements Serializable {
     public int getTokenColumnNumber() {
         return this.tokenColumnNumber;
     }
-    
+
     public String toString() {
-        return this.location + ":"
-        + "LINE:"
-        + getTokenLineNumber()
-        +
-        ":COLUMN:"
-        + getTokenColumnNumber()
-        + ":";
+        return this.location
+            + ":"
+            + "LINE:"
+            + getTokenLineNumber()
+            +
+            ":COLUMN:"
+            + getTokenColumnNumber()
+            + ":";
     }
 }
