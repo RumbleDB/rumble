@@ -262,10 +262,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         throw new PrefixCannotBeExpandedException(
                 "Cannot expand prefix " + prefix,
-                new ExceptionMetadata(
-                        ctx.getStop().getLine(),
-                        ctx.getStop().getCharPositionInLine()
-                )
+                generateMetadata(ctx.getStop())
         );
     }
 
@@ -396,10 +393,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression returnExpr = (Expression) this.visitExprSingle(ctx.return_expr);
         ReturnClause returnClause = new ReturnClause(
                 returnExpr,
-                new ExceptionMetadata(
-                        ctx.getStop().getLine(),
-                        ctx.getStop().getCharPositionInLine()
-                )
+                generateMetadata(ctx.getStop())
         );
         previousFLWORClause.chainWith(returnClause);
 
@@ -1271,9 +1265,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     // endregion
 
     private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
-        int tokenLineNumber = ctx.getStart().getLine();
-        int tokenColumnNumber = ctx.getStart().getCharPositionInLine();
-        return new ExceptionMetadata(tokenLineNumber, tokenColumnNumber);
+        return generateMetadata(ctx.getStart());
     }
 
     @Override
@@ -1337,6 +1329,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 this.configuration,
                 generateMetadata(ctx.getStop())
             );
+            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
+                throw new ModuleNotFoundException(
+                        "A module with namespace "
+                            + resolvedURI.toString()
+                            + " was not found. The namespace of the module at this location was: "
+                            + libraryModule.getNamespace(),
+                        generateMetadata(ctx.getStop())
+                );
+            }
         } catch (IOException e) {
             RumbleException exception = new ModuleNotFoundException(
                     "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
@@ -1362,8 +1363,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return libraryModule;
     }
 
-    public static ExceptionMetadata generateMetadata(Token token) {
+    public ExceptionMetadata generateMetadata(Token token) {
         return new ExceptionMetadata(
+                this.moduleContext.getStaticBaseURI().toString(),
                 token.getLine(),
                 token.getCharPositionInLine()
         );

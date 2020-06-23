@@ -90,6 +90,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     new ExceptionMetadata(
+                            uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )
@@ -120,6 +121,7 @@ public class VisitorHelpers {
             ParsingException e = new ParsingException(
                     lexer.getText(),
                     new ExceptionMetadata(
+                            uri.toString(),
                             lexer.getLine(),
                             lexer.getCharPositionInLine()
                     )

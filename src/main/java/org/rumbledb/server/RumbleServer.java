@@ -29,7 +29,7 @@ public class RumbleServer {
             context.setHandler(new RumbleHttpHandler());
             server.start();
         } catch (IOException e) {
-            throw new OurBadException(e.getMessage(), new ExceptionMetadata(0, 0));
+            throw new OurBadException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
