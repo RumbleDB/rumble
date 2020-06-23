@@ -33,7 +33,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
-import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
@@ -100,18 +100,16 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     private Item getProjection(Item objItem, List<Item> keys) {
-        ArrayList<String> finalKeylist = new ArrayList<>();
-        ArrayList<Item> finalValueList = new ArrayList<>();
+        LinkedHashMap<String, Item> finalContent = new LinkedHashMap<>();
         for (Item keyItem : keys) {
             String key = keyItem.getStringValue();
             Item value = objItem.getItemByKey(key);
             if (value != null) {
-                finalKeylist.add(key);
-                finalValueList.add(value);
+                finalContent.put(key, value);
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata());
+            .createObjectItem(finalContent, getMetadata());
     }
 
     @Override

@@ -73,9 +73,8 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     iterator.open(this.currentDynamicContextForLocalExecution);
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
-                        for(String key : item.getKeys())
-                        {
-                            content.put(key,  item.getItemByKey(key));
+                        for (String key : item.getKeys()) {
+                            content.put(key, item.getItemByKey(key));
                         }
                     }
                     iterator.close();
@@ -87,11 +86,10 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
             } else {
                 Item key = null;
                 Item value = null;
-                for(int i = 0; i < this.keys.size(); ++i)
-                {
+                for (int i = 0; i < this.keys.size(); ++i) {
                     RuntimeIterator keyIterator = this.keys.get(i);
                     RuntimeIterator valueIterator = this.values.get(i);
-                    
+
                     List<Item> currentResults = new ArrayList<>();
                     valueIterator.open(this.currentDynamicContextForLocalExecution);
                     while (valueIterator.hasNext()) {
@@ -106,7 +104,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     } else {
                         value = ItemFactory.getInstance().createNullItem();
                     }
- 
+
                     keyIterator.open(this.currentDynamicContextForLocalExecution);
                     if (!keyIterator.hasNext()) {
                         throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());

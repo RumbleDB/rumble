@@ -19,6 +19,7 @@ import org.rumbledb.items.ItemFactory;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class RumbleMLUtils {
@@ -185,12 +186,9 @@ public class RumbleMLUtils {
     }
 
     public static Item removeParameter(Item paramMapItem, String key, ExceptionMetadata metadata) {
-        List<String> keys = paramMapItem.getKeys();
-        List<Item> values = paramMapItem.getValues();
-        int indexToRemove = keys.indexOf(key);
-        keys.remove(indexToRemove);
-        values.remove(indexToRemove);
-        return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
+        LinkedHashMap<String, Item> newContent = new LinkedHashMap<>(paramMapItem.getAsMap());
+        newContent.remove(key);
+        return ItemFactory.getInstance().createObjectItem(newContent, metadata);
     }
 
     public static Dataset<Row> createDataFrameContainingVectorizedColumn(

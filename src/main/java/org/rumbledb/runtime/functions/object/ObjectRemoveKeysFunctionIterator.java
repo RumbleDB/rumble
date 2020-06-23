@@ -35,6 +35,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
@@ -114,17 +115,15 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private Item removeKeys(Item objItem, List<String> removalKeys) {
-        ArrayList<String> finalKeylist = new ArrayList<>();
-        ArrayList<Item> finalValueList = new ArrayList<>();
+        LinkedHashMap<String, Item> finalContent = new LinkedHashMap<>();
 
         for (String objectKey : objItem.getKeys()) {
             if (!removalKeys.contains(objectKey)) {
-                finalKeylist.add(objectKey);
-                finalValueList.add(objItem.getItemByKey(objectKey));
+                finalContent.put(objectKey, objItem.getItemByKey(objectKey));
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalKeylist, finalValueList, getMetadata());
+            .createObjectItem(finalContent, getMetadata());
     }
 
     @Override

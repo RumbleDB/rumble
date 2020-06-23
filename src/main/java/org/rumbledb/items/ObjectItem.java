@@ -25,11 +25,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,15 +86,9 @@ public class ObjectItem extends JsonItem {
         return new ArrayList<Item>(this.content.values());
     }
 
-    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
-        HashMap<String, Integer> frequencies = new HashMap<>();
-        for (String key : keys) {
-            if (frequencies.containsKey(key)) {
-                throw new DuplicateObjectKeyException(key, metadata);
-            } else {
-                frequencies.put(key, 1);
-            }
-        }
+    @Override
+    public Map<String, Item> getAsMap() {
+        return this.content;
     }
 
     @Override
@@ -129,7 +121,6 @@ public class ObjectItem extends JsonItem {
         sb.append("{");
         String comma = " ";
         for (String key : this.content.keySet()) {
-            sb.append(comma);
             sb.append(comma);
             comma = ", ";
 
