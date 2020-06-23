@@ -120,7 +120,7 @@ public class ObjectItem extends JsonItem {
     public void putItemByKey(String s, Item value) {
         this.keys.add(s);
         this.values.add(value);
-        checkForDuplicateKeys(this.keys, new ExceptionMetadata(0, 0));
+        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
     }
 
     @Override

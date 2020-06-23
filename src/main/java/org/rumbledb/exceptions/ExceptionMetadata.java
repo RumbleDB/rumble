@@ -30,9 +30,10 @@ import java.io.Serializable;
 public class ExceptionMetadata implements Serializable {
 
     private static final long serialVersionUID = 1L;
+    private final String location;
     private final int tokenLineNumber;
     private final int tokenColumnNumber;
-    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata(0, 0);
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 0, 0);
 
     /**
      * Builds a new metadata object
@@ -40,7 +41,8 @@ public class ExceptionMetadata implements Serializable {
      * @param line the line number at which the error occurred.
      * @param column the column number at which the error occurred.
      */
-    public ExceptionMetadata(int line, int column) {
+    public ExceptionMetadata(String location, int line, int column) {
+        this.location = location;
         this.tokenLineNumber = line;
         this.tokenColumnNumber = column;
 
@@ -62,5 +64,16 @@ public class ExceptionMetadata implements Serializable {
      */
     public int getTokenColumnNumber() {
         return this.tokenColumnNumber;
+    }
+
+    public String toString() {
+        return this.location
+            + ":"
+            + "LINE:"
+            + getTokenLineNumber()
+            +
+            ":COLUMN:"
+            + getTokenColumnNumber()
+            + ":";
     }
 }
