@@ -69,7 +69,7 @@ public class RumbleHttpHandler implements HttpHandler {
                 );
             }
         }
-        String[] args = new String[queryParameters.keySet().size() * 2];
+        String[] args = new String[queryParameters.size() * 2];
         int i = 0;
         for (String param : queryParameters.keySet()) {
             args[i++] = "--" + param;

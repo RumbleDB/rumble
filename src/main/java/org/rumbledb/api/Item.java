@@ -36,6 +36,7 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.Map;
 
 /**
  * An instance of this class is an item in the JSONiq data model.
@@ -216,6 +217,15 @@ public abstract class Item implements SerializableItem {
      * @return the list of the value items.
      */
     public List<Item> getValues() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
+    }
+
+    /**
+     * Returns the map represented by the item, if it is an object item.
+     *
+     * @return the map.
+     */
+    public Map<String, Item> getAsMap() {
         throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
     }
 

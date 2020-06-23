@@ -25,11 +25,9 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DuplicateObjectKeyException;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -37,20 +35,16 @@ public class ObjectItem extends JsonItem {
 
 
     private static final long serialVersionUID = 1L;
-    private List<Item> values;
-    private List<String> keys;
+    private Map<String, Item> content;
 
     public ObjectItem() {
         super();
-        this.keys = new ArrayList<>();
-        this.values = new ArrayList<>();
+        this.content = new LinkedHashMap<>();
     }
 
-    public ObjectItem(List<String> keys, List<Item> values, ExceptionMetadata itemMetadata) {
+    public ObjectItem(LinkedHashMap<String, Item> content) {
         super();
-        checkForDuplicateKeys(keys, itemMetadata);
-        this.keys = keys;
-        this.values = values;
+        this.content = content;
     }
 
     /**
@@ -64,53 +58,42 @@ public class ObjectItem extends JsonItem {
     public ObjectItem(Map<String, List<Item>> keyValuePairs) {
         super();
 
-        List<String> keyList = new ArrayList<>();
-        List<Item> valueList = new ArrayList<>();
+        this.content = new LinkedHashMap<>(keyValuePairs.size(), 1);
         for (String key : keyValuePairs.keySet()) {
             // add all keys to the keyList
-            keyList.add(key);
             List<Item> values = keyValuePairs.get(key);
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
                 Item valuesArray = ItemFactory.getInstance().createArrayItem(values);
-                valueList.add(valuesArray);
+                this.content.put(key, valuesArray);
             } else if (values.size() == 1) {
                 Item value = values.get(0);
-                valueList.add(value);
+                this.content.put(key, value);
             } else {
                 throw new RuntimeException("Unexpected list size found.");
             }
         }
-
-        this.keys = keyList;
-        this.values = valueList;
     }
 
     @Override
     public List<String> getKeys() {
-        return this.keys;
+        return new ArrayList<String>(this.content.keySet());
     }
 
     @Override
     public List<Item> getValues() {
-        return this.values;
+        return new ArrayList<Item>(this.content.values());
     }
 
-    private void checkForDuplicateKeys(List<String> keys, ExceptionMetadata metadata) {
-        HashMap<String, Integer> frequencies = new HashMap<>();
-        for (String key : keys) {
-            if (frequencies.containsKey(key)) {
-                throw new DuplicateObjectKeyException(key, metadata);
-            } else {
-                frequencies.put(key, 1);
-            }
-        }
+    @Override
+    public Map<String, Item> getAsMap() {
+        return this.content;
     }
 
     @Override
     public Item getItemByKey(String s) {
-        if (this.keys.contains(s)) {
-            return this.values.get(this.keys.indexOf(s));
+        if (this.content.containsKey(s)) {
+            return this.content.get(s);
         } else {
             return null;
         }
@@ -118,9 +101,7 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public void putItemByKey(String s, Item value) {
-        this.keys.add(s);
-        this.values.add(value);
-        checkForDuplicateKeys(this.keys, ExceptionMetadata.EMPTY_METADATA);
+        this.content.put(s, value);
     }
 
     @Override
@@ -136,10 +117,13 @@ public class ObjectItem extends JsonItem {
     @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
-        sb.append("{ ");
-        for (int i = 0; i < this.keys.size(); ++i) {
-            String key = this.keys.get(i);
-            Item value = this.values.get(i);
+        sb.append("{");
+        String comma = " ";
+        for (String key : this.content.keySet()) {
+            sb.append(comma);
+            comma = ", ";
+
+            Item value = this.content.get(key);
             boolean isStringValue = value.isString();
             sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
             if (isStringValue) {
@@ -150,27 +134,20 @@ public class ObjectItem extends JsonItem {
                 sb.append(value.serialize());
             }
 
-            if (i < this.keys.size() - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(" ");
-            }
         }
-        sb.append("}");
+        sb.append(" }");
         return sb.toString();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.keys);
-        kryo.writeObject(output, this.values);
+        kryo.writeObject(output, this.content);
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.keys = kryo.readObject(input, ArrayList.class);
-        this.values = kryo.readObject(input, ArrayList.class);
+        this.content = kryo.readObject(input, LinkedHashMap.class);
     }
 
     public boolean equals(Object otherItem) {

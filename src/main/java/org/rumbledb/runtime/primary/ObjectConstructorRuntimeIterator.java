@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -31,6 +32,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 
 public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
@@ -66,25 +68,35 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            List<Item> values = new ArrayList<>();
-            List<String> keys = new ArrayList<>();
+            LinkedHashMap<String, Item> content = new LinkedHashMap<>();
             if (this.isMergedObject) {
                 for (RuntimeIterator iterator : this.children) {
                     iterator.open(this.currentDynamicContextForLocalExecution);
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
-                        keys.addAll(item.getKeys());
-                        values.addAll(item.getValues());
+                        for (String key : item.getKeys()) {
+                            if (content.containsKey(key)) {
+                                throw new DuplicateObjectKeyException(
+                                        "Duplicate key: " + key,
+                                        getMetadata()
+                                );
+                            }
+                            content.put(key, item.getItemByKey(key));
+                        }
                     }
                     iterator.close();
                 }
                 this.hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, getMetadata());
+                    .createObjectItem(content);
 
             } else {
+                Item key = null;
+                Item value = null;
+                for (int i = 0; i < this.keys.size(); ++i) {
+                    RuntimeIterator keyIterator = this.keys.get(i);
+                    RuntimeIterator valueIterator = this.values.get(i);
 
-                for (RuntimeIterator valueIterator : this.values) {
                     List<Item> currentResults = new ArrayList<>();
                     valueIterator.open(this.currentDynamicContextForLocalExecution);
                     while (valueIterator.hasNext()) {
@@ -93,27 +105,31 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     valueIterator.close();
                     // SIMILAR TO ZORBA, if value is more than one item, wrap it in an array
                     if (currentResults.size() > 1) {
-                        values.add(ItemFactory.getInstance().createArrayItem(currentResults));
+                        value = ItemFactory.getInstance().createArrayItem(currentResults);
                     } else if (currentResults.size() == 1) {
-                        values.add(currentResults.get(0));
+                        value = currentResults.get(0);
                     } else {
-                        values.add(ItemFactory.getInstance().createNullItem());
+                        value = ItemFactory.getInstance().createNullItem();
                     }
-                }
 
-                for (RuntimeIterator keyIterator : this.keys) {
                     keyIterator.open(this.currentDynamicContextForLocalExecution);
                     if (!keyIterator.hasNext()) {
                         throw new IteratorFlowException("A key cannot be the empty sequence", getMetadata());
                     }
-                    Item key = keyIterator.next();
+                    key = keyIterator.next();
                     if (!key.isString()) {
                         throw new UnexpectedTypeException(
                                 "Key provided for object creation must be of type String",
                                 getMetadata()
                         );
                     }
-                    keys.add(key.getStringValue());
+                    if (content.containsKey(key.getStringValue())) {
+                        throw new DuplicateObjectKeyException(
+                                "Duplicate key: " + key.getStringValue(),
+                                getMetadata()
+                        );
+                    }
+                    content.put(key.getStringValue(), value);
                     if (keyIterator.hasNext()) {
                         throw new IteratorFlowException(
                                 "A key cannot be a sequence of more than one item",
@@ -124,7 +140,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
                 this.hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(keys, values, getMetadata());
+                    .createObjectItem(content);
             }
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());
