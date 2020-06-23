@@ -58,7 +58,7 @@ public class ObjectItem extends JsonItem {
     public ObjectItem(Map<String, List<Item>> keyValuePairs) {
         super();
 
-        this.content = new LinkedHashMap<>();
+        this.content = new LinkedHashMap<>(keyValuePairs.size());
         for (String key : keyValuePairs.keySet()) {
             // add all keys to the keyList
             List<Item> values = keyValuePairs.get(key);

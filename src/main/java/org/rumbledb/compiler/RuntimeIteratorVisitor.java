@@ -458,7 +458,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitInlineFunctionExpr(InlineFunctionExpression expression, RuntimeIterator argument) {
-        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
+        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>(expression.getParams().size());
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
@@ -896,7 +896,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitSwitchExpression(SwitchExpression expression, RuntimeIterator argument) {
-        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>();
+        Map<RuntimeIterator, RuntimeIterator> cases = new LinkedHashMap<>(expression.getCases().size());
         for (SwitchCase caseExpression : expression.getCases()) {
             RuntimeIterator caseExpr = this.visit(caseExpression.getReturnExpression(), argument);
             for (Expression conditionExpr : caseExpression.getConditionExpressions()) {
@@ -948,7 +948,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
         System.out.println("Visiting!");
-        Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
+        Map<String, RuntimeIterator> cases = new LinkedHashMap<>(expression.getErrorsCaught().size());
         for (String code : expression.getErrorsCaught()) {
             cases.put(
                 code,

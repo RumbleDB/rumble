@@ -115,9 +115,9 @@ public class ItemParser implements Serializable {
     }
 
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
-        LinkedHashMap<String, Item> content = new LinkedHashMap<>();
         StructType schema = row.schema();
         StructField[] fields = schema.fields();
+        LinkedHashMap<String, Item> content = new LinkedHashMap<>(fields.length);
         String[] fieldnames = schema.fieldNames();
 
         for (int i = 0; i < fields.length; ++i) {
@@ -246,15 +246,17 @@ public class ItemParser implements Serializable {
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
-            List<Item> members = new ArrayList<>();
+            List<Item> members = null;
             if (row != null) {
                 List<Object> objects = row.getList(i);
+                members = new ArrayList<>(objects.size());
                 for (Object object : objects) {
                     members.add(getValue(null, 0, object, dataType, metadata));
                 }
             } else {
                 @SuppressWarnings("unchecked")
                 Object arrayObject = ((WrappedArray<Object>) o).array();
+                members = new ArrayList<>(Array.getLength(arrayObject));
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
                     members.add(getValue(null, 0, value, dataType, metadata));
@@ -279,8 +281,8 @@ public class ItemParser implements Serializable {
             } else if (vector instanceof SparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
                 SparseVector sparseVector = (SparseVector) vector;
-                LinkedHashMap<String, Item> objectContent = new LinkedHashMap<>();
                 int[] vectorIndices = sparseVector.indices();
+                LinkedHashMap<String, Item> objectContent = new LinkedHashMap<>(vectorIndices.length);
                 double[] vectorValues = sparseVector.values();
                 for (int j = 0; j < vectorIndices.length; j++) {
                     objectContent.put(

@@ -269,11 +269,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.qname(), true);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
+            Map<Name, SequenceType> fnParams = new LinkedHashMap<>(ctx.paramList().param().size());
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false);
                 paramType = MOST_GENERAL_SEQUENCE_TYPE;
