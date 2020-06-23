@@ -70,6 +70,7 @@ public class SparkSessionManager {
     public static SparkSessionManager getInstance() {
         if (instance == null) {
             instance = new SparkSessionManager();
+            instance.initializeConfigurationAndSession();
         }
         return instance;
     }
