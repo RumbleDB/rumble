@@ -273,7 +273,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
-            Map<Name, SequenceType> fnParams = new LinkedHashMap<>(ctx.paramList().param().size());
+            Map<Name, SequenceType> fnParams = new LinkedHashMap<>(ctx.paramList().param().size(), 1);
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false);
                 paramType = MOST_GENERAL_SEQUENCE_TYPE;

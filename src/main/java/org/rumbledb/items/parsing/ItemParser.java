@@ -117,7 +117,7 @@ public class ItemParser implements Serializable {
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
         StructType schema = row.schema();
         StructField[] fields = schema.fields();
-        LinkedHashMap<String, Item> content = new LinkedHashMap<>(fields.length);
+        LinkedHashMap<String, Item> content = new LinkedHashMap<>(fields.length, 1);
         String[] fieldnames = schema.fieldNames();
 
         for (int i = 0; i < fields.length; ++i) {
@@ -282,7 +282,7 @@ public class ItemParser implements Serializable {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
                 SparseVector sparseVector = (SparseVector) vector;
                 int[] vectorIndices = sparseVector.indices();
-                LinkedHashMap<String, Item> objectContent = new LinkedHashMap<>(vectorIndices.length);
+                LinkedHashMap<String, Item> objectContent = new LinkedHashMap<>(vectorIndices.length, 1);
                 double[] vectorValues = sparseVector.values();
                 for (int j = 0; j < vectorIndices.length; j++) {
                     objectContent.put(
