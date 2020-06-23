@@ -109,7 +109,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalContent, getMetadata());
+            .createObjectItem(finalContent);
     }
 
     @Override
@@ -141,8 +141,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
         this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         FlatMapFunction<Item, Item> transformation = new ObjectProjectClosure(
-                this.projectionKeys,
-                getMetadata()
+                this.projectionKeys
         );
         return childRDD.flatMap(transformation);
     }

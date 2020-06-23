@@ -188,7 +188,7 @@ public class RumbleMLUtils {
     public static Item removeParameter(Item paramMapItem, String key, ExceptionMetadata metadata) {
         LinkedHashMap<String, Item> newContent = new LinkedHashMap<>(paramMapItem.getAsMap());
         newContent.remove(key);
-        return ItemFactory.getInstance().createObjectItem(newContent, metadata);
+        return ItemFactory.getInstance().createObjectItem(newContent);
     }
 
     public static Dataset<Row> createDataFrameContainingVectorizedColumn(

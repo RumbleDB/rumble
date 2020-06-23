@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -43,7 +42,7 @@ public class ObjectItem extends JsonItem {
         this.content = new LinkedHashMap<>();
     }
 
-    public ObjectItem(LinkedHashMap<String, Item> content, ExceptionMetadata itemMetadata) {
+    public ObjectItem(LinkedHashMap<String, Item> content) {
         super();
         this.content = content;
     }
@@ -66,10 +65,10 @@ public class ObjectItem extends JsonItem {
             // for each key, convert the lists of values into arrayItems
             if (values.size() > 1) {
                 Item valuesArray = ItemFactory.getInstance().createArrayItem(values);
-                content.put(key, valuesArray);
+                this.content.put(key, valuesArray);
             } else if (values.size() == 1) {
                 Item value = values.get(0);
-                content.put(key, value);
+                this.content.put(key, value);
             } else {
                 throw new RuntimeException("Unexpected list size found.");
             }

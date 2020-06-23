@@ -123,7 +123,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
             }
         }
         return ItemFactory.getInstance()
-            .createObjectItem(finalContent, getMetadata());
+            .createObjectItem(finalContent);
     }
 
     @Override
@@ -161,8 +161,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
             this.removalKeys.add(removalKey);
         }
         FlatMapFunction<Item, Item> transformation = new ObjectRemoveKeysClosure(
-                this.removalKeys,
-                getMetadata()
+                this.removalKeys
         );
         return childRDD.flatMap(transformation);
     }

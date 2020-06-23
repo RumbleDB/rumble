@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -74,6 +75,12 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                     while (iterator.hasNext()) {
                         ObjectItem item = (ObjectItem) iterator.next();
                         for (String key : item.getKeys()) {
+                            if (content.containsKey(key)) {
+                                throw new DuplicateObjectKeyException(
+                                        "Duplicate key: " + key,
+                                        getMetadata()
+                                );
+                            }
                             content.put(key, item.getItemByKey(key));
                         }
                     }
@@ -81,7 +88,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
                 this.hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(content, getMetadata());
+                    .createObjectItem(content);
 
             } else {
                 Item key = null;
@@ -116,6 +123,12 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                                 getMetadata()
                         );
                     }
+                    if (content.containsKey(key.getStringValue())) {
+                        throw new DuplicateObjectKeyException(
+                                "Duplicate key: " + key.getStringValue(),
+                                getMetadata()
+                        );
+                    }
                     content.put(key.getStringValue(), value);
                     if (keyIterator.hasNext()) {
                         throw new IteratorFlowException(
@@ -127,7 +140,7 @@ public class ObjectConstructorRuntimeIterator extends LocalRuntimeIterator {
                 }
                 this.hasNext = false;
                 return ItemFactory.getInstance()
-                    .createObjectItem(content, getMetadata());
+                    .createObjectItem(content);
             }
         }
         throw new IteratorFlowException("Invalid next() call on object!", getMetadata());

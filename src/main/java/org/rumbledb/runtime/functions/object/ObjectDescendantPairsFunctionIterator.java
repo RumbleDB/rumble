@@ -110,7 +110,7 @@ public class ObjectDescendantPairsFunctionIterator extends LocalFunctionCallIter
                     content.put(key, value);
 
                     Item result = ItemFactory.getInstance()
-                        .createObjectItem(content, getMetadata());
+                        .createObjectItem(content);
                     this.nextResults.add(result);
                     getDescendantPairs(new ArrayList<Item>(content.values()));
                 }

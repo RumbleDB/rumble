@@ -3,8 +3,6 @@ package org.rumbledb.items;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-
 import java.math.BigDecimal;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -116,8 +114,8 @@ public class ItemFactory {
         return new ArrayItem(items);
     }
 
-    public Item createObjectItem(LinkedHashMap<String, Item> content, ExceptionMetadata itemMetadata) {
-        return new ObjectItem(content, itemMetadata);
+    public Item createObjectItem(LinkedHashMap<String, Item> content) {
+        return new ObjectItem(content);
     }
 
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {

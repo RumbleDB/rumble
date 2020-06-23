@@ -99,7 +99,7 @@ public class ItemParser implements Serializable {
                     content.put(s, getItemFromObject(object, metadata));
                 }
                 return ItemFactory.getInstance()
-                    .createObjectItem(content, metadata);
+                    .createObjectItem(content);
             }
             if (object.whatIsNext().equals(ValueType.NULL)) {
                 object.readNull();
@@ -129,7 +129,7 @@ public class ItemParser implements Serializable {
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return content.get(fieldnames[0]);
         }
-        return ItemFactory.getInstance().createObjectItem(content, metadata);
+        return ItemFactory.getInstance().createObjectItem(content);
     }
 
     private static Item getValue(
@@ -288,7 +288,7 @@ public class ItemParser implements Serializable {
                         ItemFactory.getInstance().createDoubleItem(vectorValues[j])
                     );
                 }
-                return ItemFactory.getInstance().createObjectItem(objectContent, metadata);
+                return ItemFactory.getInstance().createObjectItem(objectContent);
             } else {
                 throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }
