@@ -125,7 +125,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                         || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
                 ) {
                     throw new UnexpectedTypeException(
-                            "External variable value does not match the expected type.",
+                            "External variable value ("
+                                + value
+                                + ") does not match the expected type ("
+                                + variableDeclaration.getSequenceType()
+                                + ").",
                             variableDeclaration.getMetadata()
                     );
                 }
