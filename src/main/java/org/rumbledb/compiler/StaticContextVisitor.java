@@ -152,7 +152,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
         );
-        return functionDeclarationContext;
+        return argument;
     }
 
     @Override
@@ -376,18 +376,19 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     variableDeclaration.getMetadata()
             );
         }
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(
+        argument.addVariable(
             variableDeclaration.getVariableName(),
             variableDeclaration.getSequenceType(),
             variableDeclaration.getMetadata(),
             variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
         );
-        return result;
+        return argument;
     }
 
-    public StaticContext processImportedModule(LibraryModule libraryModule, StaticContext argument) {
+    @Override
+    public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
         StaticContext moduleContext = libraryModule.getStaticContext();
+        this.visit(libraryModule.getProlog(), moduleContext);
         argument.importModuleContext(moduleContext, libraryModule.getNamespace());
         return argument;
     }
