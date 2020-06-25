@@ -238,7 +238,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                                     + variableNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                generateMetadata(ctx.getStop())
+                                generateMetadata(annotatedDeclaration.getStop())
                         );
                     }
                 }
@@ -258,7 +258,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                                     + functionNamespace
                                     + " must match module namespace "
                                     + moduleNamespace,
-                                generateMetadata(ctx.getStop())
+                                generateMetadata(annotatedDeclaration.getStop())
                         );
                     }
                 }
