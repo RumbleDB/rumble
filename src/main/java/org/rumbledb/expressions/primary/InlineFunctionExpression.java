@@ -28,7 +28,6 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -89,12 +88,13 @@ public class InlineFunctionExpression extends Expression {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (this.name != null) {
-            Functions.addUserDefinedFunctionExecutionMode(
-                identifier,
-                this.body.getHighestExecutionMode(visitorConfig),
-                visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                this.getMetadata()
-            );
+            getStaticContext().getStaticallyKnownFunctionSignatures()
+                .addUserDefinedFunctionExecutionMode(
+                    identifier,
+                    this.body.getHighestExecutionMode(visitorConfig),
+                    visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                    this.getMetadata()
+                );
         }
     }
 

@@ -34,6 +34,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.runtime.functions.base.KnownFunctions;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -54,6 +56,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private Map<Name, Dataset<Row>> dataFrameVariableValues;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;
+    private KnownFunctions knownFunctions;
 
     public DynamicContext() {
         this.parent = null;
@@ -61,6 +64,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.knownFunctions = new KnownFunctions();
     }
 
     public DynamicContext(RumbleRuntimeConfiguration conf) {
@@ -70,6 +74,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
         this.conf = conf;
+        this.knownFunctions = new KnownFunctions();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -78,6 +83,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.knownFunctions = null;
     }
 
     public DynamicContext(
@@ -91,6 +97,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.localVariableValues = localVariableValues;
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
+        this.knownFunctions = null;
 
     }
 
@@ -421,6 +428,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 this.dataFrameVariableValues.put(name, items);
             }
         }
+    }
+
+    public KnownFunctions getKnownFunctions() {
+        if (this.knownFunctions != null) {
+            return this.knownFunctions;
+        }
+        if (this.parent != null) {
+            return this.parent.getKnownFunctions();
+        }
+        throw new OurBadException("Known functions are not set up properly in dynamic context.");
     }
 
 }

@@ -23,6 +23,7 @@ package org.rumbledb.context;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.runtime.functions.base.StaticallyKnownFunctionSignatures;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -95,16 +96,19 @@ public class StaticContext implements Serializable, KryoSerializable {
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
     private URI staticBaseURI;
+    public StaticallyKnownFunctionSignatures staticallyKnownFunctionSignatures;
 
     public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
+        this.staticallyKnownFunctionSignatures = new StaticallyKnownFunctionSignatures();
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
+        this.staticallyKnownFunctionSignatures = null;
     }
 
     public StaticContext getParent() {
@@ -246,5 +250,15 @@ public class StaticContext implements Serializable, KryoSerializable {
                 this.inScopeVariables.put(name, variable);
             }
         }
+    }
+
+    public StaticallyKnownFunctionSignatures getStaticallyKnownFunctionSignatures() {
+        if (this.staticallyKnownFunctionSignatures != null) {
+            return this.staticallyKnownFunctionSignatures;
+        }
+        if (this.parent != null) {
+            return this.parent.getStaticallyKnownFunctionSignatures();
+        }
+        throw new OurBadException("Statically known function signatures are not set up properly in dynamic context.");
     }
 }

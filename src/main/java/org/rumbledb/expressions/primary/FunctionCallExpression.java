@@ -33,7 +33,6 @@ import org.rumbledb.runtime.functions.base.BuiltinFunction;
 import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -100,12 +99,16 @@ public class FunctionCallExpression extends Expression {
             return;
         }
 
-        if (Functions.checkUserDefinedFunctionExecutionModeExists(this.identifier)) {
+        if (
+            getStaticContext().getStaticallyKnownFunctionSignatures()
+                .checkUserDefinedFunctionExecutionModeExists(this.identifier)
+        ) {
             if (this.isPartialApplication) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
+            this.highestExecutionMode = getStaticContext().getStaticallyKnownFunctionSignatures()
+                .getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
             return;
         }
 

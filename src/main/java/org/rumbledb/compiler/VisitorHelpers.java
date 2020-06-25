@@ -25,7 +25,7 @@ import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.base.StaticallyKnownFunctionSignatures;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -140,14 +140,14 @@ public class VisitorHelpers {
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
-        int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+        int prevUnsetCount = module.numberOfUnsetExecutionModes();
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
 
         while (true) {
             visitor.visit(module, module.getStaticContext());
-            int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+            int currentUnsetCount = module.numberOfUnsetExecutionModes();
 
             if (conf.isPrintIteratorTree()) {
                 printTree(module, conf);
@@ -159,7 +159,9 @@ public class VisitorHelpers {
                 );
             }
             if (currentUnsetCount == prevUnsetCount) {
-                setLocalExecutionForUnsetUserDefinedFunctions();
+                setLocalExecutionForUnsetUserDefinedFunctions(
+                    module.getStaticContext().getStaticallyKnownFunctionSignatures()
+                );
                 break;
             }
             prevUnsetCount = currentUnsetCount;
@@ -183,17 +185,19 @@ public class VisitorHelpers {
         return visitor.visit(node, null);
     }
 
-    private static void setLocalExecutionForUnsetUserDefinedFunctions() {
+    private static void setLocalExecutionForUnsetUserDefinedFunctions(
+            StaticallyKnownFunctionSignatures staticallyKnownFunctionSignatures
+    ) {
         try {
             List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
             unsetFunctionIdentifiers.addAll(
-                Functions
+                staticallyKnownFunctionSignatures
                     .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
             );
             for (
                 FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
             ) {
-                Functions.addUserDefinedFunctionExecutionMode(
+                staticallyKnownFunctionSignatures.addUserDefinedFunctionExecutionMode(
                     functionIdentifier,
                     ExecutionMode.LOCAL,
                     true,

@@ -50,7 +50,6 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -139,11 +138,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
-        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
-            expression.getFunctionIdentifier(),
-            expression.getMetadata()
-        );
+        List<ExecutionMode> modes = argument.getStaticallyKnownFunctionSignatures()
+            .getUserDefinedFunctionParametersStorageMode(
+                expression.getFunctionIdentifier(),
+                expression.getMetadata()
+            );
         StaticContext functionDeclarationContext = new StaticContext(argument);
+        expression.setStaticContext(argument);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
@@ -193,12 +194,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
                 }
             }
-            Functions.addUserDefinedFunctionParametersStorageMode(
-                identifier,
-                modes,
-                this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                expression.getMetadata()
-            );
+            argument.getStaticallyKnownFunctionSignatures()
+                .addUserDefinedFunctionParametersStorageMode(
+                    identifier,
+                    modes,
+                    this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                    expression.getMetadata()
+                );
         }
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;

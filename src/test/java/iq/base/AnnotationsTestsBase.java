@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
@@ -72,8 +71,6 @@ public class AnnotationsTestsBase {
         MainModule mainModule = null;
         DynamicContext dynamicContext = null;
         try {
-            Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
-
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
             mainModule = VisitorHelpers.parseMainModuleFromLocation(
                 uri,

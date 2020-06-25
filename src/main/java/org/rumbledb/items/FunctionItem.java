@@ -32,6 +32,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.base.FunctionSignature;
@@ -288,7 +289,11 @@ public class FunctionItem extends Item {
             ObjectInputStream ois = new ObjectInputStream(bis);
             return (FunctionItem) ois.readObject();
         } catch (IOException | ClassNotFoundException e) {
-            throw new OurBadException("Error while deep copying the function body runtimeIterator");
+            RumbleException rumbleException = new OurBadException(
+                    "Error while deep copying the function body runtimeIterator"
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 
