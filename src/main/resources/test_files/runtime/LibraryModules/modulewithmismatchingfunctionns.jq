@@ -1,5 +1,5 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:0:COLUMN:0:" :)
-module namespace my-module = "module.jq";
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:6:COLUMN:0:" :)
+module namespace my-module = "modulewithmismatchingfunctionns.jq";
 
 declare function main($y) {
    my-module:func($my-module:x) + 2
