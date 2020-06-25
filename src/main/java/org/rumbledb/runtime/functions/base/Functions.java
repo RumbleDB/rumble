@@ -140,7 +140,12 @@ public class Functions {
                 continue;
             }
             if (updatedMode == ExecutionMode.UNSET) {
-                throw new OurBadException("Trying to unset an execution mode that was already set.");
+                throw new OurBadException(
+                        "Trying to unset an execution mode that was already set to "
+                            + oldMode
+                            + " in function "
+                            + functionIdentifier
+                );
             }
             if (oldMode == updatedMode) {
                 newModes.add(oldMode);

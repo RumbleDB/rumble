@@ -74,7 +74,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, configuration);
+        TranslationVisitor visitor = new TranslationVisitor(uri, true, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -108,7 +108,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, configuration);
+        TranslationVisitor visitor = new TranslationVisitor(uri, false, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();

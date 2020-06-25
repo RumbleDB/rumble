@@ -93,6 +93,7 @@ public enum ErrorCode {
     DuplicateFunctionIdentifier("XQST0034"),
     DuplicateParamName("XQST0039"),
     DuplicateModuleTargetNamespace("XQST0047"),
+    NamespaceDoesNotMatchModule("XQST0048"),
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
