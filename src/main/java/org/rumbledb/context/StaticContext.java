@@ -259,6 +259,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         if (this.parent != null) {
             return this.parent.getStaticallyKnownFunctionSignatures();
         }
-        throw new OurBadException("Statically known function signatures are not set up properly in dynamic context.");
+        throw new OurBadException("Statically known function signatures are not set up properly in static context.");
     }
 }
