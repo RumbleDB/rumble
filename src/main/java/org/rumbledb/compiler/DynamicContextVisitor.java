@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -42,6 +44,8 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 
@@ -101,14 +105,31 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             String value = this.configuration.getExternalVariableValue(name);
             List<Item> values = new ArrayList<>();
             if (value != null) {
-                Item item = ItemFactory.getInstance().createStringItem(value);
+                SequenceType sequenceType = variableDeclaration.getSequenceType();
+                Item item = null;
+                if (
+                    !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
+                        && sequenceType.getItemType().equals(ItemType.anyURIItem)
+                ) {
+                    URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                        value,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
+                } else {
+                    item = ItemFactory.getInstance().createStringItem(value);
+                }
                 values.add(item);
                 if (
                     variableDeclaration.getSequenceType().isEmptySequence()
                         || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
                 ) {
                     throw new UnexpectedTypeException(
-                            "External variable value does not match the expected type.",
+                            "External variable value ("
+                                + value
+                                + ") does not match the expected type ("
+                                + variableDeclaration.getSequenceType()
+                                + ").",
                             variableDeclaration.getMetadata()
                     );
                 }
