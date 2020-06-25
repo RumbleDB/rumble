@@ -145,10 +145,10 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
      */
     @Override
     public String toString() {
-        if (this.prefix != null) {
+        if (this.prefix != null && !this.prefix.equals("")) {
             return this.prefix + ":" + this.localName;
         }
-        if (this.namespace != null) {
+        if (this.prefix == null && this.namespace != null) {
             return "{" + this.namespace + "}" + this.localName;
         }
         return this.localName;
