@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;

@@ -23,7 +23,7 @@ package org.rumbledb.context;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.runtime.functions.base.StaticallyKnownFunctionSignatures;
+import org.rumbledb.runtime.functions.base.UserDefinedFunctionExecutionModes;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -96,13 +96,13 @@ public class StaticContext implements Serializable, KryoSerializable {
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
     private URI staticBaseURI;
-    public StaticallyKnownFunctionSignatures staticallyKnownFunctionSignatures;
+    public UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures;
 
     public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
-        this.staticallyKnownFunctionSignatures = new StaticallyKnownFunctionSignatures();
+        this.staticallyKnownFunctionSignatures = null;
     }
 
     public StaticContext(StaticContext parent) {
@@ -252,7 +252,16 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
-    public StaticallyKnownFunctionSignatures getStaticallyKnownFunctionSignatures() {
+    public void setStaticallyKnownFunctionSignatures(
+            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
+    ) {
+        if (this.parent != null) {
+            throw new OurBadException("Statically known function signatures can only be stored in the module context.");
+        }
+        this.staticallyKnownFunctionSignatures = staticallyKnownFunctionSignatures;
+    }
+
+    public UserDefinedFunctionExecutionModes getStaticallyKnownFunctionSignatures() {
         if (this.staticallyKnownFunctionSignatures != null) {
             return this.staticallyKnownFunctionSignatures;
         }

@@ -29,6 +29,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.KnownFunctions;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;

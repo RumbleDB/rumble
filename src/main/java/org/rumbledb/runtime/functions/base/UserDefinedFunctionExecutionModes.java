@@ -44,7 +44,9 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-public class StaticallyKnownFunctionSignatures implements Serializable, KryoSerializable {
+public class UserDefinedFunctionExecutionModes implements Serializable, KryoSerializable {
+
+    private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
@@ -52,15 +54,10 @@ public class StaticallyKnownFunctionSignatures implements Serializable, KryoSeri
     private HashMap<FunctionIdentifier, List<ExecutionMode>> userDefinedFunctionsParametersStorageMode;
     private List<FunctionIdentifier> userDefinedFunctionIdentifiersWithUnsetExecutionModes;
 
-    public StaticallyKnownFunctionSignatures() {
+    public UserDefinedFunctionExecutionModes() {
         this.userDefinedFunctionsExecutionMode = new HashMap<>();
         this.userDefinedFunctionsParametersStorageMode = new HashMap<>();
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
-    }
-
-    public void clearUserDefinedFunctions() {
-        this.userDefinedFunctionsExecutionMode.clear();
-        this.userDefinedFunctionsParametersStorageMode.clear();
     }
 
     public boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
@@ -266,14 +263,6 @@ public class StaticallyKnownFunctionSignatures implements Serializable, KryoSeri
         }
         return functionCallIterator;
     }
-
-
-
-    static final class BuiltinFunctions {
-
-    }
-
-
 
     @Override
     public void write(Kryo kryo, Output output) {

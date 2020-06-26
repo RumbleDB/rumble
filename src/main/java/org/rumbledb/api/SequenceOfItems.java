@@ -1,6 +1,7 @@
 package org.rumbledb.api;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -36,7 +37,7 @@ public class SequenceOfItems {
      * Opens the iterator.
      */
     public void open() {
-        this.iterator.open(new DynamicContext());
+        this.iterator.open(new DynamicContext(RumbleRuntimeConfiguration.getDefaultConfiguration()));
         this.isOpen = true;
     }
 
@@ -95,7 +96,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(new DynamicContext());
+        return this.iterator.getRDD(new DynamicContext(RumbleRuntimeConfiguration.getDefaultConfiguration()));
     }
 
 }

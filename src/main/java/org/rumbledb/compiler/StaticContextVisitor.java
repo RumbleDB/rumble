@@ -368,22 +368,27 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
+        System.out.println("Visiting variable declaration: " + variableDeclaration.getVariableName());
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);
         if (argument.hasVariable(variableDeclaration.getVariableName())) {
-            throw new VariableAlreadyExistsException(
-                    variableDeclaration.getVariableName(),
-                    variableDeclaration.getMetadata()
+            if (!this.visitorConfig.suppressErrorsForFunctionSignatureCollision()) {
+                throw new VariableAlreadyExistsException(
+                        variableDeclaration.getVariableName(),
+                        variableDeclaration.getMetadata()
+                );
+            }
+        } else {
+            // first pass.
+            argument.addVariable(
+                variableDeclaration.getVariableName(),
+                variableDeclaration.getSequenceType(),
+                variableDeclaration.getMetadata(),
+                variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
-        argument.addVariable(
-            variableDeclaration.getVariableName(),
-            variableDeclaration.getSequenceType(),
-            variableDeclaration.getMetadata(),
-            variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
-        );
         return argument;
     }
 

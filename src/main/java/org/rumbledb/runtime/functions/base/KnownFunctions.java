@@ -31,12 +31,21 @@ import org.rumbledb.runtime.functions.FunctionItemCallIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import sparksoniq.jsoniq.ExecutionMode;
+
+import java.io.Serializable;
 import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 
-public class KnownFunctions {
+public class KnownFunctions implements Serializable, KryoSerializable {
+
+    private static final long serialVersionUID = 1L;
 
     // two maps for User defined function are needed as execution mode is known at static analysis phase
     // but functions items are fully known at runtimeIterator generation
@@ -179,9 +188,14 @@ public class KnownFunctions {
         return functionCallIterator;
     }
 
+    @Override
+    public void write(Kryo kryo, Output output) {
+        kryo.writeObject(output, this.userDefinedFunctions);
+    }
 
-
-    static final class BuiltinFunctions {
-
+    @SuppressWarnings("unchecked")
+    @Override
+    public void read(Kryo kryo, Input input) {
+        this.userDefinedFunctions = kryo.readObject(input, HashMap.class);
     }
 }

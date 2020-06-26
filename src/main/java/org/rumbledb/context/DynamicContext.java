@@ -58,15 +58,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration conf;
     private KnownFunctions knownFunctions;
 
-    public DynamicContext() {
-        this.parent = null;
-        this.localVariableCounts = new HashMap<>();
-        this.localVariableValues = new HashMap<>();
-        this.rddVariableValues = new HashMap<>();
-        this.dataFrameVariableValues = new HashMap<>();
-        this.knownFunctions = new KnownFunctions();
-    }
-
     public DynamicContext(RumbleRuntimeConfiguration conf) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
@@ -78,6 +69,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public DynamicContext(DynamicContext parent) {
+        if (this.parent == null) {
+            throw new OurBadException("Dynamic context defined with null parent");
+        }
         this.parent = parent;
         this.localVariableCounts = new HashMap<>();
         this.localVariableValues = new HashMap<>();
@@ -92,6 +86,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
             Map<Name, JavaRDD<Item>> rddVariableValues,
             Map<Name, Dataset<Row>> dataFrameVariableValues
     ) {
+        if (this.parent == null) {
+            throw new OurBadException("Dynamic context defined with null parent");
+        }
         this.parent = parent;
         this.localVariableCounts = new HashMap<>();
         this.localVariableValues = localVariableValues;

@@ -13,6 +13,7 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -25,7 +26,7 @@ import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.StaticallyKnownFunctionSignatures;
+import org.rumbledb.runtime.functions.base.UserDefinedFunctionExecutionModes;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -58,11 +59,12 @@ public class VisitorHelpers {
     public static LibraryModule parseLibraryModuleFromLocation(
             URI location,
             RumbleRuntimeConfiguration configuration,
+            StaticContext importingModuleContext,
             ExceptionMetadata metadata
     )
             throws IOException {
         FSDataInputStream in = FileSystemUtil.getDataInputStream(location, metadata);
-        return parseLibraryModule(CharStreams.fromStream(in), location, configuration);
+        return parseLibraryModule(CharStreams.fromStream(in), location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
@@ -74,7 +76,9 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, true, configuration);
+        StaticContext moduleContext = new StaticContext(uri);
+        moduleContext.setStaticallyKnownFunctionSignatures(new UserDefinedFunctionExecutionModes());
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -103,12 +107,17 @@ public class VisitorHelpers {
     public static LibraryModule parseLibraryModule(
             CharStream stream,
             URI uri,
+            StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, false, configuration);
+        StaticContext moduleContext = new StaticContext(uri);
+        moduleContext.setStaticallyKnownFunctionSignatures(
+            importingModuleContext.getStaticallyKnownFunctionSignatures()
+        );
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -186,7 +195,7 @@ public class VisitorHelpers {
     }
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions(
-            StaticallyKnownFunctionSignatures staticallyKnownFunctionSignatures
+            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
     ) {
         try {
             List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
