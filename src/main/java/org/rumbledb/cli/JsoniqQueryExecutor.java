@@ -85,7 +85,7 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -128,7 +128,7 @@ public class JsoniqQueryExecutor {
     public long runInteractive(String query, List<Item> resultList) throws IOException {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         // execute locally for simple expressions
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();

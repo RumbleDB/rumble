@@ -29,6 +29,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
@@ -58,6 +59,8 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
+    private StaticContext staticModuleContext;
+    private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
     private Map<Name, Dataset<Row>> dataFrameVariablesInClosure;
@@ -70,12 +73,16 @@ public class FunctionItem extends Item {
             FunctionIdentifier identifier,
             List<Name> parameterNames,
             FunctionSignature signature,
+            StaticContext staticModuleContext,
+            DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
+        this.staticModuleContext = staticModuleContext;
+        this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
@@ -85,6 +92,8 @@ public class FunctionItem extends Item {
             FunctionIdentifier identifier,
             List<Name> parameterNames,
             FunctionSignature signature,
+            StaticContext staticModuleContext,
+            DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
@@ -94,6 +103,8 @@ public class FunctionItem extends Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
+        this.staticModuleContext = staticModuleContext;
+        this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
         this.dataFrameVariablesInClosure = DFVariablesInClosure;
@@ -103,6 +114,8 @@ public class FunctionItem extends Item {
             Name name,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
+            StaticContext staticModuleContext,
+            DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
         List<Name> paramNames = new ArrayList<>();
@@ -116,6 +129,8 @@ public class FunctionItem extends Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
+        this.staticModuleContext = staticModuleContext;
+        this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
         this.dataFrameVariablesInClosure = new HashMap<>();
@@ -134,6 +149,14 @@ public class FunctionItem extends Item {
     @Override
     public FunctionSignature getSignature() {
         return this.signature;
+    }
+
+    public StaticContext getStaticModuleContext() {
+        return this.staticModuleContext;
+    }
+
+    public DynamicContext getDynamicModuleContext() {
+        return this.dynamicModuleContext;
     }
 
     public RuntimeIterator getBodyIterator() {

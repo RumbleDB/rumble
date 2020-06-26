@@ -20,6 +20,8 @@
 
 package org.rumbledb.compiler;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -145,9 +147,11 @@ import java.util.stream.Collectors;
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     private VisitorConfig visitorConfig;
+    private RumbleRuntimeConfiguration config;
 
-    public RuntimeIteratorVisitor() {
+    public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {
         this.visitorConfig = VisitorConfig.runtimeIteratorVisitorConfig;
+        this.config = config;
     }
 
     @Override
@@ -464,10 +468,13 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         }
         SequenceType returnType = expression.getReturnType();
         RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
+        // TODO need to delay creation of dynamic context
         FunctionItem function = new FunctionItem(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
+                expression.getStaticContext().getModuleContext(),
+                new DynamicContext(this.config),
                 bodyIterator
         );
         RuntimeIterator runtimeIterator = new FunctionRuntimeIterator(

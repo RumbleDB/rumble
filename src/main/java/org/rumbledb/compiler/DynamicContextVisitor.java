@@ -80,7 +80,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
-        RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression);
+        RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -135,7 +135,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             } else {
                 Expression expression = variableDeclaration.getExpression();
                 if (expression != null) {
-                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
                     iterator.bindToVariableInDynamicContext(result, name, argument);
                     return result;
                 }
@@ -151,7 +151,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             return result;
         }
         Expression expression = variableDeclaration.getExpression();
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         iterator.bindToVariableInDynamicContext(result, name, argument);
         return result;
     }

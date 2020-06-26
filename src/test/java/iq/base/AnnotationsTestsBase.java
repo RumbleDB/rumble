@@ -77,7 +77,7 @@ public class AnnotationsTestsBase {
                 AnnotationsTestsBase.configuration
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
-            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, AnnotationsTestsBase.configuration);
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();

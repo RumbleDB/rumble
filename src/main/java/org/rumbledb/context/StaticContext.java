@@ -35,6 +35,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -269,5 +270,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getStaticallyKnownFunctionSignatures();
         }
         throw new OurBadException("Statically known function signatures are not set up properly in static context.");
+    }
+
+    public static StaticContext createRumbleStaticContext() {
+        try {
+            return new StaticContext(new URI(Name.RUMBLE_NS));
+        } catch (URISyntaxException e) {
+            throw new OurBadException("Rumble namespace not recognized as a URI.");
+        }
+    }
+
+    public StaticContext getModuleContext() {
+        if (this.parent != null) {
+            return this.parent.getModuleContext();
+        }
+        return this;
     }
 }

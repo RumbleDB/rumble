@@ -33,8 +33,8 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(Node node) {
-        return new RuntimeIteratorVisitor().visit(node, null);
+    public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
+        return new RuntimeIteratorVisitor(conf).visit(node, null);
     }
 
     private static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {

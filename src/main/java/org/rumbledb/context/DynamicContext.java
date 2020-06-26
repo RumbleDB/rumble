@@ -437,5 +437,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
         throw new OurBadException("Known functions are not set up properly in dynamic context.");
     }
 
+    public DynamicContext getModuleContext() {
+        if (this.parent != null) {
+            return this.parent.getModuleContext();
+        }
+        return this;
+    }
+
 }
 

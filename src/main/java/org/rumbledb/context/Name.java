@@ -21,7 +21,6 @@
 package org.rumbledb.context;
 
 import java.io.Serializable;
-
 import org.rumbledb.exceptions.OurBadException;
 
 import com.esotericsoftware.kryo.Kryo;
