@@ -393,6 +393,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
         for (Name name : this.dataFrameVariableValues.keySet()) {
             sb.append("    " + name + " (" + this.dataFrameVariableValues.get(name).count() + " items)\n");
         }
+        if (this.knownFunctions != null) {
+            sb.append("  Known functions:\n");
+            sb.append(this.knownFunctions + "\n");
+        }
         if (this.parent != null) {
             sb.append("Parent context:\n");
             sb.append(this.parent.toString());

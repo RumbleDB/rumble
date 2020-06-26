@@ -85,15 +85,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
+        DynamicContext childContext = this.currentDynamicContextForLocalExecution;
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
             this.functionBodyIterator = this.functionItem.getBodyIterator();
-            this.currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
+            childContext = this.createNewDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
             );
         }
-        this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
+        this.functionBodyIterator.open(childContext);
         setNextResult();
     }
 

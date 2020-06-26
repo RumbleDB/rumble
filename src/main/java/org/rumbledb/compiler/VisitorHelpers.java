@@ -42,9 +42,9 @@ public class VisitorHelpers {
     }
 
     private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
-        System.out.println("***********************");
-        System.out.println("Initial expression tree");
-        System.out.println("***********************");
+        System.out.println("***************");
+        System.out.println("Expression tree");
+        System.out.println("***************");
         System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
         System.out.println(node);
         System.out.println();
@@ -157,6 +157,10 @@ public class VisitorHelpers {
         while (true) {
             visitor.visit(module, module.getStaticContext());
             int currentUnsetCount = module.numberOfUnsetExecutionModes();
+
+            if (currentUnsetCount == 0) {
+                break;
+            }
 
             if (conf.isPrintIteratorTree()) {
                 printTree(module, conf);

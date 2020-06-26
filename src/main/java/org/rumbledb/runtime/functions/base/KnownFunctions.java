@@ -198,4 +198,13 @@ public class KnownFunctions implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.userDefinedFunctions = kryo.readObject(input, HashMap.class);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (FunctionIdentifier i : this.userDefinedFunctions.keySet()) {
+            sb.append("       " + i.getNameWithArity() + "\n");
+        }
+        return sb.toString();
+    }
 }

@@ -20,35 +20,58 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.Map;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class FunctionRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item item;
+    private Name functionName;
+    private Map<Name, SequenceType> paramNameToSequenceTypes;
+    SequenceType returnType;
+    RuntimeIterator bodyIterator;
 
     public FunctionRuntimeIterator(
-            FunctionItem function,
+            Name functionName,
+            Map<Name, SequenceType> paramNameToSequenceTypes,
+            SequenceType returnType,
+            RuntimeIterator bodyIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this.item = function;
+        this.functionName = functionName;
+        this.paramNameToSequenceTypes = paramNameToSequenceTypes;
+        this.returnType = returnType;
+        this.bodyIterator = bodyIterator;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            FunctionItem result = ((FunctionItem) this.item).deepCopy();
-            result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
-            return result;
+            RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
+            FunctionItem function = new FunctionItem(
+                    this.functionName,
+                    this.paramNameToSequenceTypes,
+                    this.returnType,
+                    getStaticContext().getModuleContext(),
+                    this.currentDynamicContextForLocalExecution.getModuleContext(),
+                    bodyIteratorCopy
+            );
+            function.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
+            return function;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
