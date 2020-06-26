@@ -69,7 +69,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     }
 
     public DynamicContext(DynamicContext parent) {
-        if (this.parent == null) {
+        if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");
         }
         this.parent = parent;
@@ -86,7 +86,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             Map<Name, JavaRDD<Item>> rddVariableValues,
             Map<Name, Dataset<Row>> dataFrameVariableValues
     ) {
-        if (this.parent == null) {
+        if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");
         }
         this.parent = parent;
