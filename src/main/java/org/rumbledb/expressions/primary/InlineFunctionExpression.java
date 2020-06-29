@@ -31,6 +31,7 @@ import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -79,7 +80,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        return Arrays.asList(this.body);
     }
 
     public void registerUserDefinedFunctionExecutionMode(
