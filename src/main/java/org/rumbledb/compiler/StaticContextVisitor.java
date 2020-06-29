@@ -21,7 +21,9 @@
 package org.rumbledb.compiler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -62,11 +64,11 @@ import sparksoniq.jsoniq.ExecutionMode;
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
-    private List<String> importedModules;
+    private Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
-        this.importedModules = new ArrayList<>();
+        this.importedModuleContexts = new HashMap<>();
     }
 
     void setVisitorConfig(VisitorConfig visitorConfig) {
@@ -152,11 +154,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
         declaration.initHighestExecutionMode(this.visitorConfig);
-        if (!this.importedModules.contains(expression.getFunctionIdentifier().getName().getNamespace())) {
-            expression.registerUserDefinedFunctionExecutionMode(
-                this.visitorConfig
-            );
-        }
+        expression.registerUserDefinedFunctionExecutionMode(
+            this.visitorConfig
+        );
         return argument;
     }
 
@@ -397,13 +397,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        StaticContext moduleContext = libraryModule.getStaticContext();
-        this.visit(libraryModule.getProlog(), moduleContext);
-        libraryModule.initHighestExecutionMode(this.visitorConfig);
-        argument.importModuleContext(moduleContext, libraryModule.getNamespace());
-        if (!this.importedModules.contains(libraryModule.getNamespace())) {
-            this.importedModules.add(libraryModule.getNamespace());
+        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+            StaticContext moduleContext = libraryModule.getStaticContext();
+            this.visit(libraryModule.getProlog(), moduleContext);
+            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
         }
+        libraryModule.initHighestExecutionMode(this.visitorConfig);
+        argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()), libraryModule.getNamespace());
         return argument;
     }
 

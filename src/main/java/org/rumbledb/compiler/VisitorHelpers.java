@@ -41,6 +41,10 @@ public class VisitorHelpers {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
 
+    private static void pruneModules(Node node, RumbleRuntimeConfiguration conf) {
+        new ModulePruningVisitor(conf).visit(node, null);
+    }
+
     private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
         System.out.println("***************");
         System.out.println("Expression tree");
@@ -87,6 +91,7 @@ public class VisitorHelpers {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
             MainModule mainModule = (MainModule) visitor.visit(main);
+            pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             return mainModule;
