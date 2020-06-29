@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -54,9 +55,11 @@ import org.rumbledb.types.SequenceType;
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private RumbleRuntimeConfiguration configuration;
+    private Map<String, DynamicContext> importedModuleContexts;
 
     DynamicContextVisitor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
+        this.importedModuleContexts = new HashMap<>();
     }
 
     @Override
@@ -158,8 +161,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        DynamicContext importedContext = visitDescendants(module, argument);
-        argument.importModuleContext(importedContext, module.getNamespace());
+        if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
+            DynamicContext newContext = new DynamicContext(this.configuration);
+            newContext.setKnownFunctions(argument.getKnownFunctions());
+            DynamicContext importedContext = visitDescendants(module, newContext);
+            this.importedModuleContexts.put(module.getNamespace(), importedContext);
+        }
+        argument.importModuleContext(this.importedModuleContexts.get(module.getNamespace()), module.getNamespace());
         return argument;
     }
 }

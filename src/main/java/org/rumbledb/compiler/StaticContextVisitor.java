@@ -62,9 +62,11 @@ import sparksoniq.jsoniq.ExecutionMode;
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
+    private List<String> importedModules;
 
     StaticContextVisitor() {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
+        this.importedModules = new ArrayList<>();
     }
 
     void setVisitorConfig(VisitorConfig visitorConfig) {
@@ -150,9 +152,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
         declaration.initHighestExecutionMode(this.visitorConfig);
-        expression.registerUserDefinedFunctionExecutionMode(
-            this.visitorConfig
-        );
+        if (!this.importedModules.contains(expression.getFunctionIdentifier().getName().getNamespace())) {
+            expression.registerUserDefinedFunctionExecutionMode(
+                this.visitorConfig
+            );
+        }
         return argument;
     }
 
@@ -395,7 +399,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
         StaticContext moduleContext = libraryModule.getStaticContext();
         this.visit(libraryModule.getProlog(), moduleContext);
+        libraryModule.initHighestExecutionMode(this.visitorConfig);
         argument.importModuleContext(moduleContext, libraryModule.getNamespace());
+        if (!this.importedModules.contains(libraryModule.getNamespace())) {
+            this.importedModules.add(libraryModule.getNamespace());
+        }
         return argument;
     }
 

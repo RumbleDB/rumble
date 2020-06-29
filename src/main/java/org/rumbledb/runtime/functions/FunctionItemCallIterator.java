@@ -89,7 +89,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
-            this.functionBodyIterator = this.functionItem.getBodyIterator();
+            this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
             childContext = this.createNewDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
             );

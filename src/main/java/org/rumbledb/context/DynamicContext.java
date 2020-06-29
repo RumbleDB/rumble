@@ -35,7 +35,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
 import org.rumbledb.runtime.functions.base.KnownFunctions;
-
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -429,6 +428,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 this.dataFrameVariableValues.put(name, items);
             }
         }
+    }
+
+    public void setKnownFunctions(
+            KnownFunctions knownFunctions
+    ) {
+        if (this.parent != null) {
+            throw new OurBadException("Known function scan only be stored in the module context.");
+        }
+        this.knownFunctions = knownFunctions;
     }
 
     public KnownFunctions getKnownFunctions() {

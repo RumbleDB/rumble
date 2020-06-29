@@ -1,3 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XQST0048"; ErrorMetadata="LINE:6:COLUMN:0:"  :)
-import module "modulerepeatedimport.jq";
-()
+(:JIQS: ShouldRun; Output="20" :)
+import module namespace my-module = "modulerepeatedimport.jq";
+my-module:func()
+

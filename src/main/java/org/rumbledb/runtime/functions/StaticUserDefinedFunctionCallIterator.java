@@ -123,7 +123,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+        this.userDefinedFunctionCallIterator = dynamicContext.getKnownFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.getHighestExecutionMode(),
