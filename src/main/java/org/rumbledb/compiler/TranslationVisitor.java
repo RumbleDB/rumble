@@ -25,6 +25,7 @@ import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -100,7 +101,6 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -132,8 +132,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
 
-    public TranslationVisitor(URI staticBaseURI, boolean isMainModule, RumbleRuntimeConfiguration configuration) {
-        this.moduleContext = new StaticContext(staticBaseURI);
+    public TranslationVisitor(
+            StaticContext moduleContext,
+            boolean isMainModule,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        this.moduleContext = moduleContext;
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         this.configuration = configuration;
         this.isMainModule = isMainModule;
@@ -1371,6 +1375,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
                 resolvedURI,
                 this.configuration,
+                this.moduleContext,
                 generateMetadata(ctx.getStop())
             );
             if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {

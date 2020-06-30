@@ -13,6 +13,9 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -24,29 +27,32 @@ import org.rumbledb.expressions.module.Module;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class VisitorHelpers {
 
-    public static RuntimeIterator generateRuntimeIterator(Node node) {
-        return new RuntimeIteratorVisitor().visit(node, null);
+    public static RuntimeIterator generateRuntimeIterator(Node node, RumbleRuntimeConfiguration conf) {
+        return new RuntimeIteratorVisitor(conf).visit(node, null);
     }
 
     private static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);
     }
 
-    private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
-        System.out.println("***********************");
-        System.out.println("Initial expression tree");
-        System.out.println("***********************");
+    private static void pruneModules(Node node, RumbleRuntimeConfiguration conf) {
+        new ModulePruningVisitor(conf).visit(node, null);
+    }
+
+    private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
+        System.out.println("***************");
+        System.out.println("Expression tree");
+        System.out.println("***************");
         System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
         System.out.println(node);
         System.out.println();
+        System.out.println(node.getStaticContext());
     }
 
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
@@ -58,11 +64,12 @@ public class VisitorHelpers {
     public static LibraryModule parseLibraryModuleFromLocation(
             URI location,
             RumbleRuntimeConfiguration configuration,
+            StaticContext importingModuleContext,
             ExceptionMetadata metadata
     )
             throws IOException {
         FSDataInputStream in = FileSystemUtil.getDataInputStream(location, metadata);
-        return parseLibraryModule(CharStreams.fromStream(in), location, configuration);
+        return parseLibraryModule(CharStreams.fromStream(in), location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
@@ -74,7 +81,9 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, true, configuration);
+        StaticContext moduleContext = new StaticContext(uri);
+        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -83,6 +92,7 @@ public class VisitorHelpers {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
             MainModule mainModule = (MainModule) visitor.visit(main);
+            pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             return mainModule;
@@ -103,12 +113,17 @@ public class VisitorHelpers {
     public static LibraryModule parseLibraryModule(
             CharStream stream,
             URI uri,
+            StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        TranslationVisitor visitor = new TranslationVisitor(uri, false, configuration);
+        StaticContext moduleContext = new StaticContext(uri);
+        moduleContext.setUserDefinedFunctionsExecutionModes(
+            importingModuleContext.getUserDefinedFunctionsExecutionModes()
+        );
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -140,14 +155,18 @@ public class VisitorHelpers {
 
 
         visitor.setVisitorConfig(VisitorConfig.staticContextVisitorIntermediatePassConfig);
-        int prevUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+        int prevUnsetCount = module.numberOfUnsetExecutionModes();
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
 
         while (true) {
             visitor.visit(module, module.getStaticContext());
-            int currentUnsetCount = Functions.getUserDefinedFunctionIdentifiersWithUnsetExecutionModes().size();
+            int currentUnsetCount = module.numberOfUnsetExecutionModes();
+
+            if (currentUnsetCount == 0) {
+                break;
+            }
 
             if (conf.isPrintIteratorTree()) {
                 printTree(module, conf);
@@ -159,7 +178,9 @@ public class VisitorHelpers {
                 );
             }
             if (currentUnsetCount == prevUnsetCount) {
-                setLocalExecutionForUnsetUserDefinedFunctions();
+                setLocalExecutionForUnsetUserDefinedFunctions(
+                    module.getStaticContext().getUserDefinedFunctionsExecutionModes()
+                );
                 break;
             }
             prevUnsetCount = currentUnsetCount;
@@ -183,17 +204,19 @@ public class VisitorHelpers {
         return visitor.visit(node, null);
     }
 
-    private static void setLocalExecutionForUnsetUserDefinedFunctions() {
+    private static void setLocalExecutionForUnsetUserDefinedFunctions(
+            UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes
+    ) {
         try {
             List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
             unsetFunctionIdentifiers.addAll(
-                Functions
+                userDefinedFunctionExecutionModes
                     .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
             );
             for (
                 FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
             ) {
-                Functions.addUserDefinedFunctionExecutionMode(
+                userDefinedFunctionExecutionModes.setExecutionMode(
                     functionIdentifier,
                     ExecutionMode.LOCAL,
                     true,

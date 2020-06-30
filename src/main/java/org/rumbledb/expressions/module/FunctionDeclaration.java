@@ -22,12 +22,12 @@ package org.rumbledb.expressions.module;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import java.util.Collections;
 import java.util.List;
@@ -65,6 +65,24 @@ public class FunctionDeclaration extends Node {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.functionExpression.getBody().getHighestExecutionMode(visitorConfig);
+    }
+
+    /**
+     * Prints the node tree to a string buffer.
+     *
+     * @param buffer a string buffer to write to
+     * @param indent the current level of indentation
+     */
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("FunctionDeclaration " + this.getFunctionIdentifier());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }
 

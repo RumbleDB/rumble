@@ -21,8 +21,12 @@
 package org.rumbledb.compiler;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
@@ -42,15 +46,13 @@ import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -63,9 +65,11 @@ import sparksoniq.jsoniq.ExecutionMode;
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
+    private Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
+        this.importedModuleContexts = new HashMap<>();
     }
 
     void setVisitorConfig(VisitorConfig visitorConfig) {
@@ -89,6 +93,29 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             ((Expression) node).setStaticContext(argument);
         }
         return node.accept(this, argument);
+    }
+
+    @Override
+    public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
+        this.importedModuleContexts.clear();
+        StaticContext generatedContext = visitDescendants(mainModule, argument);
+        mainModule.initHighestExecutionMode(this.visitorConfig);
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
+        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+            StaticContext moduleContext = libraryModule.getStaticContext();
+            this.visit(libraryModule.getProlog(), moduleContext);
+            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+        }
+        libraryModule.initHighestExecutionMode(this.visitorConfig);
+        argument.importModuleContext(
+            this.importedModuleContexts.get(libraryModule.getNamespace()),
+            libraryModule.getNamespace()
+        );
+        return argument;
     }
 
     // region primary
@@ -139,11 +166,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
-        List<ExecutionMode> modes = Functions.getUserDefinedFunctionParametersStorageMode(
-            expression.getFunctionIdentifier(),
-            expression.getMetadata()
-        );
+        List<ExecutionMode> modes = argument.getUserDefinedFunctionsExecutionModes()
+            .getParameterExecutionMode(
+                expression.getFunctionIdentifier(),
+                expression.getMetadata()
+            );
         StaticContext functionDeclarationContext = new StaticContext(argument);
+        expression.setStaticContext(argument);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
@@ -152,7 +181,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
         );
-        return functionDeclarationContext;
+        return argument;
     }
 
     @Override
@@ -193,12 +222,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
                 }
             }
-            Functions.addUserDefinedFunctionParametersStorageMode(
-                identifier,
-                modes,
-                this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                expression.getMetadata()
-            );
+            argument.getUserDefinedFunctionsExecutionModes()
+                .setParameterExecutionMode(
+                    identifier,
+                    modes,
+                    expression.getMetadata()
+                );
         }
         expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
         return argument;
@@ -371,24 +400,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);
         if (argument.hasVariable(variableDeclaration.getVariableName())) {
-            throw new VariableAlreadyExistsException(
-                    variableDeclaration.getVariableName(),
-                    variableDeclaration.getMetadata()
+            if (!this.visitorConfig.suppressErrorsForFunctionSignatureCollision()) {
+                throw new VariableAlreadyExistsException(
+                        variableDeclaration.getVariableName(),
+                        variableDeclaration.getMetadata()
+                );
+            }
+        } else {
+            // first pass.
+            argument.addVariable(
+                variableDeclaration.getVariableName(),
+                variableDeclaration.getSequenceType(),
+                variableDeclaration.getMetadata(),
+                variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
-        StaticContext result = new StaticContext(argument);
-        result.addVariable(
-            variableDeclaration.getVariableName(),
-            variableDeclaration.getSequenceType(),
-            variableDeclaration.getMetadata(),
-            variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
-        );
-        return result;
-    }
-
-    public StaticContext processImportedModule(LibraryModule libraryModule, StaticContext argument) {
-        StaticContext moduleContext = libraryModule.getStaticContext();
-        argument.importModuleContext(moduleContext, libraryModule.getNamespace());
         return argument;
     }
 
