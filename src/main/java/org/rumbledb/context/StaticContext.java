@@ -44,7 +44,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
 
     private Map<Name, InScopeVariable> inScopeVariables;
-    private Map<String, String> namespaceBindings;
+    private Map<String, String> staticallyKnownNamespaces;
     private StaticContext parent;
     private URI staticBaseURI;
     public UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
@@ -164,20 +164,20 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
-        if (this.namespaceBindings == null) {
-            this.namespaceBindings = new HashMap<>();
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (!this.namespaceBindings.containsKey(prefix)) {
-            this.namespaceBindings.put(prefix, namespace);
+        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+            this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
         return false;
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.namespaceBindings != null) {
-            if (this.namespaceBindings.containsKey(prefix)) {
-                return this.namespaceBindings.get(prefix);
+        if (this.staticallyKnownNamespaces != null) {
+            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
+                return this.staticallyKnownNamespaces.get(prefix);
             } else {
                 return null;
             }
@@ -191,7 +191,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.inScopeVariables);
-        kryo.writeObject(output, this.namespaceBindings);
+        kryo.writeObject(output, this.staticallyKnownNamespaces);
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
     }
@@ -200,7 +200,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void read(Kryo kryo, Input input) {
         this.inScopeVariables = kryo.readObject(input, HashMap.class);
-        this.namespaceBindings = kryo.readObject(input, HashMap.class);
+        this.staticallyKnownNamespaces = kryo.readObject(input, HashMap.class);
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
     }
