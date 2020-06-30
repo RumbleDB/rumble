@@ -30,7 +30,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.runtime.functions.base.NamedFunctions;
+
 import java.io.Serializable;
 import java.util.List;
 import java.util.Map;

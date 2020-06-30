@@ -18,11 +18,9 @@
  *
  */
 
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.context;
 
 import java.io.Serializable;
-
-import org.rumbledb.context.Name;
 
 public class FunctionIdentifier implements Serializable {
     private int arity;

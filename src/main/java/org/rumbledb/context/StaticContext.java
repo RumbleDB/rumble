@@ -23,7 +23,6 @@ package org.rumbledb.context;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.runtime.functions.base.UserDefinedFunctionExecutionModes;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;

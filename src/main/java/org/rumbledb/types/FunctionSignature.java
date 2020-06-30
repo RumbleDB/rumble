@@ -18,12 +18,10 @@
  *
  */
 
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.types;
 
 import java.io.Serializable;
 import java.util.List;
-
-import org.rumbledb.types.SequenceType;
 
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;

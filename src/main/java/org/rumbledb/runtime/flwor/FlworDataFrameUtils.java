@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
@@ -54,7 +55,6 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 

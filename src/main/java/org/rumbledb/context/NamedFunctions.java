@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.context;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
