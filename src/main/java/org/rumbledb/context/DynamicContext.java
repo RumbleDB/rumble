@@ -55,6 +55,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     /**
      * Creates a new, empty module context (without parent).
+     * 
      * @param conf the Rumble configuration.
      */
     public DynamicContext(RumbleRuntimeConfiguration conf) {
