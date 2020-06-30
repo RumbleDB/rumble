@@ -24,12 +24,6 @@ import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
-import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.operational.TypePromotionIterator;
-import org.rumbledb.types.SequenceType;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -38,7 +32,6 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
-import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -61,15 +54,15 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = new ArrayList<>();
     }
 
-    public boolean checkUserDefinedFunctionExecutionModeExists(FunctionIdentifier identifier) {
+    public boolean exists(FunctionIdentifier identifier) {
         return this.userDefinedFunctionsExecutionMode.containsKey(identifier);
     }
 
-    public ExecutionMode getUserDefinedFunctionExecutionMode(
+    public ExecutionMode getExecutionMode(
             FunctionIdentifier identifier,
             ExceptionMetadata metadata
     ) {
-        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
+        if (exists(identifier)) {
             return this.userDefinedFunctionsExecutionMode.get(identifier);
         }
         throw new UnknownFunctionCallException(
@@ -80,11 +73,11 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
 
     }
 
-    public void addUserDefinedFunctionExecutionMode(
+    public void setExecutionMode(
             FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
             boolean suppressErrorsForFunctionSignatureCollision,
-            ExceptionMetadata meta
+            ExceptionMetadata metadata
     ) {
         if (
             BuiltinFunctionCatalogue.exists(functionIdentifier)
@@ -92,7 +85,7 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
                 (!suppressErrorsForFunctionSignatureCollision
                     && this.userDefinedFunctionsExecutionMode.containsKey(functionIdentifier))
         ) {
-            throw new DuplicateFunctionIdentifierException(functionIdentifier, meta);
+            throw new DuplicateFunctionIdentifierException(functionIdentifier, metadata);
         }
 
         if (isAddingNewUnsetUserDefinedFunction(functionIdentifier, executionMode)) {
@@ -103,11 +96,11 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
         this.userDefinedFunctionsExecutionMode.put(functionIdentifier, executionMode);
     }
 
-    public List<ExecutionMode> getUserDefinedFunctionParametersStorageMode(
+    public List<ExecutionMode> getParameterExecutionMode(
             FunctionIdentifier identifier,
             ExceptionMetadata metadata
     ) {
-        if (checkUserDefinedFunctionExecutionModeExists(identifier)) {
+        if (exists(identifier)) {
             return this.userDefinedFunctionsParametersStorageMode.get(identifier);
         }
         List<ExecutionMode> newModes = new ArrayList<>();
@@ -118,7 +111,7 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
         return newModes;
     }
 
-    public void addUserDefinedFunctionParametersStorageMode(
+    public void setParameterExecutionMode(
             FunctionIdentifier functionIdentifier,
             List<ExecutionMode> executionModes,
             ExceptionMetadata meta
@@ -174,90 +167,6 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
 
     public List<FunctionIdentifier> getUserDefinedFunctionIdentifiersWithUnsetExecutionModes() {
         return this.userDefinedFunctionIdentifiersWithUnsetExecutionModes;
-    }
-
-    public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata,
-            List<RuntimeIterator> arguments
-    ) {
-        FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
-                functionItem,
-                arguments,
-                executionMode,
-                metadata
-        );
-        if (!functionItem.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    functionItem.getSignature().getReturnType(),
-                    "Invalid return type for "
-                        + ((functionItem.getIdentifier().getName() == null)
-                            ? ""
-                            : (functionItem.getIdentifier().getName()) + " ")
-                        + "function. ",
-                    executionMode,
-                    metadata
-            );
-        }
-        return functionCallIterator;
-    }
-
-    public static RuntimeIterator getBuiltInFunctionIterator(
-            FunctionIdentifier identifier,
-            List<RuntimeIterator> arguments,
-            ExecutionMode executionMode,
-            ExceptionMetadata metadata
-    ) {
-        BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
-
-        for (int i = 0; i < arguments.size(); i++) {
-            if (
-                !builtinFunction.getSignature()
-                    .getParameterTypes()
-                    .get(i)
-                    .equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)
-            ) {
-                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
-                        arguments.get(i),
-                        builtinFunction.getSignature().getParameterTypes().get(i),
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        arguments.get(i).getHighestExecutionMode(),
-                        arguments.get(i).getMetadata()
-                );
-
-                arguments.set(i, typePromotionIterator);
-            }
-        }
-
-        RuntimeIterator functionCallIterator;
-        try {
-            Constructor<? extends RuntimeIterator> constructor = builtinFunction.getFunctionIteratorClass()
-                .getConstructor(
-                    List.class,
-                    ExecutionMode.class,
-                    ExceptionMetadata.class
-                );
-            functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
-        } catch (ReflectiveOperationException ex) {
-            throw new UnknownFunctionCallException(
-                    identifier.getName(),
-                    arguments.size(),
-                    metadata
-            );
-        }
-
-        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    builtinFunction.getSignature().getReturnType(),
-                    "Invalid return type for function " + identifier.getName() + ". ",
-                    functionCallIterator.getHighestExecutionMode(),
-                    functionCallIterator.getMetadata()
-            );
-        }
-        return functionCallIterator;
     }
 
     @Override

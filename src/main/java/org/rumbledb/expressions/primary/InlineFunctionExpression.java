@@ -89,7 +89,7 @@ public class InlineFunctionExpression extends Expression {
         // if named(static) function declaration
         if (this.name != null) {
             getStaticContext().getUserDefinedFunctionsExecutionModes()
-                .addUserDefinedFunctionExecutionMode(
+                .setExecutionMode(
                     identifier,
                     this.body.getHighestExecutionMode(visitorConfig),
                     visitorConfig.suppressErrorsForFunctionSignatureCollision(),
