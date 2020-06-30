@@ -112,9 +112,9 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             int dateTimeGroupIndex = 5;
 
             // prepare dynamic context
-            this.context.removeAllVariables();
+            this.context.getVariableValues().removeAllVariables();
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("byte[]").size(); columnIndex++) {
-                this.context.addVariableValue(
+                this.context.getVariableValues().addVariableValue(
                     Name.createVariableInNoNamespace(
                         this.columnNamesByType.get("byte[]").get(columnIndex)
                     ),
@@ -122,7 +122,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 );
             }
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("Long").size(); columnIndex++) {
-                this.context.addVariableCount(
+                this.context.getVariableValues().addVariableCount(
                     Name.createVariableInNoNamespace(
                         this.columnNamesByType.get("Long").get(columnIndex)
                     ),
@@ -131,7 +131,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             }
 
             boolean isEmptySequence = true;
-            List<Item> items = this.context.getLocalVariableValue(
+            List<Item> items = this.context.getVariableValues().getLocalVariableValue(
                 variableName,
                 this.metadata
             );

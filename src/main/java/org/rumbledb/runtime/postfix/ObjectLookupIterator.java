@@ -170,7 +170,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         break;
                     }
                 } else {
-                    Item contextItem = this.currentDynamicContextForLocalExecution.getLocalVariableValue(
+                    Item contextItem = this.currentDynamicContextForLocalExecution.getVariableValues().getLocalVariableValue(
                         Name.CONTEXT_ITEM,
                         getMetadata()
                     ).get(0);
@@ -194,7 +194,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = dynamicContext.getLocalVariableValue(
+            key = dynamicContext.getVariableValues().getLocalVariableValue(
                 Name.CONTEXT_ITEM,
                 getMetadata()
             ).get(0).getStringValue();
@@ -217,7 +217,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
-            key = context.getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
+            key = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata())
                 .get(0)
                 .getStringValue();
         } else {

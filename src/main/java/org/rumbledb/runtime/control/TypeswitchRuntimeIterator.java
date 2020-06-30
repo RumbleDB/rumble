@@ -97,7 +97,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (this.matchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.addVariableValue(
+                    this.currentDynamicContextForLocalExecution.getVariableValues().addVariableValue(
                         typeSwitchCase.getVariableName(),
                         Collections.singletonList(this.testValue)
                     );
@@ -108,7 +108,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
         if (this.matchingIterator == null) {
             if (this.defaultCase.getVariableName() != null) {
-                this.currentDynamicContextForLocalExecution.addVariableValue(
+                this.currentDynamicContextForLocalExecution.getVariableValues().addVariableValue(
                     this.defaultCase.getVariableName(),
                     Collections.singletonList(this.testValue)
                 );
@@ -145,7 +145,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (localMatchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    dynamicContext.addVariableValue(
+                    dynamicContext.getVariableValues().addVariableValue(
                         typeSwitchCase.getVariableName(),
                         Collections.singletonList(this.testValue)
                     );
@@ -156,7 +156,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         if (this.defaultCase.getVariableName() != null) {
-            dynamicContext.addVariableValue(
+            dynamicContext.getVariableValues().addVariableValue(
                 this.defaultCase.getVariableName(),
                 Collections.singletonList(this.testValue)
             );

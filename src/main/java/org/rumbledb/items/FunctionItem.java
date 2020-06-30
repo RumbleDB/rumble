@@ -325,16 +325,16 @@ public class FunctionItem extends Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        for (Name variable : dynamicContext.getLocalVariableNames()) {
-            this.localVariablesInClosure.put(variable, dynamicContext.getLocalVariableValue(variable, metadata));
+        for (Name variable : dynamicContext.getVariableValues().getLocalVariableNames()) {
+            this.localVariablesInClosure.put(variable, dynamicContext.getVariableValues().getLocalVariableValue(variable, metadata));
         }
-        for (Name variable : dynamicContext.getRDDVariableNames()) {
-            this.RDDVariablesInClosure.put(variable, dynamicContext.getRDDVariableValue(variable, metadata));
+        for (Name variable : dynamicContext.getVariableValues().getRDDVariableNames()) {
+            this.RDDVariablesInClosure.put(variable, dynamicContext.getVariableValues().getRDDVariableValue(variable, metadata));
         }
-        for (Name variable : dynamicContext.getDataFrameVariableNames()) {
+        for (Name variable : dynamicContext.getVariableValues().getDataFrameVariableNames()) {
             this.dataFrameVariablesInClosure.put(
                 variable,
-                dynamicContext.getDataFrameVariableValue(variable, metadata)
+                dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
     }

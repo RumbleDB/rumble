@@ -83,7 +83,7 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     @Override
     public List<String> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
-        this.context.removeAllVariables();
+        this.context.getVariableValues().removeAllVariables();
         this.result.clear();
 
         FlworDataFrameUtils.deserializeWrappedParameters(

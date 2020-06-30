@@ -43,56 +43,6 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static class InScopeVariable implements Serializable, KryoSerializable {
-        private static final long serialVersionUID = 1L;
-
-        private Name name;
-        private SequenceType sequenceType;
-        private ExceptionMetadata metadata;
-        private ExecutionMode storageMode;
-
-        public InScopeVariable(
-                Name name,
-                SequenceType sequenceType,
-                ExceptionMetadata metadata,
-                ExecutionMode storageMode
-        ) {
-            this.name = name;
-            this.sequenceType = sequenceType;
-            this.metadata = metadata;
-            this.storageMode = storageMode;
-        }
-
-        @SuppressWarnings("unused")
-        public Name getName() {
-            return this.name;
-        }
-
-        public SequenceType getSequenceType() {
-            return this.sequenceType;
-        }
-
-        public ExceptionMetadata getMetadata() {
-            return this.metadata;
-        }
-
-        @Override
-        public void write(Kryo kryo, Output output) {
-            kryo.writeObject(output, this.name);
-            kryo.writeObject(output, this.sequenceType);
-            kryo.writeObject(output, this.metadata);
-            kryo.writeObject(output, this.storageMode);
-        }
-
-        @Override
-        public void read(Kryo kryo, Input input) {
-            this.name = kryo.readObject(input, Name.class);
-            this.sequenceType = kryo.readObject(input, SequenceType.class);
-            this.metadata = kryo.readObject(input, ExceptionMetadata.class);
-            this.storageMode = kryo.readObject(input, ExecutionMode.class);
-        }
-    }
-
     private Map<Name, InScopeVariable> inScopeVariables;
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
@@ -171,7 +121,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public ExecutionMode getVariableStorageMode(Name varName) {
-        return getInScopeVariable(varName).storageMode;
+        return getInScopeVariable(varName).getStorageMode();
     }
 
     public void addVariable(

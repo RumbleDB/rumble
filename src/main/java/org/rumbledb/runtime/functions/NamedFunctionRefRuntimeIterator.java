@@ -51,7 +51,7 @@ public class NamedFunctionRefRuntimeIterator extends LocalRuntimeIterator {
         if (this.hasNext) {
             this.hasNext = false;
             if (
-                !this.currentDynamicContextForLocalExecution.getKnownFunctions()
+                !this.currentDynamicContextForLocalExecution.getNamedFunctions()
                     .checkUserDefinedFunctionExists(this.functionIdentifier)
             ) {
                 throw new UnknownFunctionCallException(
@@ -60,7 +60,7 @@ public class NamedFunctionRefRuntimeIterator extends LocalRuntimeIterator {
                         getMetadata()
                 );
             }
-            FunctionItem function = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+            FunctionItem function = this.currentDynamicContextForLocalExecution.getNamedFunctions()
                 .getUserDefinedFunction(this.functionIdentifier);
             FunctionItem result = ((FunctionItem) function).deepCopy();
             result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());

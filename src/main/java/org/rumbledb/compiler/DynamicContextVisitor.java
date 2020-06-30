@@ -93,7 +93,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)
-            argument.getKnownFunctions().addUserDefinedFunction(function, expression.getMetadata());
+            argument.getNamedFunctions().addUserDefinedFunction(function, expression.getMetadata());
         }
 
         return defaultAction(expression, argument);
@@ -147,7 +147,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                         variableDeclaration.getMetadata()
                 );
             }
-            result.addVariableValue(
+            result.getVariableValues().addVariableValue(
                 name,
                 values
             );
@@ -163,11 +163,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
             DynamicContext newContext = new DynamicContext(this.configuration);
-            newContext.setKnownFunctions(argument.getKnownFunctions());
+            newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
-        argument.importModuleContext(this.importedModuleContexts.get(module.getNamespace()), module.getNamespace());
+        argument.getVariableValues().importModuleValues(this.importedModuleContexts.get(module.getNamespace()).getVariableValues(), module.getNamespace());
         return argument;
     }
 }

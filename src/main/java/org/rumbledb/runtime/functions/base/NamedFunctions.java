@@ -43,7 +43,7 @@ import java.lang.reflect.Constructor;
 import java.util.HashMap;
 import java.util.List;
 
-public class KnownFunctions implements Serializable, KryoSerializable {
+public class NamedFunctions implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
@@ -51,7 +51,7 @@ public class KnownFunctions implements Serializable, KryoSerializable {
     // but functions items are fully known at runtimeIterator generation
     private HashMap<FunctionIdentifier, FunctionItem> userDefinedFunctions;
 
-    public KnownFunctions() {
+    public NamedFunctions() {
         this.userDefinedFunctions = new HashMap<>();
     }
 

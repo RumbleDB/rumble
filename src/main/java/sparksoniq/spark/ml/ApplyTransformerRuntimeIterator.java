@@ -92,12 +92,12 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
 
-        if (!context.contains(transformerInputVariableName)) {
+        if (!context.getVariableValues().contains(transformerInputVariableName)) {
             throw new OurBadException("Transformer's input data is not available in the dynamic context");
         }
 
-        if (context.isDataFrame(transformerInputVariableName, getMetadata())) {
-            return context.getDataFrameVariableValue(
+        if (context.getVariableValues().isDataFrame(transformerInputVariableName, getMetadata())) {
+            return context.getVariableValues().getDataFrameVariableValue(
                 transformerInputVariableName,
                 getMetadata()
             );
@@ -112,7 +112,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getParamMapItem(DynamicContext context) {
-        List<Item> paramMapItemList = context.getLocalVariableValue(
+        List<Item> paramMapItemList = context.getVariableValues().getLocalVariableValue(
             GetTransformerFunctionIterator.transformerParameterNames.get(1),
             getMetadata()
         );

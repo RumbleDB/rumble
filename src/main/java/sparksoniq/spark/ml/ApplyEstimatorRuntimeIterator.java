@@ -95,12 +95,12 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
 
-        if (!context.contains(estimatorInputVariableName)) {
+        if (!context.getVariableValues().contains(estimatorInputVariableName)) {
             throw new OurBadException("Estimator's input data is not available in the dynamic context");
         }
 
-        if (context.isDataFrame(estimatorInputVariableName, getMetadata())) {
-            return context.getDataFrameVariableValue(
+        if (context.getVariableValues().isDataFrame(estimatorInputVariableName, getMetadata())) {
+            return context.getVariableValues().getDataFrameVariableValue(
                 estimatorInputVariableName,
                 getMetadata()
             );
@@ -115,7 +115,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Item getParamMapItem(DynamicContext context) {
-        List<Item> paramMapItemList = context.getLocalVariableValue(
+        List<Item> paramMapItemList = context.getVariableValues().getLocalVariableValue(
             GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
             getMetadata()
         );

@@ -78,7 +78,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
                 JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
                 if (result == null) {
@@ -114,7 +114,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
-                dynamicContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+                dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
                 Dataset<Row> intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
@@ -168,8 +168,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         while (this.child.hasNext()) {
             FlworTuple tuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables from new tuple
 
             this.expression.open(this.tupleContext);
             boolean isResultSet = setResultFromExpression();

@@ -80,7 +80,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
         this.longParams.clear();
-        this.context.removeAllVariables();
+        this.context.getVariableValues().removeAllVariables();
         this.nextResult.clear();
 
         FlworDataFrameUtils.deserializeWrappedParameters(
