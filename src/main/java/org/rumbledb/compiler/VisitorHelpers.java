@@ -216,7 +216,7 @@ public class VisitorHelpers {
             for (
                 FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
             ) {
-                userDefinedFunctionExecutionModes.addUserDefinedFunctionExecutionMode(
+                userDefinedFunctionExecutionModes.setExecutionMode(
                     functionIdentifier,
                     ExecutionMode.LOCAL,
                     true,

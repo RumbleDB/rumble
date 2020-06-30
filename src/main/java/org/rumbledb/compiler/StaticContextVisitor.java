@@ -167,7 +167,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
         List<ExecutionMode> modes = argument.getUserDefinedFunctionsExecutionModes()
-            .getUserDefinedFunctionParametersStorageMode(
+            .getParameterExecutionMode(
                 expression.getFunctionIdentifier(),
                 expression.getMetadata()
             );
@@ -223,10 +223,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
             argument.getUserDefinedFunctionsExecutionModes()
-                .addUserDefinedFunctionParametersStorageMode(
+                .setParameterExecutionMode(
                     identifier,
                     modes,
-                    this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                     expression.getMetadata()
                 );
         }
