@@ -58,18 +58,20 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         super(null, executionMode, iteratorMetadata);
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
-
+        this.userDefinedFunctionCallIterator = null;
     }
 
     @Override
     public void openLocal() {
-        this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
-            .getUserDefinedFunctionCallIterator(
-                this.functionIdentifier,
-                this.getHighestExecutionMode(),
-                getMetadata(),
-                this.functionArguments
-            );
+        if (this.userDefinedFunctionCallIterator == null) {
+            this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
+                .getUserDefinedFunctionCallIterator(
+                    this.functionIdentifier,
+                    this.getHighestExecutionMode(),
+                    getMetadata(),
+                    this.functionArguments
+                );
+        }
         this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
