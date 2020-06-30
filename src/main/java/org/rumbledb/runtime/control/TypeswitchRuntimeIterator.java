@@ -97,10 +97,11 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             this.matchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (this.matchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    this.currentDynamicContextForLocalExecution.getVariableValues().addVariableValue(
-                        typeSwitchCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
+                    this.currentDynamicContextForLocalExecution.getVariableValues()
+                        .addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
                 }
                 break;
             }
@@ -108,10 +109,11 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
 
         if (this.matchingIterator == null) {
             if (this.defaultCase.getVariableName() != null) {
-                this.currentDynamicContextForLocalExecution.getVariableValues().addVariableValue(
-                    this.defaultCase.getVariableName(),
-                    Collections.singletonList(this.testValue)
-                );
+                this.currentDynamicContextForLocalExecution.getVariableValues()
+                    .addVariableValue(
+                        this.defaultCase.getVariableName(),
+                        Collections.singletonList(this.testValue)
+                    );
             }
             this.matchingIterator = this.defaultCase.getReturnIterator();
         }
@@ -145,10 +147,11 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
             localMatchingIterator = testTypeMatchAndReturnCorrespondingIterator(typeSwitchCase);
             if (localMatchingIterator != null) {
                 if (typeSwitchCase.getVariableName() != null) {
-                    dynamicContext.getVariableValues().addVariableValue(
-                        typeSwitchCase.getVariableName(),
-                        Collections.singletonList(this.testValue)
-                    );
+                    dynamicContext.getVariableValues()
+                        .addVariableValue(
+                            typeSwitchCase.getVariableName(),
+                            Collections.singletonList(this.testValue)
+                        );
                 }
 
                 return localMatchingIterator.getRDD(dynamicContext);
@@ -156,10 +159,11 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         if (this.defaultCase.getVariableName() != null) {
-            dynamicContext.getVariableValues().addVariableValue(
-                this.defaultCase.getVariableName(),
-                Collections.singletonList(this.testValue)
-            );
+            dynamicContext.getVariableValues()
+                .addVariableValue(
+                    this.defaultCase.getVariableName(),
+                    Collections.singletonList(this.testValue)
+                );
         }
 
         return this.defaultCase.getReturnIterator().getRDD(dynamicContext);

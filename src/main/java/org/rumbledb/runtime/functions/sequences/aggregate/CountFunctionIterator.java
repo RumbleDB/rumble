@@ -61,7 +61,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             if (iterator instanceof VariableReferenceIterator) {
                 VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
                 this.hasNext = false;
-                return this.currentDynamicContextForLocalExecution.getVariableValues().getVariableCount(expr.getVariableName());
+                return this.currentDynamicContextForLocalExecution.getVariableValues()
+                    .getVariableCount(expr.getVariableName());
             }
 
             if (!iterator.isRDD()) {

@@ -114,7 +114,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
             this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
+            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
+                                                                                                        // variables
+                                                                                                        // from new
             // tuple
 
             this.assignmentIterator.open(this.tupleContext);
@@ -269,7 +271,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
             this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
+            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
+                                                                                                        // variables
+                                                                                                        // from new
             // tuple
             JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
 

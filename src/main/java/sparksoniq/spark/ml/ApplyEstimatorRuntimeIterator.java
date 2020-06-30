@@ -100,10 +100,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         }
 
         if (context.getVariableValues().isDataFrame(estimatorInputVariableName, getMetadata())) {
-            return context.getVariableValues().getDataFrameVariableValue(
-                estimatorInputVariableName,
-                getMetadata()
-            );
+            return context.getVariableValues()
+                .getDataFrameVariableValue(
+                    estimatorInputVariableName,
+                    getMetadata()
+                );
         }
 
         throw new MLNotADataFrameException(
@@ -115,10 +116,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Item getParamMapItem(DynamicContext context) {
-        List<Item> paramMapItemList = context.getVariableValues().getLocalVariableValue(
-            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
-            getMetadata()
-        );
+        List<Item> paramMapItemList = context.getVariableValues()
+            .getLocalVariableValue(
+                GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
+                getMetadata()
+            );
         if (paramMapItemList.size() != 1) {
             throw new OurBadException(
                     "Applying an estimator takes a single object as the second parameter.",

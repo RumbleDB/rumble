@@ -216,10 +216,11 @@ public class FlworDataFrameUtils {
             List<List<Item>> deserializedParams
     ) {
         for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-            context.getVariableValues().addVariableValue(
-                Name.createVariableInNoNamespace(columnNames.get(columnIndex)),
-                deserializedParams.get(columnIndex)
-            );
+            context.getVariableValues()
+                .addVariableValue(
+                    Name.createVariableInNoNamespace(columnNames.get(columnIndex)),
+                    deserializedParams.get(columnIndex)
+                );
         }
     }
 
@@ -231,16 +232,18 @@ public class FlworDataFrameUtils {
             List<Item> counts
     ) {
         for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
-            context.getVariableValues().addVariableValue(
-                Name.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
-                deserializedParams.get(columnIndex)
-            );
+            context.getVariableValues()
+                .addVariableValue(
+                    Name.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
+                    deserializedParams.get(columnIndex)
+                );
         }
         for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
-            context.getVariableValues().addVariableCount(
-                Name.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
-                counts.get(columnIndex)
-            );
+            context.getVariableValues()
+                .addVariableCount(
+                    Name.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
+                    counts.get(columnIndex)
+                );
         }
     }
 

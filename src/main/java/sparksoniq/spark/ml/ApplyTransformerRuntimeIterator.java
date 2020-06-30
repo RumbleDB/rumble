@@ -97,10 +97,11 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
 
         if (context.getVariableValues().isDataFrame(transformerInputVariableName, getMetadata())) {
-            return context.getVariableValues().getDataFrameVariableValue(
-                transformerInputVariableName,
-                getMetadata()
-            );
+            return context.getVariableValues()
+                .getDataFrameVariableValue(
+                    transformerInputVariableName,
+                    getMetadata()
+                );
         }
 
         throw new MLNotADataFrameException(
@@ -112,10 +113,11 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private Item getParamMapItem(DynamicContext context) {
-        List<Item> paramMapItemList = context.getVariableValues().getLocalVariableValue(
-            GetTransformerFunctionIterator.transformerParameterNames.get(1),
-            getMetadata()
-        );
+        List<Item> paramMapItemList = context.getVariableValues()
+            .getLocalVariableValue(
+                GetTransformerFunctionIterator.transformerParameterNames.get(1),
+                getMetadata()
+            );
         if (paramMapItemList.size() != 1) {
             throw new OurBadException(
                     "Applying a transformer takes a single object as the second parameter.",

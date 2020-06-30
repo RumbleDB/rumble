@@ -151,10 +151,11 @@ public class PredicateIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
-            this.filterDynamicContext.getVariableValues().addVariableValue(
-                Name.CONTEXT_ITEM,
-                currentItems
-            );
+            this.filterDynamicContext.getVariableValues()
+                .addVariableValue(
+                    Name.CONTEXT_ITEM,
+                    currentItems
+                );
             if (this.mustMaintainPosition) {
                 this.filterDynamicContext.getVariableValues().setPosition(++this.position);
             }

@@ -147,10 +147,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                         variableDeclaration.getMetadata()
                 );
             }
-            result.getVariableValues().addVariableValue(
-                name,
-                values
-            );
+            result.getVariableValues()
+                .addVariableValue(
+                    name,
+                    values
+                );
             return result;
         }
         Expression expression = variableDeclaration.getExpression();
@@ -167,7 +168,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
-        argument.getVariableValues().importModuleValues(this.importedModuleContexts.get(module.getNamespace()).getVariableValues(), module.getNamespace());
+        argument.getVariableValues()
+            .importModuleValues(
+                this.importedModuleContexts.get(module.getNamespace()).getVariableValues(),
+                module.getNamespace()
+            );
         return argument;
     }
 }

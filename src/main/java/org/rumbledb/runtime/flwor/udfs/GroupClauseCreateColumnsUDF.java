@@ -114,27 +114,30 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             // prepare dynamic context
             this.context.getVariableValues().removeAllVariables();
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("byte[]").size(); columnIndex++) {
-                this.context.getVariableValues().addVariableValue(
-                    Name.createVariableInNoNamespace(
-                        this.columnNamesByType.get("byte[]").get(columnIndex)
-                    ),
-                    this.deserializedParams.get(columnIndex)
-                );
+                this.context.getVariableValues()
+                    .addVariableValue(
+                        Name.createVariableInNoNamespace(
+                            this.columnNamesByType.get("byte[]").get(columnIndex)
+                        ),
+                        this.deserializedParams.get(columnIndex)
+                    );
             }
             for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("Long").size(); columnIndex++) {
-                this.context.getVariableValues().addVariableCount(
-                    Name.createVariableInNoNamespace(
-                        this.columnNamesByType.get("Long").get(columnIndex)
-                    ),
-                    this.longParams.get(columnIndex)
-                );
+                this.context.getVariableValues()
+                    .addVariableCount(
+                        Name.createVariableInNoNamespace(
+                            this.columnNamesByType.get("Long").get(columnIndex)
+                        ),
+                        this.longParams.get(columnIndex)
+                    );
             }
 
             boolean isEmptySequence = true;
-            List<Item> items = this.context.getVariableValues().getLocalVariableValue(
-                variableName,
-                this.metadata
-            );
+            List<Item> items = this.context.getVariableValues()
+                .getLocalVariableValue(
+                    variableName,
+                    this.metadata
+                );
             if (items.size() >= 1) {
                 isEmptySequence = false;
                 Item nextItem = items.get(0);

@@ -38,9 +38,9 @@ import java.util.Map;
 public class DynamicContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
-    private VariableValues variableValues;
     private DynamicContext parent;
     private RumbleRuntimeConfiguration conf;
+    private VariableValues variableValues;
     private NamedFunctions namedFunctions;
 
     /**
@@ -53,6 +53,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.namedFunctions = null;
     }
 
+    /**
+     * Creates a new, empty module context (without parent).
+     * @param conf the Rumble configuration.
+     */
     public DynamicContext(RumbleRuntimeConfiguration conf) {
         this.parent = null;
         this.variableValues = new VariableValues();
@@ -79,7 +83,12 @@ public class DynamicContext implements Serializable, KryoSerializable {
             throw new OurBadException("Dynamic context defined with null parent");
         }
         this.parent = parent;
-        this.variableValues = new VariableValues(this.parent.variableValues, localVariableValues, rddVariableValues, dataFrameVariableValues);
+        this.variableValues = new VariableValues(
+                this.parent.variableValues,
+                localVariableValues,
+                rddVariableValues,
+                dataFrameVariableValues
+        );
         this.namedFunctions = null;
 
     }
