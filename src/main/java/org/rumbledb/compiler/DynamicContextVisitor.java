@@ -22,6 +22,7 @@ package org.rumbledb.compiler;
 
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +44,6 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -55,9 +55,11 @@ import org.rumbledb.types.SequenceType;
 public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     private RumbleRuntimeConfiguration configuration;
+    private Map<String, DynamicContext> importedModuleContexts;
 
     DynamicContextVisitor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
+        this.importedModuleContexts = new HashMap<>();
     }
 
     @Override
@@ -81,7 +83,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
-        RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression);
+        RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
         if (functionInList.size() != 1) {
             throw new OurBadException("A function declaration should produce exactly one function");
@@ -91,7 +93,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)
-            Functions.addUserDefinedFunction(function, expression.getMetadata());
+            argument.getKnownFunctions().addUserDefinedFunction(function, expression.getMetadata());
         }
 
         return defaultAction(expression, argument);
@@ -136,7 +138,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             } else {
                 Expression expression = variableDeclaration.getExpression();
                 if (expression != null) {
-                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
                     iterator.bindToVariableInDynamicContext(result, name, argument);
                     return result;
                 }
@@ -152,15 +154,20 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             return result;
         }
         Expression expression = variableDeclaration.getExpression();
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         iterator.bindToVariableInDynamicContext(result, name, argument);
         return result;
     }
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
-        DynamicContext importedContext = visitDescendants(module, argument);
-        argument.importModuleContext(importedContext, module.getNamespace());
+        if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
+            DynamicContext newContext = new DynamicContext(this.configuration);
+            newContext.setKnownFunctions(argument.getKnownFunctions());
+            DynamicContext importedContext = visitDescendants(module, newContext);
+            this.importedModuleContexts.put(module.getNamespace(), importedContext);
+        }
+        argument.importModuleContext(this.importedModuleContexts.get(module.getNamespace()), module.getNamespace());
         return argument;
     }
 }

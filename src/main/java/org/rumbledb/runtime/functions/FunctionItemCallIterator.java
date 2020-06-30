@@ -85,15 +85,16 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
+        DynamicContext childContext = this.currentDynamicContextForLocalExecution;
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
-            this.functionBodyIterator = this.functionItem.getBodyIterator();
-            this.currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
+            this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+            childContext = this.createNewDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
             );
         }
-        this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
+        this.functionBodyIterator.open(childContext);
         setNextResult();
     }
 
@@ -186,6 +187,8 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         partialApplicationParamTypes,
                         this.functionItem.getSignature().getReturnType()
                 ),
+                this.functionItem.getStaticModuleContext(),
+                this.functionItem.getDynamicModuleContext(),
                 this.functionItem.getBodyIterator(),
                 localArgumentValues,
                 RDDArgumentValues,
@@ -220,7 +223,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues.put(argName, argIterator.materialize(context));
             }
         }
-        return new DynamicContext(null, localArgumentValues, RDDArgumentValues, DFArgumentValues);
+
+        return new DynamicContext(
+                this.functionItem.getDynamicModuleContext(),
+                localArgumentValues,
+                RDDArgumentValues,
+                DFArgumentValues
+        );
     }
 
     @Override

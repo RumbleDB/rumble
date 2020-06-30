@@ -132,8 +132,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
 
-    public TranslationVisitor(URI staticBaseURI, boolean isMainModule, RumbleRuntimeConfiguration configuration) {
-        this.moduleContext = new StaticContext(staticBaseURI);
+    public TranslationVisitor(
+            StaticContext moduleContext,
+            boolean isMainModule,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        this.moduleContext = moduleContext;
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         this.configuration = configuration;
         this.isMainModule = isMainModule;
@@ -1371,6 +1375,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
                 resolvedURI,
                 this.configuration,
+                this.moduleContext,
                 generateMetadata(ctx.getStop())
             );
             if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {

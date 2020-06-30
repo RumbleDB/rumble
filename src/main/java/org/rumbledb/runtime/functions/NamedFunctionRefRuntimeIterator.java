@@ -20,60 +20,56 @@
 
 package org.rumbledb.runtime.functions;
 
-import java.util.Map;
-
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
-public class FunctionRuntimeIterator extends LocalRuntimeIterator {
+public class NamedFunctionRefRuntimeIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private Item item;
-    private Name functionName;
-    private Map<Name, SequenceType> paramNameToSequenceTypes;
-    SequenceType returnType;
-    RuntimeIterator bodyIterator;
 
-    public FunctionRuntimeIterator(
-            Name functionName,
-            Map<Name, SequenceType> paramNameToSequenceTypes,
-            SequenceType returnType,
-            RuntimeIterator bodyIterator,
+    private FunctionIdentifier functionIdentifier;
+
+    public NamedFunctionRefRuntimeIterator(
+            FunctionIdentifier functionIdentifier,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this.functionName = functionName;
-        this.paramNameToSequenceTypes = paramNameToSequenceTypes;
-        this.returnType = returnType;
-        this.bodyIterator = bodyIterator;
+        this.functionIdentifier = functionIdentifier;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
-            FunctionItem function = new FunctionItem(
-                    this.functionName,
-                    this.paramNameToSequenceTypes,
-                    this.returnType,
-                    getStaticContext().getModuleContext(),
-                    this.currentDynamicContextForLocalExecution.getModuleContext(),
-                    bodyIteratorCopy
-            );
-            function.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
-            return function;
+            if (
+                !this.currentDynamicContextForLocalExecution.getKnownFunctions()
+                    .checkUserDefinedFunctionExists(this.functionIdentifier)
+            ) {
+                throw new UnknownFunctionCallException(
+                        this.functionIdentifier.getName(),
+                        this.functionIdentifier.getArity(),
+                        getMetadata()
+                );
+            }
+            FunctionItem function = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+                .getUserDefinedFunction(this.functionIdentifier);
+            FunctionItem result = ((FunctionItem) function).deepCopy();
+            result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());
+            return result;
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.functionIdentifier,
+                getMetadata()
+        );
     }
 }

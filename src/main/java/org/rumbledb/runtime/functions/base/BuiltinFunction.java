@@ -38,7 +38,7 @@ public class BuiltinFunction {
         return this.identifier;
     }
 
-    FunctionSignature getSignature() {
+    public FunctionSignature getSignature() {
         return this.signature;
     }
 

@@ -29,7 +29,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -63,12 +63,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public void openLocal() {
-        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this.functionIdentifier,
-            this.getHighestExecutionMode(),
-            getMetadata(),
-            this.functionArguments
-        );
+        this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+            .getUserDefinedFunctionCallIterator(
+                this.functionIdentifier,
+                this.getHighestExecutionMode(),
+                getMetadata(),
+                this.functionArguments
+            );
         this.userDefinedFunctionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -122,12 +123,13 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this.userDefinedFunctionCallIterator = Functions.getUserDefinedFunctionCallIterator(
-            this.functionIdentifier,
-            this.getHighestExecutionMode(),
-            getMetadata(),
-            this.functionArguments
-        );
+        this.userDefinedFunctionCallIterator = dynamicContext.getKnownFunctions()
+            .getUserDefinedFunctionCallIterator(
+                this.functionIdentifier,
+                this.getHighestExecutionMode(),
+                getMetadata(),
+                this.functionArguments
+            );
         return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
     }
 

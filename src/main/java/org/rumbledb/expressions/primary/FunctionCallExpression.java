@@ -30,10 +30,10 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.BuiltinFunction;
-import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
+import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -100,12 +100,16 @@ public class FunctionCallExpression extends Expression {
             return;
         }
 
-        if (Functions.checkUserDefinedFunctionExecutionModeExists(this.identifier)) {
+        if (
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .exists(this.identifier)
+        ) {
             if (this.isPartialApplication) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
+            this.highestExecutionMode = getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .getExecutionMode(this.identifier, getMetadata());
             return;
         }
 

@@ -29,7 +29,6 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -86,7 +85,7 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -127,11 +126,9 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
-        // create temp file
-        Functions.clearUserDefinedFunctions();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         // execute locally for simple expressions
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();

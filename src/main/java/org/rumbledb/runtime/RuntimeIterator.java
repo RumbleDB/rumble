@@ -35,9 +35,15 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
@@ -296,6 +302,25 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             targetContext.addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.addVariableValue(variable, this.materialize(executionContext));
+        }
+    }
+
+    public RuntimeIterator deepCopy() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this);
+            oos.flush();
+            byte[] data = bos.toByteArray();
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            return (RuntimeIterator) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            RumbleException rumbleException = new OurBadException(
+                    "Error while deep copying the function body runtimeIterator"
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 }
