@@ -99,6 +99,13 @@ public class StaticContext implements Serializable, KryoSerializable {
     private URI staticBaseURI;
     public UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
 
+    public StaticContext() {
+        this.parent = null;
+        this.staticBaseURI = null;
+        this.inScopeVariables = new HashMap<>();
+        this.userDefinedFunctionExecutionModes = null;
+    }
+
     public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
