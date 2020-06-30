@@ -60,7 +60,7 @@ public class FunctionSignature implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("(");
+        sb.append("function(");
         String separator = "";
         for (SequenceType type : this.parameterTypes) {
             sb.append(separator + type);
