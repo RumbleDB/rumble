@@ -57,6 +57,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration conf;
     private KnownFunctions knownFunctions;
 
+    public DynamicContext() {
+        this.parent = null;
+        this.localVariableCounts = null;
+        this.localVariableValues = null;
+        this.rddVariableValues = null;
+        this.dataFrameVariableValues = null;
+        this.conf = null;
+        this.knownFunctions = null;
+    }
+
     public DynamicContext(RumbleRuntimeConfiguration conf) {
         this.parent = null;
         this.localVariableCounts = new HashMap<>();
