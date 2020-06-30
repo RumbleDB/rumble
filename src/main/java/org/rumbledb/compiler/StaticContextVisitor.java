@@ -226,7 +226,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 .addUserDefinedFunctionParametersStorageMode(
                     identifier,
                     modes,
-                    this.visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                     expression.getMetadata()
                 );
         }

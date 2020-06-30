@@ -121,7 +121,6 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
     public void addUserDefinedFunctionParametersStorageMode(
             FunctionIdentifier functionIdentifier,
             List<ExecutionMode> executionModes,
-            boolean suppressErrorsForFunctionSignatureCollision,
             ExceptionMetadata meta
     ) {
         List<ExecutionMode> newModes = new ArrayList<>();
@@ -139,12 +138,8 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
                 continue;
             }
             if (updatedMode == ExecutionMode.UNSET) {
-                throw new OurBadException(
-                        "Trying to unset an execution mode that was already set to "
-                            + oldMode
-                            + " in function "
-                            + functionIdentifier
-                );
+                newModes.add(oldMode);
+                continue;
             }
             if (oldMode == updatedMode) {
                 newModes.add(oldMode);
