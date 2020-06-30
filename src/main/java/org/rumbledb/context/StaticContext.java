@@ -185,6 +185,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Static context with variables: ");
         this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
+        stringBuilder.append("\n");
+        if (this.staticallyKnownFunctionSignatures != null) {
+            stringBuilder.append(this.staticallyKnownFunctionSignatures.toString());
+        }
         if (this.parent != null) {
             stringBuilder.append("\nParent:");
             stringBuilder.append(this.parent.toString());

@@ -45,13 +45,14 @@ public class VisitorHelpers {
         new ModulePruningVisitor(conf).visit(node, null);
     }
 
-    private static void printTree(Node node, RumbleRuntimeConfiguration conf) {
+    private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
         System.out.println("***************");
         System.out.println("Expression tree");
         System.out.println("***************");
         System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
         System.out.println(node);
         System.out.println();
+        System.out.println(node.getStaticContext());
     }
 
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)

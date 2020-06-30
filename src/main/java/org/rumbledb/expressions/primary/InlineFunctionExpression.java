@@ -30,7 +30,6 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;

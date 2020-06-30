@@ -44,6 +44,7 @@ import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -92,6 +93,29 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             ((Expression) node).setStaticContext(argument);
         }
         return node.accept(this, argument);
+    }
+
+    @Override
+    public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
+        this.importedModuleContexts.clear();
+        StaticContext generatedContext = visitDescendants(mainModule, argument);
+        mainModule.initHighestExecutionMode(this.visitorConfig);
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
+        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
+            StaticContext moduleContext = libraryModule.getStaticContext();
+            this.visit(libraryModule.getProlog(), moduleContext);
+            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+        }
+        libraryModule.initHighestExecutionMode(this.visitorConfig);
+        argument.importModuleContext(
+            this.importedModuleContexts.get(libraryModule.getNamespace()),
+            libraryModule.getNamespace()
+        );
+        return argument;
     }
 
     // region primary
@@ -392,18 +416,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
-        return argument;
-    }
-
-    @Override
-    public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
-            StaticContext moduleContext = libraryModule.getStaticContext();
-            this.visit(libraryModule.getProlog(), moduleContext);
-            this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
-        }
-        libraryModule.initHighestExecutionMode(this.visitorConfig);
-        argument.importModuleContext(this.importedModuleContexts.get(libraryModule.getNamespace()), libraryModule.getNamespace());
         return argument;
     }
 

@@ -43,6 +43,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class UserDefinedFunctionExecutionModes implements Serializable, KryoSerializable {
 
@@ -277,5 +278,24 @@ public class UserDefinedFunctionExecutionModes implements Serializable, KryoSeri
         this.userDefinedFunctionsExecutionMode = kryo.readObject(input, HashMap.class);
         this.userDefinedFunctionIdentifiersWithUnsetExecutionModes = kryo.readObject(input, List.class);
         this.userDefinedFunctionsParametersStorageMode = kryo.readObject(input, HashMap.class);
+    }
+
+
+
+    @Override
+    public String toString() {
+        StringBuilder stringBuilder = new StringBuilder();
+        stringBuilder.append("Execution modes: \n");
+        for (FunctionIdentifier fi : this.userDefinedFunctionsExecutionMode.keySet()) {
+            stringBuilder.append(fi + ": " + this.userDefinedFunctionsExecutionMode.get(fi));
+            stringBuilder.append("\n");
+        }
+        for (FunctionIdentifier fi : this.userDefinedFunctionsParametersStorageMode.keySet()) {
+            List<ExecutionMode> modes = this.userDefinedFunctionsParametersStorageMode.get(fi);
+            List<String> modeStrings = modes.stream().map(x -> x.toString()).collect(Collectors.toList());
+            stringBuilder.append(fi + " parameters: " + String.join(", ", modeStrings));
+            stringBuilder.append("\n");
+        }
+        return stringBuilder.toString();
     }
 }

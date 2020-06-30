@@ -52,8 +52,7 @@ public class ModulePruningVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitLibraryModule(LibraryModule libraryModule, Void argument) {
-        if(this.visitedModules.contains(libraryModule.getNamespace()))
-        {
+        if (this.visitedModules.contains(libraryModule.getNamespace())) {
             Prolog prolog = libraryModule.getProlog();
             prolog.clearDeclarations();
         }
