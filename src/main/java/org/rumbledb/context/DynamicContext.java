@@ -70,7 +70,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             throw new OurBadException("Dynamic context defined with null parent");
         }
         this.parent = parent;
-        this.variableValues = new VariableValues();
+        this.variableValues = new VariableValues(this.parent.variableValues);
         this.namedFunctions = null;
     }
 

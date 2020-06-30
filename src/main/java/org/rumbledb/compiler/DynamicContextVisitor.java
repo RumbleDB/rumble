@@ -101,7 +101,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
-        DynamicContext result = new DynamicContext(argument);
         Name name = variableDeclaration.getVariableName();
         if (variableDeclaration.external()) {
             String value = this.configuration.getExternalVariableValue(name);
@@ -139,25 +138,25 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 Expression expression = variableDeclaration.getExpression();
                 if (expression != null) {
                     RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-                    iterator.bindToVariableInDynamicContext(result, name, argument);
-                    return result;
+                    iterator.bindToVariableInDynamicContext(argument, name, argument);
+                    return argument;
                 }
                 throw new AbsentPartOfDynamicContextException(
                         "External variable value is not provided!",
                         variableDeclaration.getMetadata()
                 );
             }
-            result.getVariableValues()
+            argument.getVariableValues()
                 .addVariableValue(
                     name,
                     values
                 );
-            return result;
+            return argument;
         }
         Expression expression = variableDeclaration.getExpression();
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-        iterator.bindToVariableInDynamicContext(result, name, argument);
-        return result;
+        iterator.bindToVariableInDynamicContext(argument, name, argument);
+        return argument;
     }
 
     @Override
