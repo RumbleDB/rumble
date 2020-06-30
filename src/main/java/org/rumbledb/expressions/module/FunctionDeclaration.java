@@ -22,12 +22,12 @@ package org.rumbledb.expressions.module;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import java.util.Collections;
 import java.util.List;

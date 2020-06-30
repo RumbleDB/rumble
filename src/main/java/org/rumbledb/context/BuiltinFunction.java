@@ -1,6 +1,7 @@
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.FunctionSignature;
 
 public class BuiltinFunction {
 

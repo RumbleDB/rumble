@@ -23,7 +23,6 @@ package org.rumbledb.context;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
-import org.rumbledb.runtime.functions.base.UserDefinedFunctionExecutionModes;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -43,58 +42,8 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static class InScopeVariable implements Serializable, KryoSerializable {
-        private static final long serialVersionUID = 1L;
-
-        private Name name;
-        private SequenceType sequenceType;
-        private ExceptionMetadata metadata;
-        private ExecutionMode storageMode;
-
-        public InScopeVariable(
-                Name name,
-                SequenceType sequenceType,
-                ExceptionMetadata metadata,
-                ExecutionMode storageMode
-        ) {
-            this.name = name;
-            this.sequenceType = sequenceType;
-            this.metadata = metadata;
-            this.storageMode = storageMode;
-        }
-
-        @SuppressWarnings("unused")
-        public Name getName() {
-            return this.name;
-        }
-
-        public SequenceType getSequenceType() {
-            return this.sequenceType;
-        }
-
-        public ExceptionMetadata getMetadata() {
-            return this.metadata;
-        }
-
-        @Override
-        public void write(Kryo kryo, Output output) {
-            kryo.writeObject(output, this.name);
-            kryo.writeObject(output, this.sequenceType);
-            kryo.writeObject(output, this.metadata);
-            kryo.writeObject(output, this.storageMode);
-        }
-
-        @Override
-        public void read(Kryo kryo, Input input) {
-            this.name = kryo.readObject(input, Name.class);
-            this.sequenceType = kryo.readObject(input, SequenceType.class);
-            this.metadata = kryo.readObject(input, ExceptionMetadata.class);
-            this.storageMode = kryo.readObject(input, ExecutionMode.class);
-        }
-    }
-
     private Map<Name, InScopeVariable> inScopeVariables;
-    private Map<String, String> namespaceBindings;
+    private Map<String, String> staticallyKnownNamespaces;
     private StaticContext parent;
     private URI staticBaseURI;
     public UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
@@ -171,7 +120,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public ExecutionMode getVariableStorageMode(Name varName) {
-        return getInScopeVariable(varName).storageMode;
+        return getInScopeVariable(varName).getStorageMode();
     }
 
     public void addVariable(
@@ -214,20 +163,20 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
-        if (this.namespaceBindings == null) {
-            this.namespaceBindings = new HashMap<>();
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (!this.namespaceBindings.containsKey(prefix)) {
-            this.namespaceBindings.put(prefix, namespace);
+        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+            this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
         return false;
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.namespaceBindings != null) {
-            if (this.namespaceBindings.containsKey(prefix)) {
-                return this.namespaceBindings.get(prefix);
+        if (this.staticallyKnownNamespaces != null) {
+            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
+                return this.staticallyKnownNamespaces.get(prefix);
             } else {
                 return null;
             }
@@ -241,7 +190,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.inScopeVariables);
-        kryo.writeObject(output, this.namespaceBindings);
+        kryo.writeObject(output, this.staticallyKnownNamespaces);
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
     }
@@ -250,7 +199,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void read(Kryo kryo, Input input) {
         this.inScopeVariables = kryo.readObject(input, HashMap.class);
-        this.namespaceBindings = kryo.readObject(input, HashMap.class);
+        this.staticallyKnownNamespaces = kryo.readObject(input, HashMap.class);
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
     }

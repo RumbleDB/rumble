@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -21,8 +22,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.FunctionSignature;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -95,15 +95,16 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
 
-        if (!context.contains(estimatorInputVariableName)) {
+        if (!context.getVariableValues().contains(estimatorInputVariableName)) {
             throw new OurBadException("Estimator's input data is not available in the dynamic context");
         }
 
-        if (context.isDataFrame(estimatorInputVariableName, getMetadata())) {
-            return context.getDataFrameVariableValue(
-                estimatorInputVariableName,
-                getMetadata()
-            );
+        if (context.getVariableValues().isDataFrame(estimatorInputVariableName, getMetadata())) {
+            return context.getVariableValues()
+                .getDataFrameVariableValue(
+                    estimatorInputVariableName,
+                    getMetadata()
+                );
         }
 
         throw new MLNotADataFrameException(
@@ -115,10 +116,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     private Item getParamMapItem(DynamicContext context) {
-        List<Item> paramMapItemList = context.getLocalVariableValue(
-            GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
-            getMetadata()
-        );
+        List<Item> paramMapItemList = context.getVariableValues()
+            .getLocalVariableValue(
+                GetEstimatorFunctionIterator.estimatorFunctionParameterNames.get(1),
+                getMetadata()
+            );
         if (paramMapItemList.size() != 1) {
             throw new OurBadException(
                     "Applying an estimator takes a single object as the second parameter.",

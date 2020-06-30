@@ -23,12 +23,12 @@ package org.rumbledb.runtime.functions;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -63,7 +63,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public void openLocal() {
-        this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+        this.userDefinedFunctionCallIterator = this.currentDynamicContextForLocalExecution.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.getHighestExecutionMode(),
@@ -123,7 +123,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        this.userDefinedFunctionCallIterator = dynamicContext.getKnownFunctions()
+        this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
             .getUserDefinedFunctionCallIterator(
                 this.functionIdentifier,
                 this.getHighestExecutionMode(),

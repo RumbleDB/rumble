@@ -13,7 +13,9 @@ import org.antlr.v4.runtime.misc.ParseCancellationException;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.context.UserDefinedFunctionExecutionModes;
 import org.rumbledb.exceptions.DuplicateFunctionIdentifierException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -25,8 +27,6 @@ import org.rumbledb.expressions.module.Module;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.UserDefinedFunctionExecutionModes;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.jsoniq.ExecutionMode;

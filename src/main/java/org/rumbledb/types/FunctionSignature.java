@@ -18,12 +18,10 @@
  *
  */
 
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.types;
 
 import java.io.Serializable;
 import java.util.List;
-
-import org.rumbledb.types.SequenceType;
 
 public class FunctionSignature implements Serializable {
     private List<SequenceType> parameterTypes;
@@ -62,7 +60,7 @@ public class FunctionSignature implements Serializable {
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
-        sb.append("(");
+        sb.append("function(");
         String separator = "";
         for (SequenceType type : this.parameterTypes) {
             sb.append(separator + type);

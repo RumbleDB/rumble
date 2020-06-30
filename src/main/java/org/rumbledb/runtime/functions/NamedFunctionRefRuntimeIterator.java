@@ -21,13 +21,13 @@
 package org.rumbledb.runtime.functions;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
 
 import sparksoniq.jsoniq.ExecutionMode;
 
@@ -51,7 +51,7 @@ public class NamedFunctionRefRuntimeIterator extends LocalRuntimeIterator {
         if (this.hasNext) {
             this.hasNext = false;
             if (
-                !this.currentDynamicContextForLocalExecution.getKnownFunctions()
+                !this.currentDynamicContextForLocalExecution.getNamedFunctions()
                     .checkUserDefinedFunctionExists(this.functionIdentifier)
             ) {
                 throw new UnknownFunctionCallException(
@@ -60,7 +60,7 @@ public class NamedFunctionRefRuntimeIterator extends LocalRuntimeIterator {
                         getMetadata()
                 );
             }
-            FunctionItem function = this.currentDynamicContextForLocalExecution.getKnownFunctions()
+            FunctionItem function = this.currentDynamicContextForLocalExecution.getNamedFunctions()
                 .getUserDefinedFunction(this.functionIdentifier);
             FunctionItem result = ((FunctionItem) function).deepCopy();
             result.populateClosureFromDynamicContext(this.currentDynamicContextForLocalExecution, getMetadata());

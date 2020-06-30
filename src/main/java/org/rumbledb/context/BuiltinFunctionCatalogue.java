@@ -1,10 +1,9 @@
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.context;
 
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
@@ -138,6 +137,7 @@ import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
 import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.ml.AnnotateFunctionIterator;

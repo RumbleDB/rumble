@@ -93,7 +93,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             throw new OurBadException("A function declaration must always have a name.");
         } else {
             // named (static function declaration)
-            argument.getKnownFunctions().addUserDefinedFunction(function, expression.getMetadata());
+            argument.getNamedFunctions().addUserDefinedFunction(function, expression.getMetadata());
         }
 
         return defaultAction(expression, argument);
@@ -101,7 +101,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
 
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
-        DynamicContext result = new DynamicContext(argument);
         Name name = variableDeclaration.getVariableName();
         if (variableDeclaration.external()) {
             String value = this.configuration.getExternalVariableValue(name);
@@ -139,35 +138,40 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 Expression expression = variableDeclaration.getExpression();
                 if (expression != null) {
                     RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-                    iterator.bindToVariableInDynamicContext(result, name, argument);
-                    return result;
+                    iterator.bindToVariableInDynamicContext(argument, name, argument);
+                    return argument;
                 }
                 throw new AbsentPartOfDynamicContextException(
                         "External variable value is not provided!",
                         variableDeclaration.getMetadata()
                 );
             }
-            result.addVariableValue(
-                name,
-                values
-            );
-            return result;
+            argument.getVariableValues()
+                .addVariableValue(
+                    name,
+                    values
+                );
+            return argument;
         }
         Expression expression = variableDeclaration.getExpression();
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-        iterator.bindToVariableInDynamicContext(result, name, argument);
-        return result;
+        iterator.bindToVariableInDynamicContext(argument, name, argument);
+        return argument;
     }
 
     @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
             DynamicContext newContext = new DynamicContext(this.configuration);
-            newContext.setKnownFunctions(argument.getKnownFunctions());
+            newContext.setNamedFunctions(argument.getNamedFunctions());
             DynamicContext importedContext = visitDescendants(module, newContext);
             this.importedModuleContexts.put(module.getNamespace(), importedContext);
         }
-        argument.importModuleContext(this.importedModuleContexts.get(module.getNamespace()), module.getNamespace());
+        argument.getVariableValues()
+            .importModuleValues(
+                this.importedModuleContexts.get(module.getNamespace()).getVariableValues(),
+                module.getNamespace()
+            );
         return argument;
     }
 }

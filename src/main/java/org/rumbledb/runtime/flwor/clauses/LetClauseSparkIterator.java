@@ -90,8 +90,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         if (this.child.hasNext()) {
             FlworTuple inputTuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+                                                                                                   // variables from new
+                                                                                                   // tuple
 
             this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this.tupleContext);
             this.hasNext = true;

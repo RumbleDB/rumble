@@ -28,6 +28,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -35,8 +36,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.FunctionSignature;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -325,16 +325,22 @@ public class FunctionItem extends Item {
     }
 
     public void populateClosureFromDynamicContext(DynamicContext dynamicContext, ExceptionMetadata metadata) {
-        for (Name variable : dynamicContext.getLocalVariableNames()) {
-            this.localVariablesInClosure.put(variable, dynamicContext.getLocalVariableValue(variable, metadata));
+        for (Name variable : dynamicContext.getVariableValues().getLocalVariableNames()) {
+            this.localVariablesInClosure.put(
+                variable,
+                dynamicContext.getVariableValues().getLocalVariableValue(variable, metadata)
+            );
         }
-        for (Name variable : dynamicContext.getRDDVariableNames()) {
-            this.RDDVariablesInClosure.put(variable, dynamicContext.getRDDVariableValue(variable, metadata));
+        for (Name variable : dynamicContext.getVariableValues().getRDDVariableNames()) {
+            this.RDDVariablesInClosure.put(
+                variable,
+                dynamicContext.getVariableValues().getRDDVariableValue(variable, metadata)
+            );
         }
-        for (Name variable : dynamicContext.getDataFrameVariableNames()) {
+        for (Name variable : dynamicContext.getVariableValues().getDataFrameVariableNames()) {
             this.dataFrameVariablesInClosure.put(
                 variable,
-                dynamicContext.getDataFrameVariableValue(variable, metadata)
+                dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
     }
