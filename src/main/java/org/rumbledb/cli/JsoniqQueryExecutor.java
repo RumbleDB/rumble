@@ -77,8 +77,7 @@ public class JsoniqQueryExecutor {
         URI logUri = null;
         if (logPath != null) {
             logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
-            if(FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA))
-            {
+            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
                 FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
             }
         }
