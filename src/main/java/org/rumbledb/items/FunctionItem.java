@@ -253,6 +253,8 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.localVariablesInClosure);
         kryo.writeObject(output, this.RDDVariablesInClosure);
         kryo.writeObject(output, this.dataFrameVariablesInClosure);
+        kryo.writeObject(output, this.staticModuleContext);
+        kryo.writeObject(output, this.dynamicModuleContext);
 
         // convert RuntimeIterator to byte[] data
         try {
@@ -282,6 +284,8 @@ public class FunctionItem extends Item {
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
+        this.staticModuleContext = kryo.readObject(input, StaticContext.class);
+        this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
 
         try {
             int dataLength = input.readInt();

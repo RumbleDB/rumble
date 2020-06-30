@@ -82,7 +82,7 @@ public class VisitorHelpers {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri);
-        moduleContext.setStaticallyKnownFunctionSignatures(new UserDefinedFunctionExecutionModes());
+        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
         try {
             // TODO Handle module extras
@@ -120,8 +120,8 @@ public class VisitorHelpers {
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri);
-        moduleContext.setStaticallyKnownFunctionSignatures(
-            importingModuleContext.getStaticallyKnownFunctionSignatures()
+        moduleContext.setUserDefinedFunctionsExecutionModes(
+            importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration);
         try {
@@ -179,7 +179,7 @@ public class VisitorHelpers {
             }
             if (currentUnsetCount == prevUnsetCount) {
                 setLocalExecutionForUnsetUserDefinedFunctions(
-                    module.getStaticContext().getStaticallyKnownFunctionSignatures()
+                    module.getStaticContext().getUserDefinedFunctionsExecutionModes()
                 );
                 break;
             }

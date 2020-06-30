@@ -101,14 +101,14 @@ public class FunctionCallExpression extends Expression {
         }
 
         if (
-            getStaticContext().getStaticallyKnownFunctionSignatures()
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
                 .checkUserDefinedFunctionExecutionModeExists(this.identifier)
         ) {
             if (this.isPartialApplication) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this.highestExecutionMode = getStaticContext().getStaticallyKnownFunctionSignatures()
+            this.highestExecutionMode = getStaticContext().getUserDefinedFunctionsExecutionModes()
                 .getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
             return;
         }

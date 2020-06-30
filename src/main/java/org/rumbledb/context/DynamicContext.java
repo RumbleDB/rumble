@@ -281,10 +281,10 @@ public class DynamicContext implements Serializable, KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.parent);
+        kryo.writeObjectOrNull(output, this.parent, DynamicContext.class);
         kryo.writeObject(output, this.localVariableValues);
-        kryo.writeObject(output, this.rddVariableValues);
-        kryo.writeObject(output, this.dataFrameVariableValues);
+        // kryo.writeObject(output, this.rddVariableValues);
+        // kryo.writeObject(output, this.dataFrameVariableValues);
     }
 
     @SuppressWarnings("unchecked")
@@ -292,8 +292,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, DynamicContext.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
-        this.rddVariableValues = kryo.readObject(input, HashMap.class);
-        this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
+        // this.rddVariableValues = kryo.readObject(input, HashMap.class);
+        // this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
     }
 
     public Item getPosition() {

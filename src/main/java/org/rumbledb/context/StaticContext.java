@@ -97,19 +97,19 @@ public class StaticContext implements Serializable, KryoSerializable {
     private Map<String, String> namespaceBindings;
     private StaticContext parent;
     private URI staticBaseURI;
-    public UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures;
+    public UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
 
     public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
-        this.staticallyKnownFunctionSignatures = null;
+        this.userDefinedFunctionExecutionModes = null;
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
-        this.staticallyKnownFunctionSignatures = null;
+        this.userDefinedFunctionExecutionModes = null;
     }
 
     public StaticContext getParent() {
@@ -186,8 +186,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         stringBuilder.append("Static context with variables: ");
         this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
         stringBuilder.append("\n");
-        if (this.staticallyKnownFunctionSignatures != null) {
-            stringBuilder.append(this.staticallyKnownFunctionSignatures.toString());
+        if (this.userDefinedFunctionExecutionModes != null) {
+            stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
         }
         if (this.parent != null) {
             stringBuilder.append("\nParent:");
@@ -235,7 +235,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.inScopeVariables);
         kryo.writeObject(output, this.namespaceBindings);
-        kryo.writeObject(output, this.parent);
+        kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
     }
 
@@ -244,7 +244,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.inScopeVariables = kryo.readObject(input, HashMap.class);
         this.namespaceBindings = kryo.readObject(input, HashMap.class);
-        this.parent = kryo.readObject(input, StaticContext.class);
+        this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
     }
 
@@ -257,21 +257,21 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
-    public void setStaticallyKnownFunctionSignatures(
+    public void setUserDefinedFunctionsExecutionModes(
             UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
     ) {
         if (this.parent != null) {
             throw new OurBadException("Statically known function signatures can only be stored in the module context.");
         }
-        this.staticallyKnownFunctionSignatures = staticallyKnownFunctionSignatures;
+        this.userDefinedFunctionExecutionModes = staticallyKnownFunctionSignatures;
     }
 
-    public UserDefinedFunctionExecutionModes getStaticallyKnownFunctionSignatures() {
-        if (this.staticallyKnownFunctionSignatures != null) {
-            return this.staticallyKnownFunctionSignatures;
+    public UserDefinedFunctionExecutionModes getUserDefinedFunctionsExecutionModes() {
+        if (this.userDefinedFunctionExecutionModes != null) {
+            return this.userDefinedFunctionExecutionModes;
         }
         if (this.parent != null) {
-            return this.parent.getStaticallyKnownFunctionSignatures();
+            return this.parent.getUserDefinedFunctionsExecutionModes();
         }
         throw new OurBadException("Statically known function signatures are not set up properly in static context.");
     }

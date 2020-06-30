@@ -88,7 +88,7 @@ public class InlineFunctionExpression extends Expression {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (this.name != null) {
-            getStaticContext().getStaticallyKnownFunctionSignatures()
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
                 .addUserDefinedFunctionExecutionMode(
                     identifier,
                     this.body.getHighestExecutionMode(visitorConfig),
