@@ -205,18 +205,18 @@ public class VisitorHelpers {
     }
 
     private static void setLocalExecutionForUnsetUserDefinedFunctions(
-            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
+            UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes
     ) {
         try {
             List<FunctionIdentifier> unsetFunctionIdentifiers = new ArrayList<>();
             unsetFunctionIdentifiers.addAll(
-                staticallyKnownFunctionSignatures
+                userDefinedFunctionExecutionModes
                     .getUserDefinedFunctionIdentifiersWithUnsetExecutionModes()
             );
             for (
                 FunctionIdentifier functionIdentifier : unsetFunctionIdentifiers
             ) {
-                staticallyKnownFunctionSignatures.addUserDefinedFunctionExecutionMode(
+                userDefinedFunctionExecutionModes.addUserDefinedFunctionExecutionMode(
                     functionIdentifier,
                     ExecutionMode.LOCAL,
                     true,
