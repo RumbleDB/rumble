@@ -77,6 +77,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
+        this.functionBodyIterator = null;
 
     }
 
@@ -89,7 +90,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
-            this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+            if (this.functionBodyIterator == null) {
+                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+            }
             childContext = this.createNewDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
             );
