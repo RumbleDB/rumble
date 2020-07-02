@@ -75,21 +75,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
+    // This avoids the deserialization of many static context copies at runtime.
     public void setStaticContext(StaticContext staticContext) {
         if (this.staticURI != null) {
             throw new OurBadException("Static context already consumed.");
         }
         this.staticURI = staticContext.getStaticBaseURI();
     }
-
-    /*
-     * public StaticContext getStaticContext() {
-     * if (this.staticContext == null) {
-     * throw new OurBadException("Static context is not set.");
-     * }
-     * return this.staticContext;
-     * }
-     */
 
     /**
      * This function calculates the effective boolean value of the sequence given by iterator.
