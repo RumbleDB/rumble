@@ -54,7 +54,7 @@ public class StructuredJsonFileFunctionIterator extends DataFrameRuntimeIterator
         urlIterator.open(context);
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
-        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }

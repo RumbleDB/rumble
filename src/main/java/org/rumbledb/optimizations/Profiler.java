@@ -1,6 +1,7 @@
 package org.rumbledb.optimizations;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -27,17 +28,18 @@ public class Profiler {
     }
 
     public static int get() {
+        if (stacks.isEmpty()) {
+            return 0;
+        }
+        int max = Collections.max(stacks.values());
         for (String key : stacks.keySet()) {
+            if (stacks.get(key) != max)
+                continue;
             System.out.println("Occurrences: " + stacks.get(key));
             System.out.println(key);
             System.out.println();
         }
         System.out.println("Size: " + stacks.size());
-        for (String key : stacks.keySet()) {
-            if (stacks.get(key) <= 2000)
-                continue;
-            System.out.println("Occurrences: " + stacks.get(key));
-        }
         return counter;
     }
 
