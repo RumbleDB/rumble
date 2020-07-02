@@ -25,7 +25,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.parsing.ItemParser;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -43,7 +42,6 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
         if (executionMode != ExecutionMode.RDD && executionMode != ExecutionMode.DATAFRAME) {
             throw new OurBadException("RDD runtime iterators support either RDD or DF execution modes");
         }
-        this.parser = new ItemParser();
     }
 
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
