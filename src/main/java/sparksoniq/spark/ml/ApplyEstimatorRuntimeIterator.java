@@ -13,7 +13,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -271,7 +270,6 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                         paramTypes,
                         returnType
                 ),
-                StaticContext.createRumbleStaticContext(),
                 new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
                 bodyIterator
         );

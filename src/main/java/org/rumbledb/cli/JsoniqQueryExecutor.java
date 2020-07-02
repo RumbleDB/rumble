@@ -28,6 +28,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -122,6 +123,7 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
+            time += "\n[ProfilerCount] " + Profiler.get();
             FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;

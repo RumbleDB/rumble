@@ -42,11 +42,11 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
-    private Map<Name, InScopeVariable> inScopeVariables;
-    private Map<String, String> staticallyKnownNamespaces;
+    private transient Map<Name, InScopeVariable> inScopeVariables;
+    private transient Map<String, String> staticallyKnownNamespaces;
     private StaticContext parent;
     private URI staticBaseURI;
-    public UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    public transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
 
     public StaticContext() {
         this.parent = null;

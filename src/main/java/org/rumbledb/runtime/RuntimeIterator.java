@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -59,7 +60,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
-    private StaticContext staticContext;
+    protected URI staticURI;
+    // private StaticContext staticContext;
 
     protected ExecutionMode highestExecutionMode;
 
@@ -73,18 +75,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
+    // This avoids the deserialization of many static context copies at runtime.
     public void setStaticContext(StaticContext staticContext) {
-        if (this.staticContext != null) {
-            throw new OurBadException("Attempt to overwrite an existing static context");
+        if (this.staticURI != null) {
+            throw new OurBadException("Static context already consumed.");
         }
-        this.staticContext = staticContext;
-    }
-
-    public StaticContext getStaticContext() {
-        if (this.staticContext == null) {
-            throw new OurBadException("Static context is not set.");
-        }
-        return this.staticContext;
+        this.staticURI = staticContext.getStaticBaseURI();
     }
 
     /**
@@ -194,6 +191,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.children);
+        // TODO serializer other fields
     }
 
     @SuppressWarnings("unchecked")
@@ -203,6 +201,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isOpen = false;
         this.currentDynamicContextForLocalExecution = null;
         this.children = kryo.readObject(input, ArrayList.class);
+        // TODO serializer other fields
     }
 
     public boolean hasNext() {
