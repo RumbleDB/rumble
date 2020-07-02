@@ -66,7 +66,6 @@ public class FunctionRuntimeIterator extends LocalRuntimeIterator {
                     this.functionName,
                     this.paramNameToSequenceTypes,
                     this.returnType,
-                    getStaticContext().getModuleContext(),
                     this.currentDynamicContextForLocalExecution.getModuleContext(),
                     bodyIteratorCopy
             );

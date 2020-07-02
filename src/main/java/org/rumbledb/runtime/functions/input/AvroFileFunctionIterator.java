@@ -54,7 +54,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveURI(getStaticContext().getStaticBaseURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
         if (!FileSystemUtil.exists(uri, getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
@@ -70,7 +70,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
                     if (value.isString()) {
                         if (keys.get(i).equals("avroSchema")) {
                             URI schemaURI = FileSystemUtil.resolveURI(
-                                getStaticContext().getStaticBaseURI(),
+                                this.staticURI,
                                 value.getStringValue(),
                                 getMetadata()
                             );

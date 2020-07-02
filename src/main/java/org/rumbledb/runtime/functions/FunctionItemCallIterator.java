@@ -190,7 +190,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         partialApplicationParamTypes,
                         this.functionItem.getSignature().getReturnType()
                 ),
-                this.functionItem.getStaticModuleContext(),
                 this.functionItem.getDynamicModuleContext(),
                 this.functionItem.getBodyIterator(),
                 localArgumentValues,

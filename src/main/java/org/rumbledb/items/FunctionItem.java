@@ -30,7 +30,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
@@ -59,7 +58,6 @@ public class FunctionItem extends Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
-    private StaticContext staticModuleContext;
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -73,7 +71,6 @@ public class FunctionItem extends Item {
             FunctionIdentifier identifier,
             List<Name> parameterNames,
             FunctionSignature signature,
-            StaticContext staticModuleContext,
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
@@ -81,7 +78,6 @@ public class FunctionItem extends Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this.staticModuleContext = staticModuleContext;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -92,7 +88,6 @@ public class FunctionItem extends Item {
             FunctionIdentifier identifier,
             List<Name> parameterNames,
             FunctionSignature signature,
-            StaticContext staticModuleContext,
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
@@ -103,7 +98,6 @@ public class FunctionItem extends Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
-        this.staticModuleContext = staticModuleContext;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -114,7 +108,6 @@ public class FunctionItem extends Item {
             Name name,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
-            StaticContext staticModuleContext,
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator
     ) {
@@ -129,7 +122,6 @@ public class FunctionItem extends Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
-        this.staticModuleContext = staticModuleContext;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -149,10 +141,6 @@ public class FunctionItem extends Item {
     @Override
     public FunctionSignature getSignature() {
         return this.signature;
-    }
-
-    public StaticContext getStaticModuleContext() {
-        return this.staticModuleContext;
     }
 
     public DynamicContext getDynamicModuleContext() {
@@ -253,7 +241,6 @@ public class FunctionItem extends Item {
         kryo.writeObject(output, this.localVariablesInClosure);
         kryo.writeObject(output, this.RDDVariablesInClosure);
         kryo.writeObject(output, this.dataFrameVariablesInClosure);
-        kryo.writeObject(output, this.staticModuleContext);
         kryo.writeObject(output, this.dynamicModuleContext);
 
         // convert RuntimeIterator to byte[] data
@@ -284,7 +271,6 @@ public class FunctionItem extends Item {
         this.localVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.RDDVariablesInClosure = kryo.readObject(input, HashMap.class);
         this.dataFrameVariablesInClosure = kryo.readObject(input, HashMap.class);
-        this.staticModuleContext = kryo.readObject(input, StaticContext.class);
         this.dynamicModuleContext = kryo.readObject(input, DynamicContext.class);
 
         try {
