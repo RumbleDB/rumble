@@ -141,7 +141,7 @@ public class FlworDataFrameUtils {
     public static List<String> getColumnNames(
             StructType inputSchema,
             int duplicateVariableIndex,
-            Map<String, DynamicContext.VariableDependency> dependencies
+            Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
         List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
@@ -150,8 +150,14 @@ public class FlworDataFrameUtils {
                 continue;
             }
             String var = columnNames[columnIndex];
-            if (dependencies == null || dependencies.containsKey(var)) {
+            if (dependencies == null) {
                 result.add(columnNames[columnIndex]);
+            } else {
+                for (Name name : dependencies.keySet()) {
+                    if (name.toString().equals(var)) {
+                        result.add(columnNames[columnIndex]);
+                    }
+                }
             }
         }
         return result;

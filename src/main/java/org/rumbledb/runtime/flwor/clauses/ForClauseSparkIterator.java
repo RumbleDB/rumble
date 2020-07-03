@@ -203,7 +203,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
                     inputSchema,
                     duplicateVariableIndex,
-                    null
+                    parentProjection
                 );
 
                 if (duplicateVariableIndex == -1) {
