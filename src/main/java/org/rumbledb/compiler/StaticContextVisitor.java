@@ -109,6 +109,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
+        } else {
+            libraryModule.getProlog().initHighestExecutionMode(this.visitorConfig);
         }
         libraryModule.initHighestExecutionMode(this.visitorConfig);
         argument.importModuleContext(
