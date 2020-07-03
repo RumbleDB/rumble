@@ -342,7 +342,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.BinaryType
             );
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, parentProjection);
         Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
