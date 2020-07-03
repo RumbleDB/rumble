@@ -262,8 +262,12 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 List<String> allColumns = FlworDataFrameUtils.getColumnNames(
                     inputSchema,
                     duplicateVariableIndex,
-                    null
+                    parentProjection
                 );
+                for(Name name: variableAccessNames)
+                {
+                    allColumns.add(name.toString());
+                }
                 Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                     inputSchema,
                     -1,
