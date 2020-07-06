@@ -137,8 +137,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
             List<Item> results = new ArrayList<>();
             for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
-                tupleContext.removeAllVariables(); // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+                tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+                tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+                                                                                                  // variables from new
+                                                                                                  // tuple
 
                 // if grouping on an expression
                 RuntimeIterator groupVariableExpression = expression.getExpression();
@@ -180,10 +182,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     }
 
                     results.addAll(
-                        tupleContext.getLocalVariableValue(
-                            groupVariableName,
-                            getMetadata()
-                        )
+                        tupleContext.getVariableValues()
+                            .getLocalVariableValue(
+                                groupVariableName,
+                                getMetadata()
+                            )
                     );
                 }
             }
@@ -256,7 +259,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 RuntimeIterator newVariableExpression = expression.getExpression();
                 int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
 
-                List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+                List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+                    inputSchema,
+                    duplicateVariableIndex,
+                    null
+                );
                 Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                     inputSchema,
                     -1,

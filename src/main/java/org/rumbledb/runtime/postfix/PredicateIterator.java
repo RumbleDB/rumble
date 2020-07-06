@@ -141,7 +141,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             ++last;
         }
         this.iterator.close();
-        this.filterDynamicContext.setLast(last);
+        this.filterDynamicContext.getVariableValues().setLast(last);
     }
 
     private void setNextResult() {
@@ -151,12 +151,13 @@ public class PredicateIterator extends HybridRuntimeIterator {
             Item item = this.iterator.next();
             List<Item> currentItems = new ArrayList<>();
             currentItems.add(item);
-            this.filterDynamicContext.addVariableValue(
-                Name.CONTEXT_ITEM,
-                currentItems
-            );
+            this.filterDynamicContext.getVariableValues()
+                .addVariableValue(
+                    Name.CONTEXT_ITEM,
+                    currentItems
+                );
             if (this.mustMaintainPosition) {
-                this.filterDynamicContext.setPosition(++this.position);
+                this.filterDynamicContext.getVariableValues().setPosition(++this.position);
             }
 
             this.filter.open(this.filterDynamicContext);
@@ -177,7 +178,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 break;
             }
         }
-        this.filterDynamicContext.removeVariable(Name.CONTEXT_ITEM);
+        this.filterDynamicContext.getVariableValues().removeVariable(Name.CONTEXT_ITEM);
 
         if (this.nextResult == null) {
             this.hasNext = false;

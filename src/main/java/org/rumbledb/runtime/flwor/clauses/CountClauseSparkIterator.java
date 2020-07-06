@@ -117,10 +117,18 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid count clause.");
         }
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        if (!parentProjection.containsKey(this.variableName)) {
+            return df;
+        }
+
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+            inputSchema,
+            duplicateVariableIndex,
+            parentProjection
+        );
 
         String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
 

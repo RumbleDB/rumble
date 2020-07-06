@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
@@ -72,15 +71,13 @@ public class AnnotationsTestsBase {
         MainModule mainModule = null;
         DynamicContext dynamicContext = null;
         try {
-            Functions.clearUserDefinedFunctions(); // clear UDFs between each test run
-
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
             mainModule = VisitorHelpers.parseMainModuleFromLocation(
                 uri,
                 AnnotationsTestsBase.configuration
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
-            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, AnnotationsTestsBase.configuration);
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();

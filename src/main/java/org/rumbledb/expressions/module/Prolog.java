@@ -71,6 +71,10 @@ public class Prolog extends Node {
         this.declarations = declarations;
     }
 
+    public void clearDeclarations() {
+        this.declarations.clear();
+    }
+
     @Override
     public List<Node> getChildren() {
         List<Node> result = new ArrayList<>();

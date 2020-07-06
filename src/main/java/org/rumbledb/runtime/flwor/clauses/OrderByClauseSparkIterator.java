@@ -156,8 +156,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             List<Item> results = new ArrayList<>(); // results from the expressions will become a key
             for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-                tupleContext.removeAllVariables(); // clear the previous variables
-                tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+                tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+                tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+                                                                                                  // variables from new
+                                                                                                  // tuple
 
                 boolean isFieldEmpty = true;
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
@@ -222,9 +224,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
-        if (df.count() == 0) {
-            return df;
-        }
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
@@ -256,6 +255,11 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             );
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
+
+        if (columnTypesOfRows.length == 0) {
+            // The input is empty, so we output this empty DF again.
+            return df;
+        }
 
         // Every column represents an order by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)

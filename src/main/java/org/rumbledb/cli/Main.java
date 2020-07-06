@@ -59,25 +59,26 @@ public class Main {
                 System.out.println("");
                 System.out.println("Example usage:");
                 System.out.println("spark-submit spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[2] spark-rumble-1.0.jar --shell yes");
+                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --shell yes");
+                System.out.println("spark-submit --master local[2] spark-rumble-1.7.0.jar --shell yes");
                 System.out.println(
                     "spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes"
                 );
                 System.out.println("");
-                System.out.println("spark-submit --master yarn sparksoniq-0.9.7.jar --shell yes");
+                System.out.println("spark-submit --master yarn spark-rumble-1.7.0.jar --shell yes");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --shell yes"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --shell yes"
                 );
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.0.jar --query-path hdfs:///my-query.jq --output-path hdfs:///my-output.json"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
                 );
                 System.out.println(
                     "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
                 );
             }
+            System.exit(0);
         } catch (Exception ex) {
             boolean showErrorInfo = false;
             if (sparksoniqConf != null) {
@@ -101,6 +102,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(42);
             } else if (ex instanceof IllegalArgumentException) {
                 System.err.println("⚠️  It seems that you are not using Java 8. Spark only works with Java 8.");
                 System.err.println(
@@ -110,6 +112,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(43);
             } else {
                 System.out.println("An error has occured: " + ex.getMessage());
                 System.out.println(
@@ -119,6 +122,7 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(-42);
             }
         }
     }

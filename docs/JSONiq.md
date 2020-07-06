@@ -72,7 +72,7 @@ Prologs with user-defined functions and global variables are now fully supported
 
 Library modules are now supported (experimental, please report bugs), and their namespace URI is used for resolution. If it is relative, it is resolved against the importing module location.
 
-The same schemes are supported as for reading queries and data: file, hdfs, and so on. Http is not supported yet and may also be supported in the future.
+The same schemes are supported as for reading queries and data: file, hdfs, and so on. HTTP is not supported yet and may also be supported in the future.
 
 Example of library module (the file name is library-module.jq):
 
@@ -105,7 +105,7 @@ try { 1 div 0 } catch FOAR0001 { "Division by zero!" }
 
 ### Supported types
 
-The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status.
+The type system is not quite complete yet, although a lot of progress was made. Below is a complete list of JSONiq types and their support status. All builtin types are in the default type namespace, so that no prefix is needed.
 
 |  Type | Status |
 |-------|--------|
@@ -145,20 +145,20 @@ The type system is not quite complete yet, although a lot of progress was made. 
 
 ## Unsupported/Unimplemented features (beta release)
 
-Many core features of JSONiq are in place, but please be aware that some features (less and less at every release) are not yet implemented. We are working on them for subsequent releases. We prioritize the implementation of the remaining features based on user requests.
+Most core features of JSONiq are now in place, and we are working on getting the last (less used) ones into Rumble as well. We prioritize their implementation on user requests.
 
 ### Settings
 
 Some prolog settings (mostly about changing the default behavior) are not supported yet.
 
-### Nested expressions in object lookups (rhs)
+### Function types
 
-Nested object lookup keys: nested expressions on the rhs of the dot syntax are not supported yet but this is planned.
+Function type syntax is not supported yet.
 
 ### Builtin functions
 
-Not all JSONiq functions in the library are supported (see function documentation), even though they get added continuously. Please take a look at the function library documentation to know which functions are available.
+A large number of JSONiq functions in the library are now supported (see function documentation), and the remaining ones (typically, the fancier versions with an extra tuning parameter) get added continuously. Please take a look at the function library documentation to know which functions are available.
 
 ### Updates and scripting
 
-JSON updates are not supported yet. Scripting features (assignment, while loop, ...) are not supported yet.
+There are future plans to support JSONiq updates and scripting.

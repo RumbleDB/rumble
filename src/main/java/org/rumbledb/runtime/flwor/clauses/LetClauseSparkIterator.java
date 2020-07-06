@@ -90,8 +90,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         if (this.child.hasNext()) {
             FlworTuple inputTuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(inputTuple, getMetadata()); // assign new variables from new tuple
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(inputTuple, getMetadata()); // assign new
+                                                                                                   // variables from new
+                                                                                                   // tuple
 
             this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this.tupleContext);
             this.hasNext = true;
@@ -152,6 +154,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child != null) {
             Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
 
+            if (!parentProjection.containsKey(this.variableName)) {
+                return df;
+            }
+
             if (this.assignmentIterator.isRDD()) {
                 throw new JobWithinAJobException(
                         "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -163,7 +169,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
             int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
 
-            List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+            List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+                inputSchema,
+                duplicateVariableIndex,
+                parentProjection
+            );
             Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
                 inputSchema,
                 -1,

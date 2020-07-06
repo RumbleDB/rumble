@@ -22,16 +22,15 @@ package org.rumbledb.expressions.primary;
 
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -80,7 +79,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>();
+        return Arrays.asList(this.body);
     }
 
     public void registerUserDefinedFunctionExecutionMode(
@@ -89,12 +88,13 @@ public class InlineFunctionExpression extends Expression {
         FunctionIdentifier identifier = new FunctionIdentifier(this.name, this.params.size());
         // if named(static) function declaration
         if (this.name != null) {
-            Functions.addUserDefinedFunctionExecutionMode(
-                identifier,
-                this.body.getHighestExecutionMode(visitorConfig),
-                visitorConfig.suppressErrorsForFunctionSignatureCollision(),
-                this.getMetadata()
-            );
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .setExecutionMode(
+                    identifier,
+                    this.body.getHighestExecutionMode(visitorConfig),
+                    visitorConfig.suppressErrorsForFunctionSignatureCollision(),
+                    this.getMetadata()
+                );
         }
     }
 

@@ -56,7 +56,7 @@ public class PositionFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            Item result = this.currentDynamicContextForLocalExecution.getPosition();
+            Item result = this.currentDynamicContextForLocalExecution.getVariableValues().getPosition();
             if (result == null) {
                 throw new AbsentPartOfDynamicContextException("Context undefined (position) ", getMetadata());
             }

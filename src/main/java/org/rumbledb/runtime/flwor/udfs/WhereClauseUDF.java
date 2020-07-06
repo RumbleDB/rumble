@@ -76,7 +76,7 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     @Override
     public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.deserializedParams.clear();
-        this.context.removeAllVariables();
+        this.context.getVariableValues().removeAllVariables();
 
         FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,

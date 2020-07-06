@@ -21,7 +21,11 @@
 package org.rumbledb.expressions.primary;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.BuiltinFunction.BuiltinFunctionExecutionMode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
@@ -29,11 +33,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
-import org.rumbledb.runtime.functions.base.BuiltinFunction;
-import org.rumbledb.runtime.functions.base.BuiltinFunction.BuiltinFunctionExecutionMode;
-import org.rumbledb.runtime.functions.base.BuiltinFunctionCatalogue;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.Functions;
+
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
@@ -100,12 +100,16 @@ public class FunctionCallExpression extends Expression {
             return;
         }
 
-        if (Functions.checkUserDefinedFunctionExecutionModeExists(this.identifier)) {
+        if (
+            getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .exists(this.identifier)
+        ) {
             if (this.isPartialApplication) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }
-            this.highestExecutionMode = Functions.getUserDefinedFunctionExecutionMode(this.identifier, getMetadata());
+            this.highestExecutionMode = getStaticContext().getUserDefinedFunctionsExecutionModes()
+                .getExecutionMode(this.identifier, getMetadata());
             return;
         }
 

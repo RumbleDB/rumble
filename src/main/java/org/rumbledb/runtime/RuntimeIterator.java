@@ -35,10 +35,17 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.types.ItemType;
 import sparksoniq.jsoniq.ExecutionMode;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +60,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
-    private StaticContext staticContext;
+    protected URI staticURI;
+    // private StaticContext staticContext;
 
     protected ExecutionMode highestExecutionMode;
 
@@ -67,18 +75,13 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
+    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
+    // This avoids the deserialization of many static context copies at runtime.
     public void setStaticContext(StaticContext staticContext) {
-        if (this.staticContext != null) {
-            throw new OurBadException("Attempt to overwrite an existing static context");
+        if (this.staticURI != null) {
+            throw new OurBadException("Static context already consumed.");
         }
-        this.staticContext = staticContext;
-    }
-
-    public StaticContext getStaticContext() {
-        if (this.staticContext == null) {
-            throw new OurBadException("Static context is not set.");
-        }
-        return this.staticContext;
+        this.staticURI = staticContext.getStaticBaseURI();
     }
 
     /**
@@ -188,6 +191,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.children);
+        // TODO serializer other fields
     }
 
     @SuppressWarnings("unchecked")
@@ -197,6 +201,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.isOpen = false;
         this.currentDynamicContextForLocalExecution = null;
         this.children = kryo.readObject(input, ArrayList.class);
+        // TODO serializer other fields
     }
 
     public boolean hasNext() {
@@ -291,11 +296,30 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             DynamicContext executionContext
     ) {
         if (this.isDataFrame()) {
-            targetContext.addVariableValue(variable, this.getDataFrame(executionContext));
+            targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
         } else if (this.isRDD()) {
-            targetContext.addVariableValue(variable, this.getRDD(executionContext));
+            targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
-            targetContext.addVariableValue(variable, this.materialize(executionContext));
+            targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
+        }
+    }
+
+    public RuntimeIterator deepCopy() {
+        try {
+            ByteArrayOutputStream bos = new ByteArrayOutputStream();
+            ObjectOutputStream oos = new ObjectOutputStream(bos);
+            oos.writeObject(this);
+            oos.flush();
+            byte[] data = bos.toByteArray();
+            ByteArrayInputStream bis = new ByteArrayInputStream(data);
+            ObjectInputStream ois = new ObjectInputStream(bis);
+            return (RuntimeIterator) ois.readObject();
+        } catch (IOException | ClassNotFoundException e) {
+            RumbleException rumbleException = new OurBadException(
+                    "Error while deep copying the function body runtimeIterator"
+            );
+            rumbleException.initCause(e);
+            throw rumbleException;
         }
     }
 }

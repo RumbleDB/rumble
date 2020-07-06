@@ -34,6 +34,7 @@ import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -41,70 +42,30 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
 
-    private static class InScopeVariable implements Serializable, KryoSerializable {
-        private static final long serialVersionUID = 1L;
-
-        private Name name;
-        private SequenceType sequenceType;
-        private ExceptionMetadata metadata;
-        private ExecutionMode storageMode;
-
-        public InScopeVariable(
-                Name name,
-                SequenceType sequenceType,
-                ExceptionMetadata metadata,
-                ExecutionMode storageMode
-        ) {
-            this.name = name;
-            this.sequenceType = sequenceType;
-            this.metadata = metadata;
-            this.storageMode = storageMode;
-        }
-
-        @SuppressWarnings("unused")
-        public Name getName() {
-            return this.name;
-        }
-
-        public SequenceType getSequenceType() {
-            return this.sequenceType;
-        }
-
-        public ExceptionMetadata getMetadata() {
-            return this.metadata;
-        }
-
-        @Override
-        public void write(Kryo kryo, Output output) {
-            kryo.writeObject(output, this.name);
-            kryo.writeObject(output, this.sequenceType);
-            kryo.writeObject(output, this.metadata);
-            kryo.writeObject(output, this.storageMode);
-        }
-
-        @Override
-        public void read(Kryo kryo, Input input) {
-            this.name = kryo.readObject(input, Name.class);
-            this.sequenceType = kryo.readObject(input, SequenceType.class);
-            this.metadata = kryo.readObject(input, ExceptionMetadata.class);
-            this.storageMode = kryo.readObject(input, ExecutionMode.class);
-        }
-    }
-
-    private Map<Name, InScopeVariable> inScopeVariables;
-    private Map<String, String> namespaceBindings;
+    private transient Map<Name, InScopeVariable> inScopeVariables;
+    private transient Map<String, String> staticallyKnownNamespaces;
     private StaticContext parent;
     private URI staticBaseURI;
+    public transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+
+    public StaticContext() {
+        this.parent = null;
+        this.staticBaseURI = null;
+        this.inScopeVariables = null;
+        this.userDefinedFunctionExecutionModes = null;
+    }
 
     public StaticContext(URI staticBaseURI) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
+        this.userDefinedFunctionExecutionModes = null;
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
+        this.userDefinedFunctionExecutionModes = null;
     }
 
     public StaticContext getParent() {
@@ -159,7 +120,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public ExecutionMode getVariableStorageMode(Name varName) {
-        return getInScopeVariable(varName).storageMode;
+        return getInScopeVariable(varName).getStorageMode();
     }
 
     public void addVariable(
@@ -180,6 +141,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Static context with variables: ");
         this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
+        stringBuilder.append("\n");
+        if (this.userDefinedFunctionExecutionModes != null) {
+            stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
+        }
+        if (this.parent != null) {
+            stringBuilder.append("\nParent:");
+            stringBuilder.append(this.parent.toString());
+        }
         return stringBuilder.toString();
     }
 
@@ -194,20 +163,20 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public boolean bindNamespace(String prefix, String namespace) {
-        if (this.namespaceBindings == null) {
-            this.namespaceBindings = new HashMap<>();
+        if (this.staticallyKnownNamespaces == null) {
+            this.staticallyKnownNamespaces = new HashMap<>();
         }
-        if (!this.namespaceBindings.containsKey(prefix)) {
-            this.namespaceBindings.put(prefix, namespace);
+        if (!this.staticallyKnownNamespaces.containsKey(prefix)) {
+            this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
         return false;
     }
 
     public String resolveNamespace(String prefix) {
-        if (this.namespaceBindings != null) {
-            if (this.namespaceBindings.containsKey(prefix)) {
-                return this.namespaceBindings.get(prefix);
+        if (this.staticallyKnownNamespaces != null) {
+            if (this.staticallyKnownNamespaces.containsKey(prefix)) {
+                return this.staticallyKnownNamespaces.get(prefix);
             } else {
                 return null;
             }
@@ -221,8 +190,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.inScopeVariables);
-        kryo.writeObject(output, this.namespaceBindings);
-        kryo.writeObject(output, this.parent);
+        kryo.writeObject(output, this.staticallyKnownNamespaces);
+        kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
     }
 
@@ -230,8 +199,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public void read(Kryo kryo, Input input) {
         this.inScopeVariables = kryo.readObject(input, HashMap.class);
-        this.namespaceBindings = kryo.readObject(input, HashMap.class);
-        this.parent = kryo.readObject(input, StaticContext.class);
+        this.staticallyKnownNamespaces = kryo.readObject(input, HashMap.class);
+        this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
     }
 
@@ -242,5 +211,39 @@ public class StaticContext implements Serializable, KryoSerializable {
                 this.inScopeVariables.put(name, variable);
             }
         }
+    }
+
+    public void setUserDefinedFunctionsExecutionModes(
+            UserDefinedFunctionExecutionModes staticallyKnownFunctionSignatures
+    ) {
+        if (this.parent != null) {
+            throw new OurBadException("Statically known function signatures can only be stored in the module context.");
+        }
+        this.userDefinedFunctionExecutionModes = staticallyKnownFunctionSignatures;
+    }
+
+    public UserDefinedFunctionExecutionModes getUserDefinedFunctionsExecutionModes() {
+        if (this.userDefinedFunctionExecutionModes != null) {
+            return this.userDefinedFunctionExecutionModes;
+        }
+        if (this.parent != null) {
+            return this.parent.getUserDefinedFunctionsExecutionModes();
+        }
+        throw new OurBadException("Statically known function signatures are not set up properly in static context.");
+    }
+
+    public static StaticContext createRumbleStaticContext() {
+        try {
+            return new StaticContext(new URI(Name.RUMBLE_NS));
+        } catch (URISyntaxException e) {
+            throw new OurBadException("Rumble namespace not recognized as a URI.");
+        }
+    }
+
+    public StaticContext getModuleContext() {
+        if (this.parent != null) {
+            return this.parent.getModuleContext();
+        }
+        return this;
     }
 }

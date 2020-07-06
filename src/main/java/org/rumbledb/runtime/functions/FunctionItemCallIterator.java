@@ -25,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -34,9 +35,8 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.ExecutionMode;
@@ -77,6 +77,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         }
         this.functionItem = functionItem;
         this.functionArguments = functionArguments;
+        this.functionBodyIterator = null;
 
     }
 
@@ -85,15 +86,18 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.validateNumberOfArguments();
         this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
+        DynamicContext childContext = this.currentDynamicContextForLocalExecution;
         if (this.isPartialApplication) {
             this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
         } else {
-            this.functionBodyIterator = this.functionItem.getBodyIterator();
-            this.currentDynamicContextForLocalExecution = this.createNewDynamicContextWithArguments(
+            if (this.functionBodyIterator == null) {
+                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+            }
+            childContext = this.createNewDynamicContextWithArguments(
                 this.currentDynamicContextForLocalExecution
             );
         }
-        this.functionBodyIterator.open(this.currentDynamicContextForLocalExecution);
+        this.functionBodyIterator.open(childContext);
         setNextResult();
     }
 
@@ -186,6 +190,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         partialApplicationParamTypes,
                         this.functionItem.getSignature().getReturnType()
                 ),
+                this.functionItem.getDynamicModuleContext(),
                 this.functionItem.getBodyIterator(),
                 localArgumentValues,
                 RDDArgumentValues,
@@ -220,7 +225,13 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 localArgumentValues.put(argName, argIterator.materialize(context));
             }
         }
-        return new DynamicContext(null, localArgumentValues, RDDArgumentValues, DFArgumentValues);
+
+        return new DynamicContext(
+                this.functionItem.getDynamicModuleContext(),
+                localArgumentValues,
+                RDDArgumentValues,
+                DFArgumentValues
+        );
     }
 
     @Override

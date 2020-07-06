@@ -121,6 +121,9 @@ to have more than one parameter with the same name.
 - [XQST0047] - It is a static error if multiple module imports
 in the same Prolog specify the same target namespace.
 
+- [XQST0048] - It is a static error if a function or variable declared
+in a library module is not in the target namespace of the library module.
+
 - [XQST0049] - It is a static error if two or more variables
 declared or imported by a module have the same name.
 

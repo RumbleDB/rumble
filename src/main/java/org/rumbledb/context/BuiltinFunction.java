@@ -1,6 +1,7 @@
-package org.rumbledb.runtime.functions.base;
+package org.rumbledb.context;
 
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.FunctionSignature;
 
 public class BuiltinFunction {
 
@@ -38,7 +39,7 @@ public class BuiltinFunction {
         return this.identifier;
     }
 
-    FunctionSignature getSignature() {
+    public FunctionSignature getSignature() {
         return this.signature;
     }
 

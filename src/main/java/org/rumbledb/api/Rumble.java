@@ -41,7 +41,10 @@ public class Rumble {
             query,
             RumbleRuntimeConfiguration.getDefaultConfiguration()
         );
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+            mainModule,
+            RumbleRuntimeConfiguration.getDefaultConfiguration()
+        );
         return new SequenceOfItems(iterator);
     }
 }

@@ -113,8 +113,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
+                                                                                                        // variables
+                                                                                                        // from new
             // tuple
 
             this.assignmentIterator.open(this.tupleContext);
@@ -201,7 +203,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
                     inputSchema,
                     duplicateVariableIndex,
-                    null
+                    parentProjection
                 );
 
                 if (duplicateVariableIndex == -1) {
@@ -268,8 +270,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         StructType schema = null;
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
-            this.tupleContext.removeAllVariables(); // clear the previous variables
-            this.tupleContext.setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new variables from new
+            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
+                                                                                                        // variables
+                                                                                                        // from new
             // tuple
             JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
 

@@ -28,8 +28,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.Functions;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -78,7 +78,9 @@ public class JsoniqQueryExecutor {
         URI logUri = null;
         if (logPath != null) {
             logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
-            FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
+            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
+            }
         }
 
         List<Item> outputList = null;
@@ -86,7 +88,7 @@ public class JsoniqQueryExecutor {
         long startTime = System.currentTimeMillis();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
@@ -121,17 +123,16 @@ public class JsoniqQueryExecutor {
         long totalTime = endTime - startTime;
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
+            time += "\n[ProfilerCount] " + Profiler.get();
             FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
         }
         return outputList;
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
-        // create temp file
-        Functions.clearUserDefinedFunctions();
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule);
+        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
         // execute locally for simple expressions
         if (this.configuration.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();

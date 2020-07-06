@@ -35,13 +35,14 @@ public class RumbleException extends RuntimeException {
     private ExceptionMetadata metadata;
 
     public RumbleException(String message) {
-        super("Error [err: " + ErrorCode.RuntimeExceptionErrorCode + " ] " + message);
+        super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
+        this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
     public RumbleException(String message, ErrorCode errorCode) {
-        super("Error [err: " + errorCode + " ] " + message);
+        super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -54,24 +55,12 @@ public class RumbleException extends RuntimeException {
             this.errorCode = errorCode;
         }
         this.errorMessage = message;
+        this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
 
     public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
-        super(
-            "Error [err: "
-                + errorCode
-                + "]"
-                + (metadata != null
-                    ? "LINE:"
-                        + metadata.getTokenLineNumber()
-                        +
-                        ":COLUMN:"
-                        + metadata.getTokenColumnNumber()
-                        + ":"
-                    : "")
-                + message
-        );
+        super(formatMessage(errorCode, metadata, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
                 return f.get(null).equals(errorCode);
@@ -88,23 +77,21 @@ public class RumbleException extends RuntimeException {
     }
 
     public RumbleException(String message, ExceptionMetadata metadata) {
-        super(
-            "Error [err: "
-                + ErrorCode.RuntimeExceptionErrorCode
-                + "]"
-                + (metadata != null
-                    ? "LINE:"
-                        + metadata.getTokenLineNumber()
-                        +
-                        ";COLUMN:"
-                        + metadata.getTokenColumnNumber()
-                        + ";"
-                    : "")
-                + message
-        );
-        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;;
+        super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, metadata, message));
+        this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.metadata = metadata;
         this.errorMessage = message;
+    }
+
+    private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
+        return "There was an error.\n\nCode: ["
+            + errorCode
+            + "] (this code can be looked up in the documentation and specifications).\n\nLocation information: "
+            + (metadata != null
+                ? metadata.toString()
+                : "")
+            + "\n\n"
+            + message;
     }
 
     public String getErrorCode() {

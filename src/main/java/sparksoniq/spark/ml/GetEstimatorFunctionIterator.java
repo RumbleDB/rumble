@@ -23,6 +23,7 @@ package sparksoniq.spark.ml;
 import org.apache.spark.ml.Estimator;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -30,9 +31,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.FunctionIdentifier;
-import org.rumbledb.runtime.functions.base.FunctionSignature;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -143,6 +143,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                                 paramTypes,
                                 returnType
                         ),
+                        new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
                         bodyIterator
                 );
 
