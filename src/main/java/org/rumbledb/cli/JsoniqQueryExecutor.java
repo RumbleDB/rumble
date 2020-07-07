@@ -50,13 +50,13 @@ public class JsoniqQueryExecutor {
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
-        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
             if (!this.configuration.getOverwrite()) {
                 throw new CliException(
                         "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
                 );
             } else {
-                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
@@ -65,21 +65,33 @@ public class JsoniqQueryExecutor {
         String queryFile = this.configuration.getQueryPath();
         URI queryUri = null;
         if (queryFile != null) {
-            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                queryFile,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
         }
         String outputPath = this.configuration.getOutputPath();
         URI outputUri = null;
         if (outputPath != null) {
-            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
+            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                outputPath,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
             checkOutputFile(outputUri);
         }
 
         String logPath = this.configuration.getLogPath();
         URI logUri = null;
         if (logPath != null) {
-            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
-            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
-                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                logPath,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            if (FileSystemUtil.exists(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             }
         }
 
@@ -104,7 +116,7 @@ public class JsoniqQueryExecutor {
             long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             } else {
                 System.out.println(String.join("\n", lines));
             }
@@ -124,7 +136,12 @@ public class JsoniqQueryExecutor {
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
             time += "\n[ProfilerCount] " + Profiler.get();
-            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.append(
+                logUri,
+                Collections.singletonList(time),
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
         }
         return outputList;
     }

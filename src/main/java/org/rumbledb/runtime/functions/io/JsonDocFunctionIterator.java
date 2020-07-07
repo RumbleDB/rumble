@@ -70,7 +70,11 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                     path.getStringValue(),
                     getMetadata()
                 );
-                InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
+                InputStream is = FileSystemUtil.getDataInputStream(
+                    uri,
+                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                    getMetadata()
+                );
                 JsonIterator object = JsonIterator.parse(is, 1024);
                 return ItemParser.getItemFromObject(object, getMetadata());
             } catch (IteratorFlowException e) {

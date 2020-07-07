@@ -31,7 +31,9 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
@@ -94,6 +96,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             return this.arguments.get("host");
         } else {
             return "localhost";
+        }
+    }
+
+    public List<String> getAllowedURIPrefixes() {
+        if (this.arguments.containsKey("allowed-uri-prefixes")) {
+            return Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
+        } else {
+            return Arrays.asList();
         }
     }
 

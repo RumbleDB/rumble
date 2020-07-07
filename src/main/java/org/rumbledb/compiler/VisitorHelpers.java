@@ -57,7 +57,7 @@ public class VisitorHelpers {
 
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, ExceptionMetadata.EMPTY_METADATA);
+        InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         return parseMainModule(CharStreams.fromStream(in), location, configuration);
     }
 
@@ -68,12 +68,16 @@ public class VisitorHelpers {
             ExceptionMetadata metadata
     )
             throws IOException {
-        InputStream in = FileSystemUtil.getDataInputStream(location, metadata);
+        InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
         return parseLibraryModule(CharStreams.fromStream(in), location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
-        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(".", ExceptionMetadata.EMPTY_METADATA);
+        URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+            ".",
+            configuration,
+            ExceptionMetadata.EMPTY_METADATA
+        );
         return parseMainModule(CharStreams.fromString(query), location, configuration);
     }
 

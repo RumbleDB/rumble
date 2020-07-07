@@ -71,7 +71,11 @@ public class AnnotationsTestsBase {
         MainModule mainModule = null;
         DynamicContext dynamicContext = null;
         try {
-            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, ExceptionMetadata.EMPTY_METADATA);
+            URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                path,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
             mainModule = VisitorHelpers.parseMainModuleFromLocation(
                 uri,
                 AnnotationsTestsBase.configuration

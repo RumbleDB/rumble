@@ -89,10 +89,15 @@ public class TraceFunctionIterator extends LocalFunctionCallIterator {
             if (conf != null) {
                 String path = conf.getLogPath();
                 if (path != null) {
-                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(path, getMetadata());
+                    URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                        path,
+                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                        getMetadata()
+                    );
                     FileSystemUtil.append(
                         uri,
                         Collections.singletonList(this.label + " [" + (++this.position) + "]: " + result.serialize()),
+                        this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
                         getMetadata()
                     );
                 }
