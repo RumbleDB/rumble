@@ -89,6 +89,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
+    public String getHost() {
+        if (this.arguments.containsKey("host")) {
+            return this.arguments.get("host");
+        } else {
+            return "localhost";
+        }
+    }
+
     public boolean getOverwrite() {
         if (this.arguments.containsKey("overwrite")) {
             return this.arguments.get("overwrite").equals("yes");
