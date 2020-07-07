@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -42,6 +43,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     private RuntimeIterator expression;
 
     private Map<String, List<String>> columnNamesByType;
+    private List<Name> serializedVariableNames;
+    private List<Name> countedVariableNames;
 
     private List<List<Item>> deserializedParams;
     private List<Item> longParams;
@@ -73,6 +76,16 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         this.input = new Input();
 
         this.columnNamesByType = columnNamesByType;
+        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
+        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
+        for (String columnName : serializedColumNames) {
+            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
+        List<String> countedColumNames = this.columnNamesByType.get("Long");
+        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
+        for (String columnName : countedColumNames) {
+            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
     }
 
 
@@ -100,8 +113,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
 
         FlworDataFrameUtils.prepareDynamicContext(
             this.context,
-            this.columnNamesByType.get("byte[]"),
-            this.columnNamesByType.get("Long"),
+            this.serializedVariableNames,
+            this.countedVariableNames,
             this.deserializedParams,
             this.longParams
         );
