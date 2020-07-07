@@ -96,7 +96,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context, expression.getVariableDependencies());
         StructType oldSchema = df.schema();
-        return df.javaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
+        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema));
     }
 
     @Override

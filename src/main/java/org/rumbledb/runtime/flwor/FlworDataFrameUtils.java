@@ -232,22 +232,22 @@ public class FlworDataFrameUtils {
 
     public static void prepareDynamicContext(
             DynamicContext context,
-            List<String> fullColumnNames,
-            List<String> countColumnNames,
+            List<Name> serializedVariableNames,
+            List<Name> countedVariableNames,
             List<List<Item>> deserializedParams,
             List<Item> counts
     ) {
-        for (int columnIndex = 0; columnIndex < fullColumnNames.size(); columnIndex++) {
+        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
             context.getVariableValues()
                 .addVariableValue(
-                    Name.createVariableInNoNamespace(fullColumnNames.get(columnIndex)),
+                    serializedVariableNames.get(columnIndex),
                     deserializedParams.get(columnIndex)
                 );
         }
-        for (int columnIndex = 0; columnIndex < countColumnNames.size(); columnIndex++) {
+        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
             context.getVariableValues()
                 .addVariableCount(
-                    Name.createVariableInNoNamespace(countColumnNames.get(columnIndex)),
+                    countedVariableNames.get(columnIndex),
                     counts.get(columnIndex)
                 );
         }

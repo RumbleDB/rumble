@@ -52,6 +52,8 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
     private Map<String, List<String>> columnNamesByType;
+    private List<Name> serializedVariableNames;
+    private List<Name> countedVariableNames;
     private Map<Integer, String> allColumnTypes;
 
     private List<List<Item>> deserializedParams;
@@ -83,6 +85,16 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.dependencies.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
         this.columnNamesByType = columnNamesByType;
+        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
+        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
+        for (String columnName : serializedColumNames) {
+            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
+        List<String> countedColumNames = this.columnNamesByType.get("Long");
+        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
+        for (String columnName : countedColumNames) {
+            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
@@ -113,8 +125,8 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
         FlworDataFrameUtils.prepareDynamicContext(
             this.context,
-            this.columnNamesByType.get("byte[]"),
-            this.columnNamesByType.get("Long"),
+            this.serializedVariableNames,
+            this.countedVariableNames,
             this.deserializedParams,
             this.longParams
         );
