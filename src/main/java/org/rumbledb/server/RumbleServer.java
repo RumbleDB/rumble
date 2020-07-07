@@ -25,7 +25,10 @@ public class RumbleServer {
                 "Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
             );
             HttpServer server = HttpServer.create(
-                new InetSocketAddress(this.rumbleRuntimeConfiguration.getHost(), this.rumbleRuntimeConfiguration.getPort()),
+                new InetSocketAddress(
+                        this.rumbleRuntimeConfiguration.getHost(),
+                        this.rumbleRuntimeConfiguration.getPort()
+                ),
                 0
             );
             HttpContext context = server.createContext("/jsoniq");
