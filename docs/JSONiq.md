@@ -72,7 +72,7 @@ Prologs with user-defined functions and global variables are now fully supported
 
 Library modules are now supported (experimental, please report bugs), and their namespace URI is used for resolution. If it is relative, it is resolved against the importing module location.
 
-The same schemes are supported as for reading queries and data: file, hdfs, and so on. HTTP is not supported yet and may also be supported in the future.
+The same schemes are supported as for reading queries and data: file, hdfs, and so on. HTTP is also supported: you can import modules from the Web!
 
 Example of library module (the file name is library-module.jq):
 

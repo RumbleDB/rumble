@@ -6,7 +6,7 @@ The parameters that can be used on the command line as well as on the planned HT
 |  Shell parameter | HTTP parameter  | example values  | Semantics  |
 |---|---|---|---|
 | --shell  | N/A  |  yes, no |  yes runs the interactive shell. No executes a query specified with --query-path |
-| --query-path  | query-path  | file:///folder/file.jq  | A JSONiq query file to read from (from any file system).  |
+| --query-path  | query-path  | file:///folder/file.jq  | A JSONiq query file to read from (from any file system, even the Web!).  |
 | --output-path  |  output-path | file:///folder/output  | Where to output to (if the output is large, it will create a sharded directory, otherwise it will create a file) |
 | --log-path  |  log-path | file:///folder/log.txt  |  Where to output log information |
 | --result-size |  result-size | 2000 | A cap on the maximum number of items to materialize for large sequences within a query or for outputting on screen. |
