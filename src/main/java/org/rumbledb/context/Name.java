@@ -20,9 +20,10 @@
 
 package org.rumbledb.context;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import org.rumbledb.exceptions.OurBadException;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -213,5 +214,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         this.namespace = input.readString();
         this.prefix = input.readString();
         this.localName = input.readString();
+    }
+
+    public void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
+        i.defaultReadObject();
     }
 }

@@ -21,6 +21,9 @@ public class RumbleServer {
 
     public void start() {
         try {
+            System.out.println(
+                "Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
+            );
             HttpServer server = HttpServer.create(
                 new InetSocketAddress("localhost", this.rumbleRuntimeConfiguration.getPort()),
                 0
@@ -28,8 +31,14 @@ public class RumbleServer {
             HttpContext context = server.createContext("/jsoniq");
             context.setHandler(new RumbleHttpHandler());
             server.start();
+            System.out.println("Server running. Press Control+C to stop.");
+            while (!Thread.currentThread().isInterrupted()) {
+                Thread.sleep(10000);
+            }
         } catch (IOException e) {
             throw new OurBadException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
+        } catch (InterruptedException e) {
+            System.out.println("Interrupted.");
         }
     }
 
