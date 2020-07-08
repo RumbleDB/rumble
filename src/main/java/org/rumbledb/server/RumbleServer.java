@@ -33,6 +33,8 @@ public class RumbleServer {
             );
             HttpContext context = server.createContext("/jsoniq");
             context.setHandler(new RumbleHttpHandler(this.rumbleRuntimeConfiguration));
+            context = server.createContext("/public.html");
+            context.setHandler(new MainPageHandler());
             server.start();
             System.out.println("Server running. Press Control+C to stop.");
             while (!Thread.currentThread().isInterrupted()) {
