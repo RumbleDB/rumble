@@ -29,6 +29,8 @@ import sparksoniq.spark.SparkSessionManager;
 @SuppressWarnings("restriction")
 public class RumbleHttpHandler implements HttpHandler {
 
+    private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+
     private enum StatusCode {
         SUCCESS(200),
         METHOD_NOT_SUPPORTED(405),
@@ -45,7 +47,8 @@ public class RumbleHttpHandler implements HttpHandler {
         }
     }
 
-    public RumbleHttpHandler() {
+    public RumbleHttpHandler(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
+        this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
     }
 
     private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException {
@@ -87,6 +90,7 @@ public class RumbleHttpHandler implements HttpHandler {
             String[] args = getCLIArguments(queryString);
 
             RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
+            configuration.setAllowedURIPrefixes(this.rumbleRuntimeConfiguration.getAllowedURIPrefixes());
             validateConfiguration(exchange, configuration);
             SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 

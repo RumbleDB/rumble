@@ -42,6 +42,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
     private HashMap<String, String> arguments;
+
+    List<String> allowedPrefixes;
+
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
@@ -61,6 +64,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             String argumentValue = args[i + 1];
             this.arguments.put(argumentName, argumentValue);
         }
+        initAllowedURIPrefixes();
     }
 
     public static RumbleRuntimeConfiguration getDefaultConfiguration() {
@@ -100,10 +104,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public List<String> getAllowedURIPrefixes() {
+        return this.allowedPrefixes;
+    }
+
+    public void setAllowedURIPrefixes(List<String> newValue) {
+        this.allowedPrefixes = newValue;
+    }
+
+    public void initAllowedURIPrefixes() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
-            return Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
+            this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
-            return Arrays.asList();
+            this.allowedPrefixes = Arrays.asList();
         }
     }
 

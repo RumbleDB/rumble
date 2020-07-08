@@ -107,7 +107,9 @@ public class FileSystemUtil {
     }
 
     public static boolean exists(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
-        checkForAbsoluteAndNoWildcards(locator, metadata);
+        if (!locator.isAbsolute()) {
+            throw new OurBadException("Unresolved uri passed to exists()");
+        }
         checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
