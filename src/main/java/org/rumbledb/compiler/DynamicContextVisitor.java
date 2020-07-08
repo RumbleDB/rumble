@@ -114,6 +114,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 ) {
                     URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                         value,
+                        this.configuration,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());

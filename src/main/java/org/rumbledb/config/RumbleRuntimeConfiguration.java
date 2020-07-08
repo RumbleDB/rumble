@@ -31,7 +31,9 @@ import com.esotericsoftware.kryo.io.Output;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
@@ -40,6 +42,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
     private HashMap<String, String> arguments;
+
+    List<String> allowedPrefixes;
+
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
@@ -59,6 +64,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             String argumentValue = args[i + 1];
             this.arguments.put(argumentName, argumentValue);
         }
+        initAllowedURIPrefixes();
     }
 
     public static RumbleRuntimeConfiguration getDefaultConfiguration() {
@@ -86,6 +92,30 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             return Integer.parseInt(this.arguments.get("port"));
         } else {
             return 8001;
+        }
+    }
+
+    public String getHost() {
+        if (this.arguments.containsKey("host")) {
+            return this.arguments.get("host");
+        } else {
+            return "localhost";
+        }
+    }
+
+    public List<String> getAllowedURIPrefixes() {
+        return this.allowedPrefixes;
+    }
+
+    public void setAllowedURIPrefixes(List<String> newValue) {
+        this.allowedPrefixes = newValue;
+    }
+
+    public void initAllowedURIPrefixes() {
+        if (this.arguments.containsKey("allowed-uri-prefixes")) {
+            this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
+        } else {
+            this.allowedPrefixes = Arrays.asList();
         }
     }
 
