@@ -14,6 +14,7 @@ public class MainPageHandler implements HttpHandler {
 
     public MainPageHandler() {
     }
+
     @Override
     public void handle(HttpExchange exchange) throws IOException {
         String response = IOUtils.toString(Main.class.getResourceAsStream("/assets/public.html"), "UTF-8");;
