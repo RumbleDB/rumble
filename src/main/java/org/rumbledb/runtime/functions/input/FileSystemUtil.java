@@ -122,7 +122,7 @@ public class FileSystemUtil {
 
     public static boolean delete(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, null, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -145,9 +145,9 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, null, metadata);
+        checkAllowed(locator, conf, metadata);
         if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
-            return getDataInputStreamHTML(locator, metadata);
+            return getDataInputStreamHTML(locator, conf, metadata);
         }
         try {
             FileContext fileContext = FileContext.getFileContext();
@@ -162,8 +162,12 @@ public class FileSystemUtil {
         }
     }
 
-    public static InputStream getDataInputStreamHTML(URI locator, ExceptionMetadata metadata) {
-        checkAllowed(locator, null, metadata);
+    public static InputStream getDataInputStreamHTML(
+            URI locator,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
+        checkAllowed(locator, conf, metadata);
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(locator);
         try {
@@ -187,7 +191,7 @@ public class FileSystemUtil {
 
     public static String readContent(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, null, metadata);
+        checkAllowed(locator, conf, metadata);
         InputStream inputStream = getDataInputStream(locator, conf, metadata);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuffer sb = new StringBuffer();
@@ -210,7 +214,7 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, null, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -235,7 +239,7 @@ public class FileSystemUtil {
             ExceptionMetadata metadata
     ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
-        checkAllowed(locator, null, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
