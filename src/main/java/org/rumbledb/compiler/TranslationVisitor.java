@@ -897,7 +897,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
             return new StringLiteralExpression(
-                    ctx.getText().substring(1, ctx.getText().length() - 1),
+                    ctx.lt.getText().substring(1, ctx.lt.getText().length() - 1),
                     createMetadataFromContext(ctx)
             );
         }
@@ -948,7 +948,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
         }
         if (child instanceof JsoniqParser.StringLiteralContext) {
-            ctx.getText().substring(1, ctx.getText().length() - 1);
+            return new StringLiteralExpression(
+                    ctx.getText().substring(1, ctx.getText().length() - 1),
+                    createMetadataFromContext(ctx)
+            );
         }
         if (child instanceof TerminalNode) {
             return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
