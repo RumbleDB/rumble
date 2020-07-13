@@ -43,6 +43,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator expression;
     private StructType oldSchema;
+    private List<Name> variableNames;
     private DynamicContext parentContext;
     private DynamicContext context;
 
@@ -59,17 +60,22 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
+
+        this.variableNames = new ArrayList<>();
+        for (String columnName : this.oldSchema.fieldNames()) {
+            this.variableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-        String[] columnNames = this.oldSchema.fieldNames();
+
         Map<Name, DynamicContext.VariableDependency> dependencies = this.expression
             .getVariableDependencies();
         this.context.getVariableValues().removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            Name field = Name.createVariableInNoNamespace(columnNames[columnIndex]);
+        int columnIndex = 0;
+        for (Name field : this.variableNames) {
             if (dependencies.containsKey(field)) {
                 List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
                 if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
@@ -78,6 +84,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
                     this.context.getVariableValues().addVariableValue(field, i);
                 }
             }
+            ++columnIndex;
         }
 
         // Apply expression to the context
