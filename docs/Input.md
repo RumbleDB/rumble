@@ -243,11 +243,12 @@ file:/C:/Users/hadoop/file.json
 /C:/Users/hadoop/file.json
 ```
 
-In particular, the following will not work:
+In particular, the following will *not* work:
 
 ```
 file://C:/Users/hadoop/file.json
 C:/Users/hadoop/file.json
+C:\Users\hadoop\file.json
 file://C:\Users\hadoop\file.json
 ```
 
@@ -265,6 +266,14 @@ If HDFS is already set up as the default file system as is often the case in man
 
 ```
 /user/hadoop/file.json
+```
+
+The following will *not* work:
+
+```
+hdfs:///user/hadoop/file.json
+hdfs://user/hadoop/file.json
+hdfs:/user/hadoop/file.json
 ```
 
 ### S3
