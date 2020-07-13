@@ -541,7 +541,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitInteger(IntegerLiteralExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator = new IntegerRuntimeIterator(
-                expression.getLexicalValue(),
+                expression.getValue(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

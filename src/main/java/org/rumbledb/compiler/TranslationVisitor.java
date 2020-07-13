@@ -84,15 +84,11 @@ import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.postfix.PredicateExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
-import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
-import org.rumbledb.expressions.primary.DecimalLiteralExpression;
-import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
-import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
@@ -109,10 +105,11 @@ import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import sparksoniq.jsoniq.compiler.ValueTypeHandler;
+
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
 import java.io.IOException;
-import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -897,7 +894,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // TODO [EXPRVISITOR] support for ParenthesizedExpr | varRef | contextItemexpr in object lookup
         if (ctx.lt != null) {
             return new StringLiteralExpression(
-                    ctx.getText().substring(1, ctx.getText().length() - 1),
+                    ValueTypeHandler.getStringValue(ctx.lt),
                     createMetadataFromContext(ctx)
             );
         }
@@ -948,10 +945,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return this.visitParenthesizedExpr((JsoniqParser.ParenthesizedExprContext) child);
         }
         if (child instanceof JsoniqParser.StringLiteralContext) {
-            ctx.getText().substring(1, ctx.getText().length() - 1);
+            return new StringLiteralExpression(
+                    ValueTypeHandler.getStringValue((JsoniqParser.StringLiteralContext) child),
+                    createMetadataFromContext(ctx)
+            );
         }
         if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+            return ValueTypeHandler.getValueType(child.getText(), createMetadataFromContext(ctx));
         }
         if (child instanceof JsoniqParser.ContextItemExprContext) {
             return this.visitContextItemExpr((JsoniqParser.ContextItemExprContext) child);
@@ -966,25 +966,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 "Primary expression not yet implemented",
                 createMetadataFromContext(ctx)
         );
-    }
-
-    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
-        switch (token) {
-            case "null":
-                return new NullLiteralExpression(metadataFromContext);
-            case "true":
-                return new BooleanLiteralExpression(true, metadataFromContext);
-            case "false":
-                return new BooleanLiteralExpression(false, metadataFromContext);
-            default:
-        }
-        if (token.contains("E") || token.contains("e")) {
-            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
-        }
-        if (token.contains(".")) {
-            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
-        }
-        return new IntegerLiteralExpression(token, metadataFromContext);
     }
 
     @Override
@@ -1136,7 +1117,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Expression literal = getLiteralExpressionFromToken(
+        Expression literal = ValueTypeHandler.getValueType(
             ctx.arity.getText(),
             createMetadataFromContext(ctx)
         );
@@ -1147,14 +1128,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
 
         Name name = parseName(ctx.fn_name, true);
-        int arity = 0;
-        try {
-            arity = Integer.parseInt(((IntegerLiteralExpression) literal).getLexicalValue());
-        } catch (NumberFormatException e) {
-            throw new RumbleException(
-                    "Parser error: function arity beyond any reasonable range."
-            );
-        }
+        int arity = ((IntegerLiteralExpression) literal).getValue();
         return new NamedFunctionReferenceExpression(
                 new FunctionIdentifier(name, arity),
                 createMetadataFromContext(ctx)
