@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.primary;
 
+import java.math.BigDecimal;
+
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -31,11 +33,15 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private int item;
+    private String lexicalValue;
 
-    public IntegerRuntimeIterator(int value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
+    public IntegerRuntimeIterator(
+            String lexicalValue,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(null, executionMode, iteratorMetadata);
-        this.item = value;
+        this.lexicalValue = lexicalValue;
 
     }
 
@@ -43,9 +49,16 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.item);
+            if (this.lexicalValue.length() >= 12) {
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
+            }
+            try {
+                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.lexicalValue));
+            } catch (NumberFormatException e) {
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
+            }
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.lexicalValue, getMetadata());
     }
 }
