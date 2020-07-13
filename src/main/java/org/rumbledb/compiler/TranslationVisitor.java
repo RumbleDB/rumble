@@ -1139,23 +1139,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Expression literal = getLiteralExpressionFromToken(
-            ctx.arity.getText(),
-            createMetadataFromContext(ctx)
-        );
-        if (!(literal instanceof IntegerLiteralExpression)) {
-            throw new RumbleException(
-                    "Parser error: In a named function reference, arity must be an integer."
-            );
-        }
-
         Name name = parseName(ctx.fn_name, true);
         int arity = 0;
         try {
-            arity = Integer.parseInt(((IntegerLiteralExpression) literal).getLexicalValue());
+            arity = Integer.parseInt(ctx.arity.getText());
         } catch (NumberFormatException e) {
             throw new RumbleException(
-                    "Parser error: function arity beyond any reasonable range."
+                    "Parser error: In a named function reference, arity must be an integer."
             );
         }
         return new NamedFunctionReferenceExpression(
