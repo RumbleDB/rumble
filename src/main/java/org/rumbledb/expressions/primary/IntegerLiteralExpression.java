@@ -31,15 +31,15 @@ import org.rumbledb.expressions.Node;
 
 public class IntegerLiteralExpression extends Expression {
 
-    private int value;
+    private String lexicalValue;
 
-    public IntegerLiteralExpression(int value, ExceptionMetadata metadata) {
+    public IntegerLiteralExpression(String lexicalValue, ExceptionMetadata metadata) {
         super(metadata);
-        this.value = value;
+        this.lexicalValue = lexicalValue;
     }
 
-    public int getValue() {
-        return this.value;
+    public String getLexicalValue() {
+        return this.lexicalValue;
     }
 
     @Override
@@ -57,7 +57,7 @@ public class IntegerLiteralExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.value) + ") ");
+        buffer.append(" (" + (this.lexicalValue) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
