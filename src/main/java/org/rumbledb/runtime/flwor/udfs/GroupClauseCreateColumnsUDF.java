@@ -43,8 +43,9 @@ import java.util.Map;
 public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
     private static final long serialVersionUID = 1L;
-    private List<Name> variableNames;
-    private Map<String, List<String>> columnNamesByType;
+    private List<Name> groupingVariableNames;
+    private List<Name> serializedVariableNames;
+    private List<Name> countedVariableNames;
 
     private List<List<Item>> deserializedParams;
     private List<Item> longParams;
@@ -57,14 +58,12 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private transient Input input;
 
     public GroupClauseCreateColumnsUDF(
-            List<Name> variableNames,
+            List<Name> groupingVariableNames,
             DynamicContext context,
             Map<String, List<String>> columnNamesByType,
             ExceptionMetadata metadata
     ) {
-        this.variableNames = variableNames;
-        this.columnNamesByType = columnNamesByType;
-
+        this.groupingVariableNames = groupingVariableNames;
         this.deserializedParams = new ArrayList<>();
         this.longParams = new ArrayList<>();
         this.parentContext = context;
@@ -76,6 +75,17 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.input = new Input();
         this.metadata = metadata;
+
+        List<String> serializedColumNames = columnNamesByType.get("byte[]");
+        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
+        for (String columnName : serializedColumNames) {
+            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
+        List<String> countedColumNames = columnNamesByType.get("Long");
+        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
+        for (String columnName : countedColumNames) {
+            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
     }
 
     @Override
@@ -98,7 +108,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.longParams.add(count);
         }
 
-        for (Name variableName : this.variableNames) {
+        for (Name groupingVariableName : this.groupingVariableNames) {
             // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
             // The second column is used for strings, with a special value in the first column.
             // The third column is used for numbers (as a double), with a special value in the first column.
@@ -113,29 +123,29 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
 
             // prepare dynamic context
             this.context.getVariableValues().removeAllVariables();
-            for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("byte[]").size(); columnIndex++) {
+            int columnIndex = 0;
+            for (Name serializedVariableName : this.serializedVariableNames) {
                 this.context.getVariableValues()
                     .addVariableValue(
-                        Name.createVariableInNoNamespace(
-                            this.columnNamesByType.get("byte[]").get(columnIndex)
-                        ),
+                        serializedVariableName,
                         this.deserializedParams.get(columnIndex)
                     );
+                ++columnIndex;
             }
-            for (int columnIndex = 0; columnIndex < this.columnNamesByType.get("Long").size(); columnIndex++) {
+            columnIndex = 0;
+            for (Name countedVariableName : this.countedVariableNames) {
                 this.context.getVariableValues()
                     .addVariableCount(
-                        Name.createVariableInNoNamespace(
-                            this.columnNamesByType.get("Long").get(columnIndex)
-                        ),
+                        countedVariableName,
                         this.longParams.get(columnIndex)
                     );
+                ++columnIndex;
             }
 
             boolean isEmptySequence = true;
             List<Item> items = this.context.getVariableValues()
                 .getLocalVariableValue(
-                    variableName,
+                    groupingVariableName,
                     this.metadata
                 );
             if (items.size() >= 1) {
