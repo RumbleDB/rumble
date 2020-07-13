@@ -949,7 +949,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (child instanceof JsoniqParser.StringLiteralContext) {
             return new StringLiteralExpression(
-                    ctx.getText().substring(1, ctx.getText().length() - 1),
+                    child.getText().substring(1, child.getText().length() - 1),
                     createMetadataFromContext(ctx)
             );
         }
