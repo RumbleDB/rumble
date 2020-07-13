@@ -16,6 +16,8 @@ json-doc("file.json")
 
 returns the (single) JSON value read from the supplied JSON file. This will also work for structures spread over multiple lines, as the read is local and not sharded.
 
+json-doc() also works with an HTTP URI.
+
 
 ### JSON Lines
 
@@ -23,6 +25,8 @@ JSON Lines files are files that have one JSON object (or value) per line. Such f
 
 JSON Lines files are read with the json-file() function. json-file() exists in unary and binary. The first parameter specifies the JSON file (or set of JSON files) to read.
 The second, optional parameter specifies the minimum number of partitions. It is recommended to use it in a local setup, as the default is only one partition, which does not fully use the parallelism. If the input is on HDFS, then blocks are taken as splits by default. This is also similar to Spark's textFile().
+
+json-file() also works with an HTTP URI, however, it will download the file completely and then parallelize, because HTTP does not support blocks. As a consequence, it can only be used for reasonable sizes.
 
 Example of usage:
 
@@ -231,14 +235,36 @@ Warning! If you try to open a file from the local file system on a cluster of se
 
 If you use `spark-submit` locally, however, this will work out of the box, but we recommend specifying a number of partitions to avoid reading the file as a single partition.
 
+For Windows, you need to use forward slashes, and if the local file system is set up as the default and you omit the file scheme, you still need a forward slash in front of the drive letter to not confuse it with a URI scheme:
+
+```
+file:///C:/Users/hadoop/file.json
+file:/C:/Users/hadoop/file.json
+/C:/Users/hadoop/file.json
+```
+
+In particular, the following will not work:
+
+```
+file://C:/Users/hadoop/file.json
+C:/Users/hadoop/file.json
+file://C:\Users\hadoop\file.json
+```
+
 ### HDFS
 
-The scheme for the Hadoop Distributed File System is `hdfs://`. A host and port should also be specified.
+The scheme for the Hadoop Distributed File System is `hdfs://`. A host and port should also be specified, as this is required by Hadoop.
 
 Example:
 
 ```
 hdfs://www.example.com:8021/user/hadoop/file.json
+```
+
+If HDFS is already set up as the default file system as is often the case in managed Spark clusters, an absolute path suffices:
+
+```
+/user/hadoop/file.json
 ```
 
 ### S3
