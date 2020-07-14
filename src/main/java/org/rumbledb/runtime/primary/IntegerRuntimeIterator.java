@@ -50,12 +50,12 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
         if (this.hasNext) {
             this.hasNext = false;
             if (this.lexicalValue.length() >= 12) {
-                return ItemFactory.getInstance().createBigIntegerItem(new BigInteger(this.lexicalValue));
+                return ItemFactory.getInstance().createIntegerItem(new BigInteger(this.lexicalValue));
             }
             try {
                 return ItemFactory.getInstance().createIntItem(Integer.parseInt(this.lexicalValue));
             } catch (NumberFormatException e) {
-                return ItemFactory.getInstance().createBigIntegerItem(new BigInteger(this.lexicalValue));
+                return ItemFactory.getInstance().createIntegerItem(new BigInteger(this.lexicalValue));
             }
         }
 

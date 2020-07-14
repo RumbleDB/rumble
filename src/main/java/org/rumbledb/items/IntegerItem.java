@@ -34,17 +34,17 @@ import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class BigIntegerItem extends AtomicItem {
+public class IntegerItem extends AtomicItem {
 
 
     private static final long serialVersionUID = 1L;
     private BigInteger value;
 
-    public BigIntegerItem() {
+    public IntegerItem() {
         super();
     }
 
-    public BigIntegerItem(BigInteger value) {
+    public IntegerItem(BigInteger value) {
         super();
         this.value = value;
     }
@@ -150,7 +150,7 @@ public class BigIntegerItem extends AtomicItem {
         if (other.isNull()) {
             return 1;
         }
-        if (other instanceof BigIntegerItem || other instanceof IntItem) {
+        if (other instanceof IntegerItem || other instanceof IntItem) {
             return this.value.compareTo(other.castToBigIntegerValue());
         }
         throw new OurBadException("Comparing a big integer to something that is not an integer.");
@@ -185,7 +185,7 @@ public class BigIntegerItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.getBigIntegerValue().add(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getBigIntegerValue().add(other.castToBigIntegerValue()));
     }
 
     @Override
@@ -198,7 +198,7 @@ public class BigIntegerItem extends AtomicItem {
                 .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.getBigIntegerValue().subtract(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getBigIntegerValue().subtract(other.castToBigIntegerValue()));
     }
 
     @Override
@@ -219,7 +219,7 @@ public class BigIntegerItem extends AtomicItem {
                 .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.getBigIntegerValue().multiply(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getBigIntegerValue().multiply(other.castToBigIntegerValue()));
     }
 
     @Override
@@ -233,7 +233,7 @@ public class BigIntegerItem extends AtomicItem {
         BigDecimal bdResult = this.castToDecimalValue()
             .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
         if (bdResult.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance().createBigIntegerItem(bdResult.toBigIntegerExact());
+            return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
         } else {
             return ItemFactory.getInstance().createDecimalItem(bdResult);
         }
@@ -252,13 +252,13 @@ public class BigIntegerItem extends AtomicItem {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.getBigIntegerValue().mod(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getBigIntegerValue().mod(other.castToBigIntegerValue()));
     }
 
     @Override
     public Item idivide(Item other) {
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.getBigIntegerValue().divide(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getBigIntegerValue().divide(other.castToBigIntegerValue()));
     }
 
     @Override

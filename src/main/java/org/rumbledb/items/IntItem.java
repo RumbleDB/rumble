@@ -204,7 +204,7 @@ public class IntItem extends AtomicItem {
         }
         if (other.isInteger()) {
             return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().add(other.getBigIntegerValue()));
+                .createIntegerItem(this.castToBigIntegerValue().add(other.getBigIntegerValue()));
         }
         throw new OurBadException("Unexpected type encountered");
     }
@@ -229,7 +229,7 @@ public class IntItem extends AtomicItem {
         }
         if (other.isInteger()) {
             return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().subtract(other.getBigIntegerValue()));
+                .createIntegerItem(this.castToBigIntegerValue().subtract(other.getBigIntegerValue()));
         }
         throw new OurBadException("Unexpected type encountered");
     }
@@ -254,7 +254,7 @@ public class IntItem extends AtomicItem {
         }
         if (other.isInteger()) {
             return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().multiply(other.getBigIntegerValue()));
+                .createIntegerItem(this.castToBigIntegerValue().multiply(other.getBigIntegerValue()));
         }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
@@ -300,7 +300,7 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance().createIntItem(this.getIntegerValue() % other.castToIntegerValue());
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.castToBigIntegerValue().mod(other.getBigIntegerValue()));
+            .createIntegerItem(this.castToBigIntegerValue().mod(other.getBigIntegerValue()));
     }
 
     @Override
@@ -309,7 +309,7 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance().createIntItem(this.getIntegerValue() / other.castToIntegerValue());
         }
         return ItemFactory.getInstance()
-            .createBigIntegerItem(this.castToBigIntegerValue().divide(other.getBigIntegerValue()));
+            .createIntegerItem(this.castToBigIntegerValue().divide(other.getBigIntegerValue()));
 
     }
 

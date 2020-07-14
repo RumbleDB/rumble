@@ -52,8 +52,8 @@ public class ItemFactory {
         return new DecimalItem(d);
     }
 
-    public Item createBigIntegerItem(BigInteger i) {
-        return new BigIntegerItem(i);
+    public Item createIntegerItem(BigInteger i) {
+        return new IntegerItem(i);
     }
 
     public Item createDoubleItem(double d) {
