@@ -187,6 +187,17 @@ public class IntItem extends AtomicItem {
         if (other.isDecimal()) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         }
+        if (other instanceof BigIntegerItem) {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().add(other.getBigIntegerValue()));
+        }
+        if(this.getIntegerValue() >= Integer.MAX_VALUE / 2 && other.getIntegerValue() >= Integer.MAX_VALUE / 2)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().add(other.castToBigIntegerValue()));
+        }
+        if(this.getIntegerValue() <= - Integer.MAX_VALUE / 2 && other.getIntegerValue() <= - Integer.MAX_VALUE / 2)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().add(other.castToBigIntegerValue()));
+        }
         return ItemFactory.getInstance().createIntItem(this.getIntegerValue() + other.castToIntegerValue());
     }
 
@@ -199,6 +210,17 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         }
+        if (other instanceof BigIntegerItem) {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.getBigIntegerValue()));
+        }
+        if(this.getIntegerValue() >= Integer.MAX_VALUE / 2 && other.getIntegerValue() <= - Integer.MAX_VALUE / 2)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
+        }
+        if(this.getIntegerValue() <= - Integer.MAX_VALUE / 2 && other.getIntegerValue() >= Integer.MAX_VALUE / 2)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
+        }
         return ItemFactory.getInstance().createIntItem(this.getIntegerValue() - other.castToIntegerValue());
     }
 
@@ -210,6 +232,25 @@ public class IntItem extends AtomicItem {
         if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+        }
+        if (other instanceof BigIntegerItem) {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().multiply(other.getBigIntegerValue()));
+        }
+        if(this.getIntegerValue() >= Short.MAX_VALUE && other.getIntegerValue() >= Short.MAX_VALUE)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
+        }
+        if(this.getIntegerValue() >= Short.MAX_VALUE / 2 && other.getIntegerValue() <= - Short.MAX_VALUE)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
+        }
+        if(this.getIntegerValue() <= - Short.MAX_VALUE && other.getIntegerValue() >= Short.MAX_VALUE)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
+        }
+        if(this.getIntegerValue() <= - Short.MAX_VALUE / 2 && other.getIntegerValue() <= - Short.MAX_VALUE)
+        {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
         }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
@@ -251,11 +292,17 @@ public class IntItem extends AtomicItem {
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
+        if (other instanceof BigIntegerItem) {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().mod(other.getBigIntegerValue()));
+        }
         return ItemFactory.getInstance().createIntItem(this.getIntegerValue() % other.castToIntegerValue());
     }
 
     @Override
     public Item idivide(Item other) {
+        if (other instanceof BigIntegerItem) {
+            return ItemFactory.getInstance().createBigIntegerItem(this.castToBigIntegerValue().divide(other.getBigIntegerValue()));
+        }
         return ItemFactory.getInstance().createIntItem(this.getIntegerValue() / other.castToIntegerValue());
     }
 
