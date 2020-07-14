@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class DoubleItem extends AtomicItem {
 
@@ -72,7 +73,11 @@ public class DoubleItem extends AtomicItem {
     }
 
     public int castToIntegerValue() {
-        return new Double(getDoubleValue()).intValue();
+        return Double.valueOf(this.value).intValue();
+    }
+
+    public BigInteger castToBigIntegerValue() {
+        return BigInteger.valueOf(Double.valueOf(this.value).intValue());
     }
 
     @Override
@@ -97,7 +102,7 @@ public class DoubleItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
+            return ItemFactory.getInstance().createIntItem(this.castToIntegerValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
@@ -193,7 +198,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
@@ -201,7 +206,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
@@ -209,7 +214,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
-        return ItemFactory.getInstance().createIntegerItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
+        return ItemFactory.getInstance().createIntItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
     }
 
     @Override

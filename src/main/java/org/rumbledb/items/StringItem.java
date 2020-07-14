@@ -91,7 +91,7 @@ public class StringItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.getStringValue()));
+            return ItemFactory.getInstance().createIntItem(Integer.parseInt(this.getStringValue()));
         }
         if (itemType.equals(ItemType.nullItem)) {
             return ItemFactory.getInstance().createNullItem();

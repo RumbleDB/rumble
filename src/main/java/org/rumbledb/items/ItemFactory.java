@@ -6,6 +6,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
@@ -23,7 +24,7 @@ public class ItemFactory {
             instance.nullItem = new NullItem();
             instance.trueBooleanItem = new BooleanItem(true);
             instance.falseBooleanItem = new BooleanItem(false);
-            instance.zeroItem = new IntegerItem(0);
+            instance.zeroItem = new IntItem(0);
         }
         return instance;
     }
@@ -40,15 +41,19 @@ public class ItemFactory {
         return this.nullItem;
     }
 
-    public Item createIntegerItem(int i) {
+    public Item createIntItem(int i) {
         if (i == 0) {
             return this.zeroItem;
         }
-        return new IntegerItem(i);
+        return new IntItem(i);
     }
 
     public Item createDecimalItem(BigDecimal d) {
         return new DecimalItem(d);
+    }
+
+    public Item createBigIntegerItem(BigInteger i) {
+        return new BigIntegerItem(i);
     }
 
     public Item createDoubleItem(double d) {

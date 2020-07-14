@@ -61,7 +61,7 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
             if (this.negated) {
                 if (child.isNumeric()) {
                     if (child.isInteger()) {
-                        return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
+                        return ItemFactory.getInstance().createIntItem(-1 * child.getIntegerValue());
                     }
                     if (child.isDouble()) {
                         return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());

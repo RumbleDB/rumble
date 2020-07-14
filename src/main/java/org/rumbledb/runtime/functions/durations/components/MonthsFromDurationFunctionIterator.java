@@ -28,7 +28,7 @@ public class MonthsFromDurationFunctionIterator extends LocalFunctionCallIterato
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.durationItem.getDurationValue().getMonths());
+            return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getMonths());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " months-from-duration function",

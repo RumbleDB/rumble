@@ -37,7 +37,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.IntItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -108,7 +108,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     Double value = ((DoubleItem) this.lookupKey).getValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isInteger()) {
-                    Integer value = ((IntegerItem) this.lookupKey).getValue();
+                    Integer value = ((IntItem) this.lookupKey).getValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isString()) {
                     // do nothing

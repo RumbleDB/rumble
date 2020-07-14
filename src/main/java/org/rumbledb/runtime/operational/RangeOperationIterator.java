@@ -63,7 +63,7 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
             if (this.index == this.right) {
                 this.hasNext = false;
             }
-            return ItemFactory.getInstance().createIntegerItem(this.index++);
+            return ItemFactory.getInstance().createIntItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }

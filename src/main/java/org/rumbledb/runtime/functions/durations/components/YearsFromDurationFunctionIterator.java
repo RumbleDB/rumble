@@ -28,7 +28,7 @@ public class YearsFromDurationFunctionIterator extends LocalFunctionCallIterator
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.durationItem.getDurationValue().getYears());
+            return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getYears());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " years-from-duration function",

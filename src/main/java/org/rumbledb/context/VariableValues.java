@@ -232,13 +232,13 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
         if (this.dataFrameVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance()
-                .createIntegerItem((int) this.dataFrameVariableValues.get(varName).count());
+                .createIntItem((int) this.dataFrameVariableValues.get(varName).count());
         }
         if (this.rddVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem((int) this.rddVariableValues.get(varName).count());
+            return ItemFactory.getInstance().createIntItem((int) this.rddVariableValues.get(varName).count());
         }
         if (this.localVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntegerItem(this.localVariableValues.get(varName).size());
+            return ItemFactory.getInstance().createIntItem(this.localVariableValues.get(varName).size());
         }
         if (this.parent != null) {
             return this.parent.getVariableCount(varName);
@@ -292,7 +292,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         List<Item> list = new ArrayList<>();
         Item item;
         if (position < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntegerItem((int) position);
+            item = ItemFactory.getInstance().createIntItem((int) position);
 
         } else {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
@@ -315,7 +315,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         List<Item> list = new ArrayList<>();
         Item item;
         if (last < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntegerItem((int) last);
+            item = ItemFactory.getInstance().createIntItem((int) last);
         } else {
             item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
         }

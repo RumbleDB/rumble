@@ -35,7 +35,7 @@ import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.IntItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
@@ -110,7 +110,7 @@ public class SparkSessionManager {
                 ArrayItem.class,
                 ObjectItem.class,
                 StringItem.class,
-                IntegerItem.class,
+                IntItem.class,
                 DoubleItem.class,
                 DecimalItem.class,
                 NullItem.class,

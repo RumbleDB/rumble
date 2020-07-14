@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -50,12 +51,12 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
         if (this.hasNext) {
             this.hasNext = false;
             if (this.lexicalValue.length() >= 12) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
+                return ItemFactory.getInstance().createBigIntegerItem(new BigInteger(this.lexicalValue));
             }
             try {
-                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.lexicalValue));
+                return ItemFactory.getInstance().createIntItem(Integer.parseInt(this.lexicalValue));
             } catch (NumberFormatException e) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
+                return ItemFactory.getInstance().createBigIntegerItem(new BigInteger(this.lexicalValue));
             }
         }
 

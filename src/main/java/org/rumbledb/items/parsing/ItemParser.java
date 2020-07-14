@@ -76,7 +76,7 @@ public class ItemParser implements Serializable {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
                 try {
-                    return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(number));
+                    return ItemFactory.getInstance().createIntItem(Integer.parseInt(number));
                 } catch (NumberFormatException e) {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
@@ -176,7 +176,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Integer) o;
             }
-            values.add(ItemFactory.getInstance().createIntegerItem(value));
+            values.add(ItemFactory.getInstance().createIntItem(value));
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
             if (row != null) {
@@ -210,7 +210,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Short) o;
             }
-            values.add(ItemFactory.getInstance().createIntegerItem(value));
+            values.add(ItemFactory.getInstance().createIntItem(value));
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
             if (row != null) {

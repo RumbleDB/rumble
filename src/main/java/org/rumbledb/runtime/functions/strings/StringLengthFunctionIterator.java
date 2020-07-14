@@ -51,10 +51,10 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
                 .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
             if (stringItem == null) {
-                return ItemFactory.getInstance().createIntegerItem(0);
+                return ItemFactory.getInstance().createIntItem(0);
             }
 
-            return ItemFactory.getInstance().createIntegerItem(stringItem.getStringValue().length());
+            return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-length function",
