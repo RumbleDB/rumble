@@ -309,7 +309,7 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance().createIntItem(this.getIntegerValue() / other.castToIntegerValue());
         }
         return ItemFactory.getInstance()
-            .createIntegerItem(this.castToBigIntegerValue().divide(other.getBigIntegerValue()));
+            .createIntegerItem(this.castToBigIntegerValue().divide(other.castToBigIntegerValue()));
 
     }
 
