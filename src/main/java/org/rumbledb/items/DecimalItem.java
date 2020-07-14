@@ -71,11 +71,11 @@ public class DecimalItem extends AtomicItem {
         return getDecimalValue();
     }
 
-    public int castToIntegerValue() {
+    public int castToIntValue() {
         return getDecimalValue().intValue();
     }
 
-    public BigInteger castToBigIntegerValue() {
+    public BigInteger castToIntegerValue() {
         return getDecimalValue().toBigIntegerExact();
     }
 
@@ -106,7 +106,7 @@ public class DecimalItem extends AtomicItem {
             return this;
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(this.castToIntegerValue());
+            return ItemFactory.getInstance().createIntItem(this.castToIntValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));

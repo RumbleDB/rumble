@@ -107,7 +107,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             } else if (item.isNumeric()) {
                 if (position == null) {
                     if (item.isInteger()) {
-                        result = item.getIntegerValue() != 0;
+                        result = item.getIntValue() != 0;
                     } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
                     } else if (item.isDecimal()) {

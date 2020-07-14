@@ -105,10 +105,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                     Double value = this.lookupKey.getDoubleValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isInt()) {
-                    Integer value = this.lookupKey.getIntegerValue();
+                    Integer value = this.lookupKey.getIntValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isInteger()) {
-                    BigInteger value = this.lookupKey.getBigIntegerValue();
+                    BigInteger value = this.lookupKey.getIntegerValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isString()) {
                     // do nothing

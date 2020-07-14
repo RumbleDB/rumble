@@ -170,7 +170,7 @@ public class RumbleMLUtils {
             case "String":
                 return atomicItem.castAs(ItemType.stringItem).getStringValue();
             case "int":
-                return atomicItem.castAs(ItemType.integerItem).getIntegerValue();
+                return atomicItem.castAs(ItemType.integerItem).getIntValue();
             case "double":
                 return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
             case "long":

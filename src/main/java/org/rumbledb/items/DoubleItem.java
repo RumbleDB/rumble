@@ -72,11 +72,11 @@ public class DoubleItem extends AtomicItem {
         return BigDecimal.valueOf(getDoubleValue());
     }
 
-    public int castToIntegerValue() {
+    public int castToIntValue() {
         return Double.valueOf(this.value).intValue();
     }
 
-    public BigInteger castToBigIntegerValue() {
+    public BigInteger castToIntegerValue() {
         return BigInteger.valueOf(Double.valueOf(this.value).intValue());
     }
 
@@ -102,7 +102,7 @@ public class DoubleItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(this.castToIntegerValue());
+            return ItemFactory.getInstance().createIntItem(this.castToIntValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));

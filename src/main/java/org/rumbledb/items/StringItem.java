@@ -62,7 +62,7 @@ public class StringItem extends AtomicItem {
         return new BigDecimal(this.getValue());
     }
 
-    public int castToIntegerValue() {
+    public int castToIntValue() {
         return Integer.parseInt(this.getValue());
     }
 

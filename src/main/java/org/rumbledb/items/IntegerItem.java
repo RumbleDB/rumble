@@ -50,18 +50,18 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public BigInteger getBigIntegerValue() {
+    public BigInteger getIntegerValue() {
         return this.value;
     }
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return this.getIntegerValue() != 0;
+        return this.getIntValue() != 0;
     }
 
     @Override
     public double castToDoubleValue() {
-        return new Integer(getIntegerValue()).doubleValue();
+        return new Integer(getIntValue()).doubleValue();
     }
 
     @Override
@@ -70,7 +70,7 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public BigInteger castToBigIntegerValue() {
+    public BigInteger castToIntegerValue() {
         return this.value;
     }
 
@@ -94,7 +94,7 @@ public class IntegerItem extends AtomicItem {
     @Override
     public Item castAs(ItemType itemType) {
         if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(this.getIntegerValue() != 0);
+            return ItemFactory.getInstance().createBooleanItem(this.getIntValue() != 0);
         }
         if (itemType.equals(ItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
@@ -106,7 +106,7 @@ public class IntegerItem extends AtomicItem {
             return this;
         }
         if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntegerValue()));
+            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getIntValue()));
         }
         throw new ClassCastException();
     }
@@ -142,7 +142,7 @@ public class IntegerItem extends AtomicItem {
     }
 
     public int hashCode() {
-        return getIntegerValue();
+        return getIntValue();
     }
 
     @Override
@@ -151,7 +151,7 @@ public class IntegerItem extends AtomicItem {
             return 1;
         }
         if (other instanceof IntegerItem || other instanceof IntItem) {
-            return this.value.compareTo(other.castToBigIntegerValue());
+            return this.value.compareTo(other.castToIntegerValue());
         }
         throw new OurBadException("Comparing a big integer to something that is not an integer.");
     }
@@ -185,7 +185,7 @@ public class IntegerItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         }
         return ItemFactory.getInstance()
-            .createIntegerItem(this.getBigIntegerValue().add(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getIntegerValue().add(other.castToIntegerValue()));
     }
 
     @Override
@@ -198,7 +198,7 @@ public class IntegerItem extends AtomicItem {
                 .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         }
         return ItemFactory.getInstance()
-            .createIntegerItem(this.getBigIntegerValue().subtract(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getIntegerValue().subtract(other.castToIntegerValue()));
     }
 
     @Override
@@ -212,14 +212,14 @@ public class IntegerItem extends AtomicItem {
         }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
-                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntValue()));
         }
         if (other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
-                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
+                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntValue()));
         }
         return ItemFactory.getInstance()
-            .createIntegerItem(this.getBigIntegerValue().multiply(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getIntegerValue().multiply(other.castToIntegerValue()));
     }
 
     @Override
@@ -252,13 +252,13 @@ public class IntegerItem extends AtomicItem {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance()
-            .createIntegerItem(this.getBigIntegerValue().mod(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getIntegerValue().mod(other.castToIntegerValue()));
     }
 
     @Override
     public Item idivide(Item other) {
         return ItemFactory.getInstance()
-            .createIntegerItem(this.getBigIntegerValue().divide(other.castToBigIntegerValue()));
+            .createIntegerItem(this.getIntegerValue().divide(other.castToIntegerValue()));
     }
 
     @Override

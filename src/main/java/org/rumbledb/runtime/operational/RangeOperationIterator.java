@@ -94,8 +94,8 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
                 );
             }
             try {
-                this.left = left.castToIntegerValue();
-                this.right = right.castToIntegerValue();
+                this.left = left.castToIntValue();
+                this.right = right.castToIntValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

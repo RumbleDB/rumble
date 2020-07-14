@@ -69,7 +69,7 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
                 .getJavaSparkContext()
                 .textFile(
                     uri.toString(),
-                    partitionsIterator.next().getIntegerValue()
+                    partitionsIterator.next().getIntValue()
                 );
             partitionsIterator.close();
         }

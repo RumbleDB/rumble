@@ -98,8 +98,8 @@ public abstract class Item implements SerializableItem {
      *
      * @return the BigInteger value.
      */
-    public BigInteger castToBigIntegerValue() {
-        throw new IteratorFlowException("Cannot call castToBigInteger on non numeric");
+    public BigInteger castToIntegerValue() {
+        throw new IteratorFlowException("Cannot call castToInteger on non numeric");
     }
 
     /**
@@ -107,8 +107,8 @@ public abstract class Item implements SerializableItem {
      *
      * @return the int value.
      */
-    public int castToIntegerValue() {
-        throw new IteratorFlowException("Cannot call castToInteger on non numeric");
+    public int castToIntValue() {
+        throw new IteratorFlowException("Cannot call castToInt on non numeric");
     }
 
     /**
@@ -299,8 +299,8 @@ public abstract class Item implements SerializableItem {
      *
      * @return the integer value as an int.
      */
-    public int getIntegerValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
+    public int getIntValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an int.");
     }
 
     /**
@@ -308,7 +308,7 @@ public abstract class Item implements SerializableItem {
      *
      * @return the integer value as a BigInteger.
      */
-    public BigInteger getBigIntegerValue() {
+    public BigInteger getIntegerValue() {
         throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
     }
 

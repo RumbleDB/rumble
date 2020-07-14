@@ -429,7 +429,7 @@ public class ItemParser implements Serializable {
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
-                return item.castToIntegerValue();
+                return item.castToIntValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
                 return item.castToDoubleValue();

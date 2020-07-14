@@ -72,7 +72,7 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             }
             try {
                 BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-                bd = bd.setScale(precision.getIntegerValue(), RoundingMode.HALF_UP);
+                bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
 
             } catch (IteratorFlowException e) {

@@ -73,9 +73,9 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                     } else if (value.isString()) {
                         dfr.option(keys.get(i), value.getStringValue());
                     } else if (value.isInt()) {
-                        dfr.option(keys.get(i), value.getIntegerValue());
+                        dfr.option(keys.get(i), value.getIntValue());
                     } else if (value.isInteger()) {
-                        dfr.option(keys.get(i), value.getBigIntegerValue().doubleValue());
+                        dfr.option(keys.get(i), value.getIntegerValue().doubleValue());
                     } else if (value.isDecimal()) {
                         dfr.option(keys.get(i), value.getDecimalValue().doubleValue());
                     } else if (value.isDouble()) {

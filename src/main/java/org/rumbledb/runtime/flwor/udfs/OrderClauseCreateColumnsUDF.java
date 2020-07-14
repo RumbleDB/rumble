@@ -169,7 +169,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                         } else if (typeName.equals(ItemType.stringItem.getName())) {
                             this.results.add(nextItem.getStringValue());
                         } else if (typeName.equals(ItemType.integerItem.getName())) {
-                            this.results.add(nextItem.castToIntegerValue());
+                            this.results.add(nextItem.castToIntValue());
                         } else if (typeName.equals(ItemType.doubleItem.getName())) {
                             this.results.add(nextItem.castToDoubleValue());
                         } else if (typeName.equals(ItemType.decimalItem.getName())) {

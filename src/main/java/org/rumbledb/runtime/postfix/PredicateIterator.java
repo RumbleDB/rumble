@@ -168,7 +168,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
             this.filter.close();
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
             if (fil instanceof IntItem) {
-                int index = ((IntItem) fil).getIntegerValue();
+                int index = ((IntItem) fil).getIntValue();
                 if (index == this.position) {
                     this.nextResult = item;
                     break;

@@ -102,7 +102,7 @@ public class RemoveFunctionIterator extends HybridRuntimeIterator {
 
     private void init(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
-        this.removePosition = positionItem.getIntegerValue();
+        this.removePosition = positionItem.getIntValue();
     }
 
     public void setNextResult() {

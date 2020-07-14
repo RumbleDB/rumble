@@ -68,7 +68,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
         Assert.assertTrue(!iterator.isOpen());
@@ -93,7 +93,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
         iterator.close();
         Assert.assertTrue(!iterator.isOpen());
@@ -116,7 +116,7 @@ public class JavaAPITest {
             Assert.assertTrue(key.contentEquals("foo"));
             Item value = item.getItemByKey(key);
             Assert.assertTrue(value.isInteger());
-            Assert.assertTrue(value.getIntegerValue() == i);
+            Assert.assertTrue(value.getIntValue() == i);
         }
     }
 }
