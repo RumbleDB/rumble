@@ -51,9 +51,9 @@ public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterato
 
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : codepoints) {
-                if (!(item.isInteger())) {
+                if (!(item.isInt())) {
                     throw new UnexpectedTypeException(
-                            "Integer item expected",
+                            "Int item expected",
                             this.children.get(0).getMetadata()
                     );
                 } else if (!(isValidCodePoint(item.getIntegerValue()))) {

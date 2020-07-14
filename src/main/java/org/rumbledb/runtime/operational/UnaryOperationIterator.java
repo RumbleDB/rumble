@@ -31,6 +31,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collections;
 
 public class UnaryOperationIterator extends LocalRuntimeIterator {
@@ -60,8 +61,12 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
 
             if (this.negated) {
                 if (child.isNumeric()) {
-                    if (child.isInteger()) {
+                    if (child.isInt()) {
                         return ItemFactory.getInstance().createIntItem(-1 * child.getIntegerValue());
+                    }
+                    if (child.isInteger()) {
+                        return ItemFactory.getInstance()
+                            .createBigIntegerItem(BigInteger.valueOf(-1).multiply(child.getBigIntegerValue()));
                     }
                     if (child.isDouble()) {
                         return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());

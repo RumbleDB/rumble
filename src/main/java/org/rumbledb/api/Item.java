@@ -458,6 +458,15 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
+     * Tests whether the item is an atomic item of type int.
+     *
+     * @return true if it is an atomic item of type int, false otherwise.
+     */
+    public boolean isInt() {
+        return false;
+    }
+
+    /**
      * Tests whether the item is an atomic item of type double.
      *
      * @return true if it is an atomic item of type double, false otherwise.

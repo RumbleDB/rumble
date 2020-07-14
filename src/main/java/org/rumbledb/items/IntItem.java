@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
@@ -85,6 +86,11 @@ public class IntItem extends AtomicItem {
 
     @Override
     public boolean isInteger() {
+        return true;
+    }
+
+    @Override
+    public boolean isInt() {
         return true;
     }
 
@@ -187,20 +193,24 @@ public class IntItem extends AtomicItem {
         if (other.isDecimal()) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         }
-        if (other instanceof BigIntegerItem) {
-            return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().add(other.getBigIntegerValue()));
-        }
         if (
-            this.getIntegerValue() >= Integer.MAX_VALUE / 2
-                || this.getIntegerValue() <= -Integer.MAX_VALUE / 2
-                || other.getIntegerValue() <= -Integer.MAX_VALUE / 2
-                || other.getIntegerValue() >= Integer.MAX_VALUE / 2
+            other.isInt()
+                && (this.getIntegerValue() >= Integer.MAX_VALUE / 2
+                    || this.getIntegerValue() <= -Integer.MAX_VALUE / 2
+                    || other.getIntegerValue() <= -Integer.MAX_VALUE / 2
+                    || other.getIntegerValue() >= Integer.MAX_VALUE / 2)
         ) {
             return ItemFactory.getInstance()
                 .createBigIntegerItem(this.castToBigIntegerValue().add(other.castToBigIntegerValue()));
         }
-        return ItemFactory.getInstance().createIntItem(this.getIntegerValue() + other.castToIntegerValue());
+        if (other.isInt()) {
+            return ItemFactory.getInstance().createIntItem(this.getIntegerValue() + other.castToIntegerValue());
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createBigIntegerItem(this.castToBigIntegerValue().add(other.getBigIntegerValue()));
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override
@@ -212,20 +222,24 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         }
-        if (other instanceof BigIntegerItem) {
-            return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().subtract(other.getBigIntegerValue()));
-        }
         if (
-            this.getIntegerValue() >= Integer.MAX_VALUE / 2
-                || this.getIntegerValue() <= -Integer.MAX_VALUE / 2
-                || other.getIntegerValue() <= -Integer.MAX_VALUE / 2
-                || other.getIntegerValue() >= Integer.MAX_VALUE / 2
+            other.isInt()
+                && (this.getIntegerValue() >= Integer.MAX_VALUE / 2
+                    || this.getIntegerValue() <= -Integer.MAX_VALUE / 2
+                    || other.getIntegerValue() <= -Integer.MAX_VALUE / 2
+                    || other.getIntegerValue() >= Integer.MAX_VALUE / 2)
         ) {
             return ItemFactory.getInstance()
                 .createBigIntegerItem(this.castToBigIntegerValue().subtract(other.castToBigIntegerValue()));
         }
-        return ItemFactory.getInstance().createIntItem(this.getIntegerValue() - other.castToIntegerValue());
+        if (other.isInt()) {
+            return ItemFactory.getInstance().createIntItem(this.getIntegerValue() - other.castToIntegerValue());
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createBigIntegerItem(this.castToBigIntegerValue().subtract(other.getBigIntegerValue()));
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override
@@ -237,18 +251,22 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
         }
-        if (other instanceof BigIntegerItem) {
-            return ItemFactory.getInstance()
-                .createBigIntegerItem(this.castToBigIntegerValue().multiply(other.getBigIntegerValue()));
-        }
         if (
-            this.getIntegerValue() >= Short.MAX_VALUE
-                || this.getIntegerValue() <= -Short.MAX_VALUE
-                || other.getIntegerValue() >= Short.MAX_VALUE
-                || other.getIntegerValue() <= -Short.MAX_VALUE
+            other.isInt()
+                && (this.getIntegerValue() >= Short.MAX_VALUE
+                    || this.getIntegerValue() <= -Short.MAX_VALUE
+                    || other.getIntegerValue() >= Short.MAX_VALUE
+                    || other.getIntegerValue() <= -Short.MAX_VALUE)
         ) {
             return ItemFactory.getInstance()
                 .createBigIntegerItem(this.castToBigIntegerValue().multiply(other.castToBigIntegerValue()));
+        }
+        if (other.isInt()) {
+            return ItemFactory.getInstance().createIntItem(this.getIntegerValue() * other.castToIntegerValue());
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createBigIntegerItem(this.castToBigIntegerValue().multiply(other.getBigIntegerValue()));
         }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
@@ -258,7 +276,7 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntegerValue()));
         }
-        return ItemFactory.getInstance().createIntItem(this.getIntegerValue() * other.castToIntegerValue());
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override
