@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import java.math.BigDecimal;
 import java.math.BigInteger;
 
 import org.rumbledb.api.Item;
