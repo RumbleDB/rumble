@@ -107,7 +107,7 @@ public class DecimalItem extends AtomicItem {
             return this;
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(this.castToIntValue());
+            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));
