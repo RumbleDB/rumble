@@ -49,10 +49,6 @@ public class IntItem extends AtomicItem {
         this.value = value;
     }
 
-    public int getValue() {
-        return this.value;
-    }
-
     @Override
     public int getIntValue() {
         return this.value;
