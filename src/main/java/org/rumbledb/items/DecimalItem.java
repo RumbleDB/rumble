@@ -77,7 +77,7 @@ public class DecimalItem extends AtomicItem {
     }
 
     public BigInteger castToIntegerValue() {
-        return getDecimalValue().toBigIntegerExact();
+        return getDecimalValue().toBigInteger();
     }
 
     @Override
