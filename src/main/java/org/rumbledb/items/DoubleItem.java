@@ -78,7 +78,7 @@ public class DoubleItem extends AtomicItem {
     }
 
     public BigInteger castToIntegerValue() {
-        return BigInteger.valueOf(Double.valueOf(this.value).intValue());
+        return BigDecimal.valueOf(this.value).toBigInteger();
     }
 
     @Override
