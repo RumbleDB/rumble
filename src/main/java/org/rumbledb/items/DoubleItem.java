@@ -221,7 +221,7 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
-        return ItemFactory.getInstance().createIntItem((int) (this.getDoubleValue() / other.castToDoubleValue()));
+        return ItemFactory.getInstance().createLongItem((long) (this.getDoubleValue() / other.castToDoubleValue()));
     }
 
     @Override
