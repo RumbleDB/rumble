@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
@@ -153,7 +154,16 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.getDecimalValue().compareTo(other.castToDecimalValue());
+        if (other.isInteger()) {
+            return this.value.compareTo(other.castToDecimalValue());
+        }
+        if (other.isDecimal()) {
+            return this.value.compareTo(other.getDecimalValue());
+        }
+        if (other.isDouble()) {
+            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
+        }
+        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override

@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
@@ -156,7 +157,10 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : Double.compare(this.getDoubleValue(), other.castToDoubleValue());
+        if (other.isNumeric()) {
+            return Double.compare(this.getDoubleValue(), other.castToDoubleValue());
+        }
+        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override
