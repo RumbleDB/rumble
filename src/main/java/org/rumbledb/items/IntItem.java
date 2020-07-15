@@ -158,7 +158,19 @@ public class IntItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : Integer.compare(this.value, other.castToIntValue());
+        if (other.isInt()) {
+            return Integer.compare(this.value, other.getIntValue());
+        }
+        if (other.isInteger()) {
+            return this.castToIntegerValue().compareTo(other.getIntegerValue());
+        }
+        if (other.isDecimal()) {
+            return this.castToDecimalValue().compareTo(other.getDecimalValue());
+        }
+        if (other.isDouble()) {
+            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
+        }
+        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override

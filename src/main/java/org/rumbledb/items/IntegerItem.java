@@ -153,7 +153,13 @@ public class IntegerItem extends AtomicItem {
         if (other.isInteger()) {
             return this.value.compareTo(other.getIntegerValue());
         }
-        throw new OurBadException("Comparing a big integer to something that is not an integer.");
+        if (other.isDecimal()) {
+            return this.castToDecimalValue().compareTo(other.getDecimalValue());
+        }
+        if (other.isDouble()) {
+            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
+        }
+        throw new OurBadException("Comparing an integer to something that is not a number.");
     }
 
     @Override
