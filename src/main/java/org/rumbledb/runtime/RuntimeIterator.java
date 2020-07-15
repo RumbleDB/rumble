@@ -45,6 +45,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,8 +107,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = item.getBooleanValue();
             } else if (item.isNumeric()) {
                 if (position == null) {
-                    if (item.isInteger()) {
+                    if (item.isInt()) {
                         result = item.getIntValue() != 0;
+                    } else if (item.isInteger()) {
+                        result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
                     } else if (item.isDecimal()) {
