@@ -158,6 +158,9 @@ public class IntItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) {
+            return 1;
+        }
         if (other.isInt()) {
             return Integer.compare(this.value, other.getIntValue());
         }

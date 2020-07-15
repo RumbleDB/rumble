@@ -154,6 +154,9 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) {
+            return 1;
+        }
         if (other.isInteger()) {
             return this.value.compareTo(other.castToDecimalValue());
         }
@@ -239,8 +242,8 @@ public class DecimalItem extends AtomicItem {
     @Override
     public Item idivide(Item other) {
         return ItemFactory.getInstance()
-            .createIntItem(
-                this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact()
+            .createIntegerItem(
+                this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).toBigIntegerExact()
             );
     }
 

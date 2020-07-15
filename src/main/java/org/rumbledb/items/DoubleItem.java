@@ -157,6 +157,9 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
+        if (other.isNull()) {
+            return 1;
+        }
         if (other.isNumeric()) {
             return Double.compare(this.getDoubleValue(), other.castToDoubleValue());
         }
