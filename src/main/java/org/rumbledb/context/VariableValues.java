@@ -37,8 +37,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
-import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -232,10 +231,10 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
         if (this.dataFrameVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance()
-                .createIntItem((int) this.dataFrameVariableValues.get(varName).count());
+                .createLongItem(this.dataFrameVariableValues.get(varName).count());
         }
         if (this.rddVariableValues.containsKey(varName)) {
-            return ItemFactory.getInstance().createIntItem((int) this.rddVariableValues.get(varName).count());
+            return ItemFactory.getInstance().createLongItem(this.rddVariableValues.get(varName).count());
         }
         if (this.localVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntItem(this.localVariableValues.get(varName).size());
@@ -289,15 +288,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     }
 
     public void setPosition(long position) {
-        List<Item> list = new ArrayList<>();
-        Item item;
-        if (position < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntItem((int) position);
-
-        } else {
-            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(position));
-        }
-        list.add(item);
+        List<Item> list = Arrays.asList(ItemFactory.getInstance().createLongItem(position));
         this.localVariableValues.put(Name.CONTEXT_POSITION, list);
     }
 
@@ -312,14 +303,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     }
 
     public void setLast(long last) {
-        List<Item> list = new ArrayList<>();
-        Item item;
-        if (last < Integer.MAX_VALUE) {
-            item = ItemFactory.getInstance().createIntItem((int) last);
-        } else {
-            item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(last));
-        }
-        list.add(item);
+        List<Item> list = Arrays.asList(ItemFactory.getInstance().createLongItem(last));
         this.localVariableValues.put(Name.CONTEXT_COUNT, list);
     }
 
