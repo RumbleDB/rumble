@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -41,6 +42,14 @@ public class ItemFactory {
         return this.nullItem;
     }
 
+    public Item createDecimalItem(BigDecimal d) {
+        return new DecimalItem(d);
+    }
+
+    public Item createIntegerItem(BigInteger i) {
+        return new IntegerItem(i);
+    }
+
     public Item createIntItem(int i) {
         if (i == 0) {
             return this.zeroItem;
@@ -48,12 +57,27 @@ public class ItemFactory {
         return new IntItem(i);
     }
 
-    public Item createDecimalItem(BigDecimal d) {
-        return new DecimalItem(d);
+    public Item createLongItem(long l) {
+        if (l == 0) {
+            return this.zeroItem;
+        }
+        if (l >= Integer.MIN_VALUE && l <= Integer.MAX_VALUE) {
+            return new IntItem((int) l);
+        }
+        return new IntegerItem(BigInteger.valueOf(l));
     }
 
-    public Item createIntegerItem(BigInteger i) {
-        return new IntegerItem(i);
+    public Item createIntegerItem(String lexicalValue) {
+        if (lexicalValue.length() >= 10) {
+            return new IntegerItem(new BigInteger(lexicalValue));
+        }
+        try {
+            return new IntItem(Integer.parseInt(lexicalValue));
+        } catch (NumberFormatException e) {
+            OurBadException obe = new OurBadException("Issue with parsing integer " + lexicalValue);
+            obe.initCause(e);
+            throw obe;
+        }
     }
 
     public Item createDoubleItem(double d) {
