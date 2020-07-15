@@ -142,7 +142,7 @@ public class IntegerItem extends AtomicItem {
     }
 
     public int hashCode() {
-        return getIntValue();
+        return this.value.hashCode();
     }
 
     @Override
