@@ -319,16 +319,20 @@ public class IntItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
-        if (other.isInt()) {
-            return ItemFactory.getInstance().createIntItem(this.value / other.castToIntValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createIntegerItem(this.castToDecimalValue().divide(other.castToDecimalValue()).toBigInteger());
-        }
         if (other.isDouble()) {
             return ItemFactory.getInstance()
                 .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
+        }
+        if (other.isInt()) {
+            return ItemFactory.getInstance().createIntItem(this.value / other.getIntValue());
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.castToIntegerValue().divide(other.getIntegerValue()));
+        }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.castToDecimalValue().divide(other.getDecimalValue()).toBigInteger());
         }
         throw new OurBadException("Unexpected type encountered");
     }
