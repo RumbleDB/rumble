@@ -217,11 +217,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
-        }
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
         }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
@@ -229,11 +229,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
-        }
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
         }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
@@ -241,6 +241,9 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         return ItemFactory.getInstance()
             .createIntegerItem(
                 this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).toBigIntegerExact()
