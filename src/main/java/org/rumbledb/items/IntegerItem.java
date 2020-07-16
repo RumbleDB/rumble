@@ -75,6 +75,11 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
+    public int castToIntValue() {
+        return this.value.intValue();
+    }
+
+    @Override
     public boolean isInteger() {
         return true;
     }
@@ -218,11 +223,11 @@ public class IntegerItem extends AtomicItem {
         }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
-                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.getIntValue()));
+                .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.castToIntValue()));
         }
         if (other.isDayTimeDuration()) {
             return ItemFactory.getInstance()
-                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.getIntValue()));
+                .createDayTimeDurationItem(other.getDurationValue().multipliedBy(this.castToIntValue()));
         }
         return ItemFactory.getInstance()
             .createIntegerItem(this.value.multiply(other.castToIntegerValue()));
@@ -230,11 +235,11 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
-        }
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
         }
         BigDecimal bdResult = this.castToDecimalValue()
             .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
@@ -247,15 +252,15 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
         }
         if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
-        }
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance()
             .createIntegerItem(this.value.mod(other.castToIntegerValue()));

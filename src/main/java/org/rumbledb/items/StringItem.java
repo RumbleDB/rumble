@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 
 public class StringItem extends AtomicItem {
 
@@ -62,6 +63,10 @@ public class StringItem extends AtomicItem {
         return new BigDecimal(this.getValue());
     }
 
+    public BigInteger castToIntegerValue() {
+        return new BigInteger(this.getValue());
+    }
+
     public int castToIntValue() {
         return Integer.parseInt(this.getValue());
     }
@@ -91,7 +96,7 @@ public class StringItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(Integer.parseInt(this.getStringValue()));
+            return ItemFactory.getInstance().createIntegerItem(this.getStringValue());
         }
         if (itemType.equals(ItemType.nullItem)) {
             return ItemFactory.getInstance().createNullItem();
