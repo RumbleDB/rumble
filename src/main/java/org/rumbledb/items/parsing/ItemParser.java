@@ -72,14 +72,10 @@ public class ItemParser implements Serializable {
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
-                if (number.contains(".") || number.length() >= 12) {
+                if (number.contains(".")) {
                     return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
                 }
-                try {
-                    return ItemFactory.getInstance().createIntItem(Integer.parseInt(number));
-                } catch (NumberFormatException e) {
-                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-                }
+                return ItemFactory.getInstance().createIntegerItem(number);
             }
             if (object.whatIsNext().equals(ValueType.BOOLEAN)) {
                 return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
