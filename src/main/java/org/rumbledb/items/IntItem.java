@@ -77,7 +77,7 @@ public class IntItem extends AtomicItem {
     }
 
     public int castToIntValue() {
-        return getIntValue();
+        return this.value;
     }
 
     @Override
@@ -201,9 +201,6 @@ public class IntItem extends AtomicItem {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
         }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
-        }
         if (
             other.isInt()
                 && (this.value < Integer.MAX_VALUE / 2
@@ -217,6 +214,9 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createIntegerItem(this.castToIntegerValue().add(other.getIntegerValue()));
         }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
+        }
         throw new OurBadException("Unexpected type encountered");
     }
 
@@ -224,10 +224,6 @@ public class IntItem extends AtomicItem {
     public Item subtract(Item other) {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
         }
         if (
             other.isInt()
@@ -242,6 +238,10 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createIntegerItem(this.castToIntegerValue().subtract(other.getIntegerValue()));
         }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
+        }
         throw new OurBadException("Unexpected type encountered");
     }
 
@@ -249,10 +249,6 @@ public class IntItem extends AtomicItem {
     public Item multiply(Item other) {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * other.getDoubleValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
         }
         if (
             other.isInt()
@@ -267,6 +263,10 @@ public class IntItem extends AtomicItem {
             return ItemFactory.getInstance()
                 .createIntegerItem(this.castToIntegerValue().multiply(other.getIntegerValue()));
         }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.castToDecimalValue().multiply(other.getDecimalValue()));
+        }
         if (other.isYearMonthDuration()) {
             return ItemFactory.getInstance()
                 .createYearMonthDurationItem(other.getDurationValue().multipliedBy(this.value));
@@ -280,11 +280,11 @@ public class IntItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
-        }
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / other.getDoubleValue());
         }
         BigDecimal bdResult = this.castToDecimalValue()
             .divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP);
@@ -297,21 +297,24 @@ public class IntItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % other.getDoubleValue());
+        }
+        if (other.isInt()) {
+            return ItemFactory.getInstance().createIntItem(this.value % other.castToIntValue());
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.castToIntegerValue().mod(other.getIntegerValue()));
         }
         if (other.isDecimal()) {
             return ItemFactory.getInstance()
                 .createDecimalItem(this.castToDecimalValue().remainder(other.getDecimalValue()));
         }
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        if (other.isInt()) {
-            return ItemFactory.getInstance().createIntItem(this.value % other.castToIntValue());
-        }
-        return ItemFactory.getInstance()
-            .createIntegerItem(this.castToIntegerValue().mod(other.getIntegerValue()));
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override
@@ -319,9 +322,15 @@ public class IntItem extends AtomicItem {
         if (other.isInt()) {
             return ItemFactory.getInstance().createIntItem(this.value / other.castToIntValue());
         }
-        return ItemFactory.getInstance()
-            .createIntegerItem(this.castToIntegerValue().divide(other.castToIntegerValue()));
-
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.castToDecimalValue().divide(other.castToDecimalValue()).toBigInteger());
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance()
+                .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override

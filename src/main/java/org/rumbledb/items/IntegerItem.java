@@ -263,8 +263,15 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
-        return ItemFactory.getInstance()
-            .createIntegerItem(this.value.divide(other.castToIntegerValue()));
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.castToDecimalValue().divide(other.castToDecimalValue()).toBigInteger());
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance()
+                .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override
