@@ -244,10 +244,19 @@ public class DecimalItem extends AtomicItem {
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
-        return ItemFactory.getInstance()
-            .createIntegerItem(
-                this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).toBigIntegerExact()
-            );
+        if (other.isDouble()) {
+            return ItemFactory.getInstance()
+                .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.getDecimalValue().divide(other.castToDecimalValue()).toBigInteger());
+        }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(this.getDecimalValue().divide(other.getDecimalValue()).toBigInteger());
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override

@@ -319,6 +319,9 @@ public class IntItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         if (other.isDouble()) {
             return ItemFactory.getInstance()
                 .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));

@@ -216,6 +216,9 @@ public class DoubleItem extends AtomicItem {
         if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
             throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
     }
 
