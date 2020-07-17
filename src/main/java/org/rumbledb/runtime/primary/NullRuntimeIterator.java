@@ -31,16 +31,18 @@ public class NullRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
+    private Item item;
 
     public NullRuntimeIterator(ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
+        this.item = ItemFactory.getInstance().createNullItem();
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createNullItem();
+            return this.item;
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "\"null\"", getMetadata());
     }
