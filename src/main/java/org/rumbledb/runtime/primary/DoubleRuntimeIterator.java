@@ -31,11 +31,11 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private double item;
+    private Item item;
 
     public DoubleRuntimeIterator(Double value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
-        this.item = value;
+        this.item = ItemFactory.getInstance().createDoubleItem(value);
 
     }
 
@@ -43,7 +43,7 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createDoubleItem(this.item);
+            return this.item;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());

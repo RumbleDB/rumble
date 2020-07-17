@@ -32,7 +32,9 @@ public class Profiler {
             return 0;
         }
         int max = Collections.max(stacks.values());
+        int total = 0;
         for (String key : stacks.keySet()) {
+            total += stacks.get(key);
             if (stacks.get(key) != max)
                 continue;
             System.out.println("Occurrences: " + stacks.get(key));
@@ -40,6 +42,7 @@ public class Profiler {
             System.out.println();
         }
         System.out.println("Size: " + stacks.size());
+        System.out.println("Total: " + total);
         return counter;
     }
 
