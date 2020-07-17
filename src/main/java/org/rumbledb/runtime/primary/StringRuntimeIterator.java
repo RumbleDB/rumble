@@ -22,14 +22,16 @@ package org.rumbledb.runtime.primary;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
-
 
     private static final long serialVersionUID = 1L;
     private Item item;
@@ -47,5 +49,10 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    }
+
+    @Override
+    public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
+        return this.item;
     }
 }
