@@ -23,8 +23,11 @@ package org.rumbledb.runtime.primary;
 import java.math.BigDecimal;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -33,7 +36,7 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private String lexicalValue;
+    private Item item;
 
     public IntegerRuntimeIterator(
             String lexicalValue,
@@ -41,7 +44,14 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this.lexicalValue = lexicalValue;
+        if (lexicalValue.length() >= 12) {
+            this.item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(lexicalValue));
+        }
+        try {
+            this.item = ItemFactory.getInstance().createIntegerItem(Integer.parseInt(lexicalValue));
+        } catch (NumberFormatException e) {
+            this.item = ItemFactory.getInstance().createDecimalItem(new BigDecimal(lexicalValue));
+        }
 
     }
 
@@ -49,16 +59,14 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            if (this.lexicalValue.length() >= 12) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
-            }
-            try {
-                return ItemFactory.getInstance().createIntegerItem(Integer.parseInt(this.lexicalValue));
-            } catch (NumberFormatException e) {
-                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.lexicalValue));
-            }
+            return this.item;
         }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.lexicalValue, getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    }
+
+    @Override
+    public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
+        return this.item;
     }
 }

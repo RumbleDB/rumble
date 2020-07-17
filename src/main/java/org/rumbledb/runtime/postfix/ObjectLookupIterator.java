@@ -33,6 +33,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DecimalItem;
@@ -74,22 +76,21 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
         if (!this.contextLookup) {
-            lookupIterator.open(this.currentDynamicContextForLocalExecution);
-            if (lookupIterator.hasNext()) {
-                this.lookupKey = lookupIterator.next();
-            } else {
+
+            try {
+                this.lookupKey = lookupIterator.materializeExactlyOneItem(this.currentDynamicContextForLocalExecution);
+            } catch (NoItemException e) {
                 throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with zero keys: ",
+                        "Invalid Lookup Key; Object lookup can't be performed with no key.",
+                        getMetadata()
+                );
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidSelectorException(
+                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
                         getMetadata()
                 );
             }
-            if (lookupIterator.hasNext()) {
-                throw new InvalidSelectorException(
-                        "\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
-                            + this.lookupKey.serialize(),
-                        getMetadata()
-                );
-            }
+
             if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
                 throw new UnexpectedTypeException(
                         "Type error; Object selector can't be converted to a string: "
@@ -120,7 +121,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             }
-            lookupIterator.close();
         }
     }
 
