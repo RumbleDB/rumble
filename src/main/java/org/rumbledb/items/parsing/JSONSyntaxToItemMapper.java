@@ -38,22 +38,33 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
 
     @Override
     public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
-        return new Iterator<Item>() {
-            @Override
-            public boolean hasNext() {
-                return stringIterator.hasNext();
-            }
+        return new ItemMapperIterator(stringIterator);
+    }
+    
+    private class ItemMapperIterator implements Iterator<Item> {
+        private JsonIterator iterator;
+        private Iterator<String> stringIterator;
+        
+        public ItemMapperIterator(Iterator<String> stringIterator)
+        {
+            this.stringIterator = stringIterator;
+            this.iterator = new JsonIterator();
+        }
 
-            @Override
-            public Item next() {
-                JsonIterator object = JsonIterator.parse(stringIterator.next());
-                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
-            }
+        @Override
+        public boolean hasNext() {
+            return this.stringIterator.hasNext();
+        }
 
-            @Override
-            public void remove() {
-                throw new UnsupportedOperationException();
-            }
-        };
+        @Override
+        public Item next() {
+            this.iterator.reset(this.stringIterator.next().getBytes());
+            return ItemParser.getItemFromObject(this.iterator, JSONSyntaxToItemMapper.this.metadata);
+        }
+
+        @Override
+        public void remove() {
+            throw new UnsupportedOperationException();
+        }
     }
 }
