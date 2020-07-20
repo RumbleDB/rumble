@@ -33,6 +33,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 
 
 public class DecimalItem extends AtomicItem {
@@ -250,11 +251,15 @@ public class DecimalItem extends AtomicItem {
         }
         if (other.isInteger()) {
             return ItemFactory.getInstance()
-                .createIntegerItem(this.getDecimalValue().divide(other.castToDecimalValue()).toBigInteger());
+                .createIntegerItem(
+                    this.getDecimalValue().divide(other.castToDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
+                );
         }
         if (other.isDecimal()) {
             return ItemFactory.getInstance()
-                .createIntegerItem(this.getDecimalValue().divide(other.getDecimalValue()).toBigInteger());
+                .createIntegerItem(
+                    this.getDecimalValue().divide(other.getDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
+                );
         }
         throw new OurBadException("Unexpected type encountered");
     }
