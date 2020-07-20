@@ -61,7 +61,7 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
 
             Item array = this.arrayIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            return ItemFactory.getInstance().createIntegerItem(array.getSize());
+            return ItemFactory.getInstance().createIntItem(array.getSize());
         }
         throw new IteratorFlowException(
                 RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",

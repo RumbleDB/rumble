@@ -63,7 +63,7 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
             if (this.index == this.right) {
                 this.hasNext = false;
             }
-            return ItemFactory.getInstance().createIntegerItem(this.index++);
+            return ItemFactory.getInstance().createIntItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
@@ -94,8 +94,8 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
                 );
             }
             try {
-                this.left = left.castToIntegerValue();
-                this.right = right.castToIntegerValue();
+                this.left = left.castToIntValue();
+                this.right = right.castToIntValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

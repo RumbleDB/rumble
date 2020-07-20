@@ -28,7 +28,7 @@ public class MonthFromDateTimeFunctionIterator extends LocalFunctionCallIterator
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getMonthOfYear());
+            return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getMonthOfYear());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " month-from-dateTime function",

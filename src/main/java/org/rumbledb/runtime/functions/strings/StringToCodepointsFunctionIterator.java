@@ -83,7 +83,7 @@ public class StringToCodepointsFunctionIterator extends LocalFunctionCallIterato
             this.currentPosition = 0;
         }
         if (this.currentPosition < this.input.length()) {
-            this.nextResult = ItemFactory.getInstance().createIntegerItem(this.input.codePointAt(this.currentPosition));
+            this.nextResult = ItemFactory.getInstance().createIntItem(this.input.codePointAt(this.currentPosition));
             this.currentPosition++;
             this.hasNext = true;
         } else {

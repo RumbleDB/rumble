@@ -48,7 +48,7 @@ import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.IntItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
@@ -86,7 +86,7 @@ public class FlworDataFrameUtils {
         kryo.register(ArrayItem.class);
         kryo.register(ObjectItem.class);
         kryo.register(StringItem.class);
-        kryo.register(IntegerItem.class);
+        kryo.register(IntItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);
@@ -412,7 +412,7 @@ public class FlworDataFrameUtils {
         Object o = row.get(columnIndex);
         if (o instanceof Long) {
             List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntegerItem(((Long) o).intValue()));
+            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
             return result;
         } else {
             byte[] bytes = (byte[]) o;

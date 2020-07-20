@@ -103,7 +103,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             }
-            this.lookup = lookupExpression.castToIntegerValue();
+            this.lookup = lookupExpression.castToIntValue();
         } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with no key.",

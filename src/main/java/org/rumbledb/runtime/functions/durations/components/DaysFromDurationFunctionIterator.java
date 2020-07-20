@@ -28,7 +28,7 @@ public class DaysFromDurationFunctionIterator extends LocalFunctionCallIterator 
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.durationItem.getDurationValue().getDays());
+            return ItemFactory.getInstance().createIntItem(this.durationItem.getDurationValue().getDays());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " days-from-duration function",

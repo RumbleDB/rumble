@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 /**
@@ -89,7 +90,16 @@ public abstract class Item implements SerializableItem {
      * @return the BigDecimal value.
      */
     public BigDecimal castToDecimalValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+        throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
+    }
+
+    /**
+     * Casts the item to a big integer value.
+     *
+     * @return the BigInteger value.
+     */
+    public BigInteger castToIntegerValue() {
+        throw new IteratorFlowException("Cannot call castToInteger on non numeric");
     }
 
     /**
@@ -97,8 +107,8 @@ public abstract class Item implements SerializableItem {
      *
      * @return the int value.
      */
-    public int castToIntegerValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+    public int castToIntValue() {
+        throw new IteratorFlowException("Cannot call castToInt on non numeric");
     }
 
     /**
@@ -285,11 +295,20 @@ public abstract class Item implements SerializableItem {
     }
 
     /**
-     * Returns the integer value of the item, if it is a atomic item of type integer.
+     * Returns the integer value of the item, if it is a atomic item of type integer within the required range.
      *
      * @return the integer value as an int.
      */
-    public int getIntegerValue() {
+    public int getIntValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not an int.");
+    }
+
+    /**
+     * Returns the integer value of the item as a bit integer, if it is a atomic item of type integer.
+     *
+     * @return the integer value as a BigInteger.
+     */
+    public BigInteger getIntegerValue() {
         throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
     }
 
@@ -435,6 +454,15 @@ public abstract class Item implements SerializableItem {
      * @return true if it is an atomic item of type integer, false otherwise.
      */
     public boolean isInteger() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type int.
+     *
+     * @return true if it is an atomic item of type int, false otherwise.
+     */
+    public boolean isInt() {
         return false;
     }
 
