@@ -40,6 +40,7 @@ import java.util.List;
 public class EncodeForURIFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
+    @SuppressWarnings("unused")
     private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
             Arrays.asList(
 
