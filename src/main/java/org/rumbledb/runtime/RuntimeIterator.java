@@ -34,6 +34,8 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.types.ItemType;
@@ -262,6 +264,23 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     ) {
         this.open(context);
         Item result = this.hasNext() ? this.next() : null;
+        this.close();
+        return result;
+    }
+
+    public Item materializeExactlyOneItem(
+            DynamicContext context
+    )
+            throws NoItemException,
+                MoreThanOneItemException {
+        this.open(context);
+        if (!this.hasNext()) {
+            throw new NoItemException();
+        }
+        Item result = this.next();
+        if (this.hasNext()) {
+            throw new MoreThanOneItemException();
+        }
         this.close();
         return result;
     }

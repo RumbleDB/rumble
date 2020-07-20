@@ -73,7 +73,7 @@ public class AnnotationsTestsBase {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                this.configuration,
+                AnnotationsTestsBase.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
             mainModule = VisitorHelpers.parseMainModuleFromLocation(

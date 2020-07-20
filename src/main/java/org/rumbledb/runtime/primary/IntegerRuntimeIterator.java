@@ -20,11 +20,12 @@
 
 package org.rumbledb.runtime.primary;
 
-import java.math.BigInteger;
-
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
@@ -33,7 +34,7 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private String lexicalValue;
+    private Item item;
 
     public IntegerRuntimeIterator(
             String lexicalValue,
@@ -41,24 +42,20 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
-        this.lexicalValue = lexicalValue;
-
+        this.item = ItemFactory.getInstance().createIntegerItem(lexicalValue);
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            if (this.lexicalValue.length() >= 12) {
-                return ItemFactory.getInstance().createIntegerItem(new BigInteger(this.lexicalValue));
-            }
-            try {
-                return ItemFactory.getInstance().createIntItem(Integer.parseInt(this.lexicalValue));
-            } catch (NumberFormatException e) {
-                return ItemFactory.getInstance().createIntegerItem(new BigInteger(this.lexicalValue));
-            }
+            return this.item;
         }
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    }
 
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.lexicalValue, getMetadata());
+    @Override
+    public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
+        return this.item;
     }
 }
