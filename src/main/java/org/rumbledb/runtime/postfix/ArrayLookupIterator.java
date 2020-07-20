@@ -104,27 +104,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             }
-            if (lookupExpression.isInt()) {
-                this.lookup = lookupExpression.castToIntValue();
-            } else if (lookupExpression.isInteger()) {
-                BigInteger bi = lookupExpression.getIntegerValue();
-                if (
-                    bi.compareTo(BigInteger.valueOf(Integer.MIN_VALUE)) >= 0
-                        && bi.compareTo(BigInteger.valueOf(Integer.MAX_VALUE)) <= 0
-                ) {
-                    this.lookup = bi.intValue();
-                } else {
-                    throw new InvalidSelectorException(
-                            "Invalid Lookup Key; Array lookup position is too big (must be an int).",
-                            getMetadata()
-                    );
-                }
-            } else {
-                throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Array lookup position is too big (must be an int).",
-                        getMetadata()
-                );
-            }
+            this.lookup = lookupExpression.castToIntValue();
         } catch (NoItemException e) {
             throw new InvalidSelectorException(
                     "Invalid Lookup Key; Array lookup can't be performed with no key.",
