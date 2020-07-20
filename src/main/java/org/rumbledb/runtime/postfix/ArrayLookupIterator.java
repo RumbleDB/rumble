@@ -42,7 +42,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.jsoniq.ExecutionMode;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.math.BigInteger;
 import java.util.Arrays;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
