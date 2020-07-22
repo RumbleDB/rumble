@@ -48,7 +48,7 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] {});
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] { "--print-iterator-tree", "yes"});
 
 
     public void initializeTests(File dir) {
@@ -82,6 +82,9 @@ public class AnnotationsTestsBase {
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, AnnotationsTestsBase.configuration);
+            StringBuffer sb = new StringBuffer();
+            runtimeIterator.print(sb, 0);
+            System.out.println(sb);
             // PARSING
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
