@@ -22,14 +22,12 @@ package org.rumbledb.cli;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.optimizations.Profiler;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -98,22 +96,16 @@ public class JsoniqQueryExecutor {
         List<Item> outputList = null;
 
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            result.print(sb, 0);
-            System.out.println(sb);
-        }
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = rumble.runQuery(queryUri);
 
-        if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(dynamicContext);
+        if (sequence.availableAsRDD() && outputPath != null) {
+            JavaRDD<Item> rdd = sequence.getAsRDD();
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = new ArrayList<>();
-            long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
+            long materializationCount = sequence.populateList(outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
@@ -147,54 +139,14 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
-        // execute locally for simple expressions
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            runtimeIterator.print(sb, 0);
-            System.out.println(sb);
-        }
-        if (!runtimeIterator.isRDD()) {
-            return this.getIteratorOutput(runtimeIterator, dynamicContext, resultList);
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = rumble.runQuery(query);
+        if (!sequence.availableAsRDD()) {
+            return sequence.populateList(resultList);
         }
         resultList.clear();
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
+        JavaRDD<Item> rdd = sequence.getAsRDD();
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
     }
 
-    private long getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext, List<Item> resultList) {
-        resultList.clear();
-        iterator.open(dynamicContext);
-        Item result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next();
-        }
-        if (result == null) {
-            return -1;
-        }
-        Item singleOutput = result;
-        if (!iterator.hasNext()) {
-            resultList.add(singleOutput);
-            return -1;
-        } else {
-            int itemCount = 1;
-            resultList.add(result);
-            while (
-                iterator.hasNext()
-                    &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
-                        ||
-                        this.configuration.getResultSizeCap() == 0)
-            ) {
-                resultList.add(iterator.next());
-                itemCount++;
-            }
-            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
-                return Long.MAX_VALUE;
-            }
-            return -1;
-        }
-    }
 }

@@ -21,6 +21,7 @@
 package iq.base;
 
 import org.junit.Assert;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -69,6 +70,7 @@ public class AnnotationsTestsBase {
             Assert.fail();
         }
         MainModule mainModule = null;
+        SequenceOfItems sequence = null;
         DynamicContext dynamicContext = null;
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
@@ -82,10 +84,7 @@ public class AnnotationsTestsBase {
             );
             dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
             runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, AnnotationsTestsBase.configuration);
-            StringBuffer sb = new StringBuffer();
-            runtimeIterator.print(sb, 0);
-            System.out.println(sb);
-            // PARSING
+            sequence = new SequenceOfItems(runtimeIterator, dynamicContext, AnnotationsTestsBase.configuration);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(
@@ -162,7 +161,7 @@ public class AnnotationsTestsBase {
                 this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                checkExpectedOutput(this.currentAnnotation.getOutput(), sequence, dynamicContext);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 exception.printStackTrace();
@@ -176,7 +175,7 @@ public class AnnotationsTestsBase {
                     !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), sequence, dynamicContext);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
@@ -195,7 +194,7 @@ public class AnnotationsTestsBase {
 
     protected void checkExpectedOutput(
             String expectedOutput,
-            RuntimeIterator runtimeIterator,
+            SequenceOfItems sequence,
             DynamicContext dynamicContext
     ) {
         Assert.assertTrue(true);
