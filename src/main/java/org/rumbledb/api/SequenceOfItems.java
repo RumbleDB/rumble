@@ -133,7 +133,7 @@ public class SequenceOfItems {
                         ||
                         this.configuration.getResultSizeCap() == 0)
             ) {
-                resultList.add(iterator.next());
+                resultList.add(this.iterator.next());
                 itemCount++;
             }
             if (this.iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
