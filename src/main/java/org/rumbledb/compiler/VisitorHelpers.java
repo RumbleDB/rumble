@@ -41,7 +41,7 @@ public class VisitorHelpers {
             System.out.println(sb);
         }
         return result;
-   }
+    }
 
     private static void resolveDependencies(Node node, RumbleRuntimeConfiguration conf) {
         new VariableDependenciesVisitor(conf).visit(node, null);

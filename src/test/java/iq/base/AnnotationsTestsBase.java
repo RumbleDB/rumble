@@ -49,7 +49,9 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] { "--print-iterator-tree", "yes"});
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
+            new String[] { "--print-iterator-tree", "yes" }
+    );
 
 
     public void initializeTests(File dir) {

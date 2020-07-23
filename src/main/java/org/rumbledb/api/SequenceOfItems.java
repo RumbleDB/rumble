@@ -32,7 +32,11 @@ public class SequenceOfItems {
     private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
 
-    public SequenceOfItems(RuntimeIterator iterator, DynamicContext dynamicContext, RumbleRuntimeConfiguration configuration) {
+    public SequenceOfItems(
+            RuntimeIterator iterator,
+            DynamicContext dynamicContext,
+            RumbleRuntimeConfiguration configuration
+    ) {
         this.iterator = iterator;
         this.isOpen = false;
         this.dynamicContext = dynamicContext;
@@ -104,7 +108,7 @@ public class SequenceOfItems {
         }
         return this.iterator.getRDD(this.dynamicContext);
     }
-    
+
     public long populateList(List<Item> resultList) {
         resultList.clear();
         this.iterator.open(this.dynamicContext);
@@ -123,7 +127,7 @@ public class SequenceOfItems {
             int itemCount = 1;
             resultList.add(result);
             while (
-                    this.iterator.hasNext()
+                this.iterator.hasNext()
                     &&
                     ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
                         ||

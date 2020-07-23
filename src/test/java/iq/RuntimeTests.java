@@ -145,7 +145,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
             sb.append(result.serialize());
             sb.append(", ");
             while (
-                    sequence.hasNext()
+                sequence.hasNext()
                     &&
                     ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
                         && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)

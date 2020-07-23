@@ -58,8 +58,7 @@ public class TryCatchRuntimeIterator extends LocalRuntimeIterator {
         this.children.add(tryExpression);
         for (RuntimeIterator value : catchExpressions.values())
             this.children.add(value);
-        if(catchAllExpression != null)
-        {
+        if (catchAllExpression != null) {
             this.children.add(catchAllExpression);
         }
         this.tryExpression = tryExpression;
