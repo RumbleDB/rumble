@@ -38,6 +38,7 @@ public class ExceptionMetadata implements Serializable {
     /**
      * Builds a new metadata object
      *
+     * @param location the URI of the JSONiq module at which the exception occurred.
      * @param line the line number at which the error occurred.
      * @param column the column number at which the error occurred.
      */

@@ -31,9 +31,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.runtime.RuntimeIterator;
-
+import org.rumbledb.api.SequenceOfItems;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -106,14 +104,13 @@ public class RuntimeTests extends AnnotationsTestsBase {
     @Override
     protected void checkExpectedOutput(
             String expectedOutput,
-            RuntimeIterator runtimeIterator,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
         String actualOutput;
-        if (!runtimeIterator.isRDD()) {
-            actualOutput = runIterators(runtimeIterator, dynamicContext);
+        if (!sequence.availableAsRDD()) {
+            actualOutput = runIterators(sequence);
         } else {
-            actualOutput = getRDDResults(runtimeIterator, dynamicContext);
+            actualOutput = getRDDResults(sequence);
         }
         Assert.assertTrue(
             "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
@@ -122,22 +119,22 @@ public class RuntimeTests extends AnnotationsTestsBase {
         // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
     }
 
-    protected String runIterators(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        String actualOutput = getIteratorOutput(iterator, dynamicContext);
+    protected String runIterators(SequenceOfItems sequence) {
+        String actualOutput = getIteratorOutput(sequence);
         return actualOutput;
     }
 
-    protected String getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext) {
-        iterator.open(dynamicContext);
+    protected String getIteratorOutput(SequenceOfItems sequence) {
+        sequence.open();
         Item result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next();
+        if (sequence.hasNext()) {
+            result = sequence.next();
         }
         if (result == null) {
             return "";
         }
         String singleOutput = result.serialize();
-        if (!iterator.hasNext()) {
+        if (!sequence.hasNext()) {
             return singleOutput;
         } else {
             int itemCount = 1;
@@ -146,18 +143,18 @@ public class RuntimeTests extends AnnotationsTestsBase {
             sb.append(result.serialize());
             sb.append(", ");
             while (
-                iterator.hasNext()
+                sequence.hasNext()
                     &&
                     ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
                         && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
                         ||
                         AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
             ) {
-                sb.append(iterator.next().serialize());
+                sb.append(sequence.next().serialize());
                 sb.append(", ");
                 itemCount++;
             }
-            if (iterator.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
+            if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
                 System.err.println(
                     "Warning! The output sequence contains a large number of items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
@@ -172,8 +169,8 @@ public class RuntimeTests extends AnnotationsTestsBase {
         }
     }
 
-    private String getRDDResults(RuntimeIterator runtimeIterator, DynamicContext dynamicContext) {
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
+    private String getRDDResults(SequenceOfItems sequence) {
+        JavaRDD<Item> rdd = sequence.getAsRDD();
         JavaRDD<String> output = rdd.map(o -> o.serialize());
         List<String> collectedOutput = new ArrayList<String>();
         SparkSessionManager.collectRDDwithLimitWarningOnly(output, collectedOutput);
