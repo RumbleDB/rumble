@@ -24,7 +24,6 @@ import org.junit.Assert;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.context.DynamicContext;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -55,8 +54,7 @@ public class SparkRuntimeTests extends RuntimeTests {
     @Override
     protected void checkExpectedOutput(
             String expectedOutput,
-            SequenceOfItems sequence,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
         String actualOutput = runIterators(sequence);
         Assert.assertTrue(

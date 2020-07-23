@@ -32,7 +32,6 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.SequenceOfItems;
-import org.rumbledb.context.DynamicContext;
 import sparksoniq.spark.SparkSessionManager;
 import utils.FileManager;
 
@@ -105,8 +104,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     @Override
     protected void checkExpectedOutput(
             String expectedOutput,
-            SequenceOfItems sequence,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
         String actualOutput;
         if (!sequence.availableAsRDD()) {
