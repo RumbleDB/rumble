@@ -301,14 +301,17 @@ public class FlworDataFrameUtils {
             Map<Name, DynamicContext.VariableDependency> dependencies,
             Map<String, List<String>> columnNamesByType
     ) {
-        String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+        String comma = "";
+        for (Name field : dependencies.keySet()) {
+            queryColumnString.append(comma);
+            comma = ",";
+            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
 
-            String columnName = columnNames[columnIndex];
+            String columnName = field.getLocalName();
 
             if (isCountPreComputed(columnNamesByType, columnName)) {
                 queryColumnString.append("sum(`");
@@ -337,9 +340,9 @@ public class FlworDataFrameUtils {
             queryColumnString.append(columnName);
             queryColumnString.append("`");
 
-            if (trailingComma || columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
-            }
+        }
+        if (trailingComma) {
+            queryColumnString.append(",");
         }
 
         return queryColumnString.toString();

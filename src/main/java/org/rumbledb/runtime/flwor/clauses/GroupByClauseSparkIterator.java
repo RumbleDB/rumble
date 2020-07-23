@@ -379,6 +379,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             UDFcolumnsByType
         );
 
+        System.out.println(
+            String.format(
+                "select %s from (%s) group by `%s`",
+                projectSQL,
+                createColumnsSQL,
+                appendedGroupingColumnsName
+            )
+        );
+
         return df.sparkSession()
             .sql(
                 String.format(
