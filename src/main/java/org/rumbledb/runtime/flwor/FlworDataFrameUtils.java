@@ -179,7 +179,11 @@ public class FlworDataFrameUtils {
         result.put("byte[]", new ArrayList<>());
         result.put("Long", new ArrayList<>());
         StructField[] columns = inputSchema.fields();
-        for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+        for (Name field : dependencies.keySet()) {
+            if (inputSchema.getFieldIndex(field.getLocalName()).isEmpty()) {
+                continue;
+            } ;
+            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }

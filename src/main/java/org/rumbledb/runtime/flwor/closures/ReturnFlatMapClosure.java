@@ -89,21 +89,20 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
             .getVariableDependencies();
         this.context.getVariableValues().removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
-        int columnIndex = 0;
         for (Name field : this.serializedVariableNames) {
             if (dependencies.containsKey(field)) {
+                int columnIndex = row.fieldIndex(field.getLocalName());
                 List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
                 this.deserializedParams.add(i);
             }
-            ++columnIndex;
         }
         for (Name field : this.countedVariableNames) {
             if (dependencies.containsKey(field)) {
+                int columnIndex = row.fieldIndex(field.getLocalName());
                 long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
                 Item i = ItemFactory.getInstance().createLongItem(count);
                 this.longParams.add(i);
             }
-            ++columnIndex;
         }
 
         FlworDataFrameUtils.prepareDynamicContext(
