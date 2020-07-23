@@ -24,15 +24,19 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -44,6 +48,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     private RuntimeIterator expression;
     private StructType oldSchema;
     private List<Name> variableNames;
+    private List<Name> countVariableNames;
     private DynamicContext parentContext;
     private DynamicContext context;
 
@@ -62,8 +67,16 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         this.input = new Input();
 
         this.variableNames = new ArrayList<>();
+        this.countVariableNames = new ArrayList<>();
         for (String columnName : this.oldSchema.fieldNames()) {
-            this.variableNames.add(Name.createVariableInNoNamespace(columnName));
+            Name name = Name.createVariableInNoNamespace(columnName);
+
+            this.variableNames.add(name);
+
+            StructField structField = this.oldSchema.apply(columnName);
+            if (structField.dataType().sameType(DataTypes.LongType)) {
+                this.countVariableNames.add(name);
+            }
         }
     }
 
@@ -77,12 +90,14 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
         int columnIndex = 0;
         for (Name field : this.variableNames) {
             if (dependencies.containsKey(field)) {
-                List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
-                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    this.context.getVariableValues().addVariableCount(field, i.get(0));
+                List<Item> i = null;
+                if (this.countVariableNames.contains(field)) {
+                    long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
+                    i = Collections.singletonList(ItemFactory.getInstance().createLongItem(count));
                 } else {
-                    this.context.getVariableValues().addVariableValue(field, i);
+                    i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
                 }
+                this.context.getVariableValues().addVariableValue(field, i);
             }
             ++columnIndex;
         }

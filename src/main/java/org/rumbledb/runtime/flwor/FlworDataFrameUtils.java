@@ -37,6 +37,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
@@ -418,6 +419,15 @@ public class FlworDataFrameUtils {
             byte[] bytes = (byte[]) o;
             input.setBuffer(bytes);
             return (List<Item>) kryo.readClassAndObject(input);
+        }
+    }
+
+    public static long getCountOfField(Row row, int columnIndex) {
+        Object o = row.get(columnIndex);
+        if (o instanceof Long) {
+            return ((Long) o).longValue();
+        } else {
+            throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
     }
 
