@@ -104,8 +104,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             testAnnotations(testFile.getAbsolutePath());
-            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
-            {
+            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
                     AnnotationsTestsBase.configuration,

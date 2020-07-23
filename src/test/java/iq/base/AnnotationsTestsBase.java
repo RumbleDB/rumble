@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
