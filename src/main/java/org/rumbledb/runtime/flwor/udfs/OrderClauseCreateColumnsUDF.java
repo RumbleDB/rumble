@@ -119,7 +119,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            Item count = ItemFactory.getInstance().createIntItem(((Long) longParam).intValue());
             this.longParams.add(count);
         }
 
@@ -169,7 +169,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                         } else if (typeName.equals(ItemType.stringItem.getName())) {
                             this.results.add(nextItem.getStringValue());
                         } else if (typeName.equals(ItemType.integerItem.getName())) {
-                            this.results.add(nextItem.castToIntegerValue());
+                            this.results.add(nextItem.castToIntValue());
                         } else if (typeName.equals(ItemType.doubleItem.getName())) {
                             this.results.add(nextItem.castToDoubleValue());
                         } else if (typeName.equals(ItemType.decimalItem.getName())) {

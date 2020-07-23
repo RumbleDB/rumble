@@ -68,11 +68,11 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
             }
             // if second param is not given precision is set as 0 (rounds to a whole number)
             else {
-                precision = ItemFactory.getInstance().createIntegerItem(0);
+                precision = ItemFactory.getInstance().createIntItem(0);
             }
             try {
                 BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-                bd = bd.setScale(precision.getIntegerValue(), RoundingMode.HALF_UP);
+                bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
 
             } catch (IteratorFlowException e) {

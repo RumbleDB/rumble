@@ -28,7 +28,7 @@ public class DayFromDateFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateItem.getDateTimeValue().getDayOfMonth());
+            return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getDayOfMonth());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " day-from-date function",

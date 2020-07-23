@@ -77,7 +77,7 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
             try {
                 rdd = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .parallelize(contents, partitions.getIntegerValue());
+                    .parallelize(contents, partitions.getIntValue());
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext()) {
                     throw new UnexpectedTypeException(

@@ -33,12 +33,10 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.BooleanItem;
-import org.rumbledb.items.DecimalItem;
-import org.rumbledb.items.DoubleItem;
-import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -47,6 +45,7 @@ import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
@@ -74,22 +73,21 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         this.contextLookup = lookupIterator instanceof ContextExpressionIterator;
 
         if (!this.contextLookup) {
-            lookupIterator.open(this.currentDynamicContextForLocalExecution);
-            if (lookupIterator.hasNext()) {
-                this.lookupKey = lookupIterator.next();
-            } else {
+
+            try {
+                this.lookupKey = lookupIterator.materializeExactlyOneItem(this.currentDynamicContextForLocalExecution);
+            } catch (NoItemException e) {
                 throw new InvalidSelectorException(
-                        "Invalid Lookup Key; Object lookup can't be performed with zero keys: ",
+                        "Invalid Lookup Key; Object lookup can't be performed with no key.",
+                        getMetadata()
+                );
+            } catch (MoreThanOneItemException e) {
+                throw new InvalidSelectorException(
+                        "Invalid Lookup Key; Object lookup can't be performed with multiple keys.",
                         getMetadata()
                 );
             }
-            if (lookupIterator.hasNext()) {
-                throw new InvalidSelectorException(
-                        "\"Invalid Lookup Key; Object lookup can't be performed with multiple keys: "
-                            + this.lookupKey.serialize(),
-                        getMetadata()
-                );
-            }
+
             if (this.lookupKey.isNull() || this.lookupKey.isObject() || this.lookupKey.isArray()) {
                 throw new UnexpectedTypeException(
                         "Type error; Object selector can't be converted to a string: "
@@ -99,16 +97,19 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             } else {
                 // convert to string
                 if (this.lookupKey.isBoolean()) {
-                    Boolean value = ((BooleanItem) this.lookupKey).getValue();
+                    Boolean value = this.lookupKey.getBooleanValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isDecimal()) {
-                    BigDecimal value = ((DecimalItem) this.lookupKey).getValue();
+                    BigDecimal value = this.lookupKey.getDecimalValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isDouble()) {
-                    Double value = ((DoubleItem) this.lookupKey).getValue();
+                    Double value = this.lookupKey.getDoubleValue();
+                    this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
+                } else if (this.lookupKey.isInt()) {
+                    Integer value = this.lookupKey.getIntValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isInteger()) {
-                    Integer value = ((IntegerItem) this.lookupKey).getValue();
+                    BigInteger value = this.lookupKey.getIntegerValue();
                     this.lookupKey = ItemFactory.getInstance().createStringItem(value.toString());
                 } else if (this.lookupKey.isString()) {
                     // do nothing
@@ -120,7 +121,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             }
-            lookupIterator.close();
         }
     }
 

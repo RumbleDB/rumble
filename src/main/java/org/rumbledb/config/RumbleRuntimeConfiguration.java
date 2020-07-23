@@ -44,6 +44,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private HashMap<String, String> arguments;
 
     List<String> allowedPrefixes;
+    private int resultsSizeCap;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -64,7 +65,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             String argumentValue = args[i + 1];
             this.arguments.put(argumentName, argumentValue);
         }
-        initAllowedURIPrefixes();
+        init();
     }
 
     public static RumbleRuntimeConfiguration getDefaultConfiguration() {
@@ -111,11 +112,16 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.allowedPrefixes = newValue;
     }
 
-    public void initAllowedURIPrefixes() {
+    public void init() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
             this.allowedPrefixes = Arrays.asList();
+        }
+        if (this.arguments.containsKey("result-size")) {
+            this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
+        } else {
+            this.resultsSizeCap = 200;
         }
     }
 
@@ -151,12 +157,24 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
+    /**
+     * Gets the configured number of Items that should be collected in case of a forced materialization. This applies in
+     * particular to a local use of the ItemIterator.
+     *
+     * @return the current number of Items to collect.
+     */
     public int getResultSizeCap() {
-        if (this.arguments.containsKey("result-size")) {
-            return Integer.parseInt(this.arguments.get("result-size"));
-        } else {
-            return 200;
-        }
+        return this.resultsSizeCap;
+    }
+
+    /**
+     * Sets the number of Items that should be collected in case of a forced materialization. This applies in particular
+     * to a local use of the ItemIterator.
+     *
+     * @param cap the maximum number of Items to collect.
+     */
+    public void setResultSizeCap(int i) {
+        this.resultsSizeCap = i;
     }
 
     public String getExternalVariableValue(Name name) {

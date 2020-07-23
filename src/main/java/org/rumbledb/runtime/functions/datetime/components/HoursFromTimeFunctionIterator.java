@@ -28,7 +28,7 @@ public class HoursFromTimeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateItem.getDateTimeValue().getHourOfDay());
+            return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getHourOfDay());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " hours-from-time function",

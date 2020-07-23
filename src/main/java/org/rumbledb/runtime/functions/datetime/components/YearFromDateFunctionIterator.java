@@ -28,7 +28,7 @@ public class YearFromDateFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateItem.getDateTimeValue().getYear());
+            return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getYear());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " year-from-date function",

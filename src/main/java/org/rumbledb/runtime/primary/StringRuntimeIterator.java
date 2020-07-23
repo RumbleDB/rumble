@@ -22,31 +22,37 @@ package org.rumbledb.runtime.primary;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
-
     private static final long serialVersionUID = 1L;
-    private String item;
+    private Item item;
 
     public StringRuntimeIterator(String value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
-        this.item = value;
-        this.item = StringEscapeUtils.unescapeJson(this.item);
+        this.item = ItemFactory.getInstance().createStringItem(StringEscapeUtils.unescapeJson(value));
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(this.item);
+            return this.item;
         }
 
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    }
+
+    @Override
+    public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
+        return this.item;
     }
 }

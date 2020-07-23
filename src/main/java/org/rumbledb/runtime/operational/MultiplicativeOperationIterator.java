@@ -108,7 +108,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } catch (DivisionByZeroException e) {
                 throw new DivisionByZeroException(getMetadata());
             } catch (RuntimeException e) {
-                throw new UnexpectedTypeException(
+                UnexpectedTypeException ute = new UnexpectedTypeException(
                         " \""
                             + this.multiplicativeOperator.toString()
                             + "\": operation not possible with parameters of type \""
@@ -118,6 +118,8 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                             + "\"",
                         getMetadata()
                 );
+                ute.initCause(e);
+                throw ute;
             }
         }
         throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());

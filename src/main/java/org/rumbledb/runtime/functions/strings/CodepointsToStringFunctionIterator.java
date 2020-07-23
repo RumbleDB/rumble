@@ -51,18 +51,18 @@ public class CodepointsToStringFunctionIterator extends LocalFunctionCallIterato
 
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : codepoints) {
-                if (!(item.isInteger())) {
+                if (!(item.isInt())) {
                     throw new UnexpectedTypeException(
-                            "Integer item expected",
+                            "Int item expected",
                             this.children.get(0).getMetadata()
                     );
-                } else if (!(isValidCodePoint(item.getIntegerValue()))) {
+                } else if (!(isValidCodePoint(item.getIntValue()))) {
                     throw new CodepointNotValidException(
-                            "Non-XML-conformant codepoint: " + item.getIntegerValue(),
+                            "Non-XML-conformant codepoint: " + item.getIntValue(),
                             this.children.get(0).getMetadata()
                     );
                 }
-                stringBuilder.appendCodePoint(item.getIntegerValue());
+                stringBuilder.appendCodePoint(item.getIntValue());
             }
             this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());

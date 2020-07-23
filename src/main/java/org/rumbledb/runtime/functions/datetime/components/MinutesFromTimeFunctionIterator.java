@@ -28,7 +28,7 @@ public class MinutesFromTimeFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            return ItemFactory.getInstance().createIntegerItem(this.dateTimeItem.getDateTimeValue().getMinuteOfHour());
+            return ItemFactory.getInstance().createIntItem(this.dateTimeItem.getDateTimeValue().getMinuteOfHour());
         } else {
             throw new IteratorFlowException(
                     RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " minutes-from-time function",

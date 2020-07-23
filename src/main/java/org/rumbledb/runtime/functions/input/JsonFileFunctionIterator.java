@@ -59,7 +59,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
 
         int partitions = -1;
         if (this.children.size() > 1) {
-            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntegerValue();
+            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
         JavaRDD<String> strings;

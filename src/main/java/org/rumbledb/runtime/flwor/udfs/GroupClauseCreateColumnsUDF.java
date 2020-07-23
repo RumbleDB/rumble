@@ -104,7 +104,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            Item count = ItemFactory.getInstance().createIntItem(((Long) longParam).intValue());
             this.longParams.add(count);
         }
 

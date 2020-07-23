@@ -30,7 +30,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
@@ -40,6 +39,7 @@ import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import scala.Tuple2;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -167,9 +167,15 @@ public class PredicateIterator extends HybridRuntimeIterator {
             }
             this.filter.close();
             // if filter is an integer, it is used to return the element(s) with the index equal to the given integer
-            if (fil instanceof IntegerItem) {
-                int index = ((IntegerItem) fil).getIntegerValue();
+            if (fil != null && fil.isInt()) {
+                int index = fil.getIntValue();
                 if (index == this.position) {
+                    this.nextResult = item;
+                    break;
+                }
+            } else if (fil != null && fil.isInteger()) {
+                BigInteger index = fil.getIntegerValue();
+                if (index.equals(BigInteger.valueOf(this.position))) {
                     this.nextResult = item;
                     break;
                 }

@@ -147,7 +147,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
 
     private void init(DynamicContext context) {
         Item positionItem = this.positionIterator.materializeFirstItemOrNull(context);
-        this.insertPosition = positionItem.getIntegerValue();
+        this.insertPosition = positionItem.getIntValue();
     }
 
     public void setNextResult() {
