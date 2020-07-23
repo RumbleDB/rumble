@@ -1,4 +1,4 @@
-package sparksoniq.jsoniq;
+package org.rumbledb.expressions;
 
 public enum ExecutionMode {
     UNSET,

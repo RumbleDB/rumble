@@ -29,6 +29,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -38,7 +39,6 @@ import org.rumbledb.runtime.operational.NotOperationIterator;
 import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import scala.Tuple2;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.Arrays;

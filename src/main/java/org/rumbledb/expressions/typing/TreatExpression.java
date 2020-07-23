@@ -8,11 +8,10 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 
 public class TreatExpression extends Expression {

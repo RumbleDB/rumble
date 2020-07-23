@@ -24,8 +24,6 @@ import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
-import sparksoniq.jsoniq.ExecutionMode;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;

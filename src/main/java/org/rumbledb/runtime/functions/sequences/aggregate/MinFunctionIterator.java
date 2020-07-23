@@ -27,11 +27,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemComparatorForSequences;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.Collections;
 import java.util.List;

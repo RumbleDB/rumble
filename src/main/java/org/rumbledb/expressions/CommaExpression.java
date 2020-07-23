@@ -23,7 +23,6 @@ package org.rumbledb.expressions;
 
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;

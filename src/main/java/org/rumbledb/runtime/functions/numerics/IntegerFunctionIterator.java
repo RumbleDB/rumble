@@ -8,11 +8,11 @@ import org.rumbledb.exceptions.InvalidLexicalValueException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.ItemType;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 

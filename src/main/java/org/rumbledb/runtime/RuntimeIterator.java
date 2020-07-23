@@ -36,8 +36,8 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.ItemType;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

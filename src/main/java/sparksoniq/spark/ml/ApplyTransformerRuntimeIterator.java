@@ -15,8 +15,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
