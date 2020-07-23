@@ -27,7 +27,7 @@ public class Rumble {
     /**
      * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
      *
-     * @param conf a RumbleConf object containing the configuration.
+     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
@@ -37,7 +37,7 @@ public class Rumble {
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
-     * @param query the JSONiq query.
+     * @param query the content of the JSONiq main module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
@@ -56,7 +56,8 @@ public class Rumble {
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
-     * @param query the JSONiq query.
+     * @param location the JSONiq main module location.
+     * @throws java.io.IOException if there was an issue reading a module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
