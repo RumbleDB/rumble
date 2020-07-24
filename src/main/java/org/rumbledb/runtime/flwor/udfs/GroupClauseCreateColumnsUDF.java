@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
  *
  */
 
@@ -44,6 +44,18 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private List<Object> results;
     private ExceptionMetadata metadata;
 
+    // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
+    // The second column is used for strings, with a special value in the first column.
+    // The third column is used for numbers (as a double), with a special value in the first column.
+    private static int emptySequenceGroupIndex = 1;
+    private static int nullGroupIndex = 2;
+    private static int booleanTrueGroupIndex = 3;
+    private static int booleanFalseGroupIndex = 4;
+    private static int stringGroupIndex = 5;
+    private static int doubleGroupIndex = 5;
+    private static int durationGroupIndex = 5;
+    private static int dateTimeGroupIndex = 5;
+
     public GroupClauseCreateColumnsUDF(
             List<Name> groupingVariableNames,
             DynamicContext context,
@@ -53,6 +65,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
         this.groupingVariableNames = groupingVariableNames;
         this.results = new ArrayList<>();
+        this.metadata = metadata;
     }
 
     @Override
@@ -62,93 +75,84 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
         this.results.clear();
 
         for (Name groupingVariableName : this.groupingVariableNames) {
-            // nulls, true, false and empty sequences have special grouping captured in the first grouping column.
-            // The second column is used for strings, with a special value in the first column.
-            // The third column is used for numbers (as a double), with a special value in the first column.
-            int emptySequenceGroupIndex = 1;
-            int nullGroupIndex = 2;
-            int booleanTrueGroupIndex = 3;
-            int booleanFalseGroupIndex = 4;
-            int stringGroupIndex = 5;
-            int doubleGroupIndex = 5;
-            int durationGroupIndex = 5;
-            int dateTimeGroupIndex = 5;
-
-            boolean isEmptySequence = true;
             List<Item> items = this.dataFrameContext.getContext()
                 .getVariableValues()
                 .getLocalVariableValue(
                     groupingVariableName,
                     this.metadata
                 );
-            if (items.size() >= 1) {
-                isEmptySequence = false;
-                Item nextItem = items.get(0);
-                if (nextItem.isNull()) {
-                    this.results.add(nullGroupIndex);
-                    this.results.add(null);
-                    this.results.add(null);
-                    this.results.add(null);
-                } else if (nextItem.isBoolean()) {
-                    if (nextItem.getBooleanValue()) {
-                        this.results.add(booleanTrueGroupIndex);
-                    } else {
-                        this.results.add(booleanFalseGroupIndex);
-                    }
-                    this.results.add(null);
-                    this.results.add(null);
-                    this.results.add(null);
-                } else if (nextItem.isString() || nextItem.isHexBinary() || nextItem.isBase64Binary()) {
-                    this.results.add(stringGroupIndex);
-                    this.results.add(nextItem.getStringValue());
-                    this.results.add(null);
-                    this.results.add(null);
-                } else if (nextItem.isInteger()) {
-                    this.results.add(doubleGroupIndex);
-                    this.results.add(null);
-                    this.results.add(nextItem.castToDoubleValue());
-                    this.results.add(null);
-                } else if (nextItem.isDecimal()) {
-                    this.results.add(doubleGroupIndex);
-                    this.results.add(null);
-                    this.results.add(nextItem.castToDoubleValue());
-                    this.results.add(null);
-                } else if (nextItem.isDouble()) {
-                    this.results.add(doubleGroupIndex);
-                    this.results.add(null);
-                    this.results.add(nextItem.getDoubleValue());
-                    this.results.add(null);
-                } else if (nextItem.isDuration()) {
-                    this.results.add(durationGroupIndex);
-                    this.results.add(null);
-                    this.results.add(null);
-                    this.results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
-                } else if (nextItem.hasDateTime()) {
-                    this.results.add(dateTimeGroupIndex);
-                    this.results.add(null);
-                    this.results.add(null);
-                    this.results.add(nextItem.getDateTimeValue().getMillis());
-                } else {
-                    throw new UnexpectedTypeException(
-                            "Group by variable can not contain arrays or objects.",
-                            this.metadata
-                    );
-                }
-            }
+
             if (items.size() > 1) {
                 throw new UnexpectedTypeException(
                         "Can not group on variables with sequences of multiple items.",
                         this.metadata
                 );
             }
-            if (isEmptySequence) {
+
+            if (items.size() == 0) {
                 this.results.add(emptySequenceGroupIndex);
                 this.results.add(null);
                 this.results.add(null);
                 this.results.add(null);
             }
 
+            Item nextItem = items.get(0);
+            this.createColumnsForItem(nextItem);
         }
+
         return RowFactory.create(this.results.toArray());
+    }
+
+    private void createColumnsForItem(Item nextItem) {
+        if (nextItem.isNull()) {
+            this.results.add(nullGroupIndex);
+            this.results.add(null);
+            this.results.add(null);
+            this.results.add(null);
+        } else if (nextItem.isBoolean()) {
+            if (nextItem.getBooleanValue()) {
+                this.results.add(booleanTrueGroupIndex);
+            } else {
+                this.results.add(booleanFalseGroupIndex);
+            }
+            this.results.add(null);
+            this.results.add(null);
+            this.results.add(null);
+        } else if (nextItem.isString() || nextItem.isHexBinary() || nextItem.isBase64Binary()) {
+            this.results.add(stringGroupIndex);
+            this.results.add(nextItem.getStringValue());
+            this.results.add(null);
+            this.results.add(null);
+        } else if (nextItem.isInteger()) {
+            this.results.add(doubleGroupIndex);
+            this.results.add(null);
+            this.results.add(nextItem.castToDoubleValue());
+            this.results.add(null);
+        } else if (nextItem.isDecimal()) {
+            this.results.add(doubleGroupIndex);
+            this.results.add(null);
+            this.results.add(nextItem.castToDoubleValue());
+            this.results.add(null);
+        } else if (nextItem.isDouble()) {
+            this.results.add(doubleGroupIndex);
+            this.results.add(null);
+            this.results.add(nextItem.getDoubleValue());
+            this.results.add(null);
+        } else if (nextItem.isDuration()) {
+            this.results.add(durationGroupIndex);
+            this.results.add(null);
+            this.results.add(null);
+            this.results.add(nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis());
+        } else if (nextItem.hasDateTime()) {
+            this.results.add(dateTimeGroupIndex);
+            this.results.add(null);
+            this.results.add(null);
+            this.results.add(nextItem.getDateTimeValue().getMillis());
+        } else {
+            throw new UnexpectedTypeException(
+                    "Group by variable can not contain arrays or objects.",
+                    this.metadata
+            );
+        }
     }
 }
