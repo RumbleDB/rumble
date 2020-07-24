@@ -34,8 +34,10 @@ import java.util.Map;
 public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, byte[]> {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator expression;
+
     private DataFrameContext dataFrameContext;
+    private RuntimeIterator expression;
+
     private List<Item> nextResult;
 
     public LetClauseUDF(
@@ -43,8 +45,8 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
     ) {
-        this.expression = expression;
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.expression = expression;
         this.nextResult = new ArrayList<>();
     }
 
