@@ -24,10 +24,10 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
@@ -41,19 +41,39 @@ import java.util.Map;
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     private static final long serialVersionUID = 1L;
+    private Map<String, List<String>> columnNamesByType;
+    private List<Name> serializedVariableNames;
+    private List<Name> countedVariableNames;
+    private List<List<Item>> deserializedParams;
     private RuntimeIterator expression;
-    private StructType oldSchema;
-    private DynamicContext parentContext;
+    private List<Item> longParams;
     private DynamicContext context;
 
     private transient Kryo kryo;
     private transient Input input;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
+    public ReturnFlatMapClosure(
+            RuntimeIterator expression,
+            DynamicContext context,
+            Map<String, List<String>> columnNamesByType
+    ) {
         this.expression = expression;
-        this.oldSchema = oldSchema;
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
+        this.columnNamesByType = columnNamesByType;
+        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
+        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
+        for (String columnName : serializedColumNames) {
+            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
+        List<String> countedColumNames = this.columnNamesByType.get("Long");
+        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
+        for (String columnName : countedColumNames) {
+            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        }
+
+        this.deserializedParams = new ArrayList<>();
+        this.longParams = new ArrayList<>();
+
+        this.context = new DynamicContext(context);
 
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
@@ -63,22 +83,37 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     @Override
     public Iterator<Item> call(Row row) {
-        String[] columnNames = this.oldSchema.fieldNames();
+        this.deserializedParams.clear();
+
         Map<Name, DynamicContext.VariableDependency> dependencies = this.expression
             .getVariableDependencies();
         this.context.getVariableValues().removeAllVariables();
         // Create dynamic context with deserialized data but only with dependencies
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            Name field = Name.createVariableInNoNamespace(columnNames[columnIndex]);
+        for (Name field : this.serializedVariableNames) {
             if (dependencies.containsKey(field)) {
+                int columnIndex = row.fieldIndex(field.getLocalName());
                 List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
-                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    this.context.getVariableValues().addVariableCount(field, i.get(0));
-                } else {
-                    this.context.getVariableValues().addVariableValue(field, i);
-                }
+                this.deserializedParams.add(i);
             }
         }
+        for (Name field : this.countedVariableNames) {
+            if (dependencies.containsKey(field)) {
+                int columnIndex = row.fieldIndex(field.getLocalName());
+                long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
+                Item i = ItemFactory.getInstance().createLongItem(count);
+                this.longParams.add(i);
+            }
+        }
+
+        FlworDataFrameUtils.prepareDynamicContext(
+            this.context,
+            this.serializedVariableNames,
+            this.countedVariableNames,
+            this.deserializedParams,
+            this.longParams
+        );
+
+
 
         // Apply expression to the context
         List<Item> results = new ArrayList<>();

@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -38,8 +39,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 

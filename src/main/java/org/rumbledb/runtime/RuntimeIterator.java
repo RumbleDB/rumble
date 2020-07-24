@@ -34,10 +34,12 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.ItemType;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -45,6 +47,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
@@ -106,8 +109,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 result = item.getBooleanValue();
             } else if (item.isNumeric()) {
                 if (position == null) {
-                    if (item.isInteger()) {
-                        result = item.getIntegerValue() != 0;
+                    if (item.isInt()) {
+                        result = item.getIntValue() != 0;
+                    } else if (item.isInteger()) {
+                        result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
                     } else if (item.isDecimal()) {
@@ -259,6 +264,23 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     ) {
         this.open(context);
         Item result = this.hasNext() ? this.next() : null;
+        this.close();
+        return result;
+    }
+
+    public Item materializeExactlyOneItem(
+            DynamicContext context
+    )
+            throws NoItemException,
+                MoreThanOneItemException {
+        this.open(context);
+        if (!this.hasNext()) {
+            throw new NoItemException();
+        }
+        Item result = this.next();
+        if (this.hasNext()) {
+            throw new MoreThanOneItemException();
+        }
         this.close();
         return result;
     }

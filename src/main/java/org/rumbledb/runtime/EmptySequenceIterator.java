@@ -23,7 +23,7 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import sparksoniq.jsoniq.ExecutionMode;
+import org.rumbledb.expressions.ExecutionMode;
 
 public class EmptySequenceIterator extends LocalRuntimeIterator {
 

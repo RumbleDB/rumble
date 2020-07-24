@@ -12,6 +12,7 @@ import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -28,6 +29,22 @@ import java.util.EnumSet;
 import java.util.List;
 
 public class FileSystemUtil {
+
+    public static void checkAllowed(URI uri, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+        List<String> prefixes = conf.getAllowedURIPrefixes();
+        if (prefixes.isEmpty()) {
+            return;
+        }
+        for (String prefix : prefixes) {
+            if (uri.toString().startsWith(prefix)) {
+                return;
+            }
+        }
+        throw new CannotRetrieveResourceException(
+                "URI disallowed: " + uri,
+                metadata
+        );
+    }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
         if (url == null || url.isEmpty()) {
@@ -54,7 +71,11 @@ public class FileSystemUtil {
         }
     }
 
-    public static URI resolveURIAgainstWorkingDirectory(String url, ExceptionMetadata metadata) {
+    public static URI resolveURIAgainstWorkingDirectory(
+            String url,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path workingDirectory = fileContext.getWorkingDirectory();
@@ -85,10 +106,11 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean exists(URI locator, ExceptionMetadata metadata) {
+    public static boolean exists(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         if (!locator.isAbsolute()) {
             throw new OurBadException("Unresolved uri passed to exists()");
         }
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -100,8 +122,9 @@ public class FileSystemUtil {
         }
     }
 
-    public static boolean delete(URI locator, ExceptionMetadata metadata) {
+    public static boolean delete(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -118,11 +141,16 @@ public class FileSystemUtil {
         }
     }
 
-    public static InputStream getDataInputStream(URI locator, ExceptionMetadata metadata) {
-        if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
-            return getDataInputStreamHTML(locator, metadata);
-        }
+    public static InputStream getDataInputStream(
+            URI locator,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
+        checkAllowed(locator, conf, metadata);
+        if (locator.getScheme().equals("http") || locator.getScheme().equals("https")) {
+            return getDataInputStreamHTML(locator, conf, metadata);
+        }
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -136,7 +164,12 @@ public class FileSystemUtil {
         }
     }
 
-    public static InputStream getDataInputStreamHTML(URI locator, ExceptionMetadata metadata) {
+    public static InputStream getDataInputStreamHTML(
+            URI locator,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
+        checkAllowed(locator, conf, metadata);
         CloseableHttpClient httpclient = HttpClients.createDefault();
         HttpGet httpGet = new HttpGet(locator);
         try {
@@ -158,8 +191,10 @@ public class FileSystemUtil {
         return null;
     }
 
-    public static String readContent(URI locator, ExceptionMetadata metadata) {
-        InputStream inputStream = getDataInputStream(locator, metadata);
+    public static String readContent(URI locator, RumbleRuntimeConfiguration conf, ExceptionMetadata metadata) {
+        checkForAbsoluteAndNoWildcards(locator, metadata);
+        checkAllowed(locator, conf, metadata);
+        InputStream inputStream = getDataInputStream(locator, conf, metadata);
         BufferedReader reader = new BufferedReader(new InputStreamReader(inputStream));
         StringBuffer sb = new StringBuffer();
         String line;
@@ -174,8 +209,14 @@ public class FileSystemUtil {
         }
     }
 
-    public static void write(URI locator, List<String> content, ExceptionMetadata metadata) {
+    public static void write(
+            URI locator,
+            List<String> content,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);
@@ -193,8 +234,14 @@ public class FileSystemUtil {
         }
     }
 
-    public static void append(URI locator, List<String> content, ExceptionMetadata metadata) {
+    public static void append(
+            URI locator,
+            List<String> content,
+            RumbleRuntimeConfiguration conf,
+            ExceptionMetadata metadata
+    ) {
         checkForAbsoluteAndNoWildcards(locator, metadata);
+        checkAllowed(locator, conf, metadata);
         try {
             FileContext fileContext = FileContext.getFileContext();
             Path path = new Path(locator);

@@ -81,7 +81,7 @@ public class BooleanItem extends AtomicItem {
             return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
         }
         if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.hashCode());
+            return ItemFactory.getInstance().createIntItem(this.hashCode());
         }
         if (itemType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));

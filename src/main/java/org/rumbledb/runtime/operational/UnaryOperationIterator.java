@@ -25,12 +25,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Collections;
 
 public class UnaryOperationIterator extends LocalRuntimeIterator {
@@ -60,8 +61,12 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
 
             if (this.negated) {
                 if (child.isNumeric()) {
+                    if (child.isInt()) {
+                        return ItemFactory.getInstance().createIntItem(-1 * child.getIntValue());
+                    }
                     if (child.isInteger()) {
-                        return ItemFactory.getInstance().createIntegerItem(-1 * child.getIntegerValue());
+                        return ItemFactory.getInstance()
+                            .createIntegerItem(BigInteger.valueOf(-1).multiply(child.getIntegerValue()));
                     }
                     if (child.isDouble()) {
                         return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());

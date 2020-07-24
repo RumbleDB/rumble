@@ -27,10 +27,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 public class RangeOperationIterator extends LocalRuntimeIterator {
 
@@ -63,7 +63,7 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
             if (this.index == this.right) {
                 this.hasNext = false;
             }
-            return ItemFactory.getInstance().createIntegerItem(this.index++);
+            return ItemFactory.getInstance().createIntItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
@@ -94,8 +94,8 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
                 );
             }
             try {
-                this.left = left.castToIntegerValue();
-                this.right = right.castToIntegerValue();
+                this.left = left.castToIntValue();
+                this.right = right.castToIntValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

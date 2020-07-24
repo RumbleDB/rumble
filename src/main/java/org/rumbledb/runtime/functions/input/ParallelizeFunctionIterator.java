@@ -25,9 +25,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -76,7 +77,7 @@ public class ParallelizeFunctionIterator extends RDDRuntimeIterator {
             try {
                 rdd = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .parallelize(contents, partitions.getIntegerValue());
+                    .parallelize(contents, partitions.getIntValue());
             } catch (Exception e) {
                 if (!partitionsIterator.hasNext()) {
                     throw new UnexpectedTypeException(

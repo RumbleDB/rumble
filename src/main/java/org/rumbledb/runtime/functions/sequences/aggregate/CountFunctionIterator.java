@@ -26,11 +26,11 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 import java.util.Map;
@@ -68,7 +68,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             if (!iterator.isRDD()) {
                 List<Item> results = iterator.materialize(this.currentDynamicContextForLocalExecution);
                 this.hasNext = false;
-                return ItemFactory.getInstance().createIntegerItem(results.size());
+                return ItemFactory.getInstance().createIntItem(results.size());
             }
 
             long count;
@@ -82,7 +82,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 // TODO: handle too big x values
                 throw new OurBadException("The count value is too big to convert to integer type.");
             } else {
-                return ItemFactory.getInstance().createIntegerItem((int) count);
+                return ItemFactory.getInstance().createIntItem((int) count);
             }
         } else {
             throw new IteratorFlowException(

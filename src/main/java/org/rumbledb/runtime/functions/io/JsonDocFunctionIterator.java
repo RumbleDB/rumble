@@ -26,12 +26,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.InputStream;
 import java.net.URI;
@@ -70,7 +69,11 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                     path.getStringValue(),
                     getMetadata()
                 );
-                InputStream is = FileSystemUtil.getDataInputStream(uri, getMetadata());
+                InputStream is = FileSystemUtil.getDataInputStream(
+                    uri,
+                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                    getMetadata()
+                );
                 JsonIterator object = JsonIterator.parse(is, 1024);
                 return ItemParser.getItemFromObject(object, getMetadata());
             } catch (IteratorFlowException e) {

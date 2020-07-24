@@ -33,11 +33,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
@@ -47,7 +50,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Integer lookup;
+    private int lookup;
     private Item nextResult;
 
     public ArrayLookupIterator(
@@ -90,30 +93,28 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     private void initLookupPosition() {
         RuntimeIterator lookupIterator = this.children.get(1);
 
-        lookupIterator.open(this.currentDynamicContextForLocalExecution);
-        Item lookupExpression = null;
-        if (lookupIterator.hasNext()) {
-            lookupExpression = lookupIterator.next();
-        }
-        if (lookupIterator.hasNext()) {
-            throw new InvalidSelectorException(
-                    "\"Invalid Lookup Key; Array lookup can't be performed with multiple keys: "
-                        + lookupExpression.serialize(),
-                    getMetadata()
-            );
-        }
-        if (!lookupExpression.isNumeric()) {
-            throw new UnexpectedTypeException(
-                    "Type error; Non numeric array lookup for : "
-                        + lookupExpression.serialize(),
-                    getMetadata()
-            );
-        }
-        lookupIterator.close();
         try {
-            this.lookup = lookupExpression.castToIntegerValue();
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+            Item lookupExpression = lookupIterator.materializeExactlyOneItem(
+                this.currentDynamicContextForLocalExecution
+            );
+            if (!lookupExpression.isNumeric()) {
+                throw new UnexpectedTypeException(
+                        "Type error; Non numeric array lookup for : "
+                            + lookupExpression.serialize(),
+                        getMetadata()
+                );
+            }
+            this.lookup = lookupExpression.castToIntValue();
+        } catch (NoItemException e) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with no key.",
+                    getMetadata()
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new InvalidSelectorException(
+                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.",
+                    getMetadata()
+            );
         }
     }
 

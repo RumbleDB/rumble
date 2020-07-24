@@ -29,10 +29,11 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
@@ -56,7 +57,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, getMetadata())) {
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         Item optionsObjectItem;
@@ -72,8 +73,10 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
                         dfr.option(keys.get(i), value.getBooleanValue());
                     } else if (value.isString()) {
                         dfr.option(keys.get(i), value.getStringValue());
+                    } else if (value.isInt()) {
+                        dfr.option(keys.get(i), value.getIntValue());
                     } else if (value.isInteger()) {
-                        dfr.option(keys.get(i), value.getIntegerValue());
+                        dfr.option(keys.get(i), value.getIntegerValue().doubleValue());
                     } else if (value.isDecimal()) {
                         dfr.option(keys.get(i), value.getDecimalValue().doubleValue());
                     } else if (value.isDouble()) {

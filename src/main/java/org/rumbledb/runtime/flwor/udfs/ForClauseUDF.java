@@ -106,7 +106,7 @@ public class ForClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
         // actual sequence was avoided upfront.
         Object[] longParams = (Object[]) wrappedParametersLong.array();
         for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createIntegerItem(((Long) longParam).intValue());
+            Item count = ItemFactory.getInstance().createLongItem(((Long) longParam).longValue());
             this.longParams.add(count);
         }
 

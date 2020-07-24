@@ -27,10 +27,10 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.List;
 
@@ -61,7 +61,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
         JavaPairRDD<Item, Long> filteredRDD = zippedRDD.filter((item) -> item._1().equals(this.search));
-        return filteredRDD.map((item) -> ItemFactory.getInstance().createIntegerItem(item._2.intValue() + 1));
+        return filteredRDD.map((item) -> ItemFactory.getInstance().createIntItem(item._2.intValue() + 1));
     }
 
     @Override
@@ -112,7 +112,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                 );
             } else {
                 if (item.compareTo(this.search) == 0) {
-                    this.nextResult = ItemFactory.getInstance().createIntegerItem(this.currentIndex);
+                    this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }
             }

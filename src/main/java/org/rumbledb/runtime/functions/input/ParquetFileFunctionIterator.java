@@ -26,9 +26,10 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
@@ -53,7 +54,7 @@ public class ParquetFileFunctionIterator extends DataFrameRuntimeIterator {
         String url = urlIterator.next().getStringValue();
         urlIterator.close();
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
-        if (!FileSystemUtil.exists(uri, getMetadata())) {
+        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
         try {

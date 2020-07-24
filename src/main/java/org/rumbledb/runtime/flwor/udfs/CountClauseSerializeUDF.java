@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.IntItem;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import java.io.IOException;
@@ -53,7 +53,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
     @Override
     public byte[] call(Long countIndex) {
         this.nextResult.clear();
-        this.nextResult.add(new IntegerItem(countIndex.intValue()));
+        this.nextResult.add(new IntItem(countIndex.intValue()));
 
         return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
     }

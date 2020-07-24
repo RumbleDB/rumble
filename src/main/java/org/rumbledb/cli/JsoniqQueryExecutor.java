@@ -22,14 +22,12 @@ package org.rumbledb.cli;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.optimizations.Profiler;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -50,13 +48,13 @@ public class JsoniqQueryExecutor {
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
-        if (FileSystemUtil.exists(outputUri, ExceptionMetadata.EMPTY_METADATA)) {
+        if (FileSystemUtil.exists(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
             if (!this.configuration.getOverwrite()) {
                 throw new CliException(
                         "Output path " + outputUri + " already exists. Please use --overwrite yes to overwrite."
                 );
             } else {
-                FileSystemUtil.delete(outputUri, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.delete(outputUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             }
         }
     }
@@ -65,46 +63,52 @@ public class JsoniqQueryExecutor {
         String queryFile = this.configuration.getQueryPath();
         URI queryUri = null;
         if (queryFile != null) {
-            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(queryFile, ExceptionMetadata.EMPTY_METADATA);
+            queryUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                queryFile,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
         }
         String outputPath = this.configuration.getOutputPath();
         URI outputUri = null;
         if (outputPath != null) {
-            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(outputPath, ExceptionMetadata.EMPTY_METADATA);
+            outputUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                outputPath,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
             checkOutputFile(outputUri);
         }
 
         String logPath = this.configuration.getLogPath();
         URI logUri = null;
         if (logPath != null) {
-            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(logPath, ExceptionMetadata.EMPTY_METADATA);
-            if (FileSystemUtil.exists(logUri, ExceptionMetadata.EMPTY_METADATA)) {
-                FileSystemUtil.delete(logUri, ExceptionMetadata.EMPTY_METADATA);
+            logUri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                logPath,
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            if (FileSystemUtil.exists(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA)) {
+                FileSystemUtil.delete(logUri, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             }
         }
 
         List<Item> outputList = null;
 
         long startTime = System.currentTimeMillis();
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(queryUri, this.configuration);
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator result = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            result.print(sb, 0);
-            System.out.println(sb);
-        }
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = rumble.runQuery(queryUri);
 
-        if (result.isRDD() && outputPath != null) {
-            JavaRDD<Item> rdd = result.getRDD(dynamicContext);
+        if (sequence.availableAsRDD() && outputPath != null) {
+            JavaRDD<Item> rdd = sequence.getAsRDD();
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = new ArrayList<>();
-            long materializationCount = getIteratorOutput(result, dynamicContext, outputList);
+            long materializationCount = sequence.populateList(outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
-                FileSystemUtil.write(outputUri, lines, ExceptionMetadata.EMPTY_METADATA);
+                FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             } else {
                 System.out.println(String.join("\n", lines));
             }
@@ -124,60 +128,25 @@ public class JsoniqQueryExecutor {
         if (logPath != null) {
             String time = "[ExecTime] " + totalTime;
             time += "\n[ProfilerCount] " + Profiler.get();
-            FileSystemUtil.append(logUri, Collections.singletonList(time), ExceptionMetadata.EMPTY_METADATA);
+            FileSystemUtil.append(
+                logUri,
+                Collections.singletonList(time),
+                this.configuration,
+                ExceptionMetadata.EMPTY_METADATA
+            );
         }
         return outputList;
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
-        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(query, this.configuration);
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
-        RuntimeIterator runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, this.configuration);
-        // execute locally for simple expressions
-        if (this.configuration.isPrintIteratorTree()) {
-            StringBuffer sb = new StringBuffer();
-            runtimeIterator.print(sb, 0);
-            System.out.println(sb);
-        }
-        if (!runtimeIterator.isRDD()) {
-            return this.getIteratorOutput(runtimeIterator, dynamicContext, resultList);
+        Rumble rumble = new Rumble(this.configuration);
+        SequenceOfItems sequence = rumble.runQuery(query);
+        if (!sequence.availableAsRDD()) {
+            return sequence.populateList(resultList);
         }
         resultList.clear();
-        JavaRDD<Item> rdd = runtimeIterator.getRDD(dynamicContext);
+        JavaRDD<Item> rdd = sequence.getAsRDD();
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
     }
 
-    private long getIteratorOutput(RuntimeIterator iterator, DynamicContext dynamicContext, List<Item> resultList) {
-        resultList.clear();
-        iterator.open(dynamicContext);
-        Item result = null;
-        if (iterator.hasNext()) {
-            result = iterator.next();
-        }
-        if (result == null) {
-            return -1;
-        }
-        Item singleOutput = result;
-        if (!iterator.hasNext()) {
-            resultList.add(singleOutput);
-            return -1;
-        } else {
-            int itemCount = 1;
-            resultList.add(result);
-            while (
-                iterator.hasNext()
-                    &&
-                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
-                        ||
-                        this.configuration.getResultSizeCap() == 0)
-            ) {
-                resultList.add(iterator.next());
-                itemCount++;
-            }
-            if (iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
-                return Long.MAX_VALUE;
-            }
-            return -1;
-        }
-    }
 }
