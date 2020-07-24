@@ -38,7 +38,6 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     public WhereClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
