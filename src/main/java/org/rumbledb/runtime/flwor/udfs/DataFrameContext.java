@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
  *
  */
 
@@ -38,6 +38,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * This class exposes a reusable context that is dynamically populated from the input tuples stored in DataFrames.
+ * It also pools Kryo objects, inputs and outputs for better performance.
+ * This class is meant to be used by various FLWOR clauses to get a context in which to evaluate their expressions.
+ * 
+ * @author Ghislain Fourny
+ *
+ */
 public class DataFrameContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
@@ -52,6 +60,13 @@ public class DataFrameContext implements Serializable {
     private transient Output output;
     private transient Input input;
 
+    /**
+     * Builds a new data frame context.
+     * 
+     * @param context the parent dynamic context, which contains all variable values except those in input tuples.
+     * @param columnNamesByType the names of the DataFrame column names applicable to the calling clause, organized by
+     *        types (currently Long for non-materialized counts, or byte[] for serialized sequences).
+     */
     public DataFrameContext(
             DynamicContext context,
             Map<String, List<String>> columnNamesByType
@@ -80,7 +95,17 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
-
+    /**
+     * Sets the context from parameters passed to a Spark SQL UDF.
+     * 
+     * @param wrappedParameters An array, the members of which are each the serialization of a sequence of items. The
+     *        size of the array must match the number of DataFrame columns associated with the type byte[].
+     * @param wrappedParametersLong An array, the members of which are each the overall count of a (non-materialized)
+     *        sequence of items. The size of the array must match the number of DataFrame columns associated with the
+     *        type Long.
+     * 
+     * @return nothing.
+     */
     public void setFromWrappedParameters(
             WrappedArray<byte[]> wrappedParameters,
             WrappedArray<Long> wrappedParametersLong
@@ -112,6 +137,13 @@ public class DataFrameContext implements Serializable {
         );
     }
 
+    /**
+     * Sets the context from a DataFrame row.
+     * 
+     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
+     * 
+     * @return nothing.
+     */
     public void setFromRow(Row row) {
         this.deserializedParams.clear();
         this.context.getVariableValues().removeAllVariables();
@@ -139,18 +171,39 @@ public class DataFrameContext implements Serializable {
         );
     }
 
+    /**
+     * Gets the currently populated dynamic context. It is a child of the context passed to the constructor,
+     * populated with the current input tuple with one of the two set* functions.
+     * 
+     * @return the dynamic context, for evaluating and expression.
+     */
     public DynamicContext getContext() {
         return this.context;
     }
 
+    /**
+     * Gets a Kryo output that the caller can use for serialization purposes.
+     * 
+     * @return a Kryo output.
+     */
     public Output getOutput() {
         return this.output;
     }
 
+    /**
+     * Gets a Kryo object that the caller can use for serialization and deserialization purposes.
+     * 
+     * @return a Kryo.
+     */
     public Kryo getKryo() {
         return this.kryo;
     }
 
+    /**
+     * Gets a Kryo input that the caller can use for deserialization purposes.
+     * 
+     * @return a Kryo input.
+     */
     public Input getInput() {
         return this.input;
     }
