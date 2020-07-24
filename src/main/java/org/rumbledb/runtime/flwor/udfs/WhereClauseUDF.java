@@ -21,7 +21,6 @@
 package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.api.java.UDF2;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.collection.mutable.WrappedArray;

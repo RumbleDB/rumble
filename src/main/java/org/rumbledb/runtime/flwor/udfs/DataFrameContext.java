@@ -61,6 +61,18 @@ public class DataFrameContext implements Serializable {
     private transient Input input;
 
     /**
+     * Builds a new data frame context that only serves to pool Kryo objects.
+     * The only allowed methods are getKryo, getInput and getOutput.
+     */
+    public DataFrameContext() {
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
+    }
+
+    /**
      * Builds a new data frame context.
      * 
      * @param context the parent dynamic context, which contains all variable values except those in input tuples.
