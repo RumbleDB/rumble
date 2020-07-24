@@ -104,7 +104,6 @@ public class DataFrameContext implements Serializable {
      *        sequence of items. The size of the array must match the number of DataFrame columns associated with the
      *        type Long.
      * 
-     * @return nothing.
      */
     public void setFromWrappedParameters(
             WrappedArray<byte[]> wrappedParameters,
@@ -142,7 +141,6 @@ public class DataFrameContext implements Serializable {
      * 
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.
      * 
-     * @return nothing.
      */
     public void setFromRow(Row row) {
         this.deserializedParams.clear();

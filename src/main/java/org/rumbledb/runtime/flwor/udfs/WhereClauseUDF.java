@@ -14,44 +14,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
  *
  */
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.sql.api.java.UDF2;
 import org.apache.spark.sql.types.StructType;
-import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
 public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
     private static final long serialVersionUID = 1L;
+
+    private DataFrameContext dataFrameContext;
     private RuntimeIterator expression;
-
-    private Map<String, List<String>> columnNamesByType;
-    private List<Name> serializedVariableNames;
-    private List<Name> countedVariableNames;
-
-    private List<List<Item>> deserializedParams;
-    private List<Item> longParams;
-    private DynamicContext context;
-    private DynamicContext parentContext;
-
-    private transient Kryo kryo;
-    private transient Input input;
 
     public WhereClauseUDF(
             RuntimeIterator expression,
@@ -59,76 +41,17 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
             StructType inputSchema,
             Map<String, List<String>> columnNamesByType
     ) {
+        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
         this.expression = expression;
-
-        this.deserializedParams = new ArrayList<>();
-        this.longParams = new ArrayList<>();
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
-
-        this.columnNamesByType = columnNamesByType;
-        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
-        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
-        for (String columnName : serializedColumNames) {
-            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
-        List<String> countedColumNames = this.columnNamesByType.get("Long");
-        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
-        for (String columnName : countedColumNames) {
-            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
-
     }
-
 
     @Override
     public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.deserializedParams.clear();
-        this.context.getVariableValues().removeAllVariables();
+        this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
 
-        FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
-
-        // Long parameters correspond to pre-computed counts, when a materialization of the
-        // actual sequence was avoided upfront.
-        Object[] longParams = (Object[]) wrappedParametersLong.array();
-        for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createIntItem(((Long) longParam).intValue());
-            this.longParams.add(count);
-        }
-
-        FlworDataFrameUtils.prepareDynamicContext(
-            this.context,
-            this.serializedVariableNames,
-            this.countedVariableNames,
-            this.deserializedParams,
-            this.longParams
-        );
-
-        // apply expression in the dynamic context
-        this.expression.open(this.context);
+        this.expression.open(this.dataFrameContext.getContext());
         boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
         this.expression.close();
         return result;
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
     }
 }
