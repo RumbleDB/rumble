@@ -91,6 +91,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                     this.results.add(emptySequenceOrderIndexFirst);
                 }
                 this.results.add(null); // placeholder for valueColumn(2nd column)
+                iterator.close();
                 continue;
             }
             while (iterator.hasNext()) {
