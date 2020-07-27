@@ -47,21 +47,13 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
         this.expression = expression;
-
         this.results = new ArrayList<>();
     }
 
     @Override
     public Iterator<Item> call(Row row) {
         this.dataFrameContext.setFromRow(row);
-
-        this.results.clear();
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            results.add(this.expression.next());
-        }
-        this.expression.close();
-
+        this.expression.materialize(this.dataFrameContext.getContext(), this.results);
         return results.iterator();
     }
 }
