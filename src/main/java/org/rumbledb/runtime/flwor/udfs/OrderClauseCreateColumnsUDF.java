@@ -37,6 +37,7 @@ import scala.collection.mutable.WrappedArray;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Vector;
 
 public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
@@ -44,7 +45,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Map<Integer, String> allColumnTypes;
+    private Vector<String> sortingKeyTypes;
 
     private List<Object> results;
 
@@ -60,12 +61,12 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            Map<Integer, String> allColumnTypes,
+            Vector<String> sortingKeyTypes,
             Map<String, List<String>> columnNamesByType
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
         this.expressionsWithIterator = expressionsWithIterator;
-        this.allColumnTypes = allColumnTypes;
+        this.sortingKeyTypes = sortingKeyTypes;
 
         this.results = new ArrayList<>();
     }
@@ -81,17 +82,15 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 expressionIndex
             );
 
-            int emptySequenceOrderIndex = OrderClauseCreateColumnsUDF.emptySequenceOrderIndexFirst;
-            if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
-                emptySequenceOrderIndex = OrderClauseCreateColumnsUDF.emptySequenceOrderIndexLast;
-            }
-
-
             // apply expression in the dynamic context
             RuntimeIterator iterator = expressionWithIterator.getIterator();
             iterator.open(this.dataFrameContext.getContext());
             if (!iterator.hasNext()) {
-                this.results.add(emptySequenceOrderIndex);
+                if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
+                    this.results.add(emptySequenceOrderIndexLast);
+                } else {
+                    this.results.add(emptySequenceOrderIndexFirst);
+                }
                 this.results.add(null); // placeholder for valueColumn(2nd column)
                 continue;
             }
@@ -116,7 +115,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             this.results.add(valueOrderIndex);
 
             // extract type information for the sorting column
-            String typeName = this.allColumnTypes.get(expressionIndex);
+            String typeName = this.sortingKeyTypes.get(expressionIndex);
             try {
                 if (typeName.equals(ItemType.booleanItem.getName())) {
                     this.results.add(nextItem.getBooleanValue());
