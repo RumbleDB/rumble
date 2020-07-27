@@ -94,6 +94,7 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
                 this.results.add(null);
                 this.results.add(null);
                 this.results.add(null);
+                continue;
             }
 
             Item nextItem = items.get(0);
