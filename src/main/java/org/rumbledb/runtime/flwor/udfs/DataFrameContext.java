@@ -122,7 +122,7 @@ public class DataFrameContext implements Serializable {
             WrappedArray<Long> wrappedParametersLong
     ) {
         this.deserializedParams.clear();
-        this.context.getVariableValues().removeAllVariables();
+        this.longParams.clear();
 
         FlworDataFrameUtils.deserializeWrappedParameters(
             wrappedParameters,
@@ -150,7 +150,7 @@ public class DataFrameContext implements Serializable {
      */
     public void setFromRow(Row row) {
         this.deserializedParams.clear();
-        this.context.getVariableValues().removeAllVariables();
+        this.longParams.clear();
 
         // Create dynamic context with deserialized data but only with dependencies
         for (Name field : this.serializedVariableNames) {
@@ -219,6 +219,7 @@ public class DataFrameContext implements Serializable {
     }
 
     private void prepareDynamicContext() {
+        this.context.getVariableValues().removeAllVariables();
         for (int columnIndex = 0; columnIndex < this.serializedVariableNames.size(); columnIndex++) {
             this.context.getVariableValues()
                 .addVariableValue(
