@@ -37,7 +37,6 @@ import scala.collection.mutable.WrappedArray;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Vector;
 
 public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
 
@@ -45,7 +44,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Vector<String> sortingKeyTypes;
+    private Map<Integer, String> sortingKeyTypes;
 
     private List<Object> results;
 
@@ -61,7 +60,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            Vector<String> sortingKeyTypes,
+            Map<Integer, String> sortingKeyTypes,
             Map<String, List<String>> columnNamesByType
     ) {
         this.dataFrameContext = new DataFrameContext(context, columnNamesByType);

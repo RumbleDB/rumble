@@ -51,11 +51,11 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
-import java.util.Vector;
 
 import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
@@ -264,7 +264,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
         // Every column represents an order by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-        Vector<String> typesForAllColumns = new Vector<>(columnTypesOfRows.length);
+        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
@@ -273,7 +273,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 if (!columnType.equals(StringFlagForEmptySequence) && !columnType.equals(ItemType.nullItem.getName())) {
                     String currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
-                        typesForAllColumns.add(columnIndex, columnType);
+                        typesForAllColumns.put(columnIndex, columnType);
                     } else if (
                         (currentColumnType.equals(ItemType.integerItem.getName())
                             || currentColumnType.equals(ItemType.doubleItem.getName())
@@ -287,12 +287,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             currentColumnType.equals(ItemType.doubleItem.getName())
                                 || columnType.equals(ItemType.doubleItem.getName())
                         ) {
-                            typesForAllColumns.add(columnIndex, ItemType.doubleItem.getName());
+                            typesForAllColumns.put(columnIndex, ItemType.doubleItem.getName());
                         } else if (
                             currentColumnType.equals(ItemType.decimalItem.getName())
                                 || columnType.equals(ItemType.decimalItem.getName())
                         ) {
-                            typesForAllColumns.add(columnIndex, ItemType.decimalItem.getName());
+                            typesForAllColumns.put(columnIndex, ItemType.decimalItem.getName());
                         } else {
                             // do nothing, type is already set to integer
                         }
@@ -304,7 +304,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                                 || columnType.equals(ItemType.yearMonthDurationItem.getName())
                                 || columnType.equals(ItemType.durationItem.getName()))
                     ) {
-                        typesForAllColumns.add(columnIndex, ItemType.durationItem.getName());
+                        typesForAllColumns.put(columnIndex, ItemType.durationItem.getName());
                     } else if (!currentColumnType.equals(columnType)) {
                         throw new UnexpectedTypeException(
                                 "Order by variable must contain values of a single type.",
