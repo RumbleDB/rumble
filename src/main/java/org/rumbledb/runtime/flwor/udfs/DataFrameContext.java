@@ -139,13 +139,7 @@ public class DataFrameContext implements Serializable {
             this.longParams.add(count);
         }
 
-        prepareDynamicContext(
-            this.context,
-            this.serializedVariableNames,
-            this.countedVariableNames,
-            this.deserializedParams,
-            this.longParams
-        );
+        this.prepareDynamicContext();
     }
 
     /**
@@ -172,13 +166,7 @@ public class DataFrameContext implements Serializable {
             ++columnIndex;
         }
 
-        prepareDynamicContext(
-            this.context,
-            this.serializedVariableNames,
-            this.countedVariableNames,
-            this.deserializedParams,
-            this.longParams
-        );
+        this.prepareDynamicContext();
     }
 
     /**
@@ -230,25 +218,19 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
-    private static void prepareDynamicContext(
-            DynamicContext context,
-            List<Name> serializedVariableNames,
-            List<Name> countedVariableNames,
-            List<List<Item>> deserializedParams,
-            List<Item> counts
-    ) {
-        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
+    private void prepareDynamicContext() {
+        for (int columnIndex = 0; columnIndex < this.serializedVariableNames.size(); columnIndex++) {
+            this.context.getVariableValues()
                 .addVariableValue(
-                    serializedVariableNames.get(columnIndex),
-                    deserializedParams.get(columnIndex)
+                    this.serializedVariableNames.get(columnIndex),
+                    this.deserializedParams.get(columnIndex)
                 );
         }
-        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
+        for (int columnIndex = 0; columnIndex < this.countedVariableNames.size(); columnIndex++) {
+            this.context.getVariableValues()
                 .addVariableCount(
-                    countedVariableNames.get(columnIndex),
-                    counts.get(columnIndex)
+                    this.countedVariableNames.get(columnIndex),
+                    this.longParams.get(columnIndex)
                 );
         }
     }
