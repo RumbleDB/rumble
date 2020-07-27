@@ -139,7 +139,7 @@ public class DataFrameContext implements Serializable {
             this.longParams.add(count);
         }
 
-        FlworDataFrameUtils.prepareDynamicContext(
+        prepareDynamicContext(
             this.context,
             this.serializedVariableNames,
             this.countedVariableNames,
@@ -172,7 +172,7 @@ public class DataFrameContext implements Serializable {
             ++columnIndex;
         }
 
-        FlworDataFrameUtils.prepareDynamicContext(
+        prepareDynamicContext(
             this.context,
             this.serializedVariableNames,
             this.countedVariableNames,
@@ -228,5 +228,28 @@ public class DataFrameContext implements Serializable {
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
+    }
+
+    private static void prepareDynamicContext(
+            DynamicContext context,
+            List<Name> serializedVariableNames,
+            List<Name> countedVariableNames,
+            List<List<Item>> deserializedParams,
+            List<Item> counts
+    ) {
+        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
+            context.getVariableValues()
+                .addVariableValue(
+                    serializedVariableNames.get(columnIndex),
+                    deserializedParams.get(columnIndex)
+                );
+        }
+        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
+            context.getVariableValues()
+                .addVariableCount(
+                    countedVariableNames.get(columnIndex),
+                    counts.get(columnIndex)
+                );
+        }
     }
 }

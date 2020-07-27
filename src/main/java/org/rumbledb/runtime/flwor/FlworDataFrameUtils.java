@@ -235,29 +235,6 @@ public class FlworDataFrameUtils {
         }
     }
 
-    public static void prepareDynamicContext(
-            DynamicContext context,
-            List<Name> serializedVariableNames,
-            List<Name> countedVariableNames,
-            List<List<Item>> deserializedParams,
-            List<Item> counts
-    ) {
-        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableValue(
-                    serializedVariableNames.get(columnIndex),
-                    deserializedParams.get(columnIndex)
-                );
-        }
-        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableCount(
-                    countedVariableNames.get(columnIndex),
-                    counts.get(columnIndex)
-                );
-        }
-    }
-
     /**
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
