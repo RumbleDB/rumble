@@ -54,13 +54,7 @@ public class LetClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Lon
     public byte[] call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
 
-        this.nextResult.clear();
-        this.expression.open(this.dataFrameContext.getContext());
-        while (this.expression.hasNext()) {
-            Item nextItem = this.expression.next();
-            this.nextResult.add(nextItem);
-        }
-        this.expression.close();
+        this.expression.materialize(this.dataFrameContext.getContext(), this.nextResult);
 
         return FlworDataFrameUtils.serializeItemList(
             this.nextResult,
