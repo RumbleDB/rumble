@@ -50,6 +50,7 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
+import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
@@ -88,6 +89,7 @@ public class FlworDataFrameUtils {
         kryo.register(ObjectItem.class);
         kryo.register(StringItem.class);
         kryo.register(IntItem.class);
+        kryo.register(IntegerItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);
