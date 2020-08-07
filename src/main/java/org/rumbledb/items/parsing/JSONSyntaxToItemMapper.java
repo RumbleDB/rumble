@@ -40,13 +40,12 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
     public Iterator<Item> call(Iterator<String> stringIterator) throws Exception {
         return new ItemMapperIterator(stringIterator);
     }
-    
+
     private class ItemMapperIterator implements Iterator<Item> {
         private JsonIterator iterator;
         private Iterator<String> stringIterator;
-        
-        public ItemMapperIterator(Iterator<String> stringIterator)
-        {
+
+        public ItemMapperIterator(Iterator<String> stringIterator) {
             this.stringIterator = stringIterator;
             this.iterator = new JsonIterator();
         }
