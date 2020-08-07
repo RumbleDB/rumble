@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
@@ -56,8 +57,6 @@ import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting

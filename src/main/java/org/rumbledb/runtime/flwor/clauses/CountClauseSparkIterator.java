@@ -30,13 +30,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
@@ -98,7 +99,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             FlworTuple inputTuple = this.child.next();
 
             List<Item> results = new ArrayList<>();
-            results.add(ItemFactory.getInstance().createIntegerItem(this.currentCountIndex++));
+            results.add(ItemFactory.getInstance().createIntItem(this.currentCountIndex++));
 
             this.nextLocalTupleResult = new FlworTuple(inputTuple).putValue(this.variableName, results);
             this.hasNext = true;

@@ -28,11 +28,11 @@ import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
-import sparksoniq.jsoniq.ExecutionMode;
 
 public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
 
@@ -108,7 +108,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } catch (DivisionByZeroException e) {
                 throw new DivisionByZeroException(getMetadata());
             } catch (RuntimeException e) {
-                throw new UnexpectedTypeException(
+                UnexpectedTypeException ute = new UnexpectedTypeException(
                         " \""
                             + this.multiplicativeOperator.toString()
                             + "\": operation not possible with parameters of type \""
@@ -118,6 +118,8 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                             + "\"",
                         getMetadata()
                 );
+                ute.initCause(e);
+                throw ute;
             }
         }
         throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());

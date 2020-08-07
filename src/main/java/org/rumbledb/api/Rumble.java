@@ -1,7 +1,11 @@
 package org.rumbledb.api;
 
+import java.net.URI;
+import java.io.IOException;
+
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
 import sparksoniq.spark.SparkSessionManager;
@@ -18,22 +22,22 @@ import sparksoniq.spark.SparkSessionManager;
  */
 public class Rumble {
 
-    private RumbleConf conf;
+    private RumbleRuntimeConfiguration configuration;
 
     /**
      * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
      *
-     * @param conf a RumbleConf object containing the configuration.
+     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
-    public Rumble(RumbleConf conf) {
-        this.conf = conf;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = this.conf.getResultsSizeCap();
+    public Rumble(RumbleRuntimeConfiguration configuration) {
+        this.configuration = configuration;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
     }
 
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
      *
-     * @param query the JSONiq query.
+     * @param query the content of the JSONiq main module.
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
@@ -41,10 +45,31 @@ public class Rumble {
             query,
             RumbleRuntimeConfiguration.getDefaultConfiguration()
         );
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
-            RumbleRuntimeConfiguration.getDefaultConfiguration()
+            this.configuration
         );
-        return new SequenceOfItems(iterator);
+        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+    }
+
+    /**
+     * Runs a query and returns an iterator over the resulting sequence of Items.
+     *
+     * @param location the JSONiq main module location.
+     * @throws java.io.IOException if there was an issue reading a module.
+     * @return the resulting sequence as an ItemIterator.
+     */
+    public SequenceOfItems runQuery(URI location) throws IOException {
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
+            location,
+            this.configuration
+        );
+        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
+            mainModule,
+            this.configuration
+        );
+        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
 }

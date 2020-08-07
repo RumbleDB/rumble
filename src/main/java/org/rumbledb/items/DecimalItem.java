@@ -27,10 +27,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 
 
 public class DecimalItem extends AtomicItem {
@@ -70,8 +73,12 @@ public class DecimalItem extends AtomicItem {
         return getDecimalValue();
     }
 
-    public int castToIntegerValue() {
+    public int castToIntValue() {
         return getDecimalValue().intValue();
+    }
+
+    public BigInteger castToIntegerValue() {
+        return getDecimalValue().toBigInteger();
     }
 
     @Override
@@ -148,7 +155,19 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.getDecimalValue().compareTo(other.castToDecimalValue());
+        if (other.isNull()) {
+            return 1;
+        }
+        if (other.isInteger()) {
+            return this.value.compareTo(other.castToDecimalValue());
+        }
+        if (other.isDecimal()) {
+            return this.value.compareTo(other.getDecimalValue());
+        }
+        if (other.isDouble()) {
+            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
+        }
+        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override
@@ -199,11 +218,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item divide(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
-        }
-        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
@@ -211,11 +230,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item modulo(Item other) {
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
-        }
-        if (other.equals(ItemFactory.getInstance().createIntegerItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
         }
         return ItemFactory.getInstance()
             .createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
@@ -223,10 +242,26 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public Item idivide(Item other) {
-        return ItemFactory.getInstance()
-            .createIntegerItem(
-                this.getDecimalValue().divideToIntegralValue(other.castToDecimalValue()).intValueExact()
-            );
+        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
+            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+        }
+        if (other.isDouble()) {
+            return ItemFactory.getInstance()
+                .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
+        }
+        if (other.isInteger()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(
+                    this.getDecimalValue().divide(other.castToDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
+                );
+        }
+        if (other.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(
+                    this.getDecimalValue().divide(other.getDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
+                );
+        }
+        throw new OurBadException("Unexpected type encountered");
     }
 
     @Override

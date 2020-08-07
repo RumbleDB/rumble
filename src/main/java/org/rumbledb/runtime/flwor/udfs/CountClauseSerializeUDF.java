@@ -14,58 +14,42 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Ghislain Fourny
  *
  */
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.sql.api.java.UDF1;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
-
     private static final long serialVersionUID = 1L;
 
     private List<Item> nextResult;
 
-    private transient Kryo kryo;
-    private transient Output output;
+    private DataFrameContext dataFrameContext;
 
     public CountClauseSerializeUDF() {
+        this.dataFrameContext = new DataFrameContext();
         this.nextResult = new ArrayList<>();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
     }
 
     @Override
     public byte[] call(Long countIndex) {
         this.nextResult.clear();
-        this.nextResult.add(new IntegerItem(countIndex.intValue()));
+        this.nextResult.add(ItemFactory.getInstance().createLongItem(countIndex.longValue()));
 
-        return FlworDataFrameUtils.serializeItemList(this.nextResult, this.kryo, this.output);
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
+        return FlworDataFrameUtils.serializeItemList(
+            this.nextResult,
+            this.dataFrameContext.getKryo(),
+            this.dataFrameContext.getOutput()
+        );
     }
 }

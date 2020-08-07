@@ -22,17 +22,20 @@ package org.rumbledb.runtime.quantifiers;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
 
@@ -107,6 +110,23 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
             var.close();
         }
         return results;
+    }
+
+    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+        Map<Name, DynamicContext.VariableDependency> result =
+            new TreeMap<>(this.evaluationExpression.getVariableDependencies());
+        for (RuntimeIterator child : this.children) {
+            if (child instanceof QuantifiedExpressionVarIterator) {
+                QuantifiedExpressionVarIterator iterator = (QuantifiedExpressionVarIterator) child;
+                result.remove(iterator.getVariableReference());
+            }
+        }
+        for (RuntimeIterator child : this.children) {
+            if (child instanceof QuantifiedExpressionVarIterator) {
+                result.putAll(child.getVariableDependencies());
+            }
+        }
+        return result;
     }
 
 }

@@ -23,14 +23,13 @@ package org.rumbledb.context;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-
-import sparksoniq.jsoniq.ExecutionMode;
 
 import java.io.Serializable;
 import java.net.URI;

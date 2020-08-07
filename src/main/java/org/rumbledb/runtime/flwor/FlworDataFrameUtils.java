@@ -37,6 +37,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
@@ -48,6 +49,7 @@ import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
+import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
@@ -86,6 +88,7 @@ public class FlworDataFrameUtils {
         kryo.register(ArrayItem.class);
         kryo.register(ObjectItem.class);
         kryo.register(StringItem.class);
+        kryo.register(IntItem.class);
         kryo.register(IntegerItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
@@ -178,7 +181,11 @@ public class FlworDataFrameUtils {
         result.put("byte[]", new ArrayList<>());
         result.put("Long", new ArrayList<>());
         StructField[] columns = inputSchema.fields();
-        for (int columnIndex = 0; columnIndex < columns.length; columnIndex++) {
+        for (Name field : dependencies.keySet()) {
+            if (inputSchema.getFieldIndex(field.getLocalName()).isEmpty()) {
+                continue;
+            } ;
+            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
@@ -214,43 +221,6 @@ public class FlworDataFrameUtils {
             StructType inputSchema
     ) {
         return getColumnNames(inputSchema, -1, null);
-    }
-
-    public static void prepareDynamicContext(
-            DynamicContext context,
-            List<String> columnNames,
-            List<List<Item>> deserializedParams
-    ) {
-        for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableValue(
-                    Name.createVariableInNoNamespace(columnNames.get(columnIndex)),
-                    deserializedParams.get(columnIndex)
-                );
-        }
-    }
-
-    public static void prepareDynamicContext(
-            DynamicContext context,
-            List<Name> serializedVariableNames,
-            List<Name> countedVariableNames,
-            List<List<Item>> deserializedParams,
-            List<Item> counts
-    ) {
-        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableValue(
-                    serializedVariableNames.get(columnIndex),
-                    deserializedParams.get(columnIndex)
-                );
-        }
-        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableCount(
-                    countedVariableNames.get(columnIndex),
-                    counts.get(columnIndex)
-                );
-        }
     }
 
     /**
@@ -296,14 +266,17 @@ public class FlworDataFrameUtils {
             Map<Name, DynamicContext.VariableDependency> dependencies,
             Map<String, List<String>> columnNamesByType
     ) {
-        String[] columnNames = inputSchema.fieldNames();
         StringBuilder queryColumnString = new StringBuilder();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
+        String comma = "";
+        for (Name field : dependencies.keySet()) {
+            queryColumnString.append(comma);
+            comma = ",";
+            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
 
-            String columnName = columnNames[columnIndex];
+            String columnName = field.getLocalName();
 
             if (isCountPreComputed(columnNamesByType, columnName)) {
                 queryColumnString.append("sum(`");
@@ -332,9 +305,9 @@ public class FlworDataFrameUtils {
             queryColumnString.append(columnName);
             queryColumnString.append("`");
 
-            if (trailingComma || columnIndex != (columnNames.length - 1)) {
-                queryColumnString.append(",");
-            }
+        }
+        if (trailingComma) {
+            queryColumnString.append(",");
         }
 
         return queryColumnString.toString();
@@ -412,12 +385,21 @@ public class FlworDataFrameUtils {
         Object o = row.get(columnIndex);
         if (o instanceof Long) {
             List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntegerItem(((Long) o).intValue()));
+            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
             return result;
         } else {
             byte[] bytes = (byte[]) o;
             input.setBuffer(bytes);
             return (List<Item>) kryo.readClassAndObject(input);
+        }
+    }
+
+    public static long getCountOfField(Row row, int columnIndex) {
+        Object o = row.get(columnIndex);
+        if (o instanceof Long) {
+            return ((Long) o).longValue();
+        } else {
+            throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
     }
 

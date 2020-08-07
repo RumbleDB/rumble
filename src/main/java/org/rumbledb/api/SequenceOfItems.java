@@ -1,5 +1,7 @@
 package org.rumbledb.api;
 
+import java.util.List;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -26,18 +28,26 @@ import org.rumbledb.runtime.RuntimeIterator;
 public class SequenceOfItems {
 
     private RuntimeIterator iterator;
+    private DynamicContext dynamicContext;
+    private RumbleRuntimeConfiguration configuration;
     private boolean isOpen;
 
-    protected SequenceOfItems(RuntimeIterator iterator) {
+    public SequenceOfItems(
+            RuntimeIterator iterator,
+            DynamicContext dynamicContext,
+            RumbleRuntimeConfiguration configuration
+    ) {
         this.iterator = iterator;
         this.isOpen = false;
+        this.dynamicContext = dynamicContext;
+        this.configuration = configuration;
     }
 
     /**
      * Opens the iterator.
      */
     public void open() {
-        this.iterator.open(new DynamicContext(RumbleRuntimeConfiguration.getDefaultConfiguration()));
+        this.iterator.open(this.dynamicContext);
         this.isOpen = true;
     }
 
@@ -96,7 +106,42 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getRDD(new DynamicContext(RumbleRuntimeConfiguration.getDefaultConfiguration()));
+        return this.iterator.getRDD(this.dynamicContext);
     }
+
+    public long populateList(List<Item> resultList) {
+        resultList.clear();
+        this.iterator.open(this.dynamicContext);
+        Item result = null;
+        if (this.iterator.hasNext()) {
+            result = this.iterator.next();
+        }
+        if (result == null) {
+            return -1;
+        }
+        Item singleOutput = result;
+        if (!this.iterator.hasNext()) {
+            resultList.add(singleOutput);
+            return -1;
+        } else {
+            int itemCount = 1;
+            resultList.add(result);
+            while (
+                this.iterator.hasNext()
+                    &&
+                    ((itemCount < this.configuration.getResultSizeCap() && this.configuration.getResultSizeCap() > 0)
+                        ||
+                        this.configuration.getResultSizeCap() == 0)
+            ) {
+                resultList.add(this.iterator.next());
+                itemCount++;
+            }
+            if (this.iterator.hasNext() && itemCount == this.configuration.getResultSizeCap()) {
+                return Long.MAX_VALUE;
+            }
+            return -1;
+        }
+    }
+
 
 }

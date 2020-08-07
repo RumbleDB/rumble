@@ -21,15 +21,13 @@
 package iq.base;
 
 import org.junit.Assert;
-import org.rumbledb.compiler.VisitorHelpers;
+import org.rumbledb.api.Rumble;
+import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.expressions.module.MainModule;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
 import utils.FileManager;
@@ -48,7 +46,9 @@ public class AnnotationsTestsBase {
     protected static int counter = 0;
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
-    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(new String[] {});
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
+            new String[] { "--print-iterator-tree", "yes" }
+    );
 
 
     public void initializeTests(File dir) {
@@ -59,30 +59,23 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected MainModule testAnnotations(String path)
+    protected void testAnnotations(String path)
             throws IOException {
-        RuntimeIterator runtimeIterator = null;
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
         } catch (AnnotationParseException e) {
             e.printStackTrace();
             Assert.fail();
         }
-        MainModule mainModule = null;
-        DynamicContext dynamicContext = null;
+        SequenceOfItems sequence = null;
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                this.configuration,
+                AnnotationsTestsBase.configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            mainModule = VisitorHelpers.parseMainModuleFromLocation(
-                uri,
-                AnnotationsTestsBase.configuration
-            );
-            dynamicContext = VisitorHelpers.createDynamicContext(mainModule, AnnotationsTestsBase.configuration);
-            runtimeIterator = VisitorHelpers.generateRuntimeIterator(mainModule, AnnotationsTestsBase.configuration);
-            // PARSING
+            Rumble rumble = new Rumble(AnnotationsTestsBase.configuration);
+            sequence = rumble.runQuery(uri);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();
             checkErrorCode(
@@ -92,10 +85,10 @@ public class AnnotationsTestsBase {
             );
             if (this.currentAnnotation.shouldParse()) {
                 Assert.fail("Program did not parse when expected to.\nError output: " + errorOutput + "\n");
-                return mainModule;
+                return;
             } else {
                 System.out.println(errorOutput);
-                return mainModule;
+                return;
             }
 
             // SEMANTIC
@@ -109,11 +102,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldCompile()) {
                     Assert.fail("Program did not compile when expected to.\nError output: " + errorOutput + "\n");
-                    return mainModule;
+                    return;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return mainModule;
+                    return;
                 }
             } catch (Exception ex) {
             }
@@ -129,11 +122,11 @@ public class AnnotationsTestsBase {
             try {
                 if (this.currentAnnotation.shouldRun()) {
                     Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
-                    return mainModule;
+                    return;
                 } else {
                     System.out.println(errorOutput);
                     Assert.assertTrue(true);
-                    return mainModule;
+                    return;
                 }
             } catch (Exception ex) {
             }
@@ -142,14 +135,14 @@ public class AnnotationsTestsBase {
         try {
             if (!this.currentAnnotation.shouldCompile()) {
                 Assert.fail("Program compiled when not expected to.\n");
-                return mainModule;
+                return;
             }
         } catch (Exception ex) {
         }
 
         if (!this.currentAnnotation.shouldParse()) {
             Assert.fail("Program parsed when not expected to.\n");
-            return mainModule;
+            return;
         }
 
         // PROGRAM SHOULD RUN
@@ -159,7 +152,7 @@ public class AnnotationsTestsBase {
                 this.currentAnnotation.shouldRun()
         ) {
             try {
-                checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
                 exception.printStackTrace();
@@ -173,7 +166,7 @@ public class AnnotationsTestsBase {
                     !this.currentAnnotation.shouldRun()
             ) {
                 try {
-                    checkExpectedOutput(this.currentAnnotation.getOutput(), runtimeIterator, dynamicContext);
+                    checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
                 } catch (Exception exception) {
                     String errorOutput = exception.getMessage();
                     checkErrorCode(
@@ -181,19 +174,18 @@ public class AnnotationsTestsBase {
                         this.currentAnnotation.getErrorCode(),
                         this.currentAnnotation.getErrorMetadata()
                     );
-                    return mainModule;
+                    return;
                 }
 
                 Assert.fail("Program executed when not expected to");
             }
         }
-        return mainModule;
+        return;
     }
 
     protected void checkExpectedOutput(
             String expectedOutput,
-            RuntimeIterator runtimeIterator,
-            DynamicContext dynamicContext
+            SequenceOfItems sequence
     ) {
         Assert.assertTrue(true);
     }

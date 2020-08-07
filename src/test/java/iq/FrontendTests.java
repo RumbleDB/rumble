@@ -24,12 +24,16 @@ package iq;
 import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
+import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import java.io.File;
+import java.net.URI;
 import java.util.Arrays;
 import java.util.List;
 
@@ -39,17 +43,17 @@ public class FrontendTests extends AnnotationsTestsBase {
     public static final File grammarTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/parser"
+                "/src/test/resources/test_files/parser"
     );
     public static final File astTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/ast"
+                "/src/test/resources/test_files/ast"
     );
     public static final File semanticTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/semantics"
+                "/src/test/resources/test_files/semantics"
     );
     public static final String[] manualSemanticChecksFiles = new String[] { "TypesCheck.jq" };
 
@@ -99,9 +103,20 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            MainModule mainModule = testAnnotations(testFile.getAbsolutePath());
-            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName()))
+            testAnnotations(testFile.getAbsolutePath());
+            if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
+                URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                    testFile.getAbsolutePath(),
+                    AnnotationsTestsBase.configuration,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
+                    uri,
+                    AnnotationsTestsBase.configuration
+                );
+
                 testVariableTypes(testFile, mainModule);
+            }
         }
     }
 

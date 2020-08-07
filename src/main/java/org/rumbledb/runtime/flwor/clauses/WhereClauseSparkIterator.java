@@ -30,11 +30,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
-import sparksoniq.jsoniq.ExecutionMode;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.HashSet;
@@ -144,7 +145,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumnsByType),
+                new WhereClauseUDF(this.expression, context, UDFcolumnsByType),
                 DataTypes.BooleanType
             );
 

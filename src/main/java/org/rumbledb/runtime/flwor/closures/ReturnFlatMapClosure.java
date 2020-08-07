@@ -20,92 +20,40 @@
 
 package org.rumbledb.runtime.flwor.closures;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     private static final long serialVersionUID = 1L;
+    private DataFrameContext dataFrameContext;
     private RuntimeIterator expression;
-    private StructType oldSchema;
-    private List<Name> variableNames;
-    private DynamicContext parentContext;
-    private DynamicContext context;
 
-    private transient Kryo kryo;
-    private transient Input input;
+    List<Item> results;
 
-    public ReturnFlatMapClosure(RuntimeIterator expression, DynamicContext context, StructType oldSchema) {
+    public ReturnFlatMapClosure(
+            RuntimeIterator expression,
+            DynamicContext context,
+            Map<String, List<String>> columnNamesByType
+    ) {
+        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
         this.expression = expression;
-        this.oldSchema = oldSchema;
-        this.parentContext = context;
-        this.context = new DynamicContext(this.parentContext);
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
-
-        this.variableNames = new ArrayList<>();
-        for (String columnName : this.oldSchema.fieldNames()) {
-            this.variableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
+        this.results = new ArrayList<>();
     }
 
     @Override
     public Iterator<Item> call(Row row) {
-
-        Map<Name, DynamicContext.VariableDependency> dependencies = this.expression
-            .getVariableDependencies();
-        this.context.getVariableValues().removeAllVariables();
-        // Create dynamic context with deserialized data but only with dependencies
-        int columnIndex = 0;
-        for (Name field : this.variableNames) {
-            if (dependencies.containsKey(field)) {
-                List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
-                if (dependencies.get(field).equals(DynamicContext.VariableDependency.COUNT)) {
-                    this.context.getVariableValues().addVariableCount(field, i.get(0));
-                } else {
-                    this.context.getVariableValues().addVariableValue(field, i);
-                }
-            }
-            ++columnIndex;
-        }
-
-        // Apply expression to the context
-        List<Item> results = new ArrayList<>();
-        this.expression.open(this.context);
-        while (this.expression.hasNext()) {
-            results.add(this.expression.next());
-        }
-        this.expression.close();
-
+        this.dataFrameContext.setFromRow(row);
+        this.expression.materialize(this.dataFrameContext.getContext(), this.results);
         return results.iterator();
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.input = new Input();
     }
 }
