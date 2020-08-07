@@ -135,7 +135,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         initializeLocal();
     }
 

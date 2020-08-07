@@ -103,10 +103,24 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
         this.child.reset(this.currentDynamicContext);
         this.localTupleResults.clear();
         this.resultIndex = 0;
         this.hasNext = this.child.hasNext();
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
+        this.child.close();
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
     }
 
     @Override

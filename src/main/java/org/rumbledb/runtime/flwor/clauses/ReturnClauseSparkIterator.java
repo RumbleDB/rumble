@@ -217,9 +217,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.child.reset(this.currentDynamicContextForLocalExecution);
         this.expression.close();
+        this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
         setNextResult();
     }
 

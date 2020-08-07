@@ -114,7 +114,7 @@ public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
     }
 
     @Override
