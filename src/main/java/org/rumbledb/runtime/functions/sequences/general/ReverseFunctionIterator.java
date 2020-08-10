@@ -78,7 +78,7 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.results = new ArrayList<>();
         this.currentIndex = 0;
 

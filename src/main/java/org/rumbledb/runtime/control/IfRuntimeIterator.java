@@ -50,7 +50,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
+    public void resetLocal() {
         this.selectedIterator = null;
         setNextResult();
     }

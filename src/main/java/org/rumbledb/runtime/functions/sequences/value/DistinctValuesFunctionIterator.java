@@ -65,7 +65,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.sequenceIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }

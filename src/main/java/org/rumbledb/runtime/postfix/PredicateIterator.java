@@ -87,7 +87,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.iterator.close();
         this.filterDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
         if (this.filter.getVariableDependencies().containsKey(Name.CONTEXT_COUNT)) {

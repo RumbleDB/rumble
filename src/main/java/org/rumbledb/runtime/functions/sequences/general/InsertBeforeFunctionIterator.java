@@ -120,7 +120,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.currentPosition = 1; // initialize index as the first item
         this.insertingNow = false;
         this.insertingCompleted = false;

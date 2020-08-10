@@ -110,7 +110,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
+    public void resetLocal() {
         this.currentIndex = 0;
         this.items = null;
     }

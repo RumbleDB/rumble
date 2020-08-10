@@ -114,7 +114,7 @@ public class ObjectDescendantFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.nextResults = new LinkedList<>();
 

@@ -126,7 +126,7 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.alreadyFoundKeys = new ArrayList<>();
         this.nextResults = new LinkedList<>();
 

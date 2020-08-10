@@ -91,6 +91,21 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+
+        if (this.child != null) { // if it's not a start clause
+            this.child.reset(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
+
+            setNextLocalTupleResult();
+        } else { // if it's a start clause, get results using only the assignmentIterator
+            this.assignmentIterator.reset(this.currentDynamicContext);
+            setResultFromExpression();
+        }
+    }
+
+    @Override
     public FlworTuple next() {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned

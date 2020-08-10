@@ -79,6 +79,18 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        if (this.child != null) {
+            this.child.reset(this.currentDynamicContext);
+
+            setNextLocalTupleResult();
+        } else {
+            throw new OurBadException("Invalid count clause.");
+        }
+    }
+
+    @Override
     public void close() {
         super.close();
         this.currentCountIndex = 1;
