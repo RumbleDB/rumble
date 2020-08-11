@@ -48,7 +48,6 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -63,8 +62,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     protected List<RuntimeIterator> children;
     protected transient DynamicContext currentDynamicContextForLocalExecution;
     private ExceptionMetadata metadata;
-    protected URI staticURI;
-    // private StaticContext staticContext;
+    private StaticContext staticContext;
 
     protected ExecutionMode highestExecutionMode;
 
@@ -78,13 +76,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
     }
 
-    // For performance reasons, and as only the static URI is really needed at the moment, we only store it.
-    // This avoids the deserialization of many static context copies at runtime.
     public void setStaticContext(StaticContext staticContext) {
-        if (this.staticURI != null) {
-            throw new OurBadException("Static context already consumed.");
-        }
-        this.staticURI = staticContext.getStaticBaseURI();
+        this.staticContext = staticContext;
+    }
+
+    public StaticContext getStaticContext() {
+        return this.staticContext;
     }
 
     /**

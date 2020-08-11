@@ -581,10 +581,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LAST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
         }
         if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.FIRST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
         }
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new OrderByClauseSortingKey(

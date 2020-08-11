@@ -26,6 +26,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -57,9 +58,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
             ExecutionMode executionMode,
+            StaticContext staticContext,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, executionMode, staticContext, iteratorMetadata);
         this.expression = whereExpression;
         this.dependencies = this.expression.getVariableDependencies();
     }

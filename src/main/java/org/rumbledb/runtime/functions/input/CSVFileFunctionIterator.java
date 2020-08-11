@@ -56,7 +56,7 @@ public class CSVFileFunctionIterator extends DataFrameRuntimeIterator {
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
         String url = stringItem.getStringValue();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.getStaticContext().getStaticBaseURI(), url, getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }

@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -62,9 +63,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name variableName,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
+            StaticContext staticContext,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, executionMode, iteratorMetadata);
+        super(child, executionMode, staticContext, iteratorMetadata);
         this.variableName = variableName;
         this.assignmentIterator = assignmentIterator;
         this.dependencies = this.assignmentIterator.getVariableDependencies();

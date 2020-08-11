@@ -85,7 +85,7 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
             RuntimeIterator iterator = expressionWithIterator.getIterator();
             iterator.open(this.dataFrameContext.getContext());
             if (!iterator.hasNext()) {
-                if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LAST) {
+                if (expressionWithIterator.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.GREATEST) {
                     this.results.add(emptySequenceOrderIndexLast);
                 } else {
                     this.results.add(emptySequenceOrderIndexFirst);
