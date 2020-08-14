@@ -55,7 +55,7 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         String url = this.children.get(0).materializeFirstItemOrNull(context).getStringValue();
-        URI uri = FileSystemUtil.resolveURI(this.getStaticContext().getStaticBaseURI(), url, getMetadata());
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
 
         int partitions = -1;
         if (this.children.size() > 1) {

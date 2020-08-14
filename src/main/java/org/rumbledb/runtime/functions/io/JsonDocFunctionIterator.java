@@ -65,7 +65,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
             try {
                 URI uri = FileSystemUtil.resolveURI(
-                    this.getStaticContext().getStaticBaseURI(),
+                    this.staticURI,
                     path.getStringValue(),
                     getMetadata()
                 );

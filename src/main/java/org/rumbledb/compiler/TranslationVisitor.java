@@ -1397,12 +1397,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
         if (ctx.emptySequenceOrder.getText().equals("least"))
-            ;
         {
             this.moduleContext.setEmptySequenceOrderLeast(true);
         }
         if (ctx.emptySequenceOrder.getText().equals("greatest"))
-            ;
         {
             this.moduleContext.setEmptySequenceOrderLeast(false);
         }

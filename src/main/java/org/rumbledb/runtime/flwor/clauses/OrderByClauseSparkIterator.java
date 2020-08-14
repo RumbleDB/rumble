@@ -29,7 +29,6 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -75,10 +74,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             boolean stable,
             ExecutionMode executionMode,
-            StaticContext staticContext,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, executionMode, staticContext, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         this.expressionsWithIterator = expressionsWithIterator;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
