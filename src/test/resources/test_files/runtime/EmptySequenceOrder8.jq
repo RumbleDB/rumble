@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output=""({ "foo" : [ 3 ] }, { "foo" : [ 2 ] }, { "foo" : [ 1 ] }, { "foo" : [ null ] }, { "foo" : [ ] })" :)
+(:JIQS: ShouldRun; Output="({ "foo" : [ 3 ] }, { "foo" : [ 2 ] }, { "foo" : [ 1 ] }, { "foo" : [ null ] }, { "foo" : [ ] })" :)
 
 declare default order empty least;
 
