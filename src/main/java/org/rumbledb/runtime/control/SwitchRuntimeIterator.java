@@ -79,7 +79,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
+    public void resetLocal() {
         this.matchingIterator = null;
         initializeIterator(this.testField, this.cases, this.defaultReturn);
     }

@@ -71,7 +71,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
         if (!isRDD()) {
-            resetLocal(context);
+            resetLocal();
             return;
         }
         this.result = null;
@@ -146,7 +146,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected abstract void closeLocal();
 
-    protected abstract void resetLocal(DynamicContext context);
+    protected abstract void resetLocal();
 
     protected abstract boolean hasNextLocal();
 

@@ -255,7 +255,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.functionBodyIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }

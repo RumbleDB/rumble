@@ -105,7 +105,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         startLocal();
     }
 
