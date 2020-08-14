@@ -28,7 +28,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -51,19 +50,16 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected RuntimeTupleIterator child;
     protected DynamicContext currentDynamicContext;
     protected ExecutionMode highestExecutionMode;
-    private StaticContext staticContext;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
             ExecutionMode executionMode,
-            StaticContext staticContext,
             ExceptionMetadata metadata
     ) {
         this.metadata = metadata;
         this.isOpen = false;
         this.highestExecutionMode = executionMode;
         this.child = child;
-        this.staticContext = staticContext;
     }
 
     public void open(DynamicContext context) {
@@ -95,7 +91,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         output.writeBoolean(this.isOpen);
         kryo.writeObject(output, this.currentDynamicContext);
         kryo.writeObject(output, this.child);
-        kryo.writeObjectOrNull(output, this.staticContext, StaticContext.class);
     }
 
     @Override
@@ -104,7 +99,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.isOpen = input.readBoolean();
         this.currentDynamicContext = kryo.readObject(input, DynamicContext.class);
         this.child = kryo.readObject(input, RuntimeTupleIterator.class);
-        this.staticContext = kryo.readObjectOrNull(input, StaticContext.class);
     }
 
     public boolean isOpen() {

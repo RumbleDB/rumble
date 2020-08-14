@@ -234,7 +234,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     forClause.getVariableName(),
                     assignmentIterator,
                     forClause.getHighestExecutionMode(this.visitorConfig),
-                    forClause.getStaticContext(),
                     clause.getMetadata()
             );
         } else if (clause instanceof LetClause) {
@@ -245,7 +244,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     letClause.getVariableName(),
                     assignmentIterator,
                     letClause.getHighestExecutionMode(this.visitorConfig),
-                    letClause.getStaticContext(),
                     clause.getMetadata()
             );
         } else if (clause instanceof GroupByClause) {
@@ -271,7 +269,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     groupingExpressions,
                     clause.getHighestExecutionMode(this.visitorConfig),
-                    null,
                     clause.getMetadata()
             );
         } else if (clause instanceof OrderByClause) {
@@ -291,7 +288,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     expressionsWithIterator,
                     ((OrderByClause) clause).isStable(),
                     clause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getStaticContext(),
                     clause.getMetadata()
             );
         } else if (clause instanceof WhereClause) {
@@ -299,7 +295,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     clause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getStaticContext(),
                     clause.getMetadata()
             );
         } else if (clause instanceof CountClause) {
@@ -307,7 +302,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     this.visit(((CountClause) clause).getCountVariable(), argument),
                     clause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getStaticContext(),
                     clause.getMetadata()
             );
         }

@@ -29,7 +29,6 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidGroupVariableException;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -70,10 +69,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeTupleIterator child,
             List<GroupByClauseSparkIteratorExpression> groupingExpressions,
             ExecutionMode executionMode,
-            StaticContext staticContext,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(child, executionMode, staticContext, iteratorMetadata);
+        super(child, executionMode, iteratorMetadata);
         this.groupingExpressions = groupingExpressions;
         this.dependencies = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression e : this.groupingExpressions) {
