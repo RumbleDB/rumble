@@ -149,7 +149,7 @@ Most core features of JSONiq are now in place, and we are working on getting the
 
 ### Prolog
 
-Some prolog settings (mostly about changing the default behavior: default collation, base URI, ordering mode, empty order, decimal format, ) are not supported yet. Collations are not supported. Location hints for the resolution of modules are not supported yet. Default namespace declarations are not supported yet. Context item declarations are not supported yet.
+Some prolog settings (mostly about changing the default behavior: default collation, base URI, ordering mode, decimal format, ) are not supported yet. Collations are not supported. Location hints for the resolution of modules are not supported yet. Default namespace declarations are not supported yet. Context item declarations are not supported yet.
 
 ### FLWOR features
 
@@ -158,8 +158,6 @@ In for clauses, positional variables are not supported yet.
 Allowing empty is not supported yet.
 
 Windows are not supported (they are not compatible with Spark).
-
-Empty greatest and empty least is not supported yet.
 
 Stable order is not supported.
 
