@@ -63,8 +63,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
-    @SuppressWarnings("unused")
-    private final boolean isStable;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
@@ -80,7 +78,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         super(child, executionMode, iteratorMetadata);
         this.expressionsWithIterator = expressionsWithIterator;
-        this.isStable = stable;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
@@ -161,7 +158,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this.expressionsWithIterator, true)
+                new FlworKeyComparator(this.expressionsWithIterator)
         );
 
         // assign current context as parent. re-use the same context object for efficiency

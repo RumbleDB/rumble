@@ -31,7 +31,7 @@ defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
 
 orderingModeDecl        : 'declare' 'ordering' ('ordered' | 'unordered');
 
-emptyOrderDecl          : 'declare' Kdefault 'order' Kempty (Kgreatest | Kleast);
+emptyOrderDecl          : 'declare' Kdefault 'order' Kempty (emptySequenceOrder=(Kgreatest | Kleast));
 
 decimalFormatDecl       : 'declare'
                           (('decimal-format' qname) | (Kdefault 'decimal-format'))
