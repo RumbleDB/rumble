@@ -275,10 +275,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
-                if(emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE)
-                {
-                    if(clause.getStaticContext().isEmptySequenceOrderLeast())
-                    {
+                if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
+                    if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
                         System.out.println("Setting to least.");
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
                     } else {
