@@ -167,9 +167,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.nextLocalTupleResult.putValue(this.variableName, this.assignmentIterator.next());
 
             // Set the position item (if any)
-            if(this.positionalVariableName != null)
-            {
-                this.nextLocalTupleResult.putValue(this.positionalVariableName, ItemFactory.getInstance().createLongItem(this.position));
+            if (this.positionalVariableName != null) {
+                this.nextLocalTupleResult.putValue(
+                    this.positionalVariableName,
+                    ItemFactory.getInstance().createLongItem(this.position)
+                );
                 ++this.position;
             }
 
@@ -196,9 +198,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        if(this.positionalVariableName != null)
-        {
-            throw new UnsupportedFeatureException("Positional variables are not yet supported yet for big FLWORs. Please contact us if you would like us to prioritize it.", getMetadata());
+        if (this.positionalVariableName != null) {
+            throw new UnsupportedFeatureException(
+                    "Positional variables are not yet supported yet for big FLWORs. Please contact us if you would like us to prioritize it.",
+                    getMetadata()
+            );
         }
         // if it's a starting clause
         if (this.child == null) {
