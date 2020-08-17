@@ -364,6 +364,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
@@ -376,24 +377,33 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
+    @Override
     public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
         Set<Name> result = new HashSet<>();
         if (this.child != null) {
             result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
         }
         result.add(this.variableName);
+        if (this.positionalVariableName != null) {
+            result.add(this.positionalVariableName);
+        }
         return result;
     }
 
+    @Override
     public void print(StringBuffer buffer, int indent) {
         super.print(buffer, indent);
         for (int i = 0; i < indent + 1; ++i) {
             buffer.append("  ");
         }
         buffer.append("Variable ").append(this.variableName.toString()).append("\n");
+        if (this.positionalVariableName != null) {
+            buffer.append("Positional variable ").append(this.positionalVariableName.toString()).append("\n");
+        }
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
+    @Override
     public Map<Name, DynamicContext.VariableDependency> getProjection(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
@@ -407,8 +417,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Map<Name, DynamicContext.VariableDependency> projection =
             new TreeMap<>(parentProjection);
 
-        // remove the variable that this for clause binds.
+        // remove the variables that this for clause binds.
         projection.remove(this.variableName);
+        if (this.positionalVariableName != null) {
+            projection.remove(this.positionalVariableName);
+        }
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency = this.assignmentIterator
