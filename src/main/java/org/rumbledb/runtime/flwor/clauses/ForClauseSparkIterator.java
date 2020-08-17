@@ -397,6 +397,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             buffer.append("  ");
         }
         buffer.append("Variable ").append(this.variableName.toString()).append("\n");
+        for (int i = 0; i < indent + 1; ++i) {
+            buffer.append("  ");
+        }
         if (this.positionalVariableName != null) {
             buffer.append("Positional variable ").append(this.positionalVariableName.toString()).append("\n");
         }

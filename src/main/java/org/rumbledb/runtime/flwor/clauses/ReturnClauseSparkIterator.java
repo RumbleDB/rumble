@@ -239,7 +239,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
+        buffer.append(" | ");
+
+        buffer.append("Variable dependencies: ");
+        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (Name v : dependencies.keySet()) {
+            buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
+        }
         buffer.append("\n");
+
         this.child.print(buffer, indent + 1);
         this.expression.print(buffer, indent + 1);
     }
