@@ -232,6 +232,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new ForClauseSparkIterator(
                     previousIterator,
                     forClause.getVariableName(),
+                    forClause.getPositionalVariableName(),
                     assignmentIterator,
                     forClause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
