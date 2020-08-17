@@ -32,7 +32,9 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -56,21 +58,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
+    private Name positionalVariableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private long position;
     private FlworTuple nextLocalTupleResult;
     private FlworTuple inputTuple; // tuple received from child, used for tuple creation
 
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
             Name variableName,
+            Name positionalVariableName,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
+        this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
         this.dependencies = this.assignmentIterator.getVariableDependencies();
     }
@@ -82,10 +88,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child != null) { // if it's not a start clause
             this.child.open(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-
+            this.position = 1;
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.open(this.currentDynamicContext);
+            this.position = 1;
             setResultFromExpression();
         }
     }
@@ -97,10 +104,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child != null) { // if it's not a start clause
             this.child.reset(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
-
+            this.position = 1;
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.reset(this.currentDynamicContext);
+            this.position = 1;
             setResultFromExpression();
         }
     }
@@ -130,12 +138,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         while (this.child.hasNext()) {
             this.inputTuple = this.child.next();
             this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
-            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
-                                                                                                        // variables
-                                                                                                        // from new
-            // tuple
-
+            this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata());
             this.assignmentIterator.open(this.tupleContext);
+            this.position = 1;
             if (setResultFromExpression()) {
                 return;
             }
@@ -152,15 +157,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      */
     private boolean setResultFromExpression() {
         if (this.assignmentIterator.hasNext()) { // if expression returns a value, set it as next
-            List<Item> results = new ArrayList<>();
-            results.add(this.assignmentIterator.next());
-            FlworTuple newTuple;
+
+            // Set the for item
             if (this.child == null) { // if initial for clause
-                newTuple = new FlworTuple().putValue(this.variableName, results);
+                this.nextLocalTupleResult = new FlworTuple();
             } else {
-                newTuple = new FlworTuple(this.inputTuple).putValue(this.variableName, results);
+                this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
             }
-            this.nextLocalTupleResult = newTuple;
+            this.nextLocalTupleResult.putValue(this.variableName, this.assignmentIterator.next());
+
+            // Set the position item (if any)
+            if(this.positionalVariableName != null)
+            {
+                this.nextLocalTupleResult.putValue(this.positionalVariableName, ItemFactory.getInstance().createLongItem(this.position));
+                ++this.position;
+            }
+
             this.hasNext = true;
             return true;
         } else {
@@ -184,6 +196,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
+        if(this.positionalVariableName != null)
+        {
+            throw new UnsupportedFeatureException("Positional variables are not yet supported yet for big FLWORs. Please contact us if you would like us to prioritize it.", getMetadata());
+        }
         // if it's a starting clause
         if (this.child == null) {
             return getDataFrameFromRDDExpression(context);
