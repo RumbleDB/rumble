@@ -153,7 +153,7 @@ Some prolog settings (mostly about changing the default behavior: default collat
 
 ### FLWOR features
 
-In for clauses, positional variables are only supported locally. Parallel execution is planned.
+In for clauses, positional variables are only supported in starting for clauses or in local non-starting for clauses. Parallel execution of non-starting for clauses with a positional variable is planned.
 
 Allowing empty is not supported yet.
 
