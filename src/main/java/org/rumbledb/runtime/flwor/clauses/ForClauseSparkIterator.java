@@ -40,7 +40,6 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
-import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -204,14 +203,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return getDataFrameFromRDDExpression(context, parentProjection);
         }
 
-        if (this.positionalVariableName != null) {
-            throw new UnsupportedFeatureException(
-                    "Positional variables are not yet supported yet for big FLWORs. Please contact us if you would like us to prioritize it.",
-                    getMetadata()
-            );
-        }
-
         if (this.child.isDataFrame()) {
+            if (this.positionalVariableName != null) {
+                throw new UnsupportedFeatureException(
+                        "Positional variables are not yet supported yet for big non-starting for clauses. Please contact us if you would like us to prioritize it.",
+                        getMetadata()
+                );
+            }
+
             return getFromDataFrame(context, parentProjection);
         }
 
@@ -238,10 +237,23 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
             );
 
+            Dataset<Row> nextDataFrame = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+
+            if (this.positionalVariableName != null) {
+                // Add column for positional variable, similar to count clause.
+                nextDataFrame = CountClauseSparkIterator.addSerializedCountColumn(
+                    nextDataFrame,
+                    parentProjection,
+                    this.positionalVariableName
+                );
+            }
+
             if (df == null) {
-                df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+                df = nextDataFrame;
             } else {
-                df = df.union(SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema));
+                df = df.union(nextDataFrame);
             }
         }
         this.child.close();
@@ -366,32 +378,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // Add column for positional variable, similar to count clause.
-        StructType inputSchema = df.schema();
-
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
-            -1,
-            parentProjection
+        Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
+            df,
+            parentProjection,
+            this.positionalVariableName
         );
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.positionalVariableName.toString());
-        df.sparkSession()
-            .udf()
-            .register(
-                "serializeCountIndex",
-                new CountClauseSerializeUDF(),
-                DataTypes.BinaryType
-            );
-        dfWithIndex.createOrReplaceTempView("input");
-        dfWithIndex = dfWithIndex.sparkSession()
-            .sql(
-                String.format(
-                    "select %s serializeCountIndex(`%s`) as `%s` from input",
-                    selectSQL,
-                    this.positionalVariableName,
-                    this.positionalVariableName
-                )
-            );
         return dfWithIndex;
     }
 
