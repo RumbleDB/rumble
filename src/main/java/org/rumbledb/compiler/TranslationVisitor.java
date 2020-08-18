@@ -40,6 +40,7 @@ import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
 import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -495,6 +496,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Name atVar = null;
         if (ctx.at != null) {
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
+            if (atVar.equals(var)) {
+                throw new PositionalVariableNameSameAsForVariableException(
+                        "Positional variable " + var + " cannot have the same name as the main for variable.",
+                        createMetadataFromContext(ctx.at)
+                );
+            }
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
         // If the sequenceType is specified, we have to "extend" its arity to *
