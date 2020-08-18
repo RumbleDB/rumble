@@ -98,6 +98,7 @@ public enum ErrorCode {
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
     EmptyModuleURIErrorCode("XQST0088"),
+    PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
     InvalidTimezoneValue("FODT0003");

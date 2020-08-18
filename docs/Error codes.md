@@ -139,6 +139,10 @@ the specified target namespace.
 the target namespace in a module import or a module declaration is of
 zero length.
 
+- [XQST0089] - It is a static error if a variable bound in a for or
+window clause of a FLWOR expression, and its associated positional
+variable, do not have distinct names (expanded QNames).
+
 - [XQST0094] - Invalid variable in group-by clause. 
 The name of each grouping variable must be equal 
 (by the eq operator on expanded QNames) to the name of a 

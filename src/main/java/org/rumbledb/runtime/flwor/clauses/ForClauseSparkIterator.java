@@ -198,104 +198,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this.positionalVariableName != null) {
-            throw new UnsupportedFeatureException(
-                    "Positional variables are not yet supported yet for big FLWORs. Please contact us if you would like us to prioritize it.",
-                    getMetadata()
-            );
-        }
         // if it's a starting clause
         if (this.child == null) {
-            return getDataFrameFromRDDExpression(context);
+            return getDataFrameFromRDDExpression(context, parentProjection);
         }
 
         if (this.child.isDataFrame()) {
-            if (this.assignmentIterator.isRDD()) {
-                Set<Name> intersection = new HashSet<>(
-                        this.assignmentIterator.getVariableDependencies().keySet()
+            if (this.positionalVariableName != null) {
+                throw new UnsupportedFeatureException(
+                        "Positional variables are not yet supported yet for big non-starting for clauses. Please contact us if you would like us to prioritize it.",
+                        getMetadata()
                 );
-                intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
-                boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
-
-                if (expressionUsesVariablesOfCurrentFlwor) {
-                    throw new JobWithinAJobException(
-                            "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                            getMetadata()
-                    );
-                }
-
-                // since no variable dependency to the current FLWOR expression exists for the expression
-                // evaluate the DataFrame with the parent context and calculate the cartesian product
-                Dataset<Row> expressionDF;
-                expressionDF = getDataFrameFromRDDExpression(context);
-
-                String inputDFTableName = "input";
-                String expressionDFTableName = "expression";
-
-                Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
-                StructType inputSchema = inputDF.schema();
-                int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
-                    .indexOf(this.variableName.toString());
-                List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
-                    inputSchema,
-                    duplicateVariableIndex,
-                    parentProjection
-                );
-
-                if (duplicateVariableIndex == -1) {
-                    columnsToSelect.add(this.variableName.toString());
-                } else {
-                    columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
-                }
-                String selectSQL = FlworDataFrameUtils.getSQL(columnsToSelect, false);
-
-                inputDF.createOrReplaceTempView(inputDFTableName);
-                expressionDF.createOrReplaceTempView(expressionDFTableName);
-
-                return inputDF.sparkSession()
-                    .sql(
-                        String.format(
-                            "select %s from %s, %s",
-                            selectSQL,
-                            inputDFTableName,
-                            expressionDFTableName
-                        )
-                    );
             }
 
-            // the expression is locally evaluated
-            Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
-            StructType inputSchema = df.schema();
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
-            List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
-            Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
-                inputSchema,
-                -1,
-                this.dependencies
-            );
-
-            df.sparkSession()
-                .udf()
-                .register(
-                    "forClauseUDF",
-                    new ForClauseUDF(this.assignmentIterator, context, UDFcolumnsByType),
-                    DataTypes.createArrayType(DataTypes.BinaryType)
-                );
-
-            String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
-            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
-
-            df.createOrReplaceTempView("input");
-            df = df.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s explode(forClauseUDF(%s)) as `%s` from input",
-                        selectSQL,
-                        UDFParameters,
-                        this.variableName
-                    )
-                );
-            return df;
+            return getFromDataFrame(context, parentProjection);
         }
 
         // if child is locally evaluated
@@ -321,13 +237,118 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
             );
 
+            Dataset<Row> nextDataFrame = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+
+            if (this.positionalVariableName != null) {
+                // Add column for positional variable, similar to count clause.
+                nextDataFrame = CountClauseSparkIterator.addSerializedCountColumn(
+                    nextDataFrame,
+                    parentProjection,
+                    this.positionalVariableName
+                );
+            }
+
             if (df == null) {
-                df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+                df = nextDataFrame;
             } else {
-                df = df.union(SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema));
+                df = df.union(nextDataFrame);
             }
         }
         this.child.close();
+        return df;
+    }
+
+    private Dataset<Row> getFromDataFrame(
+            DynamicContext context,
+            Map<Name, DynamicContext.VariableDependency> parentProjection
+    ) {
+        if (this.assignmentIterator.isRDD()) {
+            Set<Name> intersection = new HashSet<>(
+                    this.assignmentIterator.getVariableDependencies().keySet()
+            );
+            intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
+            boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
+
+            if (expressionUsesVariablesOfCurrentFlwor) {
+                throw new JobWithinAJobException(
+                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
+            }
+
+            // since no variable dependency to the current FLWOR expression exists for the expression
+            // evaluate the DataFrame with the parent context and calculate the cartesian product
+            Dataset<Row> expressionDF;
+            expressionDF = getDataFrameFromRDDExpression(context, parentProjection);
+
+            String inputDFTableName = "input";
+            String expressionDFTableName = "expression";
+
+            Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
+            StructType inputSchema = inputDF.schema();
+            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
+                .indexOf(this.variableName.toString());
+            List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+                inputSchema,
+                duplicateVariableIndex,
+                parentProjection
+            );
+
+            if (duplicateVariableIndex == -1) {
+                columnsToSelect.add(this.variableName.toString());
+            } else {
+                columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
+            }
+            String selectSQL = FlworDataFrameUtils.getSQL(columnsToSelect, false);
+
+            inputDF.createOrReplaceTempView(inputDFTableName);
+            expressionDF.createOrReplaceTempView(expressionDFTableName);
+
+            return inputDF.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s from %s, %s",
+                        selectSQL,
+                        inputDFTableName,
+                        expressionDFTableName
+                    )
+                );
+        }
+
+        // the expression is locally evaluated
+        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        StructType inputSchema = df.schema();
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, duplicateVariableIndex, null);
+        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+            inputSchema,
+            -1,
+            this.dependencies
+        );
+
+        df.sparkSession()
+            .udf()
+            .register(
+                "forClauseUDF",
+                new ForClauseUDF(this.assignmentIterator, context, UDFcolumnsByType),
+                DataTypes.createArrayType(DataTypes.BinaryType)
+            );
+
+        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+
+        df.createOrReplaceTempView("input");
+        df = df.sparkSession()
+            .sql(
+                String.format(
+                    "select %s explode(forClauseUDF(%s)) as `%s` from input",
+                    selectSQL,
+                    UDFParameters,
+                    this.variableName
+                )
+            );
         return df;
     }
 
@@ -345,10 +366,24 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         return DataTypes.createStructType(fields);
     }
 
-    private Dataset<Row> getDataFrameFromRDDExpression(DynamicContext context) {
+    private Dataset<Row> getDataFrameFromRDDExpression(
+            DynamicContext context,
+            Map<Name, DynamicContext.VariableDependency> parentProjection
+    ) {
         // create initial RDD from expression
         JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(context);
-        return getDataFrameFromItemRDD(expressionRDD);
+        Dataset<Row> df = getDataFrameFromItemRDD(expressionRDD);
+        if (this.positionalVariableName == null) {
+            return df;
+        }
+
+        // Add column for positional variable, similar to count clause.
+        Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
+            df,
+            parentProjection,
+            this.positionalVariableName
+        );
+        return dfWithIndex;
     }
 
     private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {

@@ -134,8 +134,19 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             return df;
         }
 
+        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, parentProjection, this.variableName);
+        return dfWithIndex;
+    }
+
+    // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with
+    // positional variables).
+    public static Dataset<Row> addSerializedCountColumn(
+            Dataset<Row> df,
+            Map<Name, DynamicContext.VariableDependency> parentProjection,
+            Name variableName
+    ) {
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(variableName.toString());
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -145,7 +156,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
 
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.variableName.toString());
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
         df.sparkSession()
             .udf()
@@ -161,8 +172,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                 String.format(
                     "select %s serializeCountIndex(`%s`) as `%s` from input",
                     selectSQL,
-                    this.variableName,
-                    this.variableName
+                    variableName,
+                    variableName
                 )
             );
         return dfWithIndex;
