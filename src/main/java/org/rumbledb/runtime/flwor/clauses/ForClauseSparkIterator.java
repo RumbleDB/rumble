@@ -387,7 +387,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
-        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(allColumns, false);
+        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
@@ -395,7 +395,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "select %s, explode(forClauseUDF(%s)) as `%s` from input",
+                        "select %s explode(forClauseUDF(%s)) as `%s` from input",
                         projectionVariables,
                         UDFParameters,
                         this.variableName
@@ -413,7 +413,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT %s, for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
+                        "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
                             + "FROM input "
                             + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                         projectionVariables,
