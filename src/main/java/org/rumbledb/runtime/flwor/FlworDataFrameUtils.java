@@ -146,10 +146,26 @@ public class FlworDataFrameUtils {
             int duplicateVariableIndex,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
+        return getColumnNames(inputSchema, duplicateVariableIndex, -1, dependencies);
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param duplicatePositionalVariableIndex enables skipping another variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            int duplicatePositionalVariableIndex,
+            Map<Name, DynamicContext.VariableDependency> dependencies
+    ) {
         List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex) {
+            if (columnIndex == duplicateVariableIndex || columnIndex == duplicatePositionalVariableIndex) {
                 continue;
             }
             String var = columnNames[columnIndex];
