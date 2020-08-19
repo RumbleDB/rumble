@@ -219,8 +219,8 @@ public class FlworDataFrameUtils {
     public static String getUDFParameters(
             Map<String, List<String>> columnNamesByType
     ) {
-        String udfBinarySQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+        String udfBinarySQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("Long"), false);
 
         return String.format(
             "array(%s), array(%s)",
@@ -244,7 +244,7 @@ public class FlworDataFrameUtils {
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQL(
+    public static String getListOfSQLVariables(
             List<String> columnNames,
             boolean trailingComma
     ) {

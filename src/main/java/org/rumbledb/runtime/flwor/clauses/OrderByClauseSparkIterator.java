@@ -415,7 +415,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
         return df.sparkSession()

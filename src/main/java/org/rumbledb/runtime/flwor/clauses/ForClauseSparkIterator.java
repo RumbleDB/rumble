@@ -273,7 +273,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         } else {
             columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
         }
-        String selectSQL = FlworDataFrameUtils.getSQL(columnsToSelect, false);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, false);
 
         inputDF.createOrReplaceTempView(inputDFTableName);
         expressionDF.createOrReplaceTempView(expressionDFTableName);
@@ -384,7 +384,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(allColumns, false);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
@@ -392,8 +392,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "select %s explode(forClauseUDF(%s)) as `%s` from input",
-                        selectSQL,
+                        "select %s, explode(forClauseUDF(%s)) as `%s` from input",
+                        projectionVariables,
                         UDFParameters,
                         this.variableName
                     )
@@ -410,10 +410,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
+                        "SELECT %s, for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
                             + "FROM input "
                             + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
-                        selectSQL,
+                        projectionVariables,
                         this.variableName,
                         this.positionalVariableName,
                         this.positionalVariableName,
