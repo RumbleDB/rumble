@@ -146,10 +146,26 @@ public class FlworDataFrameUtils {
             int duplicateVariableIndex,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
+        return getColumnNames(inputSchema, duplicateVariableIndex, -1, dependencies);
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param duplicatePositionalVariableIndex enables skipping another variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            int duplicatePositionalVariableIndex,
+            Map<Name, DynamicContext.VariableDependency> dependencies
+    ) {
         List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex) {
+            if (columnIndex == duplicateVariableIndex || columnIndex == duplicatePositionalVariableIndex) {
                 continue;
             }
             String var = columnNames[columnIndex];
@@ -203,8 +219,8 @@ public class FlworDataFrameUtils {
     public static String getUDFParameters(
             Map<String, List<String>> columnNamesByType
     ) {
-        String udfBinarySQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+        String udfBinarySQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("Long"), false);
 
         return String.format(
             "array(%s), array(%s)",
@@ -228,7 +244,7 @@ public class FlworDataFrameUtils {
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQL(
+    public static String getListOfSQLVariables(
             List<String> columnNames,
             boolean trailingComma
     ) {

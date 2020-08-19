@@ -201,7 +201,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
 
-            String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+            String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
             String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
             df.createOrReplaceTempView("input");

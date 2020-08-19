@@ -302,7 +302,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         DataTypes.BinaryType
                     );
 
-                String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+                String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
                 String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
                 df.createOrReplaceTempView("input");
@@ -381,7 +381,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
