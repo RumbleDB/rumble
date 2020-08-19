@@ -28,7 +28,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
+public class LongSerializeUDF implements UDF1<Long, byte[]> {
 
     private static final long serialVersionUID = 1L;
 
@@ -36,7 +36,7 @@ public class CountClauseSerializeUDF implements UDF1<Long, byte[]> {
 
     private DataFrameContext dataFrameContext;
 
-    public CountClauseSerializeUDF() {
+    public LongSerializeUDF() {
         this.dataFrameContext = new DataFrameContext();
         this.nextResult = new ArrayList<>();
     }
