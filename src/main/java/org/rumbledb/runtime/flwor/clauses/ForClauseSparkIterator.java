@@ -362,8 +362,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
-        int duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
-            .indexOf(this.positionalVariableName.toString());
+        int duplicatePositionalVariableIndex = -1;
+        if (this.positionalVariableName != null) {
+            duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
+                .indexOf(this.positionalVariableName.toString());
+        }
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             duplicateVariableIndex,
