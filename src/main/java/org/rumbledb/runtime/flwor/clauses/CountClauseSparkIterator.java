@@ -35,7 +35,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
+import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -162,7 +162,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "serializeCountIndex",
-                new LongSerializeUDF(),
+                new CountClauseSerializeUDF(),
                 DataTypes.BinaryType
             );
 
