@@ -32,7 +32,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -230,19 +229,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this.positionalVariableName != null) {
-            throw new UnsupportedFeatureException(
-                    "Positional variables are not yet supported yet for big non-starting for clauses. Please contact us if you would like us to prioritize it.",
-                    getMetadata()
-            );
-        }
-
+        // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
                 this.assignmentIterator.getVariableDependencies().keySet()
         );
         intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
         boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
 
+        // If it does, we cannot handle it.
         if (expressionUsesVariablesOfCurrentFlwor) {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -250,39 +244,64 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        // since no variable dependency to the current FLWOR expression exists for the expression
+        // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
         expressionDF = getDataFrameStartingClause(context, parentProjection);
-
-        String inputDFTableName = "input";
-        String expressionDFTableName = "expression";
+        // And we add a column for the positional variable if there is one.
+        if (this.positionalVariableName != null) {
+            // Add column for positional variable, similar to count clause.
+            expressionDF = CountClauseSparkIterator.addSerializedCountColumn(
+                expressionDF,
+                parentProjection,
+                this.positionalVariableName
+            );
+        }
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
+
+        // Now we prepare the two views that we want to compute the Cartesian product of.
+        String inputDFTableName = "input";
+        String expressionDFTableName = "expression";
+        inputDF.createOrReplaceTempView(inputDFTableName);
+        expressionDF.createOrReplaceTempView(expressionDFTableName);
+
+        // We gather the columns to select from the previous clause.
+        // We need to project away the clause's variables from the previous clause.
         StructType inputSchema = inputDF.schema();
         int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
             .indexOf(this.variableName.toString());
+        int duplicatePositionalVariableIndex = -1;
+        if (this.positionalVariableName != null) {
+            duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
+                .indexOf(this.positionalVariableName.toString());
+        }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             duplicateVariableIndex,
+            duplicatePositionalVariableIndex,
             parentProjection
         );
 
+        // We add the one or two current clause variables to our projection.
         if (duplicateVariableIndex == -1) {
             columnsToSelect.add(this.variableName.toString());
         } else {
             columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
         }
-        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, false);
+        if (duplicatePositionalVariableIndex == -1) {
+            columnsToSelect.add(this.positionalVariableName.toString());
+        } else {
+            columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
+        }
+        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, false);
 
-        inputDF.createOrReplaceTempView(inputDFTableName);
-        expressionDF.createOrReplaceTempView(expressionDFTableName);
-
+        // And return the Cartesian product with the desired projection.
         return inputDF.sparkSession()
             .sql(
                 String.format(
                     "select %s from %s, %s",
-                    selectSQL,
+                    projectionVariables,
                     inputDFTableName,
                     expressionDFTableName
                 )
