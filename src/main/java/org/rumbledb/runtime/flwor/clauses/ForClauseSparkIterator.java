@@ -289,10 +289,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         } else {
             columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
         }
-        if (duplicatePositionalVariableIndex == -1) {
-            columnsToSelect.add(this.positionalVariableName.toString());
-        } else {
-            columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
+        if (this.positionalVariableName != null) {
+            if (duplicatePositionalVariableIndex == -1) {
+                columnsToSelect.add(this.positionalVariableName.toString());
+            } else {
+                columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
+            }
         }
         String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, false);
 
