@@ -97,7 +97,7 @@ public class SparkSessionManager {
             Logger.getLogger("org").setLevel(LOG_LEVEL);
             Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
-            this.session = SparkSession.builder().config(this.configuration).getOrCreate();
+            // this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {
             throw new OurBadException("Session already exists: new session initialization prevented.");
         }

@@ -47,6 +47,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,16 +61,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private Name variableName; // for efficient use in local iteration
     private Name positionalVariableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
+    private boolean allowingEmpty;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private long position;
     private FlworTuple nextLocalTupleResult;
     private FlworTuple inputTuple; // tuple received from child, used for tuple creation
+    private boolean isFirstItem;
 
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
             Name variableName,
             Name positionalVariableName,
+            boolean allowingEmpty,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -78,6 +82,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.variableName = variableName;
         this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
+        this.allowingEmpty = allowingEmpty;
         this.dependencies = this.assignmentIterator.getVariableDependencies();
     }
 
@@ -89,10 +94,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.child.open(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             this.position = 1;
+            this.isFirstItem = true;
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.open(this.currentDynamicContext);
             this.position = 1;
+            this.isFirstItem = true;
             setResultFromExpression();
         }
     }
@@ -105,10 +112,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.child.reset(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             this.position = 1;
+            this.isFirstItem = true;
             setNextLocalTupleResult();
         } else { // if it's a start clause, get results using only the assignmentIterator
             this.assignmentIterator.reset(this.currentDynamicContext);
             this.position = 1;
+            this.isFirstItem = true;
             setResultFromExpression();
         }
     }
@@ -141,6 +150,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata());
             this.assignmentIterator.open(this.tupleContext);
             this.position = 1;
+            this.isFirstItem = true;
             if (setResultFromExpression()) {
                 return;
             }
@@ -176,12 +186,29 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             }
 
             this.hasNext = true;
+            this.isFirstItem = false;
             return true;
-        } else {
-            this.assignmentIterator.close();
+        }
+
+        this.assignmentIterator.close();
+
+        // If an item was already output by this expression and there is no more, we are done.
+        if (!this.isFirstItem || !this.allowingEmpty) {
             this.hasNext = false;
             return false;
         }
+
+        // If nothing was output yet by this expression but we allow empty, we need to bind
+        // the empty sequence.
+        if (this.child == null) { // if initial for clause
+            this.nextLocalTupleResult = new FlworTuple();
+        } else {
+            this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
+        }
+        this.nextLocalTupleResult.putValue(this.variableName, Collections.emptyList());
+        this.hasNext = true;
+        this.isFirstItem = false;
+        return true;
     }
 
     @Override
