@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : [ ] }, { "foo" : [ null ] }, { "foo" : [ 1 ] }, { "foo" : [ 2 ] }, { "foo" : [ 3 ] })" :)
+(:JIQS: ShouldRun; Output="({ "foo" : [ 1 ] }, { "foo" : [ 2 ] }, { "foo" : [ 3 ] }, { "foo" : [ 4 ] }, { "foo" : [ 5 ] })" :)
 
 declare variable $seq := (
   { "foo" : [1] },
