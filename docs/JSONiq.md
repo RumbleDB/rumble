@@ -157,8 +157,6 @@ Allowing empty is not supported yet.
 
 Windows are not supported (they are not compatible with Spark).
 
-Stable order is not supported.
-
 ### Function types
 
 Function type syntax is not supported yet. Function coercion is thus also not implemented yet.
