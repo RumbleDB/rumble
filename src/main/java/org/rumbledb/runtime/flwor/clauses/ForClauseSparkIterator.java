@@ -451,8 +451,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         df.createOrReplaceTempView("input");
         if (this.positionalVariableName == null) {
-            if(this.allowingEmpty)
-            {
+            if (this.allowingEmpty) {
                 df = df.sparkSession()
                     .sql(
                         String.format(
@@ -464,14 +463,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     );
             } else {
                 df = df.sparkSession()
-                        .sql(
-                            String.format(
-                                "select %s explode(forClauseUDF(%s)) as `%s` from input",
-                                projectionVariables,
-                                UDFParameters,
-                                this.variableName
-                            )
-                        );
+                    .sql(
+                        String.format(
+                            "select %s explode(forClauseUDF(%s)) as `%s` from input",
+                            projectionVariables,
+                            UDFParameters,
+                            this.variableName
+                        )
+                    );
             }
         } else {
             df.sparkSession()
@@ -482,21 +481,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
 
-            if(this.allowingEmpty)
-            {
-                System.out.println(String.format(
-                            "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
-                                + "FROM input "
-                                + "LATERAL VIEW posexplode_outer(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
-                            projectionVariables,
-                            this.variableName,
-                            this.positionalVariableName,
-                            this.positionalVariableName,
-                            this.positionalVariableName,
-                            UDFParameters,
-                            this.positionalVariableName,
-                            this.variableName
-                        ));
+            if (this.allowingEmpty) {
+                System.out.println(
+                    String.format(
+                        "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
+                            + "FROM input "
+                            + "LATERAL VIEW posexplode_outer(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
+                        projectionVariables,
+                        this.variableName,
+                        this.positionalVariableName,
+                        this.positionalVariableName,
+                        this.positionalVariableName,
+                        UDFParameters,
+                        this.positionalVariableName,
+                        this.variableName
+                    )
+                );
                 df = df.sparkSession()
                     .sql(
                         String.format(
@@ -515,21 +515,21 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     );
             } else {
                 df = df.sparkSession()
-                        .sql(
-                            String.format(
-                                "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
-                                    + "FROM input "
-                                    + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
-                                projectionVariables,
-                                this.variableName,
-                                this.positionalVariableName,
-                                this.positionalVariableName,
-                                UDFParameters,
-                                this.positionalVariableName,
-                                this.variableName
-                            )
-                        );
-                }
+                    .sql(
+                        String.format(
+                            "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
+                                + "FROM input "
+                                + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
+                            projectionVariables,
+                            this.variableName,
+                            this.positionalVariableName,
+                            this.positionalVariableName,
+                            UDFParameters,
+                            this.positionalVariableName,
+                            this.variableName
+                        )
+                    );
+            }
         }
         return df;
     }
