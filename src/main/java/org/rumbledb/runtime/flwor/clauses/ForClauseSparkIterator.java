@@ -58,16 +58,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
+
+    // Properties
     private Name variableName; // for efficient use in local iteration
     private Name positionalVariableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
     private boolean allowingEmpty;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
-    private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
-    private long position;
-    private FlworTuple nextLocalTupleResult;
-    private FlworTuple inputTuple; // tuple received from child, used for tuple creation
-    private boolean isFirstItem;
+
+    // Computation state
+    private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
+    private transient long position;
+    private transient FlworTuple nextLocalTupleResult;
+    private transient FlworTuple inputTuple; // tuple received from child, used for tuple creation
+    private transient boolean isFirstItem;
 
     public ForClauseSparkIterator(
             RuntimeTupleIterator child,
