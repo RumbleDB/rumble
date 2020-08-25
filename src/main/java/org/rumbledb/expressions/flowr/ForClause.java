@@ -37,7 +37,7 @@ import java.util.List;
 public class ForClause extends Clause {
 
     private final Name variableName;
-    private final boolean allowingEmpty;
+    private final boolean allowEmpty;
     private final Name positionalVariableName;
     protected SequenceType sequenceType;
     protected Expression expression;
@@ -59,7 +59,7 @@ public class ForClause extends Clause {
             throw new SemanticException("For clause must have a variable", metadata);
         }
         this.variableName = variableName;
-        this.allowingEmpty = allowEmpty;
+        this.allowEmpty = allowEmpty;
         this.positionalVariableName = positionalVariableName;
         this.sequenceType = sequenceType;
         this.expression = expression;
@@ -71,7 +71,7 @@ public class ForClause extends Clause {
     }
 
     public boolean isAllowEmpty() {
-        return this.allowingEmpty;
+        return this.allowEmpty;
     }
 
     public Name getPositionalVariableName() {
@@ -129,7 +129,7 @@ public class ForClause extends Clause {
                 + ", "
                 + this.sequenceType.toString()
                 + ", "
-                + (this.allowingEmpty ? "allowing empty, " : "")
+                + (this.allowEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName
                 + ") "
         );
