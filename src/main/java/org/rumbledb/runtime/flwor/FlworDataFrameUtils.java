@@ -51,7 +51,6 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
@@ -64,6 +63,7 @@ import scala.collection.mutable.WrappedArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -369,6 +369,9 @@ public class FlworDataFrameUtils {
     ) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam : serializedParams) {
+            if (serializedParam == null) {
+                deserializedParams.add(Collections.emptyList());
+            }
             @SuppressWarnings("unchecked")
             List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
             deserializedParams.add(deserializedParam);
@@ -396,20 +399,6 @@ public class FlworDataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    @SuppressWarnings("unchecked")
-    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
-        Object o = row.get(columnIndex);
-        if (o instanceof Long) {
-            List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
-            return result;
-        } else {
-            byte[] bytes = (byte[]) o;
-            input.setBuffer(bytes);
-            return (List<Item>) kryo.readClassAndObject(input);
-        }
-    }
-
     public static long getCountOfField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
         if (o instanceof Long) {
@@ -417,17 +406,6 @@ public class FlworDataFrameUtils {
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
-    }
-
-    public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
-        ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
-        for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            input.setBuffer((byte[]) row.get(columnIndex));
-            Object deserializedColumnObject = kryo.readClassAndObject(input);
-            deserializedColumnObjects.add(deserializedColumnObject);
-        }
-
-        return deserializedColumnObjects;
     }
 
     /**
