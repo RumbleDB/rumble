@@ -35,6 +35,7 @@ import scala.collection.mutable.WrappedArray;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -155,7 +156,7 @@ public class DataFrameContext implements Serializable {
         // Create dynamic context with deserialized data but only with dependencies
         for (Name field : this.serializedVariableNames) {
             int columnIndex = row.fieldIndex(field.getLocalName());
-            List<Item> i = FlworDataFrameUtils.deserializeRowField(row, columnIndex, this.kryo, this.input); // rowColumns.get(columnIndex);
+            List<Item> i = deserializeRowField(row, columnIndex);
             this.deserializedParams.add(i);
         }
         for (Name field : this.countedVariableNames) {
@@ -233,6 +234,23 @@ public class DataFrameContext implements Serializable {
                     this.countedVariableNames.get(columnIndex),
                     this.longParams.get(columnIndex)
                 );
+        }
+    }
+
+    @SuppressWarnings("unchecked")
+    public List<Item> deserializeRowField(Row row, int columnIndex) {
+        Object o = row.get(columnIndex);
+        if (o == null) {
+            return Collections.emptyList();
+        }
+        if (o instanceof Long) {
+            List<Item> result = new ArrayList<>(1);
+            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
+            return result;
+        } else {
+            byte[] bytes = (byte[]) o;
+            this.input.setBuffer(bytes);
+            return (List<Item>) this.kryo.readClassAndObject(this.input);
         }
     }
 }
