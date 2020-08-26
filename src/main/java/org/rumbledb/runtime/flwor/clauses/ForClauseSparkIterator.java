@@ -41,7 +41,6 @@ import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
-
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -286,15 +285,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
         expressionDF = getDataFrameStartingClause(context, parentProjection);
-        // And we add a column for the positional variable if there is one.
-        if (this.positionalVariableName != null) {
-            // Add column for positional variable, similar to count clause.
-            expressionDF = CountClauseSparkIterator.addSerializedCountColumn(
-                expressionDF,
-                parentProjection,
-                this.positionalVariableName
-            );
-        }
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
 
@@ -482,21 +472,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
 
             if (this.allowingEmpty) {
-                System.out.println(
-                    String.format(
-                        "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
-                            + "FROM input "
-                            + "LATERAL VIEW posexplode_outer(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
-                        projectionVariables,
-                        this.variableName,
-                        this.positionalVariableName,
-                        this.positionalVariableName,
-                        this.positionalVariableName,
-                        UDFParameters,
-                        this.positionalVariableName,
-                        this.variableName
-                    )
-                );
                 df = df.sparkSession()
                     .sql(
                         String.format(
@@ -563,16 +538,48 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // create initial RDD from expression
         JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(context);
         Dataset<Row> df = getDataFrameFromItemRDD(expressionRDD);
-        if (this.positionalVariableName == null) {
+        if (this.positionalVariableName == null && !this.allowingEmpty) {
             return df;
         }
-
+        if (this.positionalVariableName == null && this.allowingEmpty) {
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT input.`%s` FROM VALUES(1) FULL OUTER JOIN input",
+                        this.variableName
+                    )
+                );
+            return df;
+        }
         // Add column for positional variable, similar to count clause.
         Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
             df,
             parentProjection,
             this.positionalVariableName
         );
+        if (!this.allowingEmpty) {
+            return dfWithIndex;
+        }
+        dfWithIndex.createOrReplaceTempView("inputWithIndex");
+        dfWithIndex.sparkSession()
+        .udf()
+        .register(
+            "serializeCountIndex",
+            new IntegerSerializeUDF(),
+            DataTypes.BinaryType
+        );
+    
+        dfWithIndex = dfWithIndex.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT inputWithIndex.`%s`, IF(inputWithIndex.`%s` IS NULL, serializeCountIndex(0), inputWithIndex.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN inputWithIndex",
+                    this.variableName,
+                    this.positionalVariableName,
+                    this.positionalVariableName,
+                    this.positionalVariableName
+                )
+            );
         return dfWithIndex;
     }
 
