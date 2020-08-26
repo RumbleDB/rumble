@@ -9,4 +9,4 @@ declare variable $seq := (
 
 for $i in parallelize($seq.foo)
 for $foo allowing empty at $pos in $i[]
-return { "foo" : [ $foo ] }
+return { "foo" : [ $foo ], "pos" : $pos }

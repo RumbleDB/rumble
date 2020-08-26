@@ -502,7 +502,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         String.format(
                             "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
                                 + "FROM input "
-                                + "LATERAL VIEW posexplode_outer(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
+                                + "LATERAL VIEW OUTER posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                             projectionVariables,
                             this.variableName,
                             this.positionalVariableName,
