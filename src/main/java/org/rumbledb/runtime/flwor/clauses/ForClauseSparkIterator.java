@@ -360,29 +360,33 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
                                                                                                         // variables
                                                                                                         // from new
-            // tuple
-            JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
-
-            if (schema == null) {
-                schema = generateSchema();
-            }
-
-            JavaRDD<Row> rowRDD = expressionRDD.map(
-                new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
-            );
-
-            Dataset<Row> nextDataFrame = SparkSessionManager.getInstance()
-                .getOrCreateSession()
-                .createDataFrame(rowRDD, schema);
-
-            if (this.positionalVariableName != null) {
-                // Add column for positional variable, similar to count clause.
-                nextDataFrame = CountClauseSparkIterator.addSerializedCountColumn(
-                    nextDataFrame,
-                    parentProjection,
-                    this.positionalVariableName
-                );
-            }
+            
+            Dataset<Row> nextDataFrame = getDataFrameStartingClause(this.tupleContext, parentProjection);
+            nextDataFrame.createOrReplaceTempView("input");
+            
+//            // tuple
+//            JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
+//
+//            if (schema == null) {
+//                schema = generateSchema();
+//            }
+//
+//            JavaRDD<Row> rowRDD = expressionRDD.map(
+//                new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
+//            );
+//
+//            Dataset<Row> nextDataFrame = SparkSessionManager.getInstance()
+//                .getOrCreateSession()
+//                .createDataFrame(rowRDD, schema);
+//
+//            if (this.positionalVariableName != null) {
+//                // Add column for positional variable, similar to count clause.
+//                nextDataFrame = CountClauseSparkIterator.addSerializedCountColumn(
+//                    nextDataFrame,
+//                    parentProjection,
+//                    this.positionalVariableName
+//                );
+//            }
 
             if (df == null) {
                 df = nextDataFrame;
