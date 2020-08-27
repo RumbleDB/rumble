@@ -563,13 +563,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         dfWithIndex.createOrReplaceTempView("inputWithIndex");
         dfWithIndex.sparkSession()
-        .udf()
-        .register(
-            "serializeCountIndex",
-            new IntegerSerializeUDF(),
-            DataTypes.BinaryType
-        );
-    
+            .udf()
+            .register(
+                "serializeCountIndex",
+                new IntegerSerializeUDF(),
+                DataTypes.BinaryType
+            );
+
         dfWithIndex = dfWithIndex.sparkSession()
             .sql(
                 String.format(
