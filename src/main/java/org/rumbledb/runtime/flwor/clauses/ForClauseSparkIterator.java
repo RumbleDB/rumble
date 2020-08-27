@@ -21,8 +21,10 @@
 package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -37,8 +39,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 
@@ -65,6 +67,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator assignmentIterator;
     private boolean allowingEmpty;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
+    private DataFrameContext dataFrameContext;
 
     // Computation state
     private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
@@ -88,6 +91,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.assignmentIterator = assignmentIterator;
         this.allowingEmpty = allowingEmpty;
         this.dependencies = this.assignmentIterator.getVariableDependencies();
+        this.dataFrameContext = new DataFrameContext();
     }
 
     @Override
@@ -367,11 +371,28 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             lateralView.createOrReplaceTempView("lateralView");
 
             // We then get the (singleton) input tuple as a data frame
-            JavaRDD<Row> inputTupleRDD = lateralView.sparkSession()
-                .sparkContext()
-                .range(1, 2, 1, 1)
-                .toJavaRDD()
-                .map(new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata()));
+
+            List<List<Item>> rowColumns = new ArrayList<>();
+            this.inputTuple.getLocalKeys()
+                .forEach(key -> rowColumns.add(this.inputTuple.getLocalValue(key, getMetadata())));
+
+            List<byte[]> serializedRowColumns = new ArrayList<>();
+            for (List<Item> column : rowColumns) {
+                serializedRowColumns.add(
+                    FlworDataFrameUtils.serializeItemList(
+                        column,
+                        this.dataFrameContext.getKryo(),
+                        this.dataFrameContext.getOutput()
+                    )
+                );
+            }
+
+            Row row = RowFactory.create(serializedRowColumns.toArray());
+
+            JavaRDD<Row> inputTupleRDD = JavaSparkContext.fromSparkContext(
+                lateralView.sparkSession()
+                    .sparkContext()
+            ).parallelize(Collections.singletonList(row));
             if (schema == null) {
                 schema = generateSchema();
             }
