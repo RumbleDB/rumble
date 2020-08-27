@@ -598,9 +598,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {
         // define a schema
-        List<StructField> fields = new ArrayList<>();
-        StructField field = DataTypes.createStructField(this.variableName.toString(), DataTypes.BinaryType, true);
-        fields.add(field);
+        List<StructField> fields = Collections.singletonList(
+            DataTypes.createStructField(this.variableName.toString(), DataTypes.BinaryType, true)
+        );
         StructType schema = DataTypes.createStructType(fields);
 
         JavaRDD<Row> rowRDD = expressionRDD.map(new ItemSerializeClosure());
