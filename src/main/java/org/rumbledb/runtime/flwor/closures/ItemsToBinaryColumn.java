@@ -20,30 +20,24 @@
 
 package org.rumbledb.runtime.flwor.closures;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseSerializeClosure implements Function<Item, Row> {
+public class ItemsToBinaryColumn implements Function<Item, Row> {
 
 
     private static final long serialVersionUID = 1L;
-    private transient Kryo kryo;
-    private transient Output output;
+    private DataFrameContext dataFrameContext;
 
-    public ForClauseSerializeClosure() {
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
+    public ItemsToBinaryColumn() {
+        this.dataFrameContext = new DataFrameContext();
     }
 
     /**
@@ -55,17 +49,12 @@ public class ForClauseSerializeClosure implements Function<Item, Row> {
         List<Item> itemList = new ArrayList<>();
         itemList.add(item);
 
-        return RowFactory.create((Object) FlworDataFrameUtils.serializeItemList(itemList, this.kryo, this.output));
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
+        return RowFactory.create(
+            (Object) FlworDataFrameUtils.serializeItemList(
+                itemList,
+                this.dataFrameContext.getKryo(),
+                this.dataFrameContext.getOutput()
+            )
+        );
     }
 }
