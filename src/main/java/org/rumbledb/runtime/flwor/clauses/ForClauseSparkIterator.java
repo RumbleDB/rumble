@@ -372,15 +372,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             // We then get the (singleton) input tuple as a data frame
 
-            List<List<Item>> rowColumns = new ArrayList<>();
-            this.inputTuple.getLocalKeys()
-                .forEach(key -> rowColumns.add(this.inputTuple.getLocalValue(key, getMetadata())));
-
             List<byte[]> serializedRowColumns = new ArrayList<>();
-            for (List<Item> column : rowColumns) {
+            for (Name columnName : this.inputTuple.getLocalKeys()) {
                 serializedRowColumns.add(
                     FlworDataFrameUtils.serializeItemList(
-                        column,
+                        this.inputTuple.getLocalValue(columnName, getMetadata()),
                         this.dataFrameContext.getKryo(),
                         this.dataFrameContext.getOutput()
                     )
