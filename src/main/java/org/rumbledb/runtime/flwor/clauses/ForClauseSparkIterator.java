@@ -41,6 +41,7 @@ import org.rumbledb.runtime.flwor.closures.ForClauseLocalTupleToRowClosure;
 import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -355,43 +356,36 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.tupleContext = new DynamicContext(context); // assign current context as parent
         StructType schema = null;
         while (this.child.hasNext()) {
+            // We first compute the new tuple variable values
             this.inputTuple = this.child.next();
             this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
             this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
                                                                                                         // variables
                                                                                                         // from new
             
-            Dataset<Row> nextDataFrame = getDataFrameStartingClause(this.tupleContext, parentProjection);
-            nextDataFrame.createOrReplaceTempView("input");
+            Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, parentProjection);
+            lateralView.createOrReplaceTempView("lateralView");
             
-//            // tuple
-//            JavaRDD<Item> expressionRDD = this.assignmentIterator.getRDD(this.tupleContext);
-//
-//            if (schema == null) {
-//                schema = generateSchema();
-//            }
-//
-//            JavaRDD<Row> rowRDD = expressionRDD.map(
-//                new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata())
-//            );
-//
-//            Dataset<Row> nextDataFrame = SparkSessionManager.getInstance()
-//                .getOrCreateSession()
-//                .createDataFrame(rowRDD, schema);
-//
-//            if (this.positionalVariableName != null) {
-//                // Add column for positional variable, similar to count clause.
-//                nextDataFrame = CountClauseSparkIterator.addSerializedCountColumn(
-//                    nextDataFrame,
-//                    parentProjection,
-//                    this.positionalVariableName
-//                );
-//            }
+            // We then get the (singleton) input tuple as a data frame
+            JavaRDD<Row> inputTupleRDD = lateralView.sparkSession().sparkContext()
+                    .range(1, 2, 1, 1).toJavaRDD()
+                    .map(new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata()));
+            if (schema == null) {
+                schema = generateSchema();
+            }
+            Dataset<Row> inputTupleDataFrame = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(inputTupleRDD, schema);
+            inputTupleDataFrame.createOrReplaceTempView("inputTuple");
+            
+            // And we join.
+            inputTupleDataFrame = inputTupleDataFrame.sparkSession()
+                    .sql("select * FROM inputTuple JOIN lateralView");
 
             if (df == null) {
-                df = nextDataFrame;
+                df = inputTupleDataFrame;
             } else {
-                df = df.union(nextDataFrame);
+                df = df.union(inputTupleDataFrame);
             }
         }
         this.child.close();
@@ -514,12 +508,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     private StructType generateSchema() {
-        Set<Name> oldColumnNames = this.inputTuple.getLocalKeys();
-        List<Name> newColumnNames = new ArrayList<>(oldColumnNames);
-        newColumnNames.add(this.variableName);
-
         List<StructField> fields = new ArrayList<>();
-        for (Name columnName : newColumnNames) {
+        for (Name columnName : this.inputTuple.getLocalKeys()) {
             // all columns store items serialized to binary format
             StructField field = DataTypes.createStructField(columnName.toString(), DataTypes.BinaryType, true);
             fields.add(field);

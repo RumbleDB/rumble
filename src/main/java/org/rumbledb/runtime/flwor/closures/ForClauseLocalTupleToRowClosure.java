@@ -34,7 +34,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
+public class ForClauseLocalTupleToRowClosure implements Function<Object, Row> {
 
     private static final long serialVersionUID = 1L;
 
@@ -54,14 +54,10 @@ public class ForClauseLocalTupleToRowClosure implements Function<Item, Row> {
     }
 
     @Override
-    public Row call(Item item) {
+    public Row call(Object item) {
         List<List<Item>> rowColumns = new ArrayList<>();
         this.inputTuple.getLocalKeys()
             .forEach(key -> rowColumns.add(this.inputTuple.getLocalValue(key, this.metadata)));
-
-        List<Item> itemList = new ArrayList<>();
-        itemList.add(item);
-        rowColumns.add(itemList);
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
