@@ -362,14 +362,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
                                                                                                         // variables
                                                                                                         // from new
-            
+
             Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, parentProjection);
             lateralView.createOrReplaceTempView("lateralView");
-            
+
             // We then get the (singleton) input tuple as a data frame
-            JavaRDD<Row> inputTupleRDD = lateralView.sparkSession().sparkContext()
-                    .range(1, 2, 1, 1).toJavaRDD()
-                    .map(new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata()));
+            JavaRDD<Row> inputTupleRDD = lateralView.sparkSession()
+                .sparkContext()
+                .range(1, 2, 1, 1)
+                .toJavaRDD()
+                .map(new ForClauseLocalTupleToRowClosure(this.inputTuple, getMetadata()));
             if (schema == null) {
                 schema = generateSchema();
             }
@@ -377,10 +379,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 .getOrCreateSession()
                 .createDataFrame(inputTupleRDD, schema);
             inputTupleDataFrame.createOrReplaceTempView("inputTuple");
-            
+
             // And we join.
             inputTupleDataFrame = inputTupleDataFrame.sparkSession()
-                    .sql("select * FROM inputTuple JOIN lateralView");
+                .sql("select * FROM inputTuple JOIN lateralView");
 
             if (df == null) {
                 df = inputTupleDataFrame;

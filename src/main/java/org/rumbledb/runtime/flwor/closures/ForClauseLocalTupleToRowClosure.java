@@ -56,7 +56,13 @@ public class ForClauseLocalTupleToRowClosure implements Function<Object, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(FlworDataFrameUtils.serializeItemList(column, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput()));
+            serializedRowColumns.add(
+                FlworDataFrameUtils.serializeItemList(
+                    column,
+                    this.dataFrameContext.getKryo(),
+                    this.dataFrameContext.getOutput()
+                )
+            );
         }
 
         return RowFactory.create(serializedRowColumns.toArray());

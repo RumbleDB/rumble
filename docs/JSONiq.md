@@ -153,15 +153,13 @@ Some prolog settings (mostly about changing the default behavior: default collat
 
 ### FLWOR features
 
-Allowing empty is not supported yet.
-
-Windows are not supported (they are not compatible with Spark).
+Window clauses are not supported, because they are not compatible with the Spark execution model.
 
 ### Function types
 
-Function type syntax is not supported yet. Function coercion is thus also not implemented yet.
+Function type syntax is not supported yet, but is planned. Function coercion is thus also not implemented yet, but is planned.
 
-Function annotations are not supported (%public, %private...).
+Function annotations are not supported (%public, %private...), but this is planned.
 
 ### Builtin functions
 
