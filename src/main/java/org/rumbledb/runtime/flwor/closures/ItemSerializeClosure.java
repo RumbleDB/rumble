@@ -32,14 +32,14 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseSerializeClosure implements Function<Item, Row> {
+public class ItemSerializeClosure implements Function<Item, Row> {
 
 
     private static final long serialVersionUID = 1L;
     private transient Kryo kryo;
     private transient Output output;
 
-    public ForClauseSerializeClosure() {
+    public ItemSerializeClosure() {
         this.kryo = new Kryo();
         this.kryo.setReferences(false);
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);

@@ -39,7 +39,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
+import org.rumbledb.runtime.flwor.closures.ItemSerializeClosure;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
@@ -603,7 +603,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         fields.add(field);
         StructType schema = DataTypes.createStructType(fields);
 
-        JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
+        JavaRDD<Row> rowRDD = expressionRDD.map(new ItemSerializeClosure());
 
         // apply the schema to row RDD
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
