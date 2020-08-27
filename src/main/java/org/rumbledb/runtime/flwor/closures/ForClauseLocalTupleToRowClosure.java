@@ -20,17 +20,16 @@
 
 package org.rumbledb.runtime.flwor.closures;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -41,16 +40,12 @@ public class ForClauseLocalTupleToRowClosure implements Function<Object, Row> {
     private final FlworTuple inputTuple;
     private final ExceptionMetadata metadata;
 
-    private transient Kryo kryo;
-    private transient Output output;
+    private DataFrameContext dataFrameContext;
 
     public ForClauseLocalTupleToRowClosure(FlworTuple inputTuple, ExceptionMetadata metadata) {
         this.inputTuple = inputTuple;
         this.metadata = metadata;
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
+        this.dataFrameContext = new DataFrameContext();
     }
 
     @Override
@@ -61,20 +56,9 @@ public class ForClauseLocalTupleToRowClosure implements Function<Object, Row> {
 
         List<byte[]> serializedRowColumns = new ArrayList<>();
         for (List<Item> column : rowColumns) {
-            serializedRowColumns.add(FlworDataFrameUtils.serializeItemList(column, this.kryo, this.output));
+            serializedRowColumns.add(FlworDataFrameUtils.serializeItemList(column, this.dataFrameContext.getKryo(), this.dataFrameContext.getOutput()));
         }
 
         return RowFactory.create(serializedRowColumns.toArray());
-    }
-
-    private void readObject(java.io.ObjectInputStream in)
-            throws IOException,
-                ClassNotFoundException {
-        in.defaultReadObject();
-
-        this.kryo = new Kryo();
-        this.kryo.setReferences(false);
-        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
-        this.output = new Output(128, -1);
     }
 }
