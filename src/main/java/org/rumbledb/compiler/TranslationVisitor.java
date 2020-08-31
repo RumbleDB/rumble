@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
+import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
 import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
@@ -218,10 +219,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.processNamespaceDecl(namespace);
         }
         List<SetterContext> setters = ctx.setter();
+        boolean emptyOrderSet = false;
         boolean defaultCollationSet = false;
         for (SetterContext setterContext : setters) {
             if (setterContext.emptyOrderDecl() != null) {
+                if (emptyOrderSet) {
+                    throw new MoreThanOneEmptyOrderDeclarationException(
+                            "The empty order was already set.",
+                            createMetadataFromContext(setterContext.emptyOrderDecl())
+                    );
+                }
                 processEmptySequenceOrder(setterContext.emptyOrderDecl());
+                emptyOrderSet = true;
                 continue;
             }
             if (setterContext.defaultCollationDecl() != null) {
