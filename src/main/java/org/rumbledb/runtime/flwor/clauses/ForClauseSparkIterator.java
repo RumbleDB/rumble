@@ -165,6 +165,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // execution reaches here when there are no more results
+        this.hasNext = false;
         this.child.close();
     }
 
