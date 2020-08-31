@@ -39,7 +39,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.closures.ForClauseSerializeClosure;
+import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
@@ -598,12 +598,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     private Dataset<Row> getDataFrameFromItemRDD(JavaRDD<Item> expressionRDD) {
         // define a schema
-        List<StructField> fields = new ArrayList<>();
-        StructField field = DataTypes.createStructField(this.variableName.toString(), DataTypes.BinaryType, true);
-        fields.add(field);
+        List<StructField> fields = Collections.singletonList(
+            DataTypes.createStructField(this.variableName.toString(), DataTypes.BinaryType, true)
+        );
         StructType schema = DataTypes.createStructType(fields);
 
-        JavaRDD<Row> rowRDD = expressionRDD.map(new ForClauseSerializeClosure());
+        JavaRDD<Row> rowRDD = expressionRDD.map(new ItemsToBinaryColumn());
 
         // apply the schema to row RDD
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
