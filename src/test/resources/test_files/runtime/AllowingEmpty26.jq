@@ -6,3 +6,5 @@ let $join :=
         [ $$.state eq $nation.state ] 
     return { "name": $nation.state, "stores": $store."store number" }
 return [$join]
+
+(: Thanks Milos Nikolic for contributing the test :)
