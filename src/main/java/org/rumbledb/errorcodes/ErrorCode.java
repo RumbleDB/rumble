@@ -98,6 +98,7 @@ public enum ErrorCode {
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
+    MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),
     EmptyModuleURIErrorCode("XQST0088"),
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),

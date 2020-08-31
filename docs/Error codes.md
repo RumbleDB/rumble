@@ -139,6 +139,9 @@ and the {variety} of the type must be simple.
 to process a schema or module import by finding a schema or module with
 the specified target namespace.
 
+- [XQST0069] - A static error is raised if a Prolog contains more than
+one empty order declaration.
+
 - [XQST0088] - It is a static error if the literal that specifies
 the target namespace in a module import or a module declaration is of
 zero length.
