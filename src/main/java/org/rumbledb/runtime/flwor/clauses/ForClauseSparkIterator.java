@@ -358,12 +358,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         Dataset<Row> df = null;
         this.child.open(context);
-        this.tupleContext = new DynamicContext(context); // assign current context as parent
         StructType schema = null;
         while (this.child.hasNext()) {
             // We first compute the new tuple variable values
             this.inputTuple = this.child.next();
-            this.tupleContext.getVariableValues().removeAllVariables(); // clear the previous variables
+            this.tupleContext = new DynamicContext(context);
+            // IMPORTANT: this must be a new context object every time
+            // because of lazy evaluation.
             this.tupleContext.getVariableValues().setBindingsFromTuple(this.inputTuple, getMetadata()); // assign new
                                                                                                         // variables
                                                                                                         // from new
