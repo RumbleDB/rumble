@@ -30,6 +30,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
@@ -104,6 +105,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.SetterContext;
@@ -216,13 +218,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             this.processNamespaceDecl(namespace);
         }
         List<SetterContext> setters = ctx.setter();
+        boolean defaultCollationSet = false;
         for (SetterContext setterContext : setters) {
             if (setterContext.emptyOrderDecl() != null) {
                 processEmptySequenceOrder(setterContext.emptyOrderDecl());
                 continue;
             }
+            if (setterContext.defaultCollationDecl() != null) {
+                if (defaultCollationSet) {
+                    throw new DefaultCollationException(
+                            "The default collation was already set.",
+                            createMetadataFromContext(setterContext.defaultCollationDecl())
+                    );
+                }
+                processDefaultCollation(setterContext.defaultCollationDecl());
+                defaultCollationSet = true;
+                continue;
+            }
             throw new UnsupportedFeatureException(
-                    "Setters are not supported yet, except for empty sequence ordering.",
+                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
                     createMetadataFromContext(setterContext)
             );
         }
@@ -1408,6 +1422,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (ctx.emptySequenceOrder.getText().equals("greatest")) {
             this.moduleContext.setEmptySequenceOrderLeast(false);
+        }
+    }
+
+    private void processDefaultCollation(DefaultCollationDeclContext ctx) {
+        String uri = processURILiteral(ctx.uriLiteral());
+        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+            throw new DefaultCollationException("Unknown collation: " + uri, generateMetadata(ctx.getStop()));
         }
     }
 

@@ -49,6 +49,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     private String localName;
     public static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
+    public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");

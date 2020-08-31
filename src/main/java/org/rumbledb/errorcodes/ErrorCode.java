@@ -91,6 +91,7 @@ public enum ErrorCode {
     InvalidJsoniqVersionErrorCode("XQST0031"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
+    DefaultCollationExceptionCode("XQST0038"),
     DuplicateParamName("XQST0039"),
     DuplicateModuleTargetNamespace("XQST0047"),
     NamespaceDoesNotMatchModule("XQST0048"),
