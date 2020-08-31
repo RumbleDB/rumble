@@ -626,6 +626,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+        if (ctx.uriLiteral() != null) {
+            String collation = processURILiteral(ctx.uriLiteral());
+            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+                throw new DefaultCollationException(
+                        "Unknown collation: " + collation,
+                        createMetadataFromContext(ctx.uriLiteral())
+                );
+            }
+        }
         SequenceType seq = null;
         Expression expr = null;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
