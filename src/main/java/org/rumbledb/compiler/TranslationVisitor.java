@@ -592,6 +592,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+        if (ctx.uriLiteral() != null) {
+            String collation = processURILiteral(ctx.uriLiteral());
+            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+                throw new DefaultCollationException(
+                        "Unknown collation: " + collation,
+                        createMetadataFromContext(ctx.uriLiteral())
+                );
+            }
+        }
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
@@ -1428,7 +1437,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private void processDefaultCollation(DefaultCollationDeclContext ctx) {
         String uri = processURILiteral(ctx.uriLiteral());
         if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
-            throw new DefaultCollationException("Unknown collation: " + uri, generateMetadata(ctx.getStop()));
+            throw new DefaultCollationException(
+                    "Unknown collation: " + uri,
+                    createMetadataFromContext(ctx.uriLiteral())
+            );
         }
     }
 
