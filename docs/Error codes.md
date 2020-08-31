@@ -114,6 +114,10 @@ if multiple functions declared or imported by a module have
 the same number of arguments and their expanded QNames are equal
 (as defined by the eq operator).
 
+- [XQST0038] - It is a static error if a Prolog contains more than one default
+collation declaration, or the value specified by a default collation
+declaration is not present in statically known collations.
+
 - [XQST0039] - Duplicate parameter name. It is a static error
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.

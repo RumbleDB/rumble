@@ -149,7 +149,11 @@ Most core features of JSONiq are now in place, and we are working on getting the
 
 ### Prolog
 
-Some prolog settings (mostly about changing the default behavior: default collation, base URI, ordering mode, decimal format, ) are not supported yet. Collations are not supported. Location hints for the resolution of modules are not supported yet. Default namespace declarations are not supported yet. Context item declarations are not supported yet.
+Some prolog settings (base URI, ordering mode, decimal format, namespace declarations) are not supported yet.
+
+Location hints for the resolution of modules are not supported yet.
+
+Context item declarations are not supported yet.
 
 ### FLWOR features
 
