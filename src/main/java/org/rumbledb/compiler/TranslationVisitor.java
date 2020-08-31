@@ -230,6 +230,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     );
                 }
                 processEmptySequenceOrder(setterContext.emptyOrderDecl());
+                emptyOrderSet = true;
                 continue;
             }
             if (setterContext.defaultCollationDecl() != null) {
