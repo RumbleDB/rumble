@@ -502,23 +502,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         inputDF.show();
         expressionDF.show();
-        if(this.allowingEmpty)
-        {
+        if (this.allowingEmpty) {
             Dataset<Row> resultDF = inputDF.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT %s `%s`.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
-                            projectionVariables,
-                            expressionDFTableName,
-                            Name.CONTEXT_ITEM.getLocalName(),
-                            this.variableName,
-                            inputDFTableName,
-                            expressionDFTableName,
-                            UDFParameters
-                        )
-                    );
-                resultDF.show();
-                return resultDF;
+                .sql(
+                    String.format(
+                        "SELECT %s `%s`.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
+                        projectionVariables,
+                        expressionDFTableName,
+                        Name.CONTEXT_ITEM.getLocalName(),
+                        this.variableName,
+                        inputDFTableName,
+                        expressionDFTableName,
+                        UDFParameters
+                    )
+                );
+            resultDF.show();
+            return resultDF;
         }
         Dataset<Row> resultDF = inputDF.sparkSession()
             .sql(
