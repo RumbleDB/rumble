@@ -390,8 +390,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
         }
 
-        if(predicateDependencies.containsKey(Name.CONTEXT_POSITION))
-        {
+        if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             expressionDF = getDataFrameStartingClause(
                 sequenceIterator,
                 Name.CONTEXT_ITEM,
@@ -411,11 +410,32 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
+        String inputDFTableName = "inputTuples";
+        String expressionDFTableName = "sequenceExpression";
+        if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
+            expressionDF.sparkSession()
+                .udf()
+                .register(
+                    "serializeIntegerIndex",
+                    new IntegerSerializeUDF(),
+                    DataTypes.BinaryType
+                );
+            long size = expressionDF.count();
+            expressionDF.createOrReplaceTempView(expressionDFTableName);
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT *, serializeIntegerIndex(%s) AS `%s` FROM %s",
+                        Long.toString(size),
+                        Name.CONTEXT_COUNT.getLocalName(),
+                        expressionDFTableName
+                    )
+                );
+        }
+
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
-        String inputDFTableName = "inputTuples";
-        String expressionDFTableName = "sequenceExpression";
         inputDF.createOrReplaceTempView(inputDFTableName);
         expressionDF.createOrReplaceTempView(expressionDFTableName);
 
@@ -460,13 +480,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (!UDFcolumnsByType.containsKey("byte[]")) {
             UDFcolumnsByType.put("byte[]", new ArrayList<>());
         }
-        if(predicateDependencies.containsKey(Name.CONTEXT_ITEM))
-        {
+        if (predicateDependencies.containsKey(Name.CONTEXT_ITEM)) {
             UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_ITEM.getLocalName());
         }
-        if(predicateDependencies.containsKey(Name.CONTEXT_POSITION))
-        {
+        if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_POSITION.getLocalName());
+        }
+        if (predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
+            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_COUNT.getLocalName());
         }
 
         inputDF.sparkSession()
