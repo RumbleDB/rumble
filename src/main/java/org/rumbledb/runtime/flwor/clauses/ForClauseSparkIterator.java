@@ -390,14 +390,26 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
         }
 
-        expressionDF = getDataFrameStartingClause(
-            sequenceIterator,
-            Name.CONTEXT_ITEM,
-            Name.CONTEXT_POSITION,
-            false,
-            context,
-            predicateDependencies
-        );
+        if(predicateDependencies.containsKey(Name.CONTEXT_POSITION))
+        {
+            expressionDF = getDataFrameStartingClause(
+                sequenceIterator,
+                Name.CONTEXT_ITEM,
+                Name.CONTEXT_POSITION,
+                false,
+                context,
+                predicateDependencies
+            );
+        } else {
+            expressionDF = getDataFrameStartingClause(
+                sequenceIterator,
+                Name.CONTEXT_ITEM,
+                null,
+                false,
+                context,
+                predicateDependencies
+            );
+        }
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
 
@@ -448,8 +460,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (!UDFcolumnsByType.containsKey("byte[]")) {
             UDFcolumnsByType.put("byte[]", new ArrayList<>());
         }
-        UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_ITEM.getLocalName());
-        UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_POSITION.getLocalName());
+        if(predicateDependencies.containsKey(Name.CONTEXT_ITEM))
+        {
+            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_ITEM.getLocalName());
+        }
+        if(predicateDependencies.containsKey(Name.CONTEXT_POSITION))
+        {
+            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_POSITION.getLocalName());
+        }
 
         inputDF.sparkSession()
             .udf()
