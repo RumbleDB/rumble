@@ -474,7 +474,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
-            this.dependencies
+            predicateDependencies
         );
         if (!UDFcolumnsByType.containsKey("byte[]")) {
             UDFcolumnsByType.put("byte[]", new ArrayList<>());
