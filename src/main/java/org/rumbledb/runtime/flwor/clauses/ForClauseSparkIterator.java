@@ -470,8 +470,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
 
-        // And return the Cartesian product with the desired projection.
-
+        // We need to prepare the parameters fed into the predicate.
         Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             inputSchema,
             -1,
@@ -490,6 +489,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_COUNT.getLocalName());
         }
 
+        // Now we need to register or join predicate as a UDF.
         inputDF.sparkSession()
             .udf()
             .register(
@@ -500,8 +500,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
-        inputDF.show();
-        expressionDF.show();
+        // If we allow empty, we need a LEFT OUTER JOIN.
         if (this.allowingEmpty) {
             Dataset<Row> resultDF = inputDF.sparkSession()
                 .sql(
@@ -516,9 +515,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         UDFParameters
                     )
                 );
-            resultDF.show();
             return resultDF;
         }
+        // Otherwise, it's a regular join.
         Dataset<Row> resultDF = inputDF.sparkSession()
             .sql(
                 String.format(
@@ -532,7 +531,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
-        resultDF.show();
         return resultDF;
     }
 
