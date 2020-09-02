@@ -371,10 +371,11 @@ public class FlworDataFrameUtils {
         for (Object serializedParam : serializedParams) {
             if (serializedParam == null) {
                 deserializedParams.add(Collections.emptyList());
+            } else {
+                @SuppressWarnings("unchecked")
+                List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+                deserializedParams.add(deserializedParam);
             }
-            @SuppressWarnings("unchecked")
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
-            deserializedParams.add(deserializedParam);
         }
     }
 

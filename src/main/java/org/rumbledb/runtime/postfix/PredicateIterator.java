@@ -71,6 +71,14 @@ public class PredicateIterator extends HybridRuntimeIterator {
         this.isBooleanOnlyFilter = isBooleanOnlyFilter();
     }
 
+    public RuntimeIterator sequenceIterator() {
+        return this.iterator;
+    }
+
+    public RuntimeIterator predicateIterator() {
+        return this.filter;
+    }
+
     @Override
     protected Item nextLocal() {
         if (this.hasNext == true) {
