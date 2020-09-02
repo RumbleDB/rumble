@@ -323,11 +323,11 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
         sb.append("  RDD:\n");
         for (Name name : this.rddVariableValues.keySet()) {
-            sb.append("    " + name + " (" + this.rddVariableValues.get(name).count() + " items)\n");
+            sb.append("    " + name + " (RDD)\n");
         }
         sb.append("  Data Frames:\n");
         for (Name name : this.dataFrameVariableValues.keySet()) {
-            sb.append("    " + name + " (" + this.dataFrameVariableValues.get(name).count() + " items)\n");
+            sb.append("    " + name + " (DF)\n");
         }
         if (this.parent != null) {
             sb.append("Parent variable values:\n");

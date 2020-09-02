@@ -456,17 +456,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             parentProjection
         );
 
+        // We don't support positional variables yet for large joins.
         if (this.positionalVariableName != null) {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata()
-            );/*
-               * if (duplicatePositionalVariableIndex == -1) {
-               * columnsToSelect.add(this.positionalVariableName.toString());
-               * } else {
-               * columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
-               * }
-               */
+            );
         }
         String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
 

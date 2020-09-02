@@ -47,7 +47,9 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
         this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
 
-        this.expression.open(this.dataFrameContext.getContext());
+        DynamicContext dynamicContext = this.dataFrameContext.getContext();
+
+        this.expression.open(dynamicContext);
         boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
         this.expression.close();
         return result;
