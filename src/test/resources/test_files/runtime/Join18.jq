@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="" :)
+(:JIQS: ShouldRun; Output="{ "id" : null, "state" : null }" :)
 let $stores := parallelize(())
 let $states := parallelize((
   { "code" : "CA", "name" : "California" },
