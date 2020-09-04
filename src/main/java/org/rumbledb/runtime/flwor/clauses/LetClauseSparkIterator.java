@@ -82,6 +82,18 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        if (this.child == null) {
+            this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
+        } else {
+            this.child.reset(this.currentDynamicContext);
+            this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
+            setNextLocalTupleResult();
+        }
+    }
+
     private void setNextLocalTupleResult() {
         // if starting clause: result is a single tuple -> no more tuples after the first next call
         if (this.child == null) {
@@ -189,7 +201,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
 
-            String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+            String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
             String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
             df.createOrReplaceTempView("input");

@@ -82,7 +82,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.mapDynamicContext = new DynamicContext(this.currentDynamicContextForLocalExecution);
         this.mapValues = new LinkedList<>();
         this.leftIterator.reset(this.currentDynamicContextForLocalExecution);

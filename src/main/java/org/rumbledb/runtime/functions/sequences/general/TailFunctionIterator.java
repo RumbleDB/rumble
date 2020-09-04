@@ -76,8 +76,8 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
-        this.iterator.reset(context);
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
 
         if (!this.iterator.hasNext()) {
             this.hasNext = false;

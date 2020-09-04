@@ -147,17 +147,35 @@ The type system is not quite complete yet, although a lot of progress was made. 
 
 Most core features of JSONiq are now in place, and we are working on getting the last (less used) ones into Rumble as well. We prioritize their implementation on user requests.
 
-### Settings
+### Prolog
 
-Some prolog settings (mostly about changing the default behavior) are not supported yet.
+Some prolog settings (base URI, ordering mode, decimal format, namespace declarations) are not supported yet.
+
+Location hints for the resolution of modules are not supported yet.
+
+Context item declarations are not supported yet.
+
+### FLWOR features
+
+Window clauses are not supported, because they are not compatible with the Spark execution model.
 
 ### Function types
 
-Function type syntax is not supported yet.
+Function type syntax is not supported yet, but is planned. Function coercion is thus also not implemented yet, but is planned.
+
+Function annotations are not supported (%public, %private...), but this is planned.
 
 ### Builtin functions
 
 A large number of JSONiq functions in the library are now supported (see function documentation), and the remaining ones (typically, the fancier versions with an extra tuning parameter) get added continuously. Please take a look at the function library documentation to know which functions are available.
+
+Constructors for atomic types are not implemented yet. Please use the "cast as" expression instead, which are equivalent.
+
+Buitin functions cannot yet be used with named function reference expressions (example: concat#2).
+
+### Error variables
+
+Error variables ($err:code, ...) for inside catch blocks are not supported.
 
 ### Updates and scripting
 

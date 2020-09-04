@@ -83,7 +83,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public void resetLocal(DynamicContext context) {
+    public void resetLocal() {
         resetMatchingIteratorToNull();
         initializeIterator();
     }

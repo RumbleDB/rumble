@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.compiler.VisitorConfig;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Node;
@@ -36,11 +37,14 @@ public abstract class Clause extends Node {
     protected Clause previousClause;
     protected Clause nextClause;
     protected FLWOR_CLAUSES clauseType;
-
+    protected StaticContext staticContext;
 
     public Clause(FLWOR_CLAUSES clauseType, ExceptionMetadata metadata) {
         super(metadata);
         this.clauseType = clauseType;
+        this.staticContext = null;
+        this.previousClause = null;
+        this.nextClause = null;
     }
 
     public FLWOR_CLAUSES getClauseType() {
@@ -103,5 +107,13 @@ public abstract class Clause extends Node {
         if (this.previousClause != null) {
             this.previousClause.print(buffer, indent + 1);
         }
+    }
+
+    public StaticContext getStaticContext() {
+        return this.staticContext;
+    }
+
+    public void setStaticContext(StaticContext staticContext) {
+        this.staticContext = staticContext;
     }
 }

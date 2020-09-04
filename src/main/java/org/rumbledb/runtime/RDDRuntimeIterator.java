@@ -59,7 +59,7 @@ public abstract class RDDRuntimeIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         throw new OurBadException("Local evaluation are not implemented for the iterator", getMetadata());
     }
 

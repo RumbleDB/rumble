@@ -122,7 +122,8 @@ public class ItemParser implements Serializable {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             keys.add(field.name());
-            addValue(row, i, null, fieldType, values, metadata);
+            Item newItem = addValue(row, i, null, fieldType, metadata);
+            values.add(newItem);
         }
 
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
@@ -131,16 +132,15 @@ public class ItemParser implements Serializable {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    private static void addValue(
+    private static Item addValue(
             Row row,
             int i,
             Object o,
             DataType fieldType,
-            List<Item> values,
             ExceptionMetadata metadata
     ) {
         if (row != null && row.isNullAt(i)) {
-            values.add(ItemFactory.getInstance().createNullItem());
+            return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
             String s;
             if (row != null) {
@@ -148,7 +148,7 @@ public class ItemParser implements Serializable {
             } else {
                 s = (String) o;
             }
-            values.add(ItemFactory.getInstance().createStringItem(s));
+            return ItemFactory.getInstance().createStringItem(s);
         } else if (fieldType.equals(DataTypes.BooleanType)) {
             boolean b;
             if (row != null) {
@@ -156,7 +156,7 @@ public class ItemParser implements Serializable {
             } else {
                 b = (Boolean) o;
             }
-            values.add(ItemFactory.getInstance().createBooleanItem(b));
+            return ItemFactory.getInstance().createBooleanItem(b);
         } else if (fieldType.equals(DataTypes.DoubleType)) {
             double value;
             if (row != null) {
@@ -164,7 +164,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Double) o;
             }
-            values.add(ItemFactory.getInstance().createDoubleItem(value));
+            return ItemFactory.getInstance().createDoubleItem(value);
         } else if (fieldType.equals(DataTypes.IntegerType)) {
             int value;
             if (row != null) {
@@ -172,7 +172,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Integer) o;
             }
-            values.add(ItemFactory.getInstance().createIntItem(value));
+            return ItemFactory.getInstance().createIntItem(value);
         } else if (fieldType.equals(DataTypes.FloatType)) {
             float value;
             if (row != null) {
@@ -180,7 +180,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Float) o;
             }
-            values.add(ItemFactory.getInstance().createDoubleItem(value));
+            return ItemFactory.getInstance().createDoubleItem(value);
         } else if (fieldType.equals(decimalType)) {
             BigDecimal value;
             if (row != null) {
@@ -188,7 +188,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (BigDecimal) o;
             }
-            values.add(ItemFactory.getInstance().createDecimalItem(value));
+            return ItemFactory.getInstance().createDecimalItem(value);
         } else if (fieldType.equals(DataTypes.LongType)) {
             BigDecimal value;
             if (row != null) {
@@ -196,9 +196,9 @@ public class ItemParser implements Serializable {
             } else {
                 value = new BigDecimal((Long) o);
             }
-            values.add(ItemFactory.getInstance().createDecimalItem(value));
+            return ItemFactory.getInstance().createDecimalItem(value);
         } else if (fieldType.equals(DataTypes.NullType)) {
-            values.add(ItemFactory.getInstance().createNullItem());
+            return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.ShortType)) {
             short value;
             if (row != null) {
@@ -206,7 +206,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Short) o;
             }
-            values.add(ItemFactory.getInstance().createIntItem(value));
+            return ItemFactory.getInstance().createIntItem(value);
         } else if (fieldType.equals(DataTypes.TimestampType)) {
             Timestamp value;
             if (row != null) {
@@ -216,7 +216,7 @@ public class ItemParser implements Serializable {
             }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
-            values.add(ItemFactory.getInstance().createDateTimeItem(dt, false));
+            return ItemFactory.getInstance().createDateTimeItem(dt, false);
         } else if (fieldType.equals(DataTypes.DateType)) {
             Date value;
             if (row != null) {
@@ -226,7 +226,7 @@ public class ItemParser implements Serializable {
             }
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
-            values.add(ItemFactory.getInstance().createDateItem(dt, false));
+            return ItemFactory.getInstance().createDateItem(dt, false);
         } else if (fieldType.equals(DataTypes.BinaryType)) {
             byte[] value;
             if (row != null) {
@@ -234,7 +234,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (byte[]) o;
             }
-            values.add(ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value)));
+            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
         } else if (fieldType instanceof StructType) {
             Row value;
             if (row != null) {
@@ -242,7 +242,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Row) o;
             }
-            values.add(getItemFromRow(value, metadata));
+            return getItemFromRow(value, metadata);
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
@@ -250,17 +250,17 @@ public class ItemParser implements Serializable {
             if (row != null) {
                 List<Object> objects = row.getList(i);
                 for (Object object : objects) {
-                    addValue(null, 0, object, dataType, members, metadata);
+                    members.add(addValue(null, 0, object, dataType, metadata));
                 }
             } else {
                 @SuppressWarnings("unchecked")
                 Object arrayObject = ((WrappedArray<Object>) o).array();
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
-                    addValue(null, 0, value, dataType, members, metadata);
+                    members.add(addValue(null, 0, value, dataType, metadata));
                 }
             }
-            values.add(ItemFactory.getInstance().createArrayItem(members));
+            return ItemFactory.getInstance().createArrayItem(members);
         } else if (fieldType instanceof VectorUDT) {
             Vector vector;
             if (row != null) {
@@ -275,7 +275,7 @@ public class ItemParser implements Serializable {
                 for (double value : denseVector.values()) {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
-                values.add(ItemFactory.getInstance().createArrayItem(members));
+                return ItemFactory.getInstance().createArrayItem(members);
             } else if (vector instanceof SparseVector) {
                 // a sparse vector is mapped to a Rumble object where keys are indices of the non-0 values in the vector
                 SparseVector sparseVector = (SparseVector) vector;
@@ -287,7 +287,7 @@ public class ItemParser implements Serializable {
                     objectKeyList.add(String.valueOf(vectorIndices[j]));
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
-                values.add(ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata));
+                return ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
             } else {
                 throw new OurBadException("Unexpected program state reached while converting vectorUDT to rumble item");
             }

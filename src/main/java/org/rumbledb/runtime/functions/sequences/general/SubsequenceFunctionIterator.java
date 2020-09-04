@@ -97,7 +97,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, null);
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, false);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, false);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
@@ -135,7 +135,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         initializeLocal();
     }
 

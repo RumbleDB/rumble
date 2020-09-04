@@ -259,6 +259,15 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
+    public void materialize(DynamicContext context, List<Item> result) {
+        result.clear();
+        this.open(context);
+        while (this.hasNext()) {
+            result.add(this.next());
+        }
+        this.close();
+    }
+
     public Item materializeFirstItemOrNull(
             DynamicContext context
     ) {
@@ -276,6 +285,23 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.open(context);
         if (!this.hasNext()) {
             throw new NoItemException();
+        }
+        Item result = this.next();
+        if (this.hasNext()) {
+            throw new MoreThanOneItemException();
+        }
+        this.close();
+        return result;
+    }
+
+    public Item materializeAtMostOneItemOrNull(
+            DynamicContext context
+    )
+            throws MoreThanOneItemException {
+        this.open(context);
+        if (!this.hasNext()) {
+            this.close();
+            return null;
         }
         Item result = this.next();
         if (this.hasNext()) {

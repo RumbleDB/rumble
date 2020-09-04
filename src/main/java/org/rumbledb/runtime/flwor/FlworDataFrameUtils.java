@@ -50,7 +50,7 @@ import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
-import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
@@ -63,6 +63,7 @@ import scala.collection.mutable.WrappedArray;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +89,7 @@ public class FlworDataFrameUtils {
         kryo.register(ObjectItem.class);
         kryo.register(StringItem.class);
         kryo.register(IntItem.class);
+        kryo.register(IntegerItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);
@@ -144,10 +146,26 @@ public class FlworDataFrameUtils {
             int duplicateVariableIndex,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
+        return getColumnNames(inputSchema, duplicateVariableIndex, -1, dependencies);
+    }
+
+    /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param duplicateVariableIndex enables skipping a variable
+     * @param duplicatePositionalVariableIndex enables skipping another variable
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            int duplicateVariableIndex,
+            int duplicatePositionalVariableIndex,
+            Map<Name, DynamicContext.VariableDependency> dependencies
+    ) {
         List<String> result = new ArrayList<>();
         String[] columnNames = inputSchema.fieldNames();
         for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex) {
+            if (columnIndex == duplicateVariableIndex || columnIndex == duplicatePositionalVariableIndex) {
                 continue;
             }
             String var = columnNames[columnIndex];
@@ -201,8 +219,8 @@ public class FlworDataFrameUtils {
     public static String getUDFParameters(
             Map<String, List<String>> columnNamesByType
     ) {
-        String udfBinarySQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = FlworDataFrameUtils.getSQL(columnNamesByType.get("Long"), false);
+        String udfBinarySQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("byte[]"), false);
+        String udfLongSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("Long"), false);
 
         return String.format(
             "array(%s), array(%s)",
@@ -221,49 +239,12 @@ public class FlworDataFrameUtils {
         return getColumnNames(inputSchema, -1, null);
     }
 
-    public static void prepareDynamicContext(
-            DynamicContext context,
-            List<String> columnNames,
-            List<List<Item>> deserializedParams
-    ) {
-        for (int columnIndex = 0; columnIndex < columnNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableValue(
-                    Name.createVariableInNoNamespace(columnNames.get(columnIndex)),
-                    deserializedParams.get(columnIndex)
-                );
-        }
-    }
-
-    public static void prepareDynamicContext(
-            DynamicContext context,
-            List<Name> serializedVariableNames,
-            List<Name> countedVariableNames,
-            List<List<Item>> deserializedParams,
-            List<Item> counts
-    ) {
-        for (int columnIndex = 0; columnIndex < serializedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableValue(
-                    serializedVariableNames.get(columnIndex),
-                    deserializedParams.get(columnIndex)
-                );
-        }
-        for (int columnIndex = 0; columnIndex < countedVariableNames.size(); columnIndex++) {
-            context.getVariableValues()
-                .addVariableCount(
-                    countedVariableNames.get(columnIndex),
-                    counts.get(columnIndex)
-                );
-        }
-    }
-
     /**
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getSQL(
+    public static String getListOfSQLVariables(
             List<String> columnNames,
             boolean trailingComma
     ) {
@@ -388,9 +369,13 @@ public class FlworDataFrameUtils {
     ) {
         Object[] serializedParams = (Object[]) wrappedParameters.array();
         for (Object serializedParam : serializedParams) {
-            @SuppressWarnings("unchecked")
-            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
-            deserializedParams.add(deserializedParam);
+            if (serializedParam == null) {
+                deserializedParams.add(Collections.emptyList());
+            } else {
+                @SuppressWarnings("unchecked")
+                List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+                deserializedParams.add(deserializedParam);
+            }
         }
     }
 
@@ -415,20 +400,6 @@ public class FlworDataFrameUtils {
         return RowFactory.create(newRowColumns.toArray());
     }
 
-    @SuppressWarnings("unchecked")
-    public static List<Item> deserializeRowField(Row row, int columnIndex, Kryo kryo, Input input) {
-        Object o = row.get(columnIndex);
-        if (o instanceof Long) {
-            List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
-            return result;
-        } else {
-            byte[] bytes = (byte[]) o;
-            input.setBuffer(bytes);
-            return (List<Item>) kryo.readClassAndObject(input);
-        }
-    }
-
     public static long getCountOfField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
         if (o instanceof Long) {
@@ -436,17 +407,6 @@ public class FlworDataFrameUtils {
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
-    }
-
-    public static List<Object> deserializeEntireRow(Row row, Kryo kryo, Input input) {
-        ArrayList<Object> deserializedColumnObjects = new ArrayList<>();
-        for (int columnIndex = 0; columnIndex < row.length(); columnIndex++) {
-            input.setBuffer((byte[]) row.get(columnIndex));
-            Object deserializedColumnObject = kryo.readClassAndObject(input);
-            deserializedColumnObjects.add(deserializedColumnObject);
-        }
-
-        return deserializedColumnObjects;
     }
 
     /**

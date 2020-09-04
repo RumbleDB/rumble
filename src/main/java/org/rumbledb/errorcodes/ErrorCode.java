@@ -91,13 +91,16 @@ public enum ErrorCode {
     InvalidJsoniqVersionErrorCode("XQST0031"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
     DuplicateFunctionIdentifier("XQST0034"),
+    DefaultCollationExceptionCode("XQST0038"),
     DuplicateParamName("XQST0039"),
     DuplicateModuleTargetNamespace("XQST0047"),
     NamespaceDoesNotMatchModule("XQST0048"),
     VariableAlreadyExists("XQST0049"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
+    MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),
     EmptyModuleURIErrorCode("XQST0088"),
+    PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
     InvalidTimezoneValue("FODT0003");

@@ -232,6 +232,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             return new ForClauseSparkIterator(
                     previousIterator,
                     forClause.getVariableName(),
+                    forClause.getPositionalVariableName(),
+                    forClause.isAllowEmpty(),
                     assignmentIterator,
                     forClause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
@@ -274,12 +276,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         } else if (clause instanceof OrderByClause) {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator = new ArrayList<>();
             for (OrderByClauseSortingKey orderExpr : ((OrderByClause) clause).getSortingKeys()) {
+                OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
+                if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
+                    if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
+                        System.out.println("Setting to least.");
+                        emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
+                    } else {
+                        System.out.println("Setting to greatest.");
+                        emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
+                    }
+                }
                 expressionsWithIterator.add(
                     new OrderByClauseAnnotatedChildIterator(
                             this.visit(orderExpr.getExpression(), argument),
                             orderExpr.isAscending(),
                             orderExpr.getUri(),
-                            orderExpr.getEmptyOrder()
+                            emptyOrder
                     )
                 );
             }

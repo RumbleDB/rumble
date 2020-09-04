@@ -35,7 +35,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.udfs.CountClauseSerializeUDF;
+import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -71,6 +71,18 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         super.open(context);
         if (this.child != null) {
             this.child.open(this.currentDynamicContext);
+
+            setNextLocalTupleResult();
+        } else {
+            throw new OurBadException("Invalid count clause.");
+        }
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        if (this.child != null) {
+            this.child.reset(this.currentDynamicContext);
 
             setNextLocalTupleResult();
         } else {
@@ -122,8 +134,19 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             return df;
         }
 
+        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, parentProjection, this.variableName);
+        return dfWithIndex;
+    }
+
+    // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with
+    // positional variables).
+    public static Dataset<Row> addSerializedCountColumn(
+            Dataset<Row> df,
+            Map<Name, DynamicContext.VariableDependency> parentProjection,
+            Name variableName
+    ) {
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(variableName.toString());
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -131,15 +154,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             parentProjection
         );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
 
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, this.variableName.toString());
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
         df.sparkSession()
             .udf()
             .register(
                 "serializeCountIndex",
-                new CountClauseSerializeUDF(),
+                new LongSerializeUDF(),
                 DataTypes.BinaryType
             );
 
@@ -149,8 +172,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                 String.format(
                     "select %s serializeCountIndex(`%s`) as `%s` from input",
                     selectSQL,
-                    this.variableName,
-                    this.variableName
+                    variableName,
+                    variableName
                 )
             );
         return dfWithIndex;

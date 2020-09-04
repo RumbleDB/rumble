@@ -30,16 +30,19 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
+import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
 import org.rumbledb.exceptions.NamespaceDoesNotMatchModuleException;
 import org.rumbledb.exceptions.NamespacePrefixBoundTwiceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.PositionalVariableNameSameAsForVariableException;
 import org.rumbledb.exceptions.PrefixCannotBeExpandedException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -103,7 +106,10 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
+import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
 import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
+import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
@@ -211,6 +217,37 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // bind namespaces
         for (JsoniqParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             this.processNamespaceDecl(namespace);
+        }
+        List<SetterContext> setters = ctx.setter();
+        boolean emptyOrderSet = false;
+        boolean defaultCollationSet = false;
+        for (SetterContext setterContext : setters) {
+            if (setterContext.emptyOrderDecl() != null) {
+                if (emptyOrderSet) {
+                    throw new MoreThanOneEmptyOrderDeclarationException(
+                            "The empty order was already set.",
+                            createMetadataFromContext(setterContext.emptyOrderDecl())
+                    );
+                }
+                processEmptySequenceOrder(setterContext.emptyOrderDecl());
+                emptyOrderSet = true;
+                continue;
+            }
+            if (setterContext.defaultCollationDecl() != null) {
+                if (defaultCollationSet) {
+                    throw new DefaultCollationException(
+                            "The default collation was already set.",
+                            createMetadataFromContext(setterContext.defaultCollationDecl())
+                    );
+                }
+                processDefaultCollation(setterContext.defaultCollationDecl());
+                defaultCollationSet = true;
+                continue;
+            }
+            throw new UnsupportedFeatureException(
+                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
+                    createMetadataFromContext(setterContext)
+            );
         }
         List<LibraryModule> libraryModules = new ArrayList<>();
         Set<String> namespaces = new HashSet<>();
@@ -482,6 +519,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Name atVar = null;
         if (ctx.at != null) {
             atVar = ((VariableReferenceExpression) this.visitVarRef(ctx.at)).getVariableName();
+            if (atVar.equals(var)) {
+                throw new PositionalVariableNameSameAsForVariableException(
+                        "Positional variable " + var + " cannot have the same name as the main for variable.",
+                        createMetadataFromContext(ctx.at)
+                );
+            }
         }
         Expression expr = (Expression) this.visitExprSingle(ctx.ex);
         // If the sequenceType is specified, we have to "extend" its arity to *
@@ -558,6 +601,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public OrderByClauseSortingKey processOrderByExpr(JsoniqParser.OrderByExprContext ctx) {
+        if (ctx.uriLiteral() != null) {
+            String collation = processURILiteral(ctx.uriLiteral());
+            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+                throw new DefaultCollationException(
+                        "Unknown collation: " + collation,
+                        createMetadataFromContext(ctx.uriLiteral())
+                );
+            }
+        }
         boolean ascending = true;
         if (ctx.desc != null && !ctx.desc.getText().isEmpty()) {
             ascending = false;
@@ -568,10 +620,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         OrderByClauseSortingKey.EMPTY_ORDER empty_order = OrderByClauseSortingKey.EMPTY_ORDER.NONE;
         if (ctx.gr != null && !ctx.gr.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LAST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
         }
         if (ctx.ls != null && !ctx.ls.getText().isEmpty()) {
-            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.FIRST;
+            empty_order = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
         }
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
         return new OrderByClauseSortingKey(
@@ -583,6 +635,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     public GroupByVariableDeclaration processGroupByVar(JsoniqParser.GroupByVarContext ctx) {
+        if (ctx.uriLiteral() != null) {
+            String collation = processURILiteral(ctx.uriLiteral());
+            if (!collation.equals(Name.DEFAULT_COLLATION_NS)) {
+                throw new DefaultCollationException(
+                        "Unknown collation: " + collation,
+                        createMetadataFromContext(ctx.uriLiteral())
+                );
+            }
+        }
         SequenceType seq = null;
         Expression expr = null;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
@@ -1380,6 +1441,25 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private String processURILiteral(UriLiteralContext ctx) {
         return ctx.getText().substring(1, ctx.getText().length() - 1);
+    }
+
+    private void processEmptySequenceOrder(EmptyOrderDeclContext ctx) {
+        if (ctx.emptySequenceOrder.getText().equals("least")) {
+            this.moduleContext.setEmptySequenceOrderLeast(true);
+        }
+        if (ctx.emptySequenceOrder.getText().equals("greatest")) {
+            this.moduleContext.setEmptySequenceOrderLeast(false);
+        }
+    }
+
+    private void processDefaultCollation(DefaultCollationDeclContext ctx) {
+        String uri = processURILiteral(ctx.uriLiteral());
+        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+            throw new DefaultCollationException(
+                    "Unknown collation: " + uri,
+                    createMetadataFromContext(ctx.uriLiteral())
+            );
+        }
     }
 
     public LibraryModule processModuleImport(JsoniqParser.ModuleImportContext ctx) {

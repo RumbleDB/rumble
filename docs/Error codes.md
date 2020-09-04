@@ -114,6 +114,10 @@ if multiple functions declared or imported by a module have
 the same number of arguments and their expanded QNames are equal
 (as defined by the eq operator).
 
+- [XQST0038] - It is a static error if a Prolog contains more than one default
+collation declaration, or the value specified by a default collation
+declaration is not present in statically known collations.
+
 - [XQST0039] - Duplicate parameter name. It is a static error
 for a function declaration or an inline function expression
 to have more than one parameter with the same name.
@@ -135,9 +139,16 @@ and the {variety} of the type must be simple.
 to process a schema or module import by finding a schema or module with
 the specified target namespace.
 
+- [XQST0069] - A static error is raised if a Prolog contains more than
+one empty order declaration.
+
 - [XQST0088] - It is a static error if the literal that specifies
 the target namespace in a module import or a module declaration is of
 zero length.
+
+- [XQST0089] - It is a static error if a variable bound in a for or
+window clause of a FLWOR expression, and its associated positional
+variable, do not have distinct names (expanded QNames).
 
 - [XQST0094] - Invalid variable in group-by clause. 
 The name of each grouping variable must be equal 

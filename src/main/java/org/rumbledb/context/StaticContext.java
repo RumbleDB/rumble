@@ -43,15 +43,17 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     private transient Map<Name, InScopeVariable> inScopeVariables;
     private transient Map<String, String> staticallyKnownNamespaces;
+    private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
     private StaticContext parent;
     private URI staticBaseURI;
-    public transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    private boolean emptySequenceOrderLeast;
 
     public StaticContext() {
         this.parent = null;
         this.staticBaseURI = null;
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
+        this.emptySequenceOrderLeast = true;
     }
 
     public StaticContext(URI staticBaseURI) {
@@ -59,6 +61,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticBaseURI = staticBaseURI;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
+        this.emptySequenceOrderLeast = true;
     }
 
     public StaticContext(StaticContext parent) {
@@ -188,19 +191,16 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeObject(output, this.inScopeVariables);
-        kryo.writeObject(output, this.staticallyKnownNamespaces);
         kryo.writeObjectOrNull(output, this.parent, StaticContext.class);
         kryo.writeObject(output, this.staticBaseURI);
+        output.writeBoolean(this.emptySequenceOrderLeast);
     }
 
-    @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        this.inScopeVariables = kryo.readObject(input, HashMap.class);
-        this.staticallyKnownNamespaces = kryo.readObject(input, HashMap.class);
         this.parent = kryo.readObjectOrNull(input, StaticContext.class);
         this.staticBaseURI = kryo.readObject(input, URI.class);
+        this.emptySequenceOrderLeast = input.readBoolean();
     }
 
     public void importModuleContext(StaticContext moduleContext, String targetNamespace) {
@@ -229,6 +229,20 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getUserDefinedFunctionsExecutionModes();
         }
         throw new OurBadException("Statically known function signatures are not set up properly in static context.");
+    }
+
+    public void setEmptySequenceOrderLeast(boolean emptySequenceOrderLeast) {
+        if (this.parent != null) {
+            throw new OurBadException("Empty sequence ordering can only be set in the root static context.");
+        }
+        this.emptySequenceOrderLeast = emptySequenceOrderLeast;
+    }
+
+    public boolean isEmptySequenceOrderLeast() {
+        if (this.parent != null) {
+            return this.parent.isEmptySequenceOrderLeast();
+        }
+        return this.emptySequenceOrderLeast;
     }
 
     public static StaticContext createRumbleStaticContext() {

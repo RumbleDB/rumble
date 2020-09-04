@@ -35,7 +35,7 @@ public class SparkRuntimeTests extends RuntimeTests {
     public static final File sparkRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
                 +
-                "/src/main/resources/test_files/runtime-spark"
+                "/src/test/resources/test_files/runtime-spark"
     );
 
     public SparkRuntimeTests(File testFile) {

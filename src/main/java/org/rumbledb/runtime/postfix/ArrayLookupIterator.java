@@ -80,7 +80,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    protected void resetLocal(DynamicContext context) {
+    protected void resetLocal() {
         this.iterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }

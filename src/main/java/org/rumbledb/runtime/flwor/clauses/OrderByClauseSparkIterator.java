@@ -63,8 +63,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
-    @SuppressWarnings("unused")
-    private final boolean isStable;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
 
@@ -80,7 +78,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         super(child, executionMode, iteratorMetadata);
         this.expressionsWithIterator = expressionsWithIterator;
-        this.isStable = stable;
         this.dependencies = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator e : this.expressionsWithIterator) {
             this.dependencies.putAll(e.getIterator().getVariableDependencies());
@@ -103,10 +100,24 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
         this.child.reset(this.currentDynamicContext);
         this.localTupleResults.clear();
         this.resultIndex = 0;
         this.hasNext = this.child.hasNext();
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        if (this.child == null) {
+            throw new OurBadException("Invalid order-by clause.");
+        }
+        this.child.close();
+        this.localTupleResults.clear();
+        this.resultIndex = 0;
     }
 
     @Override
@@ -147,7 +158,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         // OrderByClauseSortClosure implements a comparator and provides the exact desired behavior for local execution
         // as well
         TreeMap<FlworKey, List<FlworTuple>> keyValuePairs = new TreeMap<>(
-                new FlworKeyComparator(this.expressionsWithIterator, true)
+                new FlworKeyComparator(this.expressionsWithIterator)
         );
 
         // assign current context as parent. re-use the same context object for efficiency
@@ -404,7 +415,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
         return df.sparkSession()

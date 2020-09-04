@@ -116,6 +116,29 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         throw new IteratorFlowException("Invalid next() call in let flwor clause", getMetadata());
     }
 
+    @Override
+    public void close() {
+        super.close();
+        if (this.child != null) {
+            this.child.close();
+            this.localTupleResults = null;
+        } else {
+            throw new OurBadException("Invalid groupby clause.");
+        }
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        if (this.child != null) {
+            this.child.reset(this.currentDynamicContext);
+            this.localTupleResults = null;
+            this.hasNext = this.child.hasNext();
+        } else {
+            throw new OurBadException("Invalid groupby clause.");
+        }
+    }
+
     /**
      * All local results need to be calculated for grouping to be performed.
      */
@@ -279,7 +302,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                         DataTypes.BinaryType
                     );
 
-                String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+                String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
                 String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
                 df.createOrReplaceTempView("input");
@@ -358,7 +381,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQL(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
