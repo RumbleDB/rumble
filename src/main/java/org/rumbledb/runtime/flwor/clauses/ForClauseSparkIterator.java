@@ -54,7 +54,6 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -460,24 +459,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         if (optimizableJoin) {
             // expressionDF.show();
-            Map<Name, VariableDependency> contextItemDependency = new HashMap<>();
-            contextItemDependency.put(Name.CONTEXT_ITEM, VariableDependency.FULL);
             if (contextItemToTheLeft) {
                 expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    context,
                     expressionDF,
                     Name.createVariableInNoNamespace("hash1"),
                     leftHandSideOfJoinEqualityCriterion,
-                    contextItemDependency,
+                    context,
+                    null,
                     true
                 );
             } else {
                 expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    context,
                     expressionDF,
                     Name.createVariableInNoNamespace("hash1"),
                     rightHandSideOfJoinEqualityCriterion,
-                    contextItemDependency,
+                    context,
+                    null,
                     true
                 );
             }
@@ -513,20 +510,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             // inputDF.show();
             if (contextItemToTheLeft) {
                 inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    context,
                     inputDF,
                     Name.createVariableInNoNamespace("hash2"),
                     rightHandSideOfJoinEqualityCriterion,
-                    this.dependencies,
+                    context,
+                    null,
                     true
                 );
             } else {
                 inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    context,
                     inputDF,
                     Name.createVariableInNoNamespace("hash2"),
                     leftHandSideOfJoinEqualityCriterion,
-                    this.dependencies,
+                    context,
+                    null,
                     true
                 );
             }

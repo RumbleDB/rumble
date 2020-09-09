@@ -278,11 +278,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
                 df = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    context,
                     df,
                     expression.getVariableName(),
                     expression.getExpression(),
-                    this.dependencies,
+                    context,
+                    null,
                     false
                 );
 
