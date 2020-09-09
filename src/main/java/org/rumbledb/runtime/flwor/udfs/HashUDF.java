@@ -54,16 +54,14 @@ public class HashUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, L
         Item item = null;
         try {
             item = this.expression.materializeAtMostOneItemOrNull(this.dataFrameContext.getContext());
-        } catch (MoreThanOneItemException e)
-        {
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                this.expression.getMetadata()
-                    );
+                    "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                    this.expression.getMetadata()
+            );
         }
         long hashCode = 0;
-        if(item != null)
-        {
+        if (item != null) {
             hashCode = item.hashCode();
         }
         return Long.valueOf(hashCode);

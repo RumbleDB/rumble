@@ -59,17 +59,15 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         this.rightIterator = rightIterator;
         this.comparisonOperator = comparisonOperator;
     }
-    
-    public ComparisonExpression.ComparisonOperator getComparisonOperator()
-    {
+
+    public ComparisonExpression.ComparisonOperator getComparisonOperator() {
         return this.comparisonOperator;
     }
 
-    public boolean isValueEquality()
-    {
+    public boolean isValueEquality() {
         return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
     }
-    
+
     public RuntimeIterator getLeftIterator() {
         return this.leftIterator;
     }

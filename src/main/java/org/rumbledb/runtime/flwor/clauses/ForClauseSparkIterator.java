@@ -367,7 +367,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
         RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
-        
+
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
                 sequenceIterator.getVariableDependencies().keySet()
@@ -388,42 +388,37 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         boolean contextItemToTheLeft = false;
         RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
         RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
-        if(predicateIterator instanceof ComparisonOperationIterator)
-        {
+        if (predicateIterator instanceof ComparisonOperationIterator) {
             ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
-            if(comparisonIterator.isValueEquality())
-            {
+            if (comparisonIterator.isValueEquality()) {
                 leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
                 rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
-                
+
                 Set<Name> leftDependencies = new HashSet<>(
                         leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
                 );
                 Set<Name> rightDependencies = new HashSet<>(
                         rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
                 );
-                if(leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM))
-                {
-                    if(!rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                    if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
                         optimizableJoin = true;
                         contextItemToTheLeft = true;
                     }
                 }
-                if(rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM))
-                {
-                    if(!leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                    if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
                         optimizableJoin = true;
                         contextItemToTheLeft = false;
                     }
                 }
             }
         }
-        
-        if (this.allowingEmpty)
-        {
+
+        if (this.allowingEmpty) {
             optimizableJoin = false;
         }
-        
+
         // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
@@ -453,28 +448,36 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 predicateDependencies
             );
         }
-        
-        if(optimizableJoin)
-        {
+
+        if (optimizableJoin) {
             System.out.println("Optimizable join detected!");
-            if(contextItemToTheLeft)
-            {
+            if (contextItemToTheLeft) {
                 System.out.println("To the left.");
             } else {
                 System.out.println("To the right.");
             }
         }
 
-        if(optimizableJoin)
-        {
+        if (optimizableJoin) {
             // expressionDF.show();
             Map<Name, VariableDependency> contextItemDependency = new HashMap<>();
             contextItemDependency.put(Name.CONTEXT_ITEM, VariableDependency.FULL);
-            if(contextItemToTheLeft)
-            {
-                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, expressionDF, Name.createVariableInNoNamespace("hash1"), leftHandSideOfJoinEqualityCriterion, contextItemDependency);
+            if (contextItemToTheLeft) {
+                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(
+                    context,
+                    expressionDF,
+                    Name.createVariableInNoNamespace("hash1"),
+                    leftHandSideOfJoinEqualityCriterion,
+                    contextItemDependency
+                );
             } else {
-                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, expressionDF, Name.createVariableInNoNamespace("hash1"), rightHandSideOfJoinEqualityCriterion, contextItemDependency);
+                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(
+                    context,
+                    expressionDF,
+                    Name.createVariableInNoNamespace("hash1"),
+                    rightHandSideOfJoinEqualityCriterion,
+                    contextItemDependency
+                );
             }
             // expressionDF.show();
         }
@@ -504,14 +507,24 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
 
-        if(optimizableJoin)
-        {
+        if (optimizableJoin) {
             // inputDF.show();
-            if(contextItemToTheLeft)
-            {
-                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), rightHandSideOfJoinEqualityCriterion, this.dependencies);
+            if (contextItemToTheLeft) {
+                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(
+                    context,
+                    inputDF,
+                    Name.createVariableInNoNamespace("hash2"),
+                    rightHandSideOfJoinEqualityCriterion,
+                    this.dependencies
+                );
             } else {
-                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), leftHandSideOfJoinEqualityCriterion, this.dependencies);
+                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(
+                    context,
+                    inputDF,
+                    Name.createVariableInNoNamespace("hash2"),
+                    leftHandSideOfJoinEqualityCriterion,
+                    this.dependencies
+                );
             }
             // inputDF.show();
         }
@@ -593,9 +606,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
             return resultDF;
         }
-        
-        if(optimizableJoin)
-        {
+
+        if (optimizableJoin) {
             // Otherwise, it's a regular join.
             Dataset<Row> resultDF = inputDF.sparkSession()
                 .sql(
