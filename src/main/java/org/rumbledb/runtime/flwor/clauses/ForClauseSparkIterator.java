@@ -464,7 +464,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         
         if(optimizableJoin)
         {
-            expressionDF.show();
+            // expressionDF.show();
             Map<Name, VariableDependency> contextItemDependency = new HashMap<>();
             contextItemDependency.put(Name.CONTEXT_ITEM, VariableDependency.FULL);
             if(contextItemToTheLeft)
@@ -473,7 +473,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             } else {
                 expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, expressionDF, Name.createVariableInNoNamespace("hash1"), rightHandSideOfJoinEqualityCriterion, contextItemDependency);
             }
-            expressionDF.show();
+            // expressionDF.show();
         }
 
         String inputDFTableName = "inputTuples";
@@ -503,14 +503,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         if(optimizableJoin)
         {
-            inputDF.show();
+            // inputDF.show();
             if(contextItemToTheLeft)
             {
                 inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), rightHandSideOfJoinEqualityCriterion, this.dependencies);
             } else {
                 inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), leftHandSideOfJoinEqualityCriterion, this.dependencies);
             }
-            inputDF.show();
+            // inputDF.show();
         }
 
         // Now we prepare the two views that we want to compute the Cartesian product of.

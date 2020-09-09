@@ -364,13 +364,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
-        System.out.println(String.format(
-                    "select %s hashUDF(%s) as `%s` from input",
-                    selectSQL,
-                    UDFParameters,
-                    newVariableName
-                ));
-        
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
             .sql(
