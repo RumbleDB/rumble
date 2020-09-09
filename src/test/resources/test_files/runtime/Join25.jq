@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "id" : 1, "state" : "California" }, { "id" : 2, "state" : "California" }, { "id" : 2, "state" : "Massachussetts" }, { "id" : 3, "state" : "California" }, { "id" : 3, "state" : "Massachussetts" }, { "id" : 4, "state" : "California" }, { "id" : 5, "state" : "California" }, { "id" : 5, "state" : "Massachussetts" }, { "id" : 5, "state" : "New York" }, { "id" : 5, "state" : "Michigan" }, { "id" : 6, "state" : "California" }, { "id" : 6, "state" : "Massachussetts" }, { "id" : 6, "state" : "Michigan" }, { "id" : 7, "state" : "California" }, { "id" : 7, "state" : "Massachussetts" }, { "id" : 7, "state" : "Michigan" })" :)
+(:JIQS: ShouldRun; Output="({ "id" : 1, "state" : "California" }, { "id" : 2, "state" : "California" }, { "id" : 2, "state" : "Massachussetts" }, { "id" : 3, "state" : "California" }, { "id" : 3, "state" : "Massachussetts" }, { "id" : 4, "state" : "California" }, { "id" : 5, "state" : "California" }, { "id" : 5, "state" : "Massachussetts" }, { "id" : 5, "state" : "Michigan" }, { "id" : 5, "state" : "New York" }, { "id" : 6, "state" : "California" }, { "id" : 6, "state" : "Massachussetts" }, { "id" : 6, "state" : "Michigan" }, { "id" : 7, "state" : "California" }, { "id" : 7, "state" : "Massachussetts" }, { "id" : 7, "state" : "Michigan" })" :)
 let $stores := parallelize((
   { "storeid" : 1, "state" : "CA" },
   { "storeid" : 2, "state" : "MA" },
@@ -18,6 +18,7 @@ let $states := parallelize((
 return
 for $store in $stores
 for $state in $states[$$.code le $store.state]
+order by $store.storeid, $state.name
 return { "id" : $store.storeid, "state" : $state.name }
 
 
