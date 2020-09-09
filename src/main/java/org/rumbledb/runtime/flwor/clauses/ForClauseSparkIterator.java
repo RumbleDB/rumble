@@ -45,6 +45,7 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
+import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 
@@ -387,8 +388,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         boolean contextItemToTheLeft = false;
         RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
         RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
-        if (predicateIterator instanceof ComparisonOperationIterator) {
-            ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
+        RuntimeIterator iterator = predicateIterator;
+        while(iterator instanceof AndOperationIterator)
+        {
+            iterator = ((AndOperationIterator) iterator).getLeftIterator();
+        }
+        if (iterator instanceof ComparisonOperationIterator) {
+            ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) iterator;
             if (comparisonIterator.isValueEquality()) {
                 leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
                 rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
