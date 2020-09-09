@@ -421,17 +421,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             optimizableJoin = false;
         }
         
-        if(optimizableJoin)
-        {
-            System.out.println("Optimizable join detected!");
-            if(contextItemToTheLeft)
-            {
-                System.out.println("To the left.");
-            } else {
-                System.out.println("To the right.");
-            }
-        }
-
         // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
@@ -462,6 +451,17 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
         
+        if(optimizableJoin)
+        {
+            System.out.println("Optimizable join detected!");
+            if(contextItemToTheLeft)
+            {
+                System.out.println("To the left.");
+            } else {
+                System.out.println("To the right.");
+            }
+        }
+
         if(optimizableJoin)
         {
             // expressionDF.show();
