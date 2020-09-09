@@ -391,27 +391,30 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if(predicateIterator instanceof ComparisonOperationIterator)
         {
             ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
-            leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-            rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
-            
-            Set<Name> leftDependencies = new HashSet<>(
-                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
-            );
-            Set<Name> rightDependencies = new HashSet<>(
-                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
-            );
-            if(leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM))
+            if(comparisonIterator.isValueEquality())
             {
-                if(!rightDependencies.contains(Name.CONTEXT_ITEM)) {
-                    optimizableJoin = true;
-                    contextItemToTheLeft = true;
+                leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+                rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+                
+                Set<Name> leftDependencies = new HashSet<>(
+                        leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                );
+                Set<Name> rightDependencies = new HashSet<>(
+                        rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                );
+                if(leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM))
+                {
+                    if(!rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                        optimizableJoin = true;
+                        contextItemToTheLeft = true;
+                    }
                 }
-            }
-            if(rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM))
-            {
-                if(!leftDependencies.contains(Name.CONTEXT_ITEM)) {
-                    optimizableJoin = true;
-                    contextItemToTheLeft = false;
+                if(rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM))
+                {
+                    if(!leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                        optimizableJoin = true;
+                        contextItemToTheLeft = false;
+                    }
                 }
             }
         }
