@@ -462,7 +462,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             if (contextItemToTheLeft) {
                 expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     expressionDF,
-                    Name.createVariableInNoNamespace("hash1"),
+                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
                     leftHandSideOfJoinEqualityCriterion,
                     context,
                     null,
@@ -471,7 +471,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             } else {
                 expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     expressionDF,
-                    Name.createVariableInNoNamespace("hash1"),
+                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
                     rightHandSideOfJoinEqualityCriterion,
                     context,
                     null,
@@ -511,7 +511,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             if (contextItemToTheLeft) {
                 inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     inputDF,
-                    Name.createVariableInNoNamespace("hash2"),
+                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
                     rightHandSideOfJoinEqualityCriterion,
                     context,
                     null,
@@ -520,7 +520,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             } else {
                 inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     inputDF,
-                    Name.createVariableInNoNamespace("hash2"),
+                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
                     leftHandSideOfJoinEqualityCriterion,
                     context,
                     null,
@@ -613,13 +613,15 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> resultDF = inputDF.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT %s `%s`.`%s` AS `%s` FROM %s JOIN %s ON `hash1` = `hash2` WHERE joinUDF(%s) = 'true'",
+                        "SELECT %s `%s`.`%s` AS `%s` FROM %s JOIN %s ON `%s` = `%s` WHERE joinUDF(%s) = 'true'",
                         projectionVariables,
                         expressionDFTableName,
                         Name.CONTEXT_ITEM.getLocalName(),
                         this.variableName,
                         inputDFTableName,
                         expressionDFTableName,
+                        SparkSessionManager.leftHashColumnName,
+                        SparkSessionManager.rightHashColumnName,
                         UDFParameters
                     )
                 );
