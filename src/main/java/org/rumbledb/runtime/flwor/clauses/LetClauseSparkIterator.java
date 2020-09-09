@@ -288,7 +288,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> df,
             Name newVariableName,
             RuntimeIterator newVariableExpression,
-            Map<Name, DynamicContext.VariableDependency> dependencies
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            boolean hash
     ) {
         StructType inputSchema = df.schema();
         List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
@@ -306,19 +307,32 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             dependencies
         );
 
-        df.sparkSession()
+        if(!hash)
+        {
+            df.sparkSession()
             .udf()
             .register(
                 "letClauseUDF",
                 new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
                 DataTypes.BinaryType
             );
+        } else {
+            df.sparkSession()
+            .udf()
+            .register(
+                "hashUDF",
+                new HashUDF(newVariableExpression, context, UDFcolumnsByType),
+                DataTypes.LongType
+            );
+        }
 
         String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
 
         df.createOrReplaceTempView("input");
-        df = df.sparkSession()
+        if(!hash)
+        {
+            df = df.sparkSession()
             .sql(
                 String.format(
                     "select %s letClauseUDF(%s) as `%s` from input",
@@ -327,53 +341,17 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     newVariableName
                 )
             );
-        return df;
-    }
-
-    public static Dataset<Row> bindLetVariableToHashInDataFrame(
-            DynamicContext context,
-            Dataset<Row> df,
-            Name newVariableName,
-            RuntimeIterator newVariableExpression,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
-        StructType inputSchema = df.schema();
-        List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
-
-        int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
-
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
-            duplicateVariableIndex,
-            null
-        );
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
-            inputSchema,
-            -1,
-            dependencies
-        );
-
-        df.sparkSession()
-            .udf()
-            .register(
-                "hashUDF",
-                new HashUDF(newVariableExpression, context, UDFcolumnsByType),
-                DataTypes.LongType
-            );
-
-        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
-
-        df.createOrReplaceTempView("input");
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "select %s hashUDF(%s) as `%s` from input",
-                    selectSQL,
-                    UDFParameters,
-                    newVariableName
-                )
-            );
+        } else {
+            df = df.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s hashUDF(%s) as `%s` from input",
+                            selectSQL,
+                            UDFParameters,
+                            newVariableName
+                        )
+                    );
+        }
         return df;
     }
 }

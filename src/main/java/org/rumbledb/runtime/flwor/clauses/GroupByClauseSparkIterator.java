@@ -282,7 +282,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     df,
                     expression.getVariableName(),
                     expression.getExpression(),
-                    this.dependencies
+                    this.dependencies,
+                    false
                 );
 
 
