@@ -42,8 +42,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
-import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
-
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -279,42 +277,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
-                Name newVariableName = expression.getVariableName();
-                RuntimeIterator newVariableExpression = expression.getExpression();
-                int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
-
-                List<String> allColumns = FlworDataFrameUtils.getColumnNames(
-                    inputSchema,
-                    duplicateVariableIndex,
-                    null
-                );
-                Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
-                    inputSchema,
-                    -1,
-                    this.dependencies
-                );
-
-                df.sparkSession()
-                    .udf()
-                    .register(
-                        "letClauseUDF",
-                        new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
-                        DataTypes.BinaryType
-                    );
-
-                String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
-                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
-
-                df.createOrReplaceTempView("input");
-                df = df.sparkSession()
-                    .sql(
-                        String.format(
-                            "select %s letClauseUDF(%s) as `%s` from input",
-                            selectSQL,
-                            UDFParameters,
-                            newVariableName
-                        )
-                    );
+                df = LetClauseSparkIterator.bindLetVariableInDataFrame(context, df, expression.getVariableName(), expression.getExpression(), this.dependencies);
 
 
             } else {

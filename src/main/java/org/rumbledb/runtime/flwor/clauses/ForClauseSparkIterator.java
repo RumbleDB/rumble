@@ -45,6 +45,7 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
+import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -53,6 +54,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -365,7 +367,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
         RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
-
+        
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
                 sequenceIterator.getVariableDependencies().keySet()
@@ -381,6 +383,55 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
+        // Is this a join that we can optimize as an actual Spark join?
+        boolean optimizableJoin = false;
+        boolean contextItemToTheLeft = false;
+        RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
+        RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
+        if(predicateIterator instanceof ComparisonOperationIterator)
+        {
+            ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
+            leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+            rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+            
+            Set<Name> leftDependencies = new HashSet<>(
+                    leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+            );
+            Set<Name> rightDependencies = new HashSet<>(
+                    rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+            );
+            if(leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM))
+            {
+                if(!rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                    optimizableJoin = true;
+                    contextItemToTheLeft = true;
+                }
+            }
+            if(rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM))
+            {
+                if(!leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                    optimizableJoin = true;
+                    contextItemToTheLeft = false;
+                }
+            }
+        }
+        
+        if (this.allowingEmpty)
+        {
+            optimizableJoin = false;
+        }
+        
+        if(optimizableJoin)
+        {
+            System.out.println("Optimizable join detected!");
+            if(contextItemToTheLeft)
+            {
+                System.out.println("To the left.");
+            } else {
+                System.out.println("To the right.");
+            }
+        }
+
         // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
@@ -391,6 +442,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+            optimizableJoin = false;
             expressionDF = getDataFrameStartingClause(
                 sequenceIterator,
                 Name.CONTEXT_ITEM,
@@ -408,6 +460,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 context,
                 predicateDependencies
             );
+        }
+        
+        if(optimizableJoin)
+        {
+            expressionDF.show();
+            Map<Name, VariableDependency> contextItemDependency = new HashMap<>();
+            contextItemDependency.put(Name.CONTEXT_ITEM, VariableDependency.FULL);
+            if(contextItemToTheLeft)
+            {
+                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, expressionDF, Name.createVariableInNoNamespace("hash1"), leftHandSideOfJoinEqualityCriterion, contextItemDependency);
+            } else {
+                expressionDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, expressionDF, Name.createVariableInNoNamespace("hash1"), rightHandSideOfJoinEqualityCriterion, contextItemDependency);
+            }
+            expressionDF.show();
         }
 
         String inputDFTableName = "inputTuples";
@@ -434,6 +500,18 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
+
+        if(optimizableJoin)
+        {
+            inputDF.show();
+            if(contextItemToTheLeft)
+            {
+                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), rightHandSideOfJoinEqualityCriterion, this.dependencies);
+            } else {
+                inputDF = LetClauseSparkIterator.bindLetVariableToHashInDataFrame(context, inputDF, Name.createVariableInNoNamespace("hash2"), leftHandSideOfJoinEqualityCriterion, this.dependencies);
+            }
+            inputDF.show();
+        }
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
         inputDF.createOrReplaceTempView(inputDFTableName);
@@ -501,6 +579,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 .sql(
                     String.format(
                         "SELECT %s `%s`.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
+                        projectionVariables,
+                        expressionDFTableName,
+                        Name.CONTEXT_ITEM.getLocalName(),
+                        this.variableName,
+                        inputDFTableName,
+                        expressionDFTableName,
+                        UDFParameters
+                    )
+                );
+            return resultDF;
+        }
+        
+        if(optimizableJoin)
+        {
+            // Otherwise, it's a regular join.
+            Dataset<Row> resultDF = inputDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT %s `%s`.`%s` AS `%s` FROM %s JOIN %s ON `hash1` = `hash2` WHERE joinUDF(%s) = 'true'",
                         projectionVariables,
                         expressionDFTableName,
                         Name.CONTEXT_ITEM.getLocalName(),
