@@ -26,6 +26,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -33,6 +34,7 @@ import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -79,12 +81,29 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             try {
                 // TODO check numeric types conversions
                 BigDecimal sum = new BigDecimal(0);
+                double sumAsDouble = 0;
+                boolean asDouble = false;
                 for (Item r : results) {
-                    sum = sum.add(r.castToDecimalValue());
+                    if (!r.isNumeric()) {
+                        throw new UnsupportedFeatureException(
+                                "Rumble cannot yet average durations or dates and times. Please let us know if you need this.",
+                                getMetadata()
+                        );
+                    }
+                    if (r.isDouble()) {
+                        asDouble = true;
+                    }
+                    if (!asDouble) {
+                        sum = sum.add(r.castToDecimalValue());
+                    }
+                    sumAsDouble += r.castToDoubleValue();
                 }
 
-                return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size())));
-
+                if (asDouble) {
+                    return ItemFactory.getInstance().createDoubleItem(sumAsDouble / ((double) results.size()));
+                }
+                return ItemFactory.getInstance()
+                    .createDecimalItem(sum.divide(new BigDecimal(results.size()), 15, RoundingMode.HALF_UP));
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
