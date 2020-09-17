@@ -868,7 +868,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @param parentProjection the desired project.
      * @return the resulting DataFrame.
      */
-    private static Dataset<Row> getDataFrameStartingClause(
+    public static Dataset<Row> getDataFrameStartingClause(
             RuntimeIterator iterator,
             Name variableName,
             Name positionalVariableName,

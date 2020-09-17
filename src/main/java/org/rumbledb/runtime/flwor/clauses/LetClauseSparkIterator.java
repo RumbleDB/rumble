@@ -28,6 +28,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
@@ -37,8 +38,11 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
+import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.postfix.PredicateIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -171,10 +175,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             }
 
             if (this.assignmentIterator.isRDD()) {
-                throw new JobWithinAJobException(
-                        "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata()
-                );
+                getDataFrameAsJoin(context, parentProjection, df);
             }
 
             df = bindLetVariableInDataFrame(
@@ -187,6 +188,151 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             );
 
             return df;
+        }
+        throw new RuntimeException(
+                "Unexpected program state reached. Initial let clauses are always locally executed."
+        );
+    }
+
+    public Dataset<Row> getDataFrameAsJoin(
+            DynamicContext context,
+            Map<Name, DynamicContext.VariableDependency> parentProjection,
+            Dataset<Row> childDF
+    ) {
+        if (!(this.assignmentIterator instanceof PredicateIterator)) {
+            throw new JobWithinAJobException(
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata()
+            );
+        }
+        // Check that the expression does not depend functionally on the input tuples
+        Set<Name> intersection = new HashSet<>(
+                this.assignmentIterator.getVariableDependencies().keySet()
+        );
+        intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
+        boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
+
+        // If it does, we cannot handle it.
+        if (expressionUsesVariablesOfCurrentFlwor) {
+            throw new JobWithinAJobException(
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata()
+            );
+        }
+
+        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
+        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+
+        // Is this a join that we can optimize as an actual Spark join?
+        boolean optimizableJoin = false;
+        boolean contextItemToTheLeft = false;
+        RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
+        RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
+        if (predicateIterator instanceof ComparisonOperationIterator) {
+            ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
+            if (comparisonIterator.isValueEquality()) {
+                leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+                rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+
+                Set<Name> leftDependencies = new HashSet<>(
+                        leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                );
+                Set<Name> rightDependencies = new HashSet<>(
+                        rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
+                );
+                if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                    if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                        optimizableJoin = true;
+                        contextItemToTheLeft = true;
+                    }
+                }
+                if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
+                    if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
+                        optimizableJoin = true;
+                        contextItemToTheLeft = false;
+                    }
+                }
+            }
+        }
+        
+        if(!optimizableJoin)
+        {
+            throw new JobWithinAJobException(
+                "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                getMetadata()
+        );
+
+            // Since no variable dependency to the current FLWOR expression exists for the expression
+            // evaluate the DataFrame with the parent context and calculate the cartesian product
+            Dataset<Row> expressionDF;
+            Dataset<Row> inputDF;
+
+            Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
+            if (parentProjection.containsKey(this.variableName)) {
+                predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
+            }
+
+            if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+                throw new JobWithinAJobException(
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata());
+            } else {
+                expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                    sequenceIterator,
+                    Name.CONTEXT_ITEM,
+                    null,
+                    false,
+                    context,
+                    predicateDependencies
+                );
+            }
+
+            System.out.println("Optimizable join detected!");
+            if (contextItemToTheLeft) {
+                System.out.println("To the left.");
+            } else {
+                System.out.println("To the right.");
+            }
+
+            if (contextItemToTheLeft) {
+                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                    expressionDF,
+                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
+                    leftHandSideOfJoinEqualityCriterion,
+                    context,
+                    null,
+                    true
+                );
+                inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                    inputDF,
+                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
+                    rightHandSideOfJoinEqualityCriterion,
+                    context,
+                    null,
+                    true
+                );
+
+            } else {
+                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                    expressionDF,
+                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
+                    rightHandSideOfJoinEqualityCriterion,
+                    context,
+                    null,
+                    true
+                );
+                inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                    inputDF,
+                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
+                    leftHandSideOfJoinEqualityCriterion,
+                    context,
+                    null,
+                    true
+                );
+
+            }
+
+            return null;
         }
         throw new RuntimeException(
                 "Unexpected program state reached. Initial let clauses are always locally executed."
