@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
-import org.apache.hadoop.hdfs.server.namenode.UnsupportedActionException;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -85,26 +84,26 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
                 double sumAsDouble = 0;
                 boolean asDouble = false;
                 for (Item r : results) {
-                    if(!r.isNumeric())
-                    {
-                        throw new UnsupportedFeatureException("Rumble cannot yet average durations or dates and times. Please let us know if you need this.", getMetadata());
+                    if (!r.isNumeric()) {
+                        throw new UnsupportedFeatureException(
+                                "Rumble cannot yet average durations or dates and times. Please let us know if you need this.",
+                                getMetadata()
+                        );
                     }
-                    if(r.isDouble())
-                    {
+                    if (r.isDouble()) {
                         asDouble = true;
                     }
-                    if(!asDouble)
-                    {
+                    if (!asDouble) {
                         sum = sum.add(r.castToDecimalValue());
                     }
                     sumAsDouble += r.castToDoubleValue();
                 }
 
-                if(asDouble)
-                {
-                    return ItemFactory.getInstance().createDoubleItem(sumAsDouble / ((double)results.size()));
+                if (asDouble) {
+                    return ItemFactory.getInstance().createDoubleItem(sumAsDouble / ((double) results.size()));
                 }
-                return ItemFactory.getInstance().createDecimalItem(sum.divide(new BigDecimal(results.size()), 15, RoundingMode.HALF_UP));
+                return ItemFactory.getInstance()
+                    .createDecimalItem(sum.divide(new BigDecimal(results.size()), 15, RoundingMode.HALF_UP));
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }
