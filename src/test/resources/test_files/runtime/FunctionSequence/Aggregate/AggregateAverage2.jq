@@ -1,5 +1,5 @@
-(:JIQS: ShouldRun; Output="(3, 3.5, 3, 3, 3, 3, 3, 102, 3.5)" :)
+(:JIQS: ShouldRun; Output="(1.666666666666667, 2.046666666666667)" :)
 avg((1, 2, 2)),
-avg(1, 2.0, 3.14 cast as double))
+avg((1, 2.0, 3.14 cast as double))
 
-(: different numeric types :)
+(: non exact :)
