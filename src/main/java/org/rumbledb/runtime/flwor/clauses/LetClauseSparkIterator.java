@@ -254,13 +254,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        
-        if(!optimizableJoin)
-        {
+
+        if (!optimizableJoin) {
             throw new JobWithinAJobException(
-                "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                getMetadata()
-        );
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata()
+            );
 
             // Since no variable dependency to the current FLWOR expression exists for the expression
             // evaluate the DataFrame with the parent context and calculate the cartesian product
@@ -274,8 +273,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
             if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
                 throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                    getMetadata());
+                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                        getMetadata()
+                );
             } else {
                 expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
                     sequenceIterator,
