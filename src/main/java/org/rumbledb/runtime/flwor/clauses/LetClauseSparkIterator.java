@@ -205,11 +205,22 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     getMetadata()
             );
         }
+
+        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
+        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
+
         // Check that the expression does not depend functionally on the input tuples
         Set<Name> intersection = new HashSet<>(
-                this.assignmentIterator.getVariableDependencies().keySet()
+                sequenceIterator.getVariableDependencies().keySet()
         );
-        intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
+        for (Name n : intersection) {
+            System.out.println(n);
+        }
+        System.out.println();
+        intersection.retainAll(this.child.getVariablesBoundInCurrentFLWORExpression());
+        for (Name n : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+            System.out.println(n);
+        }
         boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
 
         // If it does, we cannot handle it.
@@ -219,9 +230,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     getMetadata()
             );
         }
-
-        RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
-        RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
 
         // Is this a join that we can optimize as an actual Spark join?
         boolean optimizableJoin = false;
@@ -260,83 +268,92 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata()
             );
-
-            // Since no variable dependency to the current FLWOR expression exists for the expression
-            // evaluate the DataFrame with the parent context and calculate the cartesian product
-            Dataset<Row> expressionDF;
-            Dataset<Row> inputDF;
-
-            Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
-            if (parentProjection.containsKey(this.variableName)) {
-                predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
-            }
-
-            if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
-                throw new JobWithinAJobException(
-                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
-                        getMetadata()
-                );
-            } else {
-                expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
-                    sequenceIterator,
-                    Name.CONTEXT_ITEM,
-                    null,
-                    false,
-                    context,
-                    predicateDependencies
-                );
-            }
-
-            System.out.println("Optimizable join detected!");
-            if (contextItemToTheLeft) {
-                System.out.println("To the left.");
-            } else {
-                System.out.println("To the right.");
-            }
-
-            if (contextItemToTheLeft) {
-                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    expressionDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                    leftHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-                inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    inputDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                    rightHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-
-            } else {
-                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    expressionDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                    rightHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-                inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    inputDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                    leftHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-
-            }
-
-            return null;
         }
-        throw new RuntimeException(
-                "Unexpected program state reached. Initial let clauses are always locally executed."
-        );
+
+        Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
+        inputDF.show();
+        inputDF.printSchema();
+
+        // Since no variable dependency to the current FLWOR expression exists for the expression
+        // evaluate the DataFrame with the parent context and calculate the cartesian product
+        Dataset<Row> expressionDF;
+
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
+        if (parentProjection.containsKey(this.variableName)) {
+            predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
+        }
+
+        if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+            throw new JobWithinAJobException(
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata()
+            );
+        } else {
+            expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                sequenceIterator,
+                Name.CONTEXT_ITEM,
+                null,
+                false,
+                context,
+                predicateDependencies
+            );
+        }
+
+        System.out.println("Optimizable join detected!");
+        if (contextItemToTheLeft) {
+            System.out.println("To the left.");
+        } else {
+            System.out.println("To the right.");
+        }
+        expressionDF.show();
+        expressionDF.printSchema();
+
+        if (contextItemToTheLeft) {
+            expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                expressionDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
+                leftHandSideOfJoinEqualityCriterion,
+                context,
+                null,
+                true
+            );
+            inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                inputDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
+                rightHandSideOfJoinEqualityCriterion,
+                context,
+                null,
+                true
+            );
+
+        } else {
+            expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                expressionDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
+                rightHandSideOfJoinEqualityCriterion,
+                context,
+                null,
+                true
+            );
+            inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                inputDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
+                leftHandSideOfJoinEqualityCriterion,
+                context,
+                null,
+                true
+            );
+
+        }
+
+        inputDF.show();
+        inputDF.printSchema();
+        expressionDF.show();
+        expressionDF.printSchema();
+
+
+        System.exit(1);
+        return null;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
