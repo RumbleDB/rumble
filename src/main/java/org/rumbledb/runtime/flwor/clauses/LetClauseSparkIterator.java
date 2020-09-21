@@ -35,6 +35,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -55,7 +56,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -67,7 +67,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
         this.assignmentIterator = assignmentIterator;
-        this.dependencies = this.assignmentIterator.getVariableDependencies();
     }
 
     @Override
@@ -178,42 +177,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
 
-            StructType inputSchema = df.schema();
-
-            int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
-
-            List<String> allColumns = FlworDataFrameUtils.getColumnNames(
-                inputSchema,
-                duplicateVariableIndex,
-                parentProjection
-            );
-            Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
-                inputSchema,
-                -1,
-                this.dependencies
+            df = bindLetVariableInDataFrame(
+                df,
+                this.variableName,
+                this.assignmentIterator,
+                context,
+                parentProjection,
+                false
             );
 
-            df.sparkSession()
-                .udf()
-                .register(
-                    "letClauseUDF",
-                    new LetClauseUDF(this.assignmentIterator, context, UDFcolumnsByType),
-                    DataTypes.BinaryType
-                );
-
-            String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
-            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
-
-            df.createOrReplaceTempView("input");
-            df = df.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s letClauseUDF(%s) as `%s` from input",
-                        selectSQL,
-                        UDFParameters,
-                        this.variableName
-                    )
-                );
             return df;
         }
         throw new RuntimeException(
@@ -280,5 +252,86 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Extends a DataFrame with a new column obtained from the evaluation of an expression for each tuple.
+     * 
+     * @param df the DataFrame to extend
+     * @param newVariableName the name of the new column (variable)
+     * @param newVariableExpression the expression to evaluate
+     * @param context the context (in addition to each tuple) in which to evaluation the expression
+     * @param dependencies the dependencies to project to (possibly null to keep everything).
+     * @param hash whether or not to compute single-item hashes rather than the actual serialized sequences of items.
+     * @return
+     */
+    public static Dataset<Row> bindLetVariableInDataFrame(
+            Dataset<Row> df,
+            Name newVariableName,
+            RuntimeIterator newVariableExpression,
+            DynamicContext context,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            boolean hash
+    ) {
+        StructType inputSchema = df.schema();
+        List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
+
+        int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
+
+        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+            inputSchema,
+            duplicateVariableIndex,
+            dependencies
+        );
+        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+            inputSchema,
+            -1,
+            newVariableExpression.getVariableDependencies()
+        );
+
+        if (!hash) {
+            df.sparkSession()
+                .udf()
+                .register(
+                    "letClauseUDF",
+                    new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
+                    DataTypes.BinaryType
+                );
+        } else {
+            df.sparkSession()
+                .udf()
+                .register(
+                    "hashUDF",
+                    new HashUDF(newVariableExpression, context, UDFcolumnsByType),
+                    DataTypes.LongType
+                );
+        }
+
+        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+
+        df.createOrReplaceTempView("input");
+        if (!hash) {
+            df = df.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s letClauseUDF(%s) as `%s` from input",
+                        selectSQL,
+                        UDFParameters,
+                        newVariableName
+                    )
+                );
+        } else {
+            df = df.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s hashUDF(%s) as `%s` from input",
+                        selectSQL,
+                        UDFParameters,
+                        newVariableName
+                    )
+                );
+        }
+        return df;
     }
 }

@@ -60,6 +60,22 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         this.comparisonOperator = comparisonOperator;
     }
 
+    public ComparisonExpression.ComparisonOperator getComparisonOperator() {
+        return this.comparisonOperator;
+    }
+
+    public boolean isValueEquality() {
+        return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
+    }
+
+    public RuntimeIterator getLeftIterator() {
+        return this.leftIterator;
+    }
+
+    public RuntimeIterator getRightIterator() {
+        return this.rightIterator;
+    }
+
     @Override
     public Item next() {
         if (this.hasNext()) {

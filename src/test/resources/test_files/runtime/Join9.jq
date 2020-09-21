@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "id" : 1, "state" : "California" }, { "id" : 2, "state" : "Massachussetts" }, { "id" : 3, "state" : "Massachussetts" }, { "id" : 4, "state" : "California" }, { "id" : 5, "state" : "New York" }, { "id" : 6, "state" : "Michigan" }, { "id" : 7, "state" : "Michigan" })" :)
+(:JIQS: ShouldRun; Output="({ "id" : 6, "state" : "Michigan" }, { "id" : 7, "state" : "Michigan" }, { "id" : 2, "state" : "Massachussetts" }, { "id" : 3, "state" : "Massachussetts" }, { "id" : 1, "state" : "California" }, { "id" : 4, "state" : "California" }, { "id" : 5, "state" : "New York" })" :)
 let $stores := parallelize((
   { "storeid" : 1, "state" : "CA" },
   { "storeid" : 2, "state" : "MA" },
