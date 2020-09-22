@@ -350,8 +350,38 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF.printSchema();
         expressionDF.show();
         expressionDF.printSchema();
+        
+        expressionDF.createOrReplaceTempView("hashedExpressionResults");
+        
+        if (contextItemToTheLeft) {
+            expressionDF = expressionDF.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
+                            SparkSessionManager.leftHashColumnName,
+                            Name.CONTEXT_ITEM.toString(),
+                            Name.CONTEXT_ITEM.toString(),
+                            SparkSessionManager.leftHashColumnName
+                        )
+                    );
+        } else {
+            expressionDF = expressionDF.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
+                            SparkSessionManager.rightHashColumnName,
+                            Name.CONTEXT_ITEM.toString(),
+                            Name.CONTEXT_ITEM.toString(),
+                            SparkSessionManager.leftHashColumnName
+                        )
+                    );
+        }
 
-
+        inputDF.show();
+        inputDF.printSchema();
+        expressionDF.show();
+        expressionDF.printSchema();
+        
         System.exit(1);
         return null;
     }
