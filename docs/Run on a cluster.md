@@ -16,11 +16,11 @@ You can also adapt the number of executors, etc.
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
                  spark-rumble-1.8.1.jar --shell yes
 
-The size limit for materialization can also be made higher with --result-size (the default is 100). This affects the number of items displayed on the shells as an answer to a query, as well as any materializations happening within the query with push-down is not supported. Warnings are issued if the cap is reached.
+The size limit for materialization can also be made higher with --materialization-cap (the default is 200). This affects the number of items displayed on the shells as an answer to a query, as well as any materializations happening within the query with push-down is not supported. Warnings are issued if the cap is reached.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
                  spark-rumble-1.8.1.jar
-                 --shell yes --result-size 10000
+                 --shell yes --materialization-cap 10000
 
 ## Creation functions
 
@@ -52,7 +52,7 @@ We tested it successfully and suggest the following queries to start with:
     return {”Language”: $target ,
     ”Country” : $country , ”Guesses”: length($i)}
 
-Note that by default only the first 1000 items in the output will be displayed on the shell, but you can change it with the --result-size parameter on the CLI.
+Note that by default only the first 1000 items in the output will be displayed on the shell, but you can change it with the --materialization-cap parameter on the CLI.
 
 ## Execution of single queries and output to HDFS
 
