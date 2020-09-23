@@ -387,7 +387,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             );
         inputDF.show();
         inputDF.printSchema();
-        
+
         // TODO filter the sequence with the join criterion
 
         return inputDF;
