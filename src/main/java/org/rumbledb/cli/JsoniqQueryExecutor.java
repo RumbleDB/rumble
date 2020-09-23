@@ -105,7 +105,7 @@ public class JsoniqQueryExecutor {
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = new ArrayList<>();
-            long materializationCount = sequence.populateList(outputList);
+            long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
             List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
@@ -118,8 +118,9 @@ public class JsoniqQueryExecutor {
                         + materializationCount
                         + " items but its materialization was capped at "
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
+                        + " items. This value can be configured with the --materialization-cap parameter at startup"
                 );
+                System.err.println("Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system.");
             }
         }
 
