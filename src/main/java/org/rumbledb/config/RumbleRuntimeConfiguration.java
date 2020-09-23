@@ -118,10 +118,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.allowedPrefixes = Arrays.asList();
         }
-        if (this.arguments.containsKey("result-size")) {
-            this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
+        if (this.arguments.containsKey("materialization-cap")) {
+            this.resultsSizeCap = Integer.parseInt(this.arguments.get("materialization-cap"));
         } else {
-            this.resultsSizeCap = 200;
+            if (this.arguments.containsKey("result-size")) {
+                System.err.println("[WARNING] --result-size is obsolete. Please use --materialization-cap instead.");
+                this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
+            } else {
+                this.resultsSizeCap = 200;
+            }
         }
     }
 
