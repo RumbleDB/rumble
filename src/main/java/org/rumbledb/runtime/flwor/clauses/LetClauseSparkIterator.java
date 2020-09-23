@@ -176,7 +176,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             }
 
             if (this.assignmentIterator.isRDD()) {
-                getDataFrameAsJoin(context, parentProjection, df);
+                return getDataFrameAsJoin(context, parentProjection, df);
             }
 
             df = bindLetVariableInDataFrame(
@@ -202,7 +202,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         if (!(this.assignmentIterator instanceof PredicateIterator)) {
             throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble is able to handle large scale left outer joins, but this requires the let expression to be a predicate expression, the left-hand-side of which is independent from the previous variables of the current FLWOR expression.",
                     getMetadata()
             );
         }
@@ -210,24 +210,23 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
         RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
 
-        // If it does, we cannot handle it.
+        // If the sequence expression depends on the input tuple, we cannot handle this.
         if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
             throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble attempted to detect a join but the left-hand-side of the predicate expression in this let clause depends on the previous variables of the current FLWOR expression. You can try again by making sure that such is not the case.",
                     getMetadata()
             );
         }
 
         // Is this a join that we can optimize as an actual Spark join?
         boolean optimizableJoin = false;
-        boolean contextItemToTheLeft = false;
-        RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
-        RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
+        RuntimeIterator contextItemValueExpression = null;
+        RuntimeIterator inputTupleValueExpression = null;
         if (predicateIterator instanceof ComparisonOperationIterator) {
             ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
             if (comparisonIterator.isValueEquality()) {
-                leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-                rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
+                RuntimeIterator leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
+                RuntimeIterator rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
 
                 Set<Name> leftDependencies = new HashSet<>(
                         leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
@@ -238,13 +237,15 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
                     if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
                         optimizableJoin = true;
-                        contextItemToTheLeft = true;
+                        contextItemValueExpression = leftHandSideOfJoinEqualityCriterion;
+                        inputTupleValueExpression = rightHandSideOfJoinEqualityCriterion;
                     }
                 }
                 if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
                     if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
                         optimizableJoin = true;
-                        contextItemToTheLeft = false;
+                        contextItemValueExpression = rightHandSideOfJoinEqualityCriterion;
+                        inputTupleValueExpression = leftHandSideOfJoinEqualityCriterion;
                     }
                 }
             }
@@ -252,7 +253,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         if (!optimizableJoin) {
             throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate could not be interpreted as an equi-join.",
                     getMetadata()
             );
         }
@@ -287,51 +288,25 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         System.out.println("Optimizable join detected!");
-        if (contextItemToTheLeft) {
-            System.out.println("To the left.");
-        } else {
-            System.out.println("To the right.");
-        }
         expressionDF.show();
         expressionDF.printSchema();
 
-        if (contextItemToTheLeft) {
-            expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                expressionDF,
-                Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                leftHandSideOfJoinEqualityCriterion,
-                context,
-                null,
-                true
-            );
-            inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                inputDF,
-                Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                rightHandSideOfJoinEqualityCriterion,
-                context,
-                null,
-                true
-            );
-
-        } else {
-            expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                expressionDF,
-                Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                rightHandSideOfJoinEqualityCriterion,
-                context,
-                null,
-                true
-            );
-            inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                inputDF,
-                Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                leftHandSideOfJoinEqualityCriterion,
-                context,
-                null,
-                true
-            );
-
-        }
+        expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            expressionDF,
+            Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+            contextItemValueExpression,
+            context,
+            null,
+            true
+        );
+        inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            inputDF,
+            Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+            inputTupleValueExpression,
+            context,
+            null,
+            true
+        );
 
         inputDF.show();
         inputDF.printSchema();
@@ -340,29 +315,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         expressionDF.createOrReplaceTempView("hashedExpressionResults");
 
-        if (contextItemToTheLeft) {
-            expressionDF = expressionDF.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                        SparkSessionManager.leftHashColumnName,
-                        Name.CONTEXT_ITEM.toString(),
-                        Name.CONTEXT_ITEM.toString(),
-                        SparkSessionManager.leftHashColumnName
-                    )
-                );
-        } else {
-            expressionDF = expressionDF.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                        SparkSessionManager.rightHashColumnName,
-                        Name.CONTEXT_ITEM.toString(),
-                        Name.CONTEXT_ITEM.toString(),
-                        SparkSessionManager.rightHashColumnName
-                    )
-                );
-        }
+        expressionDF = expressionDF.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
+                    SparkSessionManager.expressionHashColumnName,
+                    Name.CONTEXT_ITEM.toString(),
+                    Name.CONTEXT_ITEM.toString(),
+                    SparkSessionManager.expressionHashColumnName
+                )
+            );
 
         inputDF.show();
         inputDF.printSchema();
@@ -379,36 +341,56 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.BinaryType
             );
 
-        if (contextItemToTheLeft) {
-            expressionDF = expressionDF.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
-                        SparkSessionManager.leftHashColumnName,
-                        Name.CONTEXT_ITEM.toString(),
-                        Name.CONTEXT_ITEM.toString(),
-                        SparkSessionManager.leftHashColumnName
-                    )
-                );
-        } else {
-            expressionDF = expressionDF.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
-                        SparkSessionManager.rightHashColumnName,
-                        Name.CONTEXT_ITEM.toString(),
-                        Name.CONTEXT_ITEM.toString(),
-                        SparkSessionManager.rightHashColumnName
-                    )
-                );
-        }
+        expressionDF = expressionDF.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
+                    SparkSessionManager.expressionHashColumnName,
+                    Name.CONTEXT_ITEM.toString(),
+                    Name.CONTEXT_ITEM.toString(),
+                    SparkSessionManager.expressionHashColumnName
+                )
+            );
 
         inputDF.show();
         inputDF.printSchema();
         expressionDF.show();
         expressionDF.printSchema();
 
-        return null;
+        expressionDF.createOrReplaceTempView("groupedAndSerializedResults");
+        inputDF.createOrReplaceTempView("inputTuples");
+
+        // We gather the columns to select from the previous clause.
+        // We need to project away the clause's variables from the previous clause.
+        StructType inputSchema = inputDF.schema();
+        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
+            .indexOf(this.variableName.toString());
+        int duplicatePositionalVariableIndex = -1;
+        List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+            inputSchema,
+            duplicateVariableIndex,
+            duplicatePositionalVariableIndex,
+            parentProjection
+        );
+        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
+
+        inputDF = inputDF.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT %s groupedAndSerializedResults.`%s` AS `%s` FROM inputTuples LEFT OUTER JOIN groupedAndSerializedResults ON `%s` = `%s`",
+                    projectionVariables,
+                    Name.CONTEXT_ITEM.toString(),
+                    this.variableName.toString(),
+                    SparkSessionManager.expressionHashColumnName,
+                    SparkSessionManager.inputTupleHashColumnName
+                )
+            );
+        inputDF.show();
+        inputDF.printSchema();
+        
+        // TODO filter the sequence with the join criterion
+
+        return inputDF;
     }
 
     public static boolean isExpressionIndependentFromInputTuple(
