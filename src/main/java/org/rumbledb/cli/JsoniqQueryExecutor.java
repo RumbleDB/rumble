@@ -120,7 +120,11 @@ public class JsoniqQueryExecutor {
                         + SparkSessionManager.COLLECT_ITEM_LIMIT
                         + " items. This value can be configured with the --materialization-cap parameter at startup"
                 );
-                System.err.println("Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system.");
+                if (outputPath == null) {
+                    System.err.println(
+                        "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
+                    );
+                }
             }
         }
 

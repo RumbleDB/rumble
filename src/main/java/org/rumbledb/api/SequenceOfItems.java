@@ -146,8 +146,7 @@ public class SequenceOfItems {
     }
 
     public long populateListWithWarningOnlyIfCapReached(List<Item> resultList) {
-        if(this.availableAsRDD())
-        {
+        if (this.availableAsRDD()) {
             JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
             return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
         } else {
