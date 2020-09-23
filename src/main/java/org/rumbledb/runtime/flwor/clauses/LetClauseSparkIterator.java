@@ -36,6 +36,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
@@ -358,7 +359,46 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         SparkSessionManager.rightHashColumnName,
                         Name.CONTEXT_ITEM.toString(),
                         Name.CONTEXT_ITEM.toString(),
+                        SparkSessionManager.rightHashColumnName
+                    )
+                );
+        }
+
+        inputDF.show();
+        inputDF.printSchema();
+        expressionDF.show();
+        expressionDF.printSchema();
+
+        expressionDF.createOrReplaceTempView("groupedResults");
+
+        expressionDF.sparkSession()
+            .udf()
+            .register(
+                "serializeArray",
+                new GroupClauseSerializeAggregateResultsUDF(),
+                DataTypes.BinaryType
+            );
+
+        if (contextItemToTheLeft) {
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
+                        SparkSessionManager.leftHashColumnName,
+                        Name.CONTEXT_ITEM.toString(),
+                        Name.CONTEXT_ITEM.toString(),
                         SparkSessionManager.leftHashColumnName
+                    )
+                );
+        } else {
+            expressionDF = expressionDF.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
+                        SparkSessionManager.rightHashColumnName,
+                        Name.CONTEXT_ITEM.toString(),
+                        Name.CONTEXT_ITEM.toString(),
+                        SparkSessionManager.rightHashColumnName
                     )
                 );
         }
@@ -370,7 +410,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         return null;
     }
-    
+
     public static boolean isExpressionIndependentFromInputTuple(
             RuntimeIterator sequenceIterator,
             RuntimeTupleIterator tupleIterator
