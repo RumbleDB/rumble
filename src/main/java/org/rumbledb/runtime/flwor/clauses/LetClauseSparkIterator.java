@@ -209,22 +209,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
         RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
 
-        // Check that the expression does not depend functionally on the input tuples
-        Set<Name> intersection = new HashSet<>(
-                sequenceIterator.getVariableDependencies().keySet()
-        );
-        for (Name n : intersection) {
-            System.out.println(n);
-        }
-        System.out.println();
-        intersection.retainAll(this.child.getVariablesBoundInCurrentFLWORExpression());
-        for (Name n : this.child.getVariablesBoundInCurrentFLWORExpression()) {
-            System.out.println(n);
-        }
-        boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
-
         // If it does, we cannot handle it.
-        if (expressionUsesVariablesOfCurrentFlwor) {
+        if (!isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
             throw new JobWithinAJobException(
                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                     getMetadata()
@@ -350,40 +336,51 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF.printSchema();
         expressionDF.show();
         expressionDF.printSchema();
-        
+
         expressionDF.createOrReplaceTempView("hashedExpressionResults");
-        
+
         if (contextItemToTheLeft) {
             expressionDF = expressionDF.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                            SparkSessionManager.leftHashColumnName,
-                            Name.CONTEXT_ITEM.toString(),
-                            Name.CONTEXT_ITEM.toString(),
-                            SparkSessionManager.leftHashColumnName
-                        )
-                    );
+                .sql(
+                    String.format(
+                        "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
+                        SparkSessionManager.leftHashColumnName,
+                        Name.CONTEXT_ITEM.toString(),
+                        Name.CONTEXT_ITEM.toString(),
+                        SparkSessionManager.leftHashColumnName
+                    )
+                );
         } else {
             expressionDF = expressionDF.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                            SparkSessionManager.rightHashColumnName,
-                            Name.CONTEXT_ITEM.toString(),
-                            Name.CONTEXT_ITEM.toString(),
-                            SparkSessionManager.leftHashColumnName
-                        )
-                    );
+                .sql(
+                    String.format(
+                        "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
+                        SparkSessionManager.rightHashColumnName,
+                        Name.CONTEXT_ITEM.toString(),
+                        Name.CONTEXT_ITEM.toString(),
+                        SparkSessionManager.leftHashColumnName
+                    )
+                );
         }
 
         inputDF.show();
         inputDF.printSchema();
         expressionDF.show();
         expressionDF.printSchema();
-        
-        System.exit(1);
+
         return null;
+    }
+    
+    public static boolean isExpressionIndependentFromInputTuple(
+            RuntimeIterator sequenceIterator,
+            RuntimeTupleIterator tupleIterator
+    ) {
+        // Check that the expression does not depend functionally on the input tuples
+        Set<Name> intersection = new HashSet<>(
+                sequenceIterator.getVariableDependencies().keySet()
+        );
+        intersection.retainAll(tupleIterator.getVariablesBoundInCurrentFLWORExpression());
+        return intersection.isEmpty();
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
