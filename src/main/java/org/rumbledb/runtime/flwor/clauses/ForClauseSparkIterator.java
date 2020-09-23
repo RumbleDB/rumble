@@ -389,8 +389,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
         RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
         RuntimeIterator iterator = predicateIterator;
-        while(iterator instanceof AndOperationIterator)
-        {
+        while (iterator instanceof AndOperationIterator) {
             iterator = ((AndOperationIterator) iterator).getLeftIterator();
         }
         if (iterator instanceof ComparisonOperationIterator) {
