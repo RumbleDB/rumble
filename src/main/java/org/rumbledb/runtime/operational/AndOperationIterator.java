@@ -47,6 +47,14 @@ public class AndOperationIterator extends LocalRuntimeIterator {
         this.rightIterator = rightIterator;
     }
 
+    public RuntimeIterator getLeftIterator() {
+        return this.leftIterator;
+    }
+
+    public RuntimeIterator getRightIterator() {
+        return this.rightIterator;
+    }
+
     @Override
     public Item next() {
         if (this.hasNext) {
