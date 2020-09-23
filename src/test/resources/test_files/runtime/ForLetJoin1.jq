@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="{ "name" : "MA", "stores" : [ 1 ] }" :)
+(:JIQS: ShouldRun; Output="({ "name" : "MA", "stores" : [ 1 ] }, { "name" : "CA", "stores" : [ ] })" :)
 let $stores := parallelize([  { "store number" : 1, "state" : "MA" } ])
 let $nations := parallelize([  { "name": "US", "state": "MA" }, { "name": "US", "state": "CA" } ])
 return
