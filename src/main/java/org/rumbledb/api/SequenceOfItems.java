@@ -7,6 +7,8 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import sparksoniq.spark.SparkSessionManager;
+
 /**
  * A sequence of items is the value returned by any expression in JSONiq, which is a set-based language.
  *
@@ -140,6 +142,15 @@ public class SequenceOfItems {
                 return Long.MAX_VALUE;
             }
             return -1;
+        }
+    }
+
+    public long populateListWithWarningOnlyIfCapReached(List<Item> resultList) {
+        if (this.availableAsRDD()) {
+            JavaRDD<Item> rdd = this.iterator.getRDD(this.dynamicContext);
+            return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
+        } else {
+            return populateList(resultList);
         }
     }
 
