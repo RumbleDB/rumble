@@ -62,6 +62,8 @@ public class SparkSessionManager {
     public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
     public static String leftHashColumnName = "0b67ac92-f29c-11ea-adc1-0242ac120002";
     public static String rightHashColumnName = "17b34c86-f29c-11ea-adc1-0242ac120002";
+    public static String expressionHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String inputTupleHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
 
     private SparkSessionManager() {
     }

@@ -35,6 +35,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -277,15 +278,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        // Check that the expression does not depend functionally on the input tuples
-        Set<Name> intersection = new HashSet<>(
-                this.assignmentIterator.getVariableDependencies().keySet()
-        );
-        intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
-        boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
-
-        // If it does, we cannot handle it.
-        if (expressionUsesVariablesOfCurrentFlwor) {
+        // If the expression depends on this input tuple, we might still recognize an join.
+        if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(this.assignmentIterator, this.child)) {
             return getDataFrameFromJoin(context, parentProjection);
         }
 
@@ -361,24 +355,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         if (!(this.assignmentIterator instanceof PredicateIterator)) {
             throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. A piece of advice: if you use a predicate expression in your for clause, like for $"
+                        + this.variableName.toString()
+                        + " in json-file(\"...\")[$$.id eq $other-flwor-variable.id], Rumble may be able to detect a join.",
                     getMetadata()
             );
         }
         RuntimeIterator sequenceIterator = ((PredicateIterator) this.assignmentIterator).sequenceIterator();
         RuntimeIterator predicateIterator = ((PredicateIterator) this.assignmentIterator).predicateIterator();
 
-        // Check that the expression does not depend functionally on the input tuples
-        Set<Name> intersection = new HashSet<>(
-                sequenceIterator.getVariableDependencies().keySet()
-        );
-        intersection.retainAll(getVariablesBoundInCurrentFLWORExpression());
-        boolean expressionUsesVariablesOfCurrentFlwor = !intersection.isEmpty();
-
-        // If it does, we cannot handle it.
-        if (expressionUsesVariablesOfCurrentFlwor) {
+        // If the left hand side depends on the input tuple, we do not how to handle it.
+        if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
             throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
                     getMetadata()
             );
         }
@@ -454,12 +443,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (optimizableJoin) {
-            System.out.println("Optimizable join detected!");
-            if (contextItemToTheLeft) {
-                System.out.println("To the left.");
-            } else {
-                System.out.println("To the right.");
-            }
+            System.out.println(
+                "INFO: Rumble detected that it can optimize your query and make it faster with an equi-join."
+            );
         }
 
         if (optimizableJoin) {
@@ -558,8 +544,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // We don't support positional variables yet for large joins.
         if (this.positionalVariableName != null) {
-            throw new JobWithinAJobException(
-                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+            throw new UnsupportedFeatureException(
+                    "Rumble detected a large-scale join, but we do not support positional variables yet for these joins.",
                     getMetadata()
             );
         }
@@ -873,7 +859,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @param parentProjection the desired project.
      * @return the resulting DataFrame.
      */
-    private static Dataset<Row> getDataFrameStartingClause(
+    public static Dataset<Row> getDataFrameStartingClause(
             RuntimeIterator iterator,
             Name variableName,
             Name positionalVariableName,
