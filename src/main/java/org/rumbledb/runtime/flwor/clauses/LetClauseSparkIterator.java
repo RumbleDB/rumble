@@ -323,7 +323,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
                     SparkSessionManager.expressionHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
-                    Name.CONTEXT_ITEM.toString(),
+                    this.variableName,
                     SparkSessionManager.expressionHashColumnName
                 )
             );
@@ -348,8 +348,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 String.format(
                     "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
                     SparkSessionManager.expressionHashColumnName,
-                    Name.CONTEXT_ITEM.toString(),
-                    Name.CONTEXT_ITEM.toString(),
+                    this.variableName,
+                    this.variableName,
                     SparkSessionManager.expressionHashColumnName
                 )
             );
@@ -381,7 +381,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 String.format(
                     "SELECT %s groupedAndSerializedResults.`%s` AS `%s` FROM inputTuples LEFT OUTER JOIN groupedAndSerializedResults ON `%s` = `%s`",
                     projectionVariables,
-                    Name.CONTEXT_ITEM.toString(),
+                    this.variableName,
                     this.variableName,
                     SparkSessionManager.expressionHashColumnName,
                     SparkSessionManager.inputTupleHashColumnName
