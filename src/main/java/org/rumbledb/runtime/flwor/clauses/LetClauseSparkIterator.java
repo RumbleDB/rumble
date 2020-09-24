@@ -41,6 +41,8 @@ import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -380,7 +382,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     "SELECT %s groupedAndSerializedResults.`%s` AS `%s` FROM inputTuples LEFT OUTER JOIN groupedAndSerializedResults ON `%s` = `%s`",
                     projectionVariables,
                     Name.CONTEXT_ITEM.toString(),
-                    this.variableName.toString(),
+                    this.variableName,
                     SparkSessionManager.expressionHashColumnName,
                     SparkSessionManager.inputTupleHashColumnName
                 )
@@ -388,7 +390,25 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF.show();
         inputDF.printSchema();
 
-        // TODO filter the sequence with the join criterion
+        RuntimeIterator filteringPredicateIterator = new PredicateIterator(
+                new VariableReferenceIterator(
+                        this.variableName,
+                        SequenceType.MOST_GENERAL_SEQUENCE_TYPE,
+                        ExecutionMode.LOCAL,
+                        getMetadata()
+                ),
+                predicateIterator,
+                ExecutionMode.LOCAL,
+                getMetadata()
+        );
+        inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+            inputDF,
+            this.variableName,
+            filteringPredicateIterator,
+            context,
+            parentProjection,
+            false
+        );
 
         return inputDF;
     }
