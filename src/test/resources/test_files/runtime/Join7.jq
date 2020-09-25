@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:5:COLUMN:29:" :)
+(:JIQS: ShouldCrash; ErrorCode="RBST0002"; ErrorMetadata="LINE:5:COLUMN:29:" :)
 let $stores := parallelize([  { "store number" : 1, "state" : "MA" } ])
 let $nations := parallelize([  { "name": "US", "state": "MA" }, { "name": "US", "state": "CA" } ])
 return

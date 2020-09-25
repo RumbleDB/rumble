@@ -22,7 +22,7 @@ or arrays are supplied where an atomic element is expected.
 It is a type error if there is not exactly one supplied parameter
 for an object or array selector.
 
-- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --result-size to increase the maximum  materialization size.
+- [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --materialization-cap to increase the maximum  materialization size, or add an output path to write to.
 
 - [RBML0001] - Unrecognized Rumble ML Class Reference
 An unrecognized classname is used in query while accessing the Rumble ML API.
