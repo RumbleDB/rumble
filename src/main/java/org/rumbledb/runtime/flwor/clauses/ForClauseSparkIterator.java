@@ -372,7 +372,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        return extracted(
+        return joinInputTupleWithSequenceOnPredicate(
             context,
             this.child.getDataFrame(context, getProjection(parentProjection)),
             parentProjection,
@@ -386,7 +386,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
     }
 
-    private static Dataset<Row> extracted(
+    private static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> inputTuples,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
