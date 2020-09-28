@@ -418,46 +418,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata metadata
     ) {
         // Is this a join that we can optimize as an actual Spark join?
-        boolean optimizableJoin = false;
         List<RuntimeIterator> expressionSideEqualityCriteria = new ArrayList<>();
         List<RuntimeIterator> inputTupleSideEqualityCriteria = new ArrayList<>();
-        Stack<RuntimeIterator> candidateIterators = new Stack<>();
-        candidateIterators.push(predicateIterator);
-        while (!candidateIterators.isEmpty()) {
-            RuntimeIterator iterator = candidateIterators.pop();
-            if (iterator instanceof AndOperationIterator) {
-                AndOperationIterator andIterator = ((AndOperationIterator) iterator);
-                candidateIterators.push(andIterator.getLeftIterator());
-                candidateIterators.push(andIterator.getRightIterator());
-            } else if (iterator instanceof ComparisonOperationIterator) {
-                ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) iterator;
-                if (comparisonIterator.isValueEquality()) {
-                    RuntimeIterator lhs = comparisonIterator.getLeftIterator();
-                    RuntimeIterator rhs = comparisonIterator.getRightIterator();
-
-                    Set<Name> leftDependencies = new HashSet<>(
-                            lhs.getVariableDependencies().keySet()
-                    );
-                    Set<Name> rightDependencies = new HashSet<>(
-                            rhs.getVariableDependencies().keySet()
-                    );
-                    if (leftDependencies.size() == 1 && leftDependencies.contains(Name.CONTEXT_ITEM)) {
-                        if (!rightDependencies.contains(Name.CONTEXT_ITEM)) {
-                            optimizableJoin = true;
-                            expressionSideEqualityCriteria.add(lhs);
-                            inputTupleSideEqualityCriteria.add(rhs);
-                        }
-                    }
-                    if (rightDependencies.size() == 1 && rightDependencies.contains(Name.CONTEXT_ITEM)) {
-                        if (!leftDependencies.contains(Name.CONTEXT_ITEM)) {
-                            optimizableJoin = true;
-                            expressionSideEqualityCriteria.add(rhs);
-                            inputTupleSideEqualityCriteria.add(lhs);
-                        }
-                    }
-                }
-            }
-        }
+        boolean optimizableJoin = extractEqualityComparisonsForHashing(
+            predicateIterator,
+            expressionSideEqualityCriteria,
+            inputTupleSideEqualityCriteria,
+            sequenceVariableName
+        );
 
         if (allowingEmpty) {
             optimizableJoin = false;
@@ -691,6 +659,53 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
         return resultDF;
+    }
+
+    private static boolean extractEqualityComparisonsForHashing(
+            RuntimeIterator predicateIterator,
+            List<RuntimeIterator> expressionSideEqualityCriteria,
+            List<RuntimeIterator> inputTupleSideEqualityCriteria,
+            Name expressionVariableName
+    ) {
+        boolean optimizableJoin = false;
+        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        candidateIterators.push(predicateIterator);
+        while (!candidateIterators.isEmpty()) {
+            RuntimeIterator iterator = candidateIterators.pop();
+            if (iterator instanceof AndOperationIterator) {
+                AndOperationIterator andIterator = ((AndOperationIterator) iterator);
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
+            } else if (iterator instanceof ComparisonOperationIterator) {
+                ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) iterator;
+                if (comparisonIterator.isValueEquality()) {
+                    RuntimeIterator lhs = comparisonIterator.getLeftIterator();
+                    RuntimeIterator rhs = comparisonIterator.getRightIterator();
+
+                    Set<Name> leftDependencies = new HashSet<>(
+                            lhs.getVariableDependencies().keySet()
+                    );
+                    Set<Name> rightDependencies = new HashSet<>(
+                            rhs.getVariableDependencies().keySet()
+                    );
+                    if (leftDependencies.size() == 1 && leftDependencies.contains(expressionVariableName)) {
+                        if (!rightDependencies.contains(expressionVariableName)) {
+                            optimizableJoin = true;
+                            expressionSideEqualityCriteria.add(lhs);
+                            inputTupleSideEqualityCriteria.add(rhs);
+                        }
+                    }
+                    if (rightDependencies.size() == 1 && rightDependencies.contains(expressionVariableName)) {
+                        if (!leftDependencies.contains(expressionVariableName)) {
+                            optimizableJoin = true;
+                            expressionSideEqualityCriteria.add(rhs);
+                            inputTupleSideEqualityCriteria.add(lhs);
+                        }
+                    }
+                }
+            }
+        }
+        return optimizableJoin;
     }
 
     /**
