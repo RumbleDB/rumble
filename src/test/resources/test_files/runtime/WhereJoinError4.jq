@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:6:COLUMN:2:" :)
+(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:7:COLUMN:0:" :)
 let $stores := parallelize(())
 let $states := parallelize(())
 return
