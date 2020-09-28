@@ -161,37 +161,39 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             this.child instanceof ForClauseSparkIterator
         ) {
             ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-            if (
-                (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
-                    &&
-                    forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
-            ) {
-
-                RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
-                Name forVariable = forChild.getVariableName();
-
+            if (forChild.getChildIterator() != null) {
                 if (
-                    LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
-                        && forChild.getPositionalVariableName() == null
-                        && !forChild.isAllowingEmpty()
+                    (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
+                        &&
+                        forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
                 ) {
-                    System.out.println(
-                        "[INFO] Rumble detected a join predicate in the where clause."
-                    );
 
-                    return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-                        context,
-                        forChild.getChildIterator()
-                            .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
-                        parentProjection,
-                        sequenceIterator,
-                        this.expression,
-                        false,
-                        forVariable,
-                        null,
-                        forVariable,
-                        getMetadata()
-                    );
+                    RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
+                    Name forVariable = forChild.getVariableName();
+
+                    if (
+                        LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
+                            && forChild.getPositionalVariableName() == null
+                            && !forChild.isAllowingEmpty()
+                    ) {
+                        System.out.println(
+                            "[INFO] Rumble detected a join predicate in the where clause."
+                        );
+
+                        return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                            context,
+                            forChild.getChildIterator()
+                                .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
+                            parentProjection,
+                            sequenceIterator,
+                            this.expression,
+                            false,
+                            forVariable,
+                            null,
+                            forVariable,
+                            getMetadata()
+                        );
+                    }
                 }
             }
         }
