@@ -488,7 +488,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         if (optimizableJoin) {
             System.out.println(
-                "INFO: Rumble detected that it can optimize your query and make it faster with an equi-join."
+                "[INFO] Rumble detected that it can optimize your query and make it faster with an equi-join."
             );
         }
 
@@ -599,11 +599,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             -1,
             predicateDependencies
         );
-        if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && !UDFcolumnsByType.containsKey("byte[]")) {
+        if (!UDFcolumnsByType.containsKey("byte[]")) {
             UDFcolumnsByType.put("byte[]", new ArrayList<>());
         }
-        if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_ITEM)) {
-            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_ITEM.getLocalName());
+        if (predicateDependencies.containsKey(sequenceVariableName)) {
+            UDFcolumnsByType.get("byte[]").add(sequenceVariableName.getLocalName());
         }
         if (
             sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)

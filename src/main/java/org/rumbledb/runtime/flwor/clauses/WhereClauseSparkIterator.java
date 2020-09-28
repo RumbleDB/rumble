@@ -151,50 +151,65 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (this.expression.isRDD()) {
-            if (!(this.child instanceof ForClauseSparkIterator)) {
-                throw new JobWithinAJobException(
-                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble can detect joins, however the where clause has to follow a for clause.",
-                        getMetadata()
-                );
-            }
-            ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-            RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
-            Name forVariable = forChild.getVariableName();
-
-            if (forChild.getPositionalVariableName() != null) {
-                throw new JobWithinAJobException(
-                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble can detect joins, however the for clause preceding the where clause may not have a positional variable.",
-                        getMetadata()
-                );
-            }
-
-            if (forChild.isAllowingEmpty()) {
-                throw new JobWithinAJobException(
-                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble can detect joins, however the for clause preceding the where clause may not contain an allowing empty declaration.",
-                        getMetadata()
-                );
-            }
-
-            // If the left hand side depends on the input tuple, we do not how to handle it.
-            if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
-                throw new JobWithinAJobException(
-                        "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
-                        getMetadata()
-                );
-            }
-
-            return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-                context,
-                this.child.getDataFrame(context, getProjection(parentProjection)),
-                parentProjection,
-                sequenceIterator,
-                this.expression,
-                false,
-                forVariable,
-                null,
-                forVariable,
-                getMetadata()
+            throw new JobWithinAJobException(
+                    "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
+                    getMetadata()
             );
+        }
+
+        if (
+            this.child instanceof ForClauseSparkIterator
+        ) {
+            ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
+            if (
+                (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
+                    &&
+                    forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+            ) {
+
+                RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
+                Name forVariable = forChild.getVariableName();
+
+                if (forChild.getPositionalVariableName() != null) {
+                    throw new JobWithinAJobException(
+                            "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble can detect joins, however the for clause preceding the where clause may not have a positional variable.",
+                            getMetadata()
+                    );
+                }
+
+                if (forChild.isAllowingEmpty()) {
+                    throw new JobWithinAJobException(
+                            "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. Rumble can detect joins, however the for clause preceding the where clause may not contain an allowing empty declaration.",
+                            getMetadata()
+                    );
+                }
+
+                // If the left hand side depends on the input tuple, we do not how to handle it.
+                if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
+                    throw new JobWithinAJobException(
+                            "A where clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
+                            getMetadata()
+                    );
+                }
+
+                System.out.println(
+                    "[INFO] Rumble detected a join predicate in the where clause."
+                );
+
+                return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                    context,
+                    forChild.getChildIterator()
+                        .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
+                    parentProjection,
+                    sequenceIterator,
+                    this.expression,
+                    false,
+                    forVariable,
+                    null,
+                    forVariable,
+                    getMetadata()
+                );
+            }
         }
 
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
