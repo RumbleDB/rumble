@@ -62,6 +62,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.child = child;
     }
 
+    public RuntimeTupleIterator getChildIterator() {
+        return this.child;
+    }
+
     public void open(DynamicContext context) {
         if (this.isOpen) {
             throw new IteratorFlowException(

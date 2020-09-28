@@ -100,6 +100,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.dataFrameContext = new DataFrameContext();
     }
 
+    public Name getVariableName() {
+        return this.variableName;
+    }
+
+    public Name getPositionalVariableName() {
+        return this.positionalVariableName;
+    }
+
+    public RuntimeIterator getAssignmentIterator() {
+        return this.assignmentIterator;
+    }
+
+    public boolean isAllowingEmpty() {
+        return this.allowingEmpty;
+    }
+
     @Override
     public void open(DynamicContext context) {
         super.open(context);
@@ -386,7 +402,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
     }
 
-    private static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
+    public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> inputTuples,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
@@ -447,7 +463,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(variableName));
         }
 
-        if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+        if (
+            sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
+        ) {
             optimizableJoin = false;
             expressionDF = getDataFrameStartingClause(
                 sequenceIterator,
@@ -587,7 +605,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_ITEM)) {
             UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_ITEM.getLocalName());
         }
-        if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
+        if (
+            sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
+        ) {
             UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_POSITION.getLocalName());
         }
         if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
