@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="RBST0003"; ErrorMetadata="LINE:7:COLUMN:0:" :)
+(:JIQS: ShouldRun; Output="({ "code" : "MI", "stores" : 2 }, { "code" : "CA", "stores" : 2 }, { "code" : "NY", "stores" : 1 }, { "code" : "MA", "stores" : 2 })" :)
 let $stores := parallelize(())
 let $states := parallelize(())
 return
