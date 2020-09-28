@@ -25,6 +25,7 @@ import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.NamedFunctions;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
@@ -33,6 +34,7 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
@@ -230,7 +232,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             ForClause forClause = (ForClause) clause;
             RuntimeIterator assignmentIterator = this.visit(forClause.getExpression(), argument);
             return new ForClauseSparkIterator(
-                    previousIterator,
+                    previousIterator.getChild(),
                     forClause.getVariableName(),
                     forClause.getPositionalVariableName(),
                     forClause.isAllowEmpty(),
@@ -303,9 +305,46 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     clause.getMetadata()
             );
         } else if (clause instanceof WhereClause) {
+            WhereClause whereClause = (WhereClause) clause;
+            Clause previousClause = whereClause.getPreviousClause();
+            if(previousClause instanceof ForClause)
+            {
+                if(previousClause.getHighestExecutionMode(this.visitorConfig).equals(ExecutionMode.DATAFRAME))
+                {
+                    ForClause previousForClause = (ForClause) previousClause;
+                    if(!previousForClause.isAllowEmpty())
+                    {
+                        if(previousForClause.getPositionalVariableName() == null)
+                        {
+                            ForClauseSparkIterator forClauseSparkIterator = (ForClauseSparkIterator) previousIterator;
+                            RuntimeIterator assignmentIterator = forClauseSparkIterator.getAssignmentIterator();
+                            ContextItemSetterVisitor visitor = new ContextItemSetterVisitor(previousForClause.getVariableName());
+                            Expression conditionExpression = ((WhereClause) clause).getWhereExpression().accept(visitor, null);
+                            RuntimeIterator conditionIterator = this.visit(conditionExpression, argument);
+                            RuntimeIterator newAssignmentIterator = new PredicateIterator(
+                                assignmentIterator,
+                                conditionIterator,
+                                ExecutionMode.LOCAL,
+                                assignmentIterator.getMetadata()
+                                    );
+                            newAssignmentIterator.setStaticContext(new StaticContext());
+                            return new ForClauseSparkIterator(
+                                    previousIterator,
+                                    previousForClause.getVariableName(),
+                                    null,
+                                    false,
+                                    newAssignmentIterator,
+                                    ExecutionMode.DATAFRAME,
+                                    clause.getMetadata()
+                            );
+                        }
+                    }
+                }
+            }
+            RuntimeIterator conditionIterator = this.visit(((WhereClause) clause).getWhereExpression(), argument);
             return new WhereClauseSparkIterator(
                     previousIterator,
-                    this.visit(((WhereClause) clause).getWhereExpression(), argument),
+                    conditionIterator,
                     clause.getHighestExecutionMode(this.visitorConfig),
                     clause.getMetadata()
             );

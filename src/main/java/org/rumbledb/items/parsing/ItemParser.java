@@ -41,6 +41,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
@@ -104,10 +105,12 @@ public class ItemParser implements Serializable {
             }
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
-            throw new ParsingException(
+            RumbleException ex = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
+            ex.initCause(e);
+            throw ex;
         }
     }
 

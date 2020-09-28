@@ -99,6 +99,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.dependencies = this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
     }
+    
+    public RuntimeIterator getAssignmentIterator() {
+        return this.assignmentIterator;
+    }
 
     @Override
     public void open(DynamicContext context) {

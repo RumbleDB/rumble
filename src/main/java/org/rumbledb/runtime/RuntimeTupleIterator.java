@@ -61,6 +61,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.highestExecutionMode = executionMode;
         this.child = child;
     }
+    
+    public RuntimeTupleIterator getChild() {
+        return this.child;
+    }
 
     public void open(DynamicContext context) {
         if (this.isOpen) {
