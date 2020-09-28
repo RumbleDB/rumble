@@ -498,7 +498,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        
+
         if (optimizableJoin) {
             expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 expressionDF,
