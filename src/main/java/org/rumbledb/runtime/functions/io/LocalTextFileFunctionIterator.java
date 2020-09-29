@@ -44,7 +44,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    
+
     private transient InputStream is;
     private transient Iterator<String> stream;
 
@@ -61,9 +61,11 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         super.open(context);
         this.iterator = this.children.get(0);
         Item path = this.iterator.materializeFirstItemOrNull(context);
-        if(path == null)
-        {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
+        if (path == null) {
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
+                    getMetadata()
+            );
         }
         URI uri = FileSystemUtil.resolveURI(
             this.staticURI,
@@ -94,9 +96,11 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         }
         this.iterator = this.children.get(0);
         Item path = this.iterator.materializeFirstItemOrNull(context);
-        if(path == null)
-        {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
+        if (path == null) {
+            throw new IteratorFlowException(
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
+                    getMetadata()
+            );
         }
         URI uri = FileSystemUtil.resolveURI(
             this.staticURI,
@@ -135,7 +139,10 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = this.stream.hasNext();
             return ItemFactory.getInstance().createStringItem(line);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
+        throw new IteratorFlowException(
+                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function",
+                getMetadata()
+        );
     }
 
 
