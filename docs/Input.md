@@ -111,7 +111,7 @@ There is also a function text-file-local() that reads locally, without paralleli
 
 ```
 count(
-  for $my-string in text-file-local("file:///home/me/file.txt")
+  for $my-string in local-text-file("file:///home/me/file.txt")
   for $token in tokenize($my-string, ";")
   where $token eq "some value"
   return $token

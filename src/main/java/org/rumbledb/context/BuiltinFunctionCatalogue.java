@@ -62,7 +62,7 @@ import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
-import org.rumbledb.runtime.functions.io.TextFileLocalFunctionIterator;
+import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
@@ -332,10 +332,10 @@ public class BuiltinFunctionCatalogue {
      * function that parses a text file locally
      */
     static final BuiltinFunction text_file_local = createBuiltinFunction(
-        "text-file-local",
+        "local-text-file",
         "string",
         "item*",
-        TextFileLocalFunctionIterator.class,
+        LocalTextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
