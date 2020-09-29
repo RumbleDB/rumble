@@ -63,7 +63,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         Item path = this.iterator.materializeFirstItemOrNull(context);
         if(path == null)
         {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " text-file-local function", getMetadata());
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
         }
         URI uri = FileSystemUtil.resolveURI(
             this.staticURI,
@@ -96,7 +96,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         Item path = this.iterator.materializeFirstItemOrNull(context);
         if(path == null)
         {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " text-file-local function", getMetadata());
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
         }
         URI uri = FileSystemUtil.resolveURI(
             this.staticURI,
@@ -135,7 +135,7 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = this.stream.hasNext();
             return ItemFactory.getInstance().createStringItem(line);
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " text-file-local function", getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " local-text-file function", getMetadata());
     }
 
 
