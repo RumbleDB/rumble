@@ -334,7 +334,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction local_text_file = createBuiltinFunction(
         "local-text-file",
         "string",
-        "item*",
+        "string*",
         LocalTextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
