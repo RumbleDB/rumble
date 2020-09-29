@@ -106,6 +106,18 @@ Several files or whole directories can be read with the same pattern syntax as i
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
+There is also a function text-file-local() that reads locally, without parallelism. Rumble can stream through the file efficiently.
+
+
+```
+count(
+  for $my-string in text-file-local("file:///home/me/file.txt")
+  for $token in tokenize($my-string, ";")
+  where $token eq "some value"
+  return $token
+)
+```
+
 ### Parquet
 
 Parquet files can be opened with the function parquet-file().
