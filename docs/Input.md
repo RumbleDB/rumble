@@ -106,7 +106,7 @@ Several files or whole directories can be read with the same pattern syntax as i
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
-There is also a function text-file-local() that reads locally, without parallelism. Rumble can stream through the file efficiently.
+There is also a function local-text-file() that reads locally, without parallelism. Rumble can stream through the file efficiently.
 
 
 ```
