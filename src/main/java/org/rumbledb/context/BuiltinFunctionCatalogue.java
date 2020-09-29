@@ -331,7 +331,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that parses a text file locally
      */
-    static final BuiltinFunction text_file_local = createBuiltinFunction(
+    static final BuiltinFunction local_text_file = createBuiltinFunction(
         "local-text-file",
         "string",
         "item*",
@@ -1820,7 +1820,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
         builtinFunctions.put(text_file1.getIdentifier(), text_file1);
         builtinFunctions.put(text_file2.getIdentifier(), text_file2);
-        builtinFunctions.put(text_file_local.getIdentifier(), text_file_local);
+        builtinFunctions.put(local_text_file.getIdentifier(), local_text_file);
         builtinFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtinFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtinFunctions.put(parquet_file.getIdentifier(), parquet_file);
