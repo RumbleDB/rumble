@@ -128,7 +128,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public void setOutputFormatOption(String key, String value) {
-        this.outputFormatOptions.put(key,  value);
+        this.outputFormatOptions.put(key, value);
     }
 
     public void init() {

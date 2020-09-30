@@ -107,14 +107,13 @@ public class JsoniqQueryExecutor {
             Dataset<Row> df = sequence.getAsDataFrame();
             DataFrameWriter<Row> writer = df.write();
             Map<String, String> options = this.configuration.getOutputFormatOptions();
-            for(String key : options.keySet())
-            {
-                writer.option(key,  options.get(key));
+            for (String key : options.keySet()) {
+                writer.option(key, options.get(key));
                 System.out.println("[INFO] Writing with option " + key + " : " + options.get(key));
             }
             String format = this.configuration.getOutputFormat();
             System.out.println("[INFO] Writing to format " + format);
-            switch(format) {
+            switch (format) {
                 case "json":
                     writer.json(outputPath);
                     break;
