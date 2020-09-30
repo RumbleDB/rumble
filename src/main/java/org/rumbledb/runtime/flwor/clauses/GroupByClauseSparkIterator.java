@@ -362,13 +362,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
-        for (Name n : variableAccessNames) {
-            System.out.println("VAN: " + n.toString());
-        }
-        for (Name n : parentProjection.keySet()) {
-            System.out.println("Proj: " + n.toString());
-        }
-
         String projectSQL = FlworDataFrameUtils.getGroupbyProjectSQL(
             inputSchema,
             -1,
