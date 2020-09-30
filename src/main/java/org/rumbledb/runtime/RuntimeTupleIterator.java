@@ -149,7 +149,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
      * Invariant: all keys in getProjection(...) MUST be input tuple variables,
-     * i.e., appear in this.child.getVariablesBoundInCurrentFLWORExpression()
+     * i.e., appear in this.child.getOutputTupleVariableNames()
      *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
@@ -181,7 +181,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     /**
-     * Returns the variables bound up to the current FLWOR.
+     * Returns the output tuple variable names.
      * These variables can be removed from the dependencies of expressions in ascendent (subsequent) clauses,
      * because their values are provided in the tuples rather than the dynamic context object.
      *
