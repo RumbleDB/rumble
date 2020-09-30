@@ -26,6 +26,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -42,8 +43,10 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.TreeMap;
 
 public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
@@ -96,8 +99,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-
-        Dataset<Row> df = this.child.getDataFrame(context, expression.getVariableDependencies());
+        Map<Name, VariableDependency> dependencies = expression.getVariableDependencies();
+        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
+        Map<Name, VariableDependency> projection = new HashMap<>();
+        for (Name n : dependencies.keySet()) {
+            if (allTupleNames.contains(n)) {
+                projection.put(n, dependencies.get(n));
+            }
+        }
+        Dataset<Row> df = this.child.getDataFrame(context, projection);
         StructType oldSchema = df.schema();
         Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
             oldSchema,
@@ -227,7 +237,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.expression.getVariableDependencies());
-        for (Name variable : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
         result.putAll(this.child.getVariableDependencies());

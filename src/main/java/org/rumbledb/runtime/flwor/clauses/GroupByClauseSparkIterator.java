@@ -362,6 +362,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
+        for (Name n : variableAccessNames) {
+            System.out.println("VAN: " + n.toString());
+        }
+        for (Name n : parentProjection.keySet()) {
+            System.out.println("Proj: " + n.toString());
+        }
+
         String projectSQL = FlworDataFrameUtils.getGroupbyProjectSQL(
             inputSchema,
             -1,
@@ -392,19 +399,19 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 result.put(iterator.getVariableName(), DynamicContext.VariableDependency.FULL);
             }
         }
-        for (Name var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
         result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
-    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+    public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             result.add(iterator.getVariableName());
         }
-        result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(this.child.getOutputTupleVariableNames());
         return result;
     }
 
@@ -436,7 +443,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() == null) {
                 Name variable = iterator.getVariableName();
-                projection.put(variable, DynamicContext.VariableDependency.FULL);
+                if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                    projection.put(variable, DynamicContext.VariableDependency.FULL);
+                }
                 continue;
             }
             Map<Name, DynamicContext.VariableDependency> exprDependency = iterator.getExpression()
@@ -444,10 +453,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
-                        projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                            projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        }
                     }
                 } else {
-                    projection.put(variable, exprDependency.get(variable));
+                    if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                        projection.put(variable, exprDependency.get(variable));
+                    }
                 }
             }
         }

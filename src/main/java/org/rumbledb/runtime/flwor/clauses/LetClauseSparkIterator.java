@@ -425,7 +425,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         Set<Name> intersection = new HashSet<>(
                 sequenceIterator.getVariableDependencies().keySet()
         );
-        intersection.retainAll(tupleIterator.getVariablesBoundInCurrentFLWORExpression());
+        intersection.retainAll(tupleIterator.getOutputTupleVariableNames());
         return intersection.isEmpty();
     }
 
@@ -433,7 +433,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null) {
-            for (Name var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+            for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
             }
             result.putAll(this.child.getVariableDependencies());
@@ -441,10 +441,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+    public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
         if (this.child != null) {
-            result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
+            result.addAll(this.child.getOutputTupleVariableNames());
         }
         result.add(this.variableName);
         return result;
@@ -481,10 +481,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
-                    projection.put(variable, DynamicContext.VariableDependency.FULL);
+                    if (
+                        this.child != null && this.child.getOutputTupleVariableNames().contains(variable)
+                    ) {
+                        projection.put(variable, DynamicContext.VariableDependency.FULL);
+                    }
                 }
             } else {
-                projection.put(variable, exprDependency.get(variable));
+                if (this.child != null && this.child.getOutputTupleVariableNames().contains(variable)) {
+                    projection.put(variable, exprDependency.get(variable));
+                }
             }
         }
         return projection;

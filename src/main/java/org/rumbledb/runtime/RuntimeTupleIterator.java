@@ -148,6 +148,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
+     * Invariant: all keys in getProjection(...) MUST be input tuple variables,
+     * i.e., appear in this.child.getVariablesBoundInCurrentFLWORExpression()
      *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
@@ -179,13 +181,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     /**
-     * Returns the variables bound in descendant (previous) clauses of the current FLWOR.
+     * Returns the variables bound up to the current FLWOR.
      * These variables can be removed from the dependencies of expressions in ascendent (subsequent) clauses,
      * because their values are provided in the tuples rather than the dynamic context object.
      *
      * @return the set of variable names that are bound by descendant clauses.
      */
-    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+    public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<Name>();
     }
 
@@ -204,7 +206,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         buffer.append(" | ");
 
         buffer.append("Variables bound in current FLWOR: ");
-        for (Name v : getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name v : getOutputTupleVariableNames()) {
             buffer.append(v + " ");
         }
         buffer.append("\n");
