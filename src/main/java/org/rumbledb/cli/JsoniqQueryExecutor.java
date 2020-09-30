@@ -103,6 +103,15 @@ public class JsoniqQueryExecutor {
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(queryUri);
 
+        if (
+            !this.configuration.getOutputFormat().equals("json")
+                &&
+                !sequence.availableAsDataFrame()
+        ) {
+            throw new CliException(
+                    "Rumble cannot output another format than JSON if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+            );
+        }
         if (sequence.availableAsDataFrame() && outputPath != null) {
             Dataset<Row> df = sequence.getAsDataFrame();
             DataFrameWriter<Row> writer = df.write();

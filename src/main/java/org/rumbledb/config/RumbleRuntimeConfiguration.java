@@ -138,7 +138,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.allowedPrefixes = Arrays.asList();
         }
         if (this.arguments.containsKey("output-format")) {
-            this.outputFormat = this.arguments.get("output-format");
+            this.outputFormat = this.arguments.get("output-format").toLowerCase();
         } else {
             this.outputFormat = "json";
         }
