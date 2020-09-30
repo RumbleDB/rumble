@@ -48,6 +48,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int resultsSizeCap;
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
+    private int numberOfOutputPartitions;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -123,6 +124,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.outputFormat = newValue;
     }
 
+    public int getNumberOfOutputPartitions() {
+        return this.numberOfOutputPartitions;
+    }
+
+    public void setNumberOfOutputPartitions(int newValue) {
+        this.numberOfOutputPartitions = newValue;
+    }
+
     public Map<String, String> getOutputFormatOptions() {
         return this.outputFormatOptions;
     }
@@ -141,6 +150,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.outputFormat = this.arguments.get("output-format").toLowerCase();
         } else {
             this.outputFormat = "json";
+        }
+        if (this.arguments.containsKey("number-of-output-partitions")) {
+            this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
+        } else {
+            this.numberOfOutputPartitions = -1;
         }
         this.outputFormatOptions = new HashMap<>();
         for (String s : this.arguments.keySet()) {

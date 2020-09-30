@@ -114,6 +114,9 @@ public class JsoniqQueryExecutor {
         }
         if (sequence.availableAsDataFrame() && outputPath != null) {
             Dataset<Row> df = sequence.getAsDataFrame();
+            if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                df = df.repartition(this.configuration.getNumberOfOutputPartitions());
+            }
             DataFrameWriter<Row> writer = df.write();
             Map<String, String> options = this.configuration.getOutputFormatOptions();
             for (String key : options.keySet()) {
@@ -138,6 +141,10 @@ public class JsoniqQueryExecutor {
         } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
+            if (this.configuration.getNumberOfOutputPartitions() > 0) {
+                outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
+            }
+
             outputRDD.saveAsTextFile(outputPath);
         } else {
             outputList = new ArrayList<>();
