@@ -510,6 +510,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = null;
         if (BuiltinFunctionCatalogue.exists(identifier)) {
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
+                expression,
                 identifier,
                 arguments,
                 expression.getHighestExecutionMode(this.visitorConfig),

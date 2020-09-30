@@ -26,6 +26,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
@@ -132,6 +133,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     }
 
     public static RuntimeIterator getBuiltInFunctionIterator(
+            FunctionCallExpression expression,
             FunctionIdentifier identifier,
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
@@ -176,6 +178,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            functionCallIterator.setStaticContext(expression.getStaticContext());
             return new TypePromotionIterator(
                     functionCallIterator,
                     builtinFunction.getSignature().getReturnType(),
