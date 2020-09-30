@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -49,6 +50,7 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
+import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -60,6 +62,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.TreeMap;
 
 public class ForClauseSparkIterator extends RuntimeTupleIterator {
@@ -415,40 +418,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             ExceptionMetadata metadata
     ) {
         // Is this a join that we can optimize as an actual Spark join?
-        boolean optimizableJoin = false;
-        boolean contextItemToTheLeft = false;
-        RuntimeIterator leftHandSideOfJoinEqualityCriterion = null;
-        RuntimeIterator rightHandSideOfJoinEqualityCriterion = null;
-        RuntimeIterator iterator = predicateIterator;
-        while (iterator instanceof AndOperationIterator) {
-            iterator = ((AndOperationIterator) iterator).getLeftIterator();
-        }
-        if (iterator instanceof ComparisonOperationIterator) {
-            ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) iterator;
-            if (comparisonIterator.isValueEquality()) {
-                leftHandSideOfJoinEqualityCriterion = comparisonIterator.getLeftIterator();
-                rightHandSideOfJoinEqualityCriterion = comparisonIterator.getRightIterator();
-
-                Set<Name> leftDependencies = new HashSet<>(
-                        leftHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
-                );
-                Set<Name> rightDependencies = new HashSet<>(
-                        rightHandSideOfJoinEqualityCriterion.getVariableDependencies().keySet()
-                );
-                if (leftDependencies.size() == 1 && leftDependencies.contains(sequenceVariableName)) {
-                    if (!rightDependencies.contains(sequenceVariableName)) {
-                        optimizableJoin = true;
-                        contextItemToTheLeft = true;
-                    }
-                }
-                if (rightDependencies.size() == 1 && rightDependencies.contains(sequenceVariableName)) {
-                    if (!leftDependencies.contains(sequenceVariableName)) {
-                        optimizableJoin = true;
-                        contextItemToTheLeft = false;
-                    }
-                }
-            }
-        }
+        List<RuntimeIterator> expressionSideEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> inputTupleSideEqualityCriteria = new ArrayList<>();
+        boolean optimizableJoin = extractEqualityComparisonsForHashing(
+            predicateIterator,
+            expressionSideEqualityCriteria,
+            inputTupleSideEqualityCriteria,
+            sequenceVariableName
+        );
 
         if (allowingEmpty) {
             optimizableJoin = false;
@@ -492,28 +469,46 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
+        RuntimeIterator expressionSideEqualityCriterion;
+        RuntimeIterator inputTupleSideEqualityCriterion;
+
+        if (expressionSideEqualityCriteria.size() == 1) {
+            expressionSideEqualityCriterion = expressionSideEqualityCriteria.get(0);
+        } else {
+            expressionSideEqualityCriterion = new ArrayRuntimeIterator(
+                    new CommaExpressionIterator(
+                            expressionSideEqualityCriteria,
+                            ExecutionMode.LOCAL,
+                            metadata
+                    ),
+                    ExecutionMode.LOCAL,
+                    metadata
+            );
+        }
+        if (inputTupleSideEqualityCriteria.size() == 1) {
+            inputTupleSideEqualityCriterion = inputTupleSideEqualityCriteria.get(0);
+        } else {
+            inputTupleSideEqualityCriterion = new ArrayRuntimeIterator(
+                    new CommaExpressionIterator(
+                            inputTupleSideEqualityCriteria,
+                            ExecutionMode.LOCAL,
+                            metadata
+                    ),
+                    ExecutionMode.LOCAL,
+                    metadata
+            );
+        }
+
         if (optimizableJoin) {
-            // expressionDF.show();
-            if (contextItemToTheLeft) {
-                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    expressionDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                    leftHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-            } else {
-                expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    expressionDF,
-                    Name.createVariableInNoNamespace(SparkSessionManager.leftHashColumnName),
-                    rightHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-            }
-            // expressionDF.show();
+            expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                expressionDF,
+                Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+                expressionSideEqualityCriterion,
+                context,
+                null,
+                true
+            );
+
         }
 
         String inputDFTableName = "inputTuples";
@@ -540,27 +535,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (optimizableJoin) {
-            // inputDF.show();
-            if (contextItemToTheLeft) {
-                inputTuples = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    inputTuples,
-                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                    rightHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-            } else {
-                inputTuples = LetClauseSparkIterator.bindLetVariableInDataFrame(
-                    inputTuples,
-                    Name.createVariableInNoNamespace(SparkSessionManager.rightHashColumnName),
-                    leftHandSideOfJoinEqualityCriterion,
-                    context,
-                    null,
-                    true
-                );
-            }
-            // inputDF.show();
+            inputTuples = LetClauseSparkIterator.bindLetVariableInDataFrame(
+                inputTuples,
+                Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+                inputTupleSideEqualityCriterion,
+                context,
+                null,
+                true
+            );
         }
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
@@ -655,8 +637,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         variableName,
                         inputDFTableName,
                         expressionDFTableName,
-                        SparkSessionManager.leftHashColumnName,
-                        SparkSessionManager.rightHashColumnName,
+                        SparkSessionManager.expressionHashColumnName,
+                        SparkSessionManager.inputTupleHashColumnName,
                         UDFParameters
                     )
                 );
@@ -677,6 +659,53 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
         return resultDF;
+    }
+
+    private static boolean extractEqualityComparisonsForHashing(
+            RuntimeIterator predicateIterator,
+            List<RuntimeIterator> expressionSideEqualityCriteria,
+            List<RuntimeIterator> inputTupleSideEqualityCriteria,
+            Name expressionVariableName
+    ) {
+        boolean optimizableJoin = false;
+        Stack<RuntimeIterator> candidateIterators = new Stack<>();
+        candidateIterators.push(predicateIterator);
+        while (!candidateIterators.isEmpty()) {
+            RuntimeIterator iterator = candidateIterators.pop();
+            if (iterator instanceof AndOperationIterator) {
+                AndOperationIterator andIterator = ((AndOperationIterator) iterator);
+                candidateIterators.push(andIterator.getLeftIterator());
+                candidateIterators.push(andIterator.getRightIterator());
+            } else if (iterator instanceof ComparisonOperationIterator) {
+                ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) iterator;
+                if (comparisonIterator.isValueEquality()) {
+                    RuntimeIterator lhs = comparisonIterator.getLeftIterator();
+                    RuntimeIterator rhs = comparisonIterator.getRightIterator();
+
+                    Set<Name> leftDependencies = new HashSet<>(
+                            lhs.getVariableDependencies().keySet()
+                    );
+                    Set<Name> rightDependencies = new HashSet<>(
+                            rhs.getVariableDependencies().keySet()
+                    );
+                    if (leftDependencies.size() == 1 && leftDependencies.contains(expressionVariableName)) {
+                        if (!rightDependencies.contains(expressionVariableName)) {
+                            optimizableJoin = true;
+                            expressionSideEqualityCriteria.add(lhs);
+                            inputTupleSideEqualityCriteria.add(rhs);
+                        }
+                    }
+                    if (rightDependencies.size() == 1 && rightDependencies.contains(expressionVariableName)) {
+                        if (!leftDependencies.contains(expressionVariableName)) {
+                            optimizableJoin = true;
+                            expressionSideEqualityCriteria.add(rhs);
+                            inputTupleSideEqualityCriteria.add(lhs);
+                        }
+                    }
+                }
+            }
+        }
+        return optimizableJoin;
     }
 
     /**
