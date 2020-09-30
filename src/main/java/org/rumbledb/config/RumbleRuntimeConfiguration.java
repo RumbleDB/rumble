@@ -144,8 +144,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         this.outputFormatOptions = new HashMap<>();
         for (String s : this.arguments.keySet()) {
-            if (s.startsWith("format-option:")) {
-                String key = s.substring(14);
+            if (s.startsWith("output-format-option:")) {
+                String key = s.substring(21);
                 String value = this.arguments.get(s);
                 this.outputFormatOptions.put(key, value);
             }
