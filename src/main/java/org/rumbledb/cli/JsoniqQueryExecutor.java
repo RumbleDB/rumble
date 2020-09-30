@@ -21,6 +21,9 @@
 package org.rumbledb.cli;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.DataFrameWriter;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
@@ -36,6 +39,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 
@@ -99,7 +103,31 @@ public class JsoniqQueryExecutor {
         Rumble rumble = new Rumble(this.configuration);
         SequenceOfItems sequence = rumble.runQuery(queryUri);
 
-        if (sequence.availableAsRDD() && outputPath != null) {
+        if (sequence.availableAsDataFrame() && outputPath != null) {
+            Dataset<Row> df = sequence.getAsDataFrame();
+            DataFrameWriter<Row> writer = df.write();
+            Map<String, String> options = this.configuration.getOutputFormatOptions();
+            for(String key : options.keySet())
+            {
+                writer.option(key,  options.get(key));
+                System.out.println("[INFO] Writing with option " + key + " : " + options.get(key));
+            }
+            String format = this.configuration.getOutputFormat();
+            System.out.println("[INFO] Writing to format " + format);
+            switch(format) {
+                case "json":
+                    writer.json(outputPath);
+                    break;
+                case "csv":
+                    writer.csv(outputPath);
+                    break;
+                case "parquet":
+                    writer.parquet(outputPath);
+                    break;
+                default:
+                    writer.format(format).save(outputPath);
+            }
+        } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
             JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
             outputRDD.saveAsTextFile(outputPath);

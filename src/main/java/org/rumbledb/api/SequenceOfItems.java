@@ -3,6 +3,8 @@ package org.rumbledb.api;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -99,6 +101,15 @@ public class SequenceOfItems {
     }
 
     /**
+     * Checks whether the iterator is available as a data frame for further processing without having to collect.
+     *
+     * @return true if it is available as a data frame.
+     */
+    public boolean availableAsDataFrame() {
+        return this.iterator.isDataFrame();
+    }
+
+    /**
      * Returns the sequence of items as an RDD of Items rather than iterating over them locally.
      * It is not possible to do so if the iterator is open.
      *
@@ -109,6 +120,19 @@ public class SequenceOfItems {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
         return this.iterator.getRDD(this.dynamicContext);
+    }
+
+    /**
+     * Returns the sequence of items as a data frame rather than iterating over them locally.
+     * It is not possible to do so if the iterator is open.
+     *
+     * @return a data frame.
+     */
+    public Dataset<Row> getAsDataFrame() {
+        if (this.isOpen) {
+            throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
+        }
+        return this.iterator.getDataFrame(this.dynamicContext);
     }
 
     public long populateList(List<Item> resultList) {
