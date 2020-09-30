@@ -12,6 +12,7 @@ The parameters that can be used on the command line as well as on the planned HT
 | --output-format-option:foo  |  N/A | bar | Options to further specify the output format (example: separator character for CSV, compression format...) |
 | --overwrite  |  overwrite | yes, no | Whether to overwrite to --output-path. No throws an error if the output file/folder exists. |
 | --materialization-cap |  materialization-cap | 200 | A cap on the maximum number of items to materialize for large sequences within a query or for outputting on screen (used to be called --result-size). |
+| --number-of-output-partitions | N/A | ad hoc | How many partitions to create in the output, i.e., the number of files that will be created in the output path directory.
 | --log-path  |  log-path | file:///folder/log.txt  |  Where to output log information |
 | --print-iterator-tree | N/A | yes, no | For debugging purposes, prints out the expression tree and runtime interator tree. |
 | --show-error-info | show-error-info | yes, no | For debugging purposes. If you want to report a bug, you can use this to get the full exception stack. If no, then only a short message is shown in case of error. |
