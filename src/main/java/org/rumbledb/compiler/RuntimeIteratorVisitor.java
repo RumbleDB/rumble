@@ -279,10 +279,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
                 if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
                     if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
-                        System.out.println("Setting to least.");
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
                     } else {
-                        System.out.println("Setting to greatest.");
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
                     }
                 }
