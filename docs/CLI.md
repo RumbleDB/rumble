@@ -8,7 +8,7 @@ The parameters that can be used on the command line as well as on the planned HT
 | --shell  | N/A  |  yes, no |  yes runs the interactive shell. No executes a query specified with --query-path |
 | --query-path  | query-path  | file:///folder/file.jq  | A JSONiq query file to read from (from any file system, even the Web!).  |
 | --output-path  |  output-path | file:///folder/output  | Where to output to (if the output is large, it will create a sharded directory, otherwise it will create a file) |
-| --output-format  |  N/A | json, csv, avro, parquet | An output format to use for the output. Formats other than json can only be output if the query outputs a highly structured sequence of objects (you can nest your query in an annotate() call to specify a schema if it does not). |
+| --output-format  |  N/A | json, csv, avro, parquet, or any other format supported by Spark | An output format to use for the output. Formats other than json can only be output if the query outputs a highly structured sequence of objects (you can nest your query in an annotate() call to specify a schema if it does not). |
 | --output-format-option:foo  |  N/A | bar | Options to further specify the output format (example: separator character for CSV, compression format...) |
 | --overwrite  |  overwrite | yes, no | Whether to overwrite to --output-path. No throws an error if the output file/folder exists. |
 | --materialization-cap |  materialization-cap | 200 | A cap on the maximum number of items to materialize for large sequences within a query or for outputting on screen (used to be called --result-size). |
