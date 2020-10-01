@@ -284,8 +284,8 @@
 		</dependency>
         <dependency>
             <groupId>org.mongodb.spark</groupId>
-            <artifactId>mongo-spark-connector_2.12</artifactId>
-            <version>3.0.0</version>
+            <artifactId>mongo-spark-connector_2.11</artifactId>
+            <version>2.4.2</version>
         </dependency>
     </dependencies>
 
