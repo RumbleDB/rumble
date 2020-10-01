@@ -436,15 +436,15 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
         }
-        for (Name var : this.child.getVariablesBoundInCurrentFLWORExpression()) {
+        for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
         result.putAll(this.child.getVariableDependencies());
         return result;
     }
 
-    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
-        return new HashSet<>(this.child.getVariablesBoundInCurrentFLWORExpression());
+    public Set<Name> getOutputTupleVariableNames() {
+        return new HashSet<>(this.child.getOutputTupleVariableNames());
     }
 
     public void print(StringBuffer buffer, int indent) {
@@ -468,10 +468,14 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (Name variable : exprDependency.keySet()) {
                 if (projection.containsKey(variable)) {
                     if (projection.get(variable) != exprDependency.get(variable)) {
-                        projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                            projection.put(variable, DynamicContext.VariableDependency.FULL);
+                        }
                     }
                 } else {
-                    projection.put(variable, exprDependency.get(variable));
+                    if (this.child.getOutputTupleVariableNames().contains(variable)) {
+                        projection.put(variable, exprDependency.get(variable));
+                    }
                 }
             }
         }
