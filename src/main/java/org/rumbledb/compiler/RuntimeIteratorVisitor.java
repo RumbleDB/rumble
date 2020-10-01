@@ -510,6 +510,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
+                // Note: passing the static context of the function call expression makes
+                // all builtin functions static-context-dependent.
+                // This might be worth a more fine-grained adjustment later.
+                expression.getStaticContext(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
             );
