@@ -78,6 +78,10 @@ public class SparkSessionManager {
     }
 
     public SparkSession getOrCreateSession() {
+        if(this.configuration == null)
+        {
+            initializeConfigurationAndSession();
+        }
         if (this.session == null) {
             if (this.configuration == null) {
                 setDefaultConfiguration();
@@ -88,9 +92,17 @@ public class SparkSessionManager {
     }
 
     private void setDefaultConfiguration() {
-        this.configuration = new SparkConf()
-            .setAppName(APP_NAME)
-            .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        try {
+            this.configuration = new SparkConf()
+                .setAppName(APP_NAME)
+                .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            if(!this.configuration.contains("spark.master"))
+            {
+                this.configuration.set("spark.master", "local[*]");
+            }
+        } catch (NoClassDefFoundError e) {
+            this.configuration = null;
+        }
     }
 
     private void initialize() {
@@ -130,9 +142,12 @@ public class SparkSessionManager {
     }
 
 
-    public void initializeConfigurationAndSession() {
+    private void initializeConfigurationAndSession() {
         setDefaultConfiguration();
-        initialize();
+        if(this.configuration != null)
+        {
+            initialize();
+        }
     }
 
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
@@ -145,6 +160,10 @@ public class SparkSessionManager {
     }
 
     public JavaSparkContext getJavaSparkContext() {
+        if(this.configuration == null)
+        {
+            initializeConfigurationAndSession();
+        }
         if (this.javaSparkContext == null) {
             this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }
