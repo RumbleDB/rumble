@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.server.RumbleServer;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.shell.RumbleJLineShell;
-import sparksoniq.spark.SparkSessionManager;
 
 import java.io.IOException;
 
