@@ -243,7 +243,7 @@ public class DataFrameContext implements Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    public List<Item> deserializeRowField(Row row, int columnIndex) {
+    private List<Item> deserializeRowField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:
@@ -273,8 +273,7 @@ public class DataFrameContext implements Serializable {
                 return items;
             }
         }
-        List<Item> items = new ArrayList<>();
-        items.add(ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA));
-        return items;
+        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA);
+        return Collections.singletonList(item);
     }
 }
