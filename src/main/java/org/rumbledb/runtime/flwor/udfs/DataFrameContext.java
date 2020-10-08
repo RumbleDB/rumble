@@ -25,10 +25,15 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import scala.collection.mutable.WrappedArray;
 
@@ -240,17 +245,36 @@ public class DataFrameContext implements Serializable {
     @SuppressWarnings("unchecked")
     public List<Item> deserializeRowField(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
+        DataType dt = row.schema().fields()[columnIndex].dataType();
+        // There are three special cases:
+        // - NULL: this is an empty sequence
+        // - A binary value: this is a serialized sequence
+        // - An array of binary values: this is a sequence of serialized items
+        // Otherwise we fall back to a sequence of just one item with the regular item parser
         if (o == null) {
             return Collections.emptyList();
         }
-        if (o instanceof Long) {
-            List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
-            return result;
-        } else {
+        if (o instanceof byte[]) {
             byte[] bytes = (byte[]) o;
             this.input.setBuffer(bytes);
             return (List<Item>) this.kryo.readClassAndObject(this.input);
         }
+        if (dt instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dt;
+            if (arrayType.elementType().equals(DataTypes.BinaryType)) {
+                List<Object> objects = row.getList(columnIndex);
+                List<Item> items = new ArrayList<>();
+                for (Object object : objects) {
+                    byte[] bytes = (byte[]) object;
+                    this.input.setBuffer(bytes);
+                    Item item = (Item) this.kryo.readClassAndObject(this.input);
+                    items.add(item);
+                }
+                return items;
+            }
+        }
+        List<Item> items = new ArrayList<>();
+        items.add(ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA));
+        return items;
     }
 }
