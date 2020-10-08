@@ -244,6 +244,7 @@ public class DataFrameContext implements Serializable {
 
     @SuppressWarnings("unchecked")
     private List<Item> deserializeRowField(Row row, int columnIndex) {
+        System.out.println("Deserializing");
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:

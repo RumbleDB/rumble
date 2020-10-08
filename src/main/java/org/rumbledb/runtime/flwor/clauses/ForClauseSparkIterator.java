@@ -940,9 +940,29 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        // create initial RDD from expression
-        JavaRDD<Item> expressionRDD = iterator.getRDD(context);
-        Dataset<Row> df = getDataFrameFromItemRDD(variableName, expressionRDD);
+        Dataset<Row> df = null;;
+        if (false)// iterator.isDataFrame())
+        {
+            Dataset<Row> rows = iterator.getDataFrame(context);
+            rows.createOrReplaceTempView("assignment");
+            rows.show();
+            String[] fields = rows.schema().fieldNames();
+            String columnNames = FlworDataFrameUtils.getListOfSQLVariables(Arrays.asList(fields), false);
+            df = rows.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT struct(%s) AS `%s` FROM assignment",
+                        columnNames,
+                        variableName
+                    )
+                );
+            df.show();
+        } else {
+            // create initial RDD from expression
+            JavaRDD<Item> expressionRDD = iterator.getRDD(context);
+            df = getDataFrameFromItemRDD(variableName, expressionRDD);
+            df.show();
+        }
         if (positionalVariableName == null && !allowingEmpty) {
             return df;
         }
