@@ -26,6 +26,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -581,24 +582,41 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             -1,
             predicateDependencies
         );
+        List<StructField> fieldList = new ArrayList<StructField>();
+        for (StructField f : inputSchema.fields()) {
+            fieldList.add(f);
+        }
         if (predicateDependencies.containsKey(sequenceVariableName)) {
             UDFcolumns.add(sequenceVariableName.getLocalName());
+            fieldList.add(
+                new StructField(sequenceVariableName.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
+            );
         }
         if (
             sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
             UDFcolumns.add(Name.CONTEXT_POSITION.getLocalName());
+            fieldList.add(
+                new StructField(Name.CONTEXT_POSITION.getLocalName(), DataTypes.LongType, true, Metadata.empty())
+            );
         }
         if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
             UDFcolumns.add(Name.CONTEXT_COUNT.getLocalName());
+            fieldList.add(
+                new StructField(Name.CONTEXT_COUNT.getLocalName(), DataTypes.LongType, true, Metadata.empty())
+            );
         }
+
+        StructField[] fields = new StructField[fieldList.size()];
+        fieldList.toArray(fields);
+        StructType joinedSchema = new StructType(fields);
 
         // Now we need to register or join predicate as a UDF.
         inputTuples.sparkSession()
             .udf()
             .register(
                 "joinUDF",
-                new WhereClauseUDF(predicateIterator, context, inputSchema, UDFcolumns),
+                new WhereClauseUDF(predicateIterator, context, joinedSchema, UDFcolumns),
                 DataTypes.BooleanType
             );
 
