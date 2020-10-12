@@ -50,6 +50,11 @@ public class VisitorHelpers {
         new ModulePruningVisitor(conf).visit(node, null);
     }
 
+    private static void inferTypes(Node node, RumbleRuntimeConfiguration conf) {
+        System.out.println("* Starting type inference *");
+        new InferTypeVisitor(conf).visit(node, null);
+    }
+
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
         System.out.println("***************");
         System.out.println("Expression tree");
@@ -104,6 +109,7 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            inferTypes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
