@@ -308,14 +308,16 @@ public class FlworDataFrameUtils {
     }
 
     public static boolean isCountPreComputed(StructType schema, String columnName) {
-        System.out.println("Scanning...");
-        for (StructField field : schema.fields()) {
-            System.out.println("Field: " + field.name());
-            if (field.name().equals(columnName)) {
-                return field.dataType().equals(DataTypes.LongType);
-            }
+        int i = -1;
+        try {
+            i = schema.fieldIndex(columnName);
+        } catch (IllegalArgumentException e) {
+            OurBadException obe = new OurBadException("Column does not exist: " + columnName);
+            obe.initCause(e);
+            throw obe;
         }
-        throw new OurBadException("Column does not exist: " + columnName);
+        StructField field = schema.fields()[i];
+        return field.dataType().equals(DataTypes.LongType);
     }
 
     private static boolean shouldCalculateCount(
