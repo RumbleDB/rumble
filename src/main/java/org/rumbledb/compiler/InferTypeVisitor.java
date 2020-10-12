@@ -1,7 +1,10 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.CommaExpression;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.DecimalLiteralExpression;
 import org.rumbledb.expressions.primary.DoubleLiteralExpression;
 import org.rumbledb.expressions.primary.IntegerLiteralExpression;
@@ -25,6 +28,40 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
      */
     InferTypeVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+    }
+
+    @Override
+    public Void visitCommaExpression(CommaExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
+        
+        for(Expression childExpression : expression.getExpressions()){
+            SequenceType childExpressionInferredType = childExpression.getInferredSequenceType();
+
+            // if a child expression has no inferred type throw an error
+            if(childExpressionInferredType == null){
+                throw new UnexpectedStaticTypeException("A child expression of a CommaExpression was null");
+            }
+
+            // if the child expression is an EMPTY_SEQUENCE it does not affect the comma expression type
+            if(!childExpressionInferredType.isEmptySequence()){
+                if(inferredType.isEmptySequence()){
+                    inferredType = childExpressionInferredType;
+                } else{
+                   ItemType resultingItemType = inferredType.getItemType().findCommonSuperType(childExpressionInferredType.getItemType());
+                   SequenceType.Arity resultingArity =
+                           ( (inferredType.getArity() == SequenceType.Arity.OneOrZero || inferredType.getArity() == SequenceType.Arity.ZeroOrMore) &&
+                           (childExpressionInferredType.getArity() == SequenceType.Arity.OneOrZero || childExpressionInferredType.getArity() == SequenceType.Arity.ZeroOrMore)) ?
+                                   SequenceType.Arity.ZeroOrMore : SequenceType.Arity.OneOrMore;
+                   inferredType = new SequenceType(resultingItemType, resultingArity);
+                }
+            }
+        }
+
+        System.out.println("visited comma expression with inferred type: " + inferredType);
+        expression.setInferredSequenceType(inferredType);
+        return argument;
     }
 
     // region primary

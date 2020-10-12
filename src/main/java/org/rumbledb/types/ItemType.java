@@ -136,7 +136,7 @@ public class ItemType implements Serializable {
     }
 
 
-    boolean isSubtypeOf(ItemType superType) {
+    public boolean isSubtypeOf(ItemType superType) {
         if (superType.equals(item)) {
             return true;
         }
@@ -157,6 +157,22 @@ public class ItemType implements Serializable {
         }
 
         return false;
+    }
+    
+    public ItemType findCommonSuperType(ItemType other){
+        // TODO: check relation between Int and Double (numeric in general)
+        // TODO: first check is necessary due to inconsistency in ItemType subtype check
+        if(other.equals(this) || other.isSubtypeOf(this)){
+            return this;
+        } else if(this.isSubtypeOf(other)){
+            return other;
+        } else if(this.isSubtypeOf(ItemType.atomicItem) && other.isSubtypeOf(ItemType.atomicItem)){
+            return ItemType.atomicItem;
+        } else if(this.isSubtypeOf(ItemType.JSONItem) && other.isSubtypeOf(ItemType.JSONItem)){
+            return ItemType.JSONItem;
+        } else {
+            return ItemType.item;
+        }
     }
 
     @Override
