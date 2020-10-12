@@ -346,7 +346,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
             }
         }
-        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, false);
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, false);
 
         // And return the Cartesian product with the desired projection.
         return inputDF.sparkSession()
@@ -574,7 +574,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
         // We need to prepare the parameters fed into the predicate.
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
@@ -834,7 +834,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
-        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         df.createOrReplaceTempView("input");
@@ -961,7 +961,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             rows.createOrReplaceTempView("assignment");
             rows.show();
             String[] fields = rows.schema().fieldNames();
-            String columnNames = FlworDataFrameUtils.getListOfSQLVariables(Arrays.asList(fields), false);
+            String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
             df = rows.sparkSession()
                 .sql(
                     String.format(

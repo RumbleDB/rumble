@@ -136,6 +136,19 @@ public class FlworDataFrameUtils {
 
     /**
      * @param inputSchema schema specifies the columns to be used in the query
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema
+    ) {
+        return getColumnNames(inputSchema, -1, null);
+    }
+
+    /**
+     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
+     * overriden).
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
@@ -149,7 +162,10 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
+     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
+     * overriden).
+     * 
+     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param duplicateVariableIndex enables skipping a variable
      * @param duplicatePositionalVariableIndex enables skipping another variable
      * @param dependencies restriction of the results to within a specified set
@@ -181,10 +197,16 @@ public class FlworDataFrameUtils {
         return result;
     }
 
+    /**
+     * Prepares the parameters supplied to a UDF, as a row obtained from the specified attributes.
+     * 
+     * @param columnNames the names of the columns to pass as a parameter.
+     * @return The parameters expressed in SQL.
+     */
     public static String getUDFParameters(
             List<String> columnNames
     ) {
-        String udfSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNames, false);
+        String udfSQL = FlworDataFrameUtils.getSQLProjection(columnNames, false);
 
         return String.format(
             "struct(%s)",
@@ -193,21 +215,12 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @return list of SQL column names in the schema
-     */
-    public static List<String> getColumnNames(
-            StructType inputSchema
-    ) {
-        return getColumnNames(inputSchema, -1, null);
-    }
-
-    /**
+     * Prepares a SQL projection from the specified column names.
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getListOfSQLVariables(
+    public static String getSQLProjection(
             List<String> columnNames,
             boolean trailingComma
     ) {
@@ -227,16 +240,17 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
+     * Prepares a SQL projection for use in a GROUP BY query.
+     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma field to have a trailing comma
      * @param serializerUdfName name of the serializer function
      * @param groupbyVariableNames names of group by variables
      * @param dependencies variable dependencies of the group by clause
-     * @param columnNamesByType mapping from types(eg. Long) to columnNames(eg. [testColumn1, testColumn2])
+     * @param columnNames the attributes to include (not necessarily the entire input schema).
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getGroupbyProjectSQL(
+    public static String getGroupBySQLProjection(
             StructType inputSchema,
             int duplicateVariableIndex,
             boolean trailingComma,
@@ -256,7 +270,6 @@ public class FlworDataFrameUtils {
             }
 
             String columnName = field.getLocalName();
-            // TODO test based on column type
             if (isCountPreComputed(inputSchema, columnName)) {
                 queryColumnString.append("sum(`");
                 queryColumnString.append(columnName);

@@ -378,7 +378,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             duplicatePositionalVariableIndex,
             parentProjection
         );
-        String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
         // Now we proceed with the left outer join.
         inputDF = inputDF.sparkSession()
@@ -549,7 +549,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
         }
 
-        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         df.createOrReplaceTempView("input");

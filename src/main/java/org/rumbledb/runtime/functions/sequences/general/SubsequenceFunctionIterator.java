@@ -97,7 +97,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema, -1, null);
 
-        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, false);
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
