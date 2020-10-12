@@ -53,11 +53,7 @@ import java.util.List;
 public class DataFrameContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private StructType schema;
-    private List<Name> serializedVariableNames;
-    private List<Name> countedVariableNames;
-    private List<List<Item>> deserializedParams;
-    private List<Item> longParams;
+    private List<String> columnNames;
     private DynamicContext context;
 
     private transient Kryo kryo;
@@ -88,19 +84,7 @@ public class DataFrameContext implements Serializable {
             StructType schema,
             List<String> columnNames
     ) {
-        this.schema = schema;
-        this.serializedVariableNames = new ArrayList<>(columnNames.size());
-        this.countedVariableNames = new ArrayList<>(columnNames.size());
-        for (String columnName : columnNames) {
-            if (FlworDataFrameUtils.isCountPreComputed(this.schema, columnName)) {
-                this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-            } else {
-                this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-            }
-        }
-
-        this.deserializedParams = new ArrayList<>();
-        this.longParams = new ArrayList<>();
+        this.columnNames = columnNames;
 
         this.context = new DynamicContext(context);
 
@@ -118,24 +102,28 @@ public class DataFrameContext implements Serializable {
      * 
      */
     public void setFromRow(Row row) {
-        this.deserializedParams.clear();
-        this.longParams.clear();
+        this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
-        for (Name field : this.serializedVariableNames) {
-            int columnIndex = row.fieldIndex(field.getLocalName());
-            List<Item> i = deserializeRowField(row, columnIndex);
-            this.deserializedParams.add(i);
+        for (String columnName: this.columnNames) {
+            int columnIndex = row.fieldIndex(columnName);
+            if(!columnName.endsWith(".count"))
+            {
+                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                this.context.getVariableValues().addVariableValue(
+                    Name.createVariableInNoNamespace(columnName),
+                    i
+                );
+            } else {
+                long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
+                Item i = ItemFactory.getInstance().createLongItem(count);
+                this.context.getVariableValues()
+                .addVariableCount(
+                    Name.createVariableInNoNamespace(columnName.substring(0, columnName.indexOf("."))),
+                    i
+                );
+            }
         }
-        for (Name field : this.countedVariableNames) {
-            int columnIndex = row.fieldIndex(field.getLocalName());
-            long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
-            Item i = ItemFactory.getInstance().createLongItem(count);
-            this.longParams.add(i);
-            ++columnIndex;
-        }
-
-        this.prepareDynamicContext();
     }
 
     /**
@@ -187,27 +175,8 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
-    private void prepareDynamicContext() {
-        this.context.getVariableValues().removeAllVariables();
-        for (int columnIndex = 0; columnIndex < this.serializedVariableNames.size(); columnIndex++) {
-            this.context.getVariableValues()
-                .addVariableValue(
-                    this.serializedVariableNames.get(columnIndex),
-                    this.deserializedParams.get(columnIndex)
-                );
-        }
-        for (int columnIndex = 0; columnIndex < this.countedVariableNames.size(); columnIndex++) {
-            this.context.getVariableValues()
-                .addVariableCount(
-                    this.countedVariableNames.get(columnIndex),
-                    this.longParams.get(columnIndex)
-                );
-        }
-    }
-
     @SuppressWarnings("unchecked")
-    private List<Item> deserializeRowField(Row row, int columnIndex) {
-        System.out.println("Deserializing");
+    private List<Item> readColumnAsSequenceOfItems(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:

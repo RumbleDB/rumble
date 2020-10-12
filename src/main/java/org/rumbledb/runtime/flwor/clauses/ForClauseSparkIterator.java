@@ -959,7 +959,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
             rows.createOrReplaceTempView("assignment");
-            rows.show();
             String[] fields = rows.schema().fieldNames();
             String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
             df = rows.sparkSession()
@@ -970,12 +969,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         variableName
                     )
                 );
-            df.show();
         } else {
             // create initial RDD from expression
             JavaRDD<Item> expressionRDD = iterator.getRDD(context);
             df = getDataFrameFromItemRDD(variableName, expressionRDD);
-            df.show();
         }
         if (positionalVariableName == null && !allowingEmpty) {
             return df;

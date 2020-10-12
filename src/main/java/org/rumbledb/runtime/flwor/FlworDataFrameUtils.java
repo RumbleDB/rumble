@@ -29,7 +29,6 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -146,7 +145,7 @@ public class FlworDataFrameUtils {
 
     /**
      * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
-     * overriden).
+     * overriden). Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
      * 
      * @param inputSchema schema specifies the columns to be used in the query
      * @param duplicateVariableIndex enables skipping a variable
@@ -188,8 +187,8 @@ public class FlworDataFrameUtils {
                 result.add(columnNames[columnIndex]);
             } else {
                 for (Name name : dependencies.keySet()) {
-                    if (name.toString().equals(var)) {
-                        result.add(columnNames[columnIndex]);
+                    if (name.toString().equals(var) || var.equals(name.toString() + ".count")) {
+                        result.add(var);
                     }
                 }
             }
@@ -280,6 +279,7 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("count(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`)");
+                columnName += ".count";
             } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
                 // rows that end up in the same group have the same value for the grouping column
                 // return a single instance of this value in the grouping column
@@ -308,16 +308,15 @@ public class FlworDataFrameUtils {
     }
 
     public static boolean isCountPreComputed(StructType schema, String columnName) {
-        int i = -1;
-        try {
-            i = schema.fieldIndex(columnName);
-        } catch (IllegalArgumentException e) {
-            OurBadException obe = new OurBadException("Column does not exist: " + columnName);
-            obe.initCause(e);
-            throw obe;
+        String [] fields = schema.fieldNames();
+        for(String field : fields)
+        {
+            if(field.equals(columnName))
+            {
+                return columnName.endsWith(".count");
+            }
         }
-        StructField field = schema.fields()[i];
-        return field.dataType().equals(DataTypes.LongType);
+        throw new OurBadException("Column does not exist: " + columnName);
     }
 
     private static boolean shouldCalculateCount(
