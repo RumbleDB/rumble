@@ -576,24 +576,21 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(columnsToSelect, true);
 
         // We need to prepare the parameters fed into the predicate.
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             -1,
             predicateDependencies
         );
-        if (!UDFcolumnsByType.containsKey("byte[]")) {
-            UDFcolumnsByType.put("byte[]", new ArrayList<>());
-        }
         if (predicateDependencies.containsKey(sequenceVariableName)) {
-            UDFcolumnsByType.get("byte[]").add(sequenceVariableName.getLocalName());
+            UDFcolumns.add(sequenceVariableName.getLocalName());
         }
         if (
             sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
-            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_POSITION.getLocalName());
+            UDFcolumns.add(Name.CONTEXT_POSITION.getLocalName());
         }
         if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
-            UDFcolumnsByType.get("byte[]").add(Name.CONTEXT_COUNT.getLocalName());
+            UDFcolumns.add(Name.CONTEXT_COUNT.getLocalName());
         }
 
         // Now we need to register or join predicate as a UDF.
@@ -601,11 +598,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "joinUDF",
-                new WhereClauseUDF(predicateIterator, context, UDFcolumnsByType),
+                new WhereClauseUDF(predicateIterator, context, inputSchema, UDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         // If we allow empty, we need a LEFT OUTER JOIN.
         if (allowingEmpty) {
@@ -805,7 +802,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             duplicatePositionalVariableIndex,
             null
         );
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             -1,
             this.dependencies
@@ -815,12 +812,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "forClauseUDF",
-                new ForClauseUDF(this.assignmentIterator, context, UDFcolumnsByType),
+                new ForClauseUDF(this.assignmentIterator, context, inputSchema, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
         String projectionVariables = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         if (this.positionalVariableName == null) {
@@ -941,8 +938,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         Dataset<Row> df = null;;
-        if (false)// iterator.isDataFrame())
-        {
+        if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
             rows.createOrReplaceTempView("assignment");
             rows.show();

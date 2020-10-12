@@ -110,15 +110,15 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         Dataset<Row> df = this.child.getDataFrame(context, projection);
         df.printSchema();
         StructType oldSchema = df.schema();
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
             -1,
             this.expression.getVariableDependencies()
         );
-        for (String key : UDFcolumnsByType.keySet()) {
-            System.out.println(key + " : " + String.join(", ", UDFcolumnsByType.get(key)));
+        for (String key : UDFcolumns) {
+            System.out.println(key);
         }
-        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumnsByType));
+        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
     }
 
     @Override

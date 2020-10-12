@@ -525,7 +525,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             duplicateVariableIndex,
             dependencies
         );
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             -1,
             newVariableExpression.getVariableDependencies()
@@ -536,7 +536,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "letClauseUDF",
-                    new LetClauseUDF(newVariableExpression, context, UDFcolumnsByType),
+                    new LetClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
                     DataTypes.BinaryType
                 );
         } else {
@@ -544,13 +544,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 .udf()
                 .register(
                     "hashUDF",
-                    new HashUDF(newVariableExpression, context, UDFcolumnsByType),
+                    new HashUDF(newVariableExpression, context, inputSchema, UDFcolumns),
                     DataTypes.LongType
                 );
         }
 
         String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         if (!hash) {

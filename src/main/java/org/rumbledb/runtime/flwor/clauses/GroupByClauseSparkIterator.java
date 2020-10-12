@@ -337,7 +337,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             -1,
             groupingVariables
@@ -347,13 +347,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessNames, context, UDFcolumnsByType, getMetadata()),
+                new GroupClauseCreateColumnsUDF(variableAccessNames, context, inputSchema, UDFcolumns, getMetadata()),
                 DataTypes.createStructType(typedFields)
             );
 
         String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String createColumnsSQL = String.format(
             "select %s createGroupingColumns(%s) as `%s` from input",
@@ -369,7 +369,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             serializerUDFName,
             variableAccessNames,
             parentProjection,
-            UDFcolumnsByType
+            UDFcolumns
         );
 
         return df.sparkSession()

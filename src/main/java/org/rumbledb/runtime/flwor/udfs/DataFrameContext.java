@@ -28,6 +28,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -35,14 +36,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.WrappedArray;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class exposes a reusable context that is dynamically populated from the input tuples stored in DataFrames.
@@ -55,7 +53,7 @@ import java.util.Map;
 public class DataFrameContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Map<String, List<String>> columnNamesByType;
+    private StructType schema;
     private List<Name> serializedVariableNames;
     private List<Name> countedVariableNames;
     private List<List<Item>> deserializedParams;
@@ -87,18 +85,18 @@ public class DataFrameContext implements Serializable {
      */
     public DataFrameContext(
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            StructType schema,
+            List<String> columnNames
     ) {
-        this.columnNamesByType = columnNamesByType;
-        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
-        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
-        for (String columnName : serializedColumNames) {
-            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
-        List<String> countedColumNames = this.columnNamesByType.get("Long");
-        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
-        for (String columnName : countedColumNames) {
-            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+        this.schema = schema;
+        this.serializedVariableNames = new ArrayList<>(columnNames.size());
+        this.countedVariableNames = new ArrayList<>(columnNames.size());
+        for (String columnName : columnNames) {
+            if (FlworDataFrameUtils.isCountPreComputed(this.schema, columnName)) {
+                this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+            } else {
+                this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
+            }
         }
 
         this.deserializedParams = new ArrayList<>();
@@ -111,41 +109,6 @@ public class DataFrameContext implements Serializable {
         FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
         this.output = new Output(128, -1);
         this.input = new Input();
-    }
-
-    /**
-     * Sets the context from parameters passed to a Spark SQL UDF.
-     * 
-     * @param wrappedParameters An array, the members of which are each the serialization of a sequence of items. The
-     *        size of the array must match the number of DataFrame columns associated with the type byte[].
-     * @param wrappedParametersLong An array, the members of which are each the overall count of a (non-materialized)
-     *        sequence of items. The size of the array must match the number of DataFrame columns associated with the
-     *        type Long.
-     * 
-     */
-    public void setFromWrappedParameters(
-            WrappedArray<byte[]> wrappedParameters,
-            WrappedArray<Long> wrappedParametersLong
-    ) {
-        this.deserializedParams.clear();
-        this.longParams.clear();
-
-        FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
-
-        // Long parameters correspond to pre-computed counts, when a materialization of the
-        // actual sequence was avoided upfront.
-        Object[] longParams = (Object[]) wrappedParametersLong.array();
-        for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createLongItem(((Long) longParam).longValue());
-            this.longParams.add(count);
-        }
-
-        this.prepareDynamicContext();
     }
 
     /**

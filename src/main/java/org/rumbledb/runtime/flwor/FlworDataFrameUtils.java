@@ -28,7 +28,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
-import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -182,50 +181,14 @@ public class FlworDataFrameUtils {
         return result;
     }
 
-    /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
-     */
-    public static Map<String, List<String>> getColumnNamesByType(
-            StructType inputSchema,
-            int duplicateVariableIndex,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("byte[]", new ArrayList<>());
-        result.put("Long", new ArrayList<>());
-        StructField[] columns = inputSchema.fields();
-        for (Name field : dependencies.keySet()) {
-            if (inputSchema.getFieldIndex(field.getLocalName()).isEmpty()) {
-                continue;
-            } ;
-            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
-            if (columnIndex == duplicateVariableIndex) {
-                continue;
-            }
-            String var = columns[columnIndex].name();
-            DataType type = columns[columnIndex].dataType();
-            if (type.equals(DataTypes.BinaryType)) {
-                result.get("byte[]").add(var);
-            } else if (type.equals(DataTypes.LongType)) {
-                result.get("Long").add(var);
-            }
-        }
-        return result;
-    }
-
     public static String getUDFParameters(
-            Map<String, List<String>> columnNamesByType
+            List<String> columnNames
     ) {
-        String udfBinarySQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("Long"), false);
+        String udfSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNames, false);
 
         return String.format(
-            "array(%s), array(%s)",
-            udfBinarySQL,
-            udfLongSQL
+            "struct(%s)",
+            udfSQL
         );
     }
 
@@ -280,7 +243,7 @@ public class FlworDataFrameUtils {
             String serializerUdfName,
             List<Name> groupbyVariableNames,
             Map<Name, DynamicContext.VariableDependency> dependencies,
-            Map<String, List<String>> columnNamesByType
+            List<String> columnNames
     ) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
@@ -293,8 +256,8 @@ public class FlworDataFrameUtils {
             }
 
             String columnName = field.getLocalName();
-
-            if (isCountPreComputed(columnNamesByType, columnName)) {
+            // TODO test based on column type
+            if (isCountPreComputed(inputSchema, columnName)) {
                 queryColumnString.append("sum(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`)");
@@ -329,8 +292,13 @@ public class FlworDataFrameUtils {
         return queryColumnString.toString();
     }
 
-    private static boolean isCountPreComputed(Map<String, List<String>> columnNamesByType, String columnName) {
-        return columnNamesByType.get("Long").contains(columnName);
+    public static boolean isCountPreComputed(StructType schema, String columnName) {
+        for (StructField field : schema.fields()) {
+            if (field.name().equals(columnName)) {
+                return field.dataType().equals(DataTypes.LongType);
+            }
+        }
+        throw new OurBadException("Column does not exist: " + columnName);
     }
 
     private static boolean shouldCalculateCount(
