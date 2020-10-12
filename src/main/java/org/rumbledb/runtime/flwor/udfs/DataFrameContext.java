@@ -105,23 +105,23 @@ public class DataFrameContext implements Serializable {
         this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
-        for (String columnName: this.columnNames) {
+        for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
-            if(!columnName.endsWith(".count"))
-            {
+            if (!columnName.endsWith(".count")) {
                 List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
-                this.context.getVariableValues().addVariableValue(
-                    Name.createVariableInNoNamespace(columnName),
-                    i
-                );
+                this.context.getVariableValues()
+                    .addVariableValue(
+                        Name.createVariableInNoNamespace(columnName),
+                        i
+                    );
             } else {
                 long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
                 Item i = ItemFactory.getInstance().createLongItem(count);
                 this.context.getVariableValues()
-                .addVariableCount(
-                    Name.createVariableInNoNamespace(columnName.substring(0, columnName.indexOf("."))),
-                    i
-                );
+                    .addVariableCount(
+                        Name.createVariableInNoNamespace(columnName.substring(0, columnName.indexOf("."))),
+                        i
+                    );
             }
         }
     }

@@ -308,11 +308,9 @@ public class FlworDataFrameUtils {
     }
 
     public static boolean isCountPreComputed(StructType schema, String columnName) {
-        String [] fields = schema.fieldNames();
-        for(String field : fields)
-        {
-            if(field.equals(columnName))
-            {
+        String[] fields = schema.fieldNames();
+        for (String field : fields) {
+            if (field.equals(columnName)) {
                 return columnName.endsWith(".count");
             }
         }
