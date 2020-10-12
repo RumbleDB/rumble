@@ -216,6 +216,7 @@ public class FlworDataFrameUtils {
 
     /**
      * Prepares a SQL projection from the specified column names.
+     * 
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
@@ -241,6 +242,7 @@ public class FlworDataFrameUtils {
 
     /**
      * Prepares a SQL projection for use in a GROUP BY query.
+     * 
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma field to have a trailing comma
