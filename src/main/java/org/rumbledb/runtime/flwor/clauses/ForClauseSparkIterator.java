@@ -597,13 +597,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         ) {
             UDFcolumns.add(Name.CONTEXT_POSITION.getLocalName());
             fieldList.add(
-                new StructField(Name.CONTEXT_POSITION.getLocalName(), DataTypes.LongType, true, Metadata.empty())
+                new StructField(Name.CONTEXT_POSITION.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
             );
         }
         if (sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
             UDFcolumns.add(Name.CONTEXT_COUNT.getLocalName());
             fieldList.add(
-                new StructField(Name.CONTEXT_COUNT.getLocalName(), DataTypes.LongType, true, Metadata.empty())
+                new StructField(Name.CONTEXT_COUNT.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
             );
         }
 

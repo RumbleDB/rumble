@@ -372,7 +372,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             UDFcolumns
         );
 
-        return df.sparkSession()
+        Dataset<Row> result = df.sparkSession()
             .sql(
                 String.format(
                     "select %s from (%s) group by `%s`",
@@ -381,6 +381,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     appendedGroupingColumnsName
                 )
             );
+        return result;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
