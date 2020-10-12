@@ -22,6 +22,7 @@ package org.rumbledb.expressions;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.SequenceType;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
@@ -37,6 +38,8 @@ public abstract class Expression extends Node {
 
     protected StaticContext staticContext;
 
+    protected SequenceType inferredSequenceType;
+
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
@@ -48,4 +51,8 @@ public abstract class Expression extends Node {
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
     }
+
+    public SequenceType getInferredSequenceType() { return this.inferredSequenceType; }
+
+    public void setInferredSequenceType(SequenceType inferredSequenceType) { this.inferredSequenceType = inferredSequenceType; }
 }
