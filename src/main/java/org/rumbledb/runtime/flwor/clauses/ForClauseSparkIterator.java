@@ -579,7 +579,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We need to prepare the parameters fed into the predicate.
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
             predicateDependencies
         );
         List<StructField> fieldList = new ArrayList<StructField>();
@@ -822,7 +821,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
             this.dependencies
         );
 

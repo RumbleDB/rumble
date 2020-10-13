@@ -111,7 +111,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
-            -1,
             this.expression.getVariableDependencies()
         );
         return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));

@@ -134,13 +134,43 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Retrieves the variable name represented by a physical data frame column.
+     * 
+     * @param columnName the column name.
+     * @return the variable name.
+     */
+    public static Name variableForColumnName(String columnName) {
+        int pos = columnName.indexOf(".");
+        if (pos == -1) {
+            return Name.createVariableInNoNamespace(columnName);
+        } else {
+            return Name.createVariableInNoNamespace(columnName.substring(0, pos));
+        }
+    }
+
+    /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema
     ) {
-        return getColumnNames(inputSchema, -1, null);
+        return Arrays.asList(inputSchema.fieldNames());
+    }
+
+    /**
+     * Lists the names of the columns of the schema that needed by the dependencies.
+     * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            Map<Name, DynamicContext.VariableDependency> dependencies
+    ) {
+        return getColumnNames(inputSchema, -1, -1, dependencies);
     }
 
     /**
@@ -184,12 +214,47 @@ public class FlworDataFrameUtils {
             }
             String var = columnNames[columnIndex];
             if (dependencies == null) {
-                result.add(columnNames[columnIndex]);
+                result.add(var);
             } else {
-                for (Name name : dependencies.keySet()) {
-                    if (name.toString().equals(var) || var.equals(name.toString() + ".count")) {
-                        result.add(var);
+                Name name = variableForColumnName(var);
+                if (!dependencies.containsKey(name)) {
+                    continue;
+                }
+                switch (dependencies.get(name)) {
+                    case FULL: {
+                        if (name.toString().equals(var)) {
+                            result.add(var);
+                        }
+                        break;
                     }
+                    case COUNT: {
+                        if (var.equals(name.toString() + ".count")) {
+                            result.add(var);
+                        }
+                        break;
+                    }
+                    case SUM: {
+                        if (var.equals(name.toString() + ".sum")) {
+                            result.add(var);
+                        }
+                        break;
+                    }
+                    case MIN: {
+                        if (var.equals(name.toString() + ".min")) {
+                            result.add(var);
+                        }
+                        break;
+                    }
+                    case MAX: {
+                        if (var.equals(name.toString() + ".max")) {
+                            result.add(var);
+                        }
+                        break;
+                    }
+                    default:
+                        throw new OurBadException(
+                                "Dependency " + dependencies.get(name) + " is not supported yet."
+                        );
                 }
             }
         }
@@ -321,9 +386,9 @@ public class FlworDataFrameUtils {
             Map<Name, DynamicContext.VariableDependency> dependencies,
             String columnName
     ) {
-        return dependencies.containsKey(Name.createVariableInNoNamespace(columnName))
+        return dependencies.containsKey(variableForColumnName(columnName))
             && dependencies.get(
-                Name.createVariableInNoNamespace(columnName)
+                variableForColumnName(columnName)
             ) == DynamicContext.VariableDependency.COUNT;
     }
 
@@ -331,7 +396,7 @@ public class FlworDataFrameUtils {
             List<Name> groupbyVariableNames,
             String columnName
     ) {
-        return groupbyVariableNames.contains(Name.createVariableInNoNamespace(columnName));
+        return groupbyVariableNames.contains(variableForColumnName(columnName));
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {

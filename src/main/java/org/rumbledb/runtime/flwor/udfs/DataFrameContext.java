@@ -31,7 +31,6 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
@@ -111,7 +110,7 @@ public class DataFrameContext implements Serializable {
                 List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
-                        Name.createVariableInNoNamespace(columnName),
+                        FlworDataFrameUtils.variableForColumnName(columnName),
                         i
                     );
             } else {
@@ -119,7 +118,7 @@ public class DataFrameContext implements Serializable {
                 Item i = ItemFactory.getInstance().createLongItem(count);
                 this.context.getVariableValues()
                     .addVariableCount(
-                        Name.createVariableInNoNamespace(columnName.substring(0, columnName.indexOf("."))),
+                        FlworDataFrameUtils.variableForColumnName(columnName),
                         i
                     );
             }

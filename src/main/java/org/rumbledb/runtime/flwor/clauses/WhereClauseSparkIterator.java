@@ -203,7 +203,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
             this.dependencies
         );
 
