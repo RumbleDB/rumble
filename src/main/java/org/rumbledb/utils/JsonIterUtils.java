@@ -27,19 +27,19 @@ import com.jsoniter.JsonIterator;
 
 public class JsonIterUtils {
 
-	/**
-	 * JsonIter can process both strings and inputstreams to parse input.
-	 * Using JsonIter with InputStreams trigger dynamic code generation in JsonIter.
-	 * This dynamic code generation is called via enableStreamingSupport() method.
-	 * If this call is made first, then all consequent inputstream or string input usages are successful.
-	 *
-	 * However, if a string input is parsed first and dynamic code generation of streaming inputs is triggered later.
-	 * JsonIter reaches an invalid state where no streaming input can be processed correctly.
-	 * This function triggers a streaming input and hence dynamic code generation.
-	 * This workaround should be applied during startup for reliable use of JsonIter
-	 */
-	public static void applyJsonIterFaultyInitializationWorkAround() {
-		InputStream is = new ByteArrayInputStream("{}".getBytes());
-		JsonIterator object = JsonIterator.parse(is, 1024);
-	}
+    /**
+     * JsonIter can process both strings and inputstreams to parse input.
+     * Using JsonIter with InputStreams trigger dynamic code generation in JsonIter.
+     * This dynamic code generation is called via enableStreamingSupport() method.
+     * If this call is made first, then all consequent inputstream or string input usages are successful.
+     *
+     * However, if a string input is parsed first and dynamic code generation of streaming inputs is triggered later.
+     * JsonIter reaches an invalid state where no streaming input can be processed correctly.
+     * This function triggers a streaming input and hence dynamic code generation.
+     * This workaround should be applied during startup for reliable use of JsonIter
+     */
+    public static void applyJsonIterFaultyInitializationWorkAround() {
+        InputStream is = new ByteArrayInputStream("{}".getBytes());
+        JsonIterator object = JsonIterator.parse(is, 1024);
+    }
 }
