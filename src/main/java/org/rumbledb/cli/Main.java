@@ -19,16 +19,16 @@
  */
 package org.rumbledb.cli;
 
+import java.io.IOException;
 
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.server.RumbleServer;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
+import org.rumbledb.utils.JsonIterUtils;
 import sparksoniq.spark.SparkSessionManager;
-
-import java.io.IOException;
 
 public class Main {
     public static RumbleJLineShell terminal = null;
@@ -38,6 +38,8 @@ public class Main {
         // Parse arguments
         try {
             sparksoniqConf = new RumbleRuntimeConfiguration(args);
+
+            JsonIterUtils.applyJsonIterFaultyInitializationWorkAround();
 
             if (sparksoniqConf.isShell()) {
                 initializeApplication();
