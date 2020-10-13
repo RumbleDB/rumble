@@ -76,6 +76,7 @@ public class SequenceType implements Serializable {
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
+        // TODO: arity check because of possible error
         if (this.isEmptySequence) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }

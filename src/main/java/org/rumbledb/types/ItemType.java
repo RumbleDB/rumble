@@ -136,33 +136,32 @@ public class ItemType implements Serializable {
     }
 
 
+    // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
+        // TODO: what about Dates/Durations, base64, hex and anyURI
         if (superType.equals(item)) {
             return true;
-        }
-        if (superType.equals(JSONItem)) {
+        } else if (superType.equals(JSONItem)) {
             return this.equals(objectItem)
                 || this.equals(arrayItem)
-                || this.equals(JSONItem)
-                || this.equals(nullItem);
-        }
-
-        if (superType.equals(atomicItem)) {
+                || this.equals(JSONItem);
+        } else if (superType.equals(atomicItem)) {
             return this.equals(stringItem)
                 || this.equals(integerItem)
                 || this.equals(decimalItem)
                 || this.equals(doubleItem)
                 || this.equals(booleanItem)
-                || this.equals(anyURIItem);
+                || this.equals(nullItem)
+                || this.equals(anyURIItem)
+                || this.equals(atomicItem);
         }
-
-        return false;
+        return this.equals(superType);
     }
     
     public ItemType findCommonSuperType(ItemType other){
         // TODO: check relation between Int and Double (numeric in general)
         // TODO: first check is necessary due to inconsistency in ItemType subtype check
-        if(other.equals(this) || other.isSubtypeOf(this)){
+        if(other.isSubtypeOf(this)){
             return this;
         } else if(this.isSubtypeOf(other)){
             return other;
@@ -173,6 +172,60 @@ public class ItemType implements Serializable {
         } else {
             return ItemType.item;
         }
+    }
+
+    public boolean staticallyCastableAs(ItemType other){
+        // TODO: is null atomic or JSONitem?
+        // TODO: are jsonitems not castable to or form (excluding null) what about item
+        // TODO: no need for null special check if above applies
+        // TODO: can we cast to item (depends on inner functioning of cast as)
+        // JSON items cannot be cast from and to
+        if(this.isSubtypeOf(JSONItem) || other.isSubtypeOf(JSONItem))
+            return false;
+        // anything can be casted to itself
+        if(this.equals(other))
+            return true;
+        // anything can be casted from and to a string (or from one of its supertype)
+        if(this.equals(stringItem) || this.equals(item) || this.equals(atomicItem) || other.equals(stringItem))
+            return true;
+        // boolean and numeric can be cast between themselves
+        if(this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)){
+            if(other.equals(integerItem) ||
+                    other.equals(doubleItem) ||
+                    other.equals(decimalItem) ||
+                    other.equals(stringItem) ||
+                    other.equals(booleanItem)
+            ) return true;
+            else return false;
+        }
+        // base64 and hex can be cast between themselves
+        if(this.equals(base64BinaryItem) || this.equals(hexBinaryItem)){
+            if(other.equals(base64BinaryItem) ||
+                    other.equals(hexBinaryItem) ||
+                    other.equals(stringItem)
+            ) return true;
+            else return false;
+        }
+        // durations can be cast between themselves
+        if(this.equals(durationItem) || this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)){
+            if(other.equals(durationItem) ||
+                    other.equals(yearMonthDurationItem) ||
+                    other.equals(dayTimeDurationItem)
+            ) return true;
+            else return false;
+        }
+        // DateTime can be cast also to Date or Time
+        if(this.equals(dateTimeItem)){
+            if(other.equals(dateItem) || other.equals(timeItem)) return true;
+            else return false;
+        }
+        // Date can be cast also to DateTime
+        if(this.equals(dateItem)){
+            if(other.equals(dateTimeItem)) return true;
+            else return false;
+        }
+        // Otherwise this cannot be casted to other
+        return false;
     }
 
     @Override

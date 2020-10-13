@@ -6,6 +6,10 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.primary.*;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -141,6 +145,74 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
             }
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.objectItem));
+        return argument;
+    }
+
+    // endregion
+
+    // region typing
+
+    @Override
+    public Void visitCastableExpression(CastableExpression expression, Void argument) {
+        System.out.println("visiting Castable expression");
+        visitDescendants(expression, argument);
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        return argument;
+    }
+
+    @Override
+    public Void visitCastExpression(CastExpression expression, Void argument) {
+        System.out.println("visiting Cast expression");
+        visitDescendants(expression, argument);
+
+        // check at static time for casting errors (note cast only allows for normal or ? arity)
+        SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
+        SequenceType castedSequenceType = expression.getSequenceType();
+
+        // Arity basic check
+        if(expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() == SequenceType.Arity.One){
+            throw new UnexpectedStaticTypeException("Empty sequence cannot be cast to type with quantifier '1'");
+        }
+        // ItemType static castability check
+        if(!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())){
+            throw new UnexpectedStaticTypeException("It is not possible to cast a " +
+                    expressionSequenceType.getItemType() + " as " + castedSequenceType.getItemType());
+        }
+
+        expression.setInferredSequenceType(castedSequenceType);
+        return argument;
+    }
+
+    @Override
+    public Void visitInstanceOfExpression(InstanceOfExpression expression, Void argument) {
+        System.out.println("visiting InstanceOf expression");
+        visitDescendants(expression, argument);
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        return argument;
+    }
+
+    @Override
+    public Void visitTreatExpression(TreatExpression expression, Void argument) {
+        System.out.println("visiting Treat expression");
+        visitDescendants(expression, argument);
+
+        // check at static time for treat errors
+        SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
+        SequenceType treatedSequenceType = expression.getSequenceType();
+
+        // Empty sequence check (potentially any other arity could fullfill any other arity)
+        if(expressionSequenceType.isEmptySequence() &&
+                (treatedSequenceType.getArity() == SequenceType.Arity.One || treatedSequenceType.getArity() == SequenceType.Arity.OneOrMore)){
+            throw new UnexpectedStaticTypeException("Empty sequence cannot be treated as type with quantifier '1' or '+'");
+        }
+        // ItemType static treatability check (if the types' spaces are mutually exclusive, one cannot be treated like the other for sure)
+        if(!expressionSequenceType.getItemType().isSubtypeOf(treatedSequenceType.getItemType()) &&
+           !treatedSequenceType.getItemType().isSubtypeOf(expressionSequenceType.getItemType())){
+            throw new UnexpectedStaticTypeException("It is not possible to treat a " +
+                    expressionSequenceType.getItemType() + " as " + treatedSequenceType.getItemType());
+        }
+
+        expression.setInferredSequenceType(treatedSequenceType);
         return argument;
     }
 
