@@ -5,6 +5,8 @@ import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -14,6 +16,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -215,6 +218,61 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         expression.setInferredSequenceType(treatedSequenceType);
         return argument;
     }
+
+    // endregion
+
+    // region arithmetic
+
+    @Override
+    public Void visitAdditiveExpr(AdditiveExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+
+        // TODO: consider direct access with no casting
+        List<Node> childrenExpressions = expression.getChildren();
+        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
+        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+
+        // if any of the child expression has null inferred type throw error
+        if(leftInferredType == null || rightInferredType == null){
+            throw new UnexpectedStaticTypeException("A child expression of a AdditiveExpression has no inferred type");
+        }
+
+        // if any of the children is the empty sequence just infer the empty sequence
+        // TODO: check if returning () even when + is not supported with the other type is the intended behaviour
+        if(leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()){
+            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            System.out.println("visiting Additive expression, set type: " + expression.getInferredSequenceType());
+            return argument;
+        }
+
+        ItemType inferredType;
+        SequenceType.Arity inferredArity;
+
+        // if any of the children allows for the empty sequence the resulting arity is '?'
+        if(leftInferredType.getArity() == SequenceType.Arity.OneOrZero ||
+                leftInferredType.getArity() == SequenceType.Arity.ZeroOrMore ||
+                rightInferredType.getArity() == SequenceType.Arity.OneOrZero ||
+                rightInferredType.getArity() == SequenceType.Arity.ZeroOrMore
+        ) inferredArity = SequenceType.Arity.OneOrZero;
+        else inferredArity = SequenceType.Arity.One;
+
+        inferredType = leftInferredType.getItemType().staticallyAddTo(rightInferredType.getItemType(), expression.isMinus());
+
+        if(inferredType == null){
+            if(inferredArity == SequenceType.Arity.OneOrZero){
+                // we have incompatible types, but it is possible that at runtime one of the type resolve to be the empty sequence, that is the only possible output not causing an exception
+                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            } else {
+                throw new UnexpectedStaticTypeException("The following types operation is not possible: " + leftInferredType + (expression.isMinus() ? " - " : " + ") + rightInferredType);
+            }
+        } else {
+            expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
+        }
+
+        System.out.println("visiting Additive expression, set type: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
 
     // endregion
 }

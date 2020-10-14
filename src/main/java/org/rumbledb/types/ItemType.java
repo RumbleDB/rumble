@@ -29,39 +29,95 @@ public class ItemType implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
+    private int index; // for private matrix operation
 
-    public static final ItemType objectItem = new ItemType("object");
-    public static final ItemType atomicItem = new ItemType("atomic");
-    public static final ItemType stringItem = new ItemType("string");
-    public static final ItemType integerItem = new ItemType("integer");
-    public static final ItemType decimalItem = new ItemType("decimal");
-    public static final ItemType doubleItem = new ItemType("double");
-    public static final ItemType booleanItem = new ItemType("boolean");
-    public static final ItemType arrayItem = new ItemType("array");
-    public static final ItemType nullItem = new ItemType("null");
-    public static final ItemType JSONItem = new ItemType("json-item");
-    public static final ItemType durationItem = new ItemType("duration");
-    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
-    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
-    public static final ItemType dateTimeItem = new ItemType("dateTime");
-    public static final ItemType dateItem = new ItemType("date");
-    public static final ItemType timeItem = new ItemType("time");
-    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
-    public static final ItemType anyURIItem = new ItemType("anyURI");
-    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
-    public static final ItemType item = new ItemType("item");
-    public static final ItemType functionItem = new ItemType("function");
+    public static final ItemType item = new ItemType("item", 0);
+    public static final ItemType atomicItem = new ItemType("atomic", 1);
+    public static final ItemType stringItem = new ItemType("string", 2);
+    public static final ItemType integerItem = new ItemType("integer", 3);
+    public static final ItemType decimalItem = new ItemType("decimal", 4);
+    public static final ItemType doubleItem = new ItemType("double", 5);
+    public static final ItemType booleanItem = new ItemType("boolean", 6);
+    public static final ItemType nullItem = new ItemType("null", 7);
+    public static final ItemType durationItem = new ItemType("duration", 8);
+    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration", 9);
+    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration", 10);
+    public static final ItemType dateTimeItem = new ItemType("dateTime", 11);
+    public static final ItemType dateItem = new ItemType("date", 12);
+    public static final ItemType timeItem = new ItemType("time", 13);
+    public static final ItemType hexBinaryItem = new ItemType("hexBinary", 14);
+    public static final ItemType anyURIItem = new ItemType("anyURI", 15);
+    public static final ItemType base64BinaryItem = new ItemType("base64Binary", 16);
+    public static final ItemType JSONItem = new ItemType("json-item", 17);
+    public static final ItemType objectItem = new ItemType("object", 18);
+    public static final ItemType arrayItem = new ItemType("array", 19);
+    public static final ItemType functionItem = new ItemType("function", 20);
 
     public ItemType() {
     }
 
-    private ItemType(String name) {
+    private ItemType(String name, int index) {
         this.name = name;
+        this.index = index;
     }
+
+    // resulting type of [row] + [col]
+    private static ItemType addTable[][] = {
+    //                item          atomic      string  integer     decimal     double      bool    null    duration                y-m-dur                 d-time-dur          date-time       date        time        hex         any-uri     base64      json-item   object      array       function
+    /* item     */  { atomicItem,   atomicItem, null,   atomicItem, atomicItem, atomicItem, null,   null,   atomicItem,             atomicItem,             atomicItem,         atomicItem,     atomicItem, timeItem,   null,       null,       null,       null,       null,       null,       null },
+    /* atomic   */  { atomicItem,   atomicItem, null,   atomicItem, atomicItem, atomicItem, null,   null,   atomicItem,             atomicItem,             atomicItem,         atomicItem,     atomicItem, timeItem,   null,       null,       null,       null,       null,       null,       null },
+    /* string   */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* integer  */  { atomicItem,   atomicItem, null,   integerItem,decimalItem,doubleItem, null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* decimal  */  { atomicItem,   atomicItem, null,   decimalItem,decimalItem,doubleItem, null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* double   */  { atomicItem,   atomicItem, null,   doubleItem, doubleItem, doubleItem, null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* bool     */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* null     */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* duration */  { atomicItem,   atomicItem, null,   null,       null,       null,       null,   null,   durationItem,           yearMonthDurationItem,  dayTimeDurationItem,dateTimeItem,   dateItem,   timeItem,   null,       null,       null,       null,       null,       null,       null },
+    /* y-m-dur  */  { atomicItem,   atomicItem, null,   null,       null,       null,       null,   null,   yearMonthDurationItem,  yearMonthDurationItem,  null,               dateTimeItem,   dateItem,   null,       null,       null,       null,       null,       null,       null,       null },
+    /* d-t-dur  */  { atomicItem,   atomicItem, null,   null,       null,       null,       null,   null,   dayTimeDurationItem,    null,                   dayTimeDurationItem,dateTimeItem,   dateItem,   timeItem,   null,       null,       null,       null,       null,       null,       null },
+    /* date-time*/  { atomicItem,   atomicItem, null,   null,       null,       null,       null,   null,   dateTimeItem,           dateTimeItem,           dateTimeItem,       null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* date     */  { atomicItem,   atomicItem, null,   null,       null,       null,       null,   null,   dateItem,               dateItem,               dateItem,           null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* time     */  { timeItem,     timeItem,   null,   null,       null,       null,       null,   null,   timeItem,               null,                   timeItem,           null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* hex      */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* any-uri  */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* base64   */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* json-item*/  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* object   */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* array    */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    /* function */  { null,         null,       null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,           null,       null,       null,       null,       null,       null,       null,       null,       null },
+    };
+
+    // resulting type of [row] - [col]
+    private static ItemType subTable[][] = {
+            //                item                  atomic                  string  integer     decimal     double      bool    null    duration                y-m-dur                 d-time-dur          date-time           date                time                hex         any-uri     base64      json-item   object      array       function
+            /* item     */  { atomicItem,           atomicItem,             null,   atomicItem, atomicItem, atomicItem, null,   null,   atomicItem,             atomicItem,             atomicItem,         atomicItem,         atomicItem,         atomicItem,         null,       null,       null,       null,       null,       null,       null },
+            /* atomic   */  { atomicItem,           atomicItem,             null,   atomicItem, atomicItem, atomicItem, null,   null,   atomicItem,             atomicItem,             atomicItem,         atomicItem,         atomicItem,         atomicItem,         null,       null,       null,       null,       null,       null,       null },
+            /* string   */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* integer  */  { atomicItem,           atomicItem,             null,   integerItem,decimalItem,doubleItem, null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* decimal  */  { atomicItem,           atomicItem,             null,   decimalItem,decimalItem,doubleItem, null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* double   */  { atomicItem,           atomicItem,             null,   doubleItem, doubleItem, doubleItem, null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* bool     */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* null     */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* duration */  { durationItem,         durationItem,           null,   null,       null,       null,       null,   null,   durationItem,           yearMonthDurationItem,  dayTimeDurationItem,null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* y-m-dur  */  { yearMonthDurationItem,yearMonthDurationItem,  null,   null,       null,       null,       null,   null,   yearMonthDurationItem,  yearMonthDurationItem,  null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* d-t-dur  */  { dayTimeDurationItem,  dayTimeDurationItem,    null,   null,       null,       null,       null,   null,   dayTimeDurationItem,    null,                   dayTimeDurationItem,null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* date-time*/  { atomicItem,           atomicItem,             null,   null,       null,       null,       null,   null,   dateTimeItem,           dateTimeItem,           dateTimeItem,       dayTimeDurationItem,null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* date     */  { atomicItem,           atomicItem,             null,   null,       null,       null,       null,   null,   dateItem,               dateItem,               dateItem,           null,               dayTimeDurationItem,null,               null,       null,       null,       null,       null,       null,       null },
+            /* time     */  { atomicItem,           atomicItem,             null,   null,       null,       null,       null,   null,   timeItem,               null,                   timeItem,           null,               null,               dayTimeDurationItem,null,       null,       null,       null,       null,       null,       null },
+            /* hex      */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* any-uri  */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* base64   */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* json-item*/  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* object   */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* array    */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+            /* function */  { null,                 null,                   null,   null,       null,       null,       null,   null,   null,                   null,                   null,               null,               null,               null,               null,       null,       null,       null,       null,       null,       null },
+    };
 
     public String getName() {
         return this.name;
     }
+
+    public int getIndex() { return this.index; }
 
     public static ItemType getItemTypeByName(String name) {
         if (name.equals(objectItem.name)) {
@@ -226,6 +282,15 @@ public class ItemType implements Serializable {
         }
         // Otherwise this cannot be casted to other
         return false;
+    }
+
+    // return the resulting statically inferred ItemType from adding [this] to [other], return null in case of incompatible inferred static types
+    public ItemType staticallyAddTo(ItemType other, boolean isMinus) {
+        if(isMinus){
+            return subTable[this.getIndex()][other.getIndex()];
+        } else {
+            return addTable[this.getIndex()][other.getIndex()];
+        }
     }
 
     @Override
