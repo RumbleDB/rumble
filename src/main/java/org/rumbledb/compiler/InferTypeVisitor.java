@@ -7,6 +7,7 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -273,6 +274,42 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         return argument;
     }
 
+    @Override
+    public Void visitUnaryExpr(UnaryExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+        SequenceType childInferredType = expression.getMainExpression().getInferredSequenceType();
+
+        // if the child expression has null inferred type throw error
+        if(childInferredType == null){
+            throw new UnexpectedStaticTypeException("The child expression of a UnaryExpression has no inferred type");
+        }
+
+        // if the child is the empty sequence just infer the empty sequence
+        if(childInferredType.isEmptySequence()){
+            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            System.out.println("visiting Unary expression, set type: " + expression.getInferredSequenceType());
+            return argument;
+        }
+
+        // If child allows for the empty sequence, set returning arity to '?', normal otherwise
+        SequenceType.Arity inferredArity = (childInferredType.getArity() == SequenceType.Arity.OneOrZero || childInferredType.getArity() == SequenceType.Arity.ZeroOrMore) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
+
+        // if inferred arity does not allow for empty sequence and static type is not an accepted one throw a static error
+        ItemType childItemType = childInferredType.getItemType();
+        if(childItemType.isNumeric() || childItemType.equals(ItemType.atomicItem) || childItemType.equals(ItemType.item)){
+            expression.setInferredSequenceType(new SequenceType(childItemType, inferredArity));
+        } else {
+            if(inferredArity == SequenceType.Arity.OneOrZero){
+                // incompatible type, but still possible to have empty sequence at runtime
+                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            } else {
+                throw new UnexpectedStaticTypeException("It is not possible to have an Unary expression with the following type: " + childInferredType);
+            }
+        }
+
+        System.out.println("visiting Unary expression, set type: " + expression.getInferredSequenceType());
+        return argument;
+    }
 
     // endregion
 }

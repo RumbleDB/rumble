@@ -249,7 +249,6 @@ public class ItemType implements Serializable {
             if(other.equals(integerItem) ||
                     other.equals(doubleItem) ||
                     other.equals(decimalItem) ||
-                    other.equals(stringItem) ||
                     other.equals(booleanItem)
             ) return true;
             else return false;
@@ -257,8 +256,7 @@ public class ItemType implements Serializable {
         // base64 and hex can be cast between themselves
         if(this.equals(base64BinaryItem) || this.equals(hexBinaryItem)){
             if(other.equals(base64BinaryItem) ||
-                    other.equals(hexBinaryItem) ||
-                    other.equals(stringItem)
+                    other.equals(hexBinaryItem)
             ) return true;
             else return false;
         }
@@ -291,6 +289,11 @@ public class ItemType implements Serializable {
         } else {
             return addTable[this.getIndex()][other.getIndex()];
         }
+    }
+
+    // return [true] if this is a numeric type (i.e. [integerItem], [decimalItem] or [doubleItem]), false otherwise
+    public boolean isNumeric(){
+        return this.equals(integerItem) || this.equals(decimalItem) || this.equals(doubleItem);
     }
 
     @Override
