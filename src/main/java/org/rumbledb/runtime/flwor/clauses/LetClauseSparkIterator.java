@@ -187,6 +187,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 this.variableName,
                 this.assignmentIterator,
                 context,
+                (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 parentProjection,
                 false
             );
@@ -318,6 +319,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
             contextItemValueExpression,
             context,
+            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
             true
         );
@@ -326,6 +328,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
             inputTupleValueExpression,
             context,
+            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
             true
         );
@@ -373,8 +376,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         variableNamesToExclude.add(this.variableName);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            variableNamesToExclude,
-            parentProjection
+            parentProjection,
+            null,
+            variableNamesToExclude
         );
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
@@ -408,6 +412,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.variableName,
             filteringPredicateIterator,
             context,
+            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             parentProjection,
             false
         );
@@ -510,6 +515,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name newVariableName,
             RuntimeIterator newVariableExpression,
             DynamicContext context,
+            List<Name> projectedNames,
             Map<Name, DynamicContext.VariableDependency> dependencies,
             boolean hash
     ) {
@@ -517,12 +523,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            Collections.singletonList(newVariableName),
-            dependencies
+            dependencies,
+            null,
+            Collections.singletonList(newVariableName)
         );
+        
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            newVariableExpression.getVariableDependencies()
+            newVariableExpression.getVariableDependencies(),
+            projectedNames,
+            null
         );
 
         if (!hash) {

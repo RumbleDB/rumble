@@ -283,6 +283,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     expression.getExpression(),
                     context,
                     null,
+                    null,
                     false
                 );
 

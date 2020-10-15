@@ -326,8 +326,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            variableNamesToExclude,
-            parentProjection
+            parentProjection,
+            null,
+            variableNamesToExclude
         );
 
         // We add the one or two current clause variables to our projection.
@@ -504,6 +505,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 expressionSideEqualityCriterion,
                 context,
                 null,
+                null,
                 true
             );
 
@@ -539,6 +541,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 inputTupleSideEqualityCriterion,
                 context,
                 null,
+                null,
                 true
             );
         }
@@ -557,8 +560,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            variableNamesToExclude,
-            parentProjection
+            parentProjection,
+            null,
+            variableNamesToExclude
         );
 
         // We don't support positional variables yet for large joins.
@@ -573,8 +577,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We need to prepare the parameters fed into the predicate.
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            Arrays.asList(sequenceVariableName, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT),
-            predicateDependencies
+            predicateDependencies,
+            null,
+            Arrays.asList(sequenceVariableName, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT)
         );
         List<StructField> fieldList = new ArrayList<StructField>();
         for (StructField f : inputSchema.fields()) {
@@ -809,12 +814,22 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
+            null,
+            null,
             variableNamesToExclude
         );
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
-            this.dependencies
-        );
+        List<String> UDFcolumns;
+        if(this.child != null)
+        {
+            UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                inputSchema,
+                this.assignmentIterator.getVariableDependencies(),
+                new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                null
+            );
+        } else {
+            UDFcolumns = Collections.emptyList();
+        }
 
         df.sparkSession()
             .udf()

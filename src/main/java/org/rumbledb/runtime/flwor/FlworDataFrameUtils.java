@@ -172,7 +172,7 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
-        return getColumnNames(inputSchema, Collections.emptyList(), dependencies);
+        return getColumnNames(inputSchema, dependencies, null, null);
     }
 
     /**
@@ -180,45 +180,38 @@ public class FlworDataFrameUtils {
      * overriden).
      * 
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
+     * @param dependencies restriction of the results to within a specified set
+     * @param variablesToRestrictTo variables whose columns must refer to.
      * @param variablesToExclude variables whose columns should be projected away.
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesToRestrictTo,
             List<Name> variablesToExclude
     ) {
-        List<String> result = new ArrayList<>();
-        for (String columnName : inputSchema.fieldNames()) {
-            Name name = variableForColumnName(columnName);
-            if (variablesToExclude.contains(name)) {
-                continue;
-            }
-            result.add(columnName);
-        }
-        return result;
-    }
-
-    /**
-     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
-     * overriden).
-     * 
-     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
-     * @param variablesToExclude variables whose columns should be projected away.
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
-     */
-    public static List<String> getColumnNames(
-            StructType inputSchema,
-            List<Name> variablesToExclude,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
         if (dependencies == null) {
-            return getColumnNames(inputSchema, variablesToExclude);
+            List<String> result = new ArrayList<>();
+            for (String columnName : inputSchema.fieldNames()) {
+                Name name = variableForColumnName(columnName);
+                if (variablesToExclude != null && variablesToExclude.contains(name)) {
+                    continue;
+                }
+                if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(name)) {
+                    continue;
+                }
+                result.add(columnName);
+            }
+            return result;
         }
         List<String> result = new ArrayList<>();
         Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
         for (Name variableName : dependencies.keySet()) {
-            if (variablesToExclude.contains(variableName)) {
+            if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
+                continue;
+            }
+            if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
                 continue;
             }
             switch (dependencies.get(variableName)) {

@@ -38,6 +38,7 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
     private RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -61,7 +61,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         super(child, executionMode, iteratorMetadata);
         this.expression = whereExpression;
-        this.dependencies = this.expression.getVariableDependencies();
+        this.expression.getVariableDependencies();
     }
 
     @Override
@@ -203,7 +203,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            this.dependencies
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
         );
 
         df.sparkSession()
