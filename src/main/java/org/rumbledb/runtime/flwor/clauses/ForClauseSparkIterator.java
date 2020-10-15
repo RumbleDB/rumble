@@ -803,9 +803,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
-        variableNamesToExclude.add(variableName);
-        if (positionalVariableName != null) {
-            variableNamesToExclude.add(positionalVariableName);
+        variableNamesToExclude.add(this.variableName);
+        if (this.positionalVariableName != null) {
+            variableNamesToExclude.add(this.positionalVariableName);
         }
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,

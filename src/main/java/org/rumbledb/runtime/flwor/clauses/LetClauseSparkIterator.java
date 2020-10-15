@@ -370,7 +370,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We need to project away the let clause variable because we re-create it.
         StructType inputSchema = inputDF.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
-        variableNamesToExclude.add(variableName);
+        variableNamesToExclude.add(this.variableName);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             variableNamesToExclude,
