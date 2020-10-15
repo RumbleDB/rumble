@@ -41,7 +41,7 @@ import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -146,11 +146,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             Name variableName
     ) {
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(variableName.toString());
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
+            Collections.singletonList(variableName),
             parentProjection
         );
 

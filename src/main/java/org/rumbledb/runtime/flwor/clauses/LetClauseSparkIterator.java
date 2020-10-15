@@ -49,7 +49,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -369,13 +369,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We gather the columns to select.
         // We need to project away the let clause variable because we re-create it.
         StructType inputSchema = inputDF.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
-            .indexOf(this.variableName.toString());
-        int duplicatePositionalVariableIndex = -1;
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(variableName);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            duplicatePositionalVariableIndex,
+            variableNamesToExclude,
             parentProjection
         );
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
@@ -516,13 +514,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             boolean hash
     ) {
         StructType inputSchema = df.schema();
-        List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
-
-        int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
+            Collections.singletonList(newVariableName),
             dependencies
         );
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(

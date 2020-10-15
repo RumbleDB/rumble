@@ -319,28 +319,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We gather the columns to select from the previous clause.
         // We need to project away the clause's variables from the previous clause.
         StructType inputSchema = inputDF.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
-            .indexOf(this.variableName.toString());
-        int duplicatePositionalVariableIndex = -1;
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(this.variableName);
         if (this.positionalVariableName != null) {
-            duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
-                .indexOf(this.positionalVariableName.toString());
+            variableNamesToExclude.add(this.positionalVariableName);
         }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            duplicatePositionalVariableIndex,
+            variableNamesToExclude,
             parentProjection
         );
 
         // We add the one or two current clause variables to our projection.
-        if (duplicateVariableIndex == -1) {
+        if (!columnsToSelect.contains(this.variableName.toString())) {
             columnsToSelect.add(this.variableName.toString());
         } else {
-            columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName);
+            columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName.toString());
         }
-        if (this.positionalVariableName != null) {
-            if (duplicatePositionalVariableIndex == -1) {
+        if (variableNamesToExclude.contains(this.positionalVariableName)) {
+            if (!columnsToSelect.contains(this.positionalVariableName.toString())) {
                 columnsToSelect.add(this.positionalVariableName.toString());
             } else {
                 columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
@@ -553,17 +550,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We gather the columns to select from the previous clause.
         // We need to project away the clause's variables from the previous clause.
         StructType inputSchema = inputTuples.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
-            .indexOf(variableName.toString());
-        int duplicatePositionalVariableIndex = -1;
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(variableName);
         if (positionalVariableName != null) {
-            duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
-                .indexOf(positionalVariableName.toString());
+            variableNamesToExclude.add(positionalVariableName);
         }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            duplicatePositionalVariableIndex,
+            variableNamesToExclude,
             parentProjection
         );
 
@@ -579,6 +573,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We need to prepare the parameters fed into the predicate.
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
+            Arrays.asList(sequenceVariableName, Name.CONTEXT_POSITION, Name.CONTEXT_COUNT),
             predicateDependencies
         );
         List<StructField> fieldList = new ArrayList<StructField>();
@@ -807,17 +802,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // the expression is locally evaluated
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames()).indexOf(this.variableName.toString());
-        int duplicatePositionalVariableIndex = -1;
-        if (this.positionalVariableName != null) {
-            duplicatePositionalVariableIndex = Arrays.asList(inputSchema.fieldNames())
-                .indexOf(this.positionalVariableName.toString());
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(variableName);
+        if (positionalVariableName != null) {
+            variableNamesToExclude.add(positionalVariableName);
         }
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            duplicatePositionalVariableIndex,
-            null
+            variableNamesToExclude
         );
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
