@@ -149,8 +149,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            Collections.singletonList(variableName),
-            parentProjection
+            Collections.singletonList(variableName)
         );
 
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);

@@ -217,15 +217,6 @@ public class FlworDataFrameUtils {
         }
         List<String> result = new ArrayList<>();
         Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
-        System.out.println("Column names:");
-        for (String s : columnNames) {
-            System.out.println("  " + s);
-        }
-        System.out.println("Variables to exclude:");
-        for (Name n : variablesToExclude) {
-            System.out.println("  " + n);
-        }
-        System.out.println("Dependencies: " + dependencies);
         for (Name variableName : dependencies.keySet()) {
             if (variablesToExclude.contains(variableName)) {
                 continue;
