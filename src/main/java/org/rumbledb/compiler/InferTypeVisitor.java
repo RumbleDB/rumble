@@ -9,6 +9,9 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.logic.AndExpression;
+import org.rumbledb.expressions.logic.NotExpression;
+import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -402,6 +405,59 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         }
 
         System.out.println("visiting Unary expression, set type: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    // endregion
+
+    // region logic
+
+    private Void visitAndOrExpr(Expression expression, Void argument, String expressionName){
+        visitDescendants(expression, argument);
+
+        List<Node> childrenExpressions = expression.getChildren();
+        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
+        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+
+        if(leftInferredType == null || rightInferredType == null){
+            throw new UnexpectedStaticTypeException("A child expression of a " + expressionName + "Expression has no inferred type");
+        }
+
+        if(!leftInferredType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("left expression of a " + expressionName + "Expression has " + leftInferredType + " inferred type, which has no effective boolean value");
+        }
+
+        if(!rightInferredType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("right expression of a " + expressionName + "Expression has " + rightInferredType + " inferred type, which has no effective boolean value");
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        return argument;
+    }
+
+    @Override
+    public Void visitAndExpr(AndExpression expression, Void argument) {
+        return visitAndOrExpr(expression, argument, "And");
+    }
+
+    @Override
+    public Void visitOrExpr(OrExpression expression, Void argument) {
+        return visitAndOrExpr(expression, argument, "Or");
+    }
+
+    @Override
+    public Void visitNotExpr(NotExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType childInferredType = expression.getMainExpression().getInferredSequenceType();
+        if(childInferredType == null){
+            throw new UnexpectedStaticTypeException("The child expression of NotExpression has no inferred type");
+        }
+        if(!childInferredType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("The child expression of NotExpression has " + childInferredType + " inferred type, which has no effective boolean value");
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
     }
 

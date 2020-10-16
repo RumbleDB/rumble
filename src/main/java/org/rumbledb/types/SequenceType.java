@@ -85,6 +85,22 @@ public class SequenceType implements Serializable {
             this.arity == superType.arity;
     }
 
+    public boolean hasEffectiveBooleanValue(){
+        if(this.isEmptySequence){
+            return true;
+        } else if((this.arity == Arity.One || this.arity == Arity.OneOrZero) && (
+                this.itemType.isSubtypeOf(ItemType.JSONItem) ||
+                this.itemType.isNumeric() ||
+                this.itemType.equals(ItemType.stringItem) ||
+                this.itemType.equals(ItemType.anyURIItem) ||
+                this.itemType.equals(ItemType.nullItem) ||
+                this.itemType.equals(ItemType.booleanItem))){
+            return true;
+        } else {
+            return false;
+        }
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof SequenceType)) {
