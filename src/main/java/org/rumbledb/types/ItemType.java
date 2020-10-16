@@ -209,34 +209,43 @@ public class ItemType implements Serializable {
                 || this.equals(booleanItem)
                 || this.equals(nullItem)
                 || this.equals(anyURIItem)
+                || this.equals(hexBinaryItem)
+                || this.equals(base64BinaryItem)
+                || this.equals(dateTimeItem)
+                || this.equals(dateItem)
+                || this.equals(timeItem)
+                || this.equals(durationItem)
+                || this.equals(yearMonthDurationItem)
+                || this.equals(dayTimeDurationItem)
                 || this.equals(atomicItem);
+        } else if (superType.equals(durationItem)) {
+            return this.equals(yearMonthDurationItem)
+                || this.equals(dayTimeDurationItem)
+                || this.equals(durationItem);
         }
         return this.equals(superType);
     }
     
     public ItemType findCommonSuperType(ItemType other){
-        // TODO: check relation between Int and Double (numeric in general)
-        // TODO: first check is necessary due to inconsistency in ItemType subtype check
+        // TODO: consider introducing numeric
         if(other.isSubtypeOf(this)){
             return this;
-        } else if(this.isSubtypeOf(other)){
+        } else if(this.isSubtypeOf(other)) {
             return other;
-        } else if(this.isSubtypeOf(ItemType.atomicItem) && other.isSubtypeOf(ItemType.atomicItem)){
-            return ItemType.atomicItem;
-        } else if(this.isSubtypeOf(ItemType.JSONItem) && other.isSubtypeOf(ItemType.JSONItem)){
-            return ItemType.JSONItem;
+        } else if(this.isSubtypeOf(durationItem) && other.isSubtypeOf(durationItem)){
+            return durationItem;
+        } else if(this.isSubtypeOf(atomicItem) && other.isSubtypeOf(atomicItem)){
+            return atomicItem;
+        } else if(this.isSubtypeOf(JSONItem) && other.isSubtypeOf(JSONItem)){
+            return JSONItem;
         } else {
-            return ItemType.item;
+            return item;
         }
     }
 
-    public boolean staticallyCastableAs(ItemType other){
-        // TODO: is null atomic or JSONitem?
-        // TODO: are jsonitems not castable to or form (excluding null) what about item
-        // TODO: no need for null special check if above applies
-        // TODO: can we cast to item (depends on inner functioning of cast as)
-        // JSON items cannot be cast from and to
-        if(this.isSubtypeOf(JSONItem) || other.isSubtypeOf(JSONItem))
+    public boolean  staticallyCastableAs(ItemType other){
+        // JSON items cannot be cast from and to, nor function items, nor we can cast to atomic or item
+        if(this.isSubtypeOf(JSONItem) || other.isSubtypeOf(JSONItem) || this.equals(functionItem) || other.equals(functionItem) || other.equals(atomicItem) || other.equals(item))
             return false;
         // anything can be casted to itself
         if(this.equals(other))
@@ -261,11 +270,8 @@ public class ItemType implements Serializable {
             else return false;
         }
         // durations can be cast between themselves
-        if(this.equals(durationItem) || this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)){
-            if(other.equals(durationItem) ||
-                    other.equals(yearMonthDurationItem) ||
-                    other.equals(dayTimeDurationItem)
-            ) return true;
+        if(this.isSubtypeOf(durationItem)){
+            if(other.isSubtypeOf(durationItem)) return true;
             else return false;
         }
         // DateTime can be cast also to Date or Time

@@ -7,6 +7,7 @@ import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -271,6 +272,99 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         }
 
         System.out.println("visiting Additive expression, set type: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    // This function assume 2 numeric ItemType
+    private ItemType resolveNumericType(ItemType left, ItemType right){
+        if(left.equals(ItemType.doubleItem) || right.equals(ItemType.doubleItem)){
+            return ItemType.doubleItem;
+        } else if(left.equals(ItemType.decimalItem) || right.equals(ItemType.decimalItem)){
+            return ItemType.decimalItem;
+        } else {
+            return ItemType.integerItem;
+        }
+    }
+
+    // For arithmetic operations, given 2 arities, return the resulting arity or null in case of invalid arity
+    private SequenceType.Arity resolveArities(SequenceType.Arity left, SequenceType.Arity right) {
+        if(left == null ||
+                left == SequenceType.Arity.ZeroOrMore ||
+                left == SequenceType.Arity.OneOrMore ||
+                right == null ||
+                right == SequenceType.Arity.ZeroOrMore ||
+                right == SequenceType.Arity.OneOrMore
+        ) return null;
+        return (left == SequenceType.Arity.OneOrZero || right == SequenceType.Arity.OneOrZero) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
+    }
+
+    @Override
+    public Void visitMultiplicativeExpr(MultiplicativeExpression expression, Void argument) {
+        // TODO: Behaviour of empty sequence to check, now is accepted as only return type
+        visitDescendants(expression, argument);
+
+        List<Node> childrenExpressions = expression.getChildren();
+        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
+        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+
+        // if any of the child expression has null inferred type throw error
+        if(leftInferredType == null || rightInferredType == null){
+            throw new UnexpectedStaticTypeException("A child expression of a MultiplicativeExpression has no inferred type");
+        }
+
+        // if any of the children is the empty sequence just infer the empty sequence
+        if(leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()){
+            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            System.out.println("visiting Multiplicative expression, set type: " + expression.getInferredSequenceType());
+            return argument;
+        }
+
+        ItemType inferredType = null;
+        SequenceType.Arity inferredArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
+
+        if(inferredArity == null){
+            throw new UnexpectedStaticTypeException(expression.getMultiplicativeOperator() + " operator does not support sequences with possible arity greater than one (i.e. '*' and '+' arities)");
+        }
+
+        ItemType leftItemType = leftInferredType.getItemType();
+        ItemType rightItemType = rightInferredType.getItemType();
+
+        // check resulting item for each operation
+        if(leftItemType.isNumeric()){
+            if(rightItemType.isNumeric()){
+                if(expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.IDIV){
+                    inferredType = ItemType.integerItem;
+                } else if(expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.DIV) {
+                    inferredType = resolveNumericType(ItemType.decimalItem, resolveNumericType(leftItemType, rightItemType));
+                } else {
+                    inferredType = resolveNumericType(leftItemType, rightItemType);
+                }
+            } else if(rightItemType.isSubtypeOf(ItemType.durationItem) &&
+                    expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.MUL){
+                inferredType = rightItemType;
+            }
+        } else if(leftItemType.isSubtypeOf(ItemType.durationItem)){
+            if(rightItemType.isNumeric() && (
+                    expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.MUL ||
+                    expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.DIV )){
+                inferredType = rightItemType;
+            } else if(rightItemType.equals(leftItemType) && !leftItemType.equals(ItemType.durationItem)){
+                inferredType = ItemType.decimalItem;
+            }
+        }
+
+        if(inferredType == null){
+            if(inferredArity == SequenceType.Arity.OneOrZero){
+                // if no type combination but still optional arity, only possible resulting type is empty sequence
+                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+            } else {
+                throw new UnexpectedStaticTypeException("The following types expression is not valid: " + leftItemType + " " + expression.getMultiplicativeOperator() + " " + rightItemType);
+            }
+        } else {
+            expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
+        }
+
+        System.out.println("visiting Multiplicative expression, set type: " + expression.getInferredSequenceType());
         return argument;
     }
 
