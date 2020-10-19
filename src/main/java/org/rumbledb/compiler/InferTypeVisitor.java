@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -185,14 +186,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
 
-        // Arity basic check
-        if(expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() == SequenceType.Arity.One){
-            throw new UnexpectedStaticTypeException("Empty sequence cannot be cast to type with quantifier '1'");
+        // Empty sequence check
+        if(expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() != SequenceType.Arity.OneOrZero){
+            throw new UnexpectedStaticTypeException("Empty sequence cannot be cast to type with quantifier different from '?'");
         }
+
+        // Arity check
+        if(!castedSequenceType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)){
+            throw new UnexpectedStaticTypeException("It is possible to cast only to types with arity '1' or '?'");
+        }
+        if(!expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())){
+            throw new UnexpectedStaticTypeException("It is never possible to cast a " +
+                    expressionSequenceType + " as " + castedSequenceType);
+        }
+
         // ItemType static castability check
         if(!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())){
-            throw new UnexpectedStaticTypeException("It is not possible to cast a " +
-                    expressionSequenceType.getItemType() + " as " + castedSequenceType.getItemType());
+            throw new UnexpectedStaticTypeException("It is never possible to cast a " +
+                    expressionSequenceType + " as " + castedSequenceType);
         }
 
         expression.setInferredSequenceType(castedSequenceType);
@@ -216,16 +227,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
         SequenceType treatedSequenceType = expression.getSequenceType();
 
-        // Empty sequence check (potentially any other arity could fullfill any other arity)
-        if(expressionSequenceType.isEmptySequence() &&
-                (treatedSequenceType.getArity() == SequenceType.Arity.One || treatedSequenceType.getArity() == SequenceType.Arity.OneOrMore)){
-            throw new UnexpectedStaticTypeException("Empty sequence cannot be treated as type with quantifier '1' or '+'");
-        }
-        // ItemType static treatability check (if the types' spaces are mutually exclusive, one cannot be treated like the other for sure)
-        if(!expressionSequenceType.getItemType().isSubtypeOf(treatedSequenceType.getItemType()) &&
-           !treatedSequenceType.getItemType().isSubtypeOf(expressionSequenceType.getItemType())){
-            throw new UnexpectedStaticTypeException("It is not possible to treat a " +
-                    expressionSequenceType.getItemType() + " as " + treatedSequenceType.getItemType());
+        if(expressionSequenceType == null || treatedSequenceType == null){
+            throw new UnexpectedStaticTypeException("The child expression of a Treat expression has no inferred type or it is being treated as null sequence type");
         }
 
         expression.setInferredSequenceType(treatedSequenceType);
@@ -240,7 +243,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     public Void visitAdditiveExpr(AdditiveExpression expression, Void argument) {
         visitDescendants(expression, argument);
 
-        // TODO: consider direct access with no casting
         List<Node> childrenExpressions = expression.getChildren();
         SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
         SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
@@ -250,38 +252,31 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
             throw new UnexpectedStaticTypeException("A child expression of a AdditiveExpression has no inferred type");
         }
 
-        // if any of the children is the empty sequence just infer the empty sequence
-        // TODO: check if returning () even when + is not supported with the other type is the intended behaviour
+        // if any of the children is the empty sequence throw error XPST0005
         if(leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()){
-            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
-            System.out.println("visiting Additive expression, set type: " + expression.getInferredSequenceType());
-            return argument;
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
 
         ItemType inferredType;
-        SequenceType.Arity inferredArity;
+        SequenceType.Arity inferredArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
 
-        // if any of the children allows for the empty sequence the resulting arity is '?'
-        if(leftInferredType.getArity() == SequenceType.Arity.OneOrZero ||
-                leftInferredType.getArity() == SequenceType.Arity.ZeroOrMore ||
-                rightInferredType.getArity() == SequenceType.Arity.OneOrZero ||
-                rightInferredType.getArity() == SequenceType.Arity.ZeroOrMore
-        ) inferredArity = SequenceType.Arity.OneOrZero;
-        else inferredArity = SequenceType.Arity.One;
+        // arity check
+        if(inferredArity == null){
+            throw new UnexpectedStaticTypeException("'+' and '*' arities are not allowed for additive expressions");
+        }
 
         inferredType = leftInferredType.getItemType().staticallyAddTo(rightInferredType.getItemType(), expression.isMinus());
 
         if(inferredType == null){
             if(inferredArity == SequenceType.Arity.OneOrZero){
-                // we have incompatible types, but it is possible that at runtime one of the type resolve to be the empty sequence, that is the only possible output not causing an exception
-                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+                // Only possible resulting type is empty sequence so throw error XPST0005
+                throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
             } else {
                 throw new UnexpectedStaticTypeException("The following types operation is not possible: " + leftInferredType + (expression.isMinus() ? " - " : " + ") + rightInferredType);
             }
-        } else {
-            expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         }
 
+        expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         System.out.println("visiting Additive expression, set type: " + expression.getInferredSequenceType());
         return argument;
     }
@@ -311,7 +306,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitMultiplicativeExpr(MultiplicativeExpression expression, Void argument) {
-        // TODO: Behaviour of empty sequence to check, now is accepted as only return type
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
@@ -323,18 +317,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
             throw new UnexpectedStaticTypeException("A child expression of a MultiplicativeExpression has no inferred type");
         }
 
-        // if any of the children is the empty sequence just infer the empty sequence
+        // if any of the children is the empty sequence throw error XPST0005
         if(leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()){
-            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
-            System.out.println("visiting Multiplicative expression, set type: " + expression.getInferredSequenceType());
-            return argument;
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
 
         ItemType inferredType = null;
         SequenceType.Arity inferredArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
 
         if(inferredArity == null){
-            throw new UnexpectedStaticTypeException(expression.getMultiplicativeOperator() + " operator does not support sequences with possible arity greater than one (i.e. '*' and '+' arities)");
+            throw new UnexpectedStaticTypeException("'+' and '*' arities are not allowed for multiplicative expressions");
         }
 
         ItemType leftItemType = leftInferredType.getItemType();
@@ -366,15 +358,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
 
         if(inferredType == null){
             if(inferredArity == SequenceType.Arity.OneOrZero){
-                // if no type combination but still optional arity, only possible resulting type is empty sequence
-                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+                // Only possible resulting type is empty sequence so throw error XPST0005
+                throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
             } else {
                 throw new UnexpectedStaticTypeException("The following types expression is not valid: " + leftItemType + " " + expression.getMultiplicativeOperator() + " " + rightItemType);
             }
-        } else {
-            expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         }
 
+        expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         System.out.println("visiting Multiplicative expression, set type: " + expression.getInferredSequenceType());
         return argument;
     }
@@ -391,27 +382,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
 
         // if the child is the empty sequence just infer the empty sequence
         if(childInferredType.isEmptySequence()){
-            expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
-            System.out.println("visiting Unary expression, set type: " + expression.getInferredSequenceType());
-            return argument;
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
 
-        // If child allows for the empty sequence, set returning arity to '?', normal otherwise
-        SequenceType.Arity inferredArity = (childInferredType.getArity() == SequenceType.Arity.OneOrZero || childInferredType.getArity() == SequenceType.Arity.ZeroOrMore) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.One;
+        if(childInferredType.getArity() == SequenceType.Arity.OneOrMore || childInferredType.getArity() == SequenceType.Arity.ZeroOrMore){
+            throw new UnexpectedStaticTypeException("'+' and '*' arities are not allowed for unary expressions");
+        }
 
         // if inferred arity does not allow for empty sequence and static type is not an accepted one throw a static error
         ItemType childItemType = childInferredType.getItemType();
-        if(childItemType.isNumeric() || childItemType.equals(ItemType.atomicItem) || childItemType.equals(ItemType.item)){
-            expression.setInferredSequenceType(new SequenceType(childItemType, inferredArity));
-        } else {
-            if(inferredArity == SequenceType.Arity.OneOrZero){
-                // incompatible type, but still possible to have empty sequence at runtime
-                expression.setInferredSequenceType(SequenceType.EMPTY_SEQUENCE);
+        if(!childItemType.isNumeric()){
+            if(childInferredType.getArity() == SequenceType.Arity.OneOrZero){
+                throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
             } else {
                 throw new UnexpectedStaticTypeException("It is not possible to have an Unary expression with the following type: " + childInferredType);
             }
         }
 
+        expression.setInferredSequenceType(new SequenceType(childItemType, childInferredType.getArity()));
         System.out.println("visiting Unary expression, set type: " + expression.getInferredSequenceType());
         return argument;
     }

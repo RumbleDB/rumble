@@ -77,6 +77,7 @@ public enum ErrorCode {
 
 
     ParsingErrorCode("XPST0003"),
+    StaticallyInferredEmptySequenceNotFromCommaExpression("XPST0005"),
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
     CastableErrorCode("XPST0080"),
