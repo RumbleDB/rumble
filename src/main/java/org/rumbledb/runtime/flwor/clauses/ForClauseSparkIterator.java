@@ -394,6 +394,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             context,
             this.child.getDataFrame(context, getProjection(parentProjection)),
             parentProjection,
+            (this.child == null)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             sequenceIterator,
             predicateIterator,
             this.allowingEmpty,
@@ -408,6 +411,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Dataset<Row> inputTuples,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
+            List<Name> projectedNames,
             RuntimeIterator sequenceIterator,
             RuntimeIterator predicateIterator,
             boolean allowingEmpty,
@@ -504,7 +508,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
                 expressionSideEqualityCriterion,
                 context,
-                null,
+                projectedNames,
                 null,
                 true
             );
@@ -819,8 +823,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variableNamesToExclude
         );
         List<String> UDFcolumns;
-        if(this.child != null)
-        {
+        if (this.child != null) {
             UDFcolumns = FlworDataFrameUtils.getColumnNames(
                 inputSchema,
                 this.assignmentIterator.getVariableDependencies(),

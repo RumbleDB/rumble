@@ -187,7 +187,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 this.variableName,
                 this.assignmentIterator,
                 context,
-                (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                (this.child == null)
+                    ? Collections.emptyList()
+                    : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 parentProjection,
                 false
             );
@@ -319,7 +321,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
             contextItemValueExpression,
             context,
-            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            (this.child == null)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
             true
         );
@@ -328,7 +332,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
             inputTupleValueExpression,
             context,
-            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            (this.child == null)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
             true
         );
@@ -412,7 +418,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.variableName,
             filteringPredicateIterator,
             context,
-            (this.child == null)?Collections.emptyList():new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            (this.child == null)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             parentProjection,
             false
         );
@@ -527,7 +535,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             Collections.singletonList(newVariableName)
         );
-        
+
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
