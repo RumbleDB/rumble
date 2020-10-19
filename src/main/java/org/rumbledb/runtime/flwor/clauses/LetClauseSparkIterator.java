@@ -514,7 +514,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
      * @param newVariableName the name of the new column (variable)
      * @param newVariableExpression the expression to evaluate
      * @param context the context (in addition to each tuple) in which to evaluation the expression
-     * @param variablesInInputTuple the name of the variables that can be found in the input tuple (as opposed to those in the context)
+     * @param variablesInInputTuple the name of the variables that can be found in the input tuple (as opposed to those
+     *        in the context)
      * @param outputTupleVariableDependencies the dependencies to project to (possibly null to keep everything).
      * @param hash whether or not to compute single-item hashes rather than the actual serialized sequences of items.
      * @return
