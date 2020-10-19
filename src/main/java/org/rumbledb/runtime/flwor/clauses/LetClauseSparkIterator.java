@@ -510,28 +510,29 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     /**
      * Extends a DataFrame with a new column obtained from the evaluation of an expression for each tuple.
      * 
-     * @param df the DataFrame to extend
+     * @param dataFrame the DataFrame to extend
      * @param newVariableName the name of the new column (variable)
      * @param newVariableExpression the expression to evaluate
      * @param context the context (in addition to each tuple) in which to evaluation the expression
-     * @param dependencies the dependencies to project to (possibly null to keep everything).
+     * @param variablesInInputTuple the name of the variables that can be found in the input tuple (as opposed to those in the context)
+     * @param outputTupleVariableDependencies the dependencies to project to (possibly null to keep everything).
      * @param hash whether or not to compute single-item hashes rather than the actual serialized sequences of items.
      * @return
      */
     public static Dataset<Row> bindLetVariableInDataFrame(
-            Dataset<Row> df,
+            Dataset<Row> dataFrame,
             Name newVariableName,
             RuntimeIterator newVariableExpression,
             DynamicContext context,
-            List<Name> projectedNames,
-            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesInInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash
     ) {
-        StructType inputSchema = df.schema();
+        StructType inputSchema = dataFrame.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            dependencies,
+            outputTupleVariableDependencies,
             null,
             Collections.singletonList(newVariableName)
         );
@@ -539,12 +540,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
-            projectedNames,
+            variablesInInputTuple,
             null
         );
 
         if (!hash) {
-            df.sparkSession()
+            dataFrame.sparkSession()
                 .udf()
                 .register(
                     "letClauseUDF",
@@ -552,7 +553,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
         } else {
-            df.sparkSession()
+            dataFrame.sparkSession()
                 .udf()
                 .register(
                     "hashUDF",
@@ -564,9 +565,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
-        df.createOrReplaceTempView("input");
+        dataFrame.createOrReplaceTempView("input");
         if (!hash) {
-            df = df.sparkSession()
+            dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
                         "select %s letClauseUDF(%s) as `%s` from input",
@@ -576,7 +577,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         } else {
-            df = df.sparkSession()
+            dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
                         "select %s hashUDF(%s) as `%s` from input",
@@ -586,6 +587,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         }
-        return df;
+        return dataFrame;
     }
 }

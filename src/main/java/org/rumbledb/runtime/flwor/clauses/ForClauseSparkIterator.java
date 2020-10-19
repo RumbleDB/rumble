@@ -76,7 +76,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private Name positionalVariableName; // for efficient use in local iteration
     private RuntimeIterator assignmentIterator;
     private boolean allowingEmpty;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
     private DataFrameContext dataFrameContext;
 
     // Computation state
@@ -100,7 +99,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.positionalVariableName = positionalVariableName;
         this.assignmentIterator = assignmentIterator;
         this.allowingEmpty = allowingEmpty;
-        this.dependencies = this.assignmentIterator.getVariableDependencies();
+        this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
     }
 
@@ -411,7 +410,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context,
             Dataset<Row> inputTuples,
             Map<Name, DynamicContext.VariableDependency> parentProjection,
-            List<Name> projectedNames,
+            List<Name> variablesInInputTuple,
             RuntimeIterator sequenceIterator,
             RuntimeIterator predicateIterator,
             boolean allowingEmpty,
@@ -508,7 +507,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
                 expressionSideEqualityCriterion,
                 context,
-                projectedNames,
+                variablesInInputTuple,
                 null,
                 true
             );
