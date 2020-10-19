@@ -76,13 +76,20 @@ public class SequenceType implements Serializable {
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
-        // TODO: arity check because of possible error
         if (this.isEmptySequence) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
-            this.arity == superType.arity;
+            this.isAritySubtypeOf(superType.arity);
+    }
+
+    // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
+    public boolean isAritySubtypeOf(Arity superArity){
+        if(superArity == Arity.ZeroOrMore || superArity == this.arity)
+            return true;
+        else
+            return this.arity == Arity.One;
     }
 
     public boolean hasEffectiveBooleanValue(){
@@ -209,6 +216,7 @@ public class SequenceType implements Serializable {
 
         sequenceTypes.put("time?", new SequenceType(ItemType.timeItem, SequenceType.Arity.OneOrZero));
 
+        sequenceTypes.put("anyURI", new SequenceType(ItemType.anyURIItem));
         sequenceTypes.put("anyURI?", new SequenceType(ItemType.anyURIItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("hexBinary?", new SequenceType(ItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));

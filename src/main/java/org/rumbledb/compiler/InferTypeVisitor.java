@@ -20,7 +20,6 @@ import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -141,15 +140,24 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     public Void visitObjectConstructor(ObjectConstructorExpression expression, Void argument) {
         System.out.println("visiting Object constructor literal");
         visitDescendants(expression, argument);
-        // TODO: what about object merged constructor with childExpression
-        for(Expression keyExpression : expression.getKeys()){
-            SequenceType keySequenceType = keyExpression.getInferredSequenceType();
-            if(keySequenceType == null){
-                throw new UnexpectedStaticTypeException("One of the key in the object constructor has no inferred type");
+        if(expression.isMergedConstructor()){
+            // if it is a merged constructor the child must be a subtype of object* inferred type
+            SequenceType childSequenceType = ((Expression) expression.getChildren().get(0)).getInferredSequenceType();
+            if(childSequenceType == null) {
+                throw new UnexpectedStaticTypeException("The child expression has no inferred type");
             }
-            ItemType keyType = keySequenceType.getItemType();
-            if(!keyType.equals(ItemType.stringItem) && !keyType.equals(ItemType.atomicItem) && !keyType.equals(ItemType.item)){
-                throw new UnexpectedStaticTypeException("The inferred static types for the keys of an Object must be String or one of its supertypes (i.e. atomicItem or item)");
+            if(!childSequenceType.isSubtypeOf(SequenceType.createSequenceType("object*"))){
+                throw new UnexpectedStaticTypeException("The child expression must have object* sequence type, instead found: " + childSequenceType);
+            }
+        } else {
+            for (Expression keyExpression : expression.getKeys()) {
+                SequenceType keySequenceType = keyExpression.getInferredSequenceType();
+                if (keySequenceType == null) {
+                    throw new UnexpectedStaticTypeException("One of the key in the object constructor has no inferred type");
+                }
+                if (!keySequenceType.isSubtypeOf(SequenceType.createSequenceType("string")) && !keySequenceType.isSubtypeOf(SequenceType.createSequenceType("anyURI"))) {
+                    throw new UnexpectedStaticTypeException("The inferred static sequence types for the keys of an Object must be a subtype of string or anyURI, instead found a: " + keySequenceType);
+                }
             }
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.objectItem));

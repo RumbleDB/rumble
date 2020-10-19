@@ -227,7 +227,6 @@ public class ItemType implements Serializable {
     }
     
     public ItemType findCommonSuperType(ItemType other){
-        // TODO: consider introducing numeric
         if(other.isSubtypeOf(this)){
             return this;
         } else if(this.isSubtypeOf(other)) {
