@@ -10,6 +10,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -451,6 +452,64 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         }
         if(!childInferredType.hasEffectiveBooleanValue()){
             throw new UnexpectedStaticTypeException("The child expression of NotExpression has " + childInferredType + " inferred type, which has no effective boolean value");
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        return argument;
+    }
+
+    // endregion
+
+    // region comparison
+
+    @Override
+    public Void visitComparisonExpr(ComparisonExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+
+        List<Node> childrenExpressions = expression.getChildren();
+        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
+        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+
+        if(leftInferredType == null || rightInferredType == null){
+            throw new UnexpectedStaticTypeException("A child expression of a ComparisonExpression has no inferred type");
+        }
+
+        ComparisonExpression.ComparisonOperator operator = expression.getComparisonOperator();
+
+        // for value comparison arities * and + are not allowed, also if one return the empty sequence for sure throw XPST0005 error
+        if(operator.isValueComparison()){
+            if(leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()){
+                throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+            }
+            if(resolveArities(leftInferredType.getArity(), rightInferredType.getArity()) == null){
+                throw new UnexpectedStaticTypeException("'+' and '*' arities are not allowed for this comparison operator: " + operator);
+            }
+        }
+
+        ItemType leftItemType = leftInferredType.getItemType();
+        ItemType rightItemType = rightInferredType.getItemType();
+
+        // Type must be a strict subtype of atomic
+        if(!leftItemType.isSubtypeOf(ItemType.atomicItem) || !rightItemType.isSubtypeOf(ItemType.atomicItem) || leftItemType.equals(ItemType.atomicItem) || rightItemType.equals(ItemType.atomicItem)){
+            throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
+        }
+
+        // Type must match exactly or be both numeric or both promotable to string
+        if(!leftItemType.equals(rightItemType) &&
+                !(leftItemType.isNumeric() && rightItemType.isNumeric()) &&
+                !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())){
+            // TODO: how to deal with duration
+            throw new UnexpectedStaticTypeException("It is not possible to compare these types: " + leftItemType + " and " + rightItemType);
+        }
+
+        // Inequality is not defined for hexBinary and base64binary
+        if((operator != ComparisonExpression.ComparisonOperator.VC_EQ ||
+                operator != ComparisonExpression.ComparisonOperator.VC_NE ||
+                operator != ComparisonExpression.ComparisonOperator.GC_EQ ||
+                operator != ComparisonExpression.ComparisonOperator.GC_NE) && (
+                        leftItemType.equals(ItemType.hexBinaryItem) || leftItemType.equals(ItemType.base64BinaryItem)
+                )){
+            throw new UnexpectedStaticTypeException("It is not possible to compare these types: " + leftItemType + " " + operator + " " + rightItemType);
         }
 
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));

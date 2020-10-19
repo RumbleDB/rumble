@@ -301,6 +301,11 @@ public class ItemType implements Serializable {
         return this.equals(integerItem) || this.equals(decimalItem) || this.equals(doubleItem);
     }
 
+    // returns [true] if this can be promoted to string
+    public boolean canBePromotedToString(){
+        return this.equals(stringItem) || this.equals(anyURIItem);
+    }
+
     @Override
     public String toString() {
         return this.name;
