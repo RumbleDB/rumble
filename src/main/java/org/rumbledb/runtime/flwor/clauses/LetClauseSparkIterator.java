@@ -286,6 +286,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We need to manually adjust the context item with the dependency mode the parent projection.
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (parentProjection.containsKey(this.variableName)) {
+            predicateDependencies.remove(this.variableName);
             predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
         }
 
@@ -315,18 +316,24 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         System.out.println("[INFO] Rumble detected an equi-join in the left clause.");
 
+
+        expressionDF.show();
+
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
             Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
             contextItemValueExpression,
             context,
-            (this.child == null)
-                ? Collections.emptyList()
-                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            Collections.singletonList(Name.CONTEXT_ITEM),
             null,
             true
         );
+
+        expressionDF.show();
+
+        inputDF.show();
+
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
@@ -338,6 +345,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             true
         );
+
+        inputDF.show();
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         expressionDF.createOrReplaceTempView("hashedExpressionResults");
