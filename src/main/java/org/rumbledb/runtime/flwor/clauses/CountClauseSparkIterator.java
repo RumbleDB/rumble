@@ -186,9 +186,9 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public Set<Name> getVariablesBoundInCurrentFLWORExpression() {
+    public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
-        result.addAll(this.child.getVariablesBoundInCurrentFLWORExpression());
+        result.addAll(this.child.getOutputTupleVariableNames());
         result.add(this.variableName);
         return result;
     }

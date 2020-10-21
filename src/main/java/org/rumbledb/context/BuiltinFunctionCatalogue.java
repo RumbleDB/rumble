@@ -62,6 +62,7 @@ import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
+import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
@@ -326,6 +327,16 @@ public class BuiltinFunctionCatalogue {
         "item*",
         TextFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
+    /**
+     * function that parses a text file locally
+     */
+    static final BuiltinFunction local_text_file = createBuiltinFunction(
+        "local-text-file",
+        "string",
+        "string*",
+        LocalTextFileFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
      * function that parallelizes item collections into a Spark RDD
@@ -1809,6 +1820,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
         builtinFunctions.put(text_file1.getIdentifier(), text_file1);
         builtinFunctions.put(text_file2.getIdentifier(), text_file2);
+        builtinFunctions.put(local_text_file.getIdentifier(), local_text_file);
         builtinFunctions.put(parallelizeFunction1.getIdentifier(), parallelizeFunction1);
         builtinFunctions.put(parallelizeFunction2.getIdentifier(), parallelizeFunction2);
         builtinFunctions.put(parquet_file.getIdentifier(), parquet_file);

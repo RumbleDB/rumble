@@ -34,6 +34,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
@@ -45,6 +46,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
+    private String outputFormat;
+    private Map<String, String> outputFormatOptions;
+    private int numberOfOutputPartitions;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -112,11 +116,53 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.allowedPrefixes = newValue;
     }
 
+    public String getOutputFormat() {
+        return this.outputFormat;
+    }
+
+    public void setOutputFormat(String newValue) {
+        this.outputFormat = newValue;
+    }
+
+    public int getNumberOfOutputPartitions() {
+        return this.numberOfOutputPartitions;
+    }
+
+    public void setNumberOfOutputPartitions(int newValue) {
+        this.numberOfOutputPartitions = newValue;
+    }
+
+    public Map<String, String> getOutputFormatOptions() {
+        return this.outputFormatOptions;
+    }
+
+    public void setOutputFormatOption(String key, String value) {
+        this.outputFormatOptions.put(key, value);
+    }
+
     public void init() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
             this.allowedPrefixes = Arrays.asList();
+        }
+        if (this.arguments.containsKey("output-format")) {
+            this.outputFormat = this.arguments.get("output-format").toLowerCase();
+        } else {
+            this.outputFormat = "json";
+        }
+        if (this.arguments.containsKey("number-of-output-partitions")) {
+            this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
+        } else {
+            this.numberOfOutputPartitions = -1;
+        }
+        this.outputFormatOptions = new HashMap<>();
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("output-format-option:")) {
+                String key = s.substring(21);
+                String value = this.arguments.get(s);
+                this.outputFormatOptions.put(key, value);
+            }
         }
         if (this.arguments.containsKey("materialization-cap")) {
             this.resultsSizeCap = Integer.parseInt(this.arguments.get("materialization-cap"));

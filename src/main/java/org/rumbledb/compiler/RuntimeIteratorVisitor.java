@@ -279,10 +279,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 OrderByClauseSortingKey.EMPTY_ORDER emptyOrder = orderExpr.getEmptyOrder();
                 if (emptyOrder == OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
                     if (clause.getStaticContext().isEmptySequenceOrderLeast()) {
-                        System.out.println("Setting to least.");
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.LEAST;
                     } else {
-                        System.out.println("Setting to greatest.");
                         emptyOrder = OrderByClauseSortingKey.EMPTY_ORDER.GREATEST;
                     }
                 }
@@ -512,6 +510,10 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             runtimeIterator = NamedFunctions.getBuiltInFunctionIterator(
                 identifier,
                 arguments,
+                // Note: passing the static context of the function call expression makes
+                // all builtin functions static-context-dependent.
+                // This might be worth a more fine-grained adjustment later.
+                expression.getStaticContext(),
                 expression.getHighestExecutionMode(this.visitorConfig),
                 iteratorMetadata
             );
