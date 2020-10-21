@@ -84,6 +84,19 @@ public class SequenceType implements Serializable {
             this.isAritySubtypeOf(superType.arity);
     }
 
+    // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
+    public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
+        if (this.isEmptySequence) {
+            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+        }
+        return this.isAritySubtypeOf(superType.arity) && (
+                this.itemType.isSubtypeOf(superType.getItemType()) ||
+                        (this.itemType.canBePromotedToString() && superType.itemType.equals(ItemType.stringItem)) ||
+                        (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem)) ||
+                        (this.itemType.equals(ItemType.integerItem) && superType.itemType.equals(ItemType.decimalItem))
+        );
+    }
+
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
     public boolean isAritySubtypeOf(Arity superArity){
         if(superArity == Arity.ZeroOrMore || superArity == this.arity)

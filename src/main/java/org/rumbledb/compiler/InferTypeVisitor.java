@@ -1,7 +1,11 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
@@ -163,6 +167,75 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
             }
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.objectItem));
+        return argument;
+    }
+
+    @Override
+    public Void visitContextExpr(ContextItemExpression expression, Void argument) {
+        // Context item not available at static time
+        expression.setInferredSequenceType(new SequenceType(ItemType.item));
+        System.out.println("Visited context expression");
+        return argument;
+    }
+
+    @Override
+    public Void visitInlineFunctionExpr(InlineFunctionExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+        expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+        System.out.println("Visited inline function expression");
+        return argument;
+    }
+
+    @Override
+    public Void visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+        expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+        System.out.println("Visited named function expression");
+        return argument;
+    }
+
+    @Override
+    public Void visitFunctionCall(FunctionCallExpression expression, Void argument) {
+        visitDescendants(expression, argument);
+
+        BuiltinFunction function = null;
+        try {
+            function = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
+        } catch (OurBadException exception){
+            // TODO: where can i find all available functions in the static context
+        }
+
+        if(function == null){
+            throw new UnexpectedStaticTypeException("Function " + expression.getFunctionIdentifier() + " is not available");
+        }
+
+        List<Expression> parameterExpressions = expression.getArguments();
+        List<SequenceType> parameterTypes = function.getSignature().getParameterTypes();
+        int paramsLength = parameterExpressions.size();
+
+        for(int i = 0; i < paramsLength; ++i){
+            if(parameterExpressions.get(i) != null){
+                SequenceType actualType = parameterExpressions.get(i).getInferredSequenceType();
+                SequenceType expectedType = parameterTypes.get(i);
+                // check actual parameters is either a subtype of or can be promoted to expected type
+                // TODO: should i consider automatic prmotion as valid or not
+                if(!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)){
+                    throw new UnexpectedStaticTypeException("Argument " + i + " requires " + expectedType + " but " + actualType + " was found");
+                }
+            }
+        }
+
+        if(expression.isPartialApplication()){
+            expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+        } else {
+            SequenceType returnType = function.getSignature().getReturnType();
+            if(returnType == null){
+                returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            }
+            expression.setInferredSequenceType(returnType);
+        }
+
+        System.out.println("Visited static function call, set type to " + expression.getInferredSequenceType());
         return argument;
     }
 
@@ -503,9 +576,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         }
 
         // Inequality is not defined for hexBinary and base64binary
-        if((operator != ComparisonExpression.ComparisonOperator.VC_EQ ||
-                operator != ComparisonExpression.ComparisonOperator.VC_NE ||
-                operator != ComparisonExpression.ComparisonOperator.GC_EQ ||
+        if((operator != ComparisonExpression.ComparisonOperator.VC_EQ &&
+                operator != ComparisonExpression.ComparisonOperator.VC_NE &&
+                operator != ComparisonExpression.ComparisonOperator.GC_EQ &&
                 operator != ComparisonExpression.ComparisonOperator.GC_NE) && (
                         leftItemType.equals(ItemType.hexBinaryItem) || leftItemType.equals(ItemType.base64BinaryItem)
                 )){
@@ -515,6 +588,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
     }
+
+    // endregion
+
+    // region control
+
+
 
     // endregion
 }
