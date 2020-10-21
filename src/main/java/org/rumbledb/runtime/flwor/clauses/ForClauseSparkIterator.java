@@ -330,18 +330,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             overridenVariables
         );
 
-        // We add the one or two current clause variables to our projection.
-        if (!columnsToSelect.contains(this.variableName.toString())) {
-            columnsToSelect.add(this.variableName.toString());
-        } else {
-            columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName.toString());
-        }
-        if (overridenVariables.contains(this.positionalVariableName)) {
-            if (!columnsToSelect.contains(this.positionalVariableName.toString())) {
-                columnsToSelect.add(this.positionalVariableName.toString());
-            } else {
-                columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
-            }
+        // For the new variables, we need to disambiguate.
+        columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName.toString());
+        if (this.positionalVariableName != null) {
+            columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, false);
 
