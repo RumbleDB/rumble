@@ -361,6 +361,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
 
+        expressionDF.show();
+
         // We serialize back all grouped items as sequences of items.
         expressionDF.createOrReplaceTempView("groupedResults");
         expressionDF.sparkSession()
@@ -370,6 +372,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType
             );
+        expressionDF.show();
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
@@ -380,6 +383,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.expressionHashColumnName
                 )
             );
+        expressionDF.show();
 
         expressionDF.createOrReplaceTempView("groupedAndSerializedResults");
         inputDF.createOrReplaceTempView("inputTuples");
@@ -409,6 +413,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.inputTupleHashColumnName
                 )
             );
+        inputDF.show();
 
         // We now post-filter on the predicate, by hash group.
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
@@ -427,12 +432,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.variableName,
             filteringPredicateIterator,
             context,
-            (this.child == null)
-                ? Collections.emptyList()
-                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            new ArrayList<Name>(this.getOutputTupleVariableNames()),
             parentProjection,
             false
         );
+        inputDF.show();
 
         return inputDF;
     }
