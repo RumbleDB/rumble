@@ -59,6 +59,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -305,7 +306,17 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
-        expressionDF = getDataFrameStartingClause(context, outputTupleVariableDependencies);
+        Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+        if (outputTupleVariableDependencies.containsKey(this.variableName)) {
+            startingClauseDependencies.put(this.variableName, outputTupleVariableDependencies.get(this.variableName));
+        }
+        if (outputTupleVariableDependencies.containsKey(this.positionalVariableName)) {
+            startingClauseDependencies.put(
+                this.positionalVariableName,
+                outputTupleVariableDependencies.get(this.positionalVariableName)
+            );
+        }
+        expressionDF = getDataFrameStartingClause(context, startingClauseDependencies);
 
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(outputTupleVariableDependencies));
 
