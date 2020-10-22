@@ -49,7 +49,7 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -187,6 +187,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 this.variableName,
                 this.assignmentIterator,
                 context,
+                (this.child == null)
+                    ? Collections.emptyList()
+                    : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 parentProjection,
                 false
             );
@@ -283,6 +286,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We need to manually adjust the context item with the dependency mode the parent projection.
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (parentProjection.containsKey(this.variableName)) {
+            predicateDependencies.remove(this.variableName);
             predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
         }
 
@@ -312,23 +316,37 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         System.out.println("[INFO] Rumble detected an equi-join in the left clause.");
 
+
+        expressionDF.show();
+
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
             Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
             contextItemValueExpression,
             context,
+            Collections.singletonList(Name.CONTEXT_ITEM),
             null,
             true
         );
+
+        expressionDF.show();
+
+        inputDF.show();
+
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
             inputTupleValueExpression,
             context,
+            (this.child == null)
+                ? Collections.emptyList()
+                : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
             true
         );
+
+        inputDF.show();
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         expressionDF.createOrReplaceTempView("hashedExpressionResults");
@@ -343,6 +361,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
 
+        expressionDF.show();
+
         // We serialize back all grouped items as sequences of items.
         expressionDF.createOrReplaceTempView("groupedResults");
         expressionDF.sparkSession()
@@ -352,6 +372,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType
             );
+        expressionDF.show();
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
@@ -362,6 +383,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.expressionHashColumnName
                 )
             );
+        expressionDF.show();
 
         expressionDF.createOrReplaceTempView("groupedAndSerializedResults");
         inputDF.createOrReplaceTempView("inputTuples");
@@ -369,14 +391,13 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We gather the columns to select.
         // We need to project away the let clause variable because we re-create it.
         StructType inputSchema = inputDF.schema();
-        int duplicateVariableIndex = Arrays.asList(inputSchema.fieldNames())
-            .indexOf(this.variableName.toString());
-        int duplicatePositionalVariableIndex = -1;
+        List<Name> variableNamesToExclude = new ArrayList<>();
+        variableNamesToExclude.add(this.variableName);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            duplicatePositionalVariableIndex,
-            parentProjection
+            parentProjection,
+            null,
+            variableNamesToExclude
         );
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
@@ -392,6 +413,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.inputTupleHashColumnName
                 )
             );
+        inputDF.show();
 
         // We now post-filter on the predicate, by hash group.
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
@@ -410,9 +432,11 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.variableName,
             filteringPredicateIterator,
             context,
+            new ArrayList<Name>(this.getOutputTupleVariableNames()),
             parentProjection,
             false
         );
+        inputDF.show();
 
         return inputDF;
     }
@@ -499,40 +523,43 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     /**
      * Extends a DataFrame with a new column obtained from the evaluation of an expression for each tuple.
      * 
-     * @param df the DataFrame to extend
+     * @param dataFrame the DataFrame to extend
      * @param newVariableName the name of the new column (variable)
      * @param newVariableExpression the expression to evaluate
      * @param context the context (in addition to each tuple) in which to evaluation the expression
-     * @param dependencies the dependencies to project to (possibly null to keep everything).
+     * @param variablesInInputTuple the name of the variables that can be found in the input tuple (as opposed to those
+     *        in the context)
+     * @param outputTupleVariableDependencies the dependencies to project to (possibly null to keep everything).
      * @param hash whether or not to compute single-item hashes rather than the actual serialized sequences of items.
      * @return
      */
     public static Dataset<Row> bindLetVariableInDataFrame(
-            Dataset<Row> df,
+            Dataset<Row> dataFrame,
             Name newVariableName,
             RuntimeIterator newVariableExpression,
             DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesInInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash
     ) {
-        StructType inputSchema = df.schema();
-        List<String> columnNames = Arrays.asList(inputSchema.fieldNames());
-
-        int duplicateVariableIndex = columnNames.indexOf(newVariableName.toString());
+        StructType inputSchema = dataFrame.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            duplicateVariableIndex,
-            dependencies
+            outputTupleVariableDependencies,
+            null,
+            Collections.singletonList(newVariableName)
         );
+
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
-            newVariableExpression.getVariableDependencies()
+            newVariableExpression.getVariableDependencies(),
+            variablesInInputTuple,
+            null
         );
 
         if (!hash) {
-            df.sparkSession()
+            dataFrame.sparkSession()
                 .udf()
                 .register(
                     "letClauseUDF",
@@ -540,7 +567,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
         } else {
-            df.sparkSession()
+            dataFrame.sparkSession()
                 .udf()
                 .register(
                     "hashUDF",
@@ -552,9 +579,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
-        df.createOrReplaceTempView("input");
+        dataFrame.createOrReplaceTempView("input");
         if (!hash) {
-            df = df.sparkSession()
+            dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
                         "select %s letClauseUDF(%s) as `%s` from input",
@@ -564,7 +591,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         } else {
-            df = df.sparkSession()
+            dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
                         "select %s hashUDF(%s) as `%s` from input",
@@ -574,6 +601,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         }
-        return df;
+        return dataFrame;
     }
 }

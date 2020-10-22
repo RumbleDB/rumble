@@ -63,8 +63,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -134,30 +136,43 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Retrieves the variable name represented by a physical data frame column.
+     * 
+     * @param columnName the column name.
+     * @return the variable name.
+     */
+    public static Name variableForColumnName(String columnName) {
+        int pos = columnName.indexOf(".");
+        if (pos == -1) {
+            return Name.createVariableInNoNamespace(columnName);
+        } else {
+            return Name.createVariableInNoNamespace(columnName.substring(0, pos));
+        }
+    }
+
+    /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema
     ) {
-        return getColumnNames(inputSchema, -1, null);
+        return Arrays.asList(inputSchema.fieldNames());
     }
 
     /**
-     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
-     * overriden). Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
+     * Lists the names of the columns of the schema that needed by the dependencies.
+     * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
      * 
      * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema,
-            int duplicateVariableIndex,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
-        return getColumnNames(inputSchema, duplicateVariableIndex, -1, dependencies);
+        return getColumnNames(inputSchema, dependencies, null, null);
     }
 
     /**
@@ -165,32 +180,116 @@ public class FlworDataFrameUtils {
      * overriden).
      * 
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param duplicatePositionalVariableIndex enables skipping another variable
      * @param dependencies restriction of the results to within a specified set
+     * @param variablesToRestrictTo variables whose columns must refer to.
+     * @param variablesToExclude variables whose columns should be projected away.
      * @return list of SQL column names in the schema
      */
     public static List<String> getColumnNames(
             StructType inputSchema,
-            int duplicateVariableIndex,
-            int duplicatePositionalVariableIndex,
-            Map<Name, DynamicContext.VariableDependency> dependencies
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesToRestrictTo,
+            List<Name> variablesToExclude
     ) {
+        if (dependencies == null) {
+            List<String> result = new ArrayList<>();
+            for (String columnName : inputSchema.fieldNames()) {
+                Name name = variableForColumnName(columnName);
+                if (variablesToExclude != null && variablesToExclude.contains(name)) {
+                    continue;
+                }
+                if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(name)) {
+                    continue;
+                }
+                result.add(columnName);
+            }
+            return result;
+        }
         List<String> result = new ArrayList<>();
-        String[] columnNames = inputSchema.fieldNames();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex || columnIndex == duplicatePositionalVariableIndex) {
+        Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
+        for (Name variableName : dependencies.keySet()) {
+            if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
                 continue;
             }
-            String var = columnNames[columnIndex];
-            if (dependencies == null) {
-                result.add(columnNames[columnIndex]);
-            } else {
-                for (Name name : dependencies.keySet()) {
-                    if (name.toString().equals(var) || var.equals(name.toString() + ".count")) {
-                        result.add(var);
+            if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
+                continue;
+            }
+            switch (dependencies.get(variableName)) {
+                case FULL: {
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
                     }
+                    throw new OurBadException(
+                            "Expecting full variable dependency on "
+                                + variableName
+                                + " but column not found in the data frame."
+                    );
                 }
+                case COUNT: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".count");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting count variable dependency on "
+                                + variableName
+                                + " but no appropriate column was found in the data frame."
+                    );
+                }
+                case SUM: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".sum");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting count variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                case MIN: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".min");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting count variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                case MAX: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".max");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting count variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                default:
+                    throw new OurBadException(
+                            "Dependency " + dependencies.get(variableName) + " is not supported yet."
+                    );
             }
         }
         return result;
@@ -321,9 +420,9 @@ public class FlworDataFrameUtils {
             Map<Name, DynamicContext.VariableDependency> dependencies,
             String columnName
     ) {
-        return dependencies.containsKey(Name.createVariableInNoNamespace(columnName))
+        return dependencies.containsKey(variableForColumnName(columnName))
             && dependencies.get(
-                Name.createVariableInNoNamespace(columnName)
+                variableForColumnName(columnName)
             ) == DynamicContext.VariableDependency.COUNT;
     }
 
@@ -331,7 +430,7 @@ public class FlworDataFrameUtils {
             List<Name> groupbyVariableNames,
             String columnName
     ) {
-        return groupbyVariableNames.contains(Name.createVariableInNoNamespace(columnName));
+        return groupbyVariableNames.contains(variableForColumnName(columnName));
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {

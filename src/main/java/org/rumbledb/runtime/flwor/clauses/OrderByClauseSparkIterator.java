@@ -241,8 +241,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
-            this.dependencies
+            null,
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
         );
 
         df.sparkSession()
