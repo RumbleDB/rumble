@@ -310,7 +310,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (outputTupleVariableDependencies.containsKey(this.variableName)) {
             startingClauseDependencies.put(this.variableName, outputTupleVariableDependencies.get(this.variableName));
         }
-        if (outputTupleVariableDependencies.containsKey(this.positionalVariableName)) {
+        if (
+            this.positionalVariableName != null
+                && outputTupleVariableDependencies.containsKey(this.positionalVariableName)
+        ) {
             startingClauseDependencies.put(
                 this.positionalVariableName,
                 outputTupleVariableDependencies.get(this.positionalVariableName)
