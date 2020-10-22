@@ -457,6 +457,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (
             sequenceVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
+            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+            startingClauseDependencies.put(sequenceVariableName, DynamicContext.VariableDependency.FULL);
+            startingClauseDependencies.put(Name.CONTEXT_POSITION, DynamicContext.VariableDependency.FULL);
+
             optimizableJoin = false;
             expressionDF = getDataFrameStartingClause(
                 sequenceIterator,
@@ -464,18 +468,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 Name.CONTEXT_POSITION,
                 false,
                 context,
-                predicateDependencies
+                startingClauseDependencies
             );
             variablesInExpressionSideTuple.add(sequenceVariableName);
             variablesInExpressionSideTuple.add(Name.CONTEXT_POSITION);
         } else {
+            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+            startingClauseDependencies.put(sequenceVariableName, DynamicContext.VariableDependency.FULL);
             expressionDF = getDataFrameStartingClause(
                 sequenceIterator,
                 sequenceVariableName,
                 null,
                 false,
                 context,
-                predicateDependencies
+                startingClauseDependencies
             );
             variablesInExpressionSideTuple.add(sequenceVariableName);
         }
@@ -771,7 +777,20 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                                                                                                         // variables
                                                                                                         // from new
 
-            Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, parentProjection);
+            Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+            if (parentProjection.containsKey(this.variableName)) {
+                startingClauseDependencies.put(this.variableName, parentProjection.get(this.variableName));
+            }
+            if (
+                this.positionalVariableName != null
+                    && parentProjection.containsKey(this.positionalVariableName)
+            ) {
+                startingClauseDependencies.put(
+                    this.positionalVariableName,
+                    parentProjection.get(this.positionalVariableName)
+                );
+            }
+            Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, startingClauseDependencies);
             lateralView.createOrReplaceTempView("lateralView");
 
             // We then get the (singleton) input tuple as a data frame
