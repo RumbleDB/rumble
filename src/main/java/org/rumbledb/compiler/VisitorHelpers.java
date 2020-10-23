@@ -50,9 +50,9 @@ public class VisitorHelpers {
         new ModulePruningVisitor(conf).visit(node, null);
     }
 
-    private static void inferTypes(Node node, RumbleRuntimeConfiguration conf) {
+    private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
         System.out.println("* Starting type inference *");
-        new InferTypeVisitor(conf).visit(node, null);
+        new InferTypeVisitor(conf).visit(module, module.getStaticContext());
     }
 
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {

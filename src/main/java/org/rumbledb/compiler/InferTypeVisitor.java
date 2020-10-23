@@ -4,6 +4,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunction;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
@@ -31,7 +32,7 @@ import java.util.List;
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
-public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
+public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
@@ -45,7 +46,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitCommaExpression(CommaExpression expression, Void argument) {
+    public StaticContext visitCommaExpression(CommaExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         SequenceType inferredType = SequenceType.EMPTY_SEQUENCE;
@@ -81,49 +82,49 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     // region primary
 
     @Override
-    public Void visitString(StringLiteralExpression expression, Void argument){
+    public StaticContext visitString(StringLiteralExpression expression, StaticContext argument){
         System.out.println("visiting String literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.stringItem));
         return argument;
     }
 
     @Override
-    public Void visitInteger(IntegerLiteralExpression expression, Void argument) {
+    public StaticContext visitInteger(IntegerLiteralExpression expression, StaticContext argument) {
         System.out.println("visiting Int literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.integerItem));
         return argument;
     }
 
     @Override
-    public Void visitDouble(DoubleLiteralExpression expression, Void argument) {
+    public StaticContext visitDouble(DoubleLiteralExpression expression, StaticContext argument) {
         System.out.println("visiting Double literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.doubleItem));
         return argument;
     }
 
     @Override
-    public Void visitDecimal(DecimalLiteralExpression expression, Void argument) {
+    public StaticContext visitDecimal(DecimalLiteralExpression expression, StaticContext argument) {
         System.out.println("visiting Decimal literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.decimalItem));
         return argument;
     }
 
     @Override
-    public Void visitNull(NullLiteralExpression expression, Void argument) {
+    public StaticContext visitNull(NullLiteralExpression expression, StaticContext argument) {
         System.out.println("visiting Null literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.nullItem));
         return argument;
     }
 
     @Override
-    public Void visitBoolean(BooleanLiteralExpression expression, Void argument) {
+    public StaticContext visitBoolean(BooleanLiteralExpression expression, StaticContext argument) {
         System.out.println("visiting Boolean literal");
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
     }
 
     @Override
-    public Void visitVariableReference(VariableReferenceExpression expression, Void argument) {
+    public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
         SequenceType variableType = expression.getType();
         if(variableType == null){
             System.out.println("variable reference type was null so");
@@ -135,7 +136,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitArrayConstructor(ArrayConstructorExpression expression, Void argument) {
+    public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
         System.out.println("visiting Array constructor literal");
         visitDescendants(expression, argument);
         expression.setInferredSequenceType(new SequenceType(ItemType.arrayItem));
@@ -143,7 +144,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitObjectConstructor(ObjectConstructorExpression expression, Void argument) {
+    public StaticContext visitObjectConstructor(ObjectConstructorExpression expression, StaticContext argument) {
         System.out.println("visiting Object constructor literal");
         visitDescendants(expression, argument);
         if(expression.isMergedConstructor()){
@@ -171,7 +172,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitContextExpr(ContextItemExpression expression, Void argument) {
+    public StaticContext visitContextExpr(ContextItemExpression expression, StaticContext argument) {
         // Context item not available at static time
         expression.setInferredSequenceType(new SequenceType(ItemType.item));
         System.out.println("Visited context expression");
@@ -179,7 +180,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitInlineFunctionExpr(InlineFunctionExpression expression, Void argument) {
+    public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
         System.out.println("Visited inline function expression");
@@ -187,7 +188,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Void argument) {
+    public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
         System.out.println("Visited named function expression");
@@ -195,7 +196,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitFunctionCall(FunctionCallExpression expression, Void argument) {
+    public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         BuiltinFunction function = null;
@@ -244,7 +245,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     // region typing
 
     @Override
-    public Void visitCastableExpression(CastableExpression expression, Void argument) {
+    public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
@@ -252,7 +253,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitCastExpression(CastExpression expression, Void argument) {
+    public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
         System.out.println("visiting Cast expression");
         visitDescendants(expression, argument);
 
@@ -285,7 +286,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitInstanceOfExpression(InstanceOfExpression expression, Void argument) {
+    public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
         System.out.println("visiting InstanceOf expression");
         visitDescendants(expression, argument);
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
@@ -293,7 +294,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitTreatExpression(TreatExpression expression, Void argument) {
+    public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
         System.out.println("visiting Treat expression");
         visitDescendants(expression, argument);
 
@@ -314,7 +315,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     // region arithmetic
 
     @Override
-    public Void visitAdditiveExpr(AdditiveExpression expression, Void argument) {
+    public StaticContext visitAdditiveExpr(AdditiveExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
@@ -379,7 +380,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitMultiplicativeExpr(MultiplicativeExpression expression, Void argument) {
+    public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
@@ -445,7 +446,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitUnaryExpr(UnaryExpression expression, Void argument) {
+    public StaticContext visitUnaryExpr(UnaryExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         SequenceType childInferredType = expression.getMainExpression().getInferredSequenceType();
 
@@ -482,7 +483,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
 
     // region logic
 
-    private Void visitAndOrExpr(Expression expression, Void argument, String expressionName){
+    private StaticContext visitAndOrExpr(Expression expression, StaticContext argument, String expressionName){
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
@@ -506,17 +507,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     }
 
     @Override
-    public Void visitAndExpr(AndExpression expression, Void argument) {
+    public StaticContext visitAndExpr(AndExpression expression, StaticContext argument) {
         return visitAndOrExpr(expression, argument, "And");
     }
 
     @Override
-    public Void visitOrExpr(OrExpression expression, Void argument) {
+    public StaticContext visitOrExpr(OrExpression expression, StaticContext argument) {
         return visitAndOrExpr(expression, argument, "Or");
     }
 
     @Override
-    public Void visitNotExpr(NotExpression expression, Void argument) {
+    public StaticContext visitNotExpr(NotExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         SequenceType childInferredType = expression.getMainExpression().getInferredSequenceType();
@@ -536,7 +537,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<Void> {
     // region comparison
 
     @Override
-    public Void visitComparisonExpr(ComparisonExpression expression, Void argument) {
+    public StaticContext visitComparisonExpr(ComparisonExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
         List<Node> childrenExpressions = expression.getChildren();
