@@ -47,7 +47,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -283,9 +282,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     expression.getVariableName(),
                     expression.getExpression(),
                     context,
-                    (this.child == null)
-                        ? Collections.emptyList()
-                        : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                    new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     null,
                     false
                 );
