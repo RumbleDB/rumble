@@ -16,6 +16,10 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -603,7 +607,107 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region control
 
+    @Override
+    public StaticContext visitConditionalExpression(ConditionalExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
 
+        SequenceType ifType = expression.getCondition().getInferredSequenceType();
+        SequenceType thenType = expression.getBranch().getInferredSequenceType();
+        SequenceType elseType = expression.getElseBranch().getInferredSequenceType();
+
+        if(ifType == null || thenType == null || elseType == null){
+            throw new OurBadException("A child expression of a ConditionalExpression has no inferred type");
+        }
+
+        if(!ifType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("The condition in the 'if' must have effective boolean value, found inferred type: " + ifType + " (which has not effective boolean value)");
+        }
+
+        if(thenType.isEmptySequence() && elseType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        expression.setInferredSequenceType(thenType.leastCommonSupertypeWith(elseType));
+        System.out.println("visiting Conditional expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTryCatchExpression(TryCatchExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        SequenceType inferredType = null;
+
+        for(Node childNode : expression.getChildren()){
+            SequenceType childType = ((Expression) childNode).getInferredSequenceType();
+            if(childType == null){
+                throw new OurBadException("A child expression of a TryCatchExpression has no inferred type");
+            }
+
+            if(inferredType == null){
+                inferredType = childType;
+            } else {
+                inferredType = inferredType.leastCommonSupertypeWith(childType);
+            }
+        }
+
+        if(inferredType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+        expression.setInferredSequenceType(inferredType);
+        System.out.println("visiting TryCatch expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
+        visit(expression.getTestCondition(), argument);
+        SequenceType inferredType = null;
+
+        SequenceType conditionType = expression.getTestCondition().getInferredSequenceType();
+        if(conditionType == null){
+            throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
+        }
+
+        for(TypeswitchCase typeswitchCase : expression.getCases()){
+            Name variableName = typeswitchCase.getVariableName();
+            Expression returnExpression = typeswitchCase.getReturnExpression();
+            // if we bind a variable we add the static type of it in the context of the return expression
+            if(variableName != null){
+                SequenceType variableType = null;
+                for(SequenceType st : typeswitchCase.getUnion()){
+                    variableType = variableType == null ? st : variableType.leastCommonSupertypeWith(st);
+                }
+                returnExpression.getStaticContext().replaceVariableSequenceType(variableName, variableType);
+            }
+
+            visit(returnExpression, argument);
+            SequenceType caseType = returnExpression.getInferredSequenceType();
+            if(caseType == null){
+                throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
+            }
+            inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
+        }
+
+        Name variableName = expression.getDefaultCase().getVariableName();
+        Expression returnExpression = expression.getDefaultCase().getReturnExpression();
+        // if we bind a variable in the default case, we infer testCondition type
+        if(variableName != null){
+            returnExpression.getStaticContext().replaceVariableSequenceType(variableName, conditionType);
+        }
+        visit(returnExpression, argument);
+        SequenceType defaultType = returnExpression.getInferredSequenceType();
+        if(defaultType == null){
+            throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
+        }
+        inferredType = inferredType.leastCommonSupertypeWith(defaultType);
+
+        if(inferredType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+        expression.setInferredSequenceType(inferredType);
+        System.out.println("visiting TypeSwitch expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
 
     // endregion
 

@@ -122,6 +122,41 @@ public class SequenceType implements Serializable {
         }
     }
 
+    public SequenceType leastCommonSupertypeWith(SequenceType other){
+        if(this.isEmptySequence){
+            if(other.isEmptySequence()){
+                return this;
+            } else {
+                Arity resultingArity = other.getArity();
+                if(resultingArity == Arity.One){
+                    resultingArity = Arity.OneOrZero;
+                } else if(resultingArity == Arity.OneOrMore){
+                    resultingArity = Arity.ZeroOrMore;
+                }
+                return new SequenceType(other.itemType, resultingArity);
+            }
+        }
+        if(other.isEmptySequence()){
+            Arity resultingArity = this.getArity();
+            if(resultingArity == Arity.One){
+                resultingArity = Arity.OneOrZero;
+            } else if(resultingArity == Arity.OneOrMore){
+                resultingArity = Arity.ZeroOrMore;
+            }
+            return new SequenceType(this.itemType, resultingArity);
+        }
+
+        ItemType itemSupertype = this.getItemType().findCommonSuperType(other.getItemType());
+        Arity aritySuperType = Arity.ZeroOrMore;
+        if(this.isAritySubtypeOf(other.getArity())){
+            aritySuperType = other.getArity();
+        } else if(other.isAritySubtypeOf(this.getArity())){
+            aritySuperType = this.getArity();
+        }
+        // no need additional check because the only disjointed arity are ? and +, which least common supertype is *
+        return new SequenceType(itemSupertype, aritySuperType);
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof SequenceType)) {
