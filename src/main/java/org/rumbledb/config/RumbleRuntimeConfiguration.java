@@ -222,7 +222,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * Sets the number of Items that should be collected in case of a forced materialization. This applies in particular
      * to a local use of the ItemIterator.
      *
-     * @param cap the maximum number of Items to collect.
+     * @param i the maximum number of Items to collect.
      */
     public void setResultSizeCap(int i) {
         this.resultsSizeCap = i;
@@ -259,6 +259,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             return false;
         }
+    }
+
+    public boolean doStaticAnalysis() {
+        return this.arguments.containsKey("static-analysis") && this.arguments.get("static-analysis").equals("yes");
+    }
+
+    public boolean printInferredTypes() {
+        return this.arguments.containsKey("print-inferred-types") && this.arguments.get("print-inferred-types").equals("yes");
     }
 
     public boolean isLocal() {

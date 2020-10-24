@@ -118,6 +118,7 @@ public class InlineFunctionExpression extends Expression {
         buffer.append(this.returnType.toString());
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType) );
         buffer.append("\n");
         for (int i = 0; i < indent + 2; ++i) {
             buffer.append("  ");

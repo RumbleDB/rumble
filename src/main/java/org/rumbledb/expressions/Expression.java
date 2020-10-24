@@ -55,4 +55,17 @@ public abstract class Expression extends Node {
     public SequenceType getInferredSequenceType() { return this.inferredSequenceType; }
 
     public void setInferredSequenceType(SequenceType inferredSequenceType) { this.inferredSequenceType = inferredSequenceType; }
+
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType) );
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
+    }
 }
