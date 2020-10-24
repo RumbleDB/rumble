@@ -47,6 +47,8 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+    // TODO: should this be transient?
+    private transient SequenceType contextItemStaticType;
 
     public StaticContext() {
         this.parent = null;
@@ -54,6 +56,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.contextItemStaticType = null;
     }
 
     public StaticContext(URI staticBaseURI) {
@@ -62,12 +65,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.contextItemStaticType = null;
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
+        this.contextItemStaticType = null;
     }
 
     public StaticContext getParent() {
@@ -264,5 +269,13 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getModuleContext();
         }
         return this;
+    }
+
+    public SequenceType getContextItemStaticType() {
+        return contextItemStaticType;
+    }
+
+    public void setContextItemStaticType(SequenceType contextItemStaticType) {
+        this.contextItemStaticType = contextItemStaticType;
     }
 }

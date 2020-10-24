@@ -130,7 +130,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if(variableType == null){
             // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
             System.out.println("variable reference type was null so we infer it");
-            variableType = argument.getVariableSequenceType(expression.getVariableName());
+            variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
             // we also set variableReference type
             expression.setType(variableType);
         }
@@ -177,9 +177,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitContextExpr(ContextItemExpression expression, StaticContext argument) {
-        // Context item not available at static time
-        expression.setInferredSequenceType(new SequenceType(ItemType.item));
-        System.out.println("Visited context expression");
+        SequenceType contextType = expression.getStaticContext().getContextItemStaticType();
+        if(contextType == null){
+            contextType = new SequenceType(ItemType.item);
+        }
+        expression.setInferredSequenceType(contextType);
+        System.out.println("Visited context expression, set type: " + contextType);
         return argument;
     }
 
@@ -572,20 +575,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
         }
 
-        // Type must match exactly or be both numeric or both promotable to string
+        // Type must match exactly or be both numeric or both promotable to string or both durations
         if(!leftItemType.equals(rightItemType) &&
                 !(leftItemType.isNumeric() && rightItemType.isNumeric()) &&
+                !(leftItemType.isSubtypeOf(ItemType.durationItem) && rightItemType.isSubtypeOf(ItemType.durationItem)) &&
                 !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())){
-            // TODO: how to deal with duration
             throw new UnexpectedStaticTypeException("It is not possible to compare these types: " + leftItemType + " and " + rightItemType);
         }
 
-        // Inequality is not defined for hexBinary and base64binary
+        // Inequality is not defined for hexBinary and base64binary or for duration of different types
         if((operator != ComparisonExpression.ComparisonOperator.VC_EQ &&
                 operator != ComparisonExpression.ComparisonOperator.VC_NE &&
                 operator != ComparisonExpression.ComparisonOperator.GC_EQ &&
                 operator != ComparisonExpression.ComparisonOperator.GC_NE) && (
-                        leftItemType.equals(ItemType.hexBinaryItem) || leftItemType.equals(ItemType.base64BinaryItem)
+                        leftItemType.equals(ItemType.hexBinaryItem) || leftItemType.equals(ItemType.base64BinaryItem) ||
+                                leftItemType.equals(ItemType.durationItem) || rightItemType.equals(ItemType.durationItem) ||
+                                ((leftItemType.equals(ItemType.dayTimeDurationItem) || leftItemType.equals(ItemType.yearMonthDurationItem)) && !rightItemType.equals(leftItemType))
                 )){
             throw new UnexpectedStaticTypeException("It is not possible to compare these types: " + leftItemType + " " + operator + " " + rightItemType);
         }
@@ -613,13 +618,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if(inferredType == null){
                 throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
             }
-            // TODO: should I also change the variableDeclaration SequenceType?
             argument.replaceVariableSequenceType(expression.getVariableName(), inferredType);
         }
 
         return argument;
     }
-
 
     // endregion
 }
