@@ -55,7 +55,12 @@ public class VariableReferenceExpression extends Expression implements Serializa
         return this.name;
     }
 
+    // default to item* if type is null
     public SequenceType getType() {
+        return this.type == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.type;
+    }
+
+    public SequenceType getActualType() {
         return this.type;
     }
 

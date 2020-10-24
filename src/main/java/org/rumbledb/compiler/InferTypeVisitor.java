@@ -19,6 +19,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
@@ -125,10 +126,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
-        SequenceType variableType = expression.getType();
+        SequenceType variableType = expression.getActualType();
         if(variableType == null){
-            System.out.println("variable reference type was null so");
-            variableType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
+            System.out.println("variable reference type was null so we infer it");
+            variableType = argument.getVariableSequenceType(expression.getVariableName());
+            // we also set variableReference type
+            expression.setType(variableType);
         }
         System.out.println("visiting variable reference with type: " + variableType);
         expression.setInferredSequenceType(variableType);
@@ -594,6 +598,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region control
 
+
+
+    // endregion
+
+    // region module
+
+    @Override
+    public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
+        // if expression has no type we infer it, and overwrite the type in the correspondent InScopeVariable
+        visitDescendants(expression, argument);
+        if(expression.getActualSequenceType() == null){
+            SequenceType inferredType = expression.getExpression().getInferredSequenceType();
+            if(inferredType == null){
+                throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
+            }
+            // TODO: should I also change the variableDeclaration SequenceType?
+            argument.replaceVariableSequenceType(expression.getVariableName(), inferredType);
+        }
+
+        return argument;
+    }
 
 
     // endregion

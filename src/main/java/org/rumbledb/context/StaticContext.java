@@ -113,6 +113,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
+    // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
+    public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType){
+        InScopeVariable variable = getInScopeVariable(varName);
+        this.inScopeVariables.replace(varName, new InScopeVariable(varName, newSequenceType, variable.getMetadata(), variable.getStorageMode()));
+    }
+
     public SequenceType getVariableSequenceType(Name varName) {
         return getInScopeVariable(varName).getSequenceType();
     }

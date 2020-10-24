@@ -1398,19 +1398,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarDecl(JsoniqParser.VarDeclContext ctx) {
+        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
+        // but it is actually treated as if it was item*
         SequenceType seq = null;
         boolean external;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
         external = (ctx.external != null);
         Expression expr = null;
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (seq != null) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }

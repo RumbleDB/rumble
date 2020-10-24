@@ -68,7 +68,13 @@ public class VariableDeclaration extends Node {
         return this.external;
     }
 
+    // return item* if sequenceType is [null]
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+    }
+
+    // as above but does NOT default to item*
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -115,7 +121,7 @@ public class VariableDeclaration extends Node {
                 + (this.variableName)
                 + ", "
                 + (this.external ? "external, " : "")
-                + this.sequenceType.toString()
+                + this.getSequenceType().toString()
                 + ") "
         );
         buffer.append(" | " + this.highestExecutionMode);
