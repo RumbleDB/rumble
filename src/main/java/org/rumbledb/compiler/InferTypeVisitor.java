@@ -28,6 +28,7 @@ import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
@@ -887,6 +888,45 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         expression.setInferredSequenceType(SequenceType.createSequenceType("item*"));
         System.out.println("visiting ArrayUnboxingExpression expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
+        visit(expression.getMainExpression(), argument);
+        SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
+
+        if(mainType == null){
+            throw new OurBadException("A child expression of a FilterExpression has no inferred type");
+        }
+
+        if(mainType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        Expression predicateExpression = expression.getPredicateExpression();
+        // set context item static type
+        predicateExpression.getStaticContext().setContextItemStaticType(new SequenceType(mainType.getItemType()));
+        visit(predicateExpression, argument);
+        SequenceType predicateType = predicateExpression.getInferredSequenceType();
+        // unset context item static type
+        predicateExpression.getStaticContext().setContextItemStaticType(null);
+
+        if(predicateType == null){
+            throw new OurBadException("A child expression of a FilterExpression has no inferred type");
+        }
+        // always false so the return type is for sure ()
+        if(predicateType.isEmptySequence() || predicateType.isSubtypeOf(SequenceType.createSequenceType("null?"))){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+        if(!predicateType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("Inferred type " + predicateType + " has no effective boolean value");
+        }
+
+        // if we are filter one or less items or we use an integer to select a specific position we return at most one element, otherwise *
+        SequenceType.Arity inferredArity = (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || mainType.getItemType().equals(ItemType.integerItem)) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.ZeroOrMore;
+        expression.setInferredSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
+        System.out.println("visiting Filter expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
 
