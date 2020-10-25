@@ -23,6 +23,8 @@ import org.rumbledb.expressions.control.TypeswitchCase;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
@@ -706,6 +708,58 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         expression.setInferredSequenceType(inferredType);
         System.out.println("visiting TypeSwitch expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    // endregion
+
+    // region miscellaneous
+
+    @Override
+    public StaticContext visitRangeExpr(RangeExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        List<Node> children = expression.getChildren();
+        SequenceType leftType = ((Expression) children.get(0)).getInferredSequenceType();
+        SequenceType rightType = ((Expression) children.get(1)).getInferredSequenceType();
+
+        if(leftType == null || rightType == null){
+            throw new OurBadException("A child expression of a RangeExpression has no inferred type");
+        }
+
+        if(leftType.isEmptySequence() || rightType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        SequenceType intOpt = new SequenceType(ItemType.integerItem, SequenceType.Arity.OneOrZero);
+        if(!leftType.isSubtypeOf(intOpt) || !rightType.isSubtypeOf(intOpt)){
+            throw new UnexpectedStaticTypeException("operands of the range expression must match type integer? instead found: " + leftType + " and " + rightType);
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.integerItem, SequenceType.Arity.ZeroOrMore));
+        System.out.println("visiting Range expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitStringConcatExpr(StringConcatExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        List<Node> children = expression.getChildren();
+        SequenceType leftType = ((Expression) children.get(0)).getInferredSequenceType();
+        SequenceType rightType = ((Expression) children.get(1)).getInferredSequenceType();
+
+        if(leftType == null || rightType == null){
+            throw new OurBadException("A child expression of a ConcatExpression has no inferred type");
+        }
+
+        SequenceType intOpt = new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero);
+        if(!leftType.isSubtypeOf(intOpt) || !rightType.isSubtypeOf(intOpt)){
+            throw new UnexpectedStaticTypeException("operands of the concat expression must match type atomic? instead found: " + leftType + " and " + rightType);
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.stringItem));
+        System.out.println("visiting Concat expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
 

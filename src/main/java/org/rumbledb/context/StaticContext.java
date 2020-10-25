@@ -272,7 +272,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     }
 
     public SequenceType getContextItemStaticType() {
-        return contextItemStaticType;
+        return this.contextItemStaticType;
     }
 
     public void setContextItemStaticType(SequenceType contextItemStaticType) {
