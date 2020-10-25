@@ -70,6 +70,10 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public SequenceType getReturnType() {
+        return this.returnType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.returnType;
+    }
+
+    public SequenceType getActualReturnType() {
         return this.returnType;
     }
 
@@ -115,7 +119,7 @@ public class InlineFunctionExpression extends Expression {
             buffer.append(entry.getValue().toString());
             buffer.append(", ");
         }
-        buffer.append(this.returnType.toString());
+        buffer.append(this.returnType == null ? "not set" : this.returnType.toString());
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType) );

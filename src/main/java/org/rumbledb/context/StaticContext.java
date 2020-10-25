@@ -24,6 +24,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -47,8 +48,9 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
-    // TODO: should this be transient?
+    // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
+    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
 
     public StaticContext() {
         this.parent = null;
@@ -66,6 +68,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
     }
 
     public StaticContext(StaticContext parent) {
@@ -73,6 +76,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
     }
 
     public StaticContext getParent() {
@@ -118,6 +122,21 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
+    public FunctionSignature getFunctionSignature(FunctionIdentifier identifier) {
+        if (this.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+            return this.staticallyKnownFunctionSignatures.get(identifier);
+        } else {
+            StaticContext ancestor = this.parent;
+            while (ancestor != null) {
+                if (ancestor.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+                    return ancestor.staticallyKnownFunctionSignatures.get(identifier);
+                }
+                ancestor = ancestor.parent;
+            }
+            throw new SemanticException("function " + identifier + " not in scope", null);
+        }
+    }
+
     // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
     public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType){
         InScopeVariable variable = getInScopeVariable(varName);
@@ -143,6 +162,10 @@ public class StaticContext implements Serializable, KryoSerializable {
             ExecutionMode storageMode
     ) {
         this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+    }
+
+    public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature){
+        this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
     protected Map<Name, InScopeVariable> getInScopeVariables() {

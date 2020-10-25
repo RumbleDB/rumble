@@ -358,7 +358,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.qname(), true);
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
+        SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
@@ -383,8 +383,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         if (ctx.return_type != null) {
             fnReturnType = this.processSequenceType(ctx.return_type);
-        } else {
-            fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
         Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);

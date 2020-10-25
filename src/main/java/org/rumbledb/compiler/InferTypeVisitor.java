@@ -25,6 +25,7 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
+import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -37,9 +38,11 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -219,18 +222,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         BuiltinFunction function = null;
+        FunctionSignature signature = null;
         try {
             function = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
         } catch (OurBadException exception){
-            // TODO: where can i find all available functions in the static context
+            signature = expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier());
         }
 
-        if(function == null){
-            throw new UnexpectedStaticTypeException("Function " + expression.getFunctionIdentifier() + " is not available");
-        }
+
 
         List<Expression> parameterExpressions = expression.getArguments();
-        List<SequenceType> parameterTypes = function.getSignature().getParameterTypes();
+        if(function != null){
+            signature = function.getSignature();
+        }
+        List<SequenceType> parameterTypes = signature.getParameterTypes();
         int paramsLength = parameterExpressions.size();
 
         for(int i = 0; i < paramsLength; ++i){
@@ -248,7 +253,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if(expression.isPartialApplication()){
             expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
         } else {
-            SequenceType returnType = function.getSignature().getReturnType();
+            SequenceType returnType = signature.getReturnType();
             if(returnType == null){
                 returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
             }
@@ -945,6 +950,27 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             argument.replaceVariableSequenceType(expression.getVariableName(), inferredType);
         }
+
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        InlineFunctionExpression inlineExpression = ((InlineFunctionExpression) expression.getExpression());
+        SequenceType inferredType = inlineExpression.getBody().getInferredSequenceType();
+        SequenceType expectedType = inlineExpression.getActualReturnType();
+
+        if(expectedType == null){
+            // TODO: should i register the function with the inferred type or most general in this case?
+            expectedType = inferredType;
+        } else if(!inferredType.isSubtypeOf(expectedType)) {
+            throw new UnexpectedStaticTypeException("The declared function inferred type " + inferredType + " does not match the expected return type " + expectedType);
+        }
+
+        // add function signature to the statically known one
+        argument.addFunctionSignature(inlineExpression.getFunctionIdentifier(), new FunctionSignature(new ArrayList<SequenceType>(inlineExpression.getParams().values()), expectedType));
 
         return argument;
     }
