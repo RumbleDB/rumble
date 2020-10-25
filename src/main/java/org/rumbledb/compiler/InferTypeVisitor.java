@@ -26,6 +26,9 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
@@ -812,6 +815,80 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+
+    // endregion
+
+    // region postfix
+
+    @Override
+    public StaticContext visitArrayLookupExpression(ArrayLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
+        SequenceType lookupType = expression.getLookupExpression().getInferredSequenceType();
+
+        if(mainType == null || lookupType == null){
+            throw new OurBadException("A child expression of a ArrayLookupExpression has no inferred type");
+        }
+
+        if(!lookupType.isSubtypeOf(SequenceType.createSequenceType("integer"))){
+            throw new UnexpectedStaticTypeException("the lookup expression type must match integer, instead " + lookupType + " was inferred");
+        }
+
+        if(!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.ZeroOrMore;
+        expression.setInferredSequenceType(new SequenceType(ItemType.arrayItem, inferredArity));
+        System.out.println("visiting ArrayLookup expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitObjectLookupExpression(ObjectLookupExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
+        SequenceType lookupType = expression.getLookupExpression().getInferredSequenceType();
+
+        if(mainType == null || lookupType == null){
+            throw new OurBadException("A child expression of a ObjectLookupExpression has no inferred type");
+        }
+
+        // must be castable to string
+        if(!lookupType.isSubtypeOf(SequenceType.createSequenceType("atomic"))){
+            throw new UnexpectedStaticTypeException("the lookup expression type must be castable to string (i.e. must match atomic), instead " + lookupType + " was inferred");
+        }
+
+        if(!mainType.hasOverlapWith(SequenceType.createSequenceType("object*")) || mainType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.ZeroOrMore;
+        expression.setInferredSequenceType(new SequenceType(ItemType.objectItem, inferredArity));
+        System.out.println("visiting ObjectLookup expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitArrayUnboxingExpression(ArrayUnboxingExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
+
+        if(mainType == null){
+            throw new OurBadException("A child expression of a ArrayUnboxingExpression has no inferred type");
+        }
+
+        if(!mainType.hasOverlapWith(SequenceType.createSequenceType("array*")) || mainType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        expression.setInferredSequenceType(SequenceType.createSequenceType("item*"));
+        System.out.println("visiting ArrayUnboxingExpression expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
 
     // endregion
 

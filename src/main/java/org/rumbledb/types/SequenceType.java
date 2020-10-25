@@ -122,6 +122,18 @@ public class SequenceType implements Serializable {
         }
     }
 
+    public boolean hasOverlapWith(SequenceType other){
+        // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
+        if(this.isEmptySequence()){
+            return other.isEmptySequence() || other.getArity() == Arity.OneOrZero || other.getArity() == Arity.ZeroOrMore;
+        }
+        if(other.isEmptySequence()){
+            return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
+        }
+        // All arities overlap between each other
+        return this.getItemType().isSubtypeOf(other.getItemType()) || other.getItemType().isSubtypeOf(this.getItemType());
+    }
+
     public SequenceType leastCommonSupertypeWith(SequenceType other){
         if(this.isEmptySequence){
             if(other.isEmptySequence()){
@@ -226,6 +238,7 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("array*", new SequenceType(ItemType.arrayItem, Arity.ZeroOrMore));
 
         sequenceTypes.put("atomic", new SequenceType(ItemType.atomicItem, SequenceType.Arity.One));
         sequenceTypes.put("atomic?", new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero));
