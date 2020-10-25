@@ -1348,8 +1348,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             )).getVariableName();
             if (currentVariable.sequenceType() != null) {
                 sequenceType = this.processSequenceType(currentVariable.sequenceType());
-            } else {
-                sequenceType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
             }
 
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());

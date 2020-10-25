@@ -27,6 +27,8 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.*;
+import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
+import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -762,6 +764,54 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         System.out.println("visiting Concat expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
+
+    // endregion
+
+    // region quantified
+
+    @Override
+    public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
+        Expression evaluationExpression = (Expression) expression.getEvaluationExpression();
+        boolean skipTestInference = false;
+        for(QuantifiedExpressionVar var : expression.getVariables()){
+            visit(var.getExpression(), argument);
+            SequenceType varType = var.getActualSequenceType();
+            SequenceType inferredType = var.getExpression().getInferredSequenceType();
+            if(varType == null){
+                // if type was not specified for a clause we use the single version of the inferred one
+                if(inferredType == null){
+                    throw new OurBadException("A child expression of a QuantifiedExpression has no inferred type");
+                }
+                if(inferredType.isEmptySequence()){
+                    skipTestInference = true;
+                } else {
+                    System.out.println("setting "+var.getVariableName()+" type to: "+inferredType.getItemType());
+                    evaluationExpression.getStaticContext().replaceVariableSequenceType(var.getVariableName(), new SequenceType(inferredType.getItemType()));
+                }
+            } else {
+                // otherwise we must check that the type is appropriate
+                if(!inferredType.isEmptySequence() && !(new SequenceType(inferredType.getItemType())).isSubtypeOfOrCanBePromotedTo(varType)){
+                    throw  new UnexpectedStaticTypeException("expected type for variable " + var.getVariableName() + " must match " + varType + " but " + inferredType.getItemType() + " was inferred");
+                }
+            }
+        }
+
+        if(!skipTestInference){
+            visit(evaluationExpression, argument);
+            SequenceType evaluationType = evaluationExpression.getInferredSequenceType();
+            if(evaluationType == null){
+                throw new OurBadException("A child expression of a QuantifiedExpression has no inferred type");
+            }
+            if(!evaluationType.hasEffectiveBooleanValue()){
+                throw new UnexpectedStaticTypeException("evaluation expression of quantified expression has " + evaluationType + " inferred type, which has no effective boolean value");
+            }
+        }
+
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        System.out.println("visiting Quantified expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
 
     // endregion
 

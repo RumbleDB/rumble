@@ -22,6 +22,7 @@ package org.rumbledb.expressions.quantifiers;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 public class QuantifiedExpressionVar {
@@ -48,7 +49,12 @@ public class QuantifiedExpressionVar {
         return this.variableName;
     }
 
+    // default to item if it is [null]
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? new SequenceType(ItemType.item) : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 }

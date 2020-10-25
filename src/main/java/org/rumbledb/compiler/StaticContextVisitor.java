@@ -347,7 +347,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext result = new StaticContext(contextWithQuantifiedExpressionVariables);
             result.addVariable(
                 clause.getVariableName(),
-                clause.getSequenceType(),
+                clause.getActualSequenceType(),
                 expression.getMetadata(),
                 ExecutionMode.LOCAL
             );
