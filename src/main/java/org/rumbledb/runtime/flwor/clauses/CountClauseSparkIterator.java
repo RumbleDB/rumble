@@ -142,14 +142,14 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     // positional variables).
     public static Dataset<Row> addSerializedCountColumn(
             Dataset<Row> df,
-            Map<Name, DynamicContext.VariableDependency> parentProjection,
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
             Name variableName
     ) {
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            parentProjection,
+            outputDependencies,
             null,
             Collections.singletonList(variableName)
         );

@@ -995,7 +995,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @param positionalVariableName the name of the positional variable (or null if none)
      * @param allowingEmpty whether the allowing empty option is present
      * @param context the dynamic context.
-     * @param parentProjection the desired project.
+     * @param outputDependencies the desired project.
      * @return the resulting DataFrame.
      */
     public static Dataset<Row> getDataFrameStartingClause(
@@ -1004,7 +1004,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Name positionalVariableName,
             boolean allowingEmpty,
             DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            Map<Name, DynamicContext.VariableDependency> outputDependencies
     ) {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
@@ -1042,7 +1042,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // Add column for positional variable, similar to count clause.
         Dataset<Row> dfWithIndex = CountClauseSparkIterator.addSerializedCountColumn(
             df,
-            parentProjection,
+            outputDependencies,
             positionalVariableName
         );
         if (!allowingEmpty) {

@@ -50,6 +50,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -283,14 +284,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
 
         // We resolve the dependencies of the predicate expression.
-        // We need to manually adjust the context item with the dependency mode the parent projection.
-        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
-        if (parentProjection.containsKey(this.variableName)) {
-            predicateDependencies.remove(this.variableName);
-            predicateDependencies.put(Name.CONTEXT_ITEM, parentProjection.get(this.variableName));
-        }
-
         // If the predicate depends on position() or last(), we are not able yet to support this.
+        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             throw new UnsupportedFeatureException(
                     "Rumble detected an equi-join, but does not support yet position() in the join predicate.",
@@ -305,19 +300,19 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // Now we execute the left-hand-side of the predicate, which is the right side of the join.
+        // We need to manually adjust the context item with the dependency mode the parent projection.
+        Map<Name, VariableDependency> sequenceDependencies = new HashMap<>();
+        sequenceDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
         Dataset<Row> expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
             sequenceIterator,
             Name.CONTEXT_ITEM,
             null,
             false,
             context,
-            predicateDependencies
+            sequenceDependencies
         );
 
         System.out.println("[INFO] Rumble detected an equi-join in the left clause.");
-
-
-        expressionDF.show();
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
@@ -331,8 +326,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         expressionDF.show();
-
-        inputDF.show();
 
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
