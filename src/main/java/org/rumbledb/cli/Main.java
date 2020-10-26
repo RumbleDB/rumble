@@ -28,7 +28,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.server.RumbleServer;
 import org.rumbledb.shell.RumbleJLineShell;
 import org.rumbledb.utils.JsonIterUtils;
-import sparksoniq.spark.SparkSessionManager;
 
 public class Main {
     public static RumbleJLineShell terminal = null;

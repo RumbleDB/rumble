@@ -40,6 +40,7 @@ public class JsonIterUtils {
      */
     public static void applyJsonIterFaultyInitializationWorkAround() {
         InputStream is = new ByteArrayInputStream("{}".getBytes());
+        @SuppressWarnings("unused")
         JsonIterator object = JsonIterator.parse(is, 1024);
     }
 }
