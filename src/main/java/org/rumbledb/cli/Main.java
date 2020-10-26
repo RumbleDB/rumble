@@ -42,13 +42,10 @@ public class Main {
             JsonIterUtils.applyJsonIterFaultyInitializationWorkAround();
 
             if (sparksoniqConf.isShell()) {
-                initializeApplication();
                 launchShell(sparksoniqConf);
             } else if (sparksoniqConf.isServer()) {
-                initializeApplication();
                 launchServer(sparksoniqConf);
             } else if (sparksoniqConf.getQueryPath() != null) {
-                initializeApplication();
                 runQueryExecutor(sparksoniqConf);
             } else {
                 System.out.println("    ____                  __    __   ");
@@ -132,10 +129,6 @@ public class Main {
     private static void runQueryExecutor(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
         JsoniqQueryExecutor translator = new JsoniqQueryExecutor(sparksoniqConf);
         translator.runQuery();
-    }
-
-    private static void initializeApplication() {
-        SparkSessionManager.getInstance().initializeConfigurationAndSession();
     }
 
     private static void launchShell(RumbleRuntimeConfiguration sparksoniqConf) throws IOException {
