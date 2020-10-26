@@ -251,7 +251,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting sum variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
@@ -266,7 +266,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting min variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
@@ -281,7 +281,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting max variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
