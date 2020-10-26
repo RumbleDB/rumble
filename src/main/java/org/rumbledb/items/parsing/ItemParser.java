@@ -122,7 +122,7 @@ public class ItemParser implements Serializable {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             keys.add(field.name());
-            Item newItem = addValue(row, i, null, fieldType, metadata);
+            Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
             values.add(newItem);
         }
 
@@ -132,7 +132,15 @@ public class ItemParser implements Serializable {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    private static Item addValue(
+    public static Item convertValueToItem(
+            Object o,
+            DataType fieldType,
+            ExceptionMetadata metadata
+    ) {
+        return convertValueToItem(null, 0, o, fieldType, metadata);
+    }
+
+    private static Item convertValueToItem(
             Row row,
             int i,
             Object o,
@@ -250,14 +258,14 @@ public class ItemParser implements Serializable {
             if (row != null) {
                 List<Object> objects = row.getList(i);
                 for (Object object : objects) {
-                    members.add(addValue(null, 0, object, dataType, metadata));
+                    members.add(convertValueToItem(object, dataType, metadata));
                 }
             } else {
                 @SuppressWarnings("unchecked")
                 Object arrayObject = ((WrappedArray<Object>) o).array();
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
-                    members.add(addValue(null, 0, value, dataType, metadata));
+                    members.add(convertValueToItem(value, dataType, metadata));
                 }
             }
             return ItemFactory.getInstance().createArrayItem(members);

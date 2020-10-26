@@ -282,6 +282,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     expression.getVariableName(),
                     expression.getExpression(),
                     context,
+                    new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     null,
                     false
                 );
@@ -337,9 +338,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
             groupingVariables
         );
 
@@ -347,13 +347,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "createGroupingColumns",
-                new GroupClauseCreateColumnsUDF(variableAccessNames, context, UDFcolumnsByType, getMetadata()),
+                new GroupClauseCreateColumnsUDF(variableAccessNames, context, inputSchema, UDFcolumns, getMetadata()),
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getListOfSQLVariables(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String createColumnsSQL = String.format(
             "select %s createGroupingColumns(%s) as `%s` from input",
@@ -362,17 +362,17 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
-        String projectSQL = FlworDataFrameUtils.getGroupbyProjectSQL(
+        String projectSQL = FlworDataFrameUtils.getGroupBySQLProjection(
             inputSchema,
             -1,
             false,
             serializerUDFName,
             variableAccessNames,
             parentProjection,
-            UDFcolumnsByType
+            UDFcolumns
         );
 
-        return df.sparkSession()
+        Dataset<Row> result = df.sparkSession()
             .sql(
                 String.format(
                     "select %s from (%s) group by `%s`",
@@ -381,6 +381,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     appendedGroupingColumnsName
                 )
             );
+        return result;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

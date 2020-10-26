@@ -22,7 +22,8 @@ package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.StructType;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -32,13 +33,11 @@ import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.types.ItemType;
-import scala.collection.mutable.WrappedArray;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
+public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
@@ -60,10 +59,11 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     public OrderClauseCreateColumnsUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
+            StructType schema,
             Map<Integer, String> sortingKeyTypes,
-            Map<String, List<String>> columnNamesByType
+            List<String> columnNames
     ) {
-        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expressionsWithIterator = expressionsWithIterator;
         this.sortingKeyTypes = sortingKeyTypes;
 
@@ -71,8 +71,8 @@ public class OrderClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     }
 
     @Override
-    public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
+    public Row call(Row row) {
+        this.dataFrameContext.setFromRow(row);
 
         this.results.clear();
 

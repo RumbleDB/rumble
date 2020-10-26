@@ -22,6 +22,7 @@ package org.rumbledb.runtime.flwor.closures;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -30,7 +31,6 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
@@ -43,9 +43,10 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
     public ReturnFlatMapClosure(
             RuntimeIterator expression,
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            StructType schema,
+            List<String> columnNames
     ) {
-        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expression = expression;
         this.results = new ArrayList<>();
     }

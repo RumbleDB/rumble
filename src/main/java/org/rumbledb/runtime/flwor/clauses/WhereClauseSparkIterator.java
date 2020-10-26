@@ -38,6 +38,7 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -48,7 +49,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Map<Name, DynamicContext.VariableDependency> dependencies;
     private RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -61,7 +61,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         super(child, executionMode, iteratorMetadata);
         this.expression = whereExpression;
-        this.dependencies = this.expression.getVariableDependencies();
+        this.expression.getVariableDependencies();
     }
 
     @Override
@@ -185,6 +185,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             forChild.getChildIterator()
                                 .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
                             parentProjection,
+                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                             sequenceIterator,
                             this.expression,
                             false,
@@ -201,21 +202,22 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            -1,
-            this.dependencies
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
         );
 
         df.sparkSession()
             .udf()
             .register(
                 "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, UDFcolumnsByType),
+                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumns),
                 DataTypes.BooleanType
             );
 
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumnsByType);
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         df.createOrReplaceTempView("input");
         df = df.sparkSession()
