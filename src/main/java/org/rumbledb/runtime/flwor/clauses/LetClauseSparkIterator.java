@@ -531,7 +531,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
      *        in the context)
      * @param outputTupleVariableDependencies the dependencies to project to (possibly null to keep everything).
      * @param hash whether or not to compute single-item hashes rather than the actual serialized sequences of items.
-     * @return
+     * @return the DataFrame with the new column
      */
     public static Dataset<Row> bindLetVariableInDataFrame(
             Dataset<Row> dataFrame,
