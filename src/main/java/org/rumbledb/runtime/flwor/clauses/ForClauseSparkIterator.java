@@ -928,6 +928,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * 
      * Starting clause and the expression is parallelizable.
      * 
+     * @param iterator the expression iterator
+     * @param variableName the name of the for variable
+     * @param positionalVariableName the name of the positional variable (or null if none)
+     * @param allowingEmpty whether the allowing empty option is present
      * @param context the dynamic context.
      * @param parentProjection the desired project.
      * @return the resulting DataFrame.
