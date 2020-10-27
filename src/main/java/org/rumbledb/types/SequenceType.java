@@ -108,7 +108,7 @@ public class SequenceType implements Serializable {
     public boolean hasEffectiveBooleanValue(){
         if(this.isEmptySequence) {
             return true;
-        } else if(this.itemType.isSubtypeOf(ItemType.JSONItem) || this.itemType.equals(ItemType.item)) {
+        } else if(this.itemType.isSubtypeOf(ItemType.JSONItem)) {
             return true;
         } else if((this.arity == Arity.One || this.arity == Arity.OneOrZero) && (
                 this.itemType.isNumeric() ||
