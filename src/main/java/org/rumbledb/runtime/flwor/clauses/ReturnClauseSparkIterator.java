@@ -42,6 +42,7 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -109,12 +110,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         Dataset<Row> df = this.child.getDataFrame(context, projection);
         StructType oldSchema = df.schema();
-        Map<String, List<String>> UDFcolumnsByType = FlworDataFrameUtils.getColumnNamesByType(
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
-            -1,
-            this.expression.getVariableDependencies()
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
         );
-        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, UDFcolumnsByType));
+        return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
     }
 
     @Override
