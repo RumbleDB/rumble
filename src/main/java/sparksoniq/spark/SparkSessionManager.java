@@ -78,22 +78,31 @@ public class SparkSessionManager {
     }
 
     public SparkSession getOrCreateSession() {
+        if (this.configuration == null) {
+            setDefaultConfiguration();
+        }
         if (this.session == null) {
-            if (this.configuration == null) {
-                setDefaultConfiguration();
-            }
-            initialize();
+            initializeSession();
         }
         return this.session;
     }
 
     private void setDefaultConfiguration() {
-        this.configuration = new SparkConf()
-            .setAppName(APP_NAME)
-            .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        try {
+            this.configuration = new SparkConf()
+                .setAppName(APP_NAME)
+                .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            if (!this.configuration.contains("spark.master")) {
+                this.configuration.set("spark.master", "local[*]");
+            }
+        } catch (NoClassDefFoundError e) {
+            throw new RuntimeException(
+                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
+            );
+        }
     }
 
-    private void initialize() {
+    private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
             Logger.getLogger("org").setLevel(LOG_LEVEL);
@@ -130,21 +139,21 @@ public class SparkSessionManager {
     }
 
 
-    public void initializeConfigurationAndSession() {
-        setDefaultConfiguration();
-        initialize();
-    }
-
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName) {
             conf.setAppName(APP_NAME);
         }
         this.configuration = conf;
-        initializeKryoSerialization();
-        initialize();
+        initializeSession();
     }
 
     public JavaSparkContext getJavaSparkContext() {
+        if (this.configuration == null) {
+            setDefaultConfiguration();
+        }
+        if (this.session == null) {
+            initializeSession();
+        }
         if (this.javaSparkContext == null) {
             this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }

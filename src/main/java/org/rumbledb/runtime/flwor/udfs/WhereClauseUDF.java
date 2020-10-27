@@ -20,15 +20,15 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
-import scala.collection.mutable.WrappedArray;
 
 import java.util.List;
-import java.util.Map;
 
-public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Boolean> {
+public class WhereClauseUDF implements UDF1<Row, Boolean> {
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;
@@ -37,15 +37,16 @@ public class WhereClauseUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<L
     public WhereClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            StructType schema,
+            List<String> columnNames
     ) {
-        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expression = expression;
     }
 
     @Override
-    public Boolean call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
+    public Boolean call(Row row) {
+        this.dataFrameContext.setFromRow(row);
 
         DynamicContext dynamicContext = this.dataFrameContext.getContext();
 

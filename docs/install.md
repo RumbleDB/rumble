@@ -36,7 +36,7 @@ In the shell, go to the desired location:
     
 Clone the github repository:
     
-    $ git clone git@github.com:Rumble/rumble.git
+    $ git clone https://github.com/RumbleDB/rumble.git
     
 Go to the root of this repository:
 
