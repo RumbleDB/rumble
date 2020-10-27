@@ -287,7 +287,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
-            clause.getSequenceType(),
+            clause.getActualSequenceType(),
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );

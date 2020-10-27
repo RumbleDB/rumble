@@ -17,7 +17,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.*;
-import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.*;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -1049,6 +1049,53 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // endregion
 
+    // region FLOWR
+
+    @Override
+    public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
+        Clause clause = expression.getReturnClause().getFirstClause();
+
+        while (clause != null){
+            this.visit(clause, argument);
+            clause = clause.getNextClause();
+        }
+
+        SequenceType returnType = expression.getReturnClause().getReturnExpr().getInferredSequenceType();
+        if(returnType == null){
+            throw new OurBadException("A child expression of a FlowrExpression has no inferred type");
+        }
+        if(returnType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        expression.setInferredSequenceType(returnType);
+        System.out.println("visiting Flowr expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
+        // if type was not defined we infer it and overwrite it in the next clause context
+        visit(expression.getExpression(), argument);
+        SequenceType inferredType = expression.getExpression().getInferredSequenceType();
+        if(inferredType == null){
+            throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
+        }
+        if(expression.getActualSequenceType()    == null){
+            // if type was not defined we infer it and overwrite it in the next clause context
+            // getNextClause() cannot return null because LetClause cannot be the last clause
+            expression.getNextClause().getStaticContext().replaceVariableSequenceType(expression.getVariableName(), inferredType);
+        } else {
+            if(!inferredType.isSubtypeOfOrCanBePromotedTo(expression.getActualSequenceType())){
+                throw new UnexpectedStaticTypeException(expression.getVariableName() + " has expected type " + expression.getActualSequenceType() + " but is not matched by the inferred type: " + inferredType);
+            }
+        }
+        System.out.println("visiting Let clause, inferred var " + expression.getVariableName() + " : " + inferredType);
+        return argument;
+    }
+
+    // endregion
+
     // region module
 
     @Override
@@ -1060,6 +1107,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if(inferredType == null){
                 throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
             }
+            // TODO: consider static check as well
             argument.replaceVariableSequenceType(expression.getVariableName(), inferredType);
         }
 
