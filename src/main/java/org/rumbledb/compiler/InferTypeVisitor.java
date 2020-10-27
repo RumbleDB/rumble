@@ -17,6 +17,7 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.control.*;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -1000,6 +1001,49 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // TODO: what aout partial application?
         expression.setInferredSequenceType(SequenceType.MOST_GENERAL_SEQUENCE_TYPE);
         System.out.println("visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitSimpleMapExpr(SimpleMapExpression expression, StaticContext argument) {
+        List<Node> nodes = expression.getChildren();
+        Expression leftExpression = (Expression) nodes.get(0);
+        Expression rightExpression = (Expression) nodes.get(1);
+
+        visit(leftExpression, argument);
+        SequenceType leftType = leftExpression.getInferredSequenceType();
+        if(leftType == null){
+            throw new OurBadException("A child expression of a SimpleMapExpression has no inferred type");
+        }
+        if(leftType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        // set context item static type
+        rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
+        visit(rightExpression, argument);
+        rightExpression.getStaticContext().setContextItemStaticType(null);
+
+        SequenceType rightType = rightExpression.getInferredSequenceType();
+        if(rightType == null){
+            throw new OurBadException("A child expression of a SimpleMapExpression has no inferred type");
+        }
+        if(rightType.isEmptySequence()){
+            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+
+        SequenceType.Arity resultingArity = SequenceType.Arity.ZeroOrMore;
+
+        if(leftType.getArity() == SequenceType.Arity.One && rightType.getArity() == SequenceType.Arity.One){
+            resultingArity = SequenceType.Arity.One;
+        } else if(leftType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) && rightType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)){
+            resultingArity = SequenceType.Arity.OneOrZero;
+        } else if(leftType.isAritySubtypeOf(SequenceType.Arity.OneOrMore) && rightType.isAritySubtypeOf(SequenceType.Arity.OneOrMore)){
+            resultingArity = SequenceType.Arity.OneOrMore;
+        }
+
+        expression.setInferredSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
+        System.out.println("visiting SimpleMap expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
 
