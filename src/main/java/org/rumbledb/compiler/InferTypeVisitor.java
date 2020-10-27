@@ -1068,6 +1068,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
 
+        // TODO: deal properly with arity basing on for clauses
         expression.setInferredSequenceType(returnType);
         System.out.println("visiting Flowr expression, type set to: " + expression.getInferredSequenceType());
         return argument;
@@ -1079,9 +1080,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visit(expression.getExpression(), argument);
         SequenceType inferredType = expression.getExpression().getInferredSequenceType();
         if(inferredType == null){
-            throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
+            throw new OurBadException("The child expression of LetClause has no inferred type");
         }
-        if(expression.getActualSequenceType()    == null){
+        if(expression.getActualSequenceType() == null){
             // if type was not defined we infer it and overwrite it in the next clause context
             // getNextClause() cannot return null because LetClause cannot be the last clause
             expression.getNextClause().getStaticContext().replaceVariableSequenceType(expression.getVariableName(), inferredType);
@@ -1091,6 +1092,42 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         System.out.println("visiting Let clause, inferred var " + expression.getVariableName() + " : " + inferredType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitWhereClause(WhereClause expression, StaticContext argument) {
+        visit(expression.getWhereExpression(), argument);
+        SequenceType whereType = expression.getWhereExpression().getInferredSequenceType();
+        if(whereType == null){
+            throw new OurBadException("The child expression of WhereClause has no inferred type");
+        }
+        if(!whereType.hasEffectiveBooleanValue()){
+            throw new UnexpectedStaticTypeException("where clause inferred type (" + whereType + ") has no effective boolean value");
+        }
+        if(whereType.isEmptySequence() || whereType.isSubtypeOf(SequenceType.createSequenceType("null?"))){
+            throw new UnexpectedStaticTypeException("where clause always return false, so return expression inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitOrderByClause(OrderByClause expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        for(OrderByClauseSortingKey orderClause : expression.getSortingKeys()){
+            SequenceType orderType = orderClause.getExpression().getInferredSequenceType();
+            if(orderType == null){
+                throw new OurBadException("The child expression of OrderByClause has no inferred type");
+            }
+            if(!orderType.isSubtypeOf(SequenceType.createSequenceType("atomic?")) ||
+                    orderType.getItemType().equals(ItemType.atomicItem) ||
+                    orderType.getItemType().equals(ItemType.durationItem) ||
+                    orderType.getItemType().equals(ItemType.hexBinaryItem) ||
+                    orderType.getItemType().equals(ItemType.base64BinaryItem)){
+                throw new UnexpectedStaticTypeException("order by sorting expression's type must match atomic? and be comparable using 'gt' operator (so duration, hexBinary, base64Binary and atomic item type are not allowed), instead inferred: " + orderType);
+            }
+        }
+
         return argument;
     }
 
