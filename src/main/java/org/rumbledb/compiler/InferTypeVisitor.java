@@ -16,10 +16,7 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.control.ConditionalExpression;
-import org.rumbledb.expressions.control.TryCatchExpression;
-import org.rumbledb.expressions.control.TypeSwitchExpression;
-import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.control.*;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -27,10 +24,7 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.ArrayLookupExpression;
-import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
-import org.rumbledb.expressions.postfix.FilterExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
@@ -645,6 +639,61 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    // throw errors if [type] does not conform to switch test and cases requirements
+    public void checkSwitchType(SequenceType type){
+        if(type == null){
+            throw new OurBadException("A child expression of a SwitchExpression has no inferred type");
+        }
+        if(type.isEmptySequence()){
+            return; // no further check is required
+        }
+        if(type.getArity() == SequenceType.Arity.OneOrZero || type.getArity() == SequenceType.Arity.ZeroOrMore){
+            throw new UnexpectedStaticTypeException("+ and * arities are not allowed for the expressions of switch test condition and cases");
+        }
+        ItemType itemType = type.getItemType();
+        if(itemType.equals(ItemType.functionItem)){
+            throw new UnexpectedStaticTypeException("function item not allowed for the expressions of switch test condition and cases", ErrorCode.UnexpectedFunctionITem);
+        }
+        if(!itemType.isSubtypeOf(ItemType.atomicItem)){
+            throw new UnexpectedStaticTypeException("switch test condition and cases expressions' item type must match atomic, instead inferred: " + itemType);
+        }
+    }
+
+    @Override
+    public StaticContext visitSwitchExpression(SwitchExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        SequenceType testType = expression.getTestCondition().getInferredSequenceType();
+        checkSwitchType(testType);
+
+        SequenceType returnType = expression.getDefaultExpression().getInferredSequenceType();
+        if(returnType == null){
+            throw new OurBadException("A child expression of a SwitchExpression has no inferred type");
+        }
+
+        for(SwitchCase switchCase : expression.getCases()){
+            boolean addToReturnType = false;
+            for(Expression caseExpression : switchCase.getConditionExpressions()){
+                // test the case expression
+                checkSwitchType(caseExpression.getInferredSequenceType());
+                // if has overlap with the test condition will add the return type to the possible ones
+                if(caseExpression.getInferredSequenceType().hasOverlapWith(testType)){
+                    addToReturnType = true;
+                }
+            }
+            SequenceType caseReturnType = switchCase.getReturnExpression().getInferredSequenceType();
+            if(caseReturnType == null){
+                throw new OurBadException("A child expression of a SwitchExpression has no inferred type");
+            }
+            if(addToReturnType){
+                returnType = returnType.leastCommonSupertypeWith(caseReturnType);
+            }
+        }
+
+        expression.setInferredSequenceType(returnType);
+        System.out.println("visiting Switch expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
     @Override
     public StaticContext visitTryCatchExpression(TryCatchExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -932,6 +981,25 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) || mainType.getItemType().equals(ItemType.integerItem)) ? SequenceType.Arity.OneOrZero : SequenceType.Arity.ZeroOrMore;
         expression.setInferredSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
         System.out.println("visiting Filter expression, type set to: " + expression.getInferredSequenceType());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitDynamicFunctionCallExpression(DynamicFunctionCallExpression expression, StaticContext argument) {
+        // since we do not specify function's signature in the itemType we can only check that it is a function
+        visitDescendants(expression, argument);
+
+        SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
+        if(mainType == null){
+            throw new OurBadException("A child expression of a DynamicExpression has no inferred type");
+        }
+        if(!mainType.equals(new SequenceType(ItemType.functionItem))){
+            throw new UnexpectedStaticTypeException("the type of a dynamic function call main expression must be function, instead inferred " + mainType);
+        }
+
+        // TODO: what aout partial application?
+        expression.setInferredSequenceType(SequenceType.MOST_GENERAL_SEQUENCE_TYPE);
+        System.out.println("visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
 
