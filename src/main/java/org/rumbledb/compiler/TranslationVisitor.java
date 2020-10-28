@@ -510,8 +510,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.var_ref)).getVariableName();
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
         emptyFlag = (ctx.flag != null);
         Name atVar = null;
@@ -528,11 +526,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // If the sequenceType is specified, we have to "extend" its arity to *
         // because TreatIterator is wrapping the whole assignment expression,
         // meaning there is not one TreatIterator for each variable we loop over.
-        SequenceType expressionType = new SequenceType(
-                seq.getItemType(),
-                SequenceType.Arity.ZeroOrMore
-        );
-        if (!expressionType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        if (seq != null) {
+            SequenceType expressionType = new SequenceType(
+                    seq.getItemType(),
+                    SequenceType.Arity.ZeroOrMore
+            );
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 

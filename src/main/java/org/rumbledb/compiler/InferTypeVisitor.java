@@ -1075,6 +1075,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitForClause(ForClause expression, StaticContext argument) {
+        visit(expression.getExpression(), argument);
+        SequenceType inferredType = expression.getExpression().getInferredSequenceType();
+        if(inferredType == null){
+            throw new OurBadException("The child expression of ForClause has no inferred type");
+        }
+        if(inferredType.isEmptySequence()){
+            if(!expression.isAllowEmpty()) {
+                // for sure we will not have any tuple to process and return the empty sequence
+                throw new UnexpectedStaticTypeException("In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+            }
+        } else {
+            // we take the single arity version of the inferred type
+            inferredType = new SequenceType(inferredType.getItemType());
+        }
+
+        if(expression.getActualSequenceType() == null){
+            // if type was not defined we infer it and overwrite it in the next clause context
+            // getNextClause() cannot return null because ForClause cannot be the last clause
+            expression.getNextClause().getStaticContext().replaceVariableSequenceType(expression.getVariableName(), inferredType);
+        } else {
+            if(!inferredType.isSubtypeOfOrCanBePromotedTo(expression.getActualSequenceType())){
+                throw new UnexpectedStaticTypeException(expression.getVariableName() + " has expected type " + expression.getActualSequenceType() + " but is not matched by the inferred type: " + inferredType);
+            }
+        }
+        System.out.println("visiting For clause, inferred var " + expression.getVariableName() + " : " + inferredType);
+        return argument;
+    }
+
+    @Override
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
         // if type was not defined we infer it and overwrite it in the next clause context
         visit(expression.getExpression(), argument);
