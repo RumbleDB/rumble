@@ -20,6 +20,7 @@
 
 package org.rumbledb.context;
 
+import com.amazonaws.transform.MapEntry;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -37,6 +38,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class StaticContext implements Serializable, KryoSerializable {
 
@@ -300,5 +302,25 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     public void setContextItemStaticType(SequenceType contextItemStaticType) {
         this.contextItemStaticType = contextItemStaticType;
+    }
+
+    // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude] with same variable with sequence type arity changed from 1 to + and form ? to *
+    // used by groupBy cluse
+    public void incrementArities(StaticContext stopContext, Set<Name> varToExclude){
+        this.inScopeVariables.replaceAll((key, value) -> varToExclude.contains(value) ? value :
+                new InScopeVariable(
+                        value.getName(),
+                        value.getSequenceType().incrementArity(),
+                        value.getMetadata(),
+                        value.getStorageMode()));
+        StaticContext current = this.parent;
+        while (current != null && current != stopContext){
+            for(Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()){
+                if(!this.inScopeVariables.containsKey(entry.getKey())){
+                    this.addVariable(entry.getKey(), entry.getValue().getSequenceType().incrementArity(), entry.getValue().getMetadata(), entry.getValue().getStorageMode());
+                }
+            }
+            current = current.parent;
+        }
     }
 }

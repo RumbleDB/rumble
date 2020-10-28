@@ -169,6 +169,18 @@ public class SequenceType implements Serializable {
         return new SequenceType(itemSupertype, aritySuperType);
     }
 
+    // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
+    public SequenceType incrementArity(){
+        if(!this.isEmptySequence()){
+            if(this.arity == Arity.One){
+                return new SequenceType(this.getItemType(), Arity.OneOrMore);
+            } else if(this.arity == Arity.OneOrZero){
+                return new SequenceType(this.getItemType(), Arity.ZeroOrMore);
+            }
+        }
+        return this;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof SequenceType)) {

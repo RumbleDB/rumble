@@ -644,13 +644,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq);
-        } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
         if (ctx.ex != null) {
             expr = (Expression) this.visitExprSingle(ctx.ex);
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (seq != null) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
 

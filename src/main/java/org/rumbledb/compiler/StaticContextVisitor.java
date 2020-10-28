@@ -304,7 +304,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 this.visit(variable.getExpression(), argument);
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
-                    variable.getSequenceType(),
+                    variable.getActualSequenceType(),
                     clause.getMetadata(),
                     ExecutionMode.LOCAL
                 );

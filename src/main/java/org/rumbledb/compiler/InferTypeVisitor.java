@@ -38,7 +38,9 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -1138,6 +1140,46 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if(whereType.isEmptySequence() || whereType.isSubtypeOf(SequenceType.createSequenceType("null?"))){
             throw new UnexpectedStaticTypeException("where clause always return false, so return expression inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
+        Clause nextClause = expression.getNextClause(); // != null because group by cannot be last clause of FLOWR expression
+        Set<Name> groupingVars = new HashSet<>();
+        for(GroupByVariableDeclaration groupByVar : expression.getGroupVariables()){
+            // if we are grouping by an existing var (i.e. expr is null), then the appropriate type is already inferred
+            Expression groupByVarExpr = groupByVar.getExpression();
+            SequenceType expectedType;
+            if(groupByVarExpr != null){
+                visit(groupByVarExpr, argument);
+                SequenceType inferredType = groupByVarExpr.getInferredSequenceType();
+                if(inferredType == null){
+                    throw new OurBadException("The child expression of GroupByClause has no inferred type");
+                }
+                expectedType = groupByVar.getActualSequenceType();
+                if(expectedType == null){
+                    nextClause.getStaticContext().replaceVariableSequenceType(groupByVar.getVariableName(), inferredType);
+                    expectedType = inferredType;
+                } else {
+                    // TODO: treat as expr in case of type so should i ignore check (apply to let and for as well)
+                }
+            } else {
+                expectedType = expression.getStaticContext().getVariableSequenceType(groupByVar.getVariableName());
+            }
+            // check that expectedType is a subtype of atomic?
+            if(!expectedType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))){
+                throw new UnexpectedStaticTypeException("group by variable " + groupByVar.getVariableName() + " must match atomic? instead found " + expectedType);
+            }
+            groupingVars.add(groupByVar.getVariableName());
+        }
+
+        // finally if there was a for clause we need to change the arity of the variables binded so far in the flowr expression, from ? to * and from 1 to +
+        // excluding the grouping variables
+        StaticContext firstClauseStaticContext = expression.getFirstClause().getStaticContext();
+        nextClause.getStaticContext().incrementArities(firstClauseStaticContext, groupingVars);
+
+
         return argument;
     }
 

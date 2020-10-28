@@ -41,12 +41,7 @@ public class GroupByVariableDeclaration {
         }
         this.variableName = variableName;
         this.sequenceType = sequenceType;
-        if (this.sequenceType == null) {
-            throw new OurBadException("A sequence type cannot be null");
-        }
         this.expression = expression;
-
-        sequenceType = this.sequenceType;
     }
 
     public Name getVariableName() {
@@ -58,6 +53,10 @@ public class GroupByVariableDeclaration {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 }
