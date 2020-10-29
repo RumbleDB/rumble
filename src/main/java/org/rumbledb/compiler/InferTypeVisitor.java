@@ -1090,8 +1090,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new UnexpectedStaticTypeException("In for clause Inferred type is empty sequence, empty is not allowed, so the result returned is for sure () and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
             }
         } else {
-            // we take the single arity version of the inferred type
-            inferredType = new SequenceType(inferredType.getItemType());
+            // we take the single arity version of the inferred type or optional arity if we allow empty and the sequence allows () (i.e. arity ? or *)
+            if(expression.isAllowEmpty() && (inferredType.getArity() == SequenceType.Arity.OneOrZero || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)){
+                inferredType = new SequenceType(inferredType.getItemType(), SequenceType.Arity.OneOrZero);
+            } else {
+                inferredType = new SequenceType(inferredType.getItemType());
+            }
         }
 
         if(expression.getActualSequenceType() == null){
