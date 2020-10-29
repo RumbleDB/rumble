@@ -98,11 +98,9 @@ public class SequenceType implements Serializable {
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
+    // TODO: consider removing it
     public boolean isAritySubtypeOf(Arity superArity){
-        if(superArity == Arity.ZeroOrMore || superArity == this.arity)
-            return true;
-        else
-            return this.arity == Arity.One;
+        return this.arity.isSubtypeOf(superArity);
     }
 
     public boolean hasEffectiveBooleanValue(){
@@ -223,6 +221,26 @@ public class SequenceType implements Serializable {
         };
 
         public abstract String getSymbol();
+
+        public boolean isSubtypeOf(Arity superArity){
+            if(superArity == Arity.ZeroOrMore || superArity == this)
+                return true;
+            else
+                return this == Arity.One;
+        }
+
+        public Arity multiplyWith(Arity other){
+            if(this == One && other == One){
+                return One;
+            } else if(this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)){
+                return OneOrZero;
+            } else if(this.isSubtypeOf(OneOrMore) && other.isSubtypeOf(OneOrMore)){
+                return OneOrMore;
+            } else {
+                return ZeroOrMore;
+            }
+        }
+
     }
 
     @Override

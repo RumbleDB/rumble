@@ -1034,16 +1034,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
 
-        SequenceType.Arity resultingArity = SequenceType.Arity.ZeroOrMore;
-
-        if(leftType.getArity() == SequenceType.Arity.One && rightType.getArity() == SequenceType.Arity.One){
-            resultingArity = SequenceType.Arity.One;
-        } else if(leftType.isAritySubtypeOf(SequenceType.Arity.OneOrZero) && rightType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)){
-            resultingArity = SequenceType.Arity.OneOrZero;
-        } else if(leftType.isAritySubtypeOf(SequenceType.Arity.OneOrMore) && rightType.isAritySubtypeOf(SequenceType.Arity.OneOrMore)){
-            resultingArity = SequenceType.Arity.OneOrMore;
-        }
-
+        SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         expression.setInferredSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
         System.out.println("visiting SimpleMap expression, type set to: " + expression.getInferredSequenceType());
         return argument;
@@ -1056,9 +1047,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
+        SequenceType.Arity forArities = SequenceType.Arity.One; // One is arity multiplication's neutral element
+        SequenceType forType;
 
         while (clause != null){
             this.visit(clause, argument);
+            // if there are for clauses we need to consider their arities for the returning expression
+            if(clause.getClauseType() == FLWOR_CLAUSES.FOR){
+                 forType = ((ForClause) clause).getExpression().getInferredSequenceType();
+                // if forType is the empty sequence that means that allowing empty is set otherwise we would have thrown an error
+                // therefore this for loop will generate one tuple binding the empty sequence, so as for the arities count as arity.One
+                if(!forType.isEmptySequence()){
+                    forArities = forType.getArity().multiplyWith(forArities);
+                }
+            }
             clause = clause.getNextClause();
         }
 
@@ -1069,8 +1071,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if(returnType.isEmptySequence()){
             throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
-
-        // TODO: deal properly with arity basing on for clauses
+        returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
         expression.setInferredSequenceType(returnType);
         System.out.println("visiting Flowr expression, type set to: " + expression.getInferredSequenceType());
         return argument;
