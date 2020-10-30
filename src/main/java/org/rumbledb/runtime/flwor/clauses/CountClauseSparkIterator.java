@@ -158,21 +158,12 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
-        df.sparkSession()
-            .udf()
-            .register(
-                "serializeCountIndex",
-                new LongSerializeUDF(),
-                DataTypes.BinaryType
-            );
-
         dfWithIndex.createOrReplaceTempView("input");
         dfWithIndex = dfWithIndex.sparkSession()
             .sql(
                 String.format(
-                    "select %s serializeCountIndex(`%s`) as `%s` from input",
+                    "select %s `%s` from input",
                     selectSQL,
-                    variableName,
                     variableName
                 )
             );
