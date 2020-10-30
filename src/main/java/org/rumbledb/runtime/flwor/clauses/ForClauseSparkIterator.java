@@ -46,7 +46,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
-import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
