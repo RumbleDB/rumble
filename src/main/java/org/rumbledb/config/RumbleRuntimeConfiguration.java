@@ -130,16 +130,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.numberOfOutputPartitions;
     }
 
-    public void setNumberOfOutputPartitions(int newValue) {
+    public RumbleRuntimeConfiguration setNumberOfOutputPartitions(int newValue) {
         this.numberOfOutputPartitions = newValue;
+        return this;
     }
 
     public Map<String, String> getOutputFormatOptions() {
         return this.outputFormatOptions;
     }
 
-    public void setOutputFormatOption(String key, String value) {
+    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
         this.outputFormatOptions.put(key, value);
+        return this;
     }
 
     public void init() {
@@ -235,8 +237,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      *
      * @param cap the maximum number of Items to collect.
      */
-    public void setResultSizeCap(int i) {
+    public RumbleRuntimeConfiguration setResultSizeCap(int i) {
         this.resultsSizeCap = i;
+        return this;
     }
 
     public List<Item> getExternalVariableValue(Name name) {
@@ -253,8 +256,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
-    public void setExternalVariableValue(Name name, List<Item> items) {
+    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
+        return this;
     }
 
     public boolean isShell() {
