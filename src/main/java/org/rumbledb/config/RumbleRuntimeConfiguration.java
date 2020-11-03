@@ -20,9 +20,9 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -49,6 +49,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
+    private Map<Name, List<Item>> externalVariableValues;
+    private Map<Name, String> unparsedExternalVariableValues;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -174,6 +176,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.resultsSizeCap = 200;
             }
         }
+        this.externalVariableValues = new HashMap<>();
+        this.unparsedExternalVariableValues = new HashMap<>();
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("variable:")) {
+                String variableLocalName = s.substring(9);
+                Name name = Name.createVariableInNoNamespace(variableLocalName);
+                this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
+            }
+        }
     }
 
     public boolean getOverwrite() {
@@ -228,13 +239,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.resultsSizeCap = i;
     }
 
-    public String getExternalVariableValue(Name name) {
-        for (String s : this.arguments.keySet()) {
-            if (s.equals("variable:" + name)) {
-                return this.arguments.get(s);
-            }
+    public List<Item> getExternalVariableValue(Name name) {
+        if (this.externalVariableValues.containsKey(name)) {
+            return this.externalVariableValues.get(name);
         }
         return null;
+    }
+
+    public String getUnparsedExternalVariableValue(Name name) {
+        if (this.externalVariableValues.containsKey(name)) {
+            return this.unparsedExternalVariableValues.get(name);
+        }
+        return null;
+    }
+
+    public void setExternalVariableValue(Name name, List<Item> items) {
+        this.externalVariableValues.put(name, items);
     }
 
     public boolean isShell() {
