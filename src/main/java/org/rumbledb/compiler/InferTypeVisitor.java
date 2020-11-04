@@ -37,10 +37,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -56,6 +53,52 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      */
     InferTypeVisitor(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+    }
+
+    /**
+     * Perform basic checks on a list of SequenceType, available checks are for null (OurBad exception) and inferred the empty sequence (XPST0005)
+     *
+     * @param types list of sequence types to check
+     * @param nodeName name of the node to use in the errors
+     * @param nullCheck flag indicating to perform null check
+     * @param inferredEmptyCheck flag indicating to perform empty sequence check
+     */
+    private void basicChecks(List<SequenceType> types, String nodeName, boolean nullCheck, boolean inferredEmptyCheck){
+        if(nullCheck){
+            for (SequenceType type : types){
+                if(type == null){
+                    throw new OurBadException("A child expression of a " + nodeName + " has no inferred type");
+                }
+            }
+        }
+        if(inferredEmptyCheck){
+            for (SequenceType type : types){
+                if(type.isEmptySequence()){
+                    throw new UnexpectedStaticTypeException("Inferred type for " + nodeName + " is empty sequence (with active static typing feature, only allowed for CommaExpression)", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+                }
+            }
+        }
+    }
+
+    /**
+     * Perform basic checks on a SequenceType, available checks are for null (OurBad exception) and inferred the empty sequence (XPST0005)
+     *
+     * @param type sequence types to check
+     * @param nodeName name of the node to use in the errors
+     * @param nullCheck flag indicating to perform null check
+     * @param inferredEmptyCheck flag indicating to perform empty sequence check
+     */
+    private void basicChecks(SequenceType type, String nodeName, boolean nullCheck, boolean inferredEmptyCheck){
+        if(nullCheck){
+            if(type == null){
+                throw new OurBadException("A child expression of a " + nodeName + " has no inferred type");
+            }
+        }
+        if(inferredEmptyCheck){
+            if(type.isEmptySequence()){
+                throw new UnexpectedStaticTypeException("Inferred type for " + nodeName + " is empty sequence (with active static typing feature, only allowed for CommaExpression)", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+            }
+        }
     }
 
     @Override
@@ -729,9 +772,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = null;
 
         SequenceType conditionType = expression.getTestCondition().getInferredSequenceType();
-        if(conditionType == null){
-            throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
-        }
+        basicChecks(conditionType, expression.getClass().getSimpleName(), true, false);
 
         for(TypeswitchCase typeswitchCase : expression.getCases()){
             Name variableName = typeswitchCase.getVariableName();
@@ -747,9 +788,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             visit(returnExpression, argument);
             SequenceType caseType = returnExpression.getInferredSequenceType();
-            if(caseType == null){
-                throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
-            }
+            basicChecks(caseType, expression.getClass().getSimpleName(), true, false);
             inferredType = inferredType == null ? caseType : inferredType.leastCommonSupertypeWith(caseType);
         }
 
@@ -761,14 +800,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         visit(returnExpression, argument);
         SequenceType defaultType = returnExpression.getInferredSequenceType();
-        if(defaultType == null){
-            throw new OurBadException("A child expression of a TypeSwitchExpression has no inferred type");
-        }
+        basicChecks(defaultType, expression.getClass().getSimpleName(), true, false);
         inferredType = inferredType.leastCommonSupertypeWith(defaultType);
 
-        if(inferredType.isEmptySequence()){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
-        }
+        basicChecks(inferredType, expression.getClass().getSimpleName(), false, true);
         expression.setInferredSequenceType(inferredType);
         System.out.println("visiting TypeSwitch expression, type set to: " + expression.getInferredSequenceType());
         return argument;
@@ -836,33 +871,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         boolean skipTestInference = false;
         for(QuantifiedExpressionVar var : expression.getVariables()){
             visit(var.getExpression(), argument);
-            SequenceType varType = var.getActualSequenceType();
             SequenceType inferredType = var.getExpression().getInferredSequenceType();
-            if(varType == null){
-                // if type was not specified for a clause we use the single version of the inferred one
-                if(inferredType == null){
-                    throw new OurBadException("A child expression of a QuantifiedExpression has no inferred type");
-                }
-                if(inferredType.isEmptySequence()){
-                    skipTestInference = true;
-                } else {
-                    System.out.println("setting "+var.getVariableName()+" type to: "+inferredType.getItemType());
-                    evaluationExpression.getStaticContext().replaceVariableSequenceType(var.getVariableName(), new SequenceType(inferredType.getItemType()));
-                }
+            basicChecks(inferredType, expression.getClass().getSimpleName(), true, false);
+
+            SequenceType varType = var.getActualSequenceType();
+
+            if(inferredType.isEmptySequence()){
+                skipTestInference = true;
             } else {
-                // otherwise we must check that the type is appropriate
-                if(!inferredType.isEmptySequence() && !(new SequenceType(inferredType.getItemType())).isSubtypeOfOrCanBePromotedTo(varType)){
-                    throw  new UnexpectedStaticTypeException("expected type for variable " + var.getVariableName() + " must match " + varType + " but " + inferredType.getItemType() + " was inferred");
-                }
+                checkVariableType(varType, inferredType, evaluationExpression.getStaticContext(), expression.getClass().getSimpleName(), var.getVariableName());
             }
         }
 
         if(!skipTestInference){
             visit(evaluationExpression, argument);
             SequenceType evaluationType = evaluationExpression.getInferredSequenceType();
-            if(evaluationType == null){
-                throw new OurBadException("A child expression of a QuantifiedExpression has no inferred type");
-            }
+            basicChecks(evaluationType, expression.getClass().getSimpleName(), true, false);
             if(!evaluationType.hasEffectiveBooleanValue()){
                 throw new UnexpectedStaticTypeException("evaluation expression of quantified expression has " + evaluationType + " inferred type, which has no effective boolean value");
             }
@@ -952,14 +976,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visit(expression.getMainExpression(), argument);
         SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
-
-        if(mainType == null){
-            throw new OurBadException("A child expression of a FilterExpression has no inferred type");
-        }
-
-        if(mainType.isEmptySequence()){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
-        }
+        basicChecks(mainType, expression.getClass().getSimpleName(), true, true);
 
         Expression predicateExpression = expression.getPredicateExpression();
         // set context item static type
@@ -969,15 +986,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // unset context item static type
         predicateExpression.getStaticContext().setContextItemStaticType(null);
 
-        if(predicateType == null){
-            throw new OurBadException("A child expression of a FilterExpression has no inferred type");
-        }
+        basicChecks(predicateType, expression.getClass().getSimpleName(), true, true);
         // always false so the return type is for sure ()
-        if(predicateType.isEmptySequence() || predicateType.isSubtypeOf(SequenceType.createSequenceType("null?"))){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
+        if(predicateType.isSubtypeOf(SequenceType.createSequenceType("null?"))){
+            throw new UnexpectedStaticTypeException("Inferred type for FilterExpression is empty sequence (with active static typing feature, only allowed for CommaExpression)", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
         }
         if(!predicateType.hasEffectiveBooleanValue()){
-            throw new UnexpectedStaticTypeException("Inferred type " + predicateType + " has no effective boolean value");
+            throw new UnexpectedStaticTypeException("Inferred type " + predicateType + " in FilterExpression has no effective boolean value");
         }
 
         // if we are filter one or less items or we use an integer to select a specific position we return at most one element, otherwise *
@@ -993,14 +1008,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
-        if(mainType == null){
-            throw new OurBadException("A child expression of a DynamicExpression has no inferred type");
-        }
+        basicChecks(mainType, expression.getClass().getSimpleName(), true, false);
         if(!mainType.equals(new SequenceType(ItemType.functionItem))){
             throw new UnexpectedStaticTypeException("the type of a dynamic function call main expression must be function, instead inferred " + mainType);
         }
 
-        // TODO: what aout partial application?
+        // TODO: need to add support for partial application
         expression.setInferredSequenceType(SequenceType.MOST_GENERAL_SEQUENCE_TYPE);
         System.out.println("visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType());
         return argument;
@@ -1014,12 +1027,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         visit(leftExpression, argument);
         SequenceType leftType = leftExpression.getInferredSequenceType();
-        if(leftType == null){
-            throw new OurBadException("A child expression of a SimpleMapExpression has no inferred type");
-        }
-        if(leftType.isEmptySequence()){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
-        }
+        basicChecks(leftType, expression.getClass().getSimpleName(), true, true);
 
         // set context item static type
         rightExpression.getStaticContext().setContextItemStaticType(new SequenceType(leftType.getItemType()));
@@ -1027,12 +1035,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         rightExpression.getStaticContext().setContextItemStaticType(null);
 
         SequenceType rightType = rightExpression.getInferredSequenceType();
-        if(rightType == null){
-            throw new OurBadException("A child expression of a SimpleMapExpression has no inferred type");
-        }
-        if(rightType.isEmptySequence()){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
-        }
+        basicChecks(rightType, expression.getClass().getSimpleName(), true, true);
 
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         expression.setInferredSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
@@ -1065,12 +1068,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getInferredSequenceType();
-        if(returnType == null){
-            throw new OurBadException("A child expression of a FlowrExpression has no inferred type");
-        }
-        if(returnType.isEmptySequence()){
-            throw new UnexpectedStaticTypeException("Inferred type is empty sequence and this is not a CommaExpression", ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression);
-        }
+        basicChecks(returnType, expression.getClass().getSimpleName(), true, true);
         returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
         expression.setInferredSequenceType(returnType);
         System.out.println("visiting Flowr expression, type set to: " + expression.getInferredSequenceType());
@@ -1080,10 +1078,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
         visit(expression.getExpression(), argument);
-        SequenceType inferredType = expression.getExpression().getInferredSequenceType();
-        if(inferredType == null){
-            throw new OurBadException("The child expression of ForClause has no inferred type");
-        }
+
+        SequenceType declaredType = expression.getActualSequenceType();
+        SequenceType inferredType = (declaredType == null ? expression.getExpression() : ((TreatExpression) expression.getExpression()).getMainExpression()).getInferredSequenceType();
+        basicChecks(inferredType, expression.getClass().getSimpleName(), true, false);
         if(inferredType.isEmptySequence()){
             if(!expression.isAllowEmpty()) {
                 // for sure we will not have any tuple to process and return the empty sequence
@@ -1098,37 +1096,28 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        if(expression.getActualSequenceType() == null){
-            // if type was not defined we infer it and overwrite it in the next clause context
-            // getNextClause() cannot return null because ForClause cannot be the last clause
-            expression.getNextClause().getStaticContext().replaceVariableSequenceType(expression.getVariableName(), inferredType);
-        } else {
-            if(!inferredType.isSubtypeOfOrCanBePromotedTo(expression.getActualSequenceType())){
-                throw new UnexpectedStaticTypeException(expression.getVariableName() + " has expected type " + expression.getActualSequenceType() + " but is not matched by the inferred type: " + inferredType);
-            }
-        }
+        checkVariableType(declaredType,
+                inferredType,
+                expression.getNextClause().getStaticContext(),
+                expression.getClass().getSimpleName(),
+                expression.getVariableName());
+
         System.out.println("visiting For clause, inferred var " + expression.getVariableName() + " : " + inferredType);
         return argument;
     }
 
     @Override
     public StaticContext visitLetClause(LetClause expression, StaticContext argument) {
-        // if type was not defined we infer it and overwrite it in the next clause context
         visit(expression.getExpression(), argument);
-        SequenceType inferredType = expression.getExpression().getInferredSequenceType();
-        if(inferredType == null){
-            throw new OurBadException("The child expression of LetClause has no inferred type");
-        }
-        if(expression.getActualSequenceType() == null){
-            // if type was not defined we infer it and overwrite it in the next clause context
-            // getNextClause() cannot return null because LetClause cannot be the last clause
-            expression.getNextClause().getStaticContext().replaceVariableSequenceType(expression.getVariableName(), inferredType);
-        } else {
-            if(!inferredType.isSubtypeOfOrCanBePromotedTo(expression.getActualSequenceType())){
-                throw new UnexpectedStaticTypeException(expression.getVariableName() + " has expected type " + expression.getActualSequenceType() + " but is not matched by the inferred type: " + inferredType);
-            }
-        }
-        System.out.println("visiting Let clause, inferred var " + expression.getVariableName() + " : " + inferredType);
+        SequenceType declaredType = expression.getActualSequenceType();
+        SequenceType inferredType = (declaredType == null ? expression.getExpression() : ((TreatExpression) expression.getExpression()).getMainExpression()).getInferredSequenceType();
+        checkVariableType(declaredType,
+                inferredType,
+                expression.getNextClause().getStaticContext(),
+                expression.getClass().getSimpleName(),
+                expression.getVariableName());
+
+        System.out.println("visiting Let clause, var " + expression.getVariableName() + " : " + inferredType);
         return argument;
     }
 
@@ -1136,9 +1125,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitWhereClause(WhereClause expression, StaticContext argument) {
         visit(expression.getWhereExpression(), argument);
         SequenceType whereType = expression.getWhereExpression().getInferredSequenceType();
-        if(whereType == null){
-            throw new OurBadException("The child expression of WhereClause has no inferred type");
-        }
+        basicChecks(whereType, expression.getClass().getSimpleName(), true, false);
         if(!whereType.hasEffectiveBooleanValue()){
             throw new UnexpectedStaticTypeException("where clause inferred type (" + whereType + ") has no effective boolean value");
         }
@@ -1158,17 +1145,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             SequenceType expectedType;
             if(groupByVarExpr != null){
                 visit(groupByVarExpr, argument);
-                SequenceType inferredType = groupByVarExpr.getInferredSequenceType();
-                if(inferredType == null){
-                    throw new OurBadException("The child expression of GroupByClause has no inferred type");
-                }
-                expectedType = groupByVar.getActualSequenceType();
-                if(expectedType == null){
-                    nextClause.getStaticContext().replaceVariableSequenceType(groupByVar.getVariableName(), inferredType);
+                SequenceType declaredType = groupByVar.getActualSequenceType();
+                SequenceType inferredType;
+                if(declaredType == null){
+                    inferredType = groupByVarExpr.getInferredSequenceType();
                     expectedType = inferredType;
                 } else {
-                    // TODO: treat as expr in case of type so should i ignore check (apply to let and for as well)
+                    inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getInferredSequenceType();
+                    expectedType = declaredType;
                 }
+                checkVariableType(declaredType,
+                         inferredType,
+                         nextClause.getStaticContext(),
+                         expression.getClass().getSimpleName(),
+                         groupByVar.getVariableName());
             } else {
                 expectedType = expression.getStaticContext().getVariableSequenceType(groupByVar.getVariableName());
             }
@@ -1183,8 +1173,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // excluding the grouping variables
         StaticContext firstClauseStaticContext = expression.getFirstClause().getStaticContext();
         nextClause.getStaticContext().incrementArities(firstClauseStaticContext, groupingVars);
-
-
         return argument;
     }
 
@@ -1193,9 +1181,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         for(OrderByClauseSortingKey orderClause : expression.getSortingKeys()){
             SequenceType orderType = orderClause.getExpression().getInferredSequenceType();
-            if(orderType == null){
-                throw new OurBadException("The child expression of OrderByClause has no inferred type");
-            }
+            basicChecks(orderType, expression.getClass().getSimpleName(), true, false);
             if(!orderType.isSubtypeOf(SequenceType.createSequenceType("atomic?")) ||
                     orderType.getItemType().equals(ItemType.atomicItem) ||
                     orderType.getItemType().equals(ItemType.durationItem) ||
@@ -1212,18 +1198,32 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     // region module
 
+    // if [declaredType] is not null, check if the inferred type matches or can be promoted to the declared type (otherwise throw type error)
+    // if [declaredType] is null, replace the type of [variableName] in the [context] with the inferred type
+    public void checkVariableType(SequenceType declaredType, SequenceType inferredType, StaticContext context, String nodeName, Name variableName) {
+        basicChecks(inferredType, nodeName, true, false);
+
+        if(declaredType == null){
+            // if declared type is null, we overwrite the type in the correspondent InScopeVariable with the inferred type
+            context.replaceVariableSequenceType(variableName, inferredType);
+        } else {
+            // the expression we get is a treat expression by design so we need to extract the inferred type of its main expression
+            if(!inferredType.isSubtypeOfOrCanBePromotedTo(declaredType)){
+                throw new UnexpectedStaticTypeException("In a " + nodeName + ", the variable $" + variableName + " inferred type " + inferredType + " does not match or can be promoted to the declared type " + declaredType);
+            }
+        }
+    }
+
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
-        // if expression has no type we infer it, and overwrite the type in the correspondent InScopeVariable
         visitDescendants(expression, argument);
-        if(expression.getActualSequenceType() == null){
-            SequenceType inferredType = expression.getExpression().getInferredSequenceType();
-            if(inferredType == null){
-                throw new OurBadException("The child expression of VariableDeclaration has no inferred type");
-            }
-            // TODO: consider static check as well
-            argument.replaceVariableSequenceType(expression.getVariableName(), inferredType);
-        }
+        SequenceType declaredType = expression.getActualSequenceType();
+        SequenceType inferredType = (declaredType == null ? expression.getExpression() : ((TreatExpression) expression.getExpression()).getMainExpression()).getInferredSequenceType();
+        checkVariableType(declaredType,
+                inferredType,
+                argument,
+                expression.getClass().getSimpleName(),
+                expression.getVariableName());
 
         return argument;
     }
@@ -1232,15 +1232,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        InlineFunctionExpression inlineExpression = ((InlineFunctionExpression) expression.getExpression());
+        InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
         SequenceType inferredType = inlineExpression.getBody().getInferredSequenceType();
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
         if(expectedType == null){
-            // TODO: should i register the function with the inferred type or most general in this case?
             expectedType = inferredType;
-        } else if(!inferredType.isSubtypeOf(expectedType)) {
-            throw new UnexpectedStaticTypeException("The declared function inferred type " + inferredType + " does not match the expected return type " + expectedType);
+        } else if(!inferredType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
+            throw new UnexpectedStaticTypeException("The declared function return inferred type " + inferredType + " does not match or can be promoted to the expected return type " + expectedType);
         }
 
         // add function signature to the statically known one

@@ -7,8 +7,7 @@ public class UnexpectedStaticTypeException extends RumbleException {
     private static final long serialVersionUID = 1L;
 
     public UnexpectedStaticTypeException(String message) {
-        // TODO: investigates errorCode and Metadata
-        super(message);
+        super(message, ErrorCode.UnexpectedTypeErrorCode);
     }
 
     public UnexpectedStaticTypeException(String message, ErrorCode errorCode){
