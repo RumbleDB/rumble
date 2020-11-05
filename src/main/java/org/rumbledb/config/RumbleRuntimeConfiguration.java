@@ -20,9 +20,9 @@
 
 package org.rumbledb.config;
 
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
-
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -49,6 +49,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
+    private Map<Name, List<Item>> externalVariableValues;
+    private Map<Name, String> unparsedExternalVariableValues;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -128,16 +130,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.numberOfOutputPartitions;
     }
 
-    public void setNumberOfOutputPartitions(int newValue) {
+    public RumbleRuntimeConfiguration setNumberOfOutputPartitions(int newValue) {
         this.numberOfOutputPartitions = newValue;
+        return this;
     }
 
     public Map<String, String> getOutputFormatOptions() {
         return this.outputFormatOptions;
     }
 
-    public void setOutputFormatOption(String key, String value) {
+    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
         this.outputFormatOptions.put(key, value);
+        return this;
     }
 
     public void init() {
@@ -172,6 +176,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.resultsSizeCap = Integer.parseInt(this.arguments.get("result-size"));
             } else {
                 this.resultsSizeCap = 200;
+            }
+        }
+        this.externalVariableValues = new HashMap<>();
+        this.unparsedExternalVariableValues = new HashMap<>();
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("variable:")) {
+                String variableLocalName = s.substring(9);
+                Name name = Name.createVariableInNoNamespace(variableLocalName);
+                this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
     }
@@ -224,17 +237,28 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      *
      * @param cap the maximum number of Items to collect.
      */
-    public void setResultSizeCap(int i) {
+    public RumbleRuntimeConfiguration setResultSizeCap(int i) {
         this.resultsSizeCap = i;
+        return this;
     }
 
-    public String getExternalVariableValue(Name name) {
-        for (String s : this.arguments.keySet()) {
-            if (s.equals("variable:" + name)) {
-                return this.arguments.get(s);
-            }
+    public List<Item> getExternalVariableValue(Name name) {
+        if (this.externalVariableValues.containsKey(name)) {
+            return this.externalVariableValues.get(name);
         }
         return null;
+    }
+
+    public String getUnparsedExternalVariableValue(Name name) {
+        if (this.unparsedExternalVariableValues.containsKey(name)) {
+            return this.unparsedExternalVariableValues.get(name);
+        }
+        return null;
+    }
+
+    public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
+        this.externalVariableValues.put(name, items);
+        return this;
     }
 
     public boolean isShell() {

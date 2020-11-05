@@ -22,7 +22,7 @@ public class RumbleServer {
     public void start() {
         try {
             System.out.println(
-                "Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
+                "[INFO] Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
             );
             HttpServer server = HttpServer.create(
                 new InetSocketAddress(
@@ -36,14 +36,14 @@ public class RumbleServer {
             context = server.createContext("/public.html");
             context.setHandler(new MainPageHandler());
             server.start();
-            System.out.println("Server running. Press Control+C to stop.");
+            System.out.println("[INFO] Server running. Press Control+C to stop.");
             while (!Thread.currentThread().isInterrupted()) {
                 Thread.sleep(10000);
             }
         } catch (IOException e) {
             throw new OurBadException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
         } catch (InterruptedException e) {
-            System.out.println("Interrupted.");
+            System.out.println("[INFO] Interrupted.");
         }
     }
 
