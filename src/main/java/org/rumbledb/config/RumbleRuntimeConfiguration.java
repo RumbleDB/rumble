@@ -181,12 +181,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
         for (String s : this.arguments.keySet()) {
-            System.out.println("Looking at parameter " + s);
             if (s.startsWith("variable:")) {
-                System.out.println("Variable.");
                 String variableLocalName = s.substring(9);
                 Name name = Name.createVariableInNoNamespace(variableLocalName);
-                System.out.println("Name: " + name);
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
@@ -246,18 +243,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public List<Item> getExternalVariableValue(Name name) {
-        System.out.println("External variables: " + this.externalVariableValues.size());
-        System.out.println("Looking up " + name);
         if (this.externalVariableValues.containsKey(name)) {
-            System.out.println("Found!");
             return this.externalVariableValues.get(name);
         }
         return null;
     }
 
     public String getUnparsedExternalVariableValue(Name name) {
-        System.out.println("Unparsed variables: " + this.unparsedExternalVariableValues.size());
-        System.out.println("Looking up " + name);
         if (this.unparsedExternalVariableValues.containsKey(name)) {
             return this.unparsedExternalVariableValues.get(name);
         }
@@ -265,7 +257,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
-        System.out.println("Setting external variable " + name + " to " + items.size() + " items.");
         this.externalVariableValues.put(name, items);
         return this;
     }

@@ -167,13 +167,11 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 }
             }
 
-            System.out.println("Adding items!");
             argument.getVariableValues()
                 .addVariableValue(
                     name,
                     items
                 );
-            System.out.println(argument);
             return argument;
         }
 
