@@ -325,8 +325,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             true
         );
 
-        expressionDF.show();
-
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
@@ -338,8 +336,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             true
         );
-
-        inputDF.show();
 
         // We group the right-hand-side of the join by hash to prepare the left outer join.
         expressionDF.createOrReplaceTempView("hashedExpressionResults");
@@ -354,8 +350,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
 
-        expressionDF.show();
-
         // We serialize back all grouped items as sequences of items.
         expressionDF.createOrReplaceTempView("groupedResults");
         expressionDF.sparkSession()
@@ -365,7 +359,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType
             );
-        expressionDF.show();
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
@@ -376,8 +369,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.expressionHashColumnName
                 )
             );
-        expressionDF.show();
-
         expressionDF.createOrReplaceTempView("groupedAndSerializedResults");
         inputDF.createOrReplaceTempView("inputTuples");
 
@@ -406,7 +397,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     SparkSessionManager.inputTupleHashColumnName
                 )
             );
-        inputDF.show();
 
         // We now post-filter on the predicate, by hash group.
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
@@ -429,7 +419,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             parentProjection,
             false
         );
-        inputDF.show();
 
         return inputDF;
     }

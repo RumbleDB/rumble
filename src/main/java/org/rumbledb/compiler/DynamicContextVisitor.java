@@ -47,6 +47,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 /**
@@ -114,11 +115,65 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
         // Variable is external. Do we have supplied items?
         List<Item> items = this.configuration.getExternalVariableValue(name);
         if (items != null) {
+            if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence type ().",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.One
+                    && items.size() != 1
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity 1.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.OneOrZero
+                    && items.size() > 1
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity ?.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.OneOrMore
+                    && items.size() == 0
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity +.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            for (Item item : items) {
+                if (
+                    variableDeclaration.getSequenceType().isEmptySequence()
+                        || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                ) {
+                    throw new UnexpectedTypeException(
+                            "External variable value ("
+                                + item
+                                + ") does not match the expected type ("
+                                + variableDeclaration.getSequenceType()
+                                + ").",
+                            variableDeclaration.getMetadata()
+                    );
+                }
+            }
+
+            System.out.println("Adding items!");
             argument.getVariableValues()
                 .addVariableValue(
                     name,
                     items
                 );
+            System.out.println(argument);
             return argument;
         }
 
