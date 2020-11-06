@@ -301,6 +301,8 @@ keyWords                : Kjsoniq
                         | Kto
                         | Kinstance
                         | Kof
+                        | Kstatically
+                        | Kis
                         | Ktreat
                         | Kcast
                         | Kcastable
@@ -411,6 +413,10 @@ Kto                     : 'to' ;
 Kinstance               : 'instance' ;
 
 Kof                     : 'of' ;
+
+Kstatically             : 'statically' ;
+
+Kis                     : 'is' ;
 
 Ktreat                  : 'treat';
 
