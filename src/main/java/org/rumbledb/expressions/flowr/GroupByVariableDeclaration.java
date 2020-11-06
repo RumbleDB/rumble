@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.flowr;
 
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.types.SequenceType;
 

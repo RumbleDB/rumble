@@ -150,7 +150,9 @@ additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=mu
 
 multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : main_expr=treatExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr          : main_expr=staticallyIsExpr ( Kinstance Kof seq=sequenceType)?;
+
+staticallyIsExpr        : main_expr=treatExpr ( Kstatically Kis seq=sequenceType)?;
 
 treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 

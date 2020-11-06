@@ -1,76 +1,35 @@
 package org.rumbledb.expressions.typing;
 
-import java.util.Collections;
-import java.util.List;
-
-import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
+import java.util.Collections;
+import java.util.List;
 
-public class TreatExpression extends Expression {
-
+public class StaticallyIsExpression extends Expression {
     private Expression mainExpression;
     private SequenceType sequenceType;
-    private ErrorCode errorCode;
 
-    public TreatExpression(
+    public StaticallyIsExpression(
             Expression mainExpression,
             SequenceType sequenceType,
-            ErrorCode errorCode,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         if (mainExpression == null) {
             throw new OurBadException("Expression cannot be null.");
         }
-        this.errorCode = errorCode;
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
     }
 
-    public SequenceType getsequenceType() {
-        return this.sequenceType;
-    }
-
-    public ErrorCode errorCodeThatShouldBeThrown() {
-        return this.errorCode;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = calculateIsRDDFromSequenceTypeAndExpression(
-            this.sequenceType,
-            this.mainExpression,
-            visitorConfig
-        );
-    }
-
-    private static ExecutionMode calculateIsRDDFromSequenceTypeAndExpression(
-            SequenceType sequenceType,
-            Expression expression,
-            VisitorConfig visitorConfig
-    ) {
-        if (
-            !sequenceType.isEmptySequence()
-                && sequenceType.getArity() != SequenceType.Arity.One
-                && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.getHighestExecutionMode(visitorConfig).isRDD()
-        ) {
-            return ExecutionMode.RDD;
-        }
-        return ExecutionMode.LOCAL;
-    }
-
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitTreatExpression(this, argument);
+        return visitor.visitStaticallyIsExpr(this, argument);
     }
 
     public SequenceType getSequenceType() {
@@ -99,5 +58,4 @@ public class TreatExpression extends Expression {
             iterator.print(buffer, indent + 1);
         }
     }
-
 }

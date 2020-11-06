@@ -66,10 +66,7 @@ import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.*;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -262,6 +259,10 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitInstanceOfExpression(InstanceOfExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
+    public T visitStaticallyIsExpr(StaticallyIsExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

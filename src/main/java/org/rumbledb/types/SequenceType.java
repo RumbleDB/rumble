@@ -89,68 +89,79 @@ public class SequenceType implements Serializable {
         if (this.isEmptySequence) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
-        return this.isAritySubtypeOf(superType.arity) && (
-                this.itemType.isSubtypeOf(superType.getItemType()) ||
-                        (this.itemType.canBePromotedToString() && superType.itemType.equals(ItemType.stringItem)) ||
-                        (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem)) ||
-                        (this.itemType.equals(ItemType.integerItem) && superType.itemType.equals(ItemType.decimalItem))
-        );
+        return this.isAritySubtypeOf(superType.arity)
+            && (this.itemType.isSubtypeOf(superType.getItemType())
+                ||
+                (this.itemType.canBePromotedToString() && superType.itemType.equals(ItemType.stringItem))
+                ||
+                (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem))
+                ||
+                (this.itemType.equals(ItemType.integerItem) && superType.itemType.equals(ItemType.decimalItem)));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
     // TODO: consider removing it
-    public boolean isAritySubtypeOf(Arity superArity){
+    public boolean isAritySubtypeOf(Arity superArity) {
         return this.arity.isSubtypeOf(superArity);
     }
 
-    public boolean hasEffectiveBooleanValue(){
-        if(this.isEmptySequence) {
+    public boolean hasEffectiveBooleanValue() {
+        if (this.isEmptySequence) {
             return true;
-        } else if(this.itemType.isSubtypeOf(ItemType.JSONItem)) {
+        } else if (this.itemType.isSubtypeOf(ItemType.JSONItem)) {
             return true;
-        } else if((this.arity == Arity.One || this.arity == Arity.OneOrZero) && (
-                this.itemType.isNumeric() ||
-                this.itemType.equals(ItemType.stringItem) ||
-                this.itemType.equals(ItemType.anyURIItem) ||
-                this.itemType.equals(ItemType.nullItem) ||
-                this.itemType.equals(ItemType.booleanItem))){
+        } else if (
+            (this.arity == Arity.One || this.arity == Arity.OneOrZero)
+                && (this.itemType.isNumeric()
+                    ||
+                    this.itemType.equals(ItemType.stringItem)
+                    ||
+                    this.itemType.equals(ItemType.anyURIItem)
+                    ||
+                    this.itemType.equals(ItemType.nullItem)
+                    ||
+                    this.itemType.equals(ItemType.booleanItem))
+        ) {
             return true;
         } else {
             return false;
         }
     }
 
-    public boolean hasOverlapWith(SequenceType other){
+    public boolean hasOverlapWith(SequenceType other) {
         // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
-        if(this.isEmptySequence()){
-            return other.isEmptySequence() || other.getArity() == Arity.OneOrZero || other.getArity() == Arity.ZeroOrMore;
+        if (this.isEmptySequence()) {
+            return other.isEmptySequence()
+                || other.getArity() == Arity.OneOrZero
+                || other.getArity() == Arity.ZeroOrMore;
         }
-        if(other.isEmptySequence()){
+        if (other.isEmptySequence()) {
             return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
         }
         // All arities overlap between each other
-        return this.getItemType().isSubtypeOf(other.getItemType()) || other.getItemType().isSubtypeOf(this.getItemType());
+        return this.getItemType().isSubtypeOf(other.getItemType())
+            || other.getItemType().isSubtypeOf(this.getItemType());
     }
 
-    public SequenceType leastCommonSupertypeWith(SequenceType other){
-        if(this.isEmptySequence){
-            if(other.isEmptySequence()){
+    public SequenceType leastCommonSupertypeWith(SequenceType other) {
+        if (this.isEmptySequence) {
+            if (other.isEmptySequence()) {
                 return this;
             } else {
                 Arity resultingArity = other.getArity();
-                if(resultingArity == Arity.One){
+                if (resultingArity == Arity.One) {
                     resultingArity = Arity.OneOrZero;
-                } else if(resultingArity == Arity.OneOrMore){
+                } else if (resultingArity == Arity.OneOrMore) {
                     resultingArity = Arity.ZeroOrMore;
                 }
                 return new SequenceType(other.itemType, resultingArity);
             }
         }
-        if(other.isEmptySequence()){
+        if (other.isEmptySequence()) {
             Arity resultingArity = this.getArity();
-            if(resultingArity == Arity.One){
+            if (resultingArity == Arity.One) {
                 resultingArity = Arity.OneOrZero;
-            } else if(resultingArity == Arity.OneOrMore){
+            } else if (resultingArity == Arity.OneOrMore) {
                 resultingArity = Arity.ZeroOrMore;
             }
             return new SequenceType(this.itemType, resultingArity);
@@ -158,9 +169,9 @@ public class SequenceType implements Serializable {
 
         ItemType itemSupertype = this.getItemType().findCommonSuperType(other.getItemType());
         Arity aritySuperType = Arity.ZeroOrMore;
-        if(this.isAritySubtypeOf(other.getArity())){
+        if (this.isAritySubtypeOf(other.getArity())) {
             aritySuperType = other.getArity();
-        } else if(other.isAritySubtypeOf(this.getArity())){
+        } else if (other.isAritySubtypeOf(this.getArity())) {
             aritySuperType = this.getArity();
         }
         // no need additional check because the only disjointed arity are ? and +, which least common supertype is *
@@ -168,11 +179,11 @@ public class SequenceType implements Serializable {
     }
 
     // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
-    public SequenceType incrementArity(){
-        if(!this.isEmptySequence()){
-            if(this.arity == Arity.One){
+    public SequenceType incrementArity() {
+        if (!this.isEmptySequence()) {
+            if (this.arity == Arity.One) {
                 return new SequenceType(this.getItemType(), Arity.OneOrMore);
-            } else if(this.arity == Arity.OneOrZero){
+            } else if (this.arity == Arity.OneOrZero) {
                 return new SequenceType(this.getItemType(), Arity.ZeroOrMore);
             }
         }
@@ -222,19 +233,19 @@ public class SequenceType implements Serializable {
 
         public abstract String getSymbol();
 
-        public boolean isSubtypeOf(Arity superArity){
-            if(superArity == Arity.ZeroOrMore || superArity == this)
+        public boolean isSubtypeOf(Arity superArity) {
+            if (superArity == Arity.ZeroOrMore || superArity == this)
                 return true;
             else
                 return this == Arity.One;
         }
 
-        public Arity multiplyWith(Arity other){
-            if(this == One && other == One){
+        public Arity multiplyWith(Arity other) {
+            if (this == One && other == One) {
                 return One;
-            } else if(this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)){
+            } else if (this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)) {
                 return OneOrZero;
-            } else if(this.isSubtypeOf(OneOrMore) && other.isSubtypeOf(OneOrMore)){
+            } else if (this.isSubtypeOf(OneOrMore) && other.isSubtypeOf(OneOrMore)) {
                 return OneOrMore;
             } else {
                 return ZeroOrMore;

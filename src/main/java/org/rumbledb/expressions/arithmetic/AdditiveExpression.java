@@ -67,7 +67,7 @@ public class AdditiveExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType) );
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
