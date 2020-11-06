@@ -189,6 +189,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // we also set variableReference type
             expression.setType(variableType);
         }
+        basicChecks(variableType, expression.getClass().getSimpleName(), false, true);
         System.out.println("visiting variable reference with type: " + variableType);
         expression.setInferredSequenceType(variableType);
         return argument;
@@ -697,8 +698,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnexpectedStaticTypeException("+ and * arities are not allowed for the expressions of switch test condition and cases");
         }
         ItemType itemType = type.getItemType();
-        if(itemType.equals(ItemType.functionItem)){
+        if(itemType.isSubtypeOf(ItemType.functionItem)){
             throw new UnexpectedStaticTypeException("function item not allowed for the expressions of switch test condition and cases", ErrorCode.UnexpectedFunctionITem);
+        }
+        if(itemType.isSubtypeOf(ItemType.JSONItem)){
+            throw new UnexpectedStaticTypeException("switch test condition and cases expressions' item type must match atomic, instead inferred: " + itemType, ErrorCode.NonAtomicElementErrorCode);
         }
         if(!itemType.isSubtypeOf(ItemType.atomicItem)){
             throw new UnexpectedStaticTypeException("switch test condition and cases expressions' item type must match atomic, instead inferred: " + itemType);
