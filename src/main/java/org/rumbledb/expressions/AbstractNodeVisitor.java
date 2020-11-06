@@ -262,7 +262,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitStaticallyIsExpr(StaticallyIsExpression expression, T argument) {
+    public T visitIsStaticallyExpr(IsStaticallyExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 

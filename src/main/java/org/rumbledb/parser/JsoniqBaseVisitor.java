@@ -370,7 +370,7 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
-	@Override public T visitStaticallyIsExpr(JsoniqParser.StaticallyIsExprContext ctx) { return visitChildren(ctx); }
+	@Override public T visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *

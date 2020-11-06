@@ -10,11 +10,11 @@ import org.rumbledb.types.SequenceType;
 import java.util.Collections;
 import java.util.List;
 
-public class StaticallyIsExpression extends Expression {
+public class IsStaticallyExpression extends Expression {
     private Expression mainExpression;
     private SequenceType sequenceType;
 
-    public StaticallyIsExpression(
+    public IsStaticallyExpression(
             Expression mainExpression,
             SequenceType sequenceType,
             ExceptionMetadata metadata
@@ -29,7 +29,7 @@ public class StaticallyIsExpression extends Expression {
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
-        return visitor.visitStaticallyIsExpr(this, argument);
+        return visitor.visitIsStaticallyExpr(this, argument);
     }
 
     public SequenceType getSequenceType() {

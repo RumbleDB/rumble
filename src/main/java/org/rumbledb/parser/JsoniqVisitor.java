@@ -314,11 +314,11 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#staticallyIsExpr}.
+	 * Visit a parse tree produced by {@link JsoniqParser#isStaticallyExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
-	T visitStaticallyIsExpr(JsoniqParser.StaticallyIsExprContext ctx);
+	T visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#treatExpr}.
 	 * @param ctx the parse tree

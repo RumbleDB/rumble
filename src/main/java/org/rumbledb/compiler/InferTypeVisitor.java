@@ -389,14 +389,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitStaticallyIsExpr(StaticallyIsExpression expression, StaticContext argument) {
+    public StaticContext visitIsStaticallyExpr(IsStaticallyExpression expression, StaticContext argument) {
         System.out.println("visiting StaticallyIs expression");
         visitDescendants(expression, argument);
 
         SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
         SequenceType expected = expression.getSequenceType();
-        if(!inferred.equals(expected)){
-            throw new UnexpectedStaticTypeException("expected static type is " + expected + " instead " + inferred + " was inferred");
+        if (!inferred.equals(expected)) {
+            throw new UnexpectedStaticTypeException(
+                    "expected static type is " + expected + " instead " + inferred + " was inferred"
+            );
         }
 
         expression.setInferredSequenceType(expected);

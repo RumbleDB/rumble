@@ -66,7 +66,7 @@ public class JsoniqParser extends Parser {
 		RULE_ifExpr = 38, RULE_tryCatchExpr = 39, RULE_catchClause = 40, RULE_orExpr = 41, 
 		RULE_andExpr = 42, RULE_notExpr = 43, RULE_comparisonExpr = 44, RULE_stringConcatExpr = 45, 
 		RULE_rangeExpr = 46, RULE_additiveExpr = 47, RULE_multiplicativeExpr = 48, 
-		RULE_instanceOfExpr = 49, RULE_staticallyIsExpr = 50, RULE_treatExpr = 51, 
+		RULE_instanceOfExpr = 49, RULE_isStaticallyExpr = 50, RULE_treatExpr = 51, 
 		RULE_castableExpr = 52, RULE_castExpr = 53, RULE_arrowExpr = 54, RULE_unaryExpr = 55, 
 		RULE_simpleMapExpr = 56, RULE_postFixExpr = 57, RULE_arrayLookup = 58, 
 		RULE_arrayUnboxing = 59, RULE_predicate = 60, RULE_objectLookup = 61, 
@@ -93,7 +93,7 @@ public class JsoniqParser extends Parser {
 		"quantifiedExpr", "quantifiedExprVar", "switchExpr", "switchCaseClause", 
 		"typeSwitchExpr", "caseClause", "ifExpr", "tryCatchExpr", "catchClause", 
 		"orExpr", "andExpr", "notExpr", "comparisonExpr", "stringConcatExpr", 
-		"rangeExpr", "additiveExpr", "multiplicativeExpr", "instanceOfExpr", "staticallyIsExpr", 
+		"rangeExpr", "additiveExpr", "multiplicativeExpr", "instanceOfExpr", "isStaticallyExpr", 
 		"treatExpr", "castableExpr", "castExpr", "arrowExpr", "unaryExpr", "simpleMapExpr", 
 		"postFixExpr", "arrayLookup", "arrayUnboxing", "predicate", "objectLookup", 
 		"primaryExpr", "varRef", "parenthesizedExpr", "contextItemExpr", "orderedExpr", 
@@ -4048,10 +4048,10 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class InstanceOfExprContext extends ParserRuleContext {
-		public StaticallyIsExprContext main_expr;
+		public IsStaticallyExprContext main_expr;
 		public SequenceTypeContext seq;
-		public StaticallyIsExprContext staticallyIsExpr() {
-			return getRuleContext(StaticallyIsExprContext.class,0);
+		public IsStaticallyExprContext isStaticallyExpr() {
+			return getRuleContext(IsStaticallyExprContext.class,0);
 		}
 		public TerminalNode Kinstance() { return getToken(JsoniqParser.Kinstance, 0); }
 		public TerminalNode Kof() { return getToken(JsoniqParser.Kof, 0); }
@@ -4076,7 +4076,7 @@ public class JsoniqParser extends Parser {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(682);
-			((InstanceOfExprContext)_localctx).main_expr = staticallyIsExpr();
+			((InstanceOfExprContext)_localctx).main_expr = isStaticallyExpr();
 			setState(686);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,65,_ctx) ) {
@@ -4104,47 +4104,47 @@ public class JsoniqParser extends Parser {
 		return _localctx;
 	}
 
-	public static class StaticallyIsExprContext extends ParserRuleContext {
+	public static class IsStaticallyExprContext extends ParserRuleContext {
 		public TreatExprContext main_expr;
 		public SequenceTypeContext seq;
 		public TreatExprContext treatExpr() {
 			return getRuleContext(TreatExprContext.class,0);
 		}
-		public TerminalNode Kstatically() { return getToken(JsoniqParser.Kstatically, 0); }
 		public TerminalNode Kis() { return getToken(JsoniqParser.Kis, 0); }
+		public TerminalNode Kstatically() { return getToken(JsoniqParser.Kstatically, 0); }
 		public SequenceTypeContext sequenceType() {
 			return getRuleContext(SequenceTypeContext.class,0);
 		}
-		public StaticallyIsExprContext(ParserRuleContext parent, int invokingState) {
+		public IsStaticallyExprContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
-		@Override public int getRuleIndex() { return RULE_staticallyIsExpr; }
+		@Override public int getRuleIndex() { return RULE_isStaticallyExpr; }
 		@Override
 		public <T> T accept(ParseTreeVisitor<? extends T> visitor) {
-			if ( visitor instanceof JsoniqVisitor ) return ((JsoniqVisitor<? extends T>)visitor).visitStaticallyIsExpr(this);
+			if ( visitor instanceof JsoniqVisitor ) return ((JsoniqVisitor<? extends T>)visitor).visitIsStaticallyExpr(this);
 			else return visitor.visitChildren(this);
 		}
 	}
 
-	public final StaticallyIsExprContext staticallyIsExpr() throws RecognitionException {
-		StaticallyIsExprContext _localctx = new StaticallyIsExprContext(_ctx, getState());
-		enterRule(_localctx, 100, RULE_staticallyIsExpr);
+	public final IsStaticallyExprContext isStaticallyExpr() throws RecognitionException {
+		IsStaticallyExprContext _localctx = new IsStaticallyExprContext(_ctx, getState());
+		enterRule(_localctx, 100, RULE_isStaticallyExpr);
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
 			setState(688);
-			((StaticallyIsExprContext)_localctx).main_expr = treatExpr();
+			((IsStaticallyExprContext)_localctx).main_expr = treatExpr();
 			setState(692);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,66,_ctx) ) {
 			case 1:
 				{
 				setState(689);
-				match(Kstatically);
-				setState(690);
 				match(Kis);
+				setState(690);
+				match(Kstatically);
 				setState(691);
-				((StaticallyIsExprContext)_localctx).seq = sequenceType();
+				((IsStaticallyExprContext)_localctx).seq = sequenceType();
 				}
 				break;
 			}
@@ -7419,8 +7419,8 @@ public class JsoniqParser extends Parser {
 		"\2\2\u02a8\u02ab\3\2\2\2\u02a9\u02a7\3\2\2\2\u02a9\u02aa\3\2\2\2\u02aa"+
 		"c\3\2\2\2\u02ab\u02a9\3\2\2\2\u02ac\u02b0\5f\64\2\u02ad\u02ae\7r\2\2\u02ae"+
 		"\u02af\7s\2\2\u02af\u02b1\5\u0096L\2\u02b0\u02ad\3\2\2\2\u02b0\u02b1\3"+
-		"\2\2\2\u02b1e\3\2\2\2\u02b2\u02b6\5h\65\2\u02b3\u02b4\7t\2\2\u02b4\u02b5"+
-		"\7u\2\2\u02b5\u02b7\5\u0096L\2\u02b6\u02b3\3\2\2\2\u02b6\u02b7\3\2\2\2"+
+		"\2\2\2\u02b1e\3\2\2\2\u02b2\u02b6\5h\65\2\u02b3\u02b4\7u\2\2\u02b4\u02b5"+
+		"\7t\2\2\u02b5\u02b7\5\u0096L\2\u02b6\u02b3\3\2\2\2\u02b6\u02b7\3\2\2\2"+
 		"\u02b7g\3\2\2\2\u02b8\u02bc\5j\66\2\u02b9\u02ba\7v\2\2\u02ba\u02bb\7X"+
 		"\2\2\u02bb\u02bd\5\u0096L\2\u02bc\u02b9\3\2\2\2\u02bc\u02bd\3\2\2\2\u02bd"+
 		"i\3\2\2\2\u02be\u02c2\5l\67\2\u02bf\u02c0\7x\2\2\u02c0\u02c1\7X\2\2\u02c1"+

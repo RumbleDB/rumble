@@ -810,7 +810,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitStaticallyIsExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitIsStaticallyExpr(ctx.main_expr);
         if (ctx.seq == null || ctx.seq.isEmpty()) {
             return mainExpression;
         }
@@ -824,14 +824,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     @Override
-    public Node visitStaticallyIsExpr(JsoniqParser.StaticallyIsExprContext ctx) {
+    public Node visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
         Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
         if (ctx.seq == null || ctx.seq.isEmpty()) {
             return mainExpression;
         }
         JsoniqParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
-        return new StaticallyIsExpression(
+        return new IsStaticallyExpression(
                 mainExpression,
                 sequenceType,
                 createMetadataFromContext(ctx)
