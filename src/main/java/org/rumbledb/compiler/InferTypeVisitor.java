@@ -29,10 +29,7 @@ import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.*;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -388,6 +385,21 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setInferredSequenceType(castedSequenceType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitStaticallyIsExpr(StaticallyIsExpression expression, StaticContext argument) {
+        System.out.println("visiting StaticallyIs expression");
+        visitDescendants(expression, argument);
+
+        SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
+        SequenceType expected = expression.getSequenceType();
+        if(!inferred.equals(expected)){
+            throw new UnexpectedStaticTypeException("expected static type is " + expected + " instead " + inferred + " was inferred");
+        }
+
+        expression.setInferredSequenceType(expected);
         return argument;
     }
 
