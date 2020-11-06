@@ -54,7 +54,7 @@ public class VisitorHelpers {
         System.out.println("* Starting type inference *");
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
         System.out.println("* Completed type inference *");
-        if(conf.printInferredTypes()){
+        if (conf.printInferredTypes()) {
             printTree(module, conf);
         }
     }
@@ -113,7 +113,7 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
-            if(configuration.doStaticAnalysis()){
+            if (configuration.doStaticAnalysis()) {
                 inferTypes(mainModule, configuration);
             }
             return mainModule;
