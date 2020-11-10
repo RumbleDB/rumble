@@ -308,7 +308,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 SequenceType actualType = parameterExpressions.get(i).getInferredSequenceType();
                 SequenceType expectedType = parameterTypes.get(i);
                 // check actual parameters is either a subtype of or can be promoted to expected type
-                // TODO: should i consider automatic prmotion as valid or not
                 if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
                     throw new UnexpectedStaticTypeException(
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found"
@@ -339,6 +338,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
+        if(expression.getSequenceType().getItemType().equals(ItemType.atomicItem)){
+            throw new UnexpectedStaticTypeException("atomic item type is not allowed in castable expression", ErrorCode.CastableErrorCode);
+        }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
     }
@@ -351,6 +353,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
+
+        if(castedSequenceType.getItemType().equals(ItemType.atomicItem)){
+            throw new UnexpectedStaticTypeException("atomic item type is not allowed in cast expression", ErrorCode.CastableErrorCode);
+        }
 
         // Empty sequence check
         if (expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
