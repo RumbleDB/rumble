@@ -1,6 +1,7 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -21,33 +22,37 @@ import java.util.Collection;
 import java.util.List;
 
 @RunWith(Parameterized.class)
-public class RuntimeTests extends AnnotationsTestsBase {
+public class StaticTypeTests extends AnnotationsTestsBase {
 
-    public static final File runtimeTestsDirectory = new File(
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
+            new String[] { "--print-iterator-tree", "yes", "--static-analysis", "yes" }
+    );
+
+    public static final File staticTypeTestsDirectory = new File(
             System.getProperty("user.dir")
-                    +
-                    "/src/test/resources/test_files/static-typing"
+                +
+                "/src/test/resources/test_files/static-typing"
     );
     public static final String javaVersion =
-            System.getProperty("java.version");
+        System.getProperty("java.version");
     public static final String scalaVersion =
-            Properties.scalaPropOrElse("version.number", "unknown");
+        Properties.scalaPropOrElse("version.number", "unknown");
     protected static List<File> _testFiles = new ArrayList<>();
     protected final File testFile;
 
-    public RuntimeTests(File testFile) {
+    public StaticTypeTests(File testFile) {
         this.testFile = testFile;
     }
 
     public static void readFileList(File dir) {
-        FileManager.loadJiqFiles(dir).forEach(file -> RuntimeTests._testFiles.add(file));
+        FileManager.loadJiqFiles(dir).forEach(file -> StaticTypeTests._testFiles.add(file));
     }
 
     @Parameterized.Parameters(name = "{index}:{0}")
     public static Collection<Object[]> testFiles() {
         List<Object[]> result = new ArrayList<>();
-        RuntimeTests.readFileList(RuntimeTests.runtimeTestsDirectory);
-        RuntimeTests._testFiles.forEach(file -> result.add(new Object[] { file }));
+        StaticTypeTests.readFileList(StaticTypeTests.staticTypeTestsDirectory);
+        StaticTypeTests._testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
     }
 
@@ -78,7 +83,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
     @Test(timeout = 1000000)
     public void testRuntimeIterators() throws Throwable {
         System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
-        testAnnotations(this.testFile.getAbsolutePath());
+        testAnnotations(this.testFile.getAbsolutePath(), StaticTypeTests.configuration);
     }
 
     @Override
@@ -86,17 +91,15 @@ public class RuntimeTests extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
+        // TODO: Should i get actual output even if i do not need it?
         String actualOutput;
         if (!sequence.availableAsRDD()) {
             actualOutput = runIterators(sequence);
         } else {
             actualOutput = getRDDResults(sequence);
         }
-        Assert.assertTrue(
-                "Expected output: " + expectedOutput + "\nActual result: " + actualOutput,
-                expectedOutput.equals(actualOutput)
-        );
-        // unorderedItemSequenceStringsAreEqual(expectedOutput, actualOutput));
+        // For static typing check we just need to check that the program run, no need to compare the output
+        Assert.assertTrue(true);
     }
 
     protected String runIterators(SequenceOfItems sequence) {
@@ -123,12 +126,12 @@ public class RuntimeTests extends AnnotationsTestsBase {
             sb.append(result.serialize());
             sb.append(", ");
             while (
-                    sequence.hasNext()
-                            &&
-                            ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
-                                    && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
-                                    ||
-                                    AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
+                sequence.hasNext()
+                    &&
+                    ((itemCount < AnnotationsTestsBase.configuration.getResultSizeCap()
+                        && AnnotationsTestsBase.configuration.getResultSizeCap() > 0)
+                        ||
+                        AnnotationsTestsBase.configuration.getResultSizeCap() == 0)
             ) {
                 sb.append(sequence.next().serialize());
                 sb.append(", ");
@@ -136,9 +139,9 @@ public class RuntimeTests extends AnnotationsTestsBase {
             }
             if (sequence.hasNext() && itemCount == AnnotationsTestsBase.configuration.getResultSizeCap()) {
                 System.err.println(
-                        "Warning! The output sequence contains a large number of items but its materialization was capped at "
-                                + SparkSessionManager.COLLECT_ITEM_LIMIT
-                                + " items. This value can be configured with the --result-size parameter at startup"
+                    "Warning! The output sequence contains a large number of items but its materialization was capped at "
+                        + SparkSessionManager.COLLECT_ITEM_LIMIT
+                        + " items. This value can be configured with the --result-size parameter at startup"
                 );
             }
             // remove last comma

@@ -68,7 +68,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath());
+            testAnnotations(testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
         }
 
     }
@@ -103,7 +103,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            testAnnotations(testFile.getAbsolutePath());
+            testAnnotations(testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
