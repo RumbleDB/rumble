@@ -1,2 +1,2 @@
 (:JIQS: ShouldRun :)
-{"a" : 12} is statically object, { "a" treat as anyURI is statically anyURI : 12
+{| {"a" : 12} is statically object, { "b" : 1} |} is statically object
