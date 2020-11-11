@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun :)
+("qwe" || "rty") is statically string, (() || ()) is statically string, (12 || $date) is statically string, (33.3 || $hexb) is statically string, (12 treat as atomic? || null) is statically string
