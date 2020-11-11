@@ -59,7 +59,7 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected void testAnnotations(String path)
+    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
@@ -71,10 +71,10 @@ public class AnnotationsTestsBase {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                AnnotationsTestsBase.configuration,
+                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            Rumble rumble = new Rumble(AnnotationsTestsBase.configuration);
+            Rumble rumble = new Rumble(configuration);
             sequence = rumble.runQuery(uri);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();

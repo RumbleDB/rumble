@@ -6,6 +6,7 @@ import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -29,10 +30,7 @@ import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.*;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -311,7 +309,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 SequenceType actualType = parameterExpressions.get(i).getInferredSequenceType();
                 SequenceType expectedType = parameterTypes.get(i);
                 // check actual parameters is either a subtype of or can be promoted to expected type
-                // TODO: should i consider automatic prmotion as valid or not
                 if (!actualType.isSubtypeOfOrCanBePromotedTo(expectedType)) {
                     throw new UnexpectedStaticTypeException(
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found"
@@ -342,6 +339,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
+        if (expression.getSequenceType().getItemType().equals(ItemType.atomicItem)) {
+            throw new UnexpectedStaticTypeException(
+                    "atomic item type is not allowed in castable expression",
+                    ErrorCode.CastableErrorCode
+            );
+        }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
     }
@@ -354,6 +357,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // check at static time for casting errors (note cast only allows for normal or ? arity)
         SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
+
+        if (castedSequenceType.getItemType().equals(ItemType.atomicItem)) {
+            throw new UnexpectedStaticTypeException(
+                    "atomic item type is not allowed in cast expression",
+                    ErrorCode.CastableErrorCode
+            );
+        }
 
         // Empty sequence check
         if (expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
@@ -388,6 +398,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setInferredSequenceType(castedSequenceType);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitIsStaticallyExpr(IsStaticallyExpression expression, StaticContext argument) {
+        System.out.println("visiting StaticallyIs expression");
+        visitDescendants(expression, argument);
+
+        SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
+        SequenceType expected = expression.getSequenceType();
+        if (!inferred.equals(expected)) {
+            throw new IsStaticallyUnexpectedType(
+                    "expected static type is " + expected + " instead " + inferred + " was inferred"
+            );
+        }
+
+        expression.setInferredSequenceType(expected);
         return argument;
     }
 

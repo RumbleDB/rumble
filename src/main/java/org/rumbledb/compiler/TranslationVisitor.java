@@ -101,10 +101,7 @@ import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.*;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
@@ -813,13 +810,28 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInstanceOfExpr(JsoniqParser.InstanceOfExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitIsStaticallyExpr(ctx.main_expr);
         if (ctx.seq == null || ctx.seq.isEmpty()) {
             return mainExpression;
         }
         JsoniqParser.SequenceTypeContext child = ctx.seq;
         SequenceType sequenceType = this.processSequenceType(child);
         return new InstanceOfExpression(
+                mainExpression,
+                sequenceType,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitIsStaticallyExpr(JsoniqParser.IsStaticallyExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
+        }
+        JsoniqParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new IsStaticallyExpression(
                 mainExpression,
                 sequenceType,
                 createMetadataFromContext(ctx)
