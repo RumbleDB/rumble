@@ -67,6 +67,8 @@ public enum ErrorCode {
     JobWithinAJobErrorCode("RBST0003"),
     OurBadErrorCode("RBST0004"),
 
+    UnexpectedStaticType("RBTY0001"),
+
 
     FunctionsNonSerializable("SENR0001"),
 

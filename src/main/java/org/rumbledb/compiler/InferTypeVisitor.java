@@ -6,6 +6,7 @@ import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -338,8 +339,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
-        if(expression.getSequenceType().getItemType().equals(ItemType.atomicItem)){
-            throw new UnexpectedStaticTypeException("atomic item type is not allowed in castable expression", ErrorCode.CastableErrorCode);
+        if (expression.getSequenceType().getItemType().equals(ItemType.atomicItem)) {
+            throw new UnexpectedStaticTypeException(
+                    "atomic item type is not allowed in castable expression",
+                    ErrorCode.CastableErrorCode
+            );
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
         return argument;
@@ -354,8 +358,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType expressionSequenceType = expression.getMainExpression().getInferredSequenceType();
         SequenceType castedSequenceType = expression.getSequenceType();
 
-        if(castedSequenceType.getItemType().equals(ItemType.atomicItem)){
-            throw new UnexpectedStaticTypeException("atomic item type is not allowed in cast expression", ErrorCode.CastableErrorCode);
+        if (castedSequenceType.getItemType().equals(ItemType.atomicItem)) {
+            throw new UnexpectedStaticTypeException(
+                    "atomic item type is not allowed in cast expression",
+                    ErrorCode.CastableErrorCode
+            );
         }
 
         // Empty sequence check
@@ -402,7 +409,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
         SequenceType expected = expression.getSequenceType();
         if (!inferred.equals(expected)) {
-            throw new UnexpectedStaticTypeException(
+            throw new IsStaticallyUnexpectedType(
                     "expected static type is " + expected + " instead " + inferred + " was inferred"
             );
         }
