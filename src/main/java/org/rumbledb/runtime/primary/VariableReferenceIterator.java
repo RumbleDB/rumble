@@ -78,6 +78,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    public String generateNativeQuery() {
+        return this.variableName.toString();
+    }
+
+    @Override
     public Item nextLocal() {
         if (!this.hasNext) {
             throw new IteratorFlowException(

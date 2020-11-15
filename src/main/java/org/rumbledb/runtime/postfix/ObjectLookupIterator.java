@@ -216,6 +216,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         return true;
     }
 
+    @Override
+    public String generateNativeQuery() {
+        String objectPart = this.iterator.generateNativeQuery();
+        if(objectPart == null){
+            return null;
+        }
+        initLookupKey();
+        return objectPart + "." + this.lookupKey.getStringValue();
+    }
+
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupKey();

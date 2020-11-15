@@ -154,6 +154,12 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
+    @Override
+    public String generateNativeQuery() {
+        // TODO: do treat check how?
+        return this.iterator.generateNativeQuery();
+    }
+
     private void checkEmptySequence(int size) {
         if (
             size == 0

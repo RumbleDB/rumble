@@ -533,6 +533,28 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Collections.singletonList(newVariableName)
         );
 
+        // if we can (depending on the expression) use let natively without UDF
+
+        if(!hash){
+            String nativeQuery = newVariableExpression.generateNativeQuery();
+            System.out.println("native query returned " + nativeQuery);
+            if(nativeQuery != null){
+                String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+                dataFrame.createOrReplaceTempView("input");
+                return dataFrame.sparkSession()
+                        .sql(
+                                String.format(
+                                        "select %s (%s) as `%s` from input",
+                                        selectSQL,
+                                        nativeQuery,
+                                        newVariableName
+                                )
+                        );
+            }
+        }
+
+        // was not possible, we use let udf
+
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
@@ -562,6 +584,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         dataFrame.createOrReplaceTempView("input");
+
+
+
         if (!hash) {
             dataFrame = dataFrame.sparkSession()
                 .sql(
