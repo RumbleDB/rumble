@@ -88,4 +88,16 @@ public class StringConcatIterator extends LocalRuntimeIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
     }
+
+    @Override
+    public String generateNativeQuery() {
+        // TODO: checks
+        String leftQuery = this.leftIterator.generateNativeQuery();
+        String rightQuery = this.rightIterator.generateNativeQuery();
+        if(leftQuery == null || rightQuery == null){
+            return null;
+        } else {
+            return "concat( ("+leftQuery+"), ("+rightQuery+") )";
+        }
+    }
 }

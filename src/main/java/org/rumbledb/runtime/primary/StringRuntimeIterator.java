@@ -55,4 +55,9 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
         return this.item;
     }
+
+    @Override
+    public String generateNativeQuery() {
+        return '"' + this.item.getStringValue() + '"';
+    }
 }
