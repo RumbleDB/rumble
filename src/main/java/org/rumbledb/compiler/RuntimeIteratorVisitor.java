@@ -953,7 +953,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
 
     @Override
     public RuntimeIterator visitTryCatchExpression(TryCatchExpression expression, RuntimeIterator argument) {
-        System.out.println("Visiting!");
         Map<String, RuntimeIterator> cases = new LinkedHashMap<>();
         for (String code : expression.getErrorsCaught()) {
             cases.put(

@@ -28,9 +28,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
-import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -65,8 +63,10 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -136,97 +136,18 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
+     * Retrieves the variable name represented by a physical data frame column.
+     * 
+     * @param columnName the column name.
+     * @return the variable name.
      */
-    public static List<String> getColumnNames(
-            StructType inputSchema,
-            int duplicateVariableIndex,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
-        return getColumnNames(inputSchema, duplicateVariableIndex, -1, dependencies);
-    }
-
-    /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param duplicatePositionalVariableIndex enables skipping another variable
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
-     */
-    public static List<String> getColumnNames(
-            StructType inputSchema,
-            int duplicateVariableIndex,
-            int duplicatePositionalVariableIndex,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
-        List<String> result = new ArrayList<>();
-        String[] columnNames = inputSchema.fieldNames();
-        for (int columnIndex = 0; columnIndex < columnNames.length; columnIndex++) {
-            if (columnIndex == duplicateVariableIndex || columnIndex == duplicatePositionalVariableIndex) {
-                continue;
-            }
-            String var = columnNames[columnIndex];
-            if (dependencies == null) {
-                result.add(columnNames[columnIndex]);
-            } else {
-                for (Name name : dependencies.keySet()) {
-                    if (name.toString().equals(var)) {
-                        result.add(columnNames[columnIndex]);
-                    }
-                }
-            }
+    public static Name variableForColumnName(String columnName) {
+        int pos = columnName.indexOf(".");
+        if (pos == -1) {
+            return Name.createVariableInNoNamespace(columnName);
+        } else {
+            return Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
-        return result;
-    }
-
-    /**
-     * @param inputSchema schema specifies the columns to be used in the query
-     * @param duplicateVariableIndex enables skipping a variable
-     * @param dependencies restriction of the results to within a specified set
-     * @return list of SQL column names in the schema
-     */
-    public static Map<String, List<String>> getColumnNamesByType(
-            StructType inputSchema,
-            int duplicateVariableIndex,
-            Map<Name, DynamicContext.VariableDependency> dependencies
-    ) {
-        Map<String, List<String>> result = new HashMap<>();
-        result.put("byte[]", new ArrayList<>());
-        result.put("Long", new ArrayList<>());
-        StructField[] columns = inputSchema.fields();
-        for (Name field : dependencies.keySet()) {
-            if (inputSchema.getFieldIndex(field.getLocalName()).isEmpty()) {
-                continue;
-            } ;
-            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
-            if (columnIndex == duplicateVariableIndex) {
-                continue;
-            }
-            String var = columns[columnIndex].name();
-            DataType type = columns[columnIndex].dataType();
-            if (type.equals(DataTypes.BinaryType)) {
-                result.get("byte[]").add(var);
-            } else if (type.equals(DataTypes.LongType)) {
-                result.get("Long").add(var);
-            }
-        }
-        return result;
-    }
-
-    public static String getUDFParameters(
-            Map<String, List<String>> columnNamesByType
-    ) {
-        String udfBinarySQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("byte[]"), false);
-        String udfLongSQL = FlworDataFrameUtils.getListOfSQLVariables(columnNamesByType.get("Long"), false);
-
-        return String.format(
-            "array(%s), array(%s)",
-            udfBinarySQL,
-            udfLongSQL
-        );
     }
 
     /**
@@ -236,15 +157,169 @@ public class FlworDataFrameUtils {
     public static List<String> getColumnNames(
             StructType inputSchema
     ) {
-        return getColumnNames(inputSchema, -1, null);
+        return Arrays.asList(inputSchema.fieldNames());
     }
 
     /**
+     * Lists the names of the columns of the schema that needed by the dependencies.
+     * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            Map<Name, DynamicContext.VariableDependency> dependencies
+    ) {
+        return getColumnNames(inputSchema, dependencies, null, null);
+    }
+
+    /**
+     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
+     * overriden).
+     * 
+     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
+     * @param dependencies restriction of the results to within a specified set
+     * @param variablesToRestrictTo variables whose columns must refer to.
+     * @param variablesToExclude variables whose columns should be projected away.
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> variablesToRestrictTo,
+            List<Name> variablesToExclude
+    ) {
+        if (dependencies == null) {
+            List<String> result = new ArrayList<>();
+            for (String columnName : inputSchema.fieldNames()) {
+                Name name = variableForColumnName(columnName);
+                if (variablesToExclude != null && variablesToExclude.contains(name)) {
+                    continue;
+                }
+                if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(name)) {
+                    continue;
+                }
+                result.add(columnName);
+            }
+            return result;
+        }
+        List<String> result = new ArrayList<>();
+        Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
+        for (Name variableName : dependencies.keySet()) {
+            if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
+                continue;
+            }
+            if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
+                continue;
+            }
+            switch (dependencies.get(variableName)) {
+                case FULL: {
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting full variable dependency on "
+                                + variableName
+                                + " but column not found in the data frame."
+                    );
+                }
+                case COUNT: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".count");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting count variable dependency on "
+                                + variableName
+                                + " but no appropriate column was found in the data frame."
+                    );
+                }
+                case SUM: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".sum");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting sum variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                case MIN: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".min");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting min variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                case MAX: {
+                    if (columnNames.contains(variableName.toString() + ".count")) {
+                        result.add(variableName.toString() + ".max");
+                        break;
+                    }
+                    if (columnNames.contains(variableName.toString())) {
+                        result.add(variableName.toString());
+                        break;
+                    }
+                    throw new OurBadException(
+                            "Expecting max variable dependency on "
+                                + variableName
+                                + "but no appropriate column was found in the data frame."
+                    );
+                }
+                default:
+                    throw new OurBadException(
+                            "Dependency " + dependencies.get(variableName) + " is not supported yet."
+                    );
+            }
+        }
+        return result;
+    }
+
+    /**
+     * Prepares the parameters supplied to a UDF, as a row obtained from the specified attributes.
+     * 
+     * @param columnNames the names of the columns to pass as a parameter.
+     * @return The parameters expressed in SQL.
+     */
+    public static String getUDFParameters(
+            List<String> columnNames
+    ) {
+        String udfSQL = FlworDataFrameUtils.getSQLProjection(columnNames, false);
+
+        return String.format(
+            "struct(%s)",
+            udfSQL
+        );
+    }
+
+    /**
+     * Prepares a SQL projection from the specified column names.
+     * 
      * @param columnNames schema specifies the columns to be used in the query
      * @param trailingComma boolean field to have a trailing comma
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getListOfSQLVariables(
+    public static String getSQLProjection(
             List<String> columnNames,
             boolean trailingComma
     ) {
@@ -264,23 +339,25 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * @param inputSchema schema specifies the columns to be used in the query
+     * Prepares a SQL projection for use in a GROUP BY query.
+     * 
+     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
      * @param duplicateVariableIndex enables skipping a variable
      * @param trailingComma field to have a trailing comma
      * @param serializerUdfName name of the serializer function
      * @param groupbyVariableNames names of group by variables
      * @param dependencies variable dependencies of the group by clause
-     * @param columnNamesByType mapping from types(eg. Long) to columnNames(eg. [testColumn1, testColumn2])
+     * @param columnNames the attributes to include (not necessarily the entire input schema).
      * @return comma separated variables to be used in spark SQL
      */
-    public static String getGroupbyProjectSQL(
+    public static String getGroupBySQLProjection(
             StructType inputSchema,
             int duplicateVariableIndex,
             boolean trailingComma,
             String serializerUdfName,
             List<Name> groupbyVariableNames,
             Map<Name, DynamicContext.VariableDependency> dependencies,
-            Map<String, List<String>> columnNamesByType
+            List<String> columnNames
     ) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
@@ -293,8 +370,7 @@ public class FlworDataFrameUtils {
             }
 
             String columnName = field.getLocalName();
-
-            if (isCountPreComputed(columnNamesByType, columnName)) {
+            if (isCountPreComputed(inputSchema, columnName)) {
                 queryColumnString.append("sum(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`)");
@@ -302,6 +378,7 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("count(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`)");
+                columnName += ".count";
             } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
                 // rows that end up in the same group have the same value for the grouping column
                 // return a single instance of this value in the grouping column
@@ -329,17 +406,23 @@ public class FlworDataFrameUtils {
         return queryColumnString.toString();
     }
 
-    private static boolean isCountPreComputed(Map<String, List<String>> columnNamesByType, String columnName) {
-        return columnNamesByType.get("Long").contains(columnName);
+    public static boolean isCountPreComputed(StructType schema, String columnName) {
+        String[] fields = schema.fieldNames();
+        for (String field : fields) {
+            if (field.equals(columnName)) {
+                return columnName.endsWith(".count");
+            }
+        }
+        throw new OurBadException("Column does not exist: " + columnName);
     }
 
     private static boolean shouldCalculateCount(
             Map<Name, DynamicContext.VariableDependency> dependencies,
             String columnName
     ) {
-        return dependencies.containsKey(Name.createVariableInNoNamespace(columnName))
+        return dependencies.containsKey(variableForColumnName(columnName))
             && dependencies.get(
-                Name.createVariableInNoNamespace(columnName)
+                variableForColumnName(columnName)
             ) == DynamicContext.VariableDependency.COUNT;
     }
 
@@ -347,7 +430,7 @@ public class FlworDataFrameUtils {
             List<Name> groupbyVariableNames,
             String columnName
     ) {
-        return groupbyVariableNames.contains(Name.createVariableInNoNamespace(columnName));
+        return groupbyVariableNames.contains(variableForColumnName(columnName));
     }
 
     private static Object deserializeByteArray(byte[] toDeserialize, Kryo kryo, Input input) {

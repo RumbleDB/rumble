@@ -25,19 +25,21 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import scala.collection.mutable.WrappedArray;
-
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 
 /**
  * This class exposes a reusable context that is dynamically populated from the input tuples stored in DataFrames.
@@ -50,11 +52,7 @@ import java.util.Map;
 public class DataFrameContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Map<String, List<String>> columnNamesByType;
-    private List<Name> serializedVariableNames;
-    private List<Name> countedVariableNames;
-    private List<List<Item>> deserializedParams;
-    private List<Item> longParams;
+    private List<String> columnNames;
     private DynamicContext context;
 
     private transient Kryo kryo;
@@ -77,27 +75,15 @@ public class DataFrameContext implements Serializable {
      * Builds a new data frame context.
      * 
      * @param context the parent dynamic context, which contains all variable values except those in input tuples.
-     * @param columnNamesByType the names of the DataFrame column names applicable to the calling clause, organized by
+     * @param columnNames the names of the DataFrame column names applicable to the calling clause, organized by
      *        types (currently Long for non-materialized counts, or byte[] for serialized sequences).
      */
     public DataFrameContext(
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            StructType schema,
+            List<String> columnNames
     ) {
-        this.columnNamesByType = columnNamesByType;
-        List<String> serializedColumNames = this.columnNamesByType.get("byte[]");
-        this.serializedVariableNames = new ArrayList<>(serializedColumNames.size());
-        for (String columnName : serializedColumNames) {
-            this.serializedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
-        List<String> countedColumNames = this.columnNamesByType.get("Long");
-        this.countedVariableNames = new ArrayList<>(countedColumNames.size());
-        for (String columnName : countedColumNames) {
-            this.countedVariableNames.add(Name.createVariableInNoNamespace(columnName));
-        }
-
-        this.deserializedParams = new ArrayList<>();
-        this.longParams = new ArrayList<>();
+        this.columnNames = columnNames;
 
         this.context = new DynamicContext(context);
 
@@ -109,65 +95,34 @@ public class DataFrameContext implements Serializable {
     }
 
     /**
-     * Sets the context from parameters passed to a Spark SQL UDF.
-     * 
-     * @param wrappedParameters An array, the members of which are each the serialization of a sequence of items. The
-     *        size of the array must match the number of DataFrame columns associated with the type byte[].
-     * @param wrappedParametersLong An array, the members of which are each the overall count of a (non-materialized)
-     *        sequence of items. The size of the array must match the number of DataFrame columns associated with the
-     *        type Long.
-     * 
-     */
-    public void setFromWrappedParameters(
-            WrappedArray<byte[]> wrappedParameters,
-            WrappedArray<Long> wrappedParametersLong
-    ) {
-        this.deserializedParams.clear();
-        this.longParams.clear();
-
-        FlworDataFrameUtils.deserializeWrappedParameters(
-            wrappedParameters,
-            this.deserializedParams,
-            this.kryo,
-            this.input
-        );
-
-        // Long parameters correspond to pre-computed counts, when a materialization of the
-        // actual sequence was avoided upfront.
-        Object[] longParams = (Object[]) wrappedParametersLong.array();
-        for (Object longParam : longParams) {
-            Item count = ItemFactory.getInstance().createLongItem(((Long) longParam).longValue());
-            this.longParams.add(count);
-        }
-
-        this.prepareDynamicContext();
-    }
-
-    /**
      * Sets the context from a DataFrame row.
      * 
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.
      * 
      */
     public void setFromRow(Row row) {
-        this.deserializedParams.clear();
-        this.longParams.clear();
+        this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
-        for (Name field : this.serializedVariableNames) {
-            int columnIndex = row.fieldIndex(field.getLocalName());
-            List<Item> i = deserializeRowField(row, columnIndex);
-            this.deserializedParams.add(i);
+        for (String columnName : this.columnNames) {
+            int columnIndex = row.fieldIndex(columnName);
+            if (!columnName.endsWith(".count")) {
+                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                this.context.getVariableValues()
+                    .addVariableValue(
+                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        i
+                    );
+            } else {
+                long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
+                Item i = ItemFactory.getInstance().createLongItem(count);
+                this.context.getVariableValues()
+                    .addVariableCount(
+                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        i
+                    );
+            }
         }
-        for (Name field : this.countedVariableNames) {
-            int columnIndex = row.fieldIndex(field.getLocalName());
-            long count = FlworDataFrameUtils.getCountOfField(row, columnIndex);
-            Item i = ItemFactory.getInstance().createLongItem(count);
-            this.longParams.add(i);
-            ++columnIndex;
-        }
-
-        this.prepareDynamicContext();
     }
 
     /**
@@ -219,38 +174,38 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
-    private void prepareDynamicContext() {
-        this.context.getVariableValues().removeAllVariables();
-        for (int columnIndex = 0; columnIndex < this.serializedVariableNames.size(); columnIndex++) {
-            this.context.getVariableValues()
-                .addVariableValue(
-                    this.serializedVariableNames.get(columnIndex),
-                    this.deserializedParams.get(columnIndex)
-                );
-        }
-        for (int columnIndex = 0; columnIndex < this.countedVariableNames.size(); columnIndex++) {
-            this.context.getVariableValues()
-                .addVariableCount(
-                    this.countedVariableNames.get(columnIndex),
-                    this.longParams.get(columnIndex)
-                );
-        }
-    }
-
     @SuppressWarnings("unchecked")
-    public List<Item> deserializeRowField(Row row, int columnIndex) {
+    private List<Item> readColumnAsSequenceOfItems(Row row, int columnIndex) {
         Object o = row.get(columnIndex);
+        DataType dt = row.schema().fields()[columnIndex].dataType();
+        // There are three special cases:
+        // - NULL: this is an empty sequence
+        // - A binary value: this is a serialized sequence
+        // - An array of binary values: this is a sequence of serialized items
+        // Otherwise we fall back to a sequence of just one item with the regular item parser
         if (o == null) {
             return Collections.emptyList();
         }
-        if (o instanceof Long) {
-            List<Item> result = new ArrayList<>(1);
-            result.add(ItemFactory.getInstance().createIntItem(((Long) o).intValue()));
-            return result;
-        } else {
+        if (o instanceof byte[]) {
             byte[] bytes = (byte[]) o;
             this.input.setBuffer(bytes);
             return (List<Item>) this.kryo.readClassAndObject(this.input);
         }
+        if (dt instanceof ArrayType) {
+            ArrayType arrayType = (ArrayType) dt;
+            if (arrayType.elementType().equals(DataTypes.BinaryType)) {
+                List<Object> objects = row.getList(columnIndex);
+                List<Item> items = new ArrayList<>();
+                for (Object object : objects) {
+                    byte[] bytes = (byte[]) object;
+                    this.input.setBuffer(bytes);
+                    Item item = (Item) this.kryo.readClassAndObject(this.input);
+                    items.add(item);
+                }
+                return items;
+            }
+        }
+        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA);
+        return Collections.singletonList(item);
     }
 }
