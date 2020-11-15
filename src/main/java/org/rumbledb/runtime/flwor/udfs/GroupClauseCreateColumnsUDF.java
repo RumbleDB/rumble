@@ -22,20 +22,18 @@ package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.StructType;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
-import scala.collection.mutable.WrappedArray;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, Row> {
+public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
 
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
@@ -59,18 +57,19 @@ public class GroupClauseCreateColumnsUDF implements UDF2<WrappedArray<byte[]>, W
     public GroupClauseCreateColumnsUDF(
             List<Name> groupingVariableNames,
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType,
+            StructType schema,
+            List<String> columnNames,
             ExceptionMetadata metadata
     ) {
-        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.groupingVariableNames = groupingVariableNames;
         this.results = new ArrayList<>();
         this.metadata = metadata;
     }
 
     @Override
-    public Row call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
+    public Row call(Row row) {
+        this.dataFrameContext.setFromRow(row);
 
         this.results.clear();
 

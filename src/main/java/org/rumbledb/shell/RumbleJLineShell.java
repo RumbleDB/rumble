@@ -166,7 +166,7 @@ public class RumbleJLineShell {
                     ex.printStackTrace();
                 }
             } else if (!(ex instanceof UserInterruptException)) {
-                System.out.println("An error has occurred: " + ex.getMessage());
+                System.out.println("[ERROR] An error has occurred: " + ex.getMessage());
                 System.out.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query. "
                 );

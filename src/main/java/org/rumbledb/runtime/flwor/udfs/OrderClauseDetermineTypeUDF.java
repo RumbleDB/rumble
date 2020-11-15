@@ -20,7 +20,9 @@
 
 package org.rumbledb.runtime.flwor.udfs;
 
-import org.apache.spark.sql.api.java.UDF2;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.api.java.UDF1;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.MoreThanOneItemException;
@@ -28,13 +30,10 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.clauses.OrderByClauseSparkIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import scala.collection.mutable.WrappedArray;
-
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
-public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, WrappedArray<Long>, List<String>> {
+public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
@@ -45,17 +44,18 @@ public class OrderClauseDetermineTypeUDF implements UDF2<WrappedArray<byte[]>, W
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
-            Map<String, List<String>> columnNamesByType
+            StructType schema,
+            List<String> columnNames
     ) {
-        this.dataFrameContext = new DataFrameContext(context, columnNamesByType);
+        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expressionsWithIterator = expressionsWithIterator;
 
         this.result = new ArrayList<>();
     }
 
     @Override
-    public List<String> call(WrappedArray<byte[]> wrappedParameters, WrappedArray<Long> wrappedParametersLong) {
-        this.dataFrameContext.setFromWrappedParameters(wrappedParameters, wrappedParametersLong);
+    public List<String> call(Row row) {
+        this.dataFrameContext.setFromRow(row);
 
         this.result.clear();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
