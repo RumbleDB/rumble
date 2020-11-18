@@ -38,7 +38,7 @@ public class Main {
         try {
             sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
-            JsonIterUtils.applyJsonIterFaultyInitializationWorkAround();
+            JsonIterUtils.applyJsonIterFaultyInitializationWorkAround(sparksoniqConf);
 
             if (sparksoniqConf.isShell()) {
                 launchShell(sparksoniqConf);
