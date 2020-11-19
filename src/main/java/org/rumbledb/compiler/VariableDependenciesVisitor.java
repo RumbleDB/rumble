@@ -458,8 +458,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             visit(functionDeclaration, null);
             nameToNodeMap.put(functionDeclaration.getFunctionIdentifier().getNameWithArity(), functionDeclaration);
             if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.out.print(functionDeclaration.getFunctionIdentifier().toString());
-                System.out.println(
+                System.err.print(functionDeclaration.getFunctionIdentifier().toString());
+                System.err.println(
                     String.join(
                         ", ",
                         getInputVariableDependencies(functionDeclaration).stream()
