@@ -443,8 +443,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             visit(variableDeclaration, null);
             nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
             if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.out.print(variableDeclaration.getVariableName());
-                System.out.println(
+                System.err.print(variableDeclaration.getVariableName());
+                System.err.println(
                     String.join(
                         ", ",
                         getInputVariableDependencies(variableDeclaration).stream()

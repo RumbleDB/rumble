@@ -177,20 +177,19 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             if (type instanceof ArrayType) {
                 ArrayType arrayType = (ArrayType) type;
                 DataType elementType = arrayType.elementType();
-                if(elementType instanceof StructType)
-                {
+                if (elementType instanceof StructType) {
                     return childDataFrame.sparkSession()
-                            .sql(
-                                String.format(
-                                    "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    Integer.toString(this.lookup - 1),
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    Integer.toString(this.lookup)
-                                )
-                            );
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                Integer.toString(this.lookup - 1),
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                Integer.toString(this.lookup)
+                            )
+                        );
                 }
                 return childDataFrame.sparkSession()
                     .sql(

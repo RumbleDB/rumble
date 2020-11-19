@@ -142,17 +142,16 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             if (type instanceof ArrayType) {
                 ArrayType arrayType = (ArrayType) type;
                 DataType elementType = arrayType.elementType();
-                if(elementType instanceof StructType)
-                {
+                if (elementType instanceof StructType) {
                     return childDataFrame.sparkSession()
-                            .sql(
-                                String.format(
-                                    "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    SparkSessionManager.atomicJSONiqItemColumnName,
-                                    SparkSessionManager.atomicJSONiqItemColumnName
-                                )
-                            );
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName
+                            )
+                        );
                 }
                 return childDataFrame.sparkSession()
                     .sql(
