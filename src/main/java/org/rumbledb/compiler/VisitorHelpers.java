@@ -37,7 +37,7 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             StringBuffer sb = new StringBuffer();
             result.print(sb, 0);
-            System.out.println(sb);
+            System.err.println(sb);
         }
         return result;
     }
@@ -51,13 +51,13 @@ public class VisitorHelpers {
     }
 
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
-        System.out.println("***************");
-        System.out.println("Expression tree");
-        System.out.println("***************");
-        System.out.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
-        System.out.println(node);
-        System.out.println();
-        System.out.println(node.getStaticContext());
+        System.err.println("***************");
+        System.err.println("Expression tree");
+        System.err.println("***************");
+        System.err.println("Unset execution modes: " + node.numberOfUnsetExecutionModes());
+        System.err.println(node);
+        System.err.println();
+        System.err.println(node.getStaticContext());
     }
 
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
