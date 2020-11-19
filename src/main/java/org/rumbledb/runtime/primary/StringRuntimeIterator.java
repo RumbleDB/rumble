@@ -21,6 +21,7 @@
 package org.rumbledb.runtime.primary;
 
 import org.apache.commons.text.StringEscapeUtils;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -57,7 +58,7 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery() {
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
         return '"' + this.item.getStringValue() + '"';
     }
 }

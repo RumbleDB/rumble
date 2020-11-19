@@ -164,6 +164,16 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return true;
     }
 
+    @Override
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
+        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
+        if(objectPart == null){
+            return null;
+        }
+        initLookupPosition();
+        return objectPart + "[" + (this.lookup - 1) + "]";
+    }
+
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition();

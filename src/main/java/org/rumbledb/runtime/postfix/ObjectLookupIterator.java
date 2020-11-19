@@ -217,8 +217,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery() {
-        String objectPart = this.iterator.generateNativeQuery();
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
+        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
         if(objectPart == null){
             return null;
         }

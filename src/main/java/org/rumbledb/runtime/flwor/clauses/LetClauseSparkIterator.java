@@ -536,7 +536,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // if we can (depending on the expression) use let natively without UDF
 
         if(!hash){
-            String nativeQuery = newVariableExpression.generateNativeQuery();
+            String nativeQuery = newVariableExpression.generateNativeQuery(inputSchema, context);
             System.out.println("native query returned " + nativeQuery);
             if(nativeQuery != null){
                 String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);

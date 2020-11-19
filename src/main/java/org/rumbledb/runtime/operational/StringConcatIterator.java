@@ -22,7 +22,9 @@ package org.rumbledb.runtime.operational;
 
 import java.util.Arrays;
 
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -90,10 +92,10 @@ public class StringConcatIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery() {
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
         // TODO: checks
-        String leftQuery = this.leftIterator.generateNativeQuery();
-        String rightQuery = this.rightIterator.generateNativeQuery();
+        String leftQuery = this.leftIterator.generateNativeQuery(inputSchema, context);
+        String rightQuery = this.rightIterator.generateNativeQuery(inputSchema, context);
         if(leftQuery == null || rightQuery == null){
             return null;
         } else {

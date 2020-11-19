@@ -2,6 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -155,9 +156,9 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery() {
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
         // TODO: do treat check how?
-        return this.iterator.generateNativeQuery();
+        return this.iterator.generateNativeQuery(inputSchema, context);
     }
 
     private void checkEmptySequence(int size) {

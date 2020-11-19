@@ -27,6 +27,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -375,8 +376,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
      *
      * @return a string representing the spark-sql native query to get an equivalent result of the iterator, or null if it is not possible
+     * @param inputSchema schema of the dataframe
+     * @param context context
      */
-    public String generateNativeQuery() {
+    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
         return null;
     }
 }
