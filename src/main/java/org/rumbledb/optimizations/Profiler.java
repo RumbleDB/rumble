@@ -37,12 +37,12 @@ public class Profiler {
             total += stacks.get(key);
             if (stacks.get(key) != max)
                 continue;
-            System.out.println("Occurrences: " + stacks.get(key));
-            System.out.println(key);
-            System.out.println();
+            System.err.println("Occurrences: " + stacks.get(key));
+            System.err.println(key);
+            System.err.println();
         }
-        System.out.println("Size: " + stacks.size());
-        System.out.println("Total: " + total);
+        System.err.println("Size: " + stacks.size());
+        System.err.println("Total: " + total);
         return counter;
     }
 
