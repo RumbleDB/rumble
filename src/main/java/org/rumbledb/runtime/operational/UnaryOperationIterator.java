@@ -61,7 +61,7 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
         }
         this.hasNext = false;
 
-        if (this.negated) {
+        if (!this.negated) {
             return this.item;
         }
         if (this.item.isInt()) {
