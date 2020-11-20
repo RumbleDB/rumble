@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -38,6 +39,7 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
 
     private boolean negated;
     private final RuntimeIterator child;
+    private Item item;
     private static final long serialVersionUID = 1L;
 
     public UnaryOperationIterator(
@@ -49,54 +51,54 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
         super(Collections.singletonList(child), executionMode, iteratorMetadata);
         this.child = child;
         this.negated = negated;
+        this.item = null;
     }
 
     @Override
     public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            this.child.open(this.currentDynamicContextForLocalExecution);
-            Item child = this.child.next();
-            this.child.close();
-
-            if (this.negated) {
-                if (child.isNumeric()) {
-                    if (child.isInt()) {
-                        return ItemFactory.getInstance().createIntItem(-1 * child.getIntValue());
-                    }
-                    if (child.isInteger()) {
-                        return ItemFactory.getInstance()
-                            .createIntegerItem(BigInteger.valueOf(-1).multiply(child.getIntegerValue()));
-                    }
-                    if (child.isDouble()) {
-                        return ItemFactory.getInstance().createDoubleItem(-1 * child.getDoubleValue());
-                    }
-                    if (child.isDecimal()) {
-                        return ItemFactory.getInstance()
-                            .createDecimalItem(child.getDecimalValue().multiply(new BigDecimal(-1)));
-                    }
-                }
-                throw new UnexpectedTypeException(
-                        "Unary expression has non numeric args "
-                            +
-                            child.serialize(),
-                        getMetadata()
-                );
-            } else {
-                return child;
-            }
+        if (!this.hasNext) {
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        this.hasNext = false;
 
+        if (this.negated) {
+            return this.item;
+        }
+        if (this.item.isInt()) {
+            return ItemFactory.getInstance().createIntItem(-1 * this.item.getIntValue());
+        }
+        if (this.item.isInteger()) {
+            return ItemFactory.getInstance()
+                .createIntegerItem(BigInteger.valueOf(-1).multiply(this.item.getIntegerValue()));
+        }
+        if (this.item.isDouble()) {
+            return ItemFactory.getInstance().createDoubleItem(-1 * this.item.getDoubleValue());
+        }
+        if (this.item.isDecimal()) {
+            return ItemFactory.getInstance()
+                .createDecimalItem(this.item.getDecimalValue().multiply(new BigDecimal(-1)));
+        }
+        throw new UnexpectedTypeException(
+                "Unary expression has non numeric args "
+                    +
+                    this.item.serialize(),
+                getMetadata()
+        );
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.child.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.child.hasNext();
-        this.child.close();
+        try {
+            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Unary expression requires at most one item in its input sequence.",
+                    getMetadata()
+            );
+        }
+        this.hasNext = this.item != null;
     }
 
 }
