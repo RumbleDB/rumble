@@ -90,16 +90,4 @@ public class StringConcatIterator extends LocalRuntimeIterator {
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
     }
-
-    @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        // TODO: checks
-        String leftQuery = this.leftIterator.generateNativeQuery(inputSchema, context);
-        String rightQuery = this.rightIterator.generateNativeQuery(inputSchema, context);
-        if(leftQuery == null || rightQuery == null){
-            return null;
-        } else {
-            return "concat( ("+leftQuery+"), ("+rightQuery+") )";
-        }
-    }
 }

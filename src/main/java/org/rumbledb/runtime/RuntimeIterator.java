@@ -32,13 +32,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.ItemType;
 
@@ -380,6 +374,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @param context context
      */
     public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        return null;
+        throw new NoNativeQueryException();
     }
 }

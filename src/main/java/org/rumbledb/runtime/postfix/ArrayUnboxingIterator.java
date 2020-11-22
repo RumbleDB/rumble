@@ -131,9 +131,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     @Override
     public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
         String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
-        if(objectPart == null){
-            return null;
-        }
         return "explode( " + objectPart + " )";
     }
 
