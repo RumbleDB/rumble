@@ -3,3 +3,9 @@ tests:
   image: bitnami/spark:2.4.5
   script:
     - echo "hello"
+    - wget -P ~/ https://apache.mirror.digionline.de/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
+    - tar xzvf apache-maven-3.6.3-bin.tar.gz
+    - echo "export MAVEN_HOME=~/apache-maven-3.6.3-bin" >> ~/.bashrc
+    - echo "export PATH=$PATH:$MAVEN_HOME/bin" >> ~/.bashrc
+    - source ~/.bashrc
+    - mvn --version
