@@ -1,0 +1,5 @@
+tests:
+  stage: build
+  image: bitnami/spark:2.4.5
+  script:
+    - echo "hello"
