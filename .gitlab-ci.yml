@@ -1,6 +1,6 @@
 image: bitnami/spark:2.4.5
 
-pre-script:
+before-script:
   - apt-get --yes --force-yes install wget
 
 tests:
