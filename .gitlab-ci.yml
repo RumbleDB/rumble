@@ -1,12 +1,9 @@
-image: bitnami/spark:2.4.5
-
-before-script:
-  - apt-get --yes --force-yes install wget
-
 tests:
   stage: build
+  image: bitnami/spark:2.4.5
   script:
     - echo "hello"
+    - sudo apt-get --yes install wget
     - wget -P ~/ https://apache.mirror.digionline.de/maven/maven-3/3.6.3/binaries/apache-maven-3.6.3-bin.tar.gz
     - tar xzvf apache-maven-3.6.3-bin.tar.gz
     - echo "export MAVEN_HOME=~/apache-maven-3.6.3-bin" >> ~/.bashrc
