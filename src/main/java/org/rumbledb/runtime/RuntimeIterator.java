@@ -369,7 +369,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     /**
      * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
      *
-     * @return a string representing the spark-sql native query to get an equivalent result of the iterator, or null if it is not possible
+     * @return a string representing the spark-sql native query to get an equivalent result of the iterator, or null if
+     *         it is not possible
      * @param inputSchema schema of the dataframe
      * @param context context
      */

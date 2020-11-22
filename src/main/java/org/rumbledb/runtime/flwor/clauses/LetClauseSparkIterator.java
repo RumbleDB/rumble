@@ -535,16 +535,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // if we can (depending on the expression) use let natively without UDF
 
-        if(!hash){
+        if (!hash) {
             Dataset<Row> nativeQueryResult = tryNativeQuery(
-                    dataFrame,
-                    newVariableName,
-                    newVariableExpression,
-                    allColumns,
-                    inputSchema,
-                    context
+                dataFrame,
+                newVariableName,
+                newVariableExpression,
+                allColumns,
+                inputSchema,
+                context
             );
-            if(nativeQueryResult != null){
+            if (nativeQueryResult != null) {
                 return nativeQueryResult;
             }
         }
@@ -608,7 +608,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe, otherwise it returns null
+     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
      *
      * @param dataFrame input dataframe for the query
      * @param newVariableName name of the new bound variable
@@ -618,23 +619,29 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the let clause if successful, null otherwise
      */
-    public static Dataset<Row> tryNativeQuery(Dataset<Row> dataFrame,
-                                       Name newVariableName, RuntimeIterator iterator, List<String> allColumns, StructType inputSchema, DynamicContext context){
-        try{
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            Name newVariableName,
+            RuntimeIterator iterator,
+            List<String> allColumns,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        try {
             String nativeQuery = iterator.generateNativeQuery(inputSchema, context);
             System.out.println("native query returned " + nativeQuery);
             String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
-                dataFrame.createOrReplaceTempView("input");
-                return dataFrame.sparkSession()
-                        .sql(
-                                String.format(
-                                        "select %s (%s) as `%s` from input",
-                                        selectSQL,
-                                        nativeQuery,
-                                        newVariableName
-                                )
-                        );
-        } catch (Exception e){
+            dataFrame.createOrReplaceTempView("input");
+            return dataFrame.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s (%s) as `%s` from input",
+                        selectSQL,
+                        nativeQuery,
+                        newVariableName
+                    )
+                );
+        } catch (Exception e) {
             return null;
         }
     }
