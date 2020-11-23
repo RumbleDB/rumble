@@ -27,9 +27,11 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
@@ -61,15 +63,27 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Multiplication expression requires at most one item in its left input sequence.",
+                    getMetadata()
+            );
+        }
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Multiplication expression requires at most one item in its right input sequence.",
+                    getMetadata()
+            );
+        }
 
         // if left or right equals empty sequence, return empty sequence
-        if (!this.leftIterator.hasNext() || !this.rightIterator.hasNext()) {
+        if (this.left == null || this.right == null) {
             this.hasNext = false;
         } else {
-            this.left = this.leftIterator.next();
-            this.right = this.rightIterator.next();
             ComparisonUtil.checkBinaryOperation(
                 this.left,
                 this.right,
@@ -77,52 +91,91 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 getMetadata()
             );
             this.hasNext = true;
-            if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
-                        getMetadata()
-                );
-            }
         }
-        this.leftIterator.close();
-        this.rightIterator.close();
     }
 
     @Override
     public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                switch (this.multiplicativeOperator) {
-                    case MUL:
-                        return this.left.multiply(this.right);
-                    case DIV:
-                        return this.left.divide(this.right);
-                    case IDIV:
-                        return this.left.idivide(this.right);
-                    case MOD:
-                        return this.left.modulo(this.right);
-                    default:
-                        throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
-                }
-            } catch (DivisionByZeroException e) {
-                throw new DivisionByZeroException(getMetadata());
-            } catch (RuntimeException e) {
-                UnexpectedTypeException ute = new UnexpectedTypeException(
-                        " \""
-                            + this.multiplicativeOperator.toString()
-                            + "\": operation not possible with parameters of type \""
-                            + this.left.getDynamicType().toString()
-                            + "\" and \""
-                            + this.right.getDynamicType().toString()
-                            + "\"",
-                        getMetadata()
-                );
-                ute.initCause(e);
-                throw ute;
-            }
+        if (!this.hasNext) {
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
-        throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());
+        this.hasNext = false;
+        try {
+            switch (this.multiplicativeOperator) {
+                case MUL:
+                    if (this.left.isDouble() && this.right.isDouble()) {
+                        return ItemFactory.getInstance()
+                            .createDoubleItem(this.left.getDoubleValue() * this.right.getDoubleValue());
+                    }
+                    if (this.left.isDouble()) {
+                        return ItemFactory.getInstance()
+                            .createDoubleItem(this.left.getDoubleValue() * this.right.castToDoubleValue());
+                    }
+                    if (this.right.isDouble()) {
+                        return ItemFactory.getInstance()
+                            .createDoubleItem(this.left.castToDoubleValue() * this.right.getDoubleValue());
+                    }
+                    if (
+                        this.left.isInt()
+                            && this.right.isInt()
+                            && (this.left.getIntValue() < Short.MAX_VALUE
+                                && this.left.getIntValue() > -Short.MAX_VALUE
+                                && this.right.getIntValue() < Short.MAX_VALUE
+                                && this.right.getIntValue() > -Short.MAX_VALUE)
+                    ) {
+                        return ItemFactory.getInstance()
+                            .createIntItem(this.left.getIntValue() * this.right.getIntValue());
+                    }
+                    if (this.left.isInteger() && this.right.isInteger()) {
+                        return ItemFactory.getInstance()
+                            .createIntegerItem(this.left.getIntegerValue().multiply(this.right.getIntegerValue()));
+                    }
+                    if (this.left.isInteger() && this.right.isNumeric()) {
+                        return ItemFactory.getInstance()
+                            .createIntegerItem(this.left.getIntegerValue().multiply(this.right.castToIntegerValue()));
+                    }
+                    if (this.right.isInteger() && this.left.isNumeric()) {
+                        return ItemFactory.getInstance()
+                            .createIntegerItem(this.left.castToIntegerValue().multiply(this.right.getIntegerValue()));
+                    }
+                    if (this.left.isDecimal() && this.right.isDecimal()) {
+                        return ItemFactory.getInstance()
+                            .createDecimalItem(this.left.getDecimalValue().multiply(this.right.getDecimalValue()));
+                    }
+                    if (this.left.isDecimal() && this.right.isNumeric()) {
+                        return ItemFactory.getInstance()
+                            .createDecimalItem(this.left.getDecimalValue().multiply(this.right.castToDecimalValue()));
+                    }
+                    if (this.right.isDecimal() && this.left.isNumeric()) {
+                        return ItemFactory.getInstance()
+                            .createDecimalItem(this.left.castToDecimalValue().multiply(this.right.getDecimalValue()));
+                    }
+                    return this.left.multiply(this.right);
+                case DIV:
+                    return this.left.divide(this.right);
+                case IDIV:
+                    return this.left.idivide(this.right);
+                case MOD:
+                    return this.left.modulo(this.right);
+                default:
+                    throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
+            }
+        } catch (DivisionByZeroException e) {
+            throw new DivisionByZeroException(getMetadata());
+        } catch (RuntimeException e) {
+            UnexpectedTypeException ute = new UnexpectedTypeException(
+                    " \""
+                        + this.multiplicativeOperator.toString()
+                        + "\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+            ute.initCause(e);
+            throw ute;
+        }
     }
 
 }
