@@ -20,6 +20,8 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
@@ -103,54 +105,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         try {
             switch (this.multiplicativeOperator) {
                 case MUL:
-                    if (this.left.isDouble() && this.right.isDouble()) {
-                        return ItemFactory.getInstance()
-                            .createDoubleItem(this.left.getDoubleValue() * this.right.getDoubleValue());
-                    }
-                    if (this.left.isDouble()) {
-                        return ItemFactory.getInstance()
-                            .createDoubleItem(this.left.getDoubleValue() * this.right.castToDoubleValue());
-                    }
-                    if (this.right.isDouble()) {
-                        return ItemFactory.getInstance()
-                            .createDoubleItem(this.left.castToDoubleValue() * this.right.getDoubleValue());
-                    }
-                    if (
-                        this.left.isInt()
-                            && this.right.isInt()
-                            && (this.left.getIntValue() < Short.MAX_VALUE
-                                && this.left.getIntValue() > -Short.MAX_VALUE
-                                && this.right.getIntValue() < Short.MAX_VALUE
-                                && this.right.getIntValue() > -Short.MAX_VALUE)
-                    ) {
-                        return ItemFactory.getInstance()
-                            .createIntItem(this.left.getIntValue() * this.right.getIntValue());
-                    }
-                    if (this.left.isInteger() && this.right.isInteger()) {
-                        return ItemFactory.getInstance()
-                            .createIntegerItem(this.left.getIntegerValue().multiply(this.right.getIntegerValue()));
-                    }
-                    if (this.left.isInteger() && this.right.isNumeric()) {
-                        return ItemFactory.getInstance()
-                            .createIntegerItem(this.left.getIntegerValue().multiply(this.right.castToIntegerValue()));
-                    }
-                    if (this.right.isInteger() && this.left.isNumeric()) {
-                        return ItemFactory.getInstance()
-                            .createIntegerItem(this.left.castToIntegerValue().multiply(this.right.getIntegerValue()));
-                    }
-                    if (this.left.isDecimal() && this.right.isDecimal()) {
-                        return ItemFactory.getInstance()
-                            .createDecimalItem(this.left.getDecimalValue().multiply(this.right.getDecimalValue()));
-                    }
-                    if (this.left.isDecimal() && this.right.isNumeric()) {
-                        return ItemFactory.getInstance()
-                            .createDecimalItem(this.left.getDecimalValue().multiply(this.right.castToDecimalValue()));
-                    }
-                    if (this.right.isDecimal() && this.left.isNumeric()) {
-                        return ItemFactory.getInstance()
-                            .createDecimalItem(this.left.castToDecimalValue().multiply(this.right.getDecimalValue()));
-                    }
-                    return this.left.multiply(this.right);
+                    return multiply(this.left, this.right);
                 case DIV:
                     return this.left.divide(this.right);
                 case IDIV:
@@ -176,6 +131,75 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             ute.initCause(e);
             throw ute;
         }
+    }
+
+    private static Item multiply(Item left, Item right) {
+        if (left.isDouble() && right.isNumeric()) {
+            double l = left.getDoubleValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return multiplyDouble(l, r);
+        }
+        if (right.isDouble() && left.isNumeric()) {
+            return multiply(right, left);
+        }
+        if (
+            left.isInt()
+                && right.isInt()
+                && (left.getIntValue() < Short.MAX_VALUE
+                    && left.getIntValue() > -Short.MAX_VALUE
+                    && right.getIntValue() < Short.MAX_VALUE
+                    && right.getIntValue() > -Short.MAX_VALUE)
+        ) {
+            return multiplyInt(left.getIntValue(), right.getIntValue());
+        }
+        if (left.isInteger() && right.isNumeric()) {
+            BigInteger l = left.getIntegerValue();
+            BigInteger r = BigInteger.ZERO;
+            if (right.isInteger()) {
+                r = right.getIntegerValue();
+            } else {
+                r = right.castToIntegerValue();
+            }
+            return multiplyInteger(l, r);
+        }
+        if (right.isInteger() && left.isNumeric()) {
+            return multiply(right, left);
+        }
+        if (left.isDecimal() && right.isNumeric()) {
+            BigDecimal l = left.getDecimalValue();
+            BigDecimal r = BigDecimal.ZERO;
+            if (right.isDecimal()) {
+                r = right.getDecimalValue();
+            } else {
+                r = right.castToDecimalValue();
+            }
+            return multiplyDecimal(l, r);
+        }
+        if (right.isDecimal() && left.isNumeric()) {
+            return multiply(right, left);
+        }
+        return left.multiply(right);
+    }
+
+    private static Item multiplyDouble(double l, double r) {
+        return ItemFactory.getInstance().createDoubleItem(l * r);
+    }
+
+    private static Item multiplyDecimal(BigDecimal l, BigDecimal r) {
+        return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
+    }
+
+    private static Item multiplyInteger(BigInteger l, BigInteger r) {
+        return ItemFactory.getInstance().createIntegerItem(l.multiply(r));
+    }
+
+    private static Item multiplyInt(int l, int r) {
+        return ItemFactory.getInstance().createIntItem(l * r);
     }
 
 }
