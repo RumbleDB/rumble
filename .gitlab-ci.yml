@@ -1,4 +1,4 @@
-image: marioarduini/rumble-source:2020-11-13
+image: marioarduini/rumble-source
 
 build-rumble:
   stage: build
