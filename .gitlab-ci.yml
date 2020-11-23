@@ -2,7 +2,7 @@ tests:
   stage: build
   image: marioarduini/rumble-source
   script:
-    - mvn --version
-    - ant -version
-    - spark-submit --version
-    - ls
+    - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
+    - mvn clean compile assembly:single
+    - mvn -Dtest=FrontendTests test
+
