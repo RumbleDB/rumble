@@ -796,58 +796,64 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        ItemType leftItemType = leftInferredType.getItemType();
-        ItemType rightItemType = rightInferredType.getItemType();
+        // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not need additional checks
+        boolean isLeftEmpty = leftInferredType.isEmptySequence();
+        boolean isRightEmpty = rightInferredType.isEmptySequence();
+        if(!isLeftEmpty || !isRightEmpty) {
 
-        // Type must be a strict subtype of atomic
-        if (leftItemType.isSubtypeOf(ItemType.JSONItem) || rightItemType.isSubtypeOf(ItemType.JSONItem)){
-            throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types", ErrorCode.NonAtomicElementErrorCode);
-        }
-        if (
-            !leftItemType.isSubtypeOf(ItemType.atomicItem)
-                || !rightItemType.isSubtypeOf(ItemType.atomicItem)
-                || leftItemType.equals(ItemType.atomicItem)
-                || rightItemType.equals(ItemType.atomicItem)
-        ) {
-            throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
-        }
+            ItemType leftItemType = isLeftEmpty ? rightInferredType.getItemType() : leftInferredType.getItemType();
+            ItemType rightItemType = isRightEmpty ? leftInferredType.getItemType() : rightInferredType.getItemType();
 
-        // Type must match exactly or be both numeric or both promotable to string or both durations
-        if (
-            !leftItemType.equals(rightItemType)
-                &&
-                !(leftItemType.isNumeric() && rightItemType.isNumeric())
-                &&
-                !(leftItemType.isSubtypeOf(ItemType.durationItem) && rightItemType.isSubtypeOf(ItemType.durationItem))
-                &&
-                !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())
-        ) {
-            throw new UnexpectedStaticTypeException(
-                    "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
-            );
-        }
+            // Type must be a strict subtype of atomic
+            if (leftItemType.isSubtypeOf(ItemType.JSONItem) || rightItemType.isSubtypeOf(ItemType.JSONItem)) {
+                throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types", ErrorCode.NonAtomicElementErrorCode);
+            }
+            if (
+                    !leftItemType.isSubtypeOf(ItemType.atomicItem)
+                            || !rightItemType.isSubtypeOf(ItemType.atomicItem)
+                            || leftItemType.equals(ItemType.atomicItem)
+                            || rightItemType.equals(ItemType.atomicItem)
+            ) {
+                throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
+            }
 
-        // Inequality is not defined for hexBinary and base64binary or for duration of different types
-        if (
-            (operator != ComparisonExpression.ComparisonOperator.VC_EQ
-                &&
-                operator != ComparisonExpression.ComparisonOperator.VC_NE
-                &&
-                operator != ComparisonExpression.ComparisonOperator.GC_EQ
-                &&
-                operator != ComparisonExpression.ComparisonOperator.GC_NE)
-                && (leftItemType.equals(ItemType.hexBinaryItem)
-                    || leftItemType.equals(ItemType.base64BinaryItem)
-                    ||
-                    leftItemType.equals(ItemType.durationItem)
-                    || rightItemType.equals(ItemType.durationItem)
-                    ||
-                    ((leftItemType.equals(ItemType.dayTimeDurationItem)
-                        || leftItemType.equals(ItemType.yearMonthDurationItem)) && !rightItemType.equals(leftItemType)))
-        ) {
-            throw new UnexpectedStaticTypeException(
-                    "It is not possible to compare these types: " + leftItemType + " " + operator + " " + rightItemType
-            );
+            // Type must match exactly or be both numeric or both promotable to string or both durations
+            if (
+                    !leftItemType.equals(rightItemType)
+                            &&
+                            !(leftItemType.isNumeric() && rightItemType.isNumeric())
+                            &&
+                            !(leftItemType.isSubtypeOf(ItemType.durationItem) && rightItemType.isSubtypeOf(ItemType.durationItem))
+                            &&
+                            !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())
+            ) {
+                throw new UnexpectedStaticTypeException(
+                        "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
+                );
+            }
+
+            // Inequality is not defined for hexBinary and base64binary or for duration of different types
+            if (
+                    (operator != ComparisonExpression.ComparisonOperator.VC_EQ
+                            &&
+                            operator != ComparisonExpression.ComparisonOperator.VC_NE
+                            &&
+                            operator != ComparisonExpression.ComparisonOperator.GC_EQ
+                            &&
+                            operator != ComparisonExpression.ComparisonOperator.GC_NE)
+                            && (leftItemType.equals(ItemType.hexBinaryItem)
+                            || leftItemType.equals(ItemType.base64BinaryItem)
+                            ||
+                            leftItemType.equals(ItemType.durationItem)
+                            || rightItemType.equals(ItemType.durationItem)
+                            ||
+                            ((leftItemType.equals(ItemType.dayTimeDurationItem)
+                                    || leftItemType.equals(ItemType.yearMonthDurationItem)) && !rightItemType.equals(leftItemType)))
+            ) {
+                throw new UnexpectedStaticTypeException(
+                        "It is not possible to compare these types: " + leftItemType + " " + operator + " " + rightItemType
+                );
+            }
         }
 
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
