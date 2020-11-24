@@ -888,14 +888,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        if (thenType.isEmptySequence() && elseType.isEmptySequence()) {
+        // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
+        SequenceType resultingType = ifType.isSubtypeOf(SequenceType.createSequenceType("null?")) ? elseType : thenType.leastCommonSupertypeWith(elseType);
+
+        if (resultingType.isEmptySequence()) {
             throw new UnexpectedStaticTypeException(
                     "Inferred type is empty sequence and this is not a CommaExpression",
                     ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
             );
         }
 
-        expression.setInferredSequenceType(thenType.leastCommonSupertypeWith(elseType));
+        expression.setInferredSequenceType(resultingType);
         System.out.println("visiting Conditional expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
