@@ -1561,9 +1561,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // type
             context.replaceVariableSequenceType(variableName, inferredType);
         } else {
-            // the expression we get is a treat expression by design so we need to extract the inferred type of its main
-            // expression
-            if (!inferredType.isSubtypeOfOrCanBePromotedTo(declaredType)) {
+            if (!inferredType.isSubtypeOf(declaredType)) {
                 throw new UnexpectedStaticTypeException(
                         "In a "
                             + nodeName

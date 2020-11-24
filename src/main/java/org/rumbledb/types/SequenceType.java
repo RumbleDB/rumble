@@ -94,9 +94,7 @@ public class SequenceType implements Serializable {
                 ||
                 (this.itemType.canBePromotedToString() && superType.itemType.equals(ItemType.stringItem))
                 ||
-                (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem))
-                ||
-                (this.itemType.equals(ItemType.integerItem) && superType.itemType.equals(ItemType.decimalItem)));
+                (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem)));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence

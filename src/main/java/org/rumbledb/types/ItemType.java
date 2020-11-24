@@ -1080,7 +1080,6 @@ public class ItemType implements Serializable {
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
-        // TODO: what about Dates/Durations, base64, hex and anyURI
         if (superType.equals(item)) {
             return true;
         } else if (superType.equals(JSONItem)) {
@@ -1108,6 +1107,8 @@ public class ItemType implements Serializable {
             return this.equals(yearMonthDurationItem)
                 || this.equals(dayTimeDurationItem)
                 || this.equals(durationItem);
+        } else if (superType.equals(decimalItem)) {
+            return this.equals(integerItem) || this.equals(decimalItem);
         }
         return this.equals(superType);
     }
