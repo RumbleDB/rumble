@@ -1098,9 +1098,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (inferredType.isEmptySequence()) {
                 skipTestInference = true;
             } else {
+                // we use the single arity version of the inferred type
                 checkVariableType(
                     varType,
-                    inferredType,
+                    new SequenceType(inferredType.getItemType()),
                     evaluationExpression.getStaticContext(),
                     expression.getClass().getSimpleName(),
                     var.getVariableName()
