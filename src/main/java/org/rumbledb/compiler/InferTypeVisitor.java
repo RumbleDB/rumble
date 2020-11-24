@@ -348,10 +348,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         SequenceType expressionType = expression.getMainExpression().getInferredSequenceType();
         basicChecks(expressionType, expression.getClass().getSimpleName(), true, false);
-        if(!expressionType.isEmptySequence() && !expressionType.getItemType().isSubtypeOf(ItemType.atomicItem)) {
+        if (!expressionType.isEmptySequence() && !expressionType.getItemType().isSubtypeOf(ItemType.atomicItem)) {
             throw new UnexpectedStaticTypeException(
-                    "non-atomic item types are not allowed in castable expression, found " + expressionType.getItemType(),
-                    expressionType.getItemType().isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.UnexpectedTypeErrorCode
+                    "non-atomic item types are not allowed in castable expression, found "
+                        + expressionType.getItemType(),
+                    expressionType.getItemType().isSubtypeOf(ItemType.JSONItem)
+                        ? ErrorCode.NonAtomicElementErrorCode
+                        : ErrorCode.UnexpectedTypeErrorCode
             );
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
@@ -396,11 +399,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // ItemType static castability check
-        if(expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem)){
+        if (expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem)) {
             throw new UnexpectedStaticTypeException(
                     "It is never possible to cast a non-atomic sequence type: "
-                            +
-                            expressionSequenceType, ErrorCode.NonAtomicElementErrorCode
+                        +
+                        expressionSequenceType,
+                    ErrorCode.NonAtomicElementErrorCode
             );
         }
         if (!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())) {
@@ -800,36 +804,41 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not need additional checks
+        // if any of the element is the empty sequence, we set its sequence type to the other, if both are we do not
+        // need additional checks
         boolean isLeftEmpty = leftInferredType.isEmptySequence();
         boolean isRightEmpty = rightInferredType.isEmptySequence();
-        if(!isLeftEmpty || !isRightEmpty) {
+        if (!isLeftEmpty || !isRightEmpty) {
 
             ItemType leftItemType = isLeftEmpty ? rightInferredType.getItemType() : leftInferredType.getItemType();
             ItemType rightItemType = isRightEmpty ? leftInferredType.getItemType() : rightInferredType.getItemType();
 
             // Type must be a strict subtype of atomic
             if (leftItemType.isSubtypeOf(ItemType.JSONItem) || rightItemType.isSubtypeOf(ItemType.JSONItem)) {
-                throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types", ErrorCode.NonAtomicElementErrorCode);
+                throw new UnexpectedStaticTypeException(
+                        "It is not possible to compare with non-atomic types",
+                        ErrorCode.NonAtomicElementErrorCode
+                );
             }
             if (
-                    !leftItemType.isSubtypeOf(ItemType.atomicItem)
-                            || !rightItemType.isSubtypeOf(ItemType.atomicItem)
-                            || leftItemType.equals(ItemType.atomicItem)
-                            || rightItemType.equals(ItemType.atomicItem)
+                !leftItemType.isSubtypeOf(ItemType.atomicItem)
+                    || !rightItemType.isSubtypeOf(ItemType.atomicItem)
+                    || leftItemType.equals(ItemType.atomicItem)
+                    || rightItemType.equals(ItemType.atomicItem)
             ) {
                 throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
             }
 
             // Type must match exactly or be both numeric or both promotable to string or both durations
             if (
-                    !leftItemType.equals(rightItemType)
-                            &&
-                            !(leftItemType.isNumeric() && rightItemType.isNumeric())
-                            &&
-                            !(leftItemType.isSubtypeOf(ItemType.durationItem) && rightItemType.isSubtypeOf(ItemType.durationItem))
-                            &&
-                            !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())
+                !leftItemType.equals(rightItemType)
+                    &&
+                    !(leftItemType.isNumeric() && rightItemType.isNumeric())
+                    &&
+                    !(leftItemType.isSubtypeOf(ItemType.durationItem)
+                        && rightItemType.isSubtypeOf(ItemType.durationItem))
+                    &&
+                    !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
@@ -838,24 +847,30 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             // Inequality is not defined for hexBinary and base64binary or for duration of different types
             if (
-                    (operator != ComparisonExpression.ComparisonOperator.VC_EQ
-                            &&
-                            operator != ComparisonExpression.ComparisonOperator.VC_NE
-                            &&
-                            operator != ComparisonExpression.ComparisonOperator.GC_EQ
-                            &&
-                            operator != ComparisonExpression.ComparisonOperator.GC_NE)
-                            && (leftItemType.equals(ItemType.hexBinaryItem)
-                            || leftItemType.equals(ItemType.base64BinaryItem)
-                            ||
-                            leftItemType.equals(ItemType.durationItem)
-                            || rightItemType.equals(ItemType.durationItem)
-                            ||
-                            ((leftItemType.equals(ItemType.dayTimeDurationItem)
-                                    || leftItemType.equals(ItemType.yearMonthDurationItem)) && !rightItemType.equals(leftItemType)))
+                (operator != ComparisonExpression.ComparisonOperator.VC_EQ
+                    &&
+                    operator != ComparisonExpression.ComparisonOperator.VC_NE
+                    &&
+                    operator != ComparisonExpression.ComparisonOperator.GC_EQ
+                    &&
+                    operator != ComparisonExpression.ComparisonOperator.GC_NE)
+                    && (leftItemType.equals(ItemType.hexBinaryItem)
+                        || leftItemType.equals(ItemType.base64BinaryItem)
+                        ||
+                        leftItemType.equals(ItemType.durationItem)
+                        || rightItemType.equals(ItemType.durationItem)
+                        ||
+                        ((leftItemType.equals(ItemType.dayTimeDurationItem)
+                            || leftItemType.equals(ItemType.yearMonthDurationItem))
+                            && !rightItemType.equals(leftItemType)))
             ) {
                 throw new UnexpectedStaticTypeException(
-                        "It is not possible to compare these types: " + leftItemType + " " + operator + " " + rightItemType
+                        "It is not possible to compare these types: "
+                            + leftItemType
+                            + " "
+                            + operator
+                            + " "
+                            + rightItemType
                 );
             }
         }
@@ -889,7 +904,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // if the if branch is false at static time (i.e. subtype of null?) we only use else branch
-        SequenceType resultingType = ifType.isSubtypeOf(SequenceType.createSequenceType("null?")) ? elseType : thenType.leastCommonSupertypeWith(elseType);
+        SequenceType resultingType = ifType.isSubtypeOf(SequenceType.createSequenceType("null?"))
+            ? elseType
+            : thenType.leastCommonSupertypeWith(elseType);
 
         if (resultingType.isEmptySequence()) {
             throw new UnexpectedStaticTypeException(
@@ -1362,11 +1379,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (!forType.isEmptySequence()) {
                     forArities = forType.getArity().multiplyWith(forArities);
                 }
-            } else if(clause.getClauseType() == FLWOR_CLAUSES.WHERE){
+            } else if (clause.getClauseType() == FLWOR_CLAUSES.WHERE) {
                 // where clause could reject all tuples so arity change from + => * and 1 => ?
-                if(forArities == SequenceType.Arity.One){
+                if (forArities == SequenceType.Arity.One) {
                     forArities = SequenceType.Arity.OneOrZero;
-                } else if(forArities == SequenceType.Arity.OneOrMore){
+                } else if (forArities == SequenceType.Arity.OneOrMore) {
                     forArities = SequenceType.Arity.ZeroOrMore;
                 }
             }
@@ -1493,12 +1510,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expectedType = expression.getStaticContext().getVariableSequenceType(groupByVar.getVariableName());
             }
             // check that expectedType is a subtype of atomic?
-            if(expectedType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))){
+            if (expectedType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
                 throw new UnexpectedStaticTypeException(
                         "group by variable "
-                                + groupByVar.getVariableName()
-                                + " must match atomic? instead found "
-                                + expectedType, ErrorCode.NonAtomicElementErrorCode
+                            + groupByVar.getVariableName()
+                            + " must match atomic? instead found "
+                            + expectedType,
+                        ErrorCode.NonAtomicElementErrorCode
                 );
             }
             if (!expectedType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))) {
@@ -1526,10 +1544,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (OrderByClauseSortingKey orderClause : expression.getSortingKeys()) {
             SequenceType orderType = orderClause.getExpression().getInferredSequenceType();
             basicChecks(orderType, expression.getClass().getSimpleName(), true, false);
-            if(orderType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))){
+            if (orderType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))) {
                 throw new UnexpectedStaticTypeException(
                         "order by sorting expression's type must match atomic? and be comparable using 'gt' operator (so duration, hexBinary, base64Binary and atomic item type are not allowed), instead inferred: "
-                                + orderType, ErrorCode.NonAtomicElementErrorCode
+                            + orderType,
+                        ErrorCode.NonAtomicElementErrorCode
                 );
             }
             if (
