@@ -615,7 +615,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         ||
                         expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.DIV)
             ) {
-                inferredType = rightItemType;
+                inferredType = leftItemType;
             } else if (rightItemType.equals(leftItemType) && !leftItemType.equals(ItemType.durationItem)) {
                 inferredType = ItemType.decimalItem;
             }
