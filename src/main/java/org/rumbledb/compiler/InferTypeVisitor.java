@@ -771,6 +771,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<Node> childrenExpressions = expression.getChildren();
         SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
         SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+        SequenceType.Arity returnArity = SequenceType.Arity.One;
 
         if (leftInferredType == null || rightInferredType == null) {
             throw new UnexpectedStaticTypeException(
@@ -789,7 +790,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
                 );
             }
-            if (resolveArities(leftInferredType.getArity(), rightInferredType.getArity()) == null) {
+            returnArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
+            if (returnArity == null) {
                 throw new UnexpectedStaticTypeException(
                         "'+' and '*' arities are not allowed for this comparison operator: " + operator
                 );
@@ -856,7 +858,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
+        expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem, returnArity));
         return argument;
     }
 
