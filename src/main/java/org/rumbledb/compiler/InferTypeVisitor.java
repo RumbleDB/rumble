@@ -1184,7 +1184,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
-        expression.setInferredSequenceType(new SequenceType(ItemType.arrayItem, inferredArity));
+        expression.setInferredSequenceType(new SequenceType(ItemType.item, inferredArity));
         System.out.println("visiting ArrayLookup expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
@@ -1219,7 +1219,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
-        expression.setInferredSequenceType(new SequenceType(ItemType.objectItem, inferredArity));
+        expression.setInferredSequenceType(new SequenceType(ItemType.item, inferredArity));
         System.out.println("visiting ObjectLookup expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
