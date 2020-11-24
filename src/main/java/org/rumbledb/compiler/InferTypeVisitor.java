@@ -1332,6 +1332,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 if (!forType.isEmptySequence()) {
                     forArities = forType.getArity().multiplyWith(forArities);
                 }
+            } else if(clause.getClauseType() == FLWOR_CLAUSES.WHERE){
+                // where clause could reject all tuples so arity change from + => * and 1 => ?
+                if(forArities == SequenceType.Arity.One){
+                    forArities = SequenceType.Arity.OneOrZero;
+                } else if(forArities == SequenceType.Arity.OneOrMore){
+                    forArities = SequenceType.Arity.ZeroOrMore;
+                }
             }
             clause = clause.getNextClause();
         }
