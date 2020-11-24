@@ -1279,7 +1279,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         // if we are filter one or less items or we use an integer to select a specific position we return at most one
         // element, otherwise *
         SequenceType.Arity inferredArity = (mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
-            || mainType.getItemType().equals(ItemType.integerItem))
+            || predicateType.getItemType().equals(ItemType.integerItem))
                 ? SequenceType.Arity.OneOrZero
                 : SequenceType.Arity.ZeroOrMore;
         expression.setInferredSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
