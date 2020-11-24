@@ -339,10 +339,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
         System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
-        if (expression.getSequenceType().getItemType().equals(ItemType.atomicItem)) {
+        ItemType itemType = expression.getSequenceType().getItemType();
+        if (itemType.equals(ItemType.atomicItem)) {
             throw new UnexpectedStaticTypeException(
                     "atomic item type is not allowed in castable expression",
                     ErrorCode.CastableErrorCode
+            );
+        }
+        if(!itemType.isSubtypeOf(ItemType.atomicItem)) {
+            throw new UnexpectedStaticTypeException(
+                    "non-atomic item types are allowed in castable expression, found " + itemType,
+                    itemType.isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.UnexpectedTypeErrorCode
             );
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
@@ -387,6 +394,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // ItemType static castability check
+        if(expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem)){
+            throw new UnexpectedStaticTypeException(
+                    "It is never possible to cast a non-atomic sequence type: "
+                            +
+                            expressionSequenceType, ErrorCode.NonAtomicElementErrorCode
+            );
+        }
         if (!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())) {
             throw new UnexpectedStaticTypeException(
                     "It is never possible to cast a "
@@ -786,6 +800,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         ItemType rightItemType = rightInferredType.getItemType();
 
         // Type must be a strict subtype of atomic
+        if (leftItemType.isSubtypeOf(ItemType.JSONItem) || rightItemType.isSubtypeOf(ItemType.JSONItem)){
+            throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types", ErrorCode.NonAtomicElementErrorCode);
+        }
         if (
             !leftItemType.isSubtypeOf(ItemType.atomicItem)
                 || !rightItemType.isSubtypeOf(ItemType.atomicItem)
@@ -1463,6 +1480,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expectedType = expression.getStaticContext().getVariableSequenceType(groupByVar.getVariableName());
             }
             // check that expectedType is a subtype of atomic?
+            if(expectedType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))){
+                throw new UnexpectedStaticTypeException(
+                        "group by variable "
+                                + groupByVar.getVariableName()
+                                + " must match atomic? instead found "
+                                + expectedType, ErrorCode.NonAtomicElementErrorCode
+                );
+            }
             if (!expectedType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))) {
                 throw new UnexpectedStaticTypeException(
                         "group by variable "
@@ -1488,6 +1513,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (OrderByClauseSortingKey orderClause : expression.getSortingKeys()) {
             SequenceType orderType = orderClause.getExpression().getInferredSequenceType();
             basicChecks(orderType, expression.getClass().getSimpleName(), true, false);
+            if(orderType.isSubtypeOf(SequenceType.createSequenceType("json-item*"))){
+                throw new UnexpectedStaticTypeException(
+                        "order by sorting expression's type must match atomic? and be comparable using 'gt' operator (so duration, hexBinary, base64Binary and atomic item type are not allowed), instead inferred: "
+                                + orderType, ErrorCode.NonAtomicElementErrorCode
+                );
+            }
             if (
                 !orderType.isSubtypeOf(SequenceType.createSequenceType("atomic?"))
                     ||

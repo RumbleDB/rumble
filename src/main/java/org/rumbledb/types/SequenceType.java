@@ -278,6 +278,8 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("object+", new SequenceType(ItemType.objectItem, SequenceType.Arity.OneOrMore));
         sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
+        sequenceTypes.put("json-item*", new SequenceType(ItemType.JSONItem, SequenceType.Arity.ZeroOrMore));
+
         sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("array*", new SequenceType(ItemType.arrayItem, Arity.ZeroOrMore));
 
