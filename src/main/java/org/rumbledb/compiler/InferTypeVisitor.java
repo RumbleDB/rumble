@@ -911,7 +911,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (type.isEmptySequence()) {
             return; // no further check is required
         }
-        if (type.getArity() == SequenceType.Arity.OneOrZero || type.getArity() == SequenceType.Arity.ZeroOrMore) {
+        if (type.getArity() == SequenceType.Arity.OneOrMore || type.getArity() == SequenceType.Arity.ZeroOrMore) {
             throw new UnexpectedStaticTypeException(
                     "+ and * arities are not allowed for the expressions of switch test condition and cases"
             );
