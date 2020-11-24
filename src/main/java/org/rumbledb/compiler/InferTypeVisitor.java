@@ -350,8 +350,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(expressionType, expression.getClass().getSimpleName(), true, false);
         if(!expressionType.isEmptySequence() && !expressionType.getItemType().isSubtypeOf(ItemType.atomicItem)) {
             throw new UnexpectedStaticTypeException(
-                    "non-atomic item types are not allowed in castable expression, found " + itemType,
-                    itemType.isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.UnexpectedTypeErrorCode
+                    "non-atomic item types are not allowed in castable expression, found " + expressionType.getItemType(),
+                    expressionType.getItemType().isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.UnexpectedTypeErrorCode
             );
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
