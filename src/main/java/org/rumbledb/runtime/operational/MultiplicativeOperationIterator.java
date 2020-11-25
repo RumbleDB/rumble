@@ -22,6 +22,7 @@ package org.rumbledb.runtime.operational;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
@@ -30,6 +31,7 @@ import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
@@ -37,6 +39,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
+
 
 public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
 
@@ -105,7 +108,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         try {
             switch (this.multiplicativeOperator) {
                 case MUL:
-                    return multiply(this.left, this.right);
+                    return processItem(this.left, this.right, this.multiplicativeOperator);
                 case DIV:
                     return this.left.divide(this.right);
                 case IDIV:
@@ -133,20 +136,11 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         }
     }
 
-    private static Item multiply(Item left, Item right) {
-        if (left.isDouble() && right.isNumeric()) {
-            double l = left.getDoubleValue();
-            double r = 0;
-            if (right.isDouble()) {
-                r = right.getDoubleValue();
-            } else {
-                r = right.castToDoubleValue();
-            }
-            return multiplyDouble(l, r);
-        }
-        if (right.isDouble() && left.isNumeric()) {
-            return multiply(right, left);
-        }
+    private static Item processItem(
+            Item left,
+            Item right,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+    ) {
         if (
             left.isInt()
                 && right.isInt()
@@ -155,9 +149,24 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     && right.getIntValue() < Short.MAX_VALUE
                     && right.getIntValue() > -Short.MAX_VALUE)
         ) {
-            return multiplyInt(left.getIntValue(), right.getIntValue());
+            return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator);
         }
-        if (left.isInteger() && right.isNumeric()) {
+
+        // General cases
+        if (left.isDouble() && right.isNumeric()) {
+            double l = left.getDoubleValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processDouble(l, r, multiplicativeOperator);
+        }
+        if (right.isDouble() && left.isNumeric()) {
+            return processItem(right, left, multiplicativeOperator);
+        }
+        if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
             BigInteger r = BigInteger.ZERO;
             if (right.isInteger()) {
@@ -165,12 +174,9 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } else {
                 r = right.castToIntegerValue();
             }
-            return multiplyInteger(l, r);
+            return processInteger(l, r, multiplicativeOperator);
         }
-        if (right.isInteger() && left.isNumeric()) {
-            return multiply(right, left);
-        }
-        if (left.isDecimal() && right.isNumeric()) {
+        if (left.isDecimal() && right.isDecimal()) {
             BigDecimal l = left.getDecimalValue();
             BigDecimal r = BigDecimal.ZERO;
             if (right.isDecimal()) {
@@ -178,27 +184,138 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } else {
                 r = right.castToDecimalValue();
             }
-            return multiplyDecimal(l, r);
+            return processDecimal(l, r, multiplicativeOperator);
         }
-        if (right.isDecimal() && left.isNumeric()) {
-            return multiply(right, left);
+        switch (multiplicativeOperator) {
+            case MUL:
+                return left.multiply(right);
+            case DIV:
+                return left.divide(right);
+            case IDIV:
+                return left.idivide(right);
+            case MOD:
+                return left.modulo(right);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
         }
-        return left.multiply(right);
     }
 
-    private static Item multiplyDouble(double l, double r) {
-        return ItemFactory.getInstance().createDoubleItem(l * r);
+    private static Item processDouble(
+            double l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createDoubleItem(l * r);
+            case DIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance().createDoubleItem(l / r);
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance()
+                    .createDoubleItem((double) (long) (l / r));
+            case MOD:
+                if (r == 0) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance().createDoubleItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+        }
     }
 
-    private static Item multiplyDecimal(BigDecimal l, BigDecimal r) {
-        return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
+    private static Item processDecimal(
+            BigDecimal l,
+            BigDecimal r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
+            case DIV:
+                if (r.equals(BigDecimal.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance()
+                    .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+            case IDIV:
+                if (r.equals(BigDecimal.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(
+                        l.divide(r, 0, RoundingMode.DOWN).toBigInteger()
+                    );
+            case MOD:
+                if (r.equals(BigDecimal.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+        }
     }
 
-    private static Item multiplyInteger(BigInteger l, BigInteger r) {
-        return ItemFactory.getInstance().createIntegerItem(l.multiply(r));
+    private static Item processInteger(
+            BigInteger l,
+            BigInteger r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createIntegerItem(l.multiply(r));
+            case DIV:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                BigDecimal bdResult = new BigDecimal(l)
+                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                if (bdResult.stripTrailingZeros().scale() <= 0) {
+                    return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
+                } else {
+                    return ItemFactory.getInstance().createDecimalItem(bdResult);
+                }
+            case IDIV:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(
+                        l.divide(r)
+                    );
+            case MOD:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(l.mod(r));
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+        }
     }
 
-    private static Item multiplyInt(int l, int r) {
+    private static Item processInt(
+            int l,
+            int r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+    ) {
         return ItemFactory.getInstance().createIntItem(l * r);
     }
 
