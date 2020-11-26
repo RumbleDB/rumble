@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="ok" :)
+(:JIQS: ShouldRun; Output="(ok, -70000, 70000, -70000, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok, ok)" :)
 try { 1 * (2, 3) } catch XPTY0004 { "ok" },
 -70000*1,
 1*70000,
