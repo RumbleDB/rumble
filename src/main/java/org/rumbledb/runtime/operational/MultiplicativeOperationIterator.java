@@ -25,6 +25,8 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
+import org.joda.time.Instant;
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
@@ -105,51 +107,36 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
         this.hasNext = false;
-        try {
-            switch (this.multiplicativeOperator) {
-                case MUL:
-                    return processItem(this.left, this.right, this.multiplicativeOperator);
-                case DIV:
-                    return this.left.divide(this.right);
-                case IDIV:
-                    return this.left.idivide(this.right);
-                case MOD:
-                    return this.left.modulo(this.right);
-                default:
-                    throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
-            }
-        } catch (DivisionByZeroException e) {
-            throw new DivisionByZeroException(getMetadata());
-        } catch (RuntimeException e) {
-            UnexpectedTypeException ute = new UnexpectedTypeException(
-                    " \""
-                        + this.multiplicativeOperator.toString()
-                        + "\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
-                        + "\" and \""
-                        + this.right.getDynamicType().toString()
-                        + "\"",
-                    getMetadata()
-            );
-            ute.initCause(e);
-            throw ute;
-        }
+        return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
 
     private static Item processItem(
             Item left,
             Item right,
-            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
     ) {
         if (
             left.isInt()
                 && right.isInt()
-                && (left.getIntValue() < Short.MAX_VALUE
-                    && left.getIntValue() > -Short.MAX_VALUE
-                    && right.getIntValue() < Short.MAX_VALUE
-                    && right.getIntValue() > -Short.MAX_VALUE)
         ) {
-            return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator);
+            switch (multiplicativeOperator) {
+                case MUL:
+                    if (
+                        left.getIntValue() < Short.MAX_VALUE
+                            && left.getIntValue() > -Short.MAX_VALUE
+                            && right.getIntValue() < Short.MAX_VALUE
+                            && right.getIntValue() > -Short.MAX_VALUE
+                    ) {
+                        return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator, metadata);
+                    } else {
+                        break;
+                    }
+                case DIV:
+                case MOD:
+                case IDIV:
+                    return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator, metadata);
+            }
         }
 
         // General cases
@@ -161,30 +148,32 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             } else {
                 r = right.castToDoubleValue();
             }
-            return processDouble(l, r, multiplicativeOperator);
+            return processDouble(l, r, multiplicativeOperator, metadata);
         }
         if (right.isDouble() && left.isNumeric()) {
-            return processItem(right, left, multiplicativeOperator);
+            double l = left.castToDoubleValue();
+            double r = right.getDoubleValue();
+            return processDouble(l, r, multiplicativeOperator, metadata);
         }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
-            BigInteger r = BigInteger.ZERO;
-            if (right.isInteger()) {
-                r = right.getIntegerValue();
-            } else {
-                r = right.castToIntegerValue();
-            }
-            return processInteger(l, r, multiplicativeOperator);
+            BigInteger r = right.getIntegerValue();
+            return processInteger(l, r, multiplicativeOperator, metadata);
         }
         if (left.isDecimal() && right.isDecimal()) {
             BigDecimal l = left.getDecimalValue();
-            BigDecimal r = BigDecimal.ZERO;
-            if (right.isDecimal()) {
-                r = right.getDecimalValue();
-            } else {
-                r = right.castToDecimalValue();
-            }
-            return processDecimal(l, r, multiplicativeOperator);
+            BigDecimal r = right.getDecimalValue();
+            return processDecimal(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processYearMonthDuration(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
         }
         switch (multiplicativeOperator) {
             case MUL:
@@ -192,13 +181,17 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             case DIV:
                 return left.divide(right);
             case IDIV:
-                return left.idivide(right);
             case MOD:
-                return left.modulo(right);
             default:
-                throw new OurBadException(
-                        "Non recognized multiplicative operator: " + multiplicativeOperator,
-                        ExceptionMetadata.EMPTY_METADATA
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of type \""
+                            + left.getDynamicType().toString()
+                            + "\" and \""
+                            + right.getDynamicType().toString()
+                            + "\"",
+                        metadata
                 );
         }
     }
@@ -206,31 +199,32 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     private static Item processDouble(
             double l,
             double r,
-            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
     ) {
         switch (multiplicativeOperator) {
             case MUL:
                 return ItemFactory.getInstance().createDoubleItem(l * r);
             case DIV:
                 if (r == 0) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance().createDoubleItem(l / r);
             case IDIV:
                 if (r == 0) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createDoubleItem((double) (long) (l / r));
             case MOD:
                 if (r == 0) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
-                        ExceptionMetadata.EMPTY_METADATA
+                        metadata
                 );
         }
     }
@@ -238,20 +232,21 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     private static Item processDecimal(
             BigDecimal l,
             BigDecimal r,
-            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
     ) {
         switch (multiplicativeOperator) {
             case MUL:
                 return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
             case DIV:
                 if (r.equals(BigDecimal.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
             case IDIV:
                 if (r.equals(BigDecimal.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createIntegerItem(
@@ -259,13 +254,13 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     );
             case MOD:
                 if (r.equals(BigDecimal.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
-                        ExceptionMetadata.EMPTY_METADATA
+                        metadata
                 );
         }
     }
@@ -273,14 +268,15 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     private static Item processInteger(
             BigInteger l,
             BigInteger r,
-            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
     ) {
         switch (multiplicativeOperator) {
             case MUL:
                 return ItemFactory.getInstance().createIntegerItem(l.multiply(r));
             case DIV:
                 if (r.equals(BigInteger.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 BigDecimal bdResult = new BigDecimal(l)
                     .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
@@ -291,7 +287,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 }
             case IDIV:
                 if (r.equals(BigInteger.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createIntegerItem(
@@ -299,14 +295,14 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     );
             case MOD:
                 if (r.equals(BigInteger.ZERO)) {
-                    throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
+                    throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createIntegerItem(l.mod(r));
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,
-                        ExceptionMetadata.EMPTY_METADATA
+                        metadata
                 );
         }
     }
@@ -314,9 +310,97 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     private static Item processInt(
             int l,
             int r,
-            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
     ) {
-        return ItemFactory.getInstance().createIntItem(l * r);
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createIntItem(l * r);
+            case DIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                BigDecimal bdResult = new BigDecimal(l)
+                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                if (bdResult.stripTrailingZeros().scale() <= 0) {
+                    return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
+                } else {
+                    return ItemFactory.getInstance().createDecimalItem(bdResult);
+                }
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance().createIntItem(l / r);
+            case MOD:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createIntItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processYearMonthDuration(
+            Period l,
+            Period r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case DIV:
+                int months = l.getYears() * 12 + l.getMonths();
+                int otherMonths = 12 * r.getYears() + r.getMonths();
+                return ItemFactory.getInstance()
+                    .createDecimalItem(
+                        BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
+                    );
+            case IDIV:
+            case MUL:
+            case MOD:
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration",
+                        metadata
+                );
+        }
+    }
+
+    private static Item processDayTimeDuration(
+            Period l,
+            Period r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case DIV:
+                Instant now = Instant.now();
+                return ItemFactory.getInstance()
+                    .createDecimalItem(
+                        BigDecimal.valueOf(
+                            l.toDurationFrom(now).getMillis()
+                                /
+                                (double) r.toDurationFrom(now).getMillis()
+                        )
+                    );
+            case IDIV:
+            case MUL:
+            case MOD:
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types dayTimeDuration",
+                        metadata
+                );
+        }
     }
 
 }
