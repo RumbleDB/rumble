@@ -20,19 +20,31 @@
 
 package org.rumbledb.runtime.operational;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.math.RoundingMode;
 import java.util.Arrays;
 
+import org.joda.time.Instant;
+import org.joda.time.Period;
+import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
+import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
+
 
 public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
 
@@ -61,15 +73,27 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Multiplication expression requires at most one item in its left input sequence.",
+                    getMetadata()
+            );
+        }
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Multiplication expression requires at most one item in its right input sequence.",
+                    getMetadata()
+            );
+        }
 
         // if left or right equals empty sequence, return empty sequence
-        if (!this.leftIterator.hasNext() || !this.rightIterator.hasNext()) {
+        if (this.left == null || this.right == null) {
             this.hasNext = false;
         } else {
-            this.left = this.leftIterator.next();
-            this.right = this.rightIterator.next();
             ComparisonUtil.checkBinaryOperation(
                 this.left,
                 this.right,
@@ -77,52 +101,400 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 getMetadata()
             );
             this.hasNext = true;
-            if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "Sequence of more than one item can not be promoted to parameter type atomic of function add()",
-                        getMetadata()
-                );
-            }
         }
-        this.leftIterator.close();
-        this.rightIterator.close();
     }
 
     @Override
     public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                switch (this.multiplicativeOperator) {
-                    case MUL:
-                        return this.left.multiply(this.right);
-                    case DIV:
-                        return this.left.divide(this.right);
-                    case IDIV:
-                        return this.left.idivide(this.right);
-                    case MOD:
-                        return this.left.modulo(this.right);
-                    default:
-                        throw new IteratorFlowException("Non recognized multiplicative operator.", getMetadata());
-                }
-            } catch (DivisionByZeroException e) {
-                throw new DivisionByZeroException(getMetadata());
-            } catch (RuntimeException e) {
-                UnexpectedTypeException ute = new UnexpectedTypeException(
-                        " \""
-                            + this.multiplicativeOperator.toString()
-                            + "\": operation not possible with parameters of type \""
-                            + this.left.getDynamicType().toString()
-                            + "\" and \""
-                            + this.right.getDynamicType().toString()
-                            + "\"",
-                        getMetadata()
-                );
-                ute.initCause(e);
-                throw ute;
+        if (!this.hasNext) {
+            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        }
+        this.hasNext = false;
+        return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
+    }
+
+    private static Item processItem(
+            Item left,
+            Item right,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        if (
+            left.isInt()
+                && right.isInt()
+        ) {
+            switch (multiplicativeOperator) {
+                case MUL:
+                    if (
+                        left.getIntValue() < Short.MAX_VALUE
+                            && left.getIntValue() > -Short.MAX_VALUE
+                            && right.getIntValue() < Short.MAX_VALUE
+                            && right.getIntValue() > -Short.MAX_VALUE
+                    ) {
+                        return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator, metadata);
+                    } else {
+                        break;
+                    }
+                case DIV:
+                case MOD:
+                case IDIV:
+                    return processInt(left.getIntValue(), right.getIntValue(), multiplicativeOperator, metadata);
             }
         }
-        throw new IteratorFlowException("Multiplicative expression has non numeric args", getMetadata());
+
+        // General cases
+        if (left.isDouble() && right.isNumeric()) {
+            double l = left.getDoubleValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (right.isDouble() && left.isNumeric()) {
+            double l = left.castToDoubleValue();
+            double r = right.getDoubleValue();
+            return processDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isInteger() && right.isInteger()) {
+            BigInteger l = left.getIntegerValue();
+            BigInteger r = right.getIntegerValue();
+            return processInteger(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isDecimal() && right.isDecimal()) {
+            BigDecimal l = left.getDecimalValue();
+            BigDecimal r = right.getDecimalValue();
+            return processDecimal(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processYearMonthDuration(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isYearMonthDuration() && right.isNumeric()) {
+            Period l = left.getDurationValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processYearMonthDurationDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isDayTimeDuration() && right.isNumeric()) {
+            Period l = left.getDurationValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processDayTimeDurationDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (
+            left.isNumeric() && right.isYearMonthDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
+        ) {
+            Period r = right.getDurationValue();
+            double l = 0;
+            if (left.isDouble()) {
+                l = left.getDoubleValue();
+            } else {
+                l = left.castToDoubleValue();
+            }
+            return processYearMonthDurationDouble(r, l, multiplicativeOperator, metadata);
+        }
+        if (
+            left.isNumeric() && right.isDayTimeDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
+        ) {
+            Period r = right.getDurationValue();
+            double l = 0;
+            if (left.isDouble()) {
+                l = left.getDoubleValue();
+            } else {
+                l = left.castToDoubleValue();
+            }
+            return processDayTimeDurationDouble(r, l, multiplicativeOperator, metadata);
+        }
+        throw new UnexpectedTypeException(
+                " \""
+                    + multiplicativeOperator
+                    + "\": operation not possible with parameters of type \""
+                    + left.getDynamicType().toString()
+                    + "\" and \""
+                    + right.getDynamicType().toString()
+                    + "\"",
+                metadata
+        );
+    }
+
+    private static Item processDouble(
+            double l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createDoubleItem(l * r);
+            case DIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance().createDoubleItem(l / r);
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createDoubleItem((double) (long) (l / r));
+            case MOD:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance().createDoubleItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processDecimal(
+            BigDecimal l,
+            BigDecimal r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
+            case DIV:
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
+            case IDIV:
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(
+                        l.divide(r, 0, RoundingMode.DOWN).toBigInteger()
+                    );
+            case MOD:
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processInteger(
+            BigInteger l,
+            BigInteger r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createIntegerItem(l.multiply(r));
+            case DIV:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                BigDecimal bdResult = new BigDecimal(l)
+                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                if (bdResult.stripTrailingZeros().scale() <= 0) {
+                    return ItemFactory.getInstance().createIntegerItem(bdResult.toBigIntegerExact());
+                } else {
+                    return ItemFactory.getInstance().createDecimalItem(bdResult);
+                }
+            case IDIV:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(
+                        l.divide(r)
+                    );
+            case MOD:
+                if (r.equals(BigInteger.ZERO)) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createIntegerItem(l.mod(r));
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processInt(
+            int l,
+            int r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createIntItem(l * r);
+            case DIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                BigDecimal bdResult = new BigDecimal(l)
+                    .divide(new BigDecimal(r), 10, BigDecimal.ROUND_HALF_UP);
+                if (bdResult.stripTrailingZeros().scale() <= 0) {
+                    return ItemFactory.getInstance().createIntItem(bdResult.intValueExact());
+                } else {
+                    return ItemFactory.getInstance().createDecimalItem(bdResult);
+                }
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance().createIntItem(l / r);
+            case MOD:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createIntItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processYearMonthDuration(
+            Period l,
+            Period r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case DIV:
+                int months = l.getYears() * 12 + l.getMonths();
+                int otherMonths = 12 * r.getYears() + r.getMonths();
+                return ItemFactory.getInstance()
+                    .createDecimalItem(
+                        BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
+                    );
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration",
+                        metadata
+                );
+        }
+    }
+
+    private static Item processYearMonthDurationDouble(
+            Period l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL: {
+                int months = l.getYears() * 12 + l.getMonths();
+                int totalMonths = (int) Math.round(months * r);
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                    );
+            }
+            case DIV: {
+                int months = l.getYears() * 12 + l.getMonths();
+                int totalMonths = (int) Math.round(months / r);
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                    );
+            }
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration and double",
+                        metadata
+                );
+        }
+    }
+
+    private static Item processDayTimeDuration(
+            Period l,
+            Period r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case DIV:
+                Instant now = Instant.now();
+                return ItemFactory.getInstance()
+                    .createDecimalItem(
+                        BigDecimal.valueOf(
+                            l.toDurationFrom(now).getMillis()
+                                /
+                                (double) r.toDurationFrom(now).getMillis()
+                        )
+                    );
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types dayTimeDuration",
+                        metadata
+                );
+        }
+    }
+
+    private static Item processDayTimeDurationDouble(
+            Period l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL: {
+                long durationInMillis = l.toStandardDuration().getMillis();
+                long durationResult = Math.round(durationInMillis * r);
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+            }
+            case DIV: {
+                long durationInMillis = l.toStandardDuration().getMillis();
+                long durationResult = Math.round(durationInMillis / r);
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+            }
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration and double",
+                        metadata
+                );
+        }
     }
 
 }
