@@ -620,22 +620,6 @@ public abstract class Item implements SerializableItem {
         throw new UnsupportedOperationException("Operation not defined");
     }
 
-    public Item multiply(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item divide(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item modulo(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item idivide(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
     /**
      * Returns the dynamic type of the item (for error message purposes).
      * 

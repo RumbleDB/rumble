@@ -2,7 +2,6 @@ package org.rumbledb.items;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
-import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
@@ -10,7 +9,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
 
 public class DayTimeDurationItem extends DurationItem {
 
@@ -128,40 +126,6 @@ public class DayTimeDurationItem extends DurationItem {
     @Override
     public Item subtract(Item other) {
         return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item multiply(Item other) {
-        BigDecimal otherAsDecimal = other.castToDecimalValue();
-        if (otherAsDecimal.stripTrailingZeros().scale() <= 0) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(this.getValue().multipliedBy(otherAsDecimal.intValue()));
-        }
-        long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = otherAsDecimal.multiply(BigDecimal.valueOf(durationInMillis))
-            .setScale(16, BigDecimal.ROUND_HALF_UP)
-            .longValue();
-        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
-    }
-
-    @Override
-    public Item divide(Item other) {
-        if (other.isDayTimeDuration()) {
-            Instant now = Instant.now();
-            return ItemFactory.getInstance()
-                .createDecimalItem(
-                    BigDecimal.valueOf(
-                        this.getValue().toDurationFrom(now).getMillis()
-                            /
-                            (double) other.getDurationValue().toDurationFrom(now).getMillis()
-                    )
-                );
-        }
-        BigDecimal otherBd = other.castToDecimalValue();
-        long durationInMillis = this.getValue().toStandardDuration().getMillis();
-        long durationResult = (BigDecimal.valueOf(durationInMillis)).divide(otherBd, 16, BigDecimal.ROUND_HALF_UP)
-            .longValue();
-        return ItemFactory.getInstance().createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
     }
 
     @Override

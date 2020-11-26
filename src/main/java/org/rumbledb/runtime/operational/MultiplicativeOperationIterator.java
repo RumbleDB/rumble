@@ -27,6 +27,7 @@ import java.util.Arrays;
 
 import org.joda.time.Instant;
 import org.joda.time.Period;
+import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
@@ -38,6 +39,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
@@ -175,25 +177,36 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             Period r = right.getDurationValue();
             return processDayTimeDuration(l, r, multiplicativeOperator, metadata);
         }
-        switch (multiplicativeOperator) {
-            case MUL:
-                return left.multiply(right);
-            case DIV:
-                return left.divide(right);
-            case IDIV:
-            case MOD:
-            default:
-                throw new UnexpectedTypeException(
-                        " \""
-                            + multiplicativeOperator
-                            + "\": operation not possible with parameters of type \""
-                            + left.getDynamicType().toString()
-                            + "\" and \""
-                            + right.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
+        if (left.isYearMonthDuration() && right.isNumeric()) {
+            Period l = left.getDurationValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processYearMonthDurationDouble(l, r, multiplicativeOperator, metadata);
         }
+        if (left.isDayTimeDuration() && right.isNumeric()) {
+            Period l = left.getDurationValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processDayTimeDurationDouble(l, r, multiplicativeOperator, metadata);
+        }
+        throw new UnexpectedTypeException(
+                " \""
+                    + multiplicativeOperator
+                    + "\": operation not possible with parameters of type \""
+                    + left.getDynamicType().toString()
+                    + "\" and \""
+                    + right.getDynamicType().toString()
+                    + "\"",
+                metadata
+        );
     }
 
     private static Item processDouble(
@@ -373,6 +386,41 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         }
     }
 
+    private static Item processYearMonthDurationDouble(
+            Period l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL: {
+                int months = l.getYears() * 12 + l.getMonths();
+                int totalMonths = (int) Math.round(months * r);
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                    );
+            }
+            case DIV: {
+                int months = l.getYears() * 12 + l.getMonths();
+                int totalMonths = (int) Math.round(months / r);
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
+                    );
+            }
+            case IDIV:
+            case MOD:
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration and double",
+                        metadata
+                );
+        }
+    }
+
     private static Item processDayTimeDuration(
             Period l,
             Period r,
@@ -398,6 +446,37 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                         " \""
                             + multiplicativeOperator
                             + "\": operation not possible with parameters of types dayTimeDuration",
+                        metadata
+                );
+        }
+    }
+
+    private static Item processDayTimeDurationDouble(
+            Period l,
+            double r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL: {
+                long durationInMillis = l.toStandardDuration().getMillis();
+                long durationResult = Math.round(durationInMillis * r);
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+            }
+            case DIV: {
+                long durationInMillis = l.toStandardDuration().getMillis();
+                long durationResult = Math.round(durationInMillis / r);
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
+            }
+            case IDIV:
+            case MOD:
+            default:
+                throw new UnexpectedTypeException(
+                        " \""
+                            + multiplicativeOperator
+                            + "\": operation not possible with parameters of types yearMonthDuration and double",
                         metadata
                 );
         }
