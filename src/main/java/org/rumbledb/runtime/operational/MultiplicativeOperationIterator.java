@@ -277,13 +277,13 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             case MUL:
                 return ItemFactory.getInstance().createDecimalItem(l.multiply(r));
             case DIV:
-                if (r.equals(BigDecimal.ZERO)) {
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
                     .createDecimalItem(l.divide(r, 10, BigDecimal.ROUND_HALF_UP));
             case IDIV:
-                if (r.equals(BigDecimal.ZERO)) {
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
@@ -291,7 +291,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                         l.divide(r, 0, RoundingMode.DOWN).toBigInteger()
                     );
             case MOD:
-                if (r.equals(BigDecimal.ZERO)) {
+                if (r.compareTo(BigDecimal.ZERO) == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance().createDecimalItem(l.remainder(r));
