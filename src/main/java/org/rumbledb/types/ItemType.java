@@ -1129,22 +1129,18 @@ public class ItemType implements Serializable {
         }
     }
 
+    /**
+     * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
+     *
+     * @param other a strict subtype of atomic item type to which we are trying to cast
+     * @return true if it is possible at static time to cast [this] to [other], false otherwise
+     */
     public boolean staticallyCastableAs(ItemType other) {
-        // JSON items cannot be cast from and to, nor function items, nor we can cast to atomic or item
-        if (
-            this.isSubtypeOf(JSONItem)
-                || other.isSubtypeOf(JSONItem)
-                || this.equals(functionItem)
-                || other.equals(functionItem)
-                || other.equals(atomicItem)
-                || other.equals(item)
-        )
-            return false;
         // anything can be casted to itself
         if (this.equals(other))
             return true;
         // anything can be casted from and to a string (or from one of its supertype)
-        if (this.equals(stringItem) || this.equals(item) || this.equals(atomicItem) || other.equals(stringItem))
+        if (this.equals(stringItem) || other.equals(stringItem))
             return true;
         // boolean and numeric can be cast between themselves
         if (

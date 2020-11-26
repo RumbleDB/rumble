@@ -354,7 +354,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         + expressionType.getItemType(),
                     expressionType.getItemType().isSubtypeOf(ItemType.JSONItem)
                         ? ErrorCode.NonAtomicElementErrorCode
-                        : ErrorCode.UnexpectedTypeErrorCode
+                        : ErrorCode.AtomizationError
             );
         }
         expression.setInferredSequenceType(new SequenceType(ItemType.booleanItem));
@@ -377,20 +377,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        // Empty sequence check
-        if (expressionSequenceType.isEmptySequence() && castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-            throw new UnexpectedStaticTypeException(
-                    "Empty sequence cannot be cast to type with quantifier different from '?'"
-            );
+        // Empty sequence case
+        if (expressionSequenceType.isEmptySequence()){
+          if(castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
+              throw new UnexpectedStaticTypeException(
+                      "Empty sequence cannot be cast to type with quantifier different from '?'"
+              );
+          } else {
+              // no additional check is needed
+              expression.setInferredSequenceType(castedSequenceType);
+              return argument;
+          }
         }
 
-        // Arity check
-        if (!castedSequenceType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)) {
-            throw new UnexpectedStaticTypeException("It is possible to cast only to types with arity '1' or '?'");
-        }
         if (!expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
             throw new UnexpectedStaticTypeException(
-                    "It is never possible to cast a "
+                    "with static type feature it is not possible to cast a "
                         +
                         expressionSequenceType
                         + " as "
@@ -399,12 +401,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // ItemType static castability check
-        if (expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem)) {
+        if (!expressionSequenceType.getItemType().isSubtypeOf(ItemType.atomicItem)) {
             throw new UnexpectedStaticTypeException(
                     "It is never possible to cast a non-atomic sequence type: "
                         +
                         expressionSequenceType,
-                    ErrorCode.NonAtomicElementErrorCode
+                    expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.AtomizationError
             );
         }
         if (!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())) {
