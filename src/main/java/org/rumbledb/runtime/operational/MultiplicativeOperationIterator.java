@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
@@ -196,6 +197,30 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 r = right.castToDoubleValue();
             }
             return processDayTimeDurationDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (
+            left.isNumeric() && right.isYearMonthDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
+        ) {
+            Period r = right.getDurationValue();
+            double l = 0;
+            if (left.isDouble()) {
+                l = left.getDoubleValue();
+            } else {
+                l = left.castToDoubleValue();
+            }
+            return processYearMonthDurationDouble(r, l, multiplicativeOperator, metadata);
+        }
+        if (
+            left.isNumeric() && right.isDayTimeDuration() && multiplicativeOperator.equals(MultiplicativeOperator.MUL)
+        ) {
+            Period r = right.getDurationValue();
+            double l = 0;
+            if (left.isDouble()) {
+                l = left.getDoubleValue();
+            } else {
+                l = left.castToDoubleValue();
+            }
+            return processDayTimeDurationDouble(r, l, multiplicativeOperator, metadata);
         }
         throw new UnexpectedTypeException(
                 " \""
@@ -373,9 +398,6 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     .createDecimalItem(
                         BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
                     );
-            case IDIV:
-            case MUL:
-            case MOD:
             default:
                 throw new UnexpectedTypeException(
                         " \""
@@ -409,8 +431,6 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                         new Period().withMonths(totalMonths).withPeriodType(YearMonthDurationItem.yearMonthPeriodType)
                     );
             }
-            case IDIV:
-            case MOD:
             default:
                 throw new UnexpectedTypeException(
                         " \""
@@ -438,9 +458,6 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                                 (double) r.toDurationFrom(now).getMillis()
                         )
                     );
-            case IDIV:
-            case MUL:
-            case MOD:
             default:
                 throw new UnexpectedTypeException(
                         " \""
@@ -470,8 +487,6 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 return ItemFactory.getInstance()
                     .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
             }
-            case IDIV:
-            case MOD:
             default:
                 throw new UnexpectedTypeException(
                         " \""
