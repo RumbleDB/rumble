@@ -23,4 +23,5 @@ try { yearMonthDuration("P1Y2M") idiv 1 } catch XPTY0004 { "ok" },
 try { dayTimeDuration("P1D") idiv 1 } catch XPTY0004 { "ok" },
 try { yearMonthDuration("P1Y2M") idiv yearMonthDuration("P1Y2M") } catch XPTY0004 { "ok" },
 try { dayTimeDuration("P1D") idiv dayTimeDuration("P1D") } catch XPTY0004 { "ok" },
-try { 2 idiv "P1D" } catch XPTY0004 { "ok" }
+try { 2 idiv "P1D" } catch XPTY0004 { "ok" },
+try { "P1D" idiv 2 } catch XPTY0004 { "ok" }
