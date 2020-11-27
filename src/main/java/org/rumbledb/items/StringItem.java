@@ -159,7 +159,8 @@ public class StringItem extends AtomicItem {
         }
         try {
             if (itemType.equals(ItemType.integerItem)) {
-                Integer.parseInt(this.getValue());
+                BigInteger i = new BigInteger(this.value);
+                return true;
             } else if (itemType.equals(ItemType.anyURIItem)) {
                 AnyURIItem.parseAnyURIString(this.getValue());
             } else if (itemType.equals(ItemType.decimalItem)) {
