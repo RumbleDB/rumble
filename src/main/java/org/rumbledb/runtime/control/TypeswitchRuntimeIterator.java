@@ -124,6 +124,9 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
+                if (this.testValue == null && sequenceType.isEmptySequence()) {
+                    return typeSwitchCase.getReturnIterator();
+                }
                 if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
                     return typeSwitchCase.getReturnIterator();
                 }
