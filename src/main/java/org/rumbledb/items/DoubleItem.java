@@ -105,7 +105,7 @@ public class DoubleItem extends AtomicItem {
             return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
+            return ItemFactory.getInstance().createStringItem(serialize());
         }
         throw new ClassCastException();
     }
