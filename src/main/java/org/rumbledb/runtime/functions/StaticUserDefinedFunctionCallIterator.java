@@ -103,7 +103,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
+        if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
             this.userDefinedFunctionCallIterator.close();
         }
     }

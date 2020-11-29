@@ -264,7 +264,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
+        if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             this.functionBodyIterator.close();
         }
     }
