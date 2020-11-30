@@ -2,6 +2,8 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -152,6 +154,18 @@ public class TreatIterator extends HybridRuntimeIterator {
                 getMetadata()
         );
         return childRDD.filter(transformation);
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
+
+        return df;
     }
 
     private void checkEmptySequence(int size) {

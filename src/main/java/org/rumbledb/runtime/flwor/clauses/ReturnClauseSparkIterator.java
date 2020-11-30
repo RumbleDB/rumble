@@ -85,9 +85,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
                 DynamicContext dynamicContext = new DynamicContext(context);
+                System.out.println(tuple);
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                                                                                                // from new tuple
 
+                System.out.println(dynamicContext);
                 JavaRDD<Item> intermediateResult = this.expression.getRDD(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;

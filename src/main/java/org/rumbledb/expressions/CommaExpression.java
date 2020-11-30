@@ -67,7 +67,7 @@ public class CommaExpression extends Expression {
         }
 
         for (Expression expression : this.expressions) {
-            if (!expression.getHighestExecutionMode(visitorConfig).isRDD()) {
+            if (!expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 return;
             }

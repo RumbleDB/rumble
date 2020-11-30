@@ -78,7 +78,7 @@ public class SwitchExpression extends Expression {
 
         if (this.highestExecutionMode == ExecutionMode.RDD) {
             for (SwitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDD()) {
+                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
                     this.highestExecutionMode = ExecutionMode.LOCAL;
                     break;
                 }

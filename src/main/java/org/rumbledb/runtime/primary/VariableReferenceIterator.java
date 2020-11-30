@@ -69,6 +69,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
+        System.out.println(context);
         return context.getVariableValues().getDataFrameVariableValue(this.variableName, getMetadata());
     }
 
