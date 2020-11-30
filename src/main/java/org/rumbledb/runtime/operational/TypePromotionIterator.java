@@ -4,17 +4,24 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 
@@ -170,7 +177,60 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
         Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
 
-        return df;
+        StructType type = df.schema();
+        DataType dataType = type;
+        StructField[] fields = type.fields();
+        if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            dataType = fields[0].dataType();
+        }
+        ItemType dataItemType = ItemParser.convertDataTypeToItemType(dataType);
+        int count = df.takeAsList(2).size();
+        if (count == 0) {
+            if (this.sequenceType.isEmptySequence()) {
+                return df;
+            }
+            if (this.sequenceType.getArity().equals(Arity.One)) {
+                throw new UnexpectedTypeException(
+                        this.exceptionMessage,
+                        getMetadata()
+                );
+            }
+            if (this.sequenceType.getArity().equals(Arity.OneOrMore)) {
+                throw new UnexpectedTypeException(
+                        this.exceptionMessage,
+                        getMetadata()
+                );
+            }
+        }
+        if (this.sequenceType.isEmptySequence()) {
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage,
+                    getMetadata()
+            );
+        }
+        if (count == 2) {
+            if (this.sequenceType.getArity().equals(Arity.One)) {
+                throw new UnexpectedTypeException(
+                        this.exceptionMessage,
+                        getMetadata()
+                );
+            }
+            if (this.sequenceType.getArity().equals(Arity.OneOrZero)) {
+                throw new UnexpectedTypeException(
+                        this.exceptionMessage,
+                        getMetadata()
+                );
+            }
+        }
+        System.out.println(dataItemType);
+        System.out.println(this.sequenceType.getItemType());
+        if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
+            return df;
+        }
+        throw new UnexpectedTypeException(
+                this.exceptionMessage,
+                getMetadata()
+        );
     }
 
     private void checkTypePromotion() {

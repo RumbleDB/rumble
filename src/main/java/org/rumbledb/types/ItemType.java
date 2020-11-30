@@ -136,7 +136,7 @@ public class ItemType implements Serializable {
     }
 
 
-    boolean isSubtypeOf(ItemType superType) {
+    public boolean isSubtypeOf(ItemType superType) {
         if (superType.equals(item)) {
             return true;
         }

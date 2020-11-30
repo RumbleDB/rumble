@@ -116,9 +116,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                                                                                    // variables from new
                                                                                                    // tuple
 
-            System.out.println(inputTuple);
             this.nextLocalTupleResult = generateTupleFromExpressionWithContext(inputTuple, this.tupleContext);
-            System.out.println(nextLocalTupleResult);
             this.hasNext = true;
         } else {
             this.child.close();

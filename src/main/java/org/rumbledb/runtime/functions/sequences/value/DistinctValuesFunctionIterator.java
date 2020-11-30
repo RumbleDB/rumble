@@ -144,7 +144,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
         df.show();
         StructType type = df.schema();
         StructField[] fields = type.fields();
-        if (fields.length != 1 && !fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (fields.length != 1 || !fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             throw new NonAtomicKeyException(
                     "Invalid args. distinct-values can't be performed on non-atomics",
                     getMetadata()
