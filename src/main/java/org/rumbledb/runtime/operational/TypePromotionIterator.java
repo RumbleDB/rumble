@@ -172,28 +172,34 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         return true;
     }
 
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-
+    private static ItemType getItemType(Dataset<Row> df) {
         StructType type = df.schema();
         DataType dataType = type;
         StructField[] fields = type.fields();
         if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             dataType = fields[0].dataType();
         }
-        ItemType dataItemType = ItemParser.convertDataTypeToItemType(dataType);
+        return ItemParser.convertDataTypeToItemType(dataType);
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
+        ItemType dataItemType = getItemType(df);
         int count = df.takeAsList(1).size();
         checkEmptySequence(count);
         if (count == 0) {
             return df;
         }
-        if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
-            return df;
-        }
-        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && itemType.equals(ItemType.doubleItem)) {
+        df.show();
+        System.out.println(dataItemType);
+        System.out.println(ItemType.decimalItem);
+        System.out.println(this.itemType);
+        System.out.println(dataItemType.isSubtypeOf(ItemType.decimalItem));
+        System.out.println(this.itemType.equals(ItemType.doubleItem));
+        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && this.itemType.equals(ItemType.doubleItem)) {
             df.createOrReplaceTempView("input");
-            df.sparkSession()
+            df = df.sparkSession()
                 .sql(
                     "SELECT CAST (`"
                         + SparkSessionManager.atomicJSONiqItemColumnName
@@ -202,9 +208,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                         + "` FROM input"
                 );
         }
+        df.show();
+        dataItemType = getItemType(df);
+        if (dataItemType.isSubtypeOf(this.itemType)) {
+            return df;
+        }
         throw new UnexpectedTypeException(
                 this.exceptionMessage
-                    + this.nextResult.getDynamicType().toString()
+                    + dataItemType
                     + " cannot be promoted to type "
                     + this.sequenceTypeName
                     + this.sequenceType.getArity().getSymbol()
