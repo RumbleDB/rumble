@@ -567,20 +567,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
         SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
 
-        // if any of the child expression has null inferred type throw error
-        if (leftInferredType == null || rightInferredType == null) {
-            throw new UnexpectedStaticTypeException(
-                    "A child expression of a MultiplicativeExpression has no inferred type"
-            );
-        }
-
-        // if any of the children is the empty sequence throw error XPST0005
-        if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-            throw new UnexpectedStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
-            );
-        }
+        basicChecks(
+            Arrays.asList(leftInferredType, rightInferredType),
+            expression.getClass().getSimpleName(),
+            true,
+            true
+        );
 
         ItemType inferredType = null;
         SequenceType.Arity inferredArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
@@ -611,12 +603,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             } else if (
                 rightItemType.isSubtypeOf(ItemType.durationItem)
+                    && !rightItemType.equals(ItemType.durationItem)
                     &&
                     expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.MUL
             ) {
                 inferredType = rightItemType;
             }
-        } else if (leftItemType.isSubtypeOf(ItemType.durationItem)) {
+        } else if (leftItemType.isSubtypeOf(ItemType.durationItem) && !leftItemType.equals(ItemType.durationItem)) {
             if (
                 rightItemType.isNumeric()
                     && (expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.MUL
@@ -624,7 +617,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.DIV)
             ) {
                 inferredType = leftItemType;
-            } else if (rightItemType.equals(leftItemType) && !leftItemType.equals(ItemType.durationItem)) {
+            } else if (rightItemType.equals(leftItemType)) {
                 inferredType = ItemType.decimalItem;
             }
         }
