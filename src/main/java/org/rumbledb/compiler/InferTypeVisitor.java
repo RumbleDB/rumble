@@ -378,16 +378,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         // Empty sequence case
-        if (expressionSequenceType.isEmptySequence()){
-          if(castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
-              throw new UnexpectedStaticTypeException(
-                      "Empty sequence cannot be cast to type with quantifier different from '?'"
-              );
-          } else {
-              // no additional check is needed
-              expression.setInferredSequenceType(castedSequenceType);
-              return argument;
-          }
+        if (expressionSequenceType.isEmptySequence()) {
+            if (castedSequenceType.getArity() != SequenceType.Arity.OneOrZero) {
+                throw new UnexpectedStaticTypeException(
+                        "Empty sequence cannot be cast to type with quantifier different from '?'"
+                );
+            } else {
+                // no additional check is needed
+                expression.setInferredSequenceType(castedSequenceType);
+                return argument;
+            }
         }
 
         if (!expressionSequenceType.isAritySubtypeOf(castedSequenceType.getArity())) {
@@ -406,7 +406,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "It is never possible to cast a non-atomic sequence type: "
                         +
                         expressionSequenceType,
-                    expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem) ? ErrorCode.NonAtomicElementErrorCode : ErrorCode.AtomizationError
+                    expressionSequenceType.getItemType().isSubtypeOf(ItemType.JSONItem)
+                        ? ErrorCode.NonAtomicElementErrorCode
+                        : ErrorCode.AtomizationError
             );
         }
         if (!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())) {

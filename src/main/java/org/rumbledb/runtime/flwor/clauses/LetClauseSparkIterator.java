@@ -550,6 +550,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
+        System.out.println("using UDF");
 
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
