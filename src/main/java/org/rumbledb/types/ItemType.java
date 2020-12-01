@@ -29,44 +29,38 @@ public class ItemType implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private String name;
-    private int index; // for private matrix operation
 
-    public static final ItemType item = new ItemType("item", 0);
-    public static final ItemType atomicItem = new ItemType("atomic", 1);
-    public static final ItemType stringItem = new ItemType("string", 2);
-    public static final ItemType integerItem = new ItemType("integer", 3);
-    public static final ItemType decimalItem = new ItemType("decimal", 4);
-    public static final ItemType doubleItem = new ItemType("double", 5);
-    public static final ItemType booleanItem = new ItemType("boolean", 6);
-    public static final ItemType nullItem = new ItemType("null", 7);
-    public static final ItemType durationItem = new ItemType("duration", 8);
-    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration", 9);
-    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration", 10);
-    public static final ItemType dateTimeItem = new ItemType("dateTime", 11);
-    public static final ItemType dateItem = new ItemType("date", 12);
-    public static final ItemType timeItem = new ItemType("time", 13);
-    public static final ItemType hexBinaryItem = new ItemType("hexBinary", 14);
-    public static final ItemType anyURIItem = new ItemType("anyURI", 15);
-    public static final ItemType base64BinaryItem = new ItemType("base64Binary", 16);
-    public static final ItemType JSONItem = new ItemType("json-item", 17);
-    public static final ItemType objectItem = new ItemType("object", 18);
-    public static final ItemType arrayItem = new ItemType("array", 19);
-    public static final ItemType functionItem = new ItemType("function", 20);
+    public static final ItemType item = new ItemType("item");
+    public static final ItemType atomicItem = new ItemType("atomic");
+    public static final ItemType stringItem = new ItemType("string");
+    public static final ItemType integerItem = new ItemType("integer");
+    public static final ItemType decimalItem = new ItemType("decimal");
+    public static final ItemType doubleItem = new ItemType("double");
+    public static final ItemType booleanItem = new ItemType("boolean");
+    public static final ItemType nullItem = new ItemType("null");
+    public static final ItemType durationItem = new ItemType("duration");
+    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
+    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
+    public static final ItemType dateTimeItem = new ItemType("dateTime");
+    public static final ItemType dateItem = new ItemType("date");
+    public static final ItemType timeItem = new ItemType("time");
+    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
+    public static final ItemType anyURIItem = new ItemType("anyURI");
+    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
+    public static final ItemType JSONItem = new ItemType("json-item");
+    public static final ItemType objectItem = new ItemType("object");
+    public static final ItemType arrayItem = new ItemType("array");
+    public static final ItemType functionItem = new ItemType("function");
 
     public ItemType() {
     }
 
-    private ItemType(String name, int index) {
+    private ItemType(String name) {
         this.name = name;
-        this.index = index;
     }
 
     public String getName() {
         return this.name;
-    }
-
-    public int getIndex() {
-        return this.index;
     }
 
     public static ItemType getItemTypeByName(String name) {
