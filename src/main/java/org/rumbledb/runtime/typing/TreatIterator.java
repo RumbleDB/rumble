@@ -192,7 +192,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }
-        throw errorToThrow(""+dataItemType);
+        throw errorToThrow("" + dataItemType);
     }
 
     private void checkEmptySequence(int size) {
