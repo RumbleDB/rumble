@@ -19,7 +19,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -184,51 +183,32 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             dataType = fields[0].dataType();
         }
         ItemType dataItemType = ItemParser.convertDataTypeToItemType(dataType);
-        int count = df.takeAsList(2).size();
+        int count = df.takeAsList(1).size();
+        checkEmptySequence(count);
         if (count == 0) {
-            if (this.sequenceType.isEmptySequence()) {
-                return df;
-            }
-            if (this.sequenceType.getArity().equals(Arity.One)) {
-                throw new UnexpectedTypeException(
-                        this.exceptionMessage,
-                        getMetadata()
-                );
-            }
-            if (this.sequenceType.getArity().equals(Arity.OneOrMore)) {
-                throw new UnexpectedTypeException(
-                        this.exceptionMessage,
-                        getMetadata()
-                );
-            }
+            return df;
         }
-        if (this.sequenceType.isEmptySequence()) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage,
-                    getMetadata()
-            );
-        }
-        if (count == 2) {
-            if (this.sequenceType.getArity().equals(Arity.One)) {
-                throw new UnexpectedTypeException(
-                        this.exceptionMessage,
-                        getMetadata()
-                );
-            }
-            if (this.sequenceType.getArity().equals(Arity.OneOrZero)) {
-                throw new UnexpectedTypeException(
-                        this.exceptionMessage,
-                        getMetadata()
-                );
-            }
-        }
-        System.out.println(dataItemType);
-        System.out.println(this.sequenceType.getItemType());
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }
+        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && itemType.equals(ItemType.doubleItem)) {
+            df.createOrReplaceTempView("input");
+            df.sparkSession()
+                .sql(
+                    "SELECT CAST (`"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` AS double) AS `"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` FROM input"
+                );
+        }
         throw new UnexpectedTypeException(
-                this.exceptionMessage,
+                this.exceptionMessage
+                    + this.nextResult.getDynamicType().toString()
+                    + " cannot be promoted to type "
+                    + this.sequenceTypeName
+                    + this.sequenceType.getArity().getSymbol()
+                    + ".",
                 getMetadata()
         );
     }

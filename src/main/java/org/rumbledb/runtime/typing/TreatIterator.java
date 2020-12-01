@@ -22,6 +22,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -54,6 +55,16 @@ public class TreatIterator extends HybridRuntimeIterator {
         this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
+        }
+        if (
+            !executionMode.equals(ExecutionMode.LOCAL)
+                && (sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero))
+        ) {
+            throw new OurBadException(
+                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
+            );
         }
     }
 
@@ -182,13 +193,11 @@ public class TreatIterator extends HybridRuntimeIterator {
             dataType = fields[0].dataType();
         }
         ItemType dataItemType = ItemParser.convertDataTypeToItemType(dataType);
-        int count = df.takeAsList(2).size();
+        int count = df.takeAsList(1).size();
         checkEmptySequence(count);
         if (count == 0) {
             return df;
         }
-        checkTreatAsEmptySequence(count);
-        checkMoreThanOneItemSequence(count);
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }
