@@ -225,7 +225,14 @@ objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
 
 itemType                : 'item'
                         | jSONItemTest
-                        | atomicType;
+                        | atomicType
+                        | functionTest;
+
+functionTest	        : (anyFunctionTest | typedFunctionTest);
+
+anyFunctionTest         : 'function' '(' '*' ')';
+
+typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*)? ')' 'as' rt=sequenceType;
 
 jSONItemTest            : 'object'
                         | 'array'
