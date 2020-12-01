@@ -477,24 +477,17 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitAdditiveExpr(AdditiveExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        List<Node> childrenExpressions = expression.getChildren();
-        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
-        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+        SequenceType leftInferredType = expression.getLeftExpression().getInferredSequenceType();
+        SequenceType rightInferredType = expression.getRightExpression().getInferredSequenceType();
 
-        // if any of the child expression has null inferred type throw error
-        if (leftInferredType == null || rightInferredType == null) {
-            throw new UnexpectedStaticTypeException("A child expression of a AdditiveExpression has no inferred type");
-        }
+        basicChecks(
+            Arrays.asList(leftInferredType, rightInferredType),
+            expression.getClass().getSimpleName(),
+            true,
+            true
+        );
 
-        // if any of the children is the empty sequence throw error XPST0005
-        if (leftInferredType.isEmptySequence() || rightInferredType.isEmptySequence()) {
-            throw new UnexpectedStaticTypeException(
-                    "Inferred type is empty sequence and this is not a CommaExpression",
-                    ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
-            );
-        }
-
-        ItemType inferredType;
+        ItemType inferredType = null;
         SequenceType.Arity inferredArity = resolveArities(leftInferredType.getArity(), rightInferredType.getArity());
 
         // arity check
@@ -502,8 +495,50 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             throw new UnexpectedStaticTypeException("'+' and '*' arities are not allowed for additive expressions");
         }
 
-        inferredType = leftInferredType.getItemType()
-            .staticallyAddTo(rightInferredType.getItemType(), expression.isMinus());
+        ItemType leftItemType = leftInferredType.getItemType();
+        ItemType rightItemType = rightInferredType.getItemType();
+
+        // check item type combination
+        if (leftItemType.isNumeric()) {
+            if (rightItemType.isNumeric()) {
+                inferredType = resolveNumericType(leftItemType, rightItemType);
+            }
+        } else if (leftItemType.equals(ItemType.dateItem) || leftItemType.equals(ItemType.dateTimeItem)) {
+            if (
+                rightItemType.equals(ItemType.dayTimeDurationItem)
+                    || rightItemType.equals(ItemType.yearMonthDurationItem)
+            ) {
+                inferredType = leftItemType;
+            } else if (expression.isMinus() && rightItemType.equals(leftItemType)) {
+                inferredType = ItemType.dayTimeDurationItem;
+            }
+        } else if (leftItemType.equals(ItemType.timeItem)) {
+            if (rightItemType.equals(ItemType.dayTimeDurationItem)) {
+                inferredType = leftItemType;
+            } else if (expression.isMinus() && rightItemType.equals(leftItemType)) {
+                inferredType = ItemType.dayTimeDurationItem;
+            }
+        } else if (leftItemType.equals(ItemType.dayTimeDurationItem)) {
+            if (rightItemType.equals(leftItemType)) {
+                inferredType = leftItemType;
+            } else if (
+                !expression.isMinus()
+                    && (rightItemType.equals(ItemType.dateTimeItem)
+                        || rightItemType.equals(ItemType.dateItem)
+                        || rightItemType.equals(ItemType.timeItem))
+            ) {
+                inferredType = rightItemType;
+            }
+        } else if (leftItemType.equals(ItemType.yearMonthDurationItem)) {
+            if (rightItemType.equals(leftItemType)) {
+                inferredType = leftItemType;
+            } else if (
+                !expression.isMinus()
+                    && (rightItemType.equals(ItemType.dateTimeItem) || rightItemType.equals(ItemType.dateItem))
+            ) {
+                inferredType = rightItemType;
+            }
+        }
 
         if (inferredType == null) {
             if (inferredArity == SequenceType.Arity.OneOrZero) {
@@ -563,9 +598,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitMultiplicativeExpr(MultiplicativeExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        List<Node> childrenExpressions = expression.getChildren();
-        SequenceType leftInferredType = ((Expression) childrenExpressions.get(0)).getInferredSequenceType();
-        SequenceType rightInferredType = ((Expression) childrenExpressions.get(1)).getInferredSequenceType();
+        SequenceType leftInferredType = expression.getLeftExpression().getInferredSequenceType();
+        SequenceType rightInferredType = expression.getRightExpression().getInferredSequenceType();
 
         basicChecks(
             Arrays.asList(leftInferredType, rightInferredType),
