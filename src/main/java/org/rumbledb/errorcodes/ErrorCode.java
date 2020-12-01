@@ -107,7 +107,7 @@ public enum ErrorCode {
     InvalidGroupVariableErrorCode("XQST0094"),
 
     AtomizationError("FOTY0012"),
-    UnexpectedFunctionITem("FOTY0015"),
+    UnexpectedFunctionItem("FOTY0015"),
 
     InvalidTimezoneValue("FODT0003");
 

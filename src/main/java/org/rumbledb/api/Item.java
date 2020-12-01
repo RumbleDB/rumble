@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
 import java.io.ObjectInputStream;

@@ -34,6 +34,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -120,7 +121,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                                 SequenceType.Arity.ZeroOrMore
                         ),
                         new SequenceType(
-                                ItemType.objectItem,
+                                AtomicItemType.objectItem,
                                 SequenceType.Arity.One
                         )
                     )

@@ -34,6 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.io.ByteArrayInputStream;
@@ -122,7 +123,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.canBePromotedTo(ItemType.stringItem)) {
+            } else if (item.canBePromotedTo(AtomicItemType.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
                 return true;

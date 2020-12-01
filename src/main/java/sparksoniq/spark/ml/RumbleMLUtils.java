@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.AtomicItem;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
 
@@ -166,15 +167,15 @@ public class RumbleMLUtils {
     private static Object convertRumbleAtomicToJava(AtomicItem atomicItem, String javaTypeName) {
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
+                return atomicItem.castAs(AtomicItemType.booleanItem).getBooleanValue();
             case "String":
-                return atomicItem.castAs(ItemType.stringItem).getStringValue();
+                return atomicItem.castAs(AtomicItemType.stringItem).getStringValue();
             case "int":
-                return atomicItem.castAs(ItemType.integerItem).getIntValue();
+                return atomicItem.castAs(AtomicItemType.integerItem).getIntValue();
             case "double":
-                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
+                return atomicItem.castAs(AtomicItemType.doubleItem).getDoubleValue();
             case "long":
-                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
+                return atomicItem.castAs(AtomicItemType.decimalItem).getDecimalValue().longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

@@ -27,99 +27,63 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    private String name;
-
-    public static final ItemType item = new ItemType("item");
-    public static final ItemType atomicItem = new ItemType("atomic");
-    public static final ItemType stringItem = new ItemType("string");
-    public static final ItemType integerItem = new ItemType("integer");
-    public static final ItemType decimalItem = new ItemType("decimal");
-    public static final ItemType doubleItem = new ItemType("double");
-    public static final ItemType booleanItem = new ItemType("boolean");
-    public static final ItemType nullItem = new ItemType("null");
-    public static final ItemType durationItem = new ItemType("duration");
-    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
-    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
-    public static final ItemType dateTimeItem = new ItemType("dateTime");
-    public static final ItemType dateItem = new ItemType("date");
-    public static final ItemType timeItem = new ItemType("time");
-    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
-    public static final ItemType anyURIItem = new ItemType("anyURI");
-    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
-    public static final ItemType JSONItem = new ItemType("json-item");
-    public static final ItemType objectItem = new ItemType("object");
-    public static final ItemType arrayItem = new ItemType("array");
-    public static final ItemType functionItem = new ItemType("function");
-
-    public ItemType() {
-    }
-
-    private ItemType(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return this.name;
-    }
-
     public static ItemType getItemTypeByName(String name) {
-        if (name.equals(objectItem.name)) {
-            return objectItem;
+        if  (name.equals(AtomicItemType.objectItem.getName())) {
+            return AtomicItemType.objectItem;
         }
-        if (name.equals(atomicItem.name)) {
-            return atomicItem;
+        if  (name.equals(AtomicItemType.atomicItem.getName())) {
+            return AtomicItemType.atomicItem;
         }
-        if (name.equals(stringItem.name)) {
-            return stringItem;
+        if  (name.equals(AtomicItemType.stringItem.getName())) {
+            return AtomicItemType.stringItem;
         }
-        if (name.equals(integerItem.name)) {
-            return integerItem;
+        if  (name.equals(AtomicItemType.integerItem.getName())) {
+            return AtomicItemType.integerItem;
         }
-        if (name.equals(decimalItem.name)) {
-            return decimalItem;
+        if  (name.equals(AtomicItemType.decimalItem.getName())) {
+            return AtomicItemType.decimalItem;
         }
-        if (name.equals(doubleItem.name)) {
-            return doubleItem;
+        if  (name.equals(AtomicItemType.doubleItem.getName())) {
+            return AtomicItemType.doubleItem;
         }
-        if (name.equals(booleanItem.name)) {
-            return booleanItem;
+        if  (name.equals(AtomicItemType.booleanItem.getName())) {
+            return AtomicItemType.booleanItem;
         }
-        if (name.equals(nullItem.name)) {
-            return nullItem;
+        if  (name.equals(AtomicItemType.nullItem.getName())) {
+            return AtomicItemType.nullItem;
         }
-        if (name.equals(arrayItem.name)) {
-            return arrayItem;
+        if  (name.equals(AtomicItemType.arrayItem.getName())) {
+            return AtomicItemType.arrayItem;
         }
-        if (name.equals(JSONItem.name)) {
-            return JSONItem;
+        if  (name.equals(AtomicItemType.JSONItem.getName())) {
+            return AtomicItemType.JSONItem;
         }
-        if (name.equals(durationItem.name)) {
-            return durationItem;
+        if  (name.equals(AtomicItemType.durationItem.getName())) {
+            return AtomicItemType.durationItem;
         }
-        if (name.equals(yearMonthDurationItem.name)) {
-            return yearMonthDurationItem;
+        if  (name.equals(AtomicItemType.yearMonthDurationItem.getName())) {
+            return AtomicItemType.yearMonthDurationItem;
         }
-        if (name.equals(dayTimeDurationItem.name)) {
-            return dayTimeDurationItem;
+        if  (name.equals(AtomicItemType.dayTimeDurationItem.getName())) {
+            return AtomicItemType.dayTimeDurationItem;
         }
-        if (name.equals(dateTimeItem.name)) {
-            return dateTimeItem;
+        if  (name.equals(AtomicItemType.dateTimeItem.getName())) {
+            return AtomicItemType.dateTimeItem;
         }
-        if (name.equals(dateItem.name)) {
-            return dateItem;
+        if  (name.equals(AtomicItemType.dateItem.getName())) {
+            return AtomicItemType.dateItem;
         }
-        if (name.equals(timeItem.name)) {
-            return timeItem;
+        if  (name.equals(AtomicItemType.timeItem.getName())) {
+            return AtomicItemType.timeItem;
         }
-        if (name.equals(anyURIItem.name)) {
-            return anyURIItem;
+        if  (name.equals(AtomicItemType.anyURIItem.getName())) {
+            return AtomicItemType.anyURIItem;
         }
-        if (name.equals(hexBinaryItem.name)) {
-            return hexBinaryItem;
+        if  (name.equals(AtomicItemType.hexBinaryItem.getName())) {
+            return AtomicItemType.hexBinaryItem;
         }
-        if (name.equals(base64BinaryItem.name)) {
-            return base64BinaryItem;
+        if  (name.equals(AtomicItemType.base64BinaryItem.getName())) {
+            return AtomicItemType.base64BinaryItem;
         }
         if (name.equals(item.name)) {
             return item;
@@ -127,64 +91,40 @@ public class ItemType implements Serializable {
         throw new OurBadException("Type unrecognized: " + name);
     }
 
+    protected static final long serialVersionUID = 1L;
+    protected String name;
+
+    public static final ItemType item = new ItemType("item");
+    public static final ItemType functionItem = new ItemType("function");
+
+    public ItemType() {
+    }
+
+    protected ItemType(String name) {
+        this.name = name;
+    }
+
+    public String getName() {
+        return this.name;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.equals(((ItemType) other).getName());
+        return this.name.equals(other.toString());
     }
 
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(item)) {
-            return true;
-        } else if (superType.equals(JSONItem)) {
-            return this.equals(objectItem)
-                || this.equals(arrayItem)
-                || this.equals(JSONItem);
-        } else if (superType.equals(atomicItem)) {
-            return this.equals(stringItem)
-                || this.equals(integerItem)
-                || this.equals(decimalItem)
-                || this.equals(doubleItem)
-                || this.equals(booleanItem)
-                || this.equals(nullItem)
-                || this.equals(anyURIItem)
-                || this.equals(hexBinaryItem)
-                || this.equals(base64BinaryItem)
-                || this.equals(dateTimeItem)
-                || this.equals(dateItem)
-                || this.equals(timeItem)
-                || this.equals(durationItem)
-                || this.equals(yearMonthDurationItem)
-                || this.equals(dayTimeDurationItem)
-                || this.equals(atomicItem);
-        } else if (superType.equals(durationItem)) {
-            return this.equals(yearMonthDurationItem)
-                || this.equals(dayTimeDurationItem)
-                || this.equals(durationItem);
-        } else if (superType.equals(decimalItem)) {
-            return this.equals(integerItem) || this.equals(decimalItem);
-        }
         return this.equals(superType);
     }
 
     public ItemType findCommonSuperType(ItemType other) {
-        if (other.isSubtypeOf(this)) {
-            return this;
-        } else if (this.isSubtypeOf(other)) {
-            return other;
-        } else if (this.isSubtypeOf(durationItem) && other.isSubtypeOf(durationItem)) {
-            return durationItem;
-        } else if (this.isSubtypeOf(atomicItem) && other.isSubtypeOf(atomicItem)) {
-            return atomicItem;
-        } else if (this.isSubtypeOf(JSONItem) && other.isSubtypeOf(JSONItem)) {
-            return JSONItem;
-        } else {
-            return item;
-        }
+        // item is the most generic type
+        return this;
     }
 
     /**
@@ -194,73 +134,19 @@ public class ItemType implements Serializable {
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
     public boolean staticallyCastableAs(ItemType other) {
-        // anything can be casted to itself
-        if (this.equals(other))
-            return true;
-        // anything can be casted from and to a string (or from one of its supertype)
-        if (this.equals(stringItem) || other.equals(stringItem))
-            return true;
-        // boolean and numeric can be cast between themselves
-        if (
-            this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)
-        ) {
-            if (
-                other.equals(integerItem)
-                    ||
-                    other.equals(doubleItem)
-                    ||
-                    other.equals(decimalItem)
-                    ||
-                    other.equals(booleanItem)
-            )
-                return true;
-            else
-                return false;
-        }
-        // base64 and hex can be cast between themselves
-        if (this.equals(base64BinaryItem) || this.equals(hexBinaryItem)) {
-            if (
-                other.equals(base64BinaryItem)
-                    ||
-                    other.equals(hexBinaryItem)
-            )
-                return true;
-            else
-                return false;
-        }
-        // durations can be cast between themselves
-        if (this.isSubtypeOf(durationItem)) {
-            if (other.isSubtypeOf(durationItem))
-                return true;
-            else
-                return false;
-        }
-        // DateTime can be cast also to Date or Time
-        if (this.equals(dateTimeItem)) {
-            if (other.equals(dateItem) || other.equals(timeItem))
-                return true;
-            else
-                return false;
-        }
-        // Date can be cast also to DateTime
-        if (this.equals(dateItem)) {
-            if (other.equals(dateTimeItem))
-                return true;
-            else
-                return false;
-        }
-        // Otherwise this cannot be casted to other
+        // this is not atomic and therefore cannot be casted
+        // TODO: consider throwing error here
         return false;
     }
 
     // return [true] if this is a numeric type (i.e. [integerItem], [decimalItem] or [doubleItem]), false otherwise
     public boolean isNumeric() {
-        return this.equals(integerItem) || this.equals(decimalItem) || this.equals(doubleItem);
+        return false;
     }
 
     // returns [true] if this can be promoted to string
     public boolean canBePromotedToString() {
-        return this.equals(stringItem) || this.equals(anyURIItem);
+        return false;
     }
 
     @Override

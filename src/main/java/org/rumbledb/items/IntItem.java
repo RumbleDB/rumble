@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -93,31 +94,31 @@ public class IntItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.integerItem)
-            || type.equals(ItemType.decimalItem)
+        return type.equals(AtomicItemType.integerItem)
+            || type.equals(AtomicItemType.decimalItem)
             || super.isTypeOf(type);
     }
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(AtomicItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return ItemFactory.getInstance().createBooleanItem(this.value != 0);
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
         }
-        if (itemType.equals(ItemType.decimalItem)) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
         }
-        if (itemType.equals(ItemType.integerItem)) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.value));
         }
         throw new ClassCastException();
@@ -125,9 +126,9 @@ public class IntItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
+        return !itemType.equals(AtomicItemType.atomicItem)
             &&
-            !itemType.equals(ItemType.nullItem);
+            !itemType.equals(AtomicItemType.nullItem);
     }
 
     @Override
@@ -345,6 +346,6 @@ public class IntItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.integerItem;
+        return AtomicItemType.integerItem;
     }
 }

@@ -42,6 +42,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
@@ -305,31 +306,31 @@ public class ItemParser implements Serializable {
     }
 
     public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
-        if (itemTypeName.equals(ItemType.booleanItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.booleanItem.getName())) {
             return DataTypes.BooleanType;
         }
-        if (itemTypeName.equals(ItemType.integerItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.integerItem.getName())) {
             return DataTypes.IntegerType;
         }
-        if (itemTypeName.equals(ItemType.doubleItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.doubleItem.getName())) {
             return DataTypes.DoubleType;
         }
-        if (itemTypeName.equals(ItemType.decimalItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.decimalItem.getName())) {
             return decimalType;
         }
-        if (itemTypeName.equals(ItemType.stringItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.stringItem.getName())) {
             return DataTypes.StringType;
         }
-        if (itemTypeName.equals(ItemType.nullItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.nullItem.getName())) {
             return DataTypes.NullType;
         }
-        if (itemTypeName.equals(ItemType.dateItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.dateItem.getName())) {
             return DataTypes.DateType;
         }
-        if (itemTypeName.equals(ItemType.dateTimeItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.dateTimeItem.getName())) {
             return DataTypes.TimestampType;
         }
-        if (itemTypeName.equals(ItemType.hexBinaryItem.getName())) {
+        if (itemTypeName.equals(AtomicItemType.hexBinaryItem.getName())) {
             return DataTypes.BinaryType;
         }
         if (itemTypeName.equals("object")) {
@@ -340,31 +341,31 @@ public class ItemParser implements Serializable {
 
     public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
-            return ItemType.booleanItem.getName();
+            return AtomicItemType.booleanItem.getName();
         }
         if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return ItemType.integerItem.getName();
+            return AtomicItemType.integerItem.getName();
         }
         if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
-            return ItemType.doubleItem.getName();
+            return AtomicItemType.doubleItem.getName();
         }
         if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return ItemType.decimalItem.getName();
+            return AtomicItemType.decimalItem.getName();
         }
         if (DataTypes.StringType.equals(dataType)) {
-            return ItemType.stringItem.getName();
+            return AtomicItemType.stringItem.getName();
         }
         if (DataTypes.NullType.equals(dataType)) {
-            return ItemType.nullItem.getName();
+            return AtomicItemType.nullItem.getName();
         }
         if (DataTypes.DateType.equals(dataType)) {
-            return ItemType.dateItem.getName();
+            return AtomicItemType.dateItem.getName();
         }
         if (DataTypes.TimestampType.equals(dataType)) {
-            return ItemType.dateTimeItem.getName();
+            return AtomicItemType.dateTimeItem.getName();
         }
         if (DataTypes.BinaryType.equals(dataType)) {
-            return ItemType.hexBinaryItem.getName();
+            return AtomicItemType.hexBinaryItem.getName();
         }
         if (vectorType.equals(dataType)) {
             return "object";

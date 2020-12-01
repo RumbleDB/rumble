@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -88,24 +89,24 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.doubleItem) || super.isTypeOf(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return ItemFactory.getInstance().createBooleanItem(this.getDoubleValue() != 0);
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.decimalItem)) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
         }
-        if (itemType.equals(ItemType.integerItem)) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
         }
         throw new ClassCastException();
@@ -113,11 +114,11 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
+        if (itemType.equals(AtomicItemType.atomicItem) || itemType.equals(AtomicItemType.nullItem)) {
             return false;
-        } else if (itemType.equals(ItemType.decimalItem)) {
+        } else if (itemType.equals(AtomicItemType.decimalItem)) {
             return !Double.isInfinite(this.getValue());
-        } else if (itemType.equals(ItemType.integerItem)) {
+        } else if (itemType.equals(AtomicItemType.integerItem)) {
             return !(Integer.MAX_VALUE < this.getValue()) && !(Integer.MIN_VALUE > this.getValue());
         }
         return true;
@@ -230,6 +231,6 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.doubleItem;
+        return AtomicItemType.doubleItem;
     }
 }

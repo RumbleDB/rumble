@@ -10,6 +10,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
@@ -35,7 +36,7 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
             AtomicItem atomicItem = (AtomicItem) this.anyItem;
             String message;
             if (atomicItem.isAnyURI()) {
-                return atomicItem.castAs(ItemType.anyURIItem);
+                return atomicItem.castAs(AtomicItemType.anyURIItem);
             } else if (atomicItem.isString()) {
                 try {
                     return ItemFactory.getInstance().createAnyURIItem(atomicItem.getStringValue());

@@ -92,9 +92,9 @@ public class SequenceType implements Serializable {
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
                 ||
-                (this.itemType.canBePromotedToString() && superType.itemType.equals(ItemType.stringItem))
+                (this.itemType.canBePromotedToString() && superType.itemType.equals(AtomicItemType.stringItem))
                 ||
-                (this.itemType.isNumeric() && superType.itemType.equals(ItemType.doubleItem)));
+                (this.itemType.isNumeric() && superType.itemType.equals(AtomicItemType.doubleItem)));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
@@ -106,19 +106,19 @@ public class SequenceType implements Serializable {
     public boolean hasEffectiveBooleanValue() {
         if (this.isEmptySequence) {
             return true;
-        } else if (this.itemType.isSubtypeOf(ItemType.JSONItem)) {
+        } else if (this.itemType.isSubtypeOf(AtomicItemType.JSONItem)) {
             return true;
         } else if (
             (this.arity == Arity.One || this.arity == Arity.OneOrZero)
                 && (this.itemType.isNumeric()
                     ||
-                    this.itemType.equals(ItemType.stringItem)
+                    this.itemType.equals(AtomicItemType.stringItem)
                     ||
-                    this.itemType.equals(ItemType.anyURIItem)
+                    this.itemType.equals(AtomicItemType.anyURIItem)
                     ||
-                    this.itemType.equals(ItemType.nullItem)
+                    this.itemType.equals(AtomicItemType.nullItem)
                     ||
-                    this.itemType.equals(ItemType.booleanItem))
+                    this.itemType.equals(AtomicItemType.booleanItem))
         ) {
             return true;
         } else {
@@ -272,64 +272,64 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("item*", new SequenceType(ItemType.item, SequenceType.Arity.ZeroOrMore));
         sequenceTypes.put("item+", new SequenceType(ItemType.item, SequenceType.Arity.OneOrMore));
 
-        sequenceTypes.put("object", new SequenceType(ItemType.objectItem, SequenceType.Arity.One));
-        sequenceTypes.put("object+", new SequenceType(ItemType.objectItem, SequenceType.Arity.OneOrMore));
-        sequenceTypes.put("object*", new SequenceType(ItemType.objectItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("object", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.One));
+        sequenceTypes.put("object+", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("object*", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("json-item*", new SequenceType(ItemType.JSONItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("json-item*", new SequenceType(AtomicItemType.JSONItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("array?", new SequenceType(ItemType.arrayItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("array*", new SequenceType(ItemType.arrayItem, Arity.ZeroOrMore));
+        sequenceTypes.put("array?", new SequenceType(AtomicItemType.arrayItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("array*", new SequenceType(AtomicItemType.arrayItem, Arity.ZeroOrMore));
 
-        sequenceTypes.put("atomic", new SequenceType(ItemType.atomicItem, SequenceType.Arity.One));
-        sequenceTypes.put("atomic?", new SequenceType(ItemType.atomicItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("atomic*", new SequenceType(ItemType.atomicItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("atomic", new SequenceType(AtomicItemType.atomicItem, SequenceType.Arity.One));
+        sequenceTypes.put("atomic?", new SequenceType(AtomicItemType.atomicItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("atomic*", new SequenceType(AtomicItemType.atomicItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("string", new SequenceType(ItemType.stringItem, SequenceType.Arity.One));
-        sequenceTypes.put("string?", new SequenceType(ItemType.stringItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("string*", new SequenceType(ItemType.stringItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("string", new SequenceType(AtomicItemType.stringItem, SequenceType.Arity.One));
+        sequenceTypes.put("string?", new SequenceType(AtomicItemType.stringItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("string*", new SequenceType(AtomicItemType.stringItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("integer", new SequenceType(ItemType.integerItem, SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(ItemType.integerItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(ItemType.integerItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("integer", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One));
+        sequenceTypes.put("integer?", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("integer*", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("decimal?", new SequenceType(ItemType.decimalItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("decimal?", new SequenceType(AtomicItemType.decimalItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("double", new SequenceType(ItemType.doubleItem, SequenceType.Arity.One));
-        sequenceTypes.put("double?", new SequenceType(ItemType.doubleItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("double", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.One));
+        sequenceTypes.put("double?", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("boolean", new SequenceType(ItemType.booleanItem, SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(ItemType.booleanItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("boolean", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.One));
+        sequenceTypes.put("boolean?", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("duration?", new SequenceType(ItemType.durationItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("duration?", new SequenceType(AtomicItemType.durationItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "yearMonthDuration?",
-            new SequenceType(ItemType.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
+            new SequenceType(AtomicItemType.yearMonthDurationItem, SequenceType.Arity.OneOrZero)
         );
 
         sequenceTypes.put(
             "dayTimeDuration?",
-            new SequenceType(ItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
+            new SequenceType(AtomicItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("dateTime?", new SequenceType(ItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("dateTime?", new SequenceType(AtomicItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("date?", new SequenceType(ItemType.dateItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("date?", new SequenceType(AtomicItemType.dateItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("time?", new SequenceType(ItemType.timeItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("time?", new SequenceType(AtomicItemType.timeItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("anyURI", new SequenceType(ItemType.anyURIItem));
-        sequenceTypes.put("anyURI?", new SequenceType(ItemType.anyURIItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("anyURI", new SequenceType(AtomicItemType.anyURIItem));
+        sequenceTypes.put("anyURI?", new SequenceType(AtomicItemType.anyURIItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("hexBinary?", new SequenceType(ItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("hexBinary?", new SequenceType(AtomicItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put(
             "base64Binary?",
-            new SequenceType(ItemType.base64BinaryItem, SequenceType.Arity.OneOrZero)
+            new SequenceType(AtomicItemType.base64BinaryItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("null?", new SequenceType(ItemType.nullItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("null?", new SequenceType(AtomicItemType.nullItem, SequenceType.Arity.OneOrZero));
     }
 
     public static SequenceType createSequenceType(String userFriendlyName) {
