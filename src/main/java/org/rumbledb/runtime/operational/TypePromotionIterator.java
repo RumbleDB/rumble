@@ -8,6 +8,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -16,6 +17,7 @@ import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -45,6 +47,16 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
+        if (
+            !executionMode.equals(ExecutionMode.LOCAL)
+                && (sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero))
+        ) {
+            throw new OurBadException(
+                    "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
+            );
+        }
     }
 
     @Override
