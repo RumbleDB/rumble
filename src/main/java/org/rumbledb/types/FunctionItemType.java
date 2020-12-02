@@ -30,6 +30,11 @@ public class FunctionItemType extends ItemType {
     }
 
     @Override
+    public FunctionSignature getSignature() {
+        return this.signature;
+    }
+
+    @Override
     public boolean equals(Object other) {
         if(!(other instanceof ItemType)){
             return false;

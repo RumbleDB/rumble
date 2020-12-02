@@ -121,6 +121,11 @@ public class ItemType implements Serializable {
         return false;
     }
 
+    // Returns the signature of a function item
+    public FunctionSignature getSignature() {
+        throw new OurBadException("called getSignature on a non-function item");
+    }
+
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
         return this.equals(superType);

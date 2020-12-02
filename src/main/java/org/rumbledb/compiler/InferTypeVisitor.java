@@ -1,10 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.BuiltinFunction;
-import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.Name;
-import org.rumbledb.context.StaticContext;
+import org.rumbledb.context.*;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
 import org.rumbledb.exceptions.OurBadException;
@@ -31,13 +28,11 @@ import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.*;
+import org.rumbledb.types.*;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -272,15 +267,40 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+        SequenceType returnType = expression.getActualReturnType();
+        if(returnType == null){
+            returnType = expression.getBody().getInferredSequenceType();
+        }
+        List<SequenceType> params = new ArrayList<>(expression.getParams().values());
+        FunctionSignature signature = new FunctionSignature(params, returnType);
+        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
         System.out.println("Visited inline function expression");
         return argument;
+    }
+
+    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext){
+        BuiltinFunction function = null;
+        FunctionSignature signature = null;
+        try {
+            function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        } catch (OurBadException exception) {
+            signature = staticContext.getFunctionSignature(identifier);
+        }
+
+        if (function != null) {
+            signature = function.getSignature();
+        }
+
+        return signature;
     }
 
     @Override
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+
+        FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
+
+        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
         System.out.println("Visited named function expression");
         return argument;
     }
@@ -289,21 +309,11 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        BuiltinFunction function = null;
-        FunctionSignature signature = null;
-        try {
-            function = BuiltinFunctionCatalogue.getBuiltinFunction(expression.getFunctionIdentifier());
-        } catch (OurBadException exception) {
-            signature = expression.getStaticContext().getFunctionSignature(expression.getFunctionIdentifier());
-        }
-
-
+        FunctionSignature signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
 
         List<Expression> parameterExpressions = expression.getArguments();
-        if (function != null) {
-            signature = function.getSignature();
-        }
         List<SequenceType> parameterTypes = signature.getParameterTypes();
+        List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
         for (int i = 0; i < paramsLength; ++i) {
@@ -316,11 +326,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                             "Argument " + i + " requires " + expectedType + " but " + actualType + " was found"
                     );
                 }
+            } else {
+                partialParams.add(parameterTypes.get(i));
             }
         }
 
         if (expression.isPartialApplication()) {
-            expression.setInferredSequenceType(new SequenceType(ItemType.functionItem));
+            FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
+            expression.setInferredSequenceType(new SequenceType(new FunctionItemType(partialSignature)));
         } else {
             SequenceType returnType = signature.getReturnType();
             if (returnType == null) {
@@ -967,7 +980,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         ItemType itemType = type.getItemType();
-        if (itemType.isSubtypeOf(ItemType.functionItem)) {
+        if (itemType.isFunctionItem()) {
             throw new UnexpectedStaticTypeException(
                     "function item not allowed for the expressions of switch test condition and cases",
                     ErrorCode.UnexpectedFunctionItem
@@ -1342,6 +1355,20 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
+    public boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types){
+        int length = expectedTypes.size();
+        if(length != types.size()){
+            return false;
+        }
+        for(int i = 0; i < length; ++i){
+            if(!types.get(i).isSubtypeOfOrCanBePromotedTo(expectedTypes.get(i))){
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public StaticContext visitDynamicFunctionCallExpression(
             DynamicFunctionCallExpression expression,
@@ -1352,18 +1379,33 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
         basicChecks(mainType, expression.getClass().getSimpleName(), true, false);
-        if (!mainType.equals(new SequenceType(ItemType.functionItem))) {
-            throw new UnexpectedStaticTypeException(
-                    "the type of a dynamic function call main expression must be function, instead inferred " + mainType
-            );
+
+        FunctionSignature signature = null;
+        boolean isAnyFunction = false;
+        if(!mainType.isEmptySequence()){
+            ItemType type = mainType.getItemType();
+            if(type.isFunctionItem()){
+                if(type.equals(FunctionItemType.ANYFUNCTION)){
+                    isAnyFunction = true;
+                } else {
+                    signature = type.getSignature();
+                }
+            }
         }
 
-        // TODO: need to add support for partial application
-        expression.setInferredSequenceType(SequenceType.MOST_GENERAL_SEQUENCE_TYPE);
-        System.out.println(
-            "visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType()
+        List<SequenceType> argsType = expression.getArguments().stream().map(expr -> expr.getInferredSequenceType()).collect(Collectors.toList());
+        if(isAnyFunction || (signature != null && checkArguments(signature.getParameterTypes(), argsType))){
+            // TODO: need to add support for partial application
+            expression.setInferredSequenceType(signature.getReturnType());
+            System.out.println(
+                    "visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType()
+            );
+            return argument;
+        }
+
+        throw new UnexpectedStaticTypeException(
+                "the type of a dynamic function call main expression must be function, instead inferred " + mainType
         );
-        return argument;
     }
 
     @Override
