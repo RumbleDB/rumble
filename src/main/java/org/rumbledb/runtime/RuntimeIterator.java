@@ -233,7 +233,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "RDDs are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
     }
 
     public boolean isDataFrame() {
@@ -244,7 +247,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new OurBadException("DataFrames are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
     }
 
     public abstract Item next();
@@ -325,6 +331,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
+        buffer.append(" | ");
+        buffer.append(this.highestExecutionMode);
         buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");

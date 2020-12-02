@@ -159,6 +159,7 @@ public class StringItem extends AtomicItem {
         }
         try {
             if (itemType.equals(ItemType.integerItem)) {
+                @SuppressWarnings("unused")
                 BigInteger i = new BigInteger(this.value);
                 return true;
             } else if (itemType.equals(ItemType.anyURIItem)) {

@@ -144,16 +144,14 @@ public class TreatIterator extends HybridRuntimeIterator {
                 return new TreatException(
                         type
                             + " cannot be treated as type "
-                            + this.sequenceType.getItemType().toString()
-                            + this.sequenceType.getArity().getSymbol(),
+                            + this.sequenceType,
                         this.getMetadata()
                 );
             case UnexpectedTypeErrorCode:
                 return new UnexpectedTypeException(
                         type
                             + " is not expected here. The expected type is "
-                            + this.sequenceType.getItemType().toString()
-                            + this.sequenceType.getArity().getSymbol(),
+                            + this.sequenceType,
                         this.getMetadata()
                 );
             default:
@@ -182,22 +180,25 @@ public class TreatIterator extends HybridRuntimeIterator {
         return true;
     }
 
-    @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-
+    public static ItemType getItemType(Dataset<Row> df) {
         StructType type = df.schema();
         DataType dataType = type;
         StructField[] fields = type.fields();
         if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             dataType = fields[0].dataType();
         }
-        ItemType dataItemType = ItemParser.convertDataTypeToItemType(dataType);
+        return ItemParser.convertDataTypeToItemType(dataType);
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
         int count = df.takeAsList(1).size();
         checkEmptySequence(count);
         if (count == 0) {
             return df;
         }
+        ItemType dataItemType = getItemType(df);
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }
