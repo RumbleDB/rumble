@@ -139,7 +139,6 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             ExceptionMetadata metadata
     ) {
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
-
         for (int i = 0; i < arguments.size(); i++) {
             if (
                 !builtinFunction.getSignature()

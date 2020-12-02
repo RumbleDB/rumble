@@ -22,6 +22,13 @@ package org.rumbledb.runtime.functions.sequences.value;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.MapType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -30,6 +37,8 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -121,5 +130,33 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
                 "Invalid args. distinct-values can't be performed on non-atomics",
                 getMetadata()
         );
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+        df.show();
+        StructType type = df.schema();
+        StructField[] fields = type.fields();
+        if (fields.length != 1 || !fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. distinct-values can't be performed on non-atomics",
+                    getMetadata()
+            );
+        }
+        DataType dataType = fields[0].dataType();
+        if (dataType instanceof StructType || dataType instanceof ArrayType || dataType instanceof MapType) {
+            throw new NonAtomicKeyException(
+                    "Invalid args. distinct-values can't be performed on non-atomics",
+                    getMetadata()
+            );
+        }
+        df.distinct().show();
+        return df.distinct();
     }
 }
