@@ -86,7 +86,6 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
     ) {
-        System.out.println("About to create iterator " + executionMode);
         FunctionItemCallIterator functionCallIterator = new FunctionItemCallIterator(
                 functionItem,
                 arguments,

@@ -132,11 +132,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             resultTuple = new FlworTuple(inputTuple);
         }
         if (this.assignmentIterator.isDataFrame()) {
-            System.out.println("Assignment is DF.");
             Dataset<Row> df = this.assignmentIterator.getDataFrame(context);
             resultTuple.putValue(this.variableName, df);
         } else if (this.assignmentIterator.isRDD()) {
-            System.out.println("Assignment is RDD.");
             JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(context);
             resultTuple.putValue(this.variableName, itemRDD);
         } else {

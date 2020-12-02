@@ -41,7 +41,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(iterator), executionMode, iteratorMetadata);
-        System.out.println("Creating " + executionMode + " iterator with type " + sequenceType);
         this.exceptionMessage = exceptionMessage;
         this.iterator = iterator;
         this.sequenceType = sequenceType;

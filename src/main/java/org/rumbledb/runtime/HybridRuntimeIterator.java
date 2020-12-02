@@ -55,7 +55,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     protected void fallbackToRDDIfDFNotImplemented(ExecutionMode executionMode) {
         if (executionMode == ExecutionMode.DATAFRAME && !this.implementsDataFrames()) {
-            System.out.println("Falling back.");
             this.highestExecutionMode = ExecutionMode.RDD;
         }
     }

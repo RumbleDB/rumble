@@ -134,7 +134,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected boolean implementsDataFrames() {
-        System.out.println("Called.");
         return true;
     }
 
