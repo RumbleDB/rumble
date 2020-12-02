@@ -116,6 +116,10 @@ public class ItemType implements Serializable {
         return this.name.equals(other.toString());
     }
 
+    // Returns true if [this] is a function item
+    public boolean isFunctionItem() {
+        return false;
+    }
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
