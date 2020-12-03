@@ -51,6 +51,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
     }
 
     @Override
