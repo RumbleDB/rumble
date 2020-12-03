@@ -91,7 +91,7 @@ public class StaticTypeTests extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        // TODO: Should i get actual output even if i do not need it?
+        @SuppressWarnings("unused")
         String actualOutput;
         if (!sequence.availableAsRDD()) {
             actualOutput = runIterators(sequence);

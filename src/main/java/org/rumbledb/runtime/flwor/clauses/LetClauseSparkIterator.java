@@ -312,7 +312,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             sequenceDependencies
         );
 
-        System.out.println("[INFO] Rumble detected an equi-join in the left clause.");
+        System.err.println("[INFO] Rumble detected an equi-join in the left clause.");
 
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(

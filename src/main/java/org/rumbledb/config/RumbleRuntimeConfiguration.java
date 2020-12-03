@@ -51,6 +51,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
+    private boolean deactivateJsoniterStreaming;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -187,6 +188,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
+        if (this.arguments.containsKey("deactivate-jsoniter-streaming")) {
+            this.deactivateJsoniterStreaming = this.arguments.get("deactivate-jsoniter-streaming").equals("yes");
+        } else {
+            this.deactivateJsoniterStreaming = false;
+        }
     }
 
     public boolean getOverwrite() {
@@ -292,6 +298,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public boolean printInferredTypes() {
         return this.arguments.containsKey("print-inferred-types")
             && this.arguments.get("print-inferred-types").equals("yes");
+    }
+    
+    public boolean getDeactivateJsoniterStreaming() {
+        return this.deactivateJsoniterStreaming;
+    }
+
+    public void setDeactivateJsoniterStreaming(boolean b) {
+        this.deactivateJsoniterStreaming = b;
     }
 
     public boolean isLocal() {

@@ -20,8 +20,7 @@
 
 package org.rumbledb.utils;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import com.jsoniter.JsonIterator;
 
@@ -38,9 +37,10 @@ public class JsonIterUtils {
      * This function triggers a streaming input and hence dynamic code generation.
      * This workaround should be applied during startup for reliable use of JsonIter
      */
-    public static void applyJsonIterFaultyInitializationWorkAround() {
-        InputStream is = new ByteArrayInputStream("{}".getBytes());
-        @SuppressWarnings("unused")
-        JsonIterator object = JsonIterator.parse(is, 1024);
+    public static void applyJsonIterFaultyInitializationWorkAround(RumbleRuntimeConfiguration sparksoniqConf) {
+        if (sparksoniqConf.getDeactivateJsoniterStreaming()) {
+            return;
+        }
+        JsonIterator.enableStreamingSupport();
     }
 }

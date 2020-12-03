@@ -42,6 +42,7 @@ import java.util.*;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
+    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**

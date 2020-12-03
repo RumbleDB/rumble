@@ -95,7 +95,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
 
-        JsonIterUtils.applyJsonIterFaultyInitializationWorkAround();
+        JsonIterUtils.applyJsonIterFaultyInitializationWorkAround(configuration);
     }
 
     @Test(timeout = 1000000)
