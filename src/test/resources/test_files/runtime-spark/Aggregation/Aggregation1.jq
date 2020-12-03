@@ -10,4 +10,8 @@ max((1 to 1000)),
 min((("foo", "bar"))),
 max((("foo", "bar"))),
 try { min(((1, "foo"))) } catch FORG0006 { "good" },
-try { max(((1, "foo"))) } catch FORG0006 { "good" }
+try { max(((1, "foo"))) } catch FORG0006 { "good" },
+max(parallelize(())),
+min(parallelize(())),
+min(()),
+max(())

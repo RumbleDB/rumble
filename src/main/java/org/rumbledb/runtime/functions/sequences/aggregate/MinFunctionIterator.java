@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -63,13 +64,18 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.close();
             return;
         }
+        JavaRDD<Item> rdd = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
+        if (rdd.isEmpty()) {
+            this.hasNext = false;
+            return;
+        }
         ItemComparator comparator = new ItemComparator(
                 new InvalidArgumentTypeException(
                         "Min expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()
                 )
         );
-        this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
+        this.result = rdd.min(comparator);
     }
 
     @Override
