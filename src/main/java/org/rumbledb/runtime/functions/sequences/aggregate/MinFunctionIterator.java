@@ -43,6 +43,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+    private Item result;
 
     public MinFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -55,44 +56,46 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+        if (!this.iterator.isRDD()) {
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
+            this.hasNext = this.iterator.hasNext();
+            this.iterator.close();
+            return;
+        }
+        try {
+            ItemComparatorForSequences comparator = new ItemComparatorForSequences();
+            this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
+        } catch (RumbleException e) {
+            throw new InvalidArgumentTypeException(
+                    "Min expression input error. Input has to be non-null atomics of matching types: "
+                        + e.getMessage(),
+                    getMetadata()
+            );
+        }
     }
 
     @Override
     public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            ItemComparatorForSequences comparator = new ItemComparatorForSequences();
-            if (!this.iterator.isRDD()) {
-                List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
-
-                try {
-                    return Collections.min(results, comparator);
-                } catch (RumbleException e) {
-                    throw new InvalidArgumentTypeException(
-                            "Min expression input error. Input has to be non-null atomics of matching types: "
-                                + e.getMessage(),
-                            getMetadata()
-                    );
-                }
-            } else {
-                try {
-                    return this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
-                } catch (RumbleException e) {
-                    throw new InvalidArgumentTypeException(
-                            "Min expression input error. Input has to be non-null atomics of matching types: "
-                                + e.getMessage(),
-                            getMetadata()
-                    );
-                }
-            }
-        } else {
+        if (!this.hasNext) {
             throw new IteratorFlowException(
-                    FLOW_EXCEPTION_MESSAGE + "MIN function",
+                FLOW_EXCEPTION_MESSAGE + "Min function",
+                getMetadata()
+                    );
+        }
+        this.hasNext = false;
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences();
+        if (this.iterator.isRDD()) {
+            return this.result;
+        }
+        System.out.println("Child iterator is not RDD!");
+        List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        try {
+            return Collections.min(results, comparator);
+        } catch (RumbleException e) {
+            throw new InvalidArgumentTypeException(
+                    "Min expression input error. Input has to be non-null atomics of matching types: "
+                        + e.getMessage(),
                     getMetadata()
             );
         }

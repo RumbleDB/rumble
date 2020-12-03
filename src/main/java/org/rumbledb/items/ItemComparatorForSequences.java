@@ -21,10 +21,10 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 
 import java.io.Serializable;
-import java.math.BigDecimal;
 import java.util.Comparator;
 
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
@@ -39,22 +39,16 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     public int compare(Item v1, Item v2) {
-        int result;
-        if (v1.isNumeric() && v2.isNumeric()) {
-            BigDecimal value1 = v1.castToDecimalValue();
-            BigDecimal value2 = v2.castToDecimalValue();
-            result = value1.compareTo(value2);
-        } else if (v1.isBoolean() && v2.isBoolean()) {
-            Boolean value1 = new Boolean(v1.getBooleanValue());
-            Boolean value2 = new Boolean(v2.getBooleanValue());
-            result = value1.compareTo(value2);
-        } else if (v1.isString() && v2.isString()) {
-            String value1 = v1.getStringValue();
-            String value2 = v2.getStringValue();
-            result = value1.compareTo(value2);
-        } else {
-            throw new OurBadException(v1.serialize() + " " + v2.serialize());
+        Item eq = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+        Item le = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_LE, ExceptionMetadata.EMPTY_METADATA);
+        if(eq.getBooleanValue())
+        {
+            return 0;
         }
-        return result;
+        if(le.getBooleanValue())
+        {
+            return -1;
+        }
+        return 1;
     }
 }
