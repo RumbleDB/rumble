@@ -22,6 +22,7 @@ package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 
 import java.io.Serializable;
@@ -30,6 +31,13 @@ import java.util.Comparator;
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
 
     private static final long serialVersionUID = 1L;
+    
+    private RumbleException exception;
+    
+    public ItemComparatorForSequences(RumbleException exception)
+    {
+        this.exception = exception;
+    }
 
     /**
      * Comparator used for sequence aggregate functions and their RDD evaluations
@@ -39,8 +47,16 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     public int compare(Item v1, Item v2) {
-        Item eq = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
-        Item le = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_LE, ExceptionMetadata.EMPTY_METADATA);
+        Item eq;
+        Item le;
+        try {
+            eq = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+            le = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_LE, ExceptionMetadata.EMPTY_METADATA);
+        } catch (RumbleException e)
+        {
+            this.exception.initCause(e);
+            throw this.exception;
+        }
         if(eq.getBooleanValue())
         {
             return 0;

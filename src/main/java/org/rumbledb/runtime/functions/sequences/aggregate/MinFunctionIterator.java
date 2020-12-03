@@ -63,16 +63,10 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.close();
             return;
         }
-        try {
-            ItemComparatorForSequences comparator = new ItemComparatorForSequences();
-            this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
-        } catch (RumbleException e) {
-            throw new InvalidArgumentTypeException(
-                    "Min expression input error. Input has to be non-null atomics of matching types: "
-                        + e.getMessage(),
-                    getMetadata()
-            );
-        }
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
+            "Min expression input error. Input has to be non-null atomics of matching types", getMetadata()
+                ));
+        this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
     }
 
     @Override
@@ -84,11 +78,12 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
                     );
         }
         this.hasNext = false;
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences();
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
+            "Max expression input error. Input has to be non-null atomics of matching types", getMetadata()
+        ));
         if (this.iterator.isRDD()) {
             return this.result;
         }
-        System.out.println("Child iterator is not RDD!");
         List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
 
         try {
