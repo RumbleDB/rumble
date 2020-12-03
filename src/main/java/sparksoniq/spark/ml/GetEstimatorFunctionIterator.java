@@ -33,10 +33,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -127,7 +124,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                     )
                 );
                 SequenceType returnType = new SequenceType(
-                        ItemType.functionItem,
+                        FunctionItemType.ANYFUNCTION,
                         SequenceType.Arity.One
                 );
 

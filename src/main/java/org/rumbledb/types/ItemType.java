@@ -95,7 +95,6 @@ public class ItemType implements Serializable {
     protected String name;
 
     public static final ItemType item = new ItemType("item");
-    public static final ItemType functionItem = new ItemType("function");
 
     public ItemType() {
     }
