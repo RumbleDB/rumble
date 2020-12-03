@@ -28,7 +28,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemComparatorForSequences;
+import org.rumbledb.items.ItemComparator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -63,7 +63,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.close();
             return;
         }
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+        ItemComparator comparator = new ItemComparator(
                 new InvalidArgumentTypeException(
                         "Min expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()
@@ -81,7 +81,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             );
         }
         this.hasNext = false;
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+        ItemComparator comparator = new ItemComparator(
                 new InvalidArgumentTypeException(
                         "Max expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()

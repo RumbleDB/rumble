@@ -28,13 +28,13 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import java.io.Serializable;
 import java.util.Comparator;
 
-public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
+public class ItemComparator implements Comparator<Item>, Serializable {
 
     private static final long serialVersionUID = 1L;
 
     private RumbleException exception;
 
-    public ItemComparatorForSequences(RumbleException exception) {
+    public ItemComparator(RumbleException exception) {
         this.exception = exception;
     }
 

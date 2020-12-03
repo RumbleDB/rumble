@@ -127,9 +127,6 @@ public abstract class Item implements SerializableItem, Comparable<Item> {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
         Item eq = this.compareItem(
             other,
             ComparisonExpression.ComparisonOperator.VC_EQ,
