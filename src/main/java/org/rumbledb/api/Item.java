@@ -130,14 +130,20 @@ public abstract class Item implements SerializableItem, Comparable<Item> {
         if (other.isNull()) {
             return 1;
         }
-        Item eq = this.compareItem(other, ComparisonExpression.ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
-        Item le = this.compareItem(other, ComparisonExpression.ComparisonOperator.VC_LE, ExceptionMetadata.EMPTY_METADATA);
-        if(eq.getBooleanValue())
-        {
+        Item eq = this.compareItem(
+            other,
+            ComparisonExpression.ComparisonOperator.VC_EQ,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        Item le = this.compareItem(
+            other,
+            ComparisonExpression.ComparisonOperator.VC_LE,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        if (eq.getBooleanValue()) {
             return 0;
         }
-        if(le.getBooleanValue())
-        {
+        if (le.getBooleanValue()) {
             return -1;
         }
         return 1;

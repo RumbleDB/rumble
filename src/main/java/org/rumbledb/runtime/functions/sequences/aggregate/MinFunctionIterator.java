@@ -63,9 +63,12 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.close();
             return;
         }
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
-            "Min expression input error. Input has to be non-null atomics of matching types", getMetadata()
-                ));
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+                new InvalidArgumentTypeException(
+                        "Min expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
         this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).min(comparator);
     }
 
@@ -73,14 +76,17 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (!this.hasNext) {
             throw new IteratorFlowException(
-                FLOW_EXCEPTION_MESSAGE + "Min function",
-                getMetadata()
-                    );
+                    FLOW_EXCEPTION_MESSAGE + "Min function",
+                    getMetadata()
+            );
         }
         this.hasNext = false;
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
-            "Max expression input error. Input has to be non-null atomics of matching types", getMetadata()
-        ));
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+                new InvalidArgumentTypeException(
+                        "Max expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
         if (this.iterator.isRDD()) {
             return this.result;
         }
@@ -89,11 +95,12 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
         try {
             return Collections.min(results, comparator);
         } catch (RumbleException e) {
-            throw new InvalidArgumentTypeException(
-                    "Min expression input error. Input has to be non-null atomics of matching types: "
-                        + e.getMessage(),
+            RumbleException ex = new InvalidArgumentTypeException(
+                    "Max expression input error. Input has to be non-null atomics of matching types.",
                     getMetadata()
             );
+            ex.initCause(e);
+            throw ex;
         }
     }
 

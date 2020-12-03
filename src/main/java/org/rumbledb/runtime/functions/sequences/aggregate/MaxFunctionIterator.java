@@ -63,9 +63,12 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
             this.iterator.close();
             return;
         }
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
-            "Max expression input error. Input has to be non-null atomics of matching types", getMetadata()
-        ));
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+                new InvalidArgumentTypeException(
+                        "Max expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
         this.result = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).max(comparator);
     }
 
@@ -73,14 +76,17 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (!this.hasNext) {
             throw new IteratorFlowException(
-                FLOW_EXCEPTION_MESSAGE + "MAX function",
-                getMetadata()
-                    );
+                    FLOW_EXCEPTION_MESSAGE + "MAX function",
+                    getMetadata()
+            );
         }
         this.hasNext = false;
-        ItemComparatorForSequences comparator = new ItemComparatorForSequences(new InvalidArgumentTypeException(
-            "Max expression input error. Input has to be non-null atomics of matching types", getMetadata()
-        ));
+        ItemComparatorForSequences comparator = new ItemComparatorForSequences(
+                new InvalidArgumentTypeException(
+                        "Max expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
         if (this.iterator.isRDD()) {
             return this.result;
         }
@@ -89,11 +95,12 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
         try {
             return Collections.max(results, comparator);
         } catch (RumbleException e) {
-            throw new InvalidArgumentTypeException(
-                    "Max expression input error. Input has to be non-null atomics of matching types: "
-                        + e.getMessage(),
+            RumbleException ex = new InvalidArgumentTypeException(
+                    "Max expression input error. Input has to be non-null atomics of matching types.",
                     getMetadata()
             );
+            ex.initCause(e);
+            throw ex;
         }
     }
 

@@ -31,11 +31,10 @@ import java.util.Comparator;
 public class ItemComparatorForSequences implements Comparator<Item>, Serializable {
 
     private static final long serialVersionUID = 1L;
-    
+
     private RumbleException exception;
-    
-    public ItemComparatorForSequences(RumbleException exception)
-    {
+
+    public ItemComparatorForSequences(RumbleException exception) {
         this.exception = exception;
     }
 
@@ -52,17 +51,14 @@ public class ItemComparatorForSequences implements Comparator<Item>, Serializabl
         try {
             eq = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
             le = v1.compareItem(v2, ComparisonExpression.ComparisonOperator.VC_LE, ExceptionMetadata.EMPTY_METADATA);
-        } catch (RumbleException e)
-        {
+        } catch (RumbleException e) {
             this.exception.initCause(e);
             throw this.exception;
         }
-        if(eq.getBooleanValue())
-        {
+        if (eq.getBooleanValue()) {
             return 0;
         }
-        if(le.getBooleanValue())
-        {
+        if (le.getBooleanValue()) {
             return -1;
         }
         return 1;
