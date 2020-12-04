@@ -22,6 +22,7 @@ package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 
@@ -46,6 +47,28 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      * @return -1 if v1 &lt; v2; 0 if v1 == v2; 1 if v1 &gt; v2;
      */
     public int compare(Item v1, Item v2) {
+        if (!v1.isAtomic()) {
+            throw new NonAtomicKeyException(
+                    "A non-atomic item cannot be compared: " + v1,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (!v2.isAtomic()) {
+            throw new NonAtomicKeyException(
+                    "A non-atomic item cannot be compared: " + v2,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (v1.isNull()) {
+            if (v2.isNull()) {
+                return 0;
+            } else {
+                return -1;
+            }
+        }
+        if (v2.isNull()) {
+            return 1;
+        }
         Item eq;
         Item le;
         try {
