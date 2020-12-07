@@ -124,8 +124,14 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
-            return String.valueOf(this.getDoubleValue());
+        if (Double.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
         }
         boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
         String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
