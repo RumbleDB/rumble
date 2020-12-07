@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(Nan, NaN, INF, -INF, good, good, NaN, NaN, good, NaN, NaN)" :)
+(:JIQS: ShouldRun; Output="(NaN, NaN, INF, -INF, good, good, NaN, NaN, good, NaN, NaN)" :)
 3 mod 0e0,
 3 mod -0e0,
 3 div 0e0,

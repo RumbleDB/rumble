@@ -250,7 +250,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createDoubleItem((double) (long) (l / r));
+                    .createLongItem((long) (l / r));
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
