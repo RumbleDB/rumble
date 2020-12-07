@@ -44,7 +44,13 @@ public class FunctionItemType extends ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return this.equals(superType) || superType.equals(ANYFUNCTION) || superType.equals(ItemType.item);
+        if(this.equals(superType) || superType.equals(ANYFUNCTION) || superType.equals(ItemType.item)){
+            return true;
+        }
+        if(superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())){
+            return true;
+        }
+        return false;
     }
 
     @Override
