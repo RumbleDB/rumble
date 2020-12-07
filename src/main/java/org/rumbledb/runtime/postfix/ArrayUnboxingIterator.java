@@ -128,12 +128,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return true;
     }
 
-    @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
-        return "explode( " + objectPart + " )";
-    }
-
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("array");
