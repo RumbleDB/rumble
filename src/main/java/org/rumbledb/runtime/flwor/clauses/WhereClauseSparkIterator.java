@@ -167,7 +167,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         &&
                         forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
                 ) {
-
                     RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
                     Name forVariable = forChild.getVariableName();
 
