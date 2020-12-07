@@ -311,7 +311,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     // used by groupBy cluse
     public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
         this.inScopeVariables.replaceAll(
-            (key, value) -> varToExclude.contains(value)
+            (key, value) -> varToExclude.contains(key)
                 ? value
                 : new InScopeVariable(
                         value.getName(),
