@@ -34,9 +34,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
@@ -629,8 +631,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         try {
-            String nativeQuery = iterator.generateNativeQuery(inputSchema, context);
-            System.out.println("native query returned " + nativeQuery);
+            NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
+            NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+            if(nativeQuery == NativeClauseContext.NoNativeQuery){
+                return null;
+            }
+            System.out.println("native query returned " + nativeQuery.getSelectPart());
             String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
             dataFrame.createOrReplaceTempView("input");
             return dataFrame.sparkSession()
@@ -638,7 +644,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     String.format(
                         "select %s (%s) as `%s` from input",
                         selectSQL,
-                        nativeQuery,
+                        nativeQuery.getSelectPart(),
                         newVariableName
                     )
                 );

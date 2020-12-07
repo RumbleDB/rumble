@@ -40,6 +40,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -217,10 +218,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
-        initLookupKey();
-        return objectPart + "." + this.lookupKey.getStringValue();
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if(newContext != NativeClauseContext.NoNativeQuery){
+            initLookupKey();
+            newContext.setSelectPart(newContext.getSelectPart() + "." + this.lookupKey.getStringValue());
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {

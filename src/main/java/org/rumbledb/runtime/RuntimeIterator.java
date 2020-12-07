@@ -34,6 +34,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
@@ -370,12 +371,11 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     /**
      * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
      *
-     * @return a string representing the spark-sql native query to get an equivalent result of the iterator, or null if
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or [NativeClauseContext.NoNativeQuery] if
      *         it is not possible
-     * @param inputSchema schema of the dataframe
-     * @param context context
+     * @param nativeClauseContext context information to generate the native query
      */
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        throw new NoNativeQueryException();
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

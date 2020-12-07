@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
 import java.util.List;
@@ -79,8 +80,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        return this.variableName.toString();
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(nativeClauseContext, this.variableName.toString());
     }
 
     @Override

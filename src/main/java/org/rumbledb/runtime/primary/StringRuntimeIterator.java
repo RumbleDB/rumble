@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 public class StringRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -58,7 +59,7 @@ public class StringRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        return '"' + this.item.getStringValue() + '"';
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(nativeClauseContext, '"' + this.item.getStringValue() + '"');
     }
 }
