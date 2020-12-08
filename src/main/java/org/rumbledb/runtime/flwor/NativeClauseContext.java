@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.flwor;
 
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -11,7 +12,7 @@ public class NativeClauseContext {
     public static NativeClauseContext NoNativeQuery = new NativeClauseContext();
 
     private FLWOR_CLAUSES clauseType;
-    private StructType schema;
+    private DataType schema;
     private DynamicContext context;
     private String selectPart;
 
@@ -44,5 +45,13 @@ public class NativeClauseContext {
 
     public String getSelectPart(){
         return this.selectPart;
+    }
+
+    public DataType getSchema() {
+        return this.schema;
+    }
+
+    public void setSchema(DataType schema) {
+        this.schema = schema;
     }
 }
