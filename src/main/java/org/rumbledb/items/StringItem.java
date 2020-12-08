@@ -56,16 +56,13 @@ public class StringItem extends AtomicItem {
     }
 
     public double castToDoubleValue() {
-        if(this.value.equals("INF"))
-        {
+        if (this.value.equals("INF") || this.value.equals("+INF")) {
             return Double.POSITIVE_INFINITY;
         }
-        if(this.value.equals("-INF"))
-        {
+        if (this.value.equals("-INF")) {
             return Double.NEGATIVE_INFINITY;
         }
-        if(this.value.equals("NaN"))
-        {
+        if (this.value.equals("NaN")) {
             return Double.NaN;
         }
         return Double.parseDouble(this.getValue());
@@ -182,8 +179,12 @@ public class StringItem extends AtomicItem {
                 }
                 Float.parseFloat(this.getValue());
             } else if (itemType.equals(ItemType.doubleItem)) {
-                if(this.value.equals("INF") || this.value.equals("-INF") || this.value.equals("NaN"))
-                {
+                if (
+                    this.value.equals("INF")
+                        || this.value.equals("+INF")
+                        || this.value.equals("-INF")
+                        || this.value.equals("NaN")
+                ) {
                     return true;
                 }
                 Double.parseDouble(this.getValue());
