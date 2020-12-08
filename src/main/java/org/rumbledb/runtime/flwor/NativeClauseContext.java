@@ -54,4 +54,8 @@ public class NativeClauseContext {
     public void setSchema(DataType schema) {
         this.schema = schema;
     }
+
+    public DynamicContext getContext() {
+        return this.context;
+    }
 }
