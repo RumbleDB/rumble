@@ -52,23 +52,35 @@ public class StringItem extends AtomicItem {
 
     @Override
     public String getStringValue() {
-        return this.getValue();
+        return this.value;
     }
 
     public double castToDoubleValue() {
+        if(this.value.equals("INF"))
+        {
+            return Double.POSITIVE_INFINITY;
+        }
+        if(this.value.equals("-INF"))
+        {
+            return Double.NEGATIVE_INFINITY;
+        }
+        if(this.value.equals("NaN"))
+        {
+            return Double.NaN;
+        }
         return Double.parseDouble(this.getValue());
     }
 
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(this.getValue());
+        return new BigDecimal(this.value);
     }
 
     public BigInteger castToIntegerValue() {
-        return new BigInteger(this.getValue());
+        return new BigInteger(this.value);
     }
 
     public int castToIntValue() {
-        return Integer.parseInt(this.getValue());
+        return Integer.parseInt(this.value);
     }
 
     private boolean isBooleanLiteral(String value) {
@@ -90,7 +102,7 @@ public class StringItem extends AtomicItem {
             return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
         }
         if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(this.getStringValue()));
+            return ItemFactory.getInstance().createDoubleItem(castToDoubleValue());
         }
         if (itemType.equals(ItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
@@ -170,6 +182,10 @@ public class StringItem extends AtomicItem {
                 }
                 Float.parseFloat(this.getValue());
             } else if (itemType.equals(ItemType.doubleItem)) {
+                if(this.value.equals("INF") || this.value.equals("-INF") || this.value.equals("NaN"))
+                {
+                    return true;
+                }
                 Double.parseDouble(this.getValue());
             } else if (itemType.equals(ItemType.nullItem)) {
                 return isNullLiteral(this.getValue());
