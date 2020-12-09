@@ -128,63 +128,66 @@ public class ItemType implements Serializable {
         throw new OurBadException("Type unrecognized: " + name);
     }
 
-    public boolean matchesItem(Item item) {
-        if (name.equals(objectItem.name)) {
-            return item.isObject();
+    public boolean matchesItem(Item itemToMatch) {
+        if (this.name.equals(item.name)) {
+            return true;
         }
-        if (name.equals(atomicItem.name)) {
-            return item.isAtomic();
+        if (this.name.equals(objectItem.name)) {
+            return itemToMatch.isObject();
         }
-        if (name.equals(stringItem.name)) {
-            return item.isString();
+        if (this.name.equals(atomicItem.name)) {
+            return itemToMatch.isAtomic();
         }
-        if (name.equals(integerItem.name)) {
-            return item.isInteger();
+        if (this.name.equals(stringItem.name)) {
+            return itemToMatch.isString();
         }
-        if (name.equals(decimalItem.name)) {
-            return item.isDecimal();
+        if (this.name.equals(integerItem.name)) {
+            return itemToMatch.isInteger();
         }
-        if (name.equals(doubleItem.name)) {
-            return item.isDouble();
+        if (this.name.equals(decimalItem.name)) {
+            return itemToMatch.isDecimal();
         }
-        if (name.equals(booleanItem.name)) {
-            return item.isBoolean();
+        if (this.name.equals(doubleItem.name)) {
+            return itemToMatch.isDouble();
         }
-        if (name.equals(nullItem.name)) {
-            return item.isNull();
+        if (this.name.equals(booleanItem.name)) {
+            return itemToMatch.isBoolean();
         }
-        if (name.equals(arrayItem.name)) {
-            return item.isArray();
+        if (this.name.equals(nullItem.name)) {
+            return itemToMatch.isNull();
         }
-        if (name.equals(JSONItem.name)) {
-            return item.isObject() || item.isArray();
+        if (this.name.equals(arrayItem.name)) {
+            return itemToMatch.isArray();
         }
-        if (name.equals(durationItem.name)) {
-            return item.isDuration();
+        if (this.name.equals(JSONItem.name)) {
+            return itemToMatch.isObject() || itemToMatch.isArray();
         }
-        if (name.equals(yearMonthDurationItem.name)) {
-            return item.isYearMonthDuration();
+        if (this.name.equals(durationItem.name)) {
+            return itemToMatch.isDuration();
         }
-        if (name.equals(dayTimeDurationItem.name)) {
-            return item.isDayTimeDuration();
+        if (this.name.equals(yearMonthDurationItem.name)) {
+            return itemToMatch.isYearMonthDuration();
         }
-        if (name.equals(dateTimeItem.name)) {
-            return item.isDateTime();
+        if (this.name.equals(dayTimeDurationItem.name)) {
+            return itemToMatch.isDayTimeDuration();
         }
-        if (name.equals(dateItem.name)) {
-            return item.isDate();
+        if (this.name.equals(dateTimeItem.name)) {
+            return itemToMatch.isDateTime();
         }
-        if (name.equals(timeItem.name)) {
-            return item.isTime();
+        if (this.name.equals(dateItem.name)) {
+            return itemToMatch.isDate();
         }
-        if (name.equals(anyURIItem.name)) {
-            return item.isAnyURI();
+        if (this.name.equals(timeItem.name)) {
+            return itemToMatch.isTime();
         }
-        if (name.equals(hexBinaryItem.name)) {
-            return item.isHexBinary();
+        if (this.name.equals(anyURIItem.name)) {
+            return itemToMatch.isAnyURI();
         }
-        if (name.equals(base64BinaryItem.name)) {
-            return item.isBase64Binary();
+        if (this.name.equals(hexBinaryItem.name)) {
+            return itemToMatch.isHexBinary();
+        }
+        if (this.name.equals(base64BinaryItem.name)) {
+            return itemToMatch.isBase64Binary();
         }
         throw new OurBadException("Type unrecognized: " + name);
     }
