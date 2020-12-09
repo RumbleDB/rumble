@@ -20,15 +20,20 @@
 
 package org.rumbledb.items;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
@@ -37,6 +42,7 @@ import java.io.ObjectOutputStream;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 abstract class ItemImpl implements Item {
 
@@ -630,6 +636,26 @@ abstract class ItemImpl implements Item {
     }
 
     public FunctionSignature getSignature() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public RuntimeIterator getBodyIterator() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public Map<Name, List<Item>> getLocalVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+        throw new UnsupportedOperationException("Operation not defined");
+    }
+
+    public DynamicContext getDynamicModuleContext() {
         throw new UnsupportedOperationException("Operation not defined");
     }
 }

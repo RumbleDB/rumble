@@ -4,13 +4,19 @@ import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -325,6 +331,41 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     FunctionSignature getSignature();
+
+    /**
+     * Returns the body iterator, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public RuntimeIterator getBodyIterator();
+
+    /**
+     * Returns the local variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, List<Item>> getLocalVariablesInClosure();
+
+    /**
+     * Returns the RDD variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure();
+
+    /**
+     * Returns the DataFrame variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, Dataset<Row>> getDFVariablesInClosure();
+
+    /**
+     * Returns the module dynamic context, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public DynamicContext getDynamicModuleContext();
 
     /**
      * @return true if the Item has a timeZone, false otherwise

@@ -24,20 +24,26 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
 
 public class StringItem implements Item {
 
@@ -473,12 +479,12 @@ public class StringItem implements Item {
 
     @Override
     public boolean hasTimeZone() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+        return false;
     }
 
     @Override
     public boolean hasDateTime() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+        return false;
     }
 
     @Override
@@ -508,6 +514,31 @@ public class StringItem implements Item {
 
     @Override
     public Item subtract(Item other) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public RuntimeIterator getBodyIterator() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Map<Name, List<Item>> getLocalVariablesInClosure() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public DynamicContext getDynamicModuleContext() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
     }
 }

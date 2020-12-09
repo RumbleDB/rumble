@@ -81,7 +81,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     }
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
+            Item functionItem,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
