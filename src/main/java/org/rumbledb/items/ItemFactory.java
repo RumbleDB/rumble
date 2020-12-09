@@ -87,13 +87,13 @@ public class ItemFactory {
     }
 
     public Item createDoubleItem(double d) {
-        if(d == Double.POSITIVE_INFINITY) {
+        if (d == Double.POSITIVE_INFINITY) {
             return this.positiveInfinityDoubleItem;
         }
-        if(d == Double.NEGATIVE_INFINITY) {
+        if (d == Double.NEGATIVE_INFINITY) {
             return this.negativeInfinityDoubleItem;
         }
-        if(d == Double.NaN) {
+        if (d == Double.NaN) {
             return this.NaNDoubleItem;
         }
         return new DoubleItem(d);
