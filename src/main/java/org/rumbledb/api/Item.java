@@ -17,6 +17,15 @@ import org.rumbledb.types.ItemType;
 import com.esotericsoftware.kryo.KryoSerializable;
 
 
+/**
+ * The Item interface exposes the functionality of an item. Items are manipulated by JSONiq as sequences.
+ *
+ * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
+ * version,
+ * we will make the classes implementing this interface visible only at the package level).
+ *
+ * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
+ */
 public interface Item extends Serializable, KryoSerializable {
 
     /**
