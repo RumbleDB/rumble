@@ -32,11 +32,6 @@ public abstract class AtomicItem extends ItemImpl {
     }
 
     @Override
-    public boolean isAtomic() {
-        return true;
-    }
-
-    @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
     }
@@ -45,8 +40,4 @@ public abstract class AtomicItem extends ItemImpl {
     public Item promoteTo(ItemType type) {
         return this.castAs(type);
     }
-
-    public abstract Item castAs(ItemType itemType);
-
-    public abstract boolean isCastableAs(ItemType itemType);
 }

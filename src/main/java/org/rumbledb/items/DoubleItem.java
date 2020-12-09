@@ -204,4 +204,9 @@ public class DoubleItem extends AtomicItem {
     public ItemType getDynamicType() {
         return ItemType.doubleItem;
     }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
 }

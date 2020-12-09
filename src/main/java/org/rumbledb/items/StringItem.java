@@ -23,15 +23,23 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import org.joda.time.DateTime;
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.util.List;
 
-public class StringItem extends AtomicItem {
+public class StringItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -158,7 +166,7 @@ public class StringItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.stringItem) || super.isTypeOf(type);
+        return type.equals(ItemType.stringItem) || type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
     }
 
     @Override
@@ -265,11 +273,246 @@ public class StringItem extends AtomicItem {
                     metadata
             );
         }
-        return super.compareItem(other, comparisonOperator, metadata);
+        return ItemImpl.compareItems(this, other, comparisonOperator, metadata);
     }
 
     @Override
     public ItemType getDynamicType() {
         return ItemType.stringItem;
+    }
+
+    @Override
+    public Item promoteTo(ItemType type) {
+        return this.castAs(type);
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
+    public boolean isArray() {
+        return false;
+    }
+
+    @Override
+    public boolean isObject() {
+        return false;
+    }
+
+    @Override
+    public boolean isFunction() {
+        return false;
+    }
+
+    @Override
+    public boolean isBoolean() {
+        return false;
+    }
+
+    @Override
+    public boolean isNull() {
+        return false;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return false;
+    }
+
+    @Override
+    public boolean isDecimal() {
+        return false;
+    }
+
+    @Override
+    public boolean isInteger() {
+        return false;
+    }
+
+    @Override
+    public boolean isInt() {
+        return false;
+    }
+
+    @Override
+    public boolean isDouble() {
+        return false;
+    }
+
+    @Override
+    public boolean isDuration() {
+        return false;
+    }
+
+    @Override
+    public boolean isYearMonthDuration() {
+        return false;
+    }
+
+    @Override
+    public boolean isDayTimeDuration() {
+        return false;
+    }
+
+    @Override
+    public boolean isDateTime() {
+        return false;
+    }
+
+    @Override
+    public boolean isDate() {
+        return false;
+    }
+
+    @Override
+    public boolean isTime() {
+        return false;
+    }
+
+    @Override
+    public boolean isAnyURI() {
+        return false;
+    }
+
+    @Override
+    public boolean isBinary() {
+        return false;
+    }
+
+    @Override
+    public boolean isHexBinary() {
+        return false;
+    }
+
+    @Override
+    public boolean isBase64Binary() {
+        return false;
+    }
+
+    @Override
+    public List<Item> getItems() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Item getItemAt(int position) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public List<String> getKeys() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public List<Item> getValues() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Item getItemByKey(String key) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public int getSize() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public boolean getBooleanValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public double getDoubleValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public int getIntValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public BigInteger getIntegerValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public BigDecimal getDecimalValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Period getDurationValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public DateTime getDateTimeValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public byte[] getBinaryValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public FunctionIdentifier getIdentifier() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public List<Name> getParameterNames() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public FunctionSignature getSignature() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public boolean hasTimeZone() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public boolean hasDateTime() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public void putItem(Item item) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public void append(Item value) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public void putItemByKey(String key, Item value) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public boolean canBePromotedTo(ItemType type) {
+        return this.isTypeOf(type);
+    }
+
+    @Override
+    public Item add(Item other) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public Item subtract(Item other) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
     }
 }

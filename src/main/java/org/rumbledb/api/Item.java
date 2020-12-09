@@ -449,4 +449,8 @@ public interface Item extends Serializable, KryoSerializable {
     Item subtract(Item other);
 
     String serialize();
+
+    Item castAs(ItemType itemType);
+
+    boolean isCastableAs(ItemType itemType);
 }
