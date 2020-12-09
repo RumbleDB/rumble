@@ -18,11 +18,20 @@ import com.esotericsoftware.kryo.KryoSerializable;
 
 
 /**
- * The Item interface exposes the functionality of an item. Items are manipulated by JSONiq as sequences.
+ * An instance of this class is an item in the JSONiq data model.
+ *
+ * JSONiq manipulates sequences of items.
  *
  * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
  * version,
  * we will make the classes implementing this interface visible only at the package level).
+ *
+ * An item can be structured or atomic or a function.
+ *
+ * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
+ * lists of items.
+ *
+ * Atomic items have a lexical value and a type. Rumble does not support all atomic types yet.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
