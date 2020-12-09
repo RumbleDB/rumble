@@ -111,7 +111,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
 
         checkItemsSize(this.childIndex);
-        if (!this.nextResult.isTypeOf(this.itemType)) {
+        if (!this.itemType.matchesItem(this.nextResult)) {
             checkTypePromotion();
         }
     }

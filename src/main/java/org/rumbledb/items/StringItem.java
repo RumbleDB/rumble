@@ -165,11 +165,6 @@ public class StringItem implements Item {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.stringItem) || type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         if (itemType.equals(ItemType.stringItem)) {
             return true;
@@ -503,7 +498,7 @@ public class StringItem implements Item {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return this.isTypeOf(type);
+        return type.matchesItem(this);
     }
 
     @Override

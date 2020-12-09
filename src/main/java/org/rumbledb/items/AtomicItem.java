@@ -32,6 +32,11 @@ public abstract class AtomicItem extends ItemImpl {
     }
 
     @Override
+    public boolean isAtomic() {
+        return true;
+    }
+
+    @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
     }

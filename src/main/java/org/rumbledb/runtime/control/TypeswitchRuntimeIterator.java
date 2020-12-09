@@ -127,7 +127,7 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
                 if (this.testValue == null && sequenceType.isEmptySequence()) {
                     return typeSwitchCase.getReturnIterator();
                 }
-                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
+                if (this.testValue != null && sequenceType.getItemType().matchesItem(this.testValue)) {
                     return typeSwitchCase.getReturnIterator();
                 }
             }

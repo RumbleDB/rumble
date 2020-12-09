@@ -77,7 +77,7 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
 
                 ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
-                    if (!item.isTypeOf(itemType)) {
+                    if (!itemType.matchesItem(item)) {
                         return ItemFactory.getInstance().createBooleanItem(false);
                     }
                 }

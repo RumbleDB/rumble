@@ -20,7 +20,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
 
     @Override
     public Item call(Item input) throws Exception {
-        if (input != null && !input.isTypeOf(this.sequenceType.getItemType())) {
+        if (input != null && !this.sequenceType.getItemType().matchesItem(input)) {
             if (input.canBePromotedTo(this.sequenceType.getItemType())) {
                 return input.promoteTo(this.sequenceType.getItemType());
             }

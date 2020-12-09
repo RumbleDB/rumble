@@ -14,6 +14,6 @@ public class InstanceOfClosure implements Function<Item, Boolean> {
 
     @Override
     public Boolean call(Item input) throws Exception {
-        return !input.isTypeOf(this.itemType);
+        return !this.itemType.matchesItem(input);
     }
 }

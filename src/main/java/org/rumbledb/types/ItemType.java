@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
@@ -123,6 +124,67 @@ public class ItemType implements Serializable {
         }
         if (name.equals(item.name)) {
             return item;
+        }
+        throw new OurBadException("Type unrecognized: " + name);
+    }
+
+    public boolean matchesItem(Item item) {
+        if (name.equals(objectItem.name)) {
+            return item.isObject();
+        }
+        if (name.equals(atomicItem.name)) {
+            return item.isAtomic();
+        }
+        if (name.equals(stringItem.name)) {
+            return item.isString();
+        }
+        if (name.equals(integerItem.name)) {
+            return item.isInteger();
+        }
+        if (name.equals(decimalItem.name)) {
+            return item.isDecimal();
+        }
+        if (name.equals(doubleItem.name)) {
+            return item.isDouble();
+        }
+        if (name.equals(booleanItem.name)) {
+            return item.isBoolean();
+        }
+        if (name.equals(nullItem.name)) {
+            return item.isNull();
+        }
+        if (name.equals(arrayItem.name)) {
+            return item.isArray();
+        }
+        if (name.equals(JSONItem.name)) {
+            return item.isObject() || item.isArray();
+        }
+        if (name.equals(durationItem.name)) {
+            return item.isDuration();
+        }
+        if (name.equals(yearMonthDurationItem.name)) {
+            return item.isYearMonthDuration();
+        }
+        if (name.equals(dayTimeDurationItem.name)) {
+            return item.isDayTimeDuration();
+        }
+        if (name.equals(dateTimeItem.name)) {
+            return item.isDateTime();
+        }
+        if (name.equals(dateItem.name)) {
+            return item.isDate();
+        }
+        if (name.equals(timeItem.name)) {
+            return item.isTime();
+        }
+        if (name.equals(anyURIItem.name)) {
+            return item.isAnyURI();
+        }
+        if (name.equals(hexBinaryItem.name)) {
+            return item.isHexBinary();
+        }
+        if (name.equals(base64BinaryItem.name)) {
+            return item.isBase64Binary();
         }
         throw new OurBadException("Type unrecognized: " + name);
     }

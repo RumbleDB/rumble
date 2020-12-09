@@ -23,7 +23,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
 
     @Override
     public Boolean call(Item input) throws Exception {
-        if (!input.isTypeOf(this.sequenceType.getItemType())) {
+        if (!this.sequenceType.getItemType().matchesItem(input)) {
             switch (this.errorCode) {
                 case DynamicTypeTreatErrorCode:
                     throw new TreatException(

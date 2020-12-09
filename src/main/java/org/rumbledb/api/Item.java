@@ -410,14 +410,6 @@ public interface Item extends Serializable, KryoSerializable {
     );
 
     /**
-     * Checks whether the item matches the specified type.
-     *
-     * @param type an ItemType.
-     * @return true if it matches the item type.
-     */
-    boolean isTypeOf(ItemType type);
-
-    /**
      * Please do not use (internal).
      *
      * @param type an ItemType.
@@ -450,7 +442,17 @@ public interface Item extends Serializable, KryoSerializable {
 
     String serialize();
 
+    /**
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
+     */
     Item castAs(ItemType itemType);
 
+    /**
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
+     */
     boolean isCastableAs(ItemType itemType);
 }

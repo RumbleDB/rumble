@@ -154,7 +154,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             for (Item item : items) {
                 if (
                     variableDeclaration.getSequenceType().isEmptySequence()
-                        || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                        || !variableDeclaration.getSequenceType().getItemType().matchesItem(item)
                 ) {
                     throw new UnexpectedTypeException(
                             "External variable value ("
@@ -197,7 +197,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             items.add(item);
             if (
                 variableDeclaration.getSequenceType().isEmptySequence()
-                    || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                    || !variableDeclaration.getSequenceType().getItemType().matchesItem(item)
             ) {
                 throw new UnexpectedTypeException(
                         "External variable value ("
