@@ -49,7 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends Item {
+public class FunctionItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;

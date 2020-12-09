@@ -23,7 +23,7 @@ package org.rumbledb.items;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
 
-public abstract class AtomicItem extends Item {
+public abstract class AtomicItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
 

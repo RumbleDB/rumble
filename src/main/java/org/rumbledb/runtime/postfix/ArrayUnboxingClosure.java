@@ -22,7 +22,6 @@ package org.rumbledb.runtime.postfix;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.ArrayItem;
 
 import java.util.Collections;
 import java.util.Iterator;
@@ -37,7 +36,7 @@ public class ArrayUnboxingClosure implements FlatMapFunction<Item, Item> {
     }
 
     public Iterator<Item> call(Item arg0) throws Exception {
-        if (!(arg0 instanceof ArrayItem)) {
+        if (!(arg0.isArray())) {
             return Collections.emptyIterator();
         }
         List<Item> results = arg0.getItems();

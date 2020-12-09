@@ -12,7 +12,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
@@ -105,7 +104,7 @@ public class RumbleMLUtils {
             ExceptionMetadata metadata
     ) {
         if (paramJavaTypeName.endsWith("[]")) {
-            if (!(param instanceof ArrayItem)) {
+            if (!(param.isArray())) {
                 throw new InvalidArgumentTypeException(paramName + " is expected to be an array type", metadata);
             }
             List<Object> paramAsListInJava = new ArrayList<>();
