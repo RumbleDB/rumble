@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.postfix;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -28,7 +27,6 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
-import org.mortbay.util.SingletonList;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -233,7 +231,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructType structSchema = (StructType) schema;
             if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))){
-                newContext.setSelectPart(newContext.getSelectPart() + "." + key);
+                newContext.setResultingQuery(newContext.getResultingQuery() + "." + key);
                 StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
                 newContext.setSchema(field.dataType());
             } else {

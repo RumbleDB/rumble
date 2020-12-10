@@ -14,7 +14,7 @@ public class NativeClauseContext {
     private FLWOR_CLAUSES clauseType;
     private DataType schema;
     private DynamicContext context;
-    private String selectPart;
+    private String resultingQuery;
 
     private NativeClauseContext() {}
 
@@ -22,29 +22,29 @@ public class NativeClauseContext {
         this.clauseType = clauseType;
         this.schema = schema;
         this.context = context;
-        this.selectPart = "";
+        this.resultingQuery = "";
     }
 
     public NativeClauseContext(NativeClauseContext parent){
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
-        this.selectPart = parent.selectPart;
+        this.resultingQuery = parent.resultingQuery;
     }
 
     public NativeClauseContext(NativeClauseContext parent, String newSelectPart){
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
-        this.selectPart = newSelectPart;
+        this.resultingQuery = newSelectPart;
     }
 
-    public void setSelectPart(String selectPart) {
-        this.selectPart = selectPart;
+    public void setResultingQuery(String resultingQuery) {
+        this.resultingQuery = resultingQuery;
     }
 
-    public String getSelectPart(){
-        return this.selectPart;
+    public String getResultingQuery(){
+        return this.resultingQuery;
     }
 
     public DataType getSchema() {
