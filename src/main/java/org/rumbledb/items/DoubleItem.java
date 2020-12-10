@@ -145,8 +145,7 @@ public class DoubleItem implements Item {
             return "-0";
         }
         double abs = Math.abs(this.value);
-        if(abs >= 0.000001 && abs <= 1000000)
-        {
+        if (abs >= 0.000001 && abs <= 1000000) {
             return this.castToDecimalValue().stripTrailingZeros().toPlainString();
         }
         return Double.toString(this.value);
