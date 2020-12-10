@@ -37,7 +37,6 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -130,11 +129,10 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
-            if (item instanceof ArrayItem) {
-                ArrayItem arrItem = (ArrayItem) item;
-                if (this.lookup > 0 && this.lookup <= arrItem.getSize()) {
+            if (item.isArray()) {
+                if (this.lookup > 0 && this.lookup <= item.getSize()) {
                     // -1 for Jsoniq convention, arrays start from 1
-                    Item result = arrItem.getItemAt(this.lookup - 1);
+                    Item result = item.getItemAt(this.lookup - 1);
                     this.nextResult = result;
                     break;
                 }
@@ -175,6 +173,22 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof ArrayType) {
+                ArrayType arrayType = (ArrayType) type;
+                DataType elementType = arrayType.elementType();
+                if (elementType instanceof StructType) {
+                    return childDataFrame.sparkSession()
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                Integer.toString(this.lookup - 1),
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                Integer.toString(this.lookup)
+                            )
+                        );
+                }
                 return childDataFrame.sparkSession()
                     .sql(
                         String.format(

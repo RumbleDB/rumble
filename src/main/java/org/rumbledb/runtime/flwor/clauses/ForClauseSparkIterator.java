@@ -503,7 +503,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (optimizableJoin) {
-            System.out.println(
+            System.err.println(
                 "[INFO] Rumble detected that it can optimize your query and make it faster with an equi-join."
             );
         }

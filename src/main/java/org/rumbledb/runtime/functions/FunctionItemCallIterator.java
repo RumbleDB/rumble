@@ -39,6 +39,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.TypePromotionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
@@ -51,7 +52,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionItem functionItem;
+    private Item functionItem;
     private List<RuntimeIterator> functionArguments;
 
     // calculated fields
@@ -61,7 +62,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
 
     public FunctionItemCallIterator(
-            FunctionItem functionItem,
+            Item functionItem,
             List<RuntimeIterator> functionArguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -124,11 +125,20 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                             .get(i)
                             .equals(MOST_GENERAL_SEQUENCE_TYPE)
                 ) {
+                    SequenceType sequenceType = this.functionItem.getSignature().getParameterTypes().get(i);
+                    ExecutionMode executionMode = this.functionArguments.get(i).getHighestExecutionMode();
+                    if (
+                        sequenceType.isEmptySequence()
+                            || sequenceType.getArity().equals(Arity.One)
+                            || sequenceType.getArity().equals(Arity.OneOrZero)
+                    ) {
+                        executionMode = ExecutionMode.LOCAL;
+                    }
                     TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
                             this.functionArguments.get(i),
-                            this.functionItem.getSignature().getParameterTypes().get(i),
+                            sequenceType,
                             "Invalid argument for " + this.functionItem.getIdentifier().getName() + " function. ",
-                            this.functionArguments.get(i).getHighestExecutionMode(),
+                            executionMode,
                             getMetadata()
                     );
                     this.functionArguments.set(i, typePromotionIterator);
@@ -264,7 +274,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
+        if (this.functionBodyIterator != null && this.functionBodyIterator.isOpen()) {
             this.functionBodyIterator.close();
         }
     }
@@ -296,5 +306,25 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         DynamicContext contextWithArguments = this.createNewDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
         return this.functionBodyIterator.getRDD(contextWithArguments);
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        if (this.isPartialApplication) {
+            throw new OurBadException(
+                    "Unexpected program state reached. Partially applied function calls must be evaluated locally."
+            );
+        }
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
+        DynamicContext contextWithArguments = this.createNewDynamicContextWithArguments(dynamicContext);
+        this.functionBodyIterator = this.functionItem.getBodyIterator();
+        return this.functionBodyIterator.getDataFrame(contextWithArguments);
     }
 }

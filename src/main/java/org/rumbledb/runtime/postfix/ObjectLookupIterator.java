@@ -66,7 +66,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         this.iterator = object;
     }
 
-    private void initLookupKey() {
+    private void initLookupKey(DynamicContext context) {
 
         RuntimeIterator lookupIterator = this.children.get(1);
 
@@ -75,7 +75,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         if (!this.contextLookup) {
 
             try {
-                this.lookupKey = lookupIterator.materializeExactlyOneItem(this.currentDynamicContextForLocalExecution);
+                this.lookupKey = lookupIterator.materializeExactlyOneItem(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
@@ -126,7 +126,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        initLookupKey();
+        initLookupKey(this.currentDynamicContextForLocalExecution);
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -192,7 +192,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupKey();
+        initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
@@ -218,7 +218,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        initLookupKey();
+        initLookupKey(context);
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.

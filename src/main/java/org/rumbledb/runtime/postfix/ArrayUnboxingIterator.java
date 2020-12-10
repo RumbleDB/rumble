@@ -33,7 +33,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -97,11 +96,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
-            if (item instanceof ArrayItem) {
-                ArrayItem arrItem = (ArrayItem) item;
+            if (item.isArray()) {
                 // if array is not empty, set the first item as the result
-                if (0 < arrItem.getSize()) {
-                    this.nextResults.addAll(arrItem.getItems());
+                if (0 < item.getSize()) {
+                    this.nextResults.addAll(item.getItems());
                     break;
                 }
             }
@@ -140,6 +138,19 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof ArrayType) {
+                ArrayType arrayType = (ArrayType) type;
+                DataType elementType = arrayType.elementType();
+                if (elementType instanceof StructType) {
+                    return childDataFrame.sparkSession()
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                SparkSessionManager.atomicJSONiqItemColumnName
+                            )
+                        );
+                }
                 return childDataFrame.sparkSession()
                     .sql(
                         String.format(

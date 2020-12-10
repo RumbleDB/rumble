@@ -166,11 +166,11 @@ public class RumbleJLineShell {
                     ex.printStackTrace();
                 }
             } else if (!(ex instanceof UserInterruptException)) {
-                System.out.println("An error has occurred: " + ex.getMessage());
-                System.out.println(
+                System.err.println("[ERROR] An error has occurred: " + ex.getMessage());
+                System.err.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query. "
                 );
-                System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
@@ -179,7 +179,7 @@ public class RumbleJLineShell {
     }
 
     public void output(String message) {
-        System.out.println(ANSIColor.YELLOW + message + ANSIColor.RESET);
+        System.err.println(ANSIColor.YELLOW + message + ANSIColor.RESET);
     }
 
     private String getPrompt() {

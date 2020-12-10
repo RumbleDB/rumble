@@ -11,15 +11,13 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 
 public class YearMonthDurationItem extends DurationItem {
 
     private static final long serialVersionUID = 1L;
     private Period value;
-    private static final PeriodType yearMonthPeriodType = PeriodType.forFields(
+    public static final PeriodType yearMonthPeriodType = PeriodType.forFields(
         new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
     );
 
@@ -126,34 +124,6 @@ public class YearMonthDurationItem extends DurationItem {
     @Override
     public Item subtract(Item other) {
         return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue().minus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item multiply(Item other) {
-        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
-        int totalMonths = BigDecimal.valueOf(months)
-            .multiply(other.castToDecimalValue())
-            .setScale(0, BigDecimal.ROUND_HALF_UP)
-            .intValue();
-        return ItemFactory.getInstance()
-            .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
-    }
-
-    @Override
-    public Item divide(Item other) {
-        int months = this.getValue().getYears() * 12 + this.getValue().getMonths();
-        if (other.isYearMonthDuration()) {
-            int otherMonths = 12 * other.getDurationValue().getYears() + other.getDurationValue().getMonths();
-            return ItemFactory.getInstance()
-                .createDecimalItem(
-                    BigDecimal.valueOf(months).divide(BigDecimal.valueOf(otherMonths), 16, RoundingMode.HALF_UP)
-                );
-        }
-        int totalMonths = BigDecimal.valueOf(months)
-            .divide(other.castToDecimalValue(), 0, BigDecimal.ROUND_HALF_UP)
-            .intValue();
-        return ItemFactory.getInstance()
-            .createYearMonthDurationItem(new Period().withMonths(totalMonths).withPeriodType(yearMonthPeriodType));
     }
 
     @Override

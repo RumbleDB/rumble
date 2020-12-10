@@ -38,7 +38,7 @@ public class Main {
         try {
             sparksoniqConf = new RumbleRuntimeConfiguration(args);
 
-            JsonIterUtils.applyJsonIterFaultyInitializationWorkAround();
+            JsonIterUtils.applyJsonIterFaultyInitializationWorkAround(sparksoniqConf);
 
             if (sparksoniqConf.isShell()) {
                 launchShell(sparksoniqConf);
@@ -112,11 +112,11 @@ public class Main {
                 }
                 System.exit(43);
             } else {
-                System.out.println("An error has occured: " + ex.getMessage());
-                System.out.println(
+                System.err.println("An error has occured: " + ex.getMessage());
+                System.err.println(
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
-                System.out.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }

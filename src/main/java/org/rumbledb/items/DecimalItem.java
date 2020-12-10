@@ -24,7 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -33,7 +32,6 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.math.RoundingMode;
 
 
 public class DecimalItem extends AtomicItem {
@@ -111,7 +109,7 @@ public class DecimalItem extends AtomicItem {
             return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));
+            return ItemFactory.getInstance().createStringItem(serialize());
         }
         throw new ClassCastException();
     }
@@ -206,66 +204,12 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public Item multiply(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() * (other.getDoubleValue()));
-        }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return other.multiply(this);
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().multiply(other.castToDecimalValue()));
-    }
-
-    @Override
-    public Item divide(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() / (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance()
-            .createDecimalItem(this.getDecimalValue().divide(other.castToDecimalValue(), 10, BigDecimal.ROUND_HALF_UP));
-    }
-
-    @Override
-    public Item modulo(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() % (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance()
-            .createDecimalItem(this.getDecimalValue().remainder(other.castToDecimalValue()));
-    }
-
-    @Override
-    public Item idivide(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        if (other.isDouble()) {
-            return ItemFactory.getInstance()
-                .createDoubleItem((double) (long) (this.castToDoubleValue() / other.getDoubleValue()));
-        }
-        if (other.isInteger()) {
-            return ItemFactory.getInstance()
-                .createIntegerItem(
-                    this.getDecimalValue().divide(other.castToDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
-                );
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createIntegerItem(
-                    this.getDecimalValue().divide(other.getDecimalValue(), 0, RoundingMode.DOWN).toBigInteger()
-                );
-        }
-        throw new OurBadException("Unexpected type encountered");
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.decimalItem;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
     }
 }

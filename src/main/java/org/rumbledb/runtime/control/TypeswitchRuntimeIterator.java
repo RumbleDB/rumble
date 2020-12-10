@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.Collections;
@@ -124,7 +125,13 @@ public class TypeswitchRuntimeIterator extends HybridRuntimeIterator {
     private RuntimeIterator testTypeMatchAndReturnCorrespondingIterator(TypeswitchRuntimeIteratorCase typeSwitchCase) {
         if (typeSwitchCase.getSequenceTypeUnion() != null) {
             for (SequenceType sequenceType : typeSwitchCase.getSequenceTypeUnion()) {
-                if (this.testValue != null && this.testValue.isTypeOf(sequenceType.getItemType())) {
+                if (this.testValue == null && sequenceType.isEmptySequence()) {
+                    return typeSwitchCase.getReturnIterator();
+                }
+                if (
+                    this.testValue != null
+                        && InstanceOfIterator.doesItemTypeMatchItem(sequenceType.getItemType(), this.testValue)
+                ) {
                     return typeSwitchCase.getReturnIterator();
                 }
             }

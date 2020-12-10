@@ -24,7 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
@@ -106,7 +105,7 @@ public class DoubleItem extends AtomicItem {
             return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
         if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDoubleValue()));
+            return ItemFactory.getInstance().createStringItem(serialize());
         }
         throw new ClassCastException();
     }
@@ -125,8 +124,14 @@ public class DoubleItem extends AtomicItem {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.getDoubleValue()) || Double.isInfinite(this.getDoubleValue())) {
-            return String.valueOf(this.getDoubleValue());
+        if (Double.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
         }
         boolean negativeZero = this.getDoubleValue() == 0 && String.valueOf(this.getDoubleValue()).charAt(0) == ('-');
         String doubleString = String.valueOf(this.castToDecimalValue().stripTrailingZeros().toPlainString());
@@ -196,40 +201,12 @@ public class DoubleItem extends AtomicItem {
     }
 
     @Override
-    public Item multiply(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return other.multiply(this);
-        }
-        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() * other.castToDoubleValue());
-    }
-
-    @Override
-    public Item divide(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() / other.castToDoubleValue());
-    }
-
-    @Override
-    public Item modulo(Item other) {
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        if (other.equals(ItemFactory.getInstance().createIntItem(0))) {
-            throw new DivisionByZeroException(ExceptionMetadata.EMPTY_METADATA);
-        }
-        return ItemFactory.getInstance().createDoubleItem(this.getDoubleValue() % other.castToDoubleValue());
-    }
-
-    @Override
-    public Item idivide(Item other) {
-        return ItemFactory.getInstance()
-            .createDoubleItem((double) (long) (this.getDoubleValue() / other.castToDoubleValue()));
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.doubleItem;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
     }
 }

@@ -49,7 +49,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends Item {
+public class FunctionItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
@@ -329,5 +329,15 @@ public class FunctionItem extends Item {
                 dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
+    }
+
+    @Override
+    public Item castAs(ItemType itemType) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a function!");
+    }
+
+    @Override
+    public boolean isCastableAs(ItemType itemType) {
+        return false;
     }
 }

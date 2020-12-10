@@ -22,7 +22,6 @@ package org.rumbledb.runtime.postfix;
 
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import org.rumbledb.items.ArrayItem;
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -40,7 +39,7 @@ public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
     public Iterator<Item> call(Item arg0) throws Exception {
         List<Item> results = new ArrayList<Item>();
 
-        if (!(arg0 instanceof ArrayItem)) {
+        if (!(arg0.isArray())) {
             return results.iterator();
         }
 
