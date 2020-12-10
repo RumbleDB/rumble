@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
@@ -77,7 +78,7 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
 
                 ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
-                    if (!itemType.matchesItem(item)) {
+                    if (!doesItemTypeMatchItem(itemType, item)) {
                         return ItemFactory.getInstance().createBooleanItem(false);
                     }
                 }
@@ -111,5 +112,81 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+    }
+
+    /**
+     * Item type tests. This supersedes the method isTypeOf() formerly located in the Item interface,
+     * as part of the efforts to cleanly separate item storage from item manipulation (which is
+     * the domain of responsibility of runtime iterators).
+     * 
+     * @param itemType the item type to match against the item.
+     * @param itemToMatch the item to match against the type.
+     * @return true if itemToMatch matches itemType.
+     */
+    public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType.equals(ItemType.item)) {
+            return true;
+        }
+        if (itemType.equals(ItemType.objectItem)) {
+            return itemToMatch.isObject();
+        }
+        if (itemType.equals(ItemType.atomicItem)) {
+            return itemToMatch.isAtomic();
+        }
+        if (itemType.equals(ItemType.stringItem)) {
+            return itemToMatch.isString();
+        }
+        if (itemType.equals(ItemType.integerItem)) {
+            return itemToMatch.isInteger();
+        }
+        if (itemType.equals(ItemType.decimalItem)) {
+            return itemToMatch.isDecimal();
+        }
+        if (itemType.equals(ItemType.doubleItem)) {
+            return itemToMatch.isDouble();
+        }
+        if (itemType.equals(ItemType.booleanItem)) {
+            return itemToMatch.isBoolean();
+        }
+        if (itemType.equals(ItemType.nullItem)) {
+            return itemToMatch.isNull();
+        }
+        if (itemType.equals(ItemType.arrayItem)) {
+            return itemToMatch.isArray();
+        }
+        if (itemType.equals(ItemType.JSONItem)) {
+            return itemToMatch.isObject() || itemToMatch.isArray();
+        }
+        if (itemType.equals(ItemType.durationItem)) {
+            return itemToMatch.isDuration();
+        }
+        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+            return itemToMatch.isYearMonthDuration();
+        }
+        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+            return itemToMatch.isDayTimeDuration();
+        }
+        if (itemType.equals(ItemType.dateTimeItem)) {
+            return itemToMatch.isDateTime();
+        }
+        if (itemType.equals(ItemType.dateItem)) {
+            return itemToMatch.isDate();
+        }
+        if (itemType.equals(ItemType.timeItem)) {
+            return itemToMatch.isTime();
+        }
+        if (itemType.equals(ItemType.anyURIItem)) {
+            return itemToMatch.isAnyURI();
+        }
+        if (itemType.equals(ItemType.hexBinaryItem)) {
+            return itemToMatch.isHexBinary();
+        }
+        if (itemType.equals(ItemType.base64BinaryItem)) {
+            return itemToMatch.isBase64Binary();
+        }
+        if (itemType.equals(ItemType.functionItem)) {
+            return itemToMatch.isFunction();
+        }
+        throw new OurBadException("Type unrecognized: " + itemType);
     }
 }

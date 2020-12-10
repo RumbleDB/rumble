@@ -133,7 +133,7 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
-        if (!this.itemType.matchesItem(this.nextResult)) {
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
             throw errorToThrow(this.nextResult.getDynamicType().toString());
         }
     }

@@ -38,6 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -504,7 +505,7 @@ public class StringItem implements Item {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.matchesItem(this);
+        return InstanceOfIterator.doesItemTypeMatchItem(type, this);
     }
 
     @Override

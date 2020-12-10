@@ -21,7 +21,6 @@
 package org.rumbledb.types;
 
 
-import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
@@ -124,73 +123,6 @@ public class ItemType implements Serializable {
         }
         if (name.equals(item.name)) {
             return item;
-        }
-        throw new OurBadException("Type unrecognized: " + name);
-    }
-
-    public boolean matchesItem(Item itemToMatch) {
-        if (this.name.equals(item.name)) {
-            return true;
-        }
-        if (this.name.equals(objectItem.name)) {
-            return itemToMatch.isObject();
-        }
-        if (this.name.equals(atomicItem.name)) {
-            return itemToMatch.isAtomic();
-        }
-        if (this.name.equals(stringItem.name)) {
-            return itemToMatch.isString();
-        }
-        if (this.name.equals(integerItem.name)) {
-            return itemToMatch.isInteger();
-        }
-        if (this.name.equals(decimalItem.name)) {
-            return itemToMatch.isDecimal();
-        }
-        if (this.name.equals(doubleItem.name)) {
-            return itemToMatch.isDouble();
-        }
-        if (this.name.equals(booleanItem.name)) {
-            return itemToMatch.isBoolean();
-        }
-        if (this.name.equals(nullItem.name)) {
-            return itemToMatch.isNull();
-        }
-        if (this.name.equals(arrayItem.name)) {
-            return itemToMatch.isArray();
-        }
-        if (this.name.equals(JSONItem.name)) {
-            return itemToMatch.isObject() || itemToMatch.isArray();
-        }
-        if (this.name.equals(durationItem.name)) {
-            return itemToMatch.isDuration();
-        }
-        if (this.name.equals(yearMonthDurationItem.name)) {
-            return itemToMatch.isYearMonthDuration();
-        }
-        if (this.name.equals(dayTimeDurationItem.name)) {
-            return itemToMatch.isDayTimeDuration();
-        }
-        if (this.name.equals(dateTimeItem.name)) {
-            return itemToMatch.isDateTime();
-        }
-        if (this.name.equals(dateItem.name)) {
-            return itemToMatch.isDate();
-        }
-        if (this.name.equals(timeItem.name)) {
-            return itemToMatch.isTime();
-        }
-        if (this.name.equals(anyURIItem.name)) {
-            return itemToMatch.isAnyURI();
-        }
-        if (this.name.equals(hexBinaryItem.name)) {
-            return itemToMatch.isHexBinary();
-        }
-        if (this.name.equals(base64BinaryItem.name)) {
-            return itemToMatch.isBase64Binary();
-        }
-        if (this.name.equals(functionItem.name)) {
-            return itemToMatch.isFunction();
         }
         throw new OurBadException("Type unrecognized: " + name);
     }
