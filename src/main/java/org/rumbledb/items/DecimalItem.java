@@ -207,4 +207,9 @@ public class DecimalItem extends AtomicItem {
     public ItemType getDynamicType() {
         return ItemType.decimalItem;
     }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
 }

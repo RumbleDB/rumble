@@ -14,6 +14,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -111,7 +112,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
 
         checkItemsSize(this.childIndex);
-        if (!this.nextResult.isTypeOf(this.itemType)) {
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
             checkTypePromotion();
         }
     }

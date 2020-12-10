@@ -27,7 +27,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -71,16 +70,16 @@ public class QuantifiedExpressionIterator extends LocalRuntimeIterator {
                 }
             }
 
-            List<BooleanItem> results = new ArrayList<>();
+            List<Item> results = new ArrayList<>();
             for (DynamicContext context : contexts) {
                 this.evaluationExpression.open(context);
-                BooleanItem result = (BooleanItem) this.evaluationExpression.next();
+                Item result = this.evaluationExpression.next();
                 this.evaluationExpression.close();
                 results.add(result);
             }
 
             boolean result = this.operator == QuantifiedExpression.Quantification.EVERY;
-            for (BooleanItem res : results) {
+            for (Item res : results) {
                 result = this.operator == QuantifiedExpression.Quantification.EVERY
                     ? result && res.getBooleanValue()
                     : result || res.getBooleanValue();

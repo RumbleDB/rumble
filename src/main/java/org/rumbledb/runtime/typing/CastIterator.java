@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.SequenceType;
@@ -67,11 +66,11 @@ public class CastIterator extends LocalRuntimeIterator {
                 this.sequenceType.toString()
             );
 
-            AtomicItem atomicItem = CastableIterator.checkInvalidCastable(item, getMetadata(), this.sequenceType);
+            CastableIterator.checkInvalidCastable(item, getMetadata(), this.sequenceType);
 
-            if (atomicItem.isCastableAs(this.sequenceType.getItemType())) {
+            if (item.isCastableAs(this.sequenceType.getItemType())) {
                 try {
-                    return atomicItem.castAs(this.sequenceType.getItemType());
+                    return item.castAs(this.sequenceType.getItemType());
                 } catch (ClassCastException e) {
                     throw new CastException(message, getMetadata());
                 }
