@@ -189,6 +189,9 @@ public class ItemType implements Serializable {
         if (this.name.equals(base64BinaryItem.name)) {
             return itemToMatch.isBase64Binary();
         }
+        if (this.name.equals(functionItem.name)) {
+            return itemToMatch.isFunction();
+        }
         throw new OurBadException("Type unrecognized: " + name);
     }
 
