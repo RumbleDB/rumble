@@ -31,9 +31,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -202,6 +204,19 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
         StructType inputSchema = df.schema();
 
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+                df,
+                this.expression,
+                inputSchema,
+                context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+
+        // was not possible, we use let udf
+        System.out.println("using UDF");
+
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             this.expression.getVariableDependencies(),
@@ -273,5 +288,42 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param iterator where filtering expression iterator
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the let clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            RuntimeIterator iterator,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        // the try catch block is required because of the query that are not supported by sparksql like using a field to decide which field to use (e.g. $i.($i.fieldToUse) )
+        try {
+            NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, inputSchema, context);
+            NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+            if(nativeQuery == NativeClauseContext.NoNativeQuery){
+                return null;
+            }
+            System.out.println("native query returned " + nativeQuery.getResultingQuery());
+            dataFrame.createOrReplaceTempView("input");
+            return dataFrame.sparkSession()
+                    .sql(
+                            String.format(
+                                    "select * from input where %s",
+                                    nativeQuery.getResultingQuery()
+                            )
+                    );
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
