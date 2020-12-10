@@ -31,6 +31,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -182,5 +183,31 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
         return left.compareItem(right, this.comparisonOperator, getMetadata());
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if(this.comparisonOperator.isValueComparison()){
+            NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+
+            if(leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery){
+                return NativeClauseContext.NoNativeQuery;
+            }
+
+            String operator = " = ";
+            switch (this.comparisonOperator.name()){
+                case "eq": operator = " = "; break;
+                case "ne": operator = " <> "; break;
+                case "le": operator = " <= "; break;
+                case "lt": operator = " < "; break;
+                case "ge": operator = " >= "; break;
+                case "gt": operator = " > "; break;
+            }
+            String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
+            return new NativeClauseContext(nativeClauseContext, query);
+        } else {
+            return NativeClauseContext.NoNativeQuery;
+        }
     }
 }

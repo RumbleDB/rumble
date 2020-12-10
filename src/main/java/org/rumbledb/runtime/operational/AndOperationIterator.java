@@ -29,6 +29,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 public class AndOperationIterator extends LocalRuntimeIterator {
 
@@ -72,5 +73,17 @@ public class AndOperationIterator extends LocalRuntimeIterator {
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
 
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        if(leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery){
+            return NativeClauseContext.NoNativeQuery;
+        }
+
+        String resultingQuery = "( " + leftResult.getResultingQuery() + " AND " + rightResult.getResultingQuery() + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }
