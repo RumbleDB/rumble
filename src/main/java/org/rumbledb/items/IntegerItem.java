@@ -294,4 +294,9 @@ public class IntegerItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.integerItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() {
+        return this.value.toString();
+    }
 }

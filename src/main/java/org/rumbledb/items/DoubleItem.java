@@ -233,4 +233,9 @@ public class DoubleItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.doubleItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() {
+        return "" + this.value;
+    }
 }

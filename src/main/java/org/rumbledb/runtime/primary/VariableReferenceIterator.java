@@ -98,7 +98,16 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             newContext.setSchema(field.dataType());
             return newContext;
         } else {
-            return NativeClauseContext.NoNativeQuery;
+            List<Item> items = nativeClauseContext.getContext().getVariableValues().getLocalVariableValue(this.variableName, getMetadata());
+            if(items.size() != 1) {
+                // only possible to turn into native, sequence of length 1
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String itemQuery = items.get(0).getSparkSqlQuery();
+            if(itemQuery == null){
+                return NativeClauseContext.NoNativeQuery;
+            }
+            return new NativeClauseContext(nativeClauseContext, itemQuery);
         }
     }
 

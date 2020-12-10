@@ -254,4 +254,9 @@ public class StringItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.stringItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() {
+        return '"' + this.value + '"';
+    }
 }

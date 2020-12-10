@@ -657,4 +657,10 @@ public abstract class Item implements SerializableItem {
     public FunctionSignature getSignature() {
         throw new UnsupportedOperationException("Operation not defined");
     }
+
+    /**
+     * Get sparkSql string for the item
+     * @return String representing the item in a sparksql query or null if it is not supported for the item
+     */
+    public String getSparkSqlQuery() { return null; }
 }
