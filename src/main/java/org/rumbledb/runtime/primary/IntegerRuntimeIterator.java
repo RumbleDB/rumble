@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
 
@@ -57,5 +58,10 @@ public class IntegerRuntimeIterator extends AtomicRuntimeIterator {
     @Override
     public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
         return this.item;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(nativeClauseContext, "" + this.item.getIntValue());
     }
 }
