@@ -38,11 +38,13 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
@@ -861,6 +863,23 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             null,
             variableNamesToExclude
         );
+
+        // TODO: Useless because here is local for
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+                df,
+                this.variableName,
+                this.positionalVariableName,
+                this.allowingEmpty,
+                this.assignmentIterator,
+                allColumns,
+                inputSchema,
+                context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+        System.out.println("using UDF");
+
         List<String> UDFcolumns;
         if (this.child != null) {
             UDFcolumns = FlworDataFrameUtils.getColumnNames(
@@ -1166,5 +1185,67 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the for clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param newVariableName name of the new bound variable
+     * @param positionalVariableName name of the positional variable (or null if absent)
+     * @param allowingEmpty boolean signaling allowing empty flag in expression
+     * @param iterator for variable assignment expression iterator
+     * @param allColumns other columns required in following clauses
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the for clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            Name newVariableName,
+            Name positionalVariableName,
+            boolean allowingEmpty,
+            RuntimeIterator iterator,
+            List<String> allColumns,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        // the try catch block is required because of the query that are not supported by sparksql like using a field to decide which field to use (e.g. $i.($i.fieldToUse) )
+        try {
+            NativeClauseContext forContext = new NativeClauseContext(FLWOR_CLAUSES.FOR, inputSchema, context);
+            NativeClauseContext nativeQuery = iterator.generateNativeQuery(forContext);
+            if(nativeQuery == NativeClauseContext.NoNativeQuery){
+                return null;
+            }
+            System.out.println("native query returned " + nativeQuery.getResultingQuery());
+            String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+            dataFrame.createOrReplaceTempView("input");
+
+            // let's distinguish 4 cases
+            if (positionalVariableName == null) {
+                if (allowingEmpty) {
+                    return null;
+                } else {
+                    return dataFrame.sparkSession()
+                            .sql(
+                                    String.format(
+                                            "select %s explode(%s) as `%s` from input",
+                                            selectSQL,
+                                            nativeQuery.getResultingQuery(),
+                                            newVariableName
+                                    )
+                            );
+                }
+            } else {
+                if(allowingEmpty) {
+                    return null;
+                } else {
+                    return null;
+                }
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 }
