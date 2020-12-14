@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -72,7 +73,7 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.base64BinaryItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.base64BinaryItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -87,22 +88,22 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.base64BinaryItem)
+        return itemType.equals(AtomicItemType.base64BinaryItem)
             ||
-            itemType.equals(ItemType.hexBinaryItem)
+            itemType.equals(AtomicItemType.hexBinaryItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(this.getStringValue());
         }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
+        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
+        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
             return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
         }
         throw new ClassCastException();
@@ -203,6 +204,6 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.base64BinaryItem;
+        return AtomicItemType.base64BinaryItem;
     }
 }

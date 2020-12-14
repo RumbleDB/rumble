@@ -11,6 +11,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.List;
@@ -47,9 +48,9 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                     ": value of type "
                     + this.item.getDynamicType().toString()
                     + " is not castable to type string.";
-                if (atomicItem.isCastableAs(ItemType.stringItem)) {
+                if (atomicItem.isCastableAs(AtomicItemType.stringItem)) {
                     try {
-                        return atomicItem.castAs(ItemType.stringItem);
+                        return atomicItem.castAs(AtomicItemType.stringItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

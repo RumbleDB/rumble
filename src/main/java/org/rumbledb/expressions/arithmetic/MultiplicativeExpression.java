@@ -92,6 +92,14 @@ public class MultiplicativeExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     public MultiplicativeOperator getMultiplicativeOperator() {
         return this.multiplicativeOperator;
     }

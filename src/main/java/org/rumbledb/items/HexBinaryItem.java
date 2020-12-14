@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -66,7 +67,7 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.hexBinaryItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.hexBinaryItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -81,22 +82,22 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.hexBinaryItem)
+        return itemType.equals(AtomicItemType.hexBinaryItem)
             ||
-            itemType.equals(ItemType.base64BinaryItem)
+            itemType.equals(AtomicItemType.base64BinaryItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.hexBinaryItem)) {
+        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(this.getStringValue());
         }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
+        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
             return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this.value));
         }
         throw new ClassCastException();
@@ -197,6 +198,6 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.hexBinaryItem;
+        return AtomicItemType.hexBinaryItem;
     }
 }

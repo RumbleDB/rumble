@@ -34,9 +34,11 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
 import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
@@ -533,6 +535,25 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Collections.singletonList(newVariableName)
         );
 
+        // if we can (depending on the expression) use let natively without UDF
+
+        if (!hash) {
+            Dataset<Row> nativeQueryResult = tryNativeQuery(
+                dataFrame,
+                newVariableName,
+                newVariableExpression,
+                allColumns,
+                inputSchema,
+                context
+            );
+            if (nativeQueryResult != null) {
+                return nativeQueryResult;
+            }
+        }
+
+        // was not possible, we use let udf
+        System.out.println("using UDF");
+
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
@@ -562,6 +583,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         dataFrame.createOrReplaceTempView("input");
+
+
+
         if (!hash) {
             dataFrame = dataFrame.sparkSession()
                 .sql(
@@ -584,5 +608,49 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
         }
         return dataFrame;
+    }
+
+    /**
+     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param newVariableName name of the new bound variable
+     * @param iterator let variable assignment expression iterator
+     * @param allColumns other columns required in following clauses
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the let clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            Name newVariableName,
+            RuntimeIterator iterator,
+            List<String> allColumns,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        // the try catch block is required because of the query that are not supported by sparksql like using a field to decide which field to use (e.g. $i.($i.fieldToUse) )
+        try {
+            NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
+            NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+            if(nativeQuery == NativeClauseContext.NoNativeQuery){
+                return null;
+            }
+            System.out.println("native query returned " + nativeQuery.getResultingQuery());
+            String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+            dataFrame.createOrReplaceTempView("input");
+            return dataFrame.sparkSession()
+                .sql(
+                    String.format(
+                        "select %s (%s) as `%s` from input",
+                        selectSQL,
+                        nativeQuery.getResultingQuery(),
+                        newVariableName
+                    )
+                );
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

@@ -12,6 +12,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
@@ -32,7 +33,7 @@ public class TimeItem extends AtomicItem {
     }
 
     TimeItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemType.timeItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicItemType.timeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -87,17 +88,17 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.timeItem)
+        return itemType.equals(AtomicItemType.timeItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(this.serialize());
         }
-        if (itemType.equals(ItemType.timeItem)) {
+        if (itemType.equals(AtomicItemType.timeItem)) {
             return this;
         }
         throw new ClassCastException();
@@ -105,7 +106,7 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.timeItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.timeItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -193,6 +194,6 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.timeItem;
+        return AtomicItemType.timeItem;
     }
 }

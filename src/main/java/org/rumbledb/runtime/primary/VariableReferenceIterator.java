@@ -20,9 +20,13 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -31,8 +35,10 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -75,6 +81,38 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        String name = this.variableName.toString();
+        DataType schema = nativeClauseContext.getSchema();
+        if(!(schema instanceof StructType)){
+            return NativeClauseContext.NoNativeQuery;
+        }
+        // check if name is in the schema
+        StructType structSchema = (StructType) schema;
+        if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(name))){
+            NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, name);
+            StructField field = structSchema.fields()[structSchema.fieldIndex(name)];
+            DataType fieldType = field.dataType();
+            if(fieldType.typeName().equals("binary")){
+                return NativeClauseContext.NoNativeQuery;
+            }
+            newContext.setSchema(fieldType);
+            return newContext;
+        } else {
+            List<Item> items = nativeClauseContext.getContext().getVariableValues().getLocalVariableValue(this.variableName, getMetadata());
+            if(items.size() != 1) {
+                // only possible to turn into native, sequence of length 1
+                return NativeClauseContext.NoNativeQuery;
+            }
+            String itemQuery = items.get(0).getSparkSqlQuery();
+            if(itemQuery == null){
+                return NativeClauseContext.NoNativeQuery;
+            }
+            return new NativeClauseContext(nativeClauseContext, itemQuery);
+        }
     }
 
     @Override

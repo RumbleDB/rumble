@@ -23,6 +23,7 @@ import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -250,13 +251,13 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
                         SequenceType.Arity.ZeroOrMore
                 ),
                 new SequenceType(
-                        ItemType.objectItem,
+                        AtomicItemType.objectItem,
                         SequenceType.Arity.One
                 )
             )
         );
         SequenceType returnType = new SequenceType(
-                ItemType.objectItem,
+                AtomicItemType.objectItem,
                 SequenceType.Arity.ZeroOrMore
         );
 

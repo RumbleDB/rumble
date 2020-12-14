@@ -106,7 +106,8 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
-    UnexpectedFunctionITem("FOTY0015"),
+    AtomizationError("FOTY0012"),
+    UnexpectedFunctionItem("FOTY0015"),
 
     InvalidTimezoneValue("FODT0003");
 

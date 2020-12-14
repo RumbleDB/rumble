@@ -56,6 +56,14 @@ public class AdditiveExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     public boolean isMinus() {
         return this.isMinus;
     }

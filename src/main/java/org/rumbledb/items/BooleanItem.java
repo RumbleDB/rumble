@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 
@@ -66,24 +67,24 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.booleanItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.booleanItem) || super.isTypeOf(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.hashCode());
         }
-        if (itemType.equals(ItemType.decimalItem)) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
         }
-        if (itemType.equals(ItemType.integerItem)) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return ItemFactory.getInstance().createIntItem(this.hashCode());
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
         }
         throw new ClassCastException();
@@ -91,9 +92,9 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
+        return !itemType.equals(AtomicItemType.atomicItem)
             &&
-            !itemType.equals(ItemType.nullItem);
+            !itemType.equals(AtomicItemType.nullItem);
     }
 
     @Override
@@ -152,6 +153,6 @@ public class BooleanItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.booleanItem;
+        return AtomicItemType.booleanItem;
     }
 }

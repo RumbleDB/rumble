@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -656,4 +657,10 @@ public abstract class Item implements SerializableItem {
     public FunctionSignature getSignature() {
         throw new UnsupportedOperationException("Operation not defined");
     }
+
+    /**
+     * Get sparkSql string for the item
+     * @return String representing the item in a sparksql query or null if it is not supported for the item
+     */
+    public String getSparkSqlQuery() { return null; }
 }

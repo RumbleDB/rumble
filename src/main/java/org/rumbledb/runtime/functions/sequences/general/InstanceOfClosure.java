@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 public class InstanceOfClosure implements Function<Item, Boolean> {

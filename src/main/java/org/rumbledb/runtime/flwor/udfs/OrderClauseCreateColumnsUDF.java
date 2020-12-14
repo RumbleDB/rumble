@@ -32,6 +32,7 @@ import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
@@ -117,28 +118,28 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             // extract type information for the sorting column
             String typeName = this.sortingKeyTypes.get(expressionIndex);
             try {
-                if (typeName.equals(ItemType.booleanItem.getName())) {
+                if (typeName.equals(AtomicItemType.booleanItem.getName())) {
                     this.results.add(nextItem.getBooleanValue());
-                } else if (typeName.equals(ItemType.stringItem.getName())) {
+                } else if (typeName.equals(AtomicItemType.stringItem.getName())) {
                     this.results.add(nextItem.getStringValue());
-                } else if (typeName.equals(ItemType.integerItem.getName())) {
+                } else if (typeName.equals(AtomicItemType.integerItem.getName())) {
                     this.results.add(nextItem.castToIntValue());
-                } else if (typeName.equals(ItemType.doubleItem.getName())) {
+                } else if (typeName.equals(AtomicItemType.doubleItem.getName())) {
                     this.results.add(nextItem.castToDoubleValue());
-                } else if (typeName.equals(ItemType.decimalItem.getName())) {
+                } else if (typeName.equals(AtomicItemType.decimalItem.getName())) {
                     this.results.add(nextItem.castToDecimalValue());
                 } else if (
-                    typeName.equals(ItemType.durationItem.getName())
-                        || typeName.equals(ItemType.yearMonthDurationItem.getName())
-                        || typeName.equals(ItemType.dayTimeDurationItem.getName())
+                    typeName.equals(AtomicItemType.durationItem.getName())
+                        || typeName.equals(AtomicItemType.yearMonthDurationItem.getName())
+                        || typeName.equals(AtomicItemType.dayTimeDurationItem.getName())
                 ) {
                     this.results.add(
                         nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
                     );
                 } else if (
-                    typeName.equals(ItemType.dateTimeItem.getName())
-                        || typeName.equals(ItemType.dateItem.getName())
-                        || typeName.equals(ItemType.timeItem.getName())
+                    typeName.equals(AtomicItemType.dateTimeItem.getName())
+                        || typeName.equals(AtomicItemType.dateItem.getName())
+                        || typeName.equals(AtomicItemType.timeItem.getName())
                 ) {
                     this.results.add(nextItem.getDateTimeValue().getMillis());
                 } else {

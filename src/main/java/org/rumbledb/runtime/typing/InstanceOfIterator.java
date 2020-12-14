@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 

@@ -21,6 +21,7 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 public abstract class JsonItem extends Item {
@@ -44,6 +45,6 @@ public abstract class JsonItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.JSONItem) || type.equals(ItemType.item);
+        return type.equals(AtomicItemType.JSONItem) || type.equals(ItemType.item);
     }
 }

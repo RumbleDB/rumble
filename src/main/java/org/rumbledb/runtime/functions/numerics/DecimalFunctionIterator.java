@@ -12,6 +12,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.List;
@@ -50,9 +51,9 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                 if (atomicItem.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
                 }
-                if (atomicItem.isCastableAs(ItemType.decimalItem)) {
+                if (atomicItem.isCastableAs(AtomicItemType.decimalItem)) {
                     try {
-                        return atomicItem.castAs(ItemType.decimalItem);
+                        return atomicItem.castAs(AtomicItemType.decimalItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

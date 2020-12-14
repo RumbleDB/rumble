@@ -109,8 +109,7 @@ import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.*;
 
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
@@ -124,6 +123,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 
 /**
@@ -1117,7 +1117,26 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.item == null) {
             return SequenceType.EMPTY_SEQUENCE;
         }
-        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
+        ItemType itemType;
+        JsoniqParser.FunctionTestContext fnCtx = ctx.item.functionTest();
+        if(fnCtx == null){
+            // non-function item type
+            itemType = ItemType.getItemTypeByName(ctx.item.getText());
+        } else {
+            // function item type
+            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
+            if(typedFnCtx == null){
+                // function(*)
+                itemType = FunctionItemType.ANYFUNCTION;
+            } else {
+                // typed function
+                SequenceType rt = processSequenceType(typedFnCtx.rt);
+                List<SequenceType> st = typedFnCtx.st.stream().map(this::processSequenceType).collect(Collectors.toList());
+                FunctionSignature signature = new FunctionSignature(st, rt);
+                itemType = new FunctionItemType(signature);
+            }
+        }
+
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,

@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -88,29 +89,29 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.decimalItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.decimalItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(AtomicItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
         }
-        if (itemType.equals(ItemType.decimalItem)) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.integerItem)) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(String.valueOf(this.getDecimalValue()));
         }
         throw new ClassCastException();
@@ -118,9 +119,9 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
+        return !itemType.equals(AtomicItemType.atomicItem)
             &&
-            !itemType.equals(ItemType.nullItem);
+            !itemType.equals(AtomicItemType.nullItem);
     }
 
     @Override
@@ -266,6 +267,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.decimalItem;
+        return AtomicItemType.decimalItem;
+    }
+
+    @Override
+    public String getSparkSqlQuery() {
+        return this.value.toString();
     }
 }
