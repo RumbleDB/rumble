@@ -95,7 +95,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(name))){
             NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, name);
             StructField field = structSchema.fields()[structSchema.fieldIndex(name)];
-            newContext.setSchema(field.dataType());
+            DataType fieldType = field.dataType();
+            if(fieldType.typeName().equals("binary")){
+                return NativeClauseContext.NoNativeQuery;
+            }
+            newContext.setSchema(fieldType);
             return newContext;
         } else {
             List<Item> items = nativeClauseContext.getContext().getVariableValues().getLocalVariableValue(this.variableName, getMetadata());
