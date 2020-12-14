@@ -97,7 +97,7 @@ public class SequenceOfItems {
      * @return true if it is available as an RDD of Items.
      */
     public boolean availableAsRDD() {
-        return this.iterator.isRDD();
+        return this.iterator.isRDDOrDataFrame();
     }
 
     /**

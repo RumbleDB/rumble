@@ -273,7 +273,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         if (this.child.isDataFrame()) {
-            if (this.assignmentIterator.isRDD()) {
+            if (this.assignmentIterator.isRDDOrDataFrame()) {
                 return getDataFrameFromCartesianProduct(context, parentProjection);
             }
 

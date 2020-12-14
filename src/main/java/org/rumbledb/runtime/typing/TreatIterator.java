@@ -106,7 +106,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         this.nextResult = null;
         if (this.iterator.hasNext()) {
-            if (this.iterator.isRDD()) {
+            if (this.iterator.isRDDOrDataFrame()) {
                 if (this.currentResult == null) {
                     JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();

@@ -225,7 +225,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.highestExecutionMode;
     }
 
-    public boolean isRDD() {
+    public boolean isRDDOrDataFrame() {
         if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
@@ -353,7 +353,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     ) {
         if (this.isDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
-        } else if (this.isRDD()) {
+        } else if (this.isRDDOrDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));

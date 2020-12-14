@@ -140,7 +140,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
         Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
-        df.show();
         StructType type = df.schema();
         StructField[] fields = type.fields();
         if (fields.length != 1 || !fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
@@ -156,7 +155,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        df.distinct().show();
         return df.distinct();
     }
 }
