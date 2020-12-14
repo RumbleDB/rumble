@@ -72,7 +72,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
-        if (expression.isRDD()) {
+        if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
@@ -122,7 +122,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
-        if (expression.isRDD()) {
+        if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
                 throw new JobWithinAJobException(
                         "A return clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",

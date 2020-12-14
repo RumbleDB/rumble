@@ -68,7 +68,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
             return inputDataAsDataFrame;
         }
 
-        if (inputDataIterator.isRDD()) {
+        if (inputDataIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
             try {
                 return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);

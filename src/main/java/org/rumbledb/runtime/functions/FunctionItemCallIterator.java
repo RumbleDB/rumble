@@ -181,7 +181,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             } else {
                 if (argIterator.isDataFrame()) {
                     DFArgumentValues.put(argName, argIterator.getDataFrame(context));
-                } else if (argIterator.isRDD()) {
+                } else if (argIterator.isRDDOrDataFrame()) {
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
                     localArgumentValues.put(argName, argIterator.materialize(context));
@@ -228,7 +228,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
             if (argIterator.isDataFrame()) {
                 DFArgumentValues.put(argName, argIterator.getDataFrame(context));
-            } else if (argIterator.isRDD()) {
+            } else if (argIterator.isRDDOrDataFrame()) {
                 RDDArgumentValues.put(argName, argIterator.getRDD(context));
             } else {
                 localArgumentValues.put(argName, argIterator.materialize(context));
