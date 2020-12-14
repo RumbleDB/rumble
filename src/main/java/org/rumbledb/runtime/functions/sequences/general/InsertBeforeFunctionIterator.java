@@ -64,7 +64,7 @@ public class InsertBeforeFunctionIterator extends HybridRuntimeIterator {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         JavaPairRDD<Item, Long> zippedRDD = childRDD.zipWithIndex();
 
-        if (this.insertIterator.isRDD()) {
+        if (this.insertIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> insertsRDD = this.insertIterator.getRDD(context);
             JavaRDD<Item> beforeRDD = zippedRDD
                 .filter((item) -> item._2() < this.insertPosition - 1)

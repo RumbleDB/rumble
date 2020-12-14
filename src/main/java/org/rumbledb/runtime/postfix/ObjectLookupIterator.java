@@ -237,9 +237,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof StructType) {
-                return childDataFrame.sparkSession().sql(String.format("SELECT `%s`.* FROM object", key));
+                Dataset<Row> result = childDataFrame.sparkSession()
+                    .sql(String.format("SELECT `%s`.* FROM object", key));
+                return result;
             } else {
-                return childDataFrame.sparkSession()
+                Dataset<Row> result = childDataFrame.sparkSession()
                     .sql(
                         String.format(
                             "SELECT `%s` AS `%s` FROM object",
@@ -247,8 +249,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                             SparkSessionManager.atomicJSONiqItemColumnName
                         )
                     );
+                return result;
             }
         }
-        return childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
+        Dataset<Row> result = childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
+        return result;
     }
 }

@@ -58,7 +58,7 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            if (!this.child.isRDD()) {
+            if (!this.child.isRDDOrDataFrame()) {
                 List<Item> items = new ArrayList<>();
                 this.child.open(this.currentDynamicContextForLocalExecution);
 
