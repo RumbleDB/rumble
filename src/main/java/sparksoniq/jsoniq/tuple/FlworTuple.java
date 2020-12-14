@@ -182,4 +182,25 @@ public class FlworTuple implements Serializable, KryoSerializable {
         this.rddVariables = kryo.readObject(input, LinkedHashMap.class);
         this.dataFrameVariables = kryo.readObject(input, LinkedHashMap.class);
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        sb.append("  Local:\n");
+        for (Name s : this.localVariables.keySet()) {
+            sb.append("    ");
+            sb.append(s);
+        }
+        sb.append("\n  RDD:\n");
+        for (Name s : this.rddVariables.keySet()) {
+            sb.append("    ");
+            sb.append(s);
+        }
+        sb.append("\n  DataFrame:\n");
+        for (Name s : this.dataFrameVariables.keySet()) {
+            sb.append("    ");
+            sb.append(s);
+        }
+        return sb.toString();
+    }
 }

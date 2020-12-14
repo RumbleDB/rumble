@@ -141,6 +141,43 @@ public class ItemParser implements Serializable {
         return convertValueToItem(null, 0, o, fieldType, metadata);
     }
 
+    public static ItemType convertDataTypeToItemType(DataType dt) {
+        if (dt instanceof StructType) {
+            return ItemType.objectItem;
+        }
+        if (dt instanceof ArrayType) {
+            return ItemType.arrayItem;
+        }
+        if (dt.equals(DataTypes.StringType)) {
+            return ItemType.stringItem;
+        } else if (dt.equals(DataTypes.BooleanType)) {
+            return ItemType.booleanItem;
+        } else if (dt.equals(DataTypes.DoubleType)) {
+            return ItemType.doubleItem;
+        } else if (dt.equals(DataTypes.IntegerType)) {
+            return ItemType.integerItem;
+        } else if (dt.equals(DataTypes.FloatType)) {
+            return ItemType.doubleItem;
+        } else if (dt.equals(decimalType)) {
+            return ItemType.decimalItem;
+        } else if (dt.equals(DataTypes.LongType)) {
+            return ItemType.integerItem;
+        } else if (dt.equals(DataTypes.NullType)) {
+            return ItemType.nullItem;
+        } else if (dt.equals(DataTypes.ShortType)) {
+            return ItemType.integerItem;
+        } else if (dt.equals(DataTypes.TimestampType)) {
+            return ItemType.dateTimeItem;
+        } else if (dt.equals(DataTypes.DateType)) {
+            return ItemType.dateItem;
+        } else if (dt.equals(DataTypes.BinaryType)) {
+            return ItemType.hexBinaryItem;
+        } else if (dt instanceof VectorUDT) {
+            return ItemType.arrayItem;
+        }
+        throw new OurBadException("DataFrame type unsupported: " + dt);
+    }
+
     private static Item convertValueToItem(
             Row row,
             int i,

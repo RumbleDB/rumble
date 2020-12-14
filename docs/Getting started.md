@@ -39,14 +39,14 @@ Create, in the same directory as Rumble to keep it simple, a file data.json and 
 
 In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit spark-rumble-1.9.0.jar --shell yes
+    spark-submit spark-rumble-1.9.1.jar --shell yes
                  
 The Rumble shell appears:
 
         ____                  __    __   
        / __ \__  ______ ___  / /_  / /__ 
       / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.9.0 "Scots pine" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/  1.9.1 "Scots pine" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
     
     

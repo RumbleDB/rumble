@@ -169,7 +169,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         &&
                         forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
                 ) {
-
                     RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
                     Name forVariable = forChild.getVariableName();
 
@@ -178,7 +177,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             && forChild.getPositionalVariableName() == null
                             && !forChild.isAllowingEmpty()
                     ) {
-                        System.out.println(
+                        System.err.println(
                             "[INFO] Rumble detected a join predicate in the where clause."
                         );
 

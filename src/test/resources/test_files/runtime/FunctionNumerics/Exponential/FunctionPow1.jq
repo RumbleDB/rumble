@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(8, -8, 0.125, 1, 1, 0, -0, Infinity, -Infinity)" :)
+(:JIQS: ShouldRun; Output="(8, -8, 0.125, 1, 1, 0, -0, INF, -INF)" :)
 pow(2, 3),
 pow(-2, 3),
 pow(2, -3),
