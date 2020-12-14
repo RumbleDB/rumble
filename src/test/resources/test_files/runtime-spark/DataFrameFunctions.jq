@@ -6,5 +6,7 @@ count(reverse(structured-json-file("../../queries/denormalized.json"))),
 count(subsequence(structured-json-file("../../queries/denormalized.json"), 5)),
 count(subsequence(structured-json-file("../../queries/denormalized.json"), 5, 1)),
 count(one-or-more(structured-json-file("../../queries/denormalized.json"))),
-count(distinct-values(structured-json-file("../../queries/denormalized.json").foo[].bar))
+count(distinct-values(structured-json-file("../../queries/denormalized.json").foo[].bar)),
+try { count(distinct-values(structured-json-file("../../queries/denormalized.json").foo[])) } catch XPTY0004 { () }
+
 
