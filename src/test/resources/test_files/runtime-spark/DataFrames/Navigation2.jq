@@ -1,3 +1,3 @@
-(:JIQS: ShouldRun; Output="(27, 29, 27, 28, 23, 1, 28, 35)" :)
+(:JIQS: ShouldRun; Output="(1, 3, 5, 7, 9, 1, 3, 5, 7, 9, 1, 3, 5, 7, 9, 1, 3, 5, 7, 9, 1, 3, 5, 7, 9, 1, 3, 5, 7, 9, 1, 3, 5, 7, 9)" :)
 structured-json-file("../../../queries/denormalized.json").foo[].bar
 

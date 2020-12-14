@@ -97,17 +97,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
         while (this.sequenceIterator.hasNext()) {
             Item item = this.sequenceIterator.next();
-            if (!item.isAtomic()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. distinct-values can't be performed on non-atomics",
-                        getMetadata()
-                );
-            } else {
-                if (!this.prevResults.contains(item)) {
-                    this.prevResults.add(item);
-                    this.nextResult = item;
-                    break;
-                }
+            if (!this.prevResults.contains(item)) {
+                this.prevResults.add(item);
+                this.nextResult = item;
+                break;
             }
         }
 
@@ -122,14 +115,7 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
-        if (childRDD.filter(transformation).isEmpty()) {
-            return childRDD.distinct();
-        }
-        throw new NonAtomicKeyException(
-                "Invalid args. distinct-values can't be performed on non-atomics",
-                getMetadata()
-        );
+        return childRDD.distinct();
     }
 
     @Override
@@ -140,21 +126,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
         Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
-        StructType type = df.schema();
-        StructField[] fields = type.fields();
-        if (fields.length != 1 || !fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. distinct-values can't be performed on non-atomics",
-                    getMetadata()
-            );
-        }
-        DataType dataType = fields[0].dataType();
-        if (dataType instanceof StructType || dataType instanceof ArrayType || dataType instanceof MapType) {
-            throw new NonAtomicKeyException(
-                    "Invalid args. distinct-values can't be performed on non-atomics",
-                    getMetadata()
-            );
-        }
         return df.distinct();
     }
 }
