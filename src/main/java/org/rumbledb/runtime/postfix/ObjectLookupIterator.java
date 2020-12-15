@@ -221,9 +221,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if(newContext != NativeClauseContext.NoNativeQuery){
-            this.currentDynamicContextForLocalExecution = newContext.getContext();
-            initLookupKey();
-            this.currentDynamicContextForLocalExecution = null;
+            initLookupKey(newContext.getContext());
             String key = this.lookupKey.getStringValue();
             DataType schema = newContext.getSchema();
             if(!(schema instanceof StructType)){

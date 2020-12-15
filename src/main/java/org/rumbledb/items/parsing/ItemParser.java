@@ -143,37 +143,37 @@ public class ItemParser implements Serializable {
 
     public static ItemType convertDataTypeToItemType(DataType dt) {
         if (dt instanceof StructType) {
-            return ItemType.objectItem;
+            return AtomicItemType.objectItem;
         }
         if (dt instanceof ArrayType) {
-            return ItemType.arrayItem;
+            return AtomicItemType.arrayItem;
         }
         if (dt.equals(DataTypes.StringType)) {
-            return ItemType.stringItem;
+            return AtomicItemType.stringItem;
         } else if (dt.equals(DataTypes.BooleanType)) {
-            return ItemType.booleanItem;
+            return AtomicItemType.booleanItem;
         } else if (dt.equals(DataTypes.DoubleType)) {
-            return ItemType.doubleItem;
+            return AtomicItemType.doubleItem;
         } else if (dt.equals(DataTypes.IntegerType)) {
-            return ItemType.integerItem;
+            return AtomicItemType.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
-            return ItemType.doubleItem;
+            return AtomicItemType.doubleItem;
         } else if (dt.equals(decimalType)) {
-            return ItemType.decimalItem;
+            return AtomicItemType.decimalItem;
         } else if (dt.equals(DataTypes.LongType)) {
-            return ItemType.integerItem;
+            return AtomicItemType.integerItem;
         } else if (dt.equals(DataTypes.NullType)) {
-            return ItemType.nullItem;
+            return AtomicItemType.nullItem;
         } else if (dt.equals(DataTypes.ShortType)) {
-            return ItemType.integerItem;
+            return AtomicItemType.integerItem;
         } else if (dt.equals(DataTypes.TimestampType)) {
-            return ItemType.dateTimeItem;
+            return AtomicItemType.dateTimeItem;
         } else if (dt.equals(DataTypes.DateType)) {
-            return ItemType.dateItem;
+            return AtomicItemType.dateItem;
         } else if (dt.equals(DataTypes.BinaryType)) {
-            return ItemType.hexBinaryItem;
+            return AtomicItemType.hexBinaryItem;
         } else if (dt instanceof VectorUDT) {
-            return ItemType.arrayItem;
+            return AtomicItemType.arrayItem;
         }
         throw new OurBadException("DataFrame type unsupported: " + dt);
     }

@@ -11,10 +11,12 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -188,7 +190,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             return df;
         }
         ItemType dataItemType = TreatIterator.getItemType(df);
-        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && this.itemType.equals(ItemType.doubleItem)) {
+        if (dataItemType.isSubtypeOf(AtomicItemType.decimalItem) && this.itemType.equals(AtomicItemType.doubleItem)) {
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
                 .sql(
