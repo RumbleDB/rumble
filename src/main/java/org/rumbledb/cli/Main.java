@@ -104,12 +104,16 @@ public class Main {
                 }
                 System.exit(42);
             } else if (ex instanceof IllegalArgumentException) {
-                System.err.println("⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8.");
+                System.err.println(
+                    "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
+                );
                 System.err.println(
                     "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
                 );
                 System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
-                System.err.println("For more debug info, please try again using --show-error-info yes in your command line.");
+                System.err.println(
+                    "For more debug info, please try again using --show-error-info yes in your command line."
+                );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
@@ -119,8 +123,12 @@ public class Main {
                 System.err.println(
                     "There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
                 );
-                System.err.println("We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available.");
-                System.err.println("For more debug info, please try again using --show-error-info yes in your command line.");
+                System.err.println(
+                    "We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
+                );
+                System.err.println(
+                    "For more debug info, please try again using --show-error-info yes in your command line."
+                );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
@@ -131,7 +139,9 @@ public class Main {
                     "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
                 );
                 System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                System.err.println("For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line.");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
