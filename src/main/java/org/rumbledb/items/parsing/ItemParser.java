@@ -76,15 +76,25 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createStringItem(s);
             }
-            if (token == '+' || token == '-'|| token == '.' || (token >= '0' && token <= '9')) {
+            if (token == '+' || token == '-' || token == '.' || (token >= '0' && token <= '9')) {
                 StringBuilder sb = new StringBuilder();
-                while (token == '+' || token == '-'|| token == '.' || (token >= '0' && token <= '9') || token == 'e' || token == 'E') {
+                while (
+                    token == '+'
+                        || token == '-'
+                        || token == '.'
+                        || (token >= '0' && token <= '9')
+                        || token == 'e'
+                        || token == 'E'
+                ) {
                     sb.append((char) token);
                     try {
                         token = object.getNextToken();
                     } catch (IOException e) {
                         if (!isTopLevel) {
-                            RumbleException ex = new ParsingException("Parsing error! , or ] or } expected but found " + (char) token, metadata);
+                            RumbleException ex = new ParsingException(
+                                    "Parsing error! , or ] or } expected but found " + (char) token,
+                                    metadata
+                            );
                             ex.initCause(e);
                             throw ex;
                         }
