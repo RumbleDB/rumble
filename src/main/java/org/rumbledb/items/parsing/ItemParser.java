@@ -39,6 +39,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import com.dslplatform.json.JsonReader;
 import org.rumbledb.types.ItemType;
@@ -63,12 +64,13 @@ public class ItemParser implements Serializable {
 
     public static Item getItemFromObject(JsonReader<Object> object, ExceptionMetadata metadata, boolean isTopLevel) {
         try {
+            if(isTopLevel)
+            {
+                object.getNextToken();
+            }
             byte token = object.last();
             if (token  == '"') {
                 String s = object.readString();
-                if (object.getNextToken() != '"') {
-                    throw new ParsingException("Parsing error! double quote expected to end string", metadata);
-                }
                 if(!isTopLevel) {
                     object.getNextToken();
                 }
@@ -118,7 +120,10 @@ public class ItemParser implements Serializable {
                     object.getNextToken();
                     values.add(getItemFromObject(object, metadata, false));
                 }
-                object.endArray();
+                if(object.last() != ']')
+                {
+                    throw new ParsingException("Parsing error! ] expected", metadata);
+                };
                 if(!isTopLevel) {
                     object.getNextToken();
                 }
@@ -132,7 +137,10 @@ public class ItemParser implements Serializable {
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
                 }
-                object.endObject();
+                if(object.last() != '}')
+                {
+                    throw new ParsingException("Parsing error! } expected", metadata);
+                };
                 if(!isTopLevel) {
                     object.getNextToken();
                 }
@@ -149,12 +157,14 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed! Token: " + token, metadata);
         } catch (Exception e) {
-            throw new ParsingException(
+            RumbleException ex = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
+            ex.initCause(e);
+            throw ex;
         }
     }
 

@@ -281,7 +281,6 @@
 		  <groupId>com.dslplatform</groupId>
 		  <artifactId>dsl-json-processor</artifactId>
 		  <version>1.9.7</version>
-		  <scope>provided</scope>
 		</dependency>
     </dependencies>
 
