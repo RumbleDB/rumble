@@ -46,6 +46,7 @@ import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
@@ -81,8 +82,18 @@ public class ItemParser implements Serializable {
                 while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
                 {
                     sb.append(token);
-                    token = object.getNextToken();
-                    // Here atm this will fail if this is a top-level, lone number.
+                    try {
+                        token = object.getNextToken();
+                    } catch (IOException e)
+                    {
+                        if(!isTopLevel)
+                        {
+                            RumbleException ex = new ParsingException("Parsing error! , or ] or } expected.", metadata);
+                            ex.initCause(e);
+                            throw ex;
+                        }
+                        // Here atm this will fail if this is a top-level, lone number.
+                    }
                 }
                 String number = sb.toString();
                 if (number.contains("E") || number.contains("e")) {
