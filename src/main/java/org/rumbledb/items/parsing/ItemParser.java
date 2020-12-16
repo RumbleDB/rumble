@@ -81,6 +81,7 @@ public class ItemParser implements Serializable {
                 {
                     sb.append(object.read());
                     token = object.getNextToken();
+                    // Here atm this will fail if this is a top-level, lone number.
                 }
                 String number = sb.toString();
                 if (number.contains("E") || number.contains("e")) {
