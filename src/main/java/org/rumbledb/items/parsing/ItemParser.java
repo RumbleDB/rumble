@@ -77,8 +77,7 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createStringItem(s);
             }
             if (token == '+' || token == '-' || (token >= '0' && token <= '9')) {
-                StringBuilder sb = new StringBuilder(token);
-                token = object.getNextToken();
+                StringBuilder sb = new StringBuilder();
                 while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
                 {
                     sb.append(token);
