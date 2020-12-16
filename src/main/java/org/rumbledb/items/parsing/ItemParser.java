@@ -127,7 +127,7 @@ public class ItemParser implements Serializable {
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                while (object.getNextToken() == ',' || object.last() == '{') {
+                while (object.last() == ',' || object.last() == '{') {
                     object.getNextToken();
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
