@@ -81,7 +81,7 @@ public class ItemParser implements Serializable {
                 StringBuilder sb = new StringBuilder();
                 while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
                 {
-                    sb.append(token);
+                    sb.append((char)token);
                     try {
                         token = object.getNextToken();
                     } catch (IOException e)
@@ -96,6 +96,7 @@ public class ItemParser implements Serializable {
                     }
                 }
                 String number = sb.toString();
+                System.out.println(number);
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
