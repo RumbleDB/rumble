@@ -65,29 +65,25 @@ public class ItemParser implements Serializable {
 
     public static Item getItemFromObject(JsonReader<Object> object, ExceptionMetadata metadata, boolean isTopLevel) {
         try {
-            if(isTopLevel)
-            {
+            if (isTopLevel) {
                 object.getNextToken();
             }
             byte token = object.last();
-            if (token  == '"') {
+            if (token == '"') {
                 String s = object.readString();
-                if(!isTopLevel) {
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance().createStringItem(s);
             }
             if (token == '+' || token == '-' || (token >= '0' && token <= '9')) {
                 StringBuilder sb = new StringBuilder();
-                while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
-                {
-                    sb.append((char)token);
+                while (token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E') {
+                    sb.append((char) token);
                     try {
                         token = object.getNextToken();
-                    } catch (IOException e)
-                    {
-                        if(!isTopLevel)
-                        {
+                    } catch (IOException e) {
+                        if (!isTopLevel) {
                             RumbleException ex = new ParsingException("Parsing error! , or ] or } expected.", metadata);
                             ex.initCause(e);
                             throw ex;
@@ -105,21 +101,19 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
             if (token == 't') {
-                if(!object.wasTrue())
-                {
+                if (!object.wasTrue()) {
                     throw new ParsingException("Parsing error! true expected", metadata);
                 }
-                if(!isTopLevel) {
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
             if (token == 'f') {
-                if(!object.wasTrue())
-                {
+                if (!object.wasTrue()) {
                     throw new ParsingException("Parsing error! false expected", metadata);
                 }
-                if(!isTopLevel) {
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance().createBooleanItem(false);
@@ -130,11 +124,10 @@ public class ItemParser implements Serializable {
                     object.getNextToken();
                     values.add(getItemFromObject(object, metadata, false));
                 }
-                if(object.last() != ']')
-                {
+                if (object.last() != ']') {
                     throw new ParsingException("Parsing error! ] expected", metadata);
-                };
-                if(!isTopLevel) {
+                } ;
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance().createArrayItem(values);
@@ -147,27 +140,28 @@ public class ItemParser implements Serializable {
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
                 }
-                if(object.last() != '}')
-                {
+                if (object.last() != '}') {
                     throw new ParsingException("Parsing error! } expected", metadata);
-                };
-                if(!isTopLevel) {
+                } ;
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
             if (token == 'n') {
-                if(!object.wasNull())
-                {
+                if (!object.wasNull()) {
                     throw new ParsingException("Parsing error! null expected", metadata);
                 }
-                if(!isTopLevel) {
+                if (!isTopLevel) {
                     object.getNextToken();
                 }
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed! Token: " + token, metadata);
+            throw new ParsingException(
+                    "Invalid value found while parsing. JSON is not well-formed! Token: " + token,
+                    metadata
+            );
         } catch (Exception e) {
             RumbleException ex = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
