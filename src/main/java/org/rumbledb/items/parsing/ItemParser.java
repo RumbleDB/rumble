@@ -96,7 +96,6 @@ public class ItemParser implements Serializable {
                     }
                 }
                 String number = sb.toString();
-                System.out.println(number);
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
