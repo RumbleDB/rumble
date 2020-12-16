@@ -51,7 +51,7 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
             public Item next() {
                 DslJson<Object> dslJson = new DslJson<Object>();
                 JsonReader<Object> object = dslJson.newReader(stringIterator.next().getBytes(Charset.forName("UTF-8")));
-                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
+                return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata, true);
             }
 
             @Override

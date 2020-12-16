@@ -61,7 +61,7 @@ public class ItemParser implements Serializable {
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
-    public static Item getItemFromObject(JsonReader<Object> object, ExceptionMetadata metadata) {
+    public static Item getItemFromObject(JsonReader<Object> object, ExceptionMetadata metadata, boolean isTopLevel) {
         try {
             byte token = object.last();
             if (token  == '"') {
@@ -69,15 +69,18 @@ public class ItemParser implements Serializable {
                 if (object.getNextToken() != '"') {
                     throw new ParsingException("Parsing error! double quote expected to end string", metadata);
                 }
-                object.getNextToken();
+                if(!isTopLevel) {
+                    object.getNextToken();
+                }
                 return ItemFactory.getInstance().createStringItem(s);
             }
             if (token == '+' || token == '-' || (token >= '0' && token <= '9')) {
                 StringBuilder sb = new StringBuilder(token);
-                token = object.read();
+                token = object.getNextToken();
                 while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
                 {
                     sb.append(object.read());
+                    token = object.getNextToken();
                 }
                 String number = sb.toString();
                 if (number.contains("E") || number.contains("e")) {
@@ -93,6 +96,9 @@ public class ItemParser implements Serializable {
                 {
                     throw new ParsingException("Parsing error! true expected", metadata);
                 }
+                if(!isTopLevel) {
+                    object.getNextToken();
+                }
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
             if (token == 'f') {
@@ -100,25 +106,35 @@ public class ItemParser implements Serializable {
                 {
                     throw new ParsingException("Parsing error! false expected", metadata);
                 }
+                if(!isTopLevel) {
+                    object.getNextToken();
+                }
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
             if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                object.getNextToken();
-                while (object.last() == ',') {
-                    values.add(getItemFromObject(object, metadata));
+                while (object.last() == ',' || object.last() == '[') {
+                    object.getNextToken();
+                    values.add(getItemFromObject(object, metadata, false));
                 }
                 object.endArray();
+                if(!isTopLevel) {
+                    object.getNextToken();
+                }
                 return ItemFactory.getInstance().createArrayItem(values);
             }
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                while (object.getNextToken() == ',') {
+                while (object.getNextToken() == ',' || object.last() == '{') {
+                    object.getNextToken();
                     keys.add(object.readKey());
-                    values.add(getItemFromObject(object, metadata));
+                    values.add(getItemFromObject(object, metadata, false));
                 }
                 object.endObject();
+                if(!isTopLevel) {
+                    object.getNextToken();
+                }
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
@@ -126,6 +142,9 @@ public class ItemParser implements Serializable {
                 if(!object.wasNull())
                 {
                     throw new ParsingException("Parsing error! null expected", metadata);
+                }
+                if(!isTopLevel) {
+                    object.getNextToken();
                 }
                 return ItemFactory.getInstance().createNullItem();
             }

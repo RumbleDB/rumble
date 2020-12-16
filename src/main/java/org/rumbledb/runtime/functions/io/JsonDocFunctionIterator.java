@@ -82,7 +82,7 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
                 DslJson<Object> dslJson = new DslJson<Object>();
                 JsonReader<Object> object = dslJson.newReader();
                 object.process(is);
-                return ItemParser.getItemFromObject(object, getMetadata());
+                return ItemParser.getItemFromObject(object, getMetadata(), true);
             } catch (IteratorFlowException e) {
                 RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 ex.initCause(e);
