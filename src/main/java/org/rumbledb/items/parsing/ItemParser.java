@@ -76,15 +76,15 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createStringItem(s);
             }
-            if (token == '+' || token == '-' || (token >= '0' && token <= '9')) {
+            if (token == '+' || token == '-'|| token == '.' || (token >= '0' && token <= '9')) {
                 StringBuilder sb = new StringBuilder();
-                while (token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E') {
+                while (token == '+' || token == '-'|| token == '.' || (token >= '0' && token <= '9') || token == 'e' || token == 'E') {
                     sb.append((char) token);
                     try {
                         token = object.getNextToken();
                     } catch (IOException e) {
                         if (!isTopLevel) {
-                            RumbleException ex = new ParsingException("Parsing error! , or ] or } expected.", metadata);
+                            RumbleException ex = new ParsingException("Parsing error! , or ] or } expected but found " + (char) token, metadata);
                             ex.initCause(e);
                             throw ex;
                         }
@@ -110,7 +110,7 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
             if (token == 'f') {
-                if (!object.wasTrue()) {
+                if (!object.wasFalse()) {
                     throw new ParsingException("Parsing error! false expected", metadata);
                 }
                 if (!isTopLevel) {
@@ -125,7 +125,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata, false));
                 }
                 if (object.last() != ']') {
-                    throw new ParsingException("Parsing error! ] expected", metadata);
+                    throw new ParsingException("Parsing error! ] expected but found " + (char) object.last(), metadata);
                 } ;
                 if (!isTopLevel) {
                     object.getNextToken();
@@ -141,7 +141,7 @@ public class ItemParser implements Serializable {
                     values.add(getItemFromObject(object, metadata, false));
                 }
                 if (object.last() != '}') {
-                    throw new ParsingException("Parsing error! } expected", metadata);
+                    throw new ParsingException("Parsing error! } expected but found " + (char) object.last(), metadata);
                 } ;
                 if (!isTopLevel) {
                     object.getNextToken();
@@ -159,7 +159,7 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createNullItem();
             }
             throw new ParsingException(
-                    "Invalid value found while parsing. JSON is not well-formed! Token: " + token,
+                    "Invalid value found while parsing. JSON is not well-formed! Token: " + (char) token,
                     metadata
             );
         } catch (Exception e) {
