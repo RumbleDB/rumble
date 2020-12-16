@@ -40,8 +40,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.ItemFactory;
-import com.google.gson.stream.JsonReader;
-import com.google.gson.stream.JsonToken;
+import com.dslplatform.json.JsonReader;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
@@ -62,13 +61,25 @@ public class ItemParser implements Serializable {
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
-    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
+    public static Item getItemFromObject(JsonReader<Object> object, ExceptionMetadata metadata) {
         try {
-            if (object.peek() == JsonToken.STRING) {
-                return ItemFactory.getInstance().createStringItem(object.nextString());
+            byte token = object.last();
+            if (token  == '"') {
+                String s = object.readString();
+                if (object.getNextToken() != '"') {
+                    throw new ParsingException("Parsing error! double quote expected to end string", metadata);
+                }
+                object.getNextToken();
+                return ItemFactory.getInstance().createStringItem(s);
             }
-            if (object.peek() == JsonToken.NUMBER) {
-                String number = object.nextString();
+            if (token == '+' || token == '-' || (token >= '0' && token <= '9')) {
+                StringBuilder sb = new StringBuilder(token);
+                token = object.read();
+                while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
+                {
+                    sb.append(object.read());
+                }
+                String number = sb.toString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
@@ -77,32 +88,45 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (object.peek() == JsonToken.BOOLEAN) {
-                return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
+            if (token == 't') {
+                if(!object.wasTrue())
+                {
+                    throw new ParsingException("Parsing error! true expected", metadata);
+                }
+                return ItemFactory.getInstance().createBooleanItem(true);
             }
-            if (object.peek() == JsonToken.BEGIN_ARRAY) {
+            if (token == 'f') {
+                if(!object.wasTrue())
+                {
+                    throw new ParsingException("Parsing error! false expected", metadata);
+                }
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                object.beginArray();
-                while (object.hasNext()) {
+                object.getNextToken();
+                while (object.last() == ',') {
                     values.add(getItemFromObject(object, metadata));
                 }
                 object.endArray();
                 return ItemFactory.getInstance().createArrayItem(values);
             }
-            if (object.peek() == JsonToken.BEGIN_OBJECT) {
+            if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                object.beginObject();
-                while (object.hasNext()) {
-                    keys.add(object.nextName());
+                while (object.getNextToken() == ',') {
+                    keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata));
                 }
                 object.endObject();
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
-            if (object.peek() == JsonToken.NULL) {
-                object.nextNull();
+            if (token == 'n') {
+                if(!object.wasNull())
+                {
+                    throw new ParsingException("Parsing error! null expected", metadata);
+                }
                 return ItemFactory.getInstance().createNullItem();
             }
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
