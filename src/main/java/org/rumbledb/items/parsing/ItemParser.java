@@ -81,7 +81,7 @@ public class ItemParser implements Serializable {
                 token = object.getNextToken();
                 while(token == '+' || token == '-' || (token >= '0' && token <= '9') || token == 'e' || token == 'E')
                 {
-                    sb.append(object.read());
+                    sb.append(token);
                     token = object.getNextToken();
                     // Here atm this will fail if this is a top-level, lone number.
                 }
