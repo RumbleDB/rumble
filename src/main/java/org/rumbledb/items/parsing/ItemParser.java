@@ -88,7 +88,7 @@ public class ItemParser implements Serializable {
                             ex.initCause(e);
                             throw ex;
                         }
-                        // Here atm this will fail if this is a top-level, lone number.
+                        // Here atm this will slow down if this is a top-level, lone number.
                     }
                 }
                 String number = sb.toString();
