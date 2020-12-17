@@ -60,10 +60,12 @@ import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
+import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
+import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
@@ -310,14 +312,36 @@ public class BuiltinFunctionCatalogue {
         JsonDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    static final BuiltinFunction parse_json = createBuiltinFunction(
+        "parse-json",
+        "string?",
+        "item?",
+        ParseJsonFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     /**
      * function that parses a text file
      */
+    static final BuiltinFunction unparsed_text = createBuiltinFunction(
+        "unparsed-text",
+        "string?",
+        "string?",
+        UnparsedTextFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction unparsed_text_lines = createBuiltinFunction(
+        "unparsed-text-lines",
+        "string?",
+        "string*",
+        UnparsedTextLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
     static final BuiltinFunction text_file1 = createBuiltinFunction(
         "text-file",
         "string",
         "item*",
-        TextFileFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
@@ -325,7 +349,7 @@ public class BuiltinFunctionCatalogue {
         "string",
         "integer?",
         "item*",
-        TextFileFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
@@ -1818,6 +1842,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
+        builtinFunctions.put(unparsed_text.getIdentifier(), unparsed_text);
+        builtinFunctions.put(unparsed_text_lines.getIdentifier(), unparsed_text_lines);
         builtinFunctions.put(text_file1.getIdentifier(), text_file1);
         builtinFunctions.put(text_file2.getIdentifier(), text_file2);
         builtinFunctions.put(local_text_file.getIdentifier(), local_text_file);
@@ -1830,6 +1856,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(root_file2.getIdentifier(), root_file2);
         builtinFunctions.put(avro_file1.getIdentifier(), avro_file1);
         builtinFunctions.put(avro_file2.getIdentifier(), avro_file2);
+        builtinFunctions.put(parse_json.getIdentifier(), parse_json);
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
