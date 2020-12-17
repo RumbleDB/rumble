@@ -132,6 +132,9 @@ public class ItemParser implements Serializable {
                 List<Item> values = new ArrayList<>();
                 object.getNextToken();
                 if (object.last() == ']') {
+                    if (!isTopLevel) {
+                        object.getNextToken();
+                    }
                     return ItemFactory.getInstance().createArrayItem(values);
                 }
                 while (true) {
@@ -157,6 +160,9 @@ public class ItemParser implements Serializable {
                 List<Item> values = new ArrayList<>();
                 object.getNextToken();
                 if (object.last() == '}') {
+                    if (!isTopLevel) {
+                        object.getNextToken();
+                    }
                     return ItemFactory.getInstance()
                         .createObjectItem(keys, values, metadata);
                 }
