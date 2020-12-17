@@ -130,15 +130,18 @@ public class ItemParser implements Serializable {
             }
             if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                while (object.last() != ']') {
+                while (true) {
                     object.getNextToken();
                     values.add(getItemFromObject(object, metadata, false));
-                    if (object.last() != ',' && object.last() != ']') {
+                    if (object.last() == ']') {
+                        break;
+                    }
+                    if (object.last() != ',') {
                         throw new ParsingException(
                                 "Parsing error! , or ] expected but found " + (char) object.last(),
                                 metadata
                         );
-                    } ;
+                    }
                 }
                 if (!isTopLevel) {
                     object.getNextToken();
@@ -148,11 +151,14 @@ public class ItemParser implements Serializable {
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                while (object.last() != '}') {
+                while (true) {
                     object.getNextToken();
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
-                    if (object.last() != ',' && object.last() != '}') {
+                    if (object.last() == '}') {
+                        break;
+                    }
+                    if (object.last() != ',') {
                         throw new ParsingException(
                                 "Parsing error! , or } expected but found " + (char) object.last(),
                                 metadata
