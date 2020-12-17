@@ -132,6 +132,7 @@ public class ItemParser implements Serializable {
                 List<Item> values = new ArrayList<>();
                 object.getNextToken();
                 while (object.last() != ']') {
+                    object.getNextToken();
                     values.add(getItemFromObject(object, metadata, false));
                     if (object.last() != ',' && object.last() != ']') {
                         throw new ParsingException(
@@ -151,6 +152,7 @@ public class ItemParser implements Serializable {
                 List<Item> values = new ArrayList<>();
                 object.getNextToken();
                 while (object.last() != '}') {
+                    object.getNextToken();
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
                     if (object.last() != ',' && object.last() != '}') {
