@@ -130,13 +130,14 @@ public class ItemParser implements Serializable {
             }
             if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                while (object.last() == ',' || object.last() == '[') {
-                    object.getNextToken();
+                token = object.getNextToken();
+                while (token != ']') {
                     values.add(getItemFromObject(object, metadata, false));
+                    if (token != ',' && token != ']') {
+                        throw new ParsingException("Parsing error! , or ] expected but found " + (char) object.last(), metadata);
+                    } ;
+                    token = object.getNextToken();
                 }
-                if (object.last() != ']') {
-                    throw new ParsingException("Parsing error! ] expected but found " + (char) object.last(), metadata);
-                } ;
                 if (!isTopLevel) {
                     object.getNextToken();
                 }
@@ -145,14 +146,15 @@ public class ItemParser implements Serializable {
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                while (object.last() == ',' || object.last() == '{') {
-                    object.getNextToken();
+                token = object.getNextToken();
+                while (token != '}') {
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
+                    if (token != ',' && token != '}') {
+                        throw new ParsingException("Parsing error! , or } expected but found " + (char) object.last(), metadata);
+                    } ;
+                    token = object.getNextToken();
                 }
-                if (object.last() != '}') {
-                    throw new ParsingException("Parsing error! } expected but found " + (char) object.last(), metadata);
-                } ;
                 if (!isTopLevel) {
                     object.getNextToken();
                 }
