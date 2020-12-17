@@ -52,10 +52,10 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
         JavaRDD<String> strings;
         RuntimeIterator urlIterator = this.children.get(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
-        if(url == null)
-        {
+        if (url == null) {
             return SparkSessionManager.getInstance()
-                    .getJavaSparkContext().emptyRDD();
+                .getJavaSparkContext()
+                .emptyRDD();
         }
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {

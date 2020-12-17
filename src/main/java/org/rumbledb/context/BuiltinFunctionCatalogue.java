@@ -319,7 +319,7 @@ public class BuiltinFunctionCatalogue {
         ParseJsonFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
-    
+
     /**
      * function that parses a text file
      */

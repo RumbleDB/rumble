@@ -38,7 +38,7 @@ public class UnparsedTextFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    
+
     private transient Item path;
 
     public UnparsedTextFunctionIterator(

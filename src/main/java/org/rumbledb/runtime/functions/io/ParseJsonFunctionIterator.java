@@ -37,7 +37,7 @@ public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    
+
     private transient Item string;
 
     public ParseJsonFunctionIterator(
