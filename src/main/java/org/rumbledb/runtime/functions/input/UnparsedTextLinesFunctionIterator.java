@@ -35,11 +35,11 @@ import sparksoniq.spark.SparkSessionManager;
 import java.net.URI;
 import java.util.List;
 
-public class TextFileFunctionIterator extends RDDRuntimeIterator {
+public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public TextFileFunctionIterator(
+    public UnparsedTextLinesFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -51,10 +51,13 @@ public class TextFileFunctionIterator extends RDDRuntimeIterator {
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<String> strings;
         RuntimeIterator urlIterator = this.children.get(0);
-        urlIterator.open(context);
-        String url = urlIterator.next().getStringValue();
-        urlIterator.close();
-        URI uri = FileSystemUtil.resolveURI(this.staticURI, url, getMetadata());
+        Item url = urlIterator.materializeFirstItemOrNull(context);
+        if (url == null) {
+            return SparkSessionManager.getInstance()
+                .getJavaSparkContext()
+                .emptyRDD();
+        }
+        URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
