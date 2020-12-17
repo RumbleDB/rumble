@@ -134,7 +134,10 @@ public class ItemParser implements Serializable {
                 while (token != ']') {
                     values.add(getItemFromObject(object, metadata, false));
                     if (token != ',' && token != ']') {
-                        throw new ParsingException("Parsing error! , or ] expected but found " + (char) object.last(), metadata);
+                        throw new ParsingException(
+                                "Parsing error! , or ] expected but found " + (char) object.last(),
+                                metadata
+                        );
                     } ;
                     token = object.getNextToken();
                 }
@@ -151,7 +154,10 @@ public class ItemParser implements Serializable {
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
                     if (token != ',' && token != '}') {
-                        throw new ParsingException("Parsing error! , or } expected but found " + (char) object.last(), metadata);
+                        throw new ParsingException(
+                                "Parsing error! , or } expected but found " + (char) object.last(),
+                                metadata
+                        );
                     } ;
                     token = object.getNextToken();
                 }
@@ -175,6 +181,9 @@ public class ItemParser implements Serializable {
                     metadata
             );
         } catch (Exception e) {
+            if (e instanceof ParsingException) {
+                throw (ParsingException) e;
+            }
             RumbleException ex = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
