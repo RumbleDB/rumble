@@ -130,16 +130,16 @@ public class ItemParser implements Serializable {
             }
             if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                token = object.getNextToken();
-                while (token != ']') {
+                object.getNextToken();
+                while (object.last() != ']') {
                     values.add(getItemFromObject(object, metadata, false));
-                    if (token != ',' && token != ']') {
+                    if (object.last() != ',' && object.last() != ']') {
                         throw new ParsingException(
                                 "Parsing error! , or ] expected but found " + (char) object.last(),
                                 metadata
                         );
                     } ;
-                    token = object.getNextToken();
+                    object.getNextToken();
                 }
                 if (!isTopLevel) {
                     object.getNextToken();
@@ -149,17 +149,17 @@ public class ItemParser implements Serializable {
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                token = object.getNextToken();
-                while (token != '}') {
+                object.getNextToken();
+                while (object.last() != '}') {
                     keys.add(object.readKey());
                     values.add(getItemFromObject(object, metadata, false));
-                    if (token != ',' && token != '}') {
+                    if (object.last() != ',' && object.last() != '}') {
                         throw new ParsingException(
                                 "Parsing error! , or } expected but found " + (char) object.last(),
                                 metadata
                         );
                     } ;
-                    token = object.getNextToken();
+                    object.getNextToken();
                 }
                 if (!isTopLevel) {
                     object.getNextToken();
