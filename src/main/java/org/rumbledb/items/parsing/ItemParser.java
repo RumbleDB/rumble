@@ -130,7 +130,6 @@ public class ItemParser implements Serializable {
             }
             if (token == '[') {
                 List<Item> values = new ArrayList<>();
-                object.getNextToken();
                 while (object.last() != ']') {
                     object.getNextToken();
                     values.add(getItemFromObject(object, metadata, false));
@@ -140,7 +139,6 @@ public class ItemParser implements Serializable {
                                 metadata
                         );
                     } ;
-                    object.getNextToken();
                 }
                 if (!isTopLevel) {
                     object.getNextToken();
@@ -150,7 +148,6 @@ public class ItemParser implements Serializable {
             if (token == '{') {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                object.getNextToken();
                 while (object.last() != '}') {
                     object.getNextToken();
                     keys.add(object.readKey());
@@ -161,7 +158,6 @@ public class ItemParser implements Serializable {
                                 metadata
                         );
                     } ;
-                    object.getNextToken();
                 }
                 if (!isTopLevel) {
                     object.getNextToken();
