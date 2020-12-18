@@ -38,7 +38,6 @@ import java.util.List;
 public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     private transient Item string;
 
@@ -48,27 +47,25 @@ public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
-        this.iterator = this.children.get(0);
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.string = this.iterator.materializeFirstItemOrNull(context);
-        this.hasNext = string != null;
+        this.string = this.children.get(0).materializeFirstItemOrNull(context);
+        this.hasNext = this.string != null;
     }
 
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        this.string = this.iterator.materializeFirstItemOrNull(context);
-        this.hasNext = string != null;
+        this.string = this.children.get(0).materializeFirstItemOrNull(context);
+        this.hasNext = this.string != null;
     }
 
     @Override
     public void close() {
         super.close();
-        this.iterator = null;
     }
 
     @Override
