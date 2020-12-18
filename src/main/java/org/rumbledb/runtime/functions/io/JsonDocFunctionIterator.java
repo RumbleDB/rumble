@@ -86,12 +86,14 @@ public class JsonDocFunctionIterator extends LocalFunctionCallIterator {
             } catch (IteratorFlowException e) {
                 RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
                 ex.initCause(e);
+                throw ex;
             } catch (IOException e) {
                 RumbleException ex = new IteratorFlowException(
                         "I/O Exception while binding the input stream",
                         getMetadata()
                 );
                 ex.initCause(e);
+                throw ex;
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-doc function", getMetadata());
