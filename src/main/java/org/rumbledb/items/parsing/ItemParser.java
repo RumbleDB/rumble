@@ -20,8 +20,17 @@
 
 package org.rumbledb.items.parsing;
 
-import com.jsoniter.JsonIterator;
-import com.jsoniter.ValueType;
+import java.io.Serializable;
+import java.lang.reflect.Array;
+import java.math.BigDecimal;
+import java.sql.Date;
+import java.sql.Timestamp;
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+import javax.json.stream.JsonParser;
+
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -46,14 +55,7 @@ import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
-import java.io.Serializable;
-import java.lang.reflect.Array;
-import java.math.BigDecimal;
-import java.sql.Date;
-import java.sql.Timestamp;
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import static javax.json.stream.JsonParser.Event.*;
 
 public class ItemParser implements Serializable {
 
@@ -61,14 +63,20 @@ public class ItemParser implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
+    private static final Item ARRAY_END_FLAG = ItemFactory.getInstance()
+        .createStringItem("40a2fbe0-42c0-4df9-9756-2bb3afdc3048");
+    private static final Item OBJECT_END_FLAG = ItemFactory.getInstance()
+        .createStringItem("00eed5db-fae2-4cac-acdb-9798f8b9282c");
 
-    public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
+    public static Item getItemFromObject(JsonParser object, ExceptionMetadata metadata) {
         try {
-            if (object.whatIsNext().equals(ValueType.STRING)) {
-                return ItemFactory.getInstance().createStringItem(object.readString());
+            JsonParser.Event next = object.next();
+
+            if (next == VALUE_STRING) {
+                return ItemFactory.getInstance().createStringItem(object.getString());
             }
-            if (object.whatIsNext().equals(ValueType.NUMBER)) {
-                String number = object.readNumberAsString();
+            if (next == VALUE_NUMBER) {
+                String number = object.getString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
@@ -77,29 +85,48 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (object.whatIsNext().equals(ValueType.BOOLEAN)) {
-                return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
+            if (next == VALUE_TRUE) {
+                return ItemFactory.getInstance().createBooleanItem(true);
             }
-            if (object.whatIsNext().equals(ValueType.ARRAY)) {
+            if (next == VALUE_FALSE) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (next == START_ARRAY) {
                 List<Item> values = new ArrayList<>();
-                while (object.readArray()) {
-                    values.add(getItemFromObject(object, metadata));
+                while (object.hasNext()) {
+                    Item nextItem = getItemFromObject(object, metadata);
+                    if (nextItem.isString() && nextItem.equals(ARRAY_END_FLAG)) {
+                        break;
+                    }
+                    values.add(nextItem);
                 }
                 return ItemFactory.getInstance().createArrayItem(values);
             }
-            if (object.whatIsNext().equals(ValueType.OBJECT)) {
+            if (next == END_ARRAY) {
+                return ARRAY_END_FLAG;
+            }
+            if (next == START_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                String s;
-                while ((s = object.readObject()) != null) {
-                    keys.add(s);
-                    values.add(getItemFromObject(object, metadata));
+                while (object.hasNext()) {
+                    JsonParser.Event objectNext = object.next();
+                    if (objectNext == END_OBJECT) {
+                        break;
+                    }
+                    keys.add(object.getString());
+                    Item nextItem = getItemFromObject(object, metadata);
+                    if (nextItem.isString() && nextItem.equals(OBJECT_END_FLAG)) {
+                        break;
+                    }
+                    values.add(nextItem);
                 }
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
-            if (object.whatIsNext().equals(ValueType.NULL)) {
-                object.readNull();
+            if (next == END_OBJECT) {
+                return OBJECT_END_FLAG;
+            }
+            if (next == VALUE_NULL) {
                 return ItemFactory.getInstance().createNullItem();
             }
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
