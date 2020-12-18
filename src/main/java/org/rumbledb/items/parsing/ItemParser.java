@@ -86,12 +86,10 @@ public class ItemParser implements Serializable {
                         || token == 'E'
                 ) {
                     sb.append((char) token);
-                    if(object.getCurrentIndex() != object.length())
-                    {
-                        token = object.getNextToken();
-                    } else {
-                        token = 'a';
+                    if (object.getCurrentIndex() == object.length()) {
+                        break;
                     }
+                    token = object.getNextToken();
                 }
                 String number = sb.toString();
                 if (number.contains("E") || number.contains("e")) {
