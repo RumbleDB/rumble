@@ -71,27 +71,23 @@ public class ItemParser implements Serializable {
     public static Item getItemFromObject(JsonParser object, ExceptionMetadata metadata) {
         try {
             JsonParser.Event next = object.next();
-
+            Item result;
             if (next == VALUE_STRING) {
-                return ItemFactory.getInstance().createStringItem(object.getString());
-            }
-            if (next == VALUE_NUMBER) {
+                result = ItemFactory.getInstance().createStringItem(object.getString());
+            } else if (next == VALUE_NUMBER) {
                 String number = object.getString();
                 if (number.contains("E") || number.contains("e")) {
-                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                    result = ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                } else if (number.contains(".")) {
+                    result = ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                } else {
+                    result = ItemFactory.getInstance().createIntegerItem(number);
                 }
-                if (number.contains(".")) {
-                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
-                }
-                return ItemFactory.getInstance().createIntegerItem(number);
-            }
-            if (next == VALUE_TRUE) {
-                return ItemFactory.getInstance().createBooleanItem(true);
-            }
-            if (next == VALUE_FALSE) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-            if (next == START_ARRAY) {
+            } else if (next == VALUE_TRUE) {
+                result = ItemFactory.getInstance().createBooleanItem(true);
+            } else if (next == VALUE_FALSE) {
+                result = ItemFactory.getInstance().createBooleanItem(false);
+            } else if (next == START_ARRAY) {
                 List<Item> values = new ArrayList<>();
                 while (object.hasNext()) {
                     Item nextItem = getItemFromObject(object, metadata);
@@ -100,12 +96,10 @@ public class ItemParser implements Serializable {
                     }
                     values.add(nextItem);
                 }
-                return ItemFactory.getInstance().createArrayItem(values);
-            }
-            if (next == END_ARRAY) {
-                return ARRAY_END_FLAG;
-            }
-            if (next == START_OBJECT) {
+                result = ItemFactory.getInstance().createArrayItem(values);
+            } else if (next == END_ARRAY) {
+                result = ARRAY_END_FLAG;
+            } else if (next == START_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
                 while (object.hasNext()) {
@@ -120,16 +114,20 @@ public class ItemParser implements Serializable {
                     }
                     values.add(nextItem);
                 }
-                return ItemFactory.getInstance()
+                result = ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
+            } else if (next == END_OBJECT) {
+                result = OBJECT_END_FLAG;
+            } else if (next == VALUE_NULL) {
+                result = ItemFactory.getInstance().createNullItem();
+            } else {
+                throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
             }
-            if (next == END_OBJECT) {
-                return OBJECT_END_FLAG;
-            }
-            if (next == VALUE_NULL) {
-                return ItemFactory.getInstance().createNullItem();
-            }
-            throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
+
+            // this hasNext call throws if more than a single top level item is detected, otherwise does nothing
+            object.hasNext();
+
+            return result;
         } catch (Exception e) {
             throw new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
