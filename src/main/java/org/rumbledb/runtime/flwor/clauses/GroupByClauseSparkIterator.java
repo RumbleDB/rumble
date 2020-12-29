@@ -308,7 +308,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
             variableAccessNames,
-            this.dependencies,
+            parentProjection,
             inputSchema,
             context
         );
@@ -521,7 +521,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     selectString.append(entry.getKey().toString());
                     selectString.append("`) as `");
                     selectString.append(entry.getKey().toString());
-                    selectString.append(".count`)");
+                    selectString.append(".count`");
                 } else if (groupingVariables.contains(entry.getKey())) {
                     // we are considering one of the grouping variables
                     selectString.append(entry.getKey().toString());
