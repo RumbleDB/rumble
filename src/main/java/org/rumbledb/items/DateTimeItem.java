@@ -320,4 +320,7 @@ public class DateTimeItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.dateTimeItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

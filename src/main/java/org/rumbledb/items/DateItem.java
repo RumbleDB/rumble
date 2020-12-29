@@ -198,4 +198,7 @@ public class DateItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.dateItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

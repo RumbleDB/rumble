@@ -6,12 +6,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -61,32 +59,30 @@ public class CastableIterator extends LocalRuntimeIterator {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
-            AtomicItem atomicItem = checkInvalidCastable(items.get(0), getMetadata(), this.sequenceType);
+            Item item = items.get(0);
+            checkInvalidCastable(item, getMetadata(), this.sequenceType);
 
             return ItemFactory.getInstance()
-                .createBooleanItem(atomicItem.isCastableAs(this.sequenceType.getItemType()));
+                .createBooleanItem(item.isCastableAs(this.sequenceType.getItemType()));
         } else {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
     }
 
-    static AtomicItem checkInvalidCastable(Item item, ExceptionMetadata metadata, SequenceType type) {
+    static void checkInvalidCastable(Item item, ExceptionMetadata metadata, SequenceType type) {
         if (type.getItemType().equals(AtomicItemType.atomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
-        AtomicItem atomicItem;
-
         if (item.isAtomic()) {
-            atomicItem = (AtomicItem) item;
-        } else {
-            String message = String.format(
-                "Can not atomize an %1$s item: an %1$s has probably been passed where "
-                    +
-                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                item.getDynamicType().toString()
-            );
-            throw new NonAtomicKeyException(message, metadata);
+            return;
         }
-        return atomicItem;
+
+        String message = String.format(
+            "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                +
+                "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+            item.getDynamicType().toString()
+        );
+        throw new NonAtomicKeyException(message, metadata);
     }
 }

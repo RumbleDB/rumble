@@ -120,4 +120,7 @@ public class NullItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.nullItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

@@ -307,4 +307,7 @@ public class DurationItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.durationItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

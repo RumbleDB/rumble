@@ -9,11 +9,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 
 import java.util.List;
 
@@ -42,18 +40,17 @@ public class DecimalFunctionIterator extends LocalFunctionCallIterator {
                     );
                     throw new NonAtomicKeyException(message, getMetadata());
                 }
-                AtomicItem atomicItem = (AtomicItem) this.item;
-                String message = atomicItem.serialize()
+                String message = this.item.serialize()
                     +
                     ": value of type "
                     + this.item.getDynamicType().toString()
                     + " is not castable to type decimal.";
-                if (atomicItem.isNull()) {
+                if (this.item.isNull()) {
                     throw new InvalidLexicalValueException(message, getMetadata());
                 }
-                if (atomicItem.isCastableAs(AtomicItemType.decimalItem)) {
+                if (this.item.isCastableAs(AtomicItemType.decimalItem)) {
                     try {
-                        return atomicItem.castAs(AtomicItemType.decimalItem);
+                        return this.item.castAs(AtomicItemType.decimalItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

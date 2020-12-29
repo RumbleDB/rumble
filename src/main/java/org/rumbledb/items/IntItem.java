@@ -264,4 +264,9 @@ public class IntItem extends AtomicItem {
     public String getSparkSqlQuery() {
         return "" + this.value;
     }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
 }

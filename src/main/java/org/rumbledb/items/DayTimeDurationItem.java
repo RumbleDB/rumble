@@ -133,4 +133,7 @@ public class DayTimeDurationItem extends DurationItem {
     public ItemType getDynamicType() {
         return AtomicItemType.dayTimeDurationItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

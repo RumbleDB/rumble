@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public abstract class AtomicItem extends Item {
+public abstract class AtomicItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
 
@@ -46,8 +46,4 @@ public abstract class AtomicItem extends Item {
     public Item promoteTo(ItemType type) {
         return this.castAs(type);
     }
-
-    public abstract Item castAs(ItemType itemType);
-
-    public abstract boolean isCastableAs(ItemType itemType);
 }

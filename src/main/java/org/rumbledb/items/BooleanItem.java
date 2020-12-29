@@ -155,4 +155,7 @@ public class BooleanItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.booleanItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

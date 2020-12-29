@@ -200,4 +200,7 @@ public class HexBinaryItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.hexBinaryItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

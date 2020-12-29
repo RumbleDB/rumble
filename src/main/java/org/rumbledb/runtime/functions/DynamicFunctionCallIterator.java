@@ -43,7 +43,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     private List<RuntimeIterator> functionArguments;
 
     // calculated fields
-    private FunctionItem functionItem;
+    private Item functionItem;
     private RuntimeIterator functionCallIterator;
     private Item nextResult;
 

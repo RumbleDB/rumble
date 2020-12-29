@@ -255,7 +255,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
-            if (expression.getExpression() != null && expression.getExpression().isRDD()) {
+            if (expression.getExpression() != null && expression.getExpression().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
                         "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()

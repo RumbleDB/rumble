@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -216,5 +217,18 @@ public class ObjectItem extends JsonItem {
     public ItemType getDynamicType() {
         return AtomicItemType.objectItem;
     }
+
+    @Override
+    public Item castAs(ItemType itemType) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is an object!");
+    }
+
+    @Override
+    public boolean isCastableAs(ItemType itemType) {
+        return false;
+    }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 
 }

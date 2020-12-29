@@ -20,11 +20,10 @@
 
 package org.rumbledb.items;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public abstract class JsonItem extends Item {
+public abstract class JsonItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;

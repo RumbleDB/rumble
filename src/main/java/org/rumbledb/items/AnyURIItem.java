@@ -141,4 +141,7 @@ public class AnyURIItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.anyURIItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

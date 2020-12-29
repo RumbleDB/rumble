@@ -196,4 +196,7 @@ public class TimeItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.timeItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

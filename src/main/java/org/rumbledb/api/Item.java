@@ -1,138 +1,459 @@
-/*
- * Licensed to the Apache Software Foundation (ASF) under one or more
- * contributor license agreements. See the NOTICE file distributed with
- * this work for additional information regarding copyright ownership.
- * The ASF licenses this file to You under the Apache License, Version 2.0
- * (the "License"); you may not use this file except in compliance with
- * the License. You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- *
- * Authors: Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
- *
- */
-
 package org.rumbledb.api;
 
-import org.joda.time.DateTime;
-import org.joda.time.Period;
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Map;
+
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.joda.time.DateTime;
+import org.joda.time.Period;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemType;
+
+import com.esotericsoftware.kryo.KryoSerializable;
+
 
 /**
  * An instance of this class is an item in the JSONiq data model.
  *
  * JSONiq manipulates sequences of items.
  *
- * An item can be structured or atomic.
+ * All calls should be made via this interface. Objects of type Item should never be cast to a subclass (in a subsequent
+ * version,
+ * we will make the classes implementing this interface visible only at the package level).
+ *
+ * An item can be structured or atomic or a function.
  *
  * Structured items include objects and arrays. Objects are mappings from strings (keys) to items. Arrays are ordered
  * lists of items.
  *
- * Atomic items have a lexical value and a type. Currently, Rumble only supports strings, numbers, booleans and null.
- *
- * Numbers can be decimals, integers or doubles.
- *
- * This class provides methods to identify what kind of item the instance is, and to access its properties.
+ * Atomic items have a lexical value and a type. Rumble does not support all atomic types yet.
  *
  * @author Ghislain Fourny, Stefan Irimescu, Can Berker Cikis
  */
-public abstract class Item implements SerializableItem {
-
-    private static final long serialVersionUID = 1L;
+public interface Item extends Serializable, KryoSerializable {
 
     /**
-     * Please do not use. Items are produced by a JSONiq query via the Rumble API.
+     * Tests whether the item is an array.
+     *
+     * @return true if it is an array, false otherwise.
      */
-    protected Item() {
-    }
+    boolean isArray();
 
     /**
-     * Tests whether the item is a number (integer, decimal or double).
+     * Tests whether the item is an object.
+     *
+     * @return true if it is an object, false otherwise.
+     */
+    boolean isObject();
+
+    /**
+     * Tests whether the item is a function.
+     *
+     * @return true if it is a function, false otherwise
+     */
+    boolean isFunction();
+
+    /**
+     * Tests whether the item is an atomic item.
+     *
+     * @return true if it is an atomic item, false otherwise.
+     */
+    boolean isAtomic();
+
+    /**
+     * Tests whether the item is an atomic item of type string.
+     *
+     * @return true if it is an atomic item of type string, false otherwise.
+     */
+    boolean isString();
+
+    /**
+     * Tests whether the item is an atomic item of type boolean.
+     *
+     * @return true if it is an atomic item of type boolean, false otherwise.
+     */
+    boolean isBoolean();
+
+    /**
+     * Tests whether the item is the null item.
+     *
+     * @return true if it is the null item, false otherwise.
+     */
+    boolean isNull();
+
+    /**
+     * Tests whether the item is a number (decimal or double).
      *
      * @return true if it is a number, false otherwise.
      */
-    public boolean isNumeric() {
-        return this.isInteger() || this.isDecimal() || this.isDouble();
-    }
+    boolean isNumeric();
 
     /**
-     * Casts the item to a double value.
+     * Tests whether the item is an atomic item of type decimal.
+     *
+     * @return true if it is an atomic item of type decimal, false otherwise.
+     */
+    boolean isDecimal();
+
+    /**
+     * Tests whether the item is an atomic item of type integer.
+     *
+     * @return true if it is an atomic item of type integer, false otherwise.
+     */
+    boolean isInteger();
+
+    /**
+     * Tests whether the item is an atomic item of type int.
+     *
+     * @return true if it is an atomic item of type int, false otherwise.
+     */
+    boolean isInt();
+
+    /**
+     * Tests whether the item is an atomic item of type double.
+     *
+     * @return true if it is an atomic item of type double, false otherwise.
+     */
+    boolean isDouble();
+
+    /**
+     * Tests whether the item is an atomic item of type duration.
+     *
+     * @return true if it is an atomic item of type duration, false otherwise.
+     */
+    boolean isDuration();
+
+    /**
+     * Tests whether the item is an atomic item of type yearMonthDuration.
+     *
+     * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
+     */
+    boolean isYearMonthDuration();
+
+    /**
+     * Tests whether the item is an atomic item of type dayTimeDuration.
+     *
+     * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
+     */
+    boolean isDayTimeDuration();
+
+    /**
+     * Tests whether the item is an atomic item of type dateTime.
+     *
+     * @return true if it is an atomic item of type dateTime, false otherwise.
+     */
+    boolean isDateTime();
+
+    /**
+     * Tests whether the item is an atomic item of type date.
+     *
+     * @return true if it is an atomic item of type date, false otherwise.
+     */
+    boolean isDate();
+
+    /**
+     * Tests whether the item is an atomic item of type time.
+     *
+     * @return true if it is an atomic item of type time, false otherwise.
+     */
+    boolean isTime();
+
+    /**
+     * Tests whether the item is an atomic item of type anyURI.
+     *
+     * @return true if it is an atomic item of type anyURI, false otherwise.
+     */
+    boolean isAnyURI();
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary or hexBinary.
+     *
+     * @return true if it is an atomic item of type base64Binary or hexBinary, false otherwise.
+     */
+    boolean isBinary();
+
+    /**
+     * Tests whether the item is an atomic item of type hexBinary.
+     *
+     * @return true if it is an atomic item of type hexBinary, false otherwise.
+     */
+    boolean isHexBinary();
+
+    /**
+     * Tests whether the item is an atomic item of type base64Binary.
+     *
+     * @return true if it is an atomic item of type base64Binary, false otherwise.
+     */
+    boolean isBase64Binary();
+
+    /**
+     * Returns the members of the item if it is an array.
+     *
+     * @return the list of the array members.
+     */
+    List<Item> getItems();
+
+    /**
+     * Returns the member of the item at the specified position if it is an array.
+     *
+     * @param position a position.
+     * @return the member at position position.
+     */
+    Item getItemAt(int position);
+
+    /**
+     * Returns the keys of the item, if it is an object.
+     *
+     * @return the list of the keys.
+     */
+    List<String> getKeys();
+
+    /**
+     * Returns the values of the item, if it is an object.
+     *
+     * @return the list of the value items.
+     */
+    List<Item> getValues();
+
+    /**
+     * Returns the value associated with a specific key, if it is an object.
+     *
+     * @param key a key.
+     * @return the value associated with key.
+     */
+    Item getItemByKey(String key);
+
+    /**
+     * Returns the size of the item, if it is an array.
+     *
+     * @return the size as an int.
+     */
+    int getSize();
+
+    /**
+     * Returns the string value of the item, if it is a string.
+     *
+     * @return the string value.
+     */
+    String getStringValue();
+
+    /**
+     * Returns the boolean value of the item, if it is a boolean.
+     *
+     * @return the boolean value.
+     */
+    boolean getBooleanValue();
+
+    /**
+     * Returns the double value of the item, if it is a double.
      *
      * @return the double value.
      */
-    public double castToDoubleValue() {
-        throw new IteratorFlowException("Cannot call castToDouble on non numeric");
-    }
+    double getDoubleValue();
 
     /**
-     * Casts the item to a decimal value.
+     * Returns the int value of the item, if it is an int.
      *
-     * @return the BigDecimal value.
+     * @return the integer value as an int.
      */
-    public BigDecimal castToDecimalValue() {
-        throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
-    }
+    int getIntValue();
 
     /**
-     * Casts the item to a big integer value.
+     * Returns the integer value of the item as a bit integer, if it is an integer.
      *
-     * @return the BigInteger value.
+     * @return the integer value as a BigInteger.
      */
-    public BigInteger castToIntegerValue() {
-        throw new IteratorFlowException("Cannot call castToInteger on non numeric");
-    }
+    BigInteger getIntegerValue();
 
     /**
-     * Casts the item to an integer value.
+     * Returns the decimal value of the item, if it is a decimal.
      *
-     * @return the int value.
+     * @return the decimal value as a BigDecimal.
      */
-    public int castToIntValue() {
-        throw new IteratorFlowException("Cannot call castToInt on non numeric");
-    }
+    BigDecimal getDecimalValue();
+
+    /**
+     * Returns the period value of the item, if it is a duration.
+     *
+     * @return the period value as a Period.
+     */
+    Period getDurationValue();
+
+    /**
+     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.
+     *
+     * @return the dateTime value as a DateTime.
+     */
+    DateTime getDateTimeValue();
+
+    /**
+     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
+     *
+     * @return the binary value as an array of bytes.
+     */
+    byte[] getBinaryValue();
+
+    /**
+     * Returns the dynamic type of the item (only for error message purposes).
+     * 
+     * @return the dynamic type as an item type.
+     */
+    ItemType getDynamicType();
+
+    /**
+     * Returns the identifier (name and arity) of the function, if it is a function item.
+     * 
+     * @return the function identifier.
+     */
+    FunctionIdentifier getIdentifier();
+
+    /**
+     * Returns the names of the parameters of the function, if it is a function item.
+     * 
+     * @return the function parameter names.
+     */
+    List<Name> getParameterNames();
+
+    /**
+     * Returns the signature of the function, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    FunctionSignature getSignature();
+
+    /**
+     * Returns the body iterator, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public RuntimeIterator getBodyIterator();
+
+    /**
+     * Returns the local variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, List<Item>> getLocalVariablesInClosure();
+
+    /**
+     * Returns the RDD variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure();
+
+    /**
+     * Returns the DataFrame variable bindings, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public Map<Name, Dataset<Row>> getDFVariablesInClosure();
+
+    /**
+     * Returns the module dynamic context, if it is a function item.
+     * 
+     * @return the function signature.
+     */
+    public DynamicContext getDynamicModuleContext();
+
+    /**
+     * @return true if the Item has a timeZone, false otherwise
+     */
+    boolean hasTimeZone();
+
+    /**
+     * Tests whether the item contains a representation of date or time (or both).
+     *
+     * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
+     */
+    boolean hasDateTime();
 
     /**
      * Returns the effective boolean value of the item, if atomic.
      *
      * @return the effective boolean value.
      */
-    public abstract boolean getEffectiveBooleanValue();
+    boolean getEffectiveBooleanValue();
 
     /**
-     * Function that compares 2 items.
+     * Appends an item, if it is an array.
+     *
+     * @param item an item.
+     */
+    void putItem(Item item);
+
+    /**
+     * Adds a value pair, if it is an array item.
+     *
+     * @param value a value.
+     */
+    void append(Item value);
+
+    /**
+     * Adds a key-value pair, if it is an object item.
+     *
+     * @param key a key.
+     * @param value a value.
+     */
+    void putItemByKey(String key, Item value);
+
+    /**
+     * Casts the item to a double value (must be a numeric).
+     *
+     * @return the double value.
+     */
+    double castToDoubleValue();
+
+    /**
+     * Casts the item to a decimal value (must be a numeric).
+     *
+     * @return the BigDecimal value.
+     */
+    BigDecimal castToDecimalValue();
+
+    /**
+     * Casts the item to a big integer value (must be a numeric).
+     *
+     * @return the BigInteger value.
+     */
+    BigInteger castToIntegerValue();
+
+    /**
+     * Casts the item to an integer value (must be a numeric).
+     *
+     * @return the int value.
+     */
+    int castToIntValue();
+
+    /**
+     * Tests for logical equality. The semantics are that of the eq operator.
+     *
+     * @param other another item.
+     * @return true it is equal to other, false otherwise.
+     */
+    boolean equals(Object other);
+
+    /**
+     * Function that compares 2 items with the semantics of the le operator.
      * Non-atomics can't be compared.
-     * Items have to be of the same type or one them has to be null.
+     * Items have to be of comparable types or one of them has to be null (null is the least value).
      *
      * @param other another item.
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        return this.serialize().compareTo(other.serialize());
-    }
+    int compareTo(Item other);
 
     /**
      * Function that compare two items according to the operator defined for the comparison.
@@ -142,509 +463,62 @@ public abstract class Item implements SerializableItem {
      * @param metadata Metadata useful for throwing exceptions
      * @return BooleanItem result of the comparison
      */
-    public Item compareItem(
+    Item compareItem(
             Item other,
             ComparisonExpression.ComparisonOperator comparisonOperator,
             ExceptionMetadata metadata
-    ) {
-        // Subclasses should override this method to perform additional typechecks,
-        // and then invoke it on super.
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
-            }
-            case VC_NE:
-            case GC_NE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
-            }
-            case VC_LT:
-            case GC_LT: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
-            }
-            case VC_LE:
-            case GC_LE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
-            }
-            case VC_GT:
-            case GC_GT: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            }
-            case VC_GE:
-            case GC_GE: {
-                int comparison = this.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
-            }
-        }
-        throw new IteratorFlowException("Unrecognized operator found", metadata);
-    }
+    );
 
     /**
-     * Returns the members of the item if it is an array.
-     *
-     * @return the list of the array members.
-     */
-    public List<Item> getItems() {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the member of the item at the specified position if it is an array.
-     *
-     * @param position a position.
-     * @return the member at position position.
-     */
-    public Item getItemAt(int position) {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Appends an item, if it is an array.
-     *
-     * @param item an item.
-     */
-    public void putItem(Item item) {
-        throw new OurBadException("Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the keys of the item, if it is an object item.
-     *
-     * @return the list of the keys.
-     */
-    public List<String> getKeys() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the values of the item, if it is an object item.
-     *
-     * @return the list of the value items.
-     */
-    public List<Item> getValues() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the value associated with a specific key, if it is an object item.
-     *
-     * @param key a key.
-     * @return the value associated with key.
-     */
-    public Item getItemByKey(String key) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Adds a value pair, if it is an array item.
-     *
-     * @param value a value.
-     */
-    public void append(Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Adds a key-value pair, if it is an object item.
-     *
-     * @param key a key.
-     * @param value a value.
-     */
-    public void putItemByKey(String key, Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an object.");
-    }
-
-    /**
-     * Returns the size of the item, if it is an array item.
-     *
-     * @return the size as an int.
-     */
-    public int getSize() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an array.");
-    }
-
-    /**
-     * Returns the string value of the item, if it is a atomic item of type string.
-     *
-     * @return the string value.
-     */
-    public String getStringValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a string.");
-    }
-
-    /**
-     * Returns the boolean value of the item, if it is a atomic item of type boolean.
-     *
-     * @return the boolean value.
-     */
-    public boolean getBooleanValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a boolean.");
-    }
-
-    /**
-     * Returns the double value of the item, if it is a atomic item of type double.
-     *
-     * @return the double value.
-     */
-    public double getDoubleValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a double.");
-    }
-
-    /**
-     * Returns the integer value of the item, if it is a atomic item of type integer within the required range.
-     *
-     * @return the integer value as an int.
-     */
-    public int getIntValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an int.");
-    }
-
-    /**
-     * Returns the integer value of the item as a bit integer, if it is a atomic item of type integer.
-     *
-     * @return the integer value as a BigInteger.
-     */
-    public BigInteger getIntegerValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not an integer.");
-    }
-
-    /**
-     * Returns the decimal value of the item, if it is a atomic item of type decimal.
-     *
-     * @return the decimal value as a BigDecimal.
-     */
-    public BigDecimal getDecimalValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a big decimal.");
-    }
-
-    /**
-     * Returns the period value of the item, if it is a atomic item of type duration.
-     *
-     * @return the period value as a Period.
-     */
-    public Period getDurationValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a duration.");
-    }
-
-    /**
-     * Returns the dateTime value of the item, if it is a atomic item of type dateTimeItem or dateItem or timeItem.
-     *
-     * @return the dateTime value as a DateTime.
-     */
-    public DateTime getDateTimeValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' does not have a DateTime.");
-    }
-
-    /**
-     * Returns the byte[] value of the item, if it is a atomic item of type hexBinary or Base64Binary.
-     *
-     * @return the binary value as an array of bytes.
-     */
-    public byte[] getBinaryValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is not a hexBinary.");
-    }
-
-    /**
-     * @return true if the Item has a timeZone, false otherwise
-     */
-    public boolean hasTimeZone() {
-        return false;
-    }
-
-    /**
-     * Please do not use, item type API not publicly released yet.
-     *
-     * @param type an ItemType.
-     * @return true if it matches the item type.
-     */
-    public abstract boolean isTypeOf(ItemType type);
-
-    /**
-     * Please do not use, item type API not publicly released yet.
+     * Please do not use (internal).
      *
      * @param type an ItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
-    public boolean canBePromotedTo(ItemType type) {
-        return this.isTypeOf(type);
-    }
+    boolean canBePromotedTo(ItemType type);
 
-
-    public Item promoteTo(ItemType type) {
-        if (!this.canBePromotedTo(type)) {
-            throw new RuntimeException(
-                    this.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + type.toString()
-            );
-        }
-        return this;
-    }
-
-    /**
-     * Tests whether the item is a function.
-     *
-     * @return true if it is a function, false otherwise
-     */
-    public boolean isFunction() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an array.
-     *
-     * @return true if it is an array, false otherwise.
-     */
-    public boolean isArray() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an object.
-     *
-     * @return true if it is an object, false otherwise.
-     */
-    public boolean isObject() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item.
-     *
-     * @return true if it is an atomic item, false otherwise.
-     */
-    public boolean isAtomic() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type string.
-     *
-     * @return true if it is an atomic item of type string, false otherwise.
-     */
-    public boolean isString() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type boolean.
-     *
-     * @return true if it is an atomic item of type boolean, false otherwise.
-     */
-    public boolean isBoolean() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is the null item.
-     *
-     * @return true if it is the null item, false otherwise.
-     */
-    public boolean isNull() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type integer.
-     *
-     * @return true if it is an atomic item of type integer, false otherwise.
-     */
-    public boolean isInteger() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type int.
-     *
-     * @return true if it is an atomic item of type int, false otherwise.
-     */
-    public boolean isInt() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type double.
-     *
-     * @return true if it is an atomic item of type double, false otherwise.
-     */
-    public boolean isDouble() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type decimal.
-     *
-     * @return true if it is an atomic item of type decimal, false otherwise.
-     */
-    public boolean isDecimal() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type duration.
-     *
-     * @return true if it is an atomic item of type duration, false otherwise.
-     */
-    public boolean isDuration() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type yearMonthDuration.
-     *
-     * @return true if it is an atomic item of type yearMonthDuration, false otherwise.
-     */
-    public boolean isYearMonthDuration() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type dayTimeDuration.
-     *
-     * @return true if it is an atomic item of type dayTimeDuration, false otherwise.
-     */
-    public boolean isDayTimeDuration() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type dateTime.
-     *
-     * @return true if it is an atomic item of type dateTime, false otherwise.
-     */
-    public boolean isDateTime() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type date.
-     *
-     * @return true if it is an atomic item of type date, false otherwise.
-     */
-    public boolean isDate() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type time.
-     *
-     * @return true if it is an atomic item of type time, false otherwise.
-     */
-    public boolean isTime() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item contains a representation of date or time (or both).
-     *
-     * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
-     */
-    public boolean hasDateTime() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type anyURI.
-     *
-     * @return true if it is an atomic item of type anyURI, false otherwise.
-     */
-    public boolean isAnyURI() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type hexBinary.
-     *
-     * @return true if it is an atomic item of type hexBinary, false otherwise.
-     */
-    public boolean isHexBinary() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type base64Binary.
-     *
-     * @return true if it is an atomic item of type base64Binary, false otherwise.
-     */
-    public boolean isBase64Binary() {
-        return false;
-    }
-
-    /**
-     * Tests whether the item is an atomic item of type base64Binary or hexBinary.
-     *
-     * @return true if it is an atomic item of type base64Binary or hexBinary, false otherwise.
-     */
-    public boolean isBinary() {
-        return this.isHexBinary() || this.isBase64Binary();
-    }
-
-    private void readObject(ObjectInputStream aInputStream)
-            throws ClassNotFoundException,
-                IOException {
-        aInputStream.defaultReadObject();
-    }
-
-    private void writeObject(ObjectOutputStream aOutputStream)
-            throws IOException {
-        aOutputStream.defaultWriteObject();
-    }
-
-    /**
-     * Tests for logical equality.
-     *
-     * @param other another item.
-     * @return true it is equal to other, false otherwise.
-     */
-    @Override
-    public abstract boolean equals(Object other);
+    Item promoteTo(ItemType type);
 
     /**
      * Computes a hash code.
      *
      * @return a hash code as an int.
      */
-    @Override
-    public abstract int hashCode();
-
-
-    public Item add(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item subtract(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
+    int hashCode();
 
     /**
-     * Returns the dynamic type of the item (for error message purposes).
-     * 
-     * @return the dynamic type as an item type.
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
      */
-    public ItemType getDynamicType() {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
+    Item add(Item other);
 
-    public FunctionIdentifier getIdentifier() {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
+    /**
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
+     */
+    Item subtract(Item other);
 
-    public List<Name> getParameterNames() {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
+    String serialize();
 
-    public FunctionSignature getSignature() {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
+    /**
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
+     */
+    Item castAs(ItemType itemType);
+
+    /**
+     * Deprecated. Will be moved to iterator.
+     *
+     * @return a hash code as an int.
+     */
+    boolean isCastableAs(ItemType itemType);
 
     /**
      * Get sparkSql string for the item
      * @return String representing the item in a sparksql query or null if it is not supported for the item
      */
-    public String getSparkSqlQuery() { return null; }
+    String getSparkSqlQuery();
 }

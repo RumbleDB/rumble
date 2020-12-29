@@ -213,4 +213,9 @@ public class DecimalItem extends AtomicItem {
     public String getSparkSqlQuery() {
         return this.value.toString();
     }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
 }

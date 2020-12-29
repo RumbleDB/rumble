@@ -206,4 +206,7 @@ public class Base64BinaryItem extends AtomicItem {
     public ItemType getDynamicType() {
         return AtomicItemType.base64BinaryItem;
     }
+
+    @Override
+    public String getSparkSqlQuery() { return null; }
 }

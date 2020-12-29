@@ -131,4 +131,6 @@ public class YearMonthDurationItem extends DurationItem {
     public ItemType getDynamicType() {
         return AtomicItemType.yearMonthDurationItem;
     }
+
+
 }

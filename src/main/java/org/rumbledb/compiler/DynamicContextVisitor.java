@@ -46,6 +46,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -155,7 +156,10 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             for (Item item : items) {
                 if (
                     variableDeclaration.getSequenceType().isEmptySequence()
-                        || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                        || !InstanceOfIterator.doesItemTypeMatchItem(
+                            variableDeclaration.getSequenceType().getItemType(),
+                            item
+                        )
                 ) {
                     throw new UnexpectedTypeException(
                             "External variable value ("
@@ -198,7 +202,10 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             items.add(item);
             if (
                 variableDeclaration.getSequenceType().isEmptySequence()
-                    || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                    || !InstanceOfIterator.doesItemTypeMatchItem(
+                        variableDeclaration.getSequenceType().getItemType(),
+                        item
+                    )
             ) {
                 throw new UnexpectedTypeException(
                         "External variable value ("

@@ -24,12 +24,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 
 import java.util.List;
 
@@ -54,10 +52,9 @@ public class NumberFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createDoubleItem(Double.NaN);
             }
 
-            AtomicItem atomicItem = (AtomicItem) anyItem;
-            if (atomicItem.isCastableAs(AtomicItemType.doubleItem)) {
+            if (anyItem.isCastableAs(AtomicItemType.doubleItem)) {
                 try {
-                    return atomicItem.castAs(AtomicItemType.doubleItem);
+                    return anyItem.castAs(AtomicItemType.doubleItem);
                 } catch (ClassCastException e) {
                     return ItemFactory.getInstance().createDoubleItem(Double.NaN);
                 }

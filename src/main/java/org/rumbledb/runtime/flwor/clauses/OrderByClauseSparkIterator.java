@@ -231,7 +231,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
-            if (expressionWithIterator.getIterator().isRDD()) {
+            if (expressionWithIterator.getIterator().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
                         "An order by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
