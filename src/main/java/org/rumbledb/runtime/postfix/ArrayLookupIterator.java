@@ -165,9 +165,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if(newContext != NativeClauseContext.NoNativeQuery){
-            this.currentDynamicContextForLocalExecution = newContext.getContext();
-            initLookupPosition();
-            this.currentDynamicContextForLocalExecution = null;
+            initLookupPosition(newContext.getContext());
             DataType schema = newContext.getSchema();
             if(!(schema instanceof ArrayType)){
                 return NativeClauseContext.NoNativeQuery;

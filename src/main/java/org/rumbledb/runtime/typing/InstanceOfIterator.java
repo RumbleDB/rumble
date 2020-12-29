@@ -128,64 +128,64 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
         if (itemType.equals(ItemType.item)) {
             return true;
         }
-        if (itemType.equals(ItemType.objectItem)) {
+        if (itemType.equals(AtomicItemType.objectItem)) {
             return itemToMatch.isObject();
         }
-        if (itemType.equals(ItemType.atomicItem)) {
+        if (itemType.equals(AtomicItemType.atomicItem)) {
             return itemToMatch.isAtomic();
         }
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return itemToMatch.isString();
         }
-        if (itemType.equals(ItemType.integerItem)) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return itemToMatch.isInteger();
         }
-        if (itemType.equals(ItemType.decimalItem)) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return itemToMatch.isDecimal();
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return itemToMatch.isDouble();
         }
-        if (itemType.equals(ItemType.booleanItem)) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return itemToMatch.isBoolean();
         }
-        if (itemType.equals(ItemType.nullItem)) {
+        if (itemType.equals(AtomicItemType.nullItem)) {
             return itemToMatch.isNull();
         }
-        if (itemType.equals(ItemType.arrayItem)) {
+        if (itemType.equals(AtomicItemType.arrayItem)) {
             return itemToMatch.isArray();
         }
-        if (itemType.equals(ItemType.JSONItem)) {
+        if (itemType.equals(AtomicItemType.JSONItem)) {
             return itemToMatch.isObject() || itemToMatch.isArray();
         }
-        if (itemType.equals(ItemType.durationItem)) {
+        if (itemType.equals(AtomicItemType.durationItem)) {
             return itemToMatch.isDuration();
         }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
+        if (itemType.equals(AtomicItemType.yearMonthDurationItem)) {
             return itemToMatch.isYearMonthDuration();
         }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
+        if (itemType.equals(AtomicItemType.dayTimeDurationItem)) {
             return itemToMatch.isDayTimeDuration();
         }
-        if (itemType.equals(ItemType.dateTimeItem)) {
+        if (itemType.equals(AtomicItemType.dateTimeItem)) {
             return itemToMatch.isDateTime();
         }
-        if (itemType.equals(ItemType.dateItem)) {
+        if (itemType.equals(AtomicItemType.dateItem)) {
             return itemToMatch.isDate();
         }
-        if (itemType.equals(ItemType.timeItem)) {
+        if (itemType.equals(AtomicItemType.timeItem)) {
             return itemToMatch.isTime();
         }
-        if (itemType.equals(ItemType.anyURIItem)) {
+        if (itemType.equals(AtomicItemType.anyURIItem)) {
             return itemToMatch.isAnyURI();
         }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
+        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
             return itemToMatch.isHexBinary();
         }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
+        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
             return itemToMatch.isBase64Binary();
         }
-        if (itemType.equals(ItemType.functionItem)) {
+        if (itemType.isFunctionItem()) {
             return itemToMatch.isFunction();
         }
         throw new OurBadException("Type unrecognized: " + itemType);
