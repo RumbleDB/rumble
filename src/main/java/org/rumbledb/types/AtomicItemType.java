@@ -39,29 +39,29 @@ public class AtomicItemType extends ItemType implements Serializable {
             return true;
         } else if (superType.equals(JSONItem)) {
             return this.equals(objectItem)
-                    || this.equals(arrayItem)
-                    || this.equals(JSONItem);
+                || this.equals(arrayItem)
+                || this.equals(JSONItem);
         } else if (superType.equals(atomicItem)) {
             return this.equals(stringItem)
-                    || this.equals(integerItem)
-                    || this.equals(decimalItem)
-                    || this.equals(doubleItem)
-                    || this.equals(booleanItem)
-                    || this.equals(nullItem)
-                    || this.equals(anyURIItem)
-                    || this.equals(hexBinaryItem)
-                    || this.equals(base64BinaryItem)
-                    || this.equals(dateTimeItem)
-                    || this.equals(dateItem)
-                    || this.equals(timeItem)
-                    || this.equals(durationItem)
-                    || this.equals(yearMonthDurationItem)
-                    || this.equals(dayTimeDurationItem)
-                    || this.equals(atomicItem);
+                || this.equals(integerItem)
+                || this.equals(decimalItem)
+                || this.equals(doubleItem)
+                || this.equals(booleanItem)
+                || this.equals(nullItem)
+                || this.equals(anyURIItem)
+                || this.equals(hexBinaryItem)
+                || this.equals(base64BinaryItem)
+                || this.equals(dateTimeItem)
+                || this.equals(dateItem)
+                || this.equals(timeItem)
+                || this.equals(durationItem)
+                || this.equals(yearMonthDurationItem)
+                || this.equals(dayTimeDurationItem)
+                || this.equals(atomicItem);
         } else if (superType.equals(durationItem)) {
             return this.equals(yearMonthDurationItem)
-                    || this.equals(dayTimeDurationItem)
-                    || this.equals(durationItem);
+                || this.equals(dayTimeDurationItem)
+                || this.equals(durationItem);
         } else if (superType.equals(decimalItem)) {
             return this.equals(integerItem) || this.equals(decimalItem);
         }
@@ -95,16 +95,16 @@ public class AtomicItemType extends ItemType implements Serializable {
             return true;
         // boolean and numeric can be cast between themselves
         if (
-                this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)
+            this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)
         ) {
             if (
-                    other.equals(integerItem)
-                            ||
-                            other.equals(doubleItem)
-                            ||
-                            other.equals(decimalItem)
-                            ||
-                            other.equals(booleanItem)
+                other.equals(integerItem)
+                    ||
+                    other.equals(doubleItem)
+                    ||
+                    other.equals(decimalItem)
+                    ||
+                    other.equals(booleanItem)
             )
                 return true;
             else
@@ -113,9 +113,9 @@ public class AtomicItemType extends ItemType implements Serializable {
         // base64 and hex can be cast between themselves
         if (this.equals(base64BinaryItem) || this.equals(hexBinaryItem)) {
             if (
-                    other.equals(base64BinaryItem)
-                            ||
-                            other.equals(hexBinaryItem)
+                other.equals(base64BinaryItem)
+                    ||
+                    other.equals(hexBinaryItem)
             )
                 return true;
             else

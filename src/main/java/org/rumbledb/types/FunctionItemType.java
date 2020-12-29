@@ -8,8 +8,8 @@ public class FunctionItemType extends ItemType {
     private FunctionSignature signature;
     public static FunctionItemType ANYFUNCTION = new FunctionItemType(true);
 
-    public FunctionItemType(FunctionSignature signature){
-        if(signature == null){
+    public FunctionItemType(FunctionSignature signature) {
+        if (signature == null) {
             throw new OurBadException("a new function item type must have a signature");
         }
         this.isGeneric = false;
@@ -18,7 +18,7 @@ public class FunctionItemType extends ItemType {
     }
 
     // we have a parameter because the empty one is public and inherited
-    private FunctionItemType(boolean isGeneric){
+    private FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
         this.name = "function(*)";
@@ -36,7 +36,7 @@ public class FunctionItemType extends ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if(!(other instanceof ItemType)){
+        if (!(other instanceof ItemType)) {
             return false;
         }
         return this.name.equals(other.toString());
@@ -44,10 +44,10 @@ public class FunctionItemType extends ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if(this.equals(superType) || superType.equals(ANYFUNCTION) || superType.equals(ItemType.item)){
+        if (this.equals(superType) || superType.equals(ANYFUNCTION) || superType.equals(ItemType.item)) {
             return true;
         }
-        if(superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())){
+        if (superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())) {
             return true;
         }
         return false;
@@ -55,10 +55,10 @@ public class FunctionItemType extends ItemType {
 
     @Override
     public ItemType findCommonSuperType(ItemType other) {
-        if(this.equals(other)){
+        if (this.equals(other)) {
             return this;
         }
-        if(other.isFunctionItem()){
+        if (other.isFunctionItem()) {
             return ANYFUNCTION;
         }
         return ItemType.item;

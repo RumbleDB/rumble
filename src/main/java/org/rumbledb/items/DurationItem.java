@@ -309,5 +309,7 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
-    public String getSparkSqlQuery() { return null; }
+    public String getSparkSqlQuery() {
+        return null;
+    }
 }

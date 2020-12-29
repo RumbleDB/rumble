@@ -55,7 +55,6 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 

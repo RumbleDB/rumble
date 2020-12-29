@@ -22,7 +22,6 @@ package org.rumbledb.expressions.quantifiers;
 
 import org.rumbledb.context.Name;
 import org.rumbledb.expressions.Expression;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 

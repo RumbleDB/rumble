@@ -159,5 +159,7 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public String getSparkSqlQuery() { return null; }
+    public String getSparkSqlQuery() {
+        return null;
+    }
 }

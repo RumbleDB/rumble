@@ -47,7 +47,6 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 

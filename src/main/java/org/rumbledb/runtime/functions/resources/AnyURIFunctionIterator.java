@@ -10,7 +10,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 
 
 import java.util.List;

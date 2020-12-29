@@ -135,5 +135,7 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public String getSparkSqlQuery() { return null; }
+    public String getSparkSqlQuery() {
+        return null;
+    }
 }

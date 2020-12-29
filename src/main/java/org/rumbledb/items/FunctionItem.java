@@ -341,5 +341,7 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public String getSparkSqlQuery() { return null; }
+    public String getSparkSqlQuery() {
+        return null;
+    }
 }

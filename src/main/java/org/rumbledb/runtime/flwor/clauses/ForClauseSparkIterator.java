@@ -866,14 +866,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // TODO: Useless because here is local for
         Dataset<Row> nativeQueryResult = tryNativeQuery(
-                df,
-                this.variableName,
-                this.positionalVariableName,
-                this.allowingEmpty,
-                this.assignmentIterator,
-                allColumns,
-                inputSchema,
-                context
+            df,
+            this.variableName,
+            this.positionalVariableName,
+            this.allowingEmpty,
+            this.assignmentIterator,
+            allColumns,
+            inputSchema,
+            context
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -1211,11 +1211,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        // the try catch block is required because of the query that are not supported by sparksql like using a field to decide which field to use (e.g. $i.($i.fieldToUse) )
+        // the try catch block is required because of the query that are not supported by sparksql like using a field to
+        // decide which field to use (e.g. $i.($i.fieldToUse) )
         try {
             NativeClauseContext forContext = new NativeClauseContext(FLWOR_CLAUSES.FOR, inputSchema, context);
             NativeClauseContext nativeQuery = iterator.generateNativeQuery(forContext);
-            if(nativeQuery == NativeClauseContext.NoNativeQuery){
+            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
                 return null;
             }
             System.out.println("native query returned " + nativeQuery.getResultingQuery());
@@ -1228,17 +1229,17 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     return null;
                 } else {
                     return dataFrame.sparkSession()
-                            .sql(
-                                    String.format(
-                                            "select %s explode(%s) as `%s` from input",
-                                            selectSQL,
-                                            nativeQuery.getResultingQuery(),
-                                            newVariableName
-                                    )
-                            );
+                        .sql(
+                            String.format(
+                                "select %s explode(%s) as `%s` from input",
+                                selectSQL,
+                                nativeQuery.getResultingQuery(),
+                                newVariableName
+                            )
+                        );
                 }
             } else {
-                if(allowingEmpty) {
+                if (allowingEmpty) {
                     return null;
                 } else {
                     return null;

@@ -220,15 +220,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-        if(newContext != NativeClauseContext.NoNativeQuery){
+        if (newContext != NativeClauseContext.NoNativeQuery) {
             initLookupKey(newContext.getContext());
             String key = this.lookupKey.getStringValue();
             DataType schema = newContext.getSchema();
-            if(!(schema instanceof StructType)){
+            if (!(schema instanceof StructType)) {
                 return NativeClauseContext.NoNativeQuery;
             }
             StructType structSchema = (StructType) schema;
-            if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))){
+            if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
                 newContext.setResultingQuery(newContext.getResultingQuery() + "." + key);
                 StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
                 newContext.setSchema(field.dataType());

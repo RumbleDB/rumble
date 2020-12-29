@@ -16,23 +16,24 @@ public class NativeClauseContext {
     private DynamicContext context;
     private String resultingQuery;
 
-    private NativeClauseContext() {}
+    private NativeClauseContext() {
+    }
 
-    public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context){
+    public NativeClauseContext(FLWOR_CLAUSES clauseType, StructType schema, DynamicContext context) {
         this.clauseType = clauseType;
         this.schema = schema;
         this.context = context;
         this.resultingQuery = "";
     }
 
-    public NativeClauseContext(NativeClauseContext parent){
+    public NativeClauseContext(NativeClauseContext parent) {
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
         this.resultingQuery = parent.resultingQuery;
     }
 
-    public NativeClauseContext(NativeClauseContext parent, String newSelectPart){
+    public NativeClauseContext(NativeClauseContext parent, String newSelectPart) {
         this.clauseType = parent.clauseType;
         this.schema = parent.schema;
         this.context = parent.context;
@@ -43,7 +44,7 @@ public class NativeClauseContext {
         this.resultingQuery = resultingQuery;
     }
 
-    public String getResultingQuery(){
+    public String getResultingQuery() {
         return this.resultingQuery;
     }
 

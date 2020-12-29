@@ -200,5 +200,7 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public String getSparkSqlQuery() { return null; }
+    public String getSparkSqlQuery() {
+        return null;
+    }
 }

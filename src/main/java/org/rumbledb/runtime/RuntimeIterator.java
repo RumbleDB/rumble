@@ -27,7 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -36,7 +35,6 @@ import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -379,7 +377,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     /**
      * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
      *
-     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or [NativeClauseContext.NoNativeQuery] if
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
      *         it is not possible
      * @param nativeClauseContext context information to generate the native query
      */

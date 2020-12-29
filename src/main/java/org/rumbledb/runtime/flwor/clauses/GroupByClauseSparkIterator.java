@@ -306,11 +306,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         df.createOrReplaceTempView("input");
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
-                df,
-                variableAccessNames,
-                this.dependencies,
-                inputSchema,
-                context
+            df,
+            variableAccessNames,
+            this.dependencies,
+            inputSchema,
+            context
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -477,7 +477,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * Try to generate the native query for the group by clause and run it, if successful return the resulting dataframe,
+     * Try to generate the native query for the group by clause and run it, if successful return the resulting
+     * dataframe,
      * otherwise it returns null (expect `input` table to be already available)
      *
      * @param dataFrame input dataframe for the query
@@ -487,13 +488,19 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the group by clause if successful, null otherwise
      */
-    private Dataset<Row> tryNativeQuery(Dataset<Row> dataFrame, List<Name> groupingVariables, Map<Name, DynamicContext.VariableDependency> dependencies, StructType inputSchema, DynamicContext context) {
-        try{
+    private Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            List<Name> groupingVariables,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        try {
             StringBuilder groupByString = new StringBuilder();
             String sep = " ";
-            for(Name groupingVar : groupingVariables){
+            for (Name groupingVar : groupingVariables) {
                 StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
-                if(field.dataType().equals(DataTypes.BinaryType)){
+                if (field.dataType().equals(DataTypes.BinaryType)) {
                     // we got a non-native type for grouping, switch to udf version
                     return null;
                 }
@@ -504,25 +511,25 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
             StringBuilder selectString = new StringBuilder();
             sep = " ";
-            for(Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()){
+            for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
                 selectString.append(sep);
                 sep = ", ";
                 // TODO: what about precomputed count
-                if(entry.getValue() == DynamicContext.VariableDependency.COUNT){
+                if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
                     // we need a count
                     selectString.append("count(`");
                     selectString.append(entry.getKey().toString());
                     selectString.append("`) as `");
                     selectString.append(entry.getKey().toString());
                     selectString.append(".count`)");
-                } else if(groupingVariables.contains(entry.getKey())){
+                } else if (groupingVariables.contains(entry.getKey())) {
                     // we are considering one of the grouping variables
                     selectString.append(entry.getKey().toString());
                 } else {
                     // we collect all the values, if it is a binary object we just switch over to udf
                     String columnName = entry.getKey().toString();
                     StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
-                    if(field.dataType().equals(DataTypes.BinaryType)){
+                    if (field.dataType().equals(DataTypes.BinaryType)) {
                         return null;
                     }
                     selectString.append("collect_list(`");
@@ -532,16 +539,16 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     selectString.append("`");
                 }
             }
-            System.out.println("select part got returned: "+selectString);
-            System.out.println("groupby part got returned: "+groupByString);
+            System.out.println("select part got returned: " + selectString);
+            System.out.println("groupby part got returned: " + groupByString);
             return dataFrame.sparkSession()
-                    .sql(
-                            String.format(
-                                    "select %s from input group by %s",
-                                    selectString,
-                                    groupByString
-                            )
-                    );
+                .sql(
+                    String.format(
+                        "select %s from input group by %s",
+                        selectString,
+                        groupByString
+                    )
+                );
         } catch (Exception e) {
             return null;
         }

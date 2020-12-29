@@ -79,11 +79,15 @@ public class AndOperationIterator extends LocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
         NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
-        if(leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery){
+        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
 
-        String resultingQuery = "( " + leftResult.getResultingQuery() + " AND " + rightResult.getResultingQuery() + " )";
+        String resultingQuery = "( "
+            + leftResult.getResultingQuery()
+            + " AND "
+            + rightResult.getResultingQuery()
+            + " )";
         return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }

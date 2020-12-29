@@ -38,7 +38,6 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.expressions.flowr.OrderByClause;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -47,7 +46,6 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
@@ -251,11 +249,11 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
-                df,
-                this.expressionsWithIterator,
-                allColumns,
-                inputSchema,
-                context
+            df,
+            this.expressionsWithIterator,
+            allColumns,
+            inputSchema,
+            context
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -300,7 +298,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 
-                if (!columnType.equals(StringFlagForEmptySequence) && !columnType.equals(AtomicItemType.nullItem.getName())) {
+                if (
+                    !columnType.equals(StringFlagForEmptySequence)
+                        && !columnType.equals(AtomicItemType.nullItem.getName())
+                ) {
                     String currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);
@@ -503,7 +504,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     /**
-     * Try to generate the native query for the order by clause and run it, if successful return the resulting dataframe,
+     * Try to generate the native query for the order by clause and run it, if successful return the resulting
+     * dataframe,
      * otherwise it returns null
      *
      * @param dataFrame input dataframe for the query
@@ -520,21 +522,22 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        // the try catch block is required because of the query that are not supported by sparksql like using a field to decide which field to use (e.g. $i.($i.fieldToUse) )
+        // the try catch block is required because of the query that are not supported by sparksql like using a field to
+        // decide which field to use (e.g. $i.($i.fieldToUse) )
         try {
             NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
             StringBuilder orderSql = new StringBuilder();
             String orderSeparator = "";
             NativeClauseContext nativeQuery;
-            for(OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator){
+            for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
                 nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
-                if(nativeQuery == NativeClauseContext.NoNativeQuery){
+                if (nativeQuery == NativeClauseContext.NoNativeQuery) {
                     return null;
                 }
                 orderSql.append(orderSeparator);
                 orderSeparator = ", ";
                 orderSql.append(nativeQuery.getResultingQuery());
-                if(!orderIterator.isAscending()){
+                if (!orderIterator.isAscending()) {
                     orderSql.append(" desc");
                 }
             }
@@ -543,13 +546,13 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
             dataFrame.createOrReplaceTempView("input");
             return dataFrame.sparkSession()
-                    .sql(
-                            String.format(
-                                    "select %s from input order by %s",
-                                    selectSQL,
-                                    orderSql
-                            )
-                    );
+                .sql(
+                    String.format(
+                        "select %s from input order by %s",
+                        selectSQL,
+                        orderSql
+                    )
+                );
         } catch (Exception e) {
             return null;
         }

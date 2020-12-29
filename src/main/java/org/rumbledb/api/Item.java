@@ -18,7 +18,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -518,6 +517,7 @@ public interface Item extends Serializable, KryoSerializable {
 
     /**
      * Get sparkSql string for the item
+     * 
      * @return String representing the item in a sparksql query or null if it is not supported for the item
      */
     String getSparkSqlQuery();

@@ -56,7 +56,7 @@ public class NotOperationIterator extends LocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
-        if(childResult == NativeClauseContext.NoNativeQuery){
+        if (childResult == NativeClauseContext.NoNativeQuery) {
             return NativeClauseContext.NoNativeQuery;
         }
 

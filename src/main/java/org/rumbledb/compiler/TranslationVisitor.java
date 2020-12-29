@@ -1124,19 +1124,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         ItemType itemType;
         JsoniqParser.FunctionTestContext fnCtx = ctx.item.functionTest();
-        if(fnCtx == null){
+        if (fnCtx == null) {
             // non-function item type
             itemType = ItemType.getItemTypeByName(ctx.item.getText());
         } else {
             // function item type
             JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
-            if(typedFnCtx == null){
+            if (typedFnCtx == null) {
                 // function(*)
                 itemType = FunctionItemType.ANYFUNCTION;
             } else {
                 // typed function
                 SequenceType rt = processSequenceType(typedFnCtx.rt);
-                List<SequenceType> st = typedFnCtx.st.stream().map(this::processSequenceType).collect(Collectors.toList());
+                List<SequenceType> st = typedFnCtx.st.stream()
+                    .map(this::processSequenceType)
+                    .collect(Collectors.toList());
                 FunctionSignature signature = new FunctionSignature(st, rt);
                 itemType = new FunctionItemType(signature);
             }

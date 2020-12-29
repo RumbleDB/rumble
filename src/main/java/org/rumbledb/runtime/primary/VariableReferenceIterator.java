@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.primary;
 
-import org.apache.commons.lang3.ArrayUtils;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -87,28 +86,30 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         String name = this.variableName.toString();
         DataType schema = nativeClauseContext.getSchema();
-        if(!(schema instanceof StructType)){
+        if (!(schema instanceof StructType)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
         StructType structSchema = (StructType) schema;
-        if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(name))){
+        if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(name))) {
             NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, name);
             StructField field = structSchema.fields()[structSchema.fieldIndex(name)];
             DataType fieldType = field.dataType();
-            if(fieldType.typeName().equals("binary")){
+            if (fieldType.typeName().equals("binary")) {
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setSchema(fieldType);
             return newContext;
         } else {
-            List<Item> items = nativeClauseContext.getContext().getVariableValues().getLocalVariableValue(this.variableName, getMetadata());
-            if(items.size() != 1) {
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(this.variableName, getMetadata());
+            if (items.size() != 1) {
                 // only possible to turn into native, sequence of length 1
                 return NativeClauseContext.NoNativeQuery;
             }
             String itemQuery = items.get(0).getSparkSqlQuery();
-            if(itemQuery == null){
+            if (itemQuery == null) {
                 return NativeClauseContext.NoNativeQuery;
             }
             return new NativeClauseContext(nativeClauseContext, itemQuery);

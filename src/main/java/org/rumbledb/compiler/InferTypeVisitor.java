@@ -268,7 +268,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
         SequenceType returnType = expression.getActualReturnType();
-        if(returnType == null){
+        if (returnType == null) {
             returnType = expression.getBody().getInferredSequenceType();
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
@@ -278,7 +278,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
-    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext){
+    private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
         try {
@@ -549,7 +549,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inferredType = leftItemType;
             } else if (
                 !expression.isMinus()
-                    && (rightItemType.equals(AtomicItemType.dateTimeItem) || rightItemType.equals(AtomicItemType.dateItem))
+                    && (rightItemType.equals(AtomicItemType.dateTimeItem)
+                        || rightItemType.equals(AtomicItemType.dateItem))
             ) {
                 inferredType = rightItemType;
             }
@@ -658,7 +659,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             ) {
                 inferredType = rightItemType;
             }
-        } else if (leftItemType.isSubtypeOf(AtomicItemType.durationItem) && !leftItemType.equals(AtomicItemType.durationItem)) {
+        } else if (
+            leftItemType.isSubtypeOf(AtomicItemType.durationItem) && !leftItemType.equals(AtomicItemType.durationItem)
+        ) {
             if (
                 rightItemType.isNumeric()
                     && (expression.getMultiplicativeOperator() == MultiplicativeExpression.MultiplicativeOperator.MUL
@@ -860,7 +863,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             ItemType rightItemType = isRightEmpty ? leftInferredType.getItemType() : rightInferredType.getItemType();
 
             // Type must be a strict subtype of atomic
-            if (leftItemType.isSubtypeOf(AtomicItemType.JSONItem) || rightItemType.isSubtypeOf(AtomicItemType.JSONItem)) {
+            if (
+                leftItemType.isSubtypeOf(AtomicItemType.JSONItem) || rightItemType.isSubtypeOf(AtomicItemType.JSONItem)
+            ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare with non-atomic types",
                         ErrorCode.NonAtomicElementErrorCode
@@ -1356,13 +1361,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     // return [true] if [types] are subtype of or can be promoted to expected types, [false] otherwise
-    public boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types){
+    public boolean checkArguments(List<SequenceType> expectedTypes, List<SequenceType> types) {
         int length = expectedTypes.size();
-        if(length != types.size()){
+        if (length != types.size()) {
             return false;
         }
-        for(int i = 0; i < length; ++i){
-            if(!types.get(i).isSubtypeOfOrCanBePromotedTo(expectedTypes.get(i))){
+        for (int i = 0; i < length; ++i) {
+            if (!types.get(i).isSubtypeOfOrCanBePromotedTo(expectedTypes.get(i))) {
                 return false;
             }
         }
@@ -1382,10 +1387,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         FunctionSignature signature = null;
         boolean isAnyFunction = false;
-        if(!mainType.isEmptySequence()){
+        if (!mainType.isEmptySequence()) {
             ItemType type = mainType.getItemType();
-            if(type.isFunctionItem()){
-                if(type.equals(FunctionItemType.ANYFUNCTION)){
+            if (type.isFunctionItem()) {
+                if (type.equals(FunctionItemType.ANYFUNCTION)) {
                     isAnyFunction = true;
                 } else {
                     signature = type.getSignature();
@@ -1393,12 +1398,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        List<SequenceType> argsType = expression.getArguments().stream().map(expr -> expr.getInferredSequenceType()).collect(Collectors.toList());
-        if(isAnyFunction || (signature != null && checkArguments(signature.getParameterTypes(), argsType))){
+        List<SequenceType> argsType = expression.getArguments()
+            .stream()
+            .map(expr -> expr.getInferredSequenceType())
+            .collect(Collectors.toList());
+        if (isAnyFunction || (signature != null && checkArguments(signature.getParameterTypes(), argsType))) {
             // TODO: need to add support for partial application
             expression.setInferredSequenceType(signature.getReturnType());
             System.out.println(
-                    "visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType()
+                "visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType()
             );
             return argument;
         }
