@@ -2,17 +2,25 @@ package org.rumbledb.runtime.operational;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 
@@ -24,7 +32,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private SequenceType sequenceType;
 
     private ItemType itemType;
-    private String sequenceTypeName;
 
     private Item nextResult;
     private int childIndex;
@@ -41,7 +48,16 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        this.sequenceTypeName = this.itemType.toString();
+        if (
+            !executionMode.equals(ExecutionMode.LOCAL)
+                && (sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero))
+        ) {
+            throw new OurBadException(
+                    "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
+            );
+        }
     }
 
     @Override
@@ -96,7 +112,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         }
 
         checkItemsSize(this.childIndex);
-        if (!this.nextResult.isTypeOf(this.itemType)) {
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
             checkTypePromotion();
         }
     }
@@ -159,6 +175,45 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         return childRDD.map(transformation);
     }
 
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
+        int count = df.takeAsList(1).size();
+        checkEmptySequence(count);
+        if (count == 0) {
+            return df;
+        }
+        ItemType dataItemType = TreatIterator.getItemType(df);
+        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && this.itemType.equals(ItemType.doubleItem)) {
+            df.createOrReplaceTempView("input");
+            df = df.sparkSession()
+                .sql(
+                    "SELECT CAST (`"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` AS double) AS `"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` FROM input"
+                );
+        }
+        dataItemType = TreatIterator.getItemType(df);
+        if (dataItemType.isSubtypeOf(this.itemType)) {
+            return df;
+        }
+        throw new UnexpectedTypeException(
+                this.exceptionMessage
+                    + dataItemType
+                    + " cannot be promoted to type "
+                    + this.sequenceType
+                    + ".",
+                getMetadata()
+        );
+    }
+
     private void checkTypePromotion() {
         if (this.nextResult.isFunction()) {
             return;
@@ -168,8 +223,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     this.exceptionMessage
                         + this.nextResult.getDynamicType().toString()
                         + " cannot be promoted to type "
-                        + this.sequenceTypeName
-                        + this.sequenceType.getArity().getSymbol()
+                        + this.sequenceType
                         + ".",
                     getMetadata()
             );

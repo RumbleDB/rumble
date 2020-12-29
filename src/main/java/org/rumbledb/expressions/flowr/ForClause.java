@@ -89,7 +89,7 @@ public class ForClause extends Clause {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
+            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
                 || (this.previousClause != null
                     && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
                         ? ExecutionMode.DATAFRAME

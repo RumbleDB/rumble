@@ -244,20 +244,14 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             case MUL:
                 return ItemFactory.getInstance().createDoubleItem(l * r);
             case DIV:
-                if (r == 0) {
-                    throw new DivisionByZeroException(metadata);
-                }
                 return ItemFactory.getInstance().createDoubleItem(l / r);
             case IDIV:
                 if (r == 0) {
                     throw new DivisionByZeroException(metadata);
                 }
                 return ItemFactory.getInstance()
-                    .createDoubleItem((double) (long) (l / r));
+                    .createLongItem((long) (l / r));
             case MOD:
-                if (r == 0) {
-                    throw new DivisionByZeroException(metadata);
-                }
                 return ItemFactory.getInstance().createDoubleItem(l % r);
             default:
                 throw new OurBadException(

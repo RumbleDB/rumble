@@ -140,7 +140,7 @@ public class FunctionCallExpression extends Expression {
             if (firstArgumentExecutionMode.isDataFrame()) {
                 return ExecutionMode.DATAFRAME;
             }
-            if (firstArgumentExecutionMode.isRDD()) {
+            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
                 return ExecutionMode.RDD;
             }
             return ExecutionMode.LOCAL;
@@ -150,7 +150,7 @@ public class FunctionCallExpression extends Expression {
         ) {
             ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (
-                firstArgumentExecutionMode.isRDD()
+                firstArgumentExecutionMode.isRDDOrDataFrame()
                     && !firstArgumentExecutionMode.isDataFrame()
             ) {
                 return ExecutionMode.RDD;

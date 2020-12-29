@@ -6,12 +6,16 @@ public enum ExecutionMode {
     RDD,
     DATAFRAME;
 
-    public boolean isRDD() {
+    public boolean isRDDOrDataFrame() {
         return this == ExecutionMode.RDD || this == ExecutionMode.DATAFRAME;
     }
 
     public boolean isDataFrame() {
         return this == ExecutionMode.DATAFRAME;
+    }
+
+    public boolean isRDD() {
+        return this == ExecutionMode.RDD;
     }
 
     public String toString() {

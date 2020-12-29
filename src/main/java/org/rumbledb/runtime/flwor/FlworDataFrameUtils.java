@@ -399,6 +399,9 @@ public class FlworDataFrameUtils {
             queryColumnString.append("`");
 
         }
+        if (comma.equals("")) {
+            queryColumnString.append("TRUE");
+        }
         if (trailingComma) {
             queryColumnString.append(",");
         }

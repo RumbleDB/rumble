@@ -21,15 +21,16 @@
 package org.rumbledb.runtime.functions.sequences.value;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+
 
 import java.util.ArrayList;
 import java.util.List;
@@ -88,17 +89,10 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
         while (this.sequenceIterator.hasNext()) {
             Item item = this.sequenceIterator.next();
-            if (!item.isAtomic()) {
-                throw new NonAtomicKeyException(
-                        "Invalid args. distinct-values can't be performed on non-atomics",
-                        getMetadata()
-                );
-            } else {
-                if (!this.prevResults.contains(item)) {
-                    this.prevResults.add(item);
-                    this.nextResult = item;
-                    break;
-                }
+            if (!this.prevResults.contains(item)) {
+                this.prevResults.add(item);
+                this.nextResult = item;
+                break;
             }
         }
 
@@ -113,13 +107,17 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
-        Function<Item, Boolean> transformation = new FilterNonAtomicClosure();
-        if (childRDD.filter(transformation).isEmpty()) {
-            return childRDD.distinct();
-        }
-        throw new NonAtomicKeyException(
-                "Invalid args. distinct-values can't be performed on non-atomics",
-                getMetadata()
-        );
+        return childRDD.distinct();
+    }
+
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+        return df.distinct();
     }
 }

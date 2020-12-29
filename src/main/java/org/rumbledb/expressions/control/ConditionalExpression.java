@@ -74,8 +74,8 @@ public class ConditionalExpression extends Expression {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (
-            this.thenExpression.getHighestExecutionMode(visitorConfig).isRDD()
-                && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()
+            this.thenExpression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
+                && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
         ) {
             this.highestExecutionMode = ExecutionMode.RDD;
             return;

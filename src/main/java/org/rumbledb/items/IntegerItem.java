@@ -225,4 +225,9 @@ public class IntegerItem extends AtomicItem {
     public ItemType getDynamicType() {
         return ItemType.integerItem;
     }
+
+    @Override
+    public boolean isNumeric() {
+        return true;
+    }
 }

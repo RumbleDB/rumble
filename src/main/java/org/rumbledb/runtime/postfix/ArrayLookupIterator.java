@@ -37,7 +37,6 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ArrayItem;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -90,13 +89,11 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         this.iterator.close();
     }
 
-    private void initLookupPosition() {
+    private void initLookupPosition(DynamicContext context) {
         RuntimeIterator lookupIterator = this.children.get(1);
 
         try {
-            Item lookupExpression = lookupIterator.materializeExactlyOneItem(
-                this.currentDynamicContextForLocalExecution
-            );
+            Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
             if (!lookupExpression.isNumeric()) {
                 throw new UnexpectedTypeException(
                         "Type error; Non numeric array lookup for : "
@@ -120,7 +117,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        initLookupPosition();
+        initLookupPosition(this.currentDynamicContextForLocalExecution);
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -130,11 +127,10 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
-            if (item instanceof ArrayItem) {
-                ArrayItem arrItem = (ArrayItem) item;
-                if (this.lookup > 0 && this.lookup <= arrItem.getSize()) {
+            if (item.isArray()) {
+                if (this.lookup > 0 && this.lookup <= item.getSize()) {
                     // -1 for Jsoniq convention, arrays start from 1
-                    Item result = arrItem.getItemAt(this.lookup - 1);
+                    Item result = item.getItemAt(this.lookup - 1);
                     this.nextResult = result;
                     break;
                 }
@@ -152,7 +148,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupPosition();
+        initLookupPosition(dynamicContext);
         FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
 
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
@@ -166,7 +162,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        initLookupPosition();
+        initLookupPosition(context);
         childDataFrame.createOrReplaceTempView("array");
         StructType schema = childDataFrame.schema();
         String[] fieldNames = schema.fieldNames();

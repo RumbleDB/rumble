@@ -49,7 +49,7 @@ public class ExistsFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext()) {
             this.hasNext = false;
-            if (this.sequenceIterator.isRDD()) {
+            if (this.sequenceIterator.isRDDOrDataFrame()) {
                 List<Item> i = this.sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
                 return ItemFactory.getInstance().createBooleanItem(!i.isEmpty());
             }
