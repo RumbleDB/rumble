@@ -5,6 +5,9 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * This class describes the context of a native clause and is used when processing FLWOR expressions without UDF
  */
@@ -15,7 +18,7 @@ public class NativeClauseContext {
     private DataType schema;
     private DynamicContext context;
     private String resultingQuery;
-    private String lateralViewPart; // used in array unboxing to generate the correct lateral view
+    private List<String> lateralViewPart; // used in array unboxing to generate the correct lateral view
 
     private NativeClauseContext() {
     }
@@ -25,7 +28,7 @@ public class NativeClauseContext {
         this.schema = schema;
         this.context = context;
         this.resultingQuery = "";
-        this.lateralViewPart = "";
+        this.lateralViewPart = new ArrayList<>();
     }
 
     public NativeClauseContext(NativeClauseContext parent) {
@@ -33,6 +36,7 @@ public class NativeClauseContext {
         this.schema = parent.schema;
         this.context = parent.context;
         this.resultingQuery = parent.resultingQuery;
+        this.lateralViewPart = parent.lateralViewPart;
     }
 
     public NativeClauseContext(NativeClauseContext parent, String newSelectPart) {
@@ -40,6 +44,7 @@ public class NativeClauseContext {
         this.schema = parent.schema;
         this.context = parent.context;
         this.resultingQuery = newSelectPart;
+        this.lateralViewPart = parent.lateralViewPart;
     }
 
     public FLWOR_CLAUSES getClauseType() {
@@ -66,11 +71,7 @@ public class NativeClauseContext {
         return this.context;
     }
 
-    public String getLateralViewPart() {
+    public List<String> getLateralViewPart() {
         return this.lateralViewPart;
-    }
-
-    public void setLateralViewPart(String lateralViewPart) {
-        this.lateralViewPart = lateralViewPart;
     }
 }

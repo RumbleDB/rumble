@@ -42,6 +42,7 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
@@ -142,7 +143,13 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 return NativeClauseContext.NoNativeQuery;
             }
             newContext.setSchema(((ArrayType) schema).elementType());
-            newContext.setLateralViewPart("explode(" + newContext.getResultingQuery() + ")");
+            List<String> lateralViewPart = newContext.getLateralViewPart();
+            if(lateralViewPart.size() == 0){
+                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+            } else {
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the previous
+                lateralViewPart.add("explode( arr"+ lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")");
+            }
             newContext.setResultingQuery(""); // dealt by for clause
         }
         return newContext;

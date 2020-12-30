@@ -1228,7 +1228,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 if (allowingEmpty) {
                     return null;
                 } else {
-                    if(nativeQuery.getLateralViewPart().equals("")){
+                    List<String> lateralViewPart = nativeQuery.getLateralViewPart();
+                    if(lateralViewPart.size() == 0){
                         // no array unboxing in the operation
                         return dataFrame.sparkSession()
                                 .sql(
@@ -1242,14 +1243,24 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     } else {
                         // we have at least an array unboxing operation
                         // col is the default name of explode
+                        StringBuilder lateralViewString = new StringBuilder();
+                        int arrIndex = 0;
+                        for(String lateralView : lateralViewPart){
+                            ++arrIndex;
+                            lateralViewString.append(" lateral view ");
+                            lateralViewString.append(lateralView);
+                            lateralViewString.append(" arr");
+                            lateralViewString.append(arrIndex);
+                        }
                         return dataFrame.sparkSession()
                                 .sql(
                                         String.format(
-                                                "select %s arr1.col%s as `%s` from input lateral view %s arr1",
+                                                "select %s arr%d.col%s as `%s` from input %s",
                                                 selectSQL,
+                                                arrIndex,
                                                 nativeQuery.getResultingQuery(),
                                                 newVariableName,
-                                                nativeQuery.getLateralViewPart()
+                                                lateralViewString
                                         )
                                 );
                     }
