@@ -15,6 +15,7 @@ public class NativeClauseContext {
     private DataType schema;
     private DynamicContext context;
     private String resultingQuery;
+    private String lateralViewPart; // used in array unboxing to generate the correct lateral view
 
     private NativeClauseContext() {
     }
@@ -24,6 +25,7 @@ public class NativeClauseContext {
         this.schema = schema;
         this.context = context;
         this.resultingQuery = "";
+        this.lateralViewPart = "";
     }
 
     public NativeClauseContext(NativeClauseContext parent) {
@@ -38,6 +40,10 @@ public class NativeClauseContext {
         this.schema = parent.schema;
         this.context = parent.context;
         this.resultingQuery = newSelectPart;
+    }
+
+    public FLWOR_CLAUSES getClauseType() {
+        return this.clauseType;
     }
 
     public void setResultingQuery(String resultingQuery) {
@@ -58,5 +64,13 @@ public class NativeClauseContext {
 
     public DynamicContext getContext() {
         return this.context;
+    }
+
+    public String getLateralViewPart() {
+        return this.lateralViewPart;
+    }
+
+    public void setLateralViewPart(String lateralViewPart) {
+        this.lateralViewPart = lateralViewPart;
     }
 }

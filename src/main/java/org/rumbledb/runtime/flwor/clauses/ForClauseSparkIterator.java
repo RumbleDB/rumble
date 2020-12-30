@@ -864,7 +864,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variableNamesToExclude
         );
 
-        // TODO: Useless because here is local for
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
             this.variableName,
@@ -1220,6 +1219,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 return null;
             }
             System.out.println("native query returned " + nativeQuery.getResultingQuery());
+            System.out.println("lateral view part is " + nativeQuery.getLateralViewPart());
             String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
             dataFrame.createOrReplaceTempView("input");
 
@@ -1228,15 +1228,31 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 if (allowingEmpty) {
                     return null;
                 } else {
-                    return dataFrame.sparkSession()
-                        .sql(
-                            String.format(
-                                "select %s explode(%s) as `%s` from input",
-                                selectSQL,
-                                nativeQuery.getResultingQuery(),
-                                newVariableName
-                            )
-                        );
+                    if(nativeQuery.getLateralViewPart().equals("")){
+                        // no array unboxing in the operation
+                        return dataFrame.sparkSession()
+                                .sql(
+                                        String.format(
+                                                "select %s %s as `%s` from input",
+                                                selectSQL,
+                                                nativeQuery.getResultingQuery(),
+                                                newVariableName
+                                        )
+                                );
+                    } else {
+                        // we have at least an array unboxing operation
+                        // col is the default name of explode
+                        return dataFrame.sparkSession()
+                                .sql(
+                                        String.format(
+                                                "select %s arr1.col%s as `%s` from input lateral view %s arr1",
+                                                selectSQL,
+                                                nativeQuery.getResultingQuery(),
+                                                newVariableName,
+                                                nativeQuery.getLateralViewPart()
+                                        )
+                                );
+                    }
                 }
             } else {
                 if (allowingEmpty) {

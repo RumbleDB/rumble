@@ -33,9 +33,11 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
@@ -124,6 +126,26 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     @Override
     public boolean implementsDataFrames() {
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if(nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR){
+            // unboxing only available for the FOR clause
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if(newContext != NativeClauseContext.NoNativeQuery){
+            DataType schema = newContext.getSchema();
+            if (!(schema instanceof ArrayType)) {
+                // let control to UDF when what we are unboxing is not an array
+                return NativeClauseContext.NoNativeQuery;
+            }
+            newContext.setSchema(((ArrayType) schema).elementType());
+            newContext.setLateralViewPart("explode(" + newContext.getResultingQuery() + ")");
+            newContext.setResultingQuery(""); // dealt by for clause
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
