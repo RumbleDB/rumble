@@ -1226,7 +1226,57 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             // let's distinguish 4 cases
             if (positionalVariableName == null) {
                 if (allowingEmpty) {
-                    return null;
+                    List<String> lateralViewPart = nativeQuery.getLateralViewPart();
+                    if(lateralViewPart.size() == 0){
+                        // no array unboxing in the operation
+                        // already covered in the generation and handled through UDF
+                        // this branch should never happen in practice
+                        return null;
+                    } else {
+                        // we have at least an array unboxing operation
+                        // col is the default name of explode
+
+                        // to deal with allowing empty
+                        // first we add an artificial unique id to the dataset and re-register the input table
+                        String rowIdField = "idx-9384-3948-1272-4375";
+                        dataFrame = dataFrame.sparkSession().sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from input");
+                        dataFrame.createOrReplaceTempView("input");
+
+                        // then we create the virtual exploded table as before
+                        // but this time we store it and also get the index field
+                        StringBuilder lateralViewString = new StringBuilder();
+                        int arrIndex = 0;
+                        for(String lateralView : lateralViewPart){
+                            ++arrIndex;
+                            lateralViewString.append(" lateral view ");
+                            lateralViewString.append(lateralView);
+                            lateralViewString.append(" arr");
+                            lateralViewString.append(arrIndex);
+                        }
+                        Dataset<Row> lateralViewDf = dataFrame.sparkSession()
+                                .sql(
+                                        String.format(
+                                                "select `%s`, arr%d.col%s as `%s` from input %s",
+                                                rowIdField,
+                                                arrIndex,
+                                                nativeQuery.getResultingQuery(),
+                                                newVariableName,
+                                                lateralViewString
+                                        )
+                                );
+                        lateralViewDf.createOrReplaceTempView("lateral");
+
+                        // to return the correct number of empty results we perform a left join between input and lateral
+                        return dataFrame.sparkSession().sql(
+                                String.format(
+                                        "select %s lateral.`%s` from input left join lateral on input.`%s` = lateral.`%s`",
+                                        selectSQL,
+                                        newVariableName,
+                                        rowIdField,
+                                        rowIdField
+                                )
+                        );
+                    }
                 } else {
                     List<String> lateralViewPart = nativeQuery.getLateralViewPart();
                     if(lateralViewPart.size() == 0){
