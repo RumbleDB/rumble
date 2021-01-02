@@ -1316,10 +1316,103 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     }
                 }
             } else {
-                if (allowingEmpty) {
-                    return null;
+                // common part for positional variable handling
+                List<String> lateralViewPart = nativeQuery.getLateralViewPart();
+                if(lateralViewPart.size() == 0){
+                    // if allowing empty we do not deal with this
+                    if(allowingEmpty){
+                        return null;
+                    }
+                    // no array unboxing in the operation
+                    // therefore position is for sure 1
+                    return dataFrame.sparkSession()
+                            .sql(
+                                    String.format(
+                                            "select %s %s as `%s`, 1 as `%s` from input",
+                                            selectSQL,
+                                            nativeQuery.getResultingQuery(),
+                                            newVariableName,
+                                            positionalVariableName
+                                    )
+                            );
                 } else {
-                    return null;
+                    // we have at least an array unboxing operation
+                    // pos, col are the default name of posexplode function
+                    // to deal with positional variable
+                    // we first add unique index to guarantee grouping correctly
+                    String rowIdField = "idx-9384-3948-1272-4375";
+                    dataFrame = dataFrame.sparkSession().sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from input");
+                    dataFrame.createOrReplaceTempView("input");
+
+                    // then we collect all values from lateral view
+                    // and group by original tuple
+                    // this is basically equivalent to flattening the array, in case of multiple unboxing operation
+                    StringBuilder lateralViewString = new StringBuilder();
+                    int arrIndex = 0;
+                    for(String lateralView : lateralViewPart){
+                        ++arrIndex;
+                        lateralViewString.append(" lateral view ");
+                        lateralViewString.append(lateralView);
+                        lateralViewString.append(" arr");
+                        lateralViewString.append(arrIndex);
+                    }
+                    dataFrame = dataFrame.sparkSession()
+                            .sql(
+                                    String.format(
+                                            "select `%s`, %s collect_list(arr%d.col%s) as grouped from input %s group by %s `%s`",
+                                            rowIdField,
+                                            selectSQL,
+                                            arrIndex,
+                                            nativeQuery.getResultingQuery(),
+                                            lateralViewString,
+                                            selectSQL,
+                                            rowIdField
+                                    )
+                            );
+
+
+                    if (allowingEmpty) {
+                        // register a support table to keep the empty values
+                        dataFrame.sparkSession().sql("select `" + rowIdField + "` from input").createOrReplaceTempView("allrows");
+
+                        // register previously created table
+                        dataFrame.createOrReplaceTempView("input");
+
+                        // insert null values
+                        dataFrame = dataFrame.sparkSession().sql(String.format(
+                                "select allrows.`%s`, %s grouped from allrows left join input on allrows.`%s` = input.`%s`",
+                                rowIdField,
+                                selectSQL,
+                                rowIdField,
+                                rowIdField
+                        ));
+                        dataFrame.createOrReplaceTempView("input");
+
+                        // we use a lateral view to handle proper counting and NULL handling
+                        return dataFrame.sparkSession()
+                                .sql(
+                                        String.format(
+                                                "select %s IF(exploded.pos IS NULL, 0, exploded.pos + 1) as `%s`, exploded.col as `%s`  from input lateral view outer posexplode(grouped) exploded",
+                                                selectSQL,
+                                                positionalVariableName,
+                                                newVariableName
+                                        )
+                                );
+                    } else {
+                        // register previously created table
+                        dataFrame.createOrReplaceTempView("input");
+
+                        // finally we unwrap it with a single posexplode
+                        return dataFrame.sparkSession()
+                                .sql(
+                                        String.format(
+                                                "select %s (exploded.pos + 1) as `%s`, exploded.col as `%s`  from input lateral view posexplode(grouped) exploded",
+                                                selectSQL,
+                                                positionalVariableName,
+                                                newVariableName
+                                        )
+                                );
+                    }
                 }
             }
         } catch (Exception e) {
