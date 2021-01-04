@@ -131,12 +131,12 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        if(nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR){
+        if (nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR) {
             // unboxing only available for the FOR clause
             return NativeClauseContext.NoNativeQuery;
         }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
-        if(newContext != NativeClauseContext.NoNativeQuery){
+        if (newContext != NativeClauseContext.NoNativeQuery) {
             DataType schema = newContext.getSchema();
             if (!(schema instanceof ArrayType)) {
                 // let control to UDF when what we are unboxing is not an array
@@ -144,11 +144,14 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
             }
             newContext.setSchema(((ArrayType) schema).elementType());
             List<String> lateralViewPart = newContext.getLateralViewPart();
-            if(lateralViewPart.size() == 0){
+            if (lateralViewPart.size() == 0) {
                 lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
             } else {
-                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the previous
-                lateralViewPart.add("explode( arr"+ lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")");
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+                // previous
+                lateralViewPart.add(
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+                );
             }
             newContext.setResultingQuery(""); // dealt by for clause
         }
