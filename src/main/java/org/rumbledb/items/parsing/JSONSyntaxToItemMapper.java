@@ -20,11 +20,12 @@
 
 package org.rumbledb.items.parsing;
 
-import com.jsoniter.JsonIterator;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import com.google.gson.stream.JsonReader;
 
+import java.io.StringReader;
 import java.util.Iterator;
 
 public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>, Item> {
@@ -46,7 +47,7 @@ public class JSONSyntaxToItemMapper implements FlatMapFunction<Iterator<String>,
 
             @Override
             public Item next() {
-                JsonIterator object = JsonIterator.parse(stringIterator.next());
+                JsonReader object = new JsonReader(new StringReader(stringIterator.next()));
                 return ItemParser.getItemFromObject(object, JSONSyntaxToItemMapper.this.metadata);
             }
 

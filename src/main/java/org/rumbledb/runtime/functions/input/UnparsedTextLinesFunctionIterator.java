@@ -38,6 +38,7 @@ import java.util.List;
 public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
+    public static final int MIN_PARTITIONS = 10;
 
     public UnparsedTextLinesFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -65,7 +66,7 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
         if (this.children.size() == 1) {
             strings = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
-                .textFile(uri.toString());
+                .textFile(uri.toString(), MIN_PARTITIONS);
         } else {
             RuntimeIterator partitionsIterator = this.children.get(1);
             partitionsIterator.open(this.currentDynamicContextForLocalExecution);
