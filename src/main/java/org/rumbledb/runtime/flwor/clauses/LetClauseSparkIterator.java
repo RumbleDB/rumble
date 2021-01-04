@@ -630,28 +630,22 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        // the try catch block is required because of the query that are not supported by sparksql like using a field to
-        // decide which field to use (e.g. $i.($i.fieldToUse) )
-        try {
-            NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
-            NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
-            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-                return null;
-            }
-            System.out.println("native query returned " + nativeQuery.getResultingQuery());
-            String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
-            dataFrame.createOrReplaceTempView("input");
-            return dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s (%s) as `%s` from input",
-                        selectSQL,
-                        nativeQuery.getResultingQuery(),
-                        newVariableName
-                    )
-                );
-        } catch (Exception e) {
+        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
+        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        System.out.println("native query returned " + nativeQuery.getResultingQuery());
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        dataFrame.createOrReplaceTempView("input");
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s (%s) as `%s` from input",
+                    selectSQL,
+                    nativeQuery.getResultingQuery(),
+                    newVariableName
+                )
+            );
     }
 }

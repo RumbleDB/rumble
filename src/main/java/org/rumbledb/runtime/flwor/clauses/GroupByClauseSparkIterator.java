@@ -495,62 +495,64 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        try {
-            StringBuilder groupByString = new StringBuilder();
-            String sep = " ";
-            for (Name groupingVar : groupingVariables) {
-                StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
+        StringBuilder groupByString = new StringBuilder();
+        String sep = " ";
+        for (Name groupingVar : groupingVariables) {
+            StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
+            if (field.dataType().equals(DataTypes.BinaryType)) {
+                // we got a non-native type for grouping, switch to udf version
+                return null;
+            }
+
+            groupByString.append(sep);
+            sep = ", ";
+            groupByString.append(groupingVar.toString());
+        }
+        StringBuilder selectString = new StringBuilder();
+        sep = " ";
+        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
+            selectString.append(sep);
+            sep = ", ";
+            if (entry.getKey().toString().endsWith(".count")) {
+                // we are summing over a previous count
+                selectString.append("sum(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`");
+            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                // we need a count
+                selectString.append("count(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count`");
+            } else if (groupingVariables.contains(entry.getKey())) {
+                // we are considering one of the grouping variables
+                selectString.append(entry.getKey().toString());
+            } else {
+                // we collect all the values, if it is a binary object we just switch over to udf
+                String columnName = entry.getKey().toString();
+                StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
                 if (field.dataType().equals(DataTypes.BinaryType)) {
-                    // we got a non-native type for grouping, switch to udf version
                     return null;
                 }
-
-                groupByString.append(sep);
-                sep = ", ";
-                groupByString.append(groupingVar.toString());
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
+                selectString.append("`");
             }
-            StringBuilder selectString = new StringBuilder();
-            sep = " ";
-            for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
-                selectString.append(sep);
-                sep = ", ";
-                // TODO: what about precomputed count
-                if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
-                    // we need a count
-                    selectString.append("count(`");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append("`) as `");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append(".count`");
-                } else if (groupingVariables.contains(entry.getKey())) {
-                    // we are considering one of the grouping variables
-                    selectString.append(entry.getKey().toString());
-                } else {
-                    // we collect all the values, if it is a binary object we just switch over to udf
-                    String columnName = entry.getKey().toString();
-                    StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
-                    if (field.dataType().equals(DataTypes.BinaryType)) {
-                        return null;
-                    }
-                    selectString.append("collect_list(`");
-                    selectString.append(columnName);
-                    selectString.append("`) as `");
-                    selectString.append(columnName);
-                    selectString.append("`");
-                }
-            }
-            System.out.println("select part got returned: " + selectString);
-            System.out.println("groupby part got returned: " + groupByString);
-            return dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s from input group by %s",
-                        selectString,
-                        groupByString
-                    )
-                );
-        } catch (Exception e) {
-            return null;
         }
+        System.out.println("select part got returned: " + selectString);
+        System.out.println("groupby part got returned: " + groupByString);
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input group by %s",
+                    selectString,
+                    groupByString
+                )
+            );
     }
 }
