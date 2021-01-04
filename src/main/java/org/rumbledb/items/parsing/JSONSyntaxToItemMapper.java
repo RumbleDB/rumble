@@ -23,6 +23,7 @@ package org.rumbledb.items.parsing;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import com.google.gson.stream.JsonReader;
 
 import com.dslplatform.json.DslJson;
 import com.dslplatform.json.JsonReader;

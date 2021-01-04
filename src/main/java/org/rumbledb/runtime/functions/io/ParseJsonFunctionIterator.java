@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -79,7 +80,9 @@ public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
                 );
                 return ItemParser.getItemFromObject(object, getMetadata(), true);
             } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+                ex.initCause(e);
+                throw ex;
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-parse function", getMetadata());

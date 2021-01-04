@@ -143,6 +143,7 @@ public class ItemParser implements Serializable {
                 if (!isTopLevel) {
                     object.getNextToken();
                 }
+                object.endArray();
                 return ItemFactory.getInstance().createArrayItem(values);
             }
             if (token == '{') {
@@ -173,6 +174,7 @@ public class ItemParser implements Serializable {
                 if (!isTopLevel) {
                     object.getNextToken();
                 }
+                object.endObject();
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
