@@ -7,7 +7,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.ItemType;
@@ -32,13 +31,12 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            AtomicItem atomicItem = (AtomicItem) this.anyItem;
             String message;
-            if (atomicItem.isAnyURI()) {
-                return atomicItem.castAs(ItemType.anyURIItem);
-            } else if (atomicItem.isString()) {
+            if (this.anyItem.isAnyURI()) {
+                return this.anyItem.castAs(ItemType.anyURIItem);
+            } else if (this.anyItem.isString()) {
                 try {
-                    return ItemFactory.getInstance().createAnyURIItem(atomicItem.getStringValue());
+                    return ItemFactory.getInstance().createAnyURIItem(this.anyItem.getStringValue());
                 } catch (IllegalArgumentException e) {
                     message = String.format(
                         "\"%s\": value of type String is not castable to type anyURI",
@@ -49,8 +47,8 @@ public class AnyURIFunctionIterator extends LocalFunctionCallIterator {
             }
             message = String.format(
                 "\"%s\": value of type %s is not castable to type anyURI",
-                atomicItem.serialize(),
-                atomicItem.getDynamicType().getName()
+                this.anyItem.serialize(),
+                this.anyItem.getDynamicType().getName()
             );
             throw new CastException(message, getMetadata());
         } else

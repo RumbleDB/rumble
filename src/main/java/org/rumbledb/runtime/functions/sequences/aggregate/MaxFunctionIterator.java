@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -28,7 +29,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemComparatorForSequences;
+import org.rumbledb.items.ItemComparator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -43,6 +44,7 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+    private Item result;
 
     public MaxFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -50,51 +52,61 @@ public class MaxFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
     }
 
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+        if (!this.iterator.isRDDOrDataFrame()) {
+            this.iterator.open(this.currentDynamicContextForLocalExecution);
+            this.hasNext = this.iterator.hasNext();
+            this.iterator.close();
+            return;
+        }
+        JavaRDD<Item> rdd = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
+        if (rdd.isEmpty()) {
+            this.hasNext = false;
+            return;
+        }
+        ItemComparator comparator = new ItemComparator(
+                new InvalidArgumentTypeException(
+                        "Max expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
+        this.result = rdd.max(comparator);
     }
 
     @Override
     public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            ItemComparatorForSequences comparator = new ItemComparatorForSequences();
-            if (!this.iterator.isRDD()) {
-                List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
-
-                try {
-                    return Collections.max(results, comparator);
-                } catch (RumbleException e) {
-                    throw new InvalidArgumentTypeException(
-                            "Max expression input error. Input has to be non-null atomics of matching types: "
-                                + e.getMessage(),
-                            getMetadata()
-                    );
-                }
-            } else {
-                try {
-                    return this.iterator.getRDD(this.currentDynamicContextForLocalExecution).max(comparator);
-                } catch (RumbleException e) {
-                    throw new InvalidArgumentTypeException(
-                            "Max expression input error. Input has to be non-null atomics of matching types: "
-                                + e.getMessage(),
-                            getMetadata()
-                    );
-                }
-            }
-        } else {
+        if (!this.hasNext) {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "MAX function",
                     getMetadata()
             );
+        }
+        this.hasNext = false;
+        ItemComparator comparator = new ItemComparator(
+                new InvalidArgumentTypeException(
+                        "Max expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
+        if (this.iterator.isRDDOrDataFrame()) {
+            return this.result;
+        }
+        List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        try {
+            return Collections.max(results, comparator);
+        } catch (RumbleException e) {
+            RumbleException ex = new InvalidArgumentTypeException(
+                    "Max expression input error. Input has to be non-null atomics of matching types.",
+                    getMetadata()
+            );
+            ex.initCause(e);
+            throw ex;
         }
     }
 

@@ -62,7 +62,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             openLocal();
         }
     }
@@ -70,7 +70,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             resetLocal();
             return;
         }
@@ -80,7 +80,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             closeLocal();
             return;
         }
@@ -89,7 +89,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             return hasNextLocal();
         }
         if (this.result == null) {
@@ -103,7 +103,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             return nextLocal();
         }
         if (!this.isOpen) {
@@ -130,14 +130,18 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if (isDataFrame()) {
             Dataset<Row> df = this.getDataFrame(context);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(getMetadata()));
-        } else if (isRDD()) {
+            return dataFrameToRDDOfItems(df, getMetadata());
+        } else if (isRDDOrDataFrame()) {
             return getRDDAux(context);
         } else {
             List<Item> contents = this.materialize(context);
             return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
+    }
+
+    public static JavaRDD<Item> dataFrameToRDDOfItems(Dataset<Row> df, ExceptionMetadata metadata) {
+        JavaRDD<Row> rowRDD = df.javaRDD();
+        return rowRDD.map(new RowToItemMapper(metadata));
     }
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);

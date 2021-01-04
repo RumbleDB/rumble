@@ -136,15 +136,21 @@ public class ItemType implements Serializable {
     }
 
 
-    boolean isSubtypeOf(ItemType superType) {
+    public boolean isSubtypeOf(ItemType superType) {
         if (superType.equals(item)) {
             return true;
+        }
+        if (superType.equals(this)) {
+            return true;
+        }
+        if (superType.equals(decimalItem)) {
+            return this.equals(decimalItem)
+                || this.equals(integerItem);
         }
         if (superType.equals(JSONItem)) {
             return this.equals(objectItem)
                 || this.equals(arrayItem)
-                || this.equals(JSONItem)
-                || this.equals(nullItem);
+                || this.equals(JSONItem);
         }
 
         if (superType.equals(atomicItem)) {

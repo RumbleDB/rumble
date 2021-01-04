@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(-Infinity, 3, 0.3010299956639812)" :)
+(:JIQS: ShouldRun; Output="(-INF, 3, 0.3010299956639812)" :)
 log10(0),
 log10(exp10(3)),
 log10(2),
