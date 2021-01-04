@@ -522,39 +522,33 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        // the try catch block is required because of the query that are not supported by sparksql like using a field to
-        // decide which field to use (e.g. $i.($i.fieldToUse) )
-        try {
-            NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
-            StringBuilder orderSql = new StringBuilder();
-            String orderSeparator = "";
-            NativeClauseContext nativeQuery;
-            for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
-                nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
-                if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-                    return null;
-                }
-                orderSql.append(orderSeparator);
-                orderSeparator = ", ";
-                orderSql.append(nativeQuery.getResultingQuery());
-                if (!orderIterator.isAscending()) {
-                    orderSql.append(" desc");
-                }
+        NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
+        StringBuilder orderSql = new StringBuilder();
+        String orderSeparator = "";
+        NativeClauseContext nativeQuery;
+        for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
+            nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+                return null;
             }
-
-            System.out.println("native query returned: " + orderSql);
-            String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
-            dataFrame.createOrReplaceTempView("input");
-            return dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s from input order by %s",
-                        selectSQL,
-                        orderSql
-                    )
-                );
-        } catch (Exception e) {
-            return null;
+            orderSql.append(orderSeparator);
+            orderSeparator = ", ";
+            orderSql.append(nativeQuery.getResultingQuery());
+            if (!orderIterator.isAscending()) {
+                orderSql.append(" desc");
+            }
         }
+
+        System.out.println("native query returned: " + orderSql);
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
+        dataFrame.createOrReplaceTempView("input");
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input order by %s",
+                    selectSQL,
+                    orderSql
+                )
+            );
     }
 }
