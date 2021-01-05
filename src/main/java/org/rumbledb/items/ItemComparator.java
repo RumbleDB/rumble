@@ -48,7 +48,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      */
     public int compare(Item v1, Item v2) {
         try {
-            return ComparisonOperationIterator.processItem(
+            return ComparisonOperationIterator.compareItems(
                 v1,
                 v2,
                 ComparisonExpression.ComparisonOperator.VC_EQ,

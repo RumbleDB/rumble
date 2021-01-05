@@ -187,14 +187,15 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
-        return compareItems(
-            processItem(left, right, this.comparisonOperator, getMetadata()),
+
+        return comparisonResultToBooleanItem(
+            compareItems(left, right, this.comparisonOperator, getMetadata()),
             this.comparisonOperator,
             getMetadata()
         );
     }
 
-    public static int processItem(
+    public static int compareItems(
             Item left,
             Item right,
             ComparisonOperator comparisonOperator,
@@ -378,7 +379,7 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         return Arrays.toString(l).compareTo(Arrays.toString(r));
     }
 
-    public static Item compareItems(
+    private static Item comparisonResultToBooleanItem(
             int comparison,
             ComparisonExpression.ComparisonOperator comparisonOperator,
             ExceptionMetadata metadata
