@@ -274,12 +274,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             columnNamesArray = inputSchema.fieldNames();
             columnNames = Arrays.asList(columnNamesArray);
 
+            // TODO: consider add sequence type to group clause variable
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
                 df = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     df,
                     expression.getVariableName(),
+                    null,
                     expression.getExpression(),
                     context,
                     new ArrayList<Name>(this.child.getOutputTupleVariableNames()),

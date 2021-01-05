@@ -556,6 +556,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 expressionDF,
                 Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+                null,
                 expressionSideEqualityCriterion,
                 context,
                 variablesInExpressionSideTuple,
@@ -565,6 +566,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             inputTuples = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 inputTuples,
                 Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+                null,
                 inputTupleSideEqualityCriterion,
                 context,
                 variablesInInputTuple,
