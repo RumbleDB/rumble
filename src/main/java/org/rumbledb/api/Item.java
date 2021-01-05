@@ -14,8 +14,6 @@ import org.joda.time.Period;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -453,20 +451,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
      */
     int compareTo(Item other);
-
-    /**
-     * Function that compare two items according to the operator defined for the comparison.
-     *
-     * @param other another Item
-     * @param comparisonOperator the operator used for the comparison
-     * @param metadata Metadata useful for throwing exceptions
-     * @return BooleanItem result of the comparison
-     */
-    Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    );
 
     /**
      * Please do not use (internal).

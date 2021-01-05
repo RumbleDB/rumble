@@ -24,11 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -166,25 +163,6 @@ public class DecimalItem extends AtomicItem {
             return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
         }
         throw new OurBadException("Comparing an int to something that is not a number.");
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for numerics comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override
