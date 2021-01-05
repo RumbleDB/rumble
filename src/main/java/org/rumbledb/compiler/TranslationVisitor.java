@@ -99,8 +99,6 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -1338,14 +1336,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        List<QuantifiedExpressionVar> vars = new ArrayList<>();
         Clause clause = null;
-        QuantifiedExpression.Quantification operator;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        boolean isUniversal = false;
         if (ctx.ev == null) {
-            operator = QuantifiedExpression.Quantification.SOME;
+            isUniversal = false;
         } else {
-            operator = QuantifiedExpression.Quantification.EVERY;
+            isUniversal = true;
         }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
@@ -1374,7 +1371,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             clause = newClause;
         }
         WhereClause whereClause = null;
-        if (operator.equals(QuantifiedExpression.Quantification.SOME)) {
+        if (!isUniversal) {
             whereClause = new WhereClause(expression, createMetadataFromContext(ctx.exprSingle()));
         } else {
             whereClause = new WhereClause(
@@ -1389,7 +1386,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         );
         whereClause.chainWith(returnClause);
         Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
-        if (operator.equals(QuantifiedExpression.Quantification.SOME)) {
+        if (!isUniversal) {
             return new FunctionCallExpression(
                     Name.createVariableInRumbleNamespace("exists"),
                     Collections.singletonList(flworExpression),

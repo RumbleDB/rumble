@@ -64,8 +64,6 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
 
 /**
@@ -363,23 +361,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitSimpleMapExpr(SimpleMapExpression expression, Void argument) {
         // TODO;
         return defaultAction(expression, argument);
-    }
-
-    @Override
-    public Void visitQuantifiedExpression(QuantifiedExpression expression, Void argument) {
-        List<QuantifiedExpressionVar> var = expression.getVariables();
-        addInputVariableDependencies(
-            expression,
-            getInputVariableDependencies(expression.getEvaluationExpression())
-        );
-        for (QuantifiedExpressionVar v : var) {
-            visit(v.getExpression(), null);
-            removeInputVariableDependency(expression, v.getVariableName());
-        }
-        for (QuantifiedExpressionVar v : var) {
-            addInputVariableDependencies(expression, getInputVariableDependencies(v.getExpression()));
-        }
-        return null;
     }
 
     @Override
