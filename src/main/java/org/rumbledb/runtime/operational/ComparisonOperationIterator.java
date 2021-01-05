@@ -20,6 +20,9 @@
 
 package org.rumbledb.runtime.operational;
 
+import org.joda.time.DateTime;
+import org.joda.time.Instant;
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -28,10 +31,13 @@ import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 
@@ -181,6 +187,240 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         if (!left.isAtomic()) {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
-        return left.compareItem(right, this.comparisonOperator, getMetadata());
+        return compareItems(
+            processItem(left, right, this.comparisonOperator, getMetadata()),
+            this.comparisonOperator,
+            getMetadata()
+        );
+    }
+
+    public static int processItem(
+            Item left,
+            Item right,
+            ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
+        if (left.isNull() && right.isNull()) {
+            return 0;
+        }
+        if (left.isNull() && !right.isNull()) {
+            return -1;
+        }
+        if (!left.isNull() && right.isNull()) {
+            return 1;
+        }
+        if (
+            left.isInt()
+                && right.isInt()
+        ) {
+            return processInt(left.getIntValue(), right.getIntValue());
+        }
+
+        // General cases
+        if (left.isDouble() && right.isNumeric()) {
+            double l = left.getDoubleValue();
+            double r = 0;
+            if (right.isDouble()) {
+                r = right.getDoubleValue();
+            } else {
+                r = right.castToDoubleValue();
+            }
+            return processDouble(l, r);
+        }
+        if (right.isDouble() && left.isNumeric()) {
+            double l = left.castToDoubleValue();
+            double r = right.getDoubleValue();
+            return processDouble(l, r);
+        }
+        if (left.isInteger() && right.isInteger()) {
+            BigInteger l = left.getIntegerValue();
+            BigInteger r = right.getIntegerValue();
+            return processInteger(l, r);
+        }
+        if (left.isDecimal() && right.isDecimal()) {
+            BigDecimal l = left.getDecimalValue();
+            BigDecimal r = right.getDecimalValue();
+            return processDecimal(l, r);
+        }
+        if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processDuration(l, r);
+        }
+        if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
+            Period l = left.getDurationValue();
+            Period r = right.getDurationValue();
+            return processDuration(l, r);
+        }
+        if (left.isDuration() && right.isDuration()) {
+            switch (comparisonOperator) {
+                case VC_EQ:
+                case GC_EQ:
+                    Period l = left.getDurationValue();
+                    Period r = right.getDurationValue();
+                    return processDuration(l, r);
+                default:
+            }
+        }
+        if (left.isHexBinary() && right.isHexBinary()) {
+            switch (comparisonOperator) {
+                case VC_EQ:
+                case GC_EQ:
+                    byte[] l = left.getBinaryValue();
+                    byte[] r = right.getBinaryValue();
+                    return processBytes(l, r);
+                default:
+            }
+        }
+        if (left.isBase64Binary() && right.isBase64Binary()) {
+            switch (comparisonOperator) {
+                case VC_EQ:
+                case GC_EQ:
+                    byte[] l = left.getBinaryValue();
+                    byte[] r = right.getBinaryValue();
+                    return processBytes(l, r);
+                default:
+            }
+        }
+        if (left.isDate() && right.isDate()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isTime() && right.isTime()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isDateTime() && right.isDateTime()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isBoolean() && right.isBoolean()) {
+            Boolean l = left.getBooleanValue();
+            Boolean r = right.getBooleanValue();
+            return processBoolean(l, r);
+        }
+        if (left.isString() && right.isString()) {
+            String l = left.getStringValue();
+            String r = right.getStringValue();
+            return processString(l, r);
+        }
+        if (left.isAnyURI() && right.isAnyURI()) {
+            String l = left.getStringValue();
+            String r = right.getStringValue();
+            return processString(l, r);
+        }
+        throw new UnexpectedTypeException(
+                " \""
+                    + comparisonOperator
+                    + "\": operation not possible with parameters of type \""
+                    + left.getDynamicType().toString()
+                    + "\" and \""
+                    + right.getDynamicType().toString()
+                    + "\"",
+                metadata
+        );
+    }
+
+    private static int processDouble(
+            double l,
+            double r
+    ) {
+        return Double.compare(l, r);
+    }
+
+    private static int processDecimal(
+            BigDecimal l,
+            BigDecimal r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processInteger(
+            BigInteger l,
+            BigInteger r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processInt(
+            int l,
+            int r
+    ) {
+        return Integer.compare(l, r);
+    }
+
+    private static int processDuration(
+            Period l,
+            Period r
+    ) {
+        Instant now = new Instant();
+        return l.toDurationFrom(now).compareTo(r.toDurationFrom(now));
+    }
+
+    private static int processDateTime(
+            DateTime l,
+            DateTime r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processBoolean(
+            Boolean l,
+            Boolean r
+    ) {
+        return Boolean.compare(l, r);
+    }
+
+    private static int processString(
+            String l,
+            String r
+    ) {
+        return l.compareTo(r);
+    }
+
+    private static int processBytes(
+            byte[] l,
+            byte[] r
+    ) {
+        return Arrays.toString(l).compareTo(Arrays.toString(r));
+    }
+
+    public static Item compareItems(
+            int comparison,
+            ComparisonExpression.ComparisonOperator comparisonOperator,
+            ExceptionMetadata metadata
+    ) {
+        // Subclasses should override this method to perform additional typechecks,
+        // and then invoke it on super.
+        switch (comparisonOperator) {
+            case VC_EQ:
+            case GC_EQ: {
+                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
+            }
+            case VC_NE:
+            case GC_NE: {
+                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
+            }
+            case VC_LT:
+            case GC_LT: {
+                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
+            }
+            case VC_LE:
+            case GC_LE: {
+                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
+            }
+            case VC_GT:
+            case GC_GT: {
+                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
+            }
+            case VC_GE:
+            case GC_GE: {
+                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
+            }
+        }
+        throw new IteratorFlowException("Unrecognized operator found: " + comparisonOperator, metadata);
     }
 }

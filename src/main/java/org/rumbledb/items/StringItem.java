@@ -33,10 +33,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
@@ -257,25 +254,6 @@ public class StringItem implements Item {
     @Override
     public int compareTo(Item other) {
         return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isString() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for string comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return ItemImpl.compareItems(this, other, comparisonOperator, metadata);
     }
 
     @Override

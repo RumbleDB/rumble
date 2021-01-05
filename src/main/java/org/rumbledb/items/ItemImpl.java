@@ -121,15 +121,6 @@ abstract class ItemImpl implements Item {
         return this.serialize().compareTo(other.serialize());
     }
 
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        return compareItems(this, other, comparisonOperator, metadata);
-    }
-
     /**
      * Function that compare two items according to the operator defined for the comparison.
      *
