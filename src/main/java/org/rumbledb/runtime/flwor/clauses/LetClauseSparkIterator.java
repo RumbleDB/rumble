@@ -623,7 +623,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if(itemType.equals(AtomicItemType.stringItem)){
                 dataFrame.sparkSession().udf().register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<String>(newVariableExpression, context, inputSchema, UDFcolumns),
+                        new GenericLetClauseUDF<String>(newVariableExpression, context, inputSchema, UDFcolumns, "String"),
                         DataTypes.StringType
                 );
                 return;
@@ -632,7 +632,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if(itemType.equals(AtomicItemType.integerItem)){
                 dataFrame.sparkSession().udf().register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<Integer>(newVariableExpression, context, inputSchema, UDFcolumns),
+                        new GenericLetClauseUDF<Integer>(newVariableExpression, context, inputSchema, UDFcolumns, "Integer"),
                         DataTypes.IntegerType
                 );
                 return;
@@ -641,7 +641,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if(itemType.equals(AtomicItemType.decimalItem)){
                 dataFrame.sparkSession().udf().register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<BigDecimal>(newVariableExpression, context, inputSchema, UDFcolumns),
+                        new GenericLetClauseUDF<BigDecimal>(newVariableExpression, context, inputSchema, UDFcolumns, "BigDecimal"),
                         DataTypes.createDecimalType()
                 );
                 return;
@@ -650,7 +650,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if(itemType.equals(AtomicItemType.doubleItem)){
                 dataFrame.sparkSession().udf().register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<Double>(newVariableExpression, context, inputSchema, UDFcolumns),
+                        new GenericLetClauseUDF<Double>(newVariableExpression, context, inputSchema, UDFcolumns, "Double"),
                         DataTypes.DoubleType
                 );
                 return;
