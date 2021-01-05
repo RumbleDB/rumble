@@ -64,6 +64,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
+    private SequenceType sequenceType;
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -71,12 +72,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
             Name variableName,
+            SequenceType sequenceType,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
+        this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
     }
 
