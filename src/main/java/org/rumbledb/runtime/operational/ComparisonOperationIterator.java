@@ -263,24 +263,14 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
             }
         }
         if (left.isHexBinary() && right.isHexBinary()) {
-            switch (comparisonOperator) {
-                case VC_EQ:
-                case GC_EQ:
-                    byte[] l = left.getBinaryValue();
-                    byte[] r = right.getBinaryValue();
-                    return processBytes(l, r);
-                default:
-            }
+            byte[] l = left.getBinaryValue();
+            byte[] r = right.getBinaryValue();
+            return processBytes(l, r);
         }
         if (left.isBase64Binary() && right.isBase64Binary()) {
-            switch (comparisonOperator) {
-                case VC_EQ:
-                case GC_EQ:
-                    byte[] l = left.getBinaryValue();
-                    byte[] r = right.getBinaryValue();
-                    return processBytes(l, r);
-                default:
-            }
+            byte[] l = left.getBinaryValue();
+            byte[] r = right.getBinaryValue();
+            return processBytes(l, r);
         }
         if (left.isDate() && right.isDate()) {
             DateTime l = left.getDateTimeValue();
