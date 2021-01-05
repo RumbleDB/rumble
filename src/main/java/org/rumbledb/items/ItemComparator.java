@@ -51,7 +51,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
             return ComparisonOperationIterator.compareItems(
                 v1,
                 v2,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
+                ComparisonExpression.ComparisonOperator.VC_LT,
                 ExceptionMetadata.EMPTY_METADATA
             );
         } catch (RumbleException e) {
