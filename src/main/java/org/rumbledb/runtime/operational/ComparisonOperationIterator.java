@@ -233,6 +233,21 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
+        if (right.isDouble() && left.isNumeric()) {
+            double l = left.castToDoubleValue();
+            double r = right.getDoubleValue();
+            return processDouble(l, r);
+        }
+        if (left.isFloat() && right.isNumeric()) {
+            float l = left.getFloatValue();
+            float r = 0;
+            if (right.isFloat()) {
+                r = right.getFloatValue();
+            } else {
+                r = right.castToFloatValue();
+            }
+            return processFloat(l, r);
+        }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
             BigInteger r = right.getIntegerValue();
@@ -320,6 +335,13 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
             double r
     ) {
         return Double.compare(l, r);
+    }
+
+    private static int processFloat(
+            float l,
+            float r
+    ) {
+        return Float.compare(l, r);
     }
 
     private static int processDecimal(

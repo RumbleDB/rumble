@@ -99,6 +99,10 @@ public class ItemFactory {
         return new DoubleItem(d);
     }
 
+    public Item createFloatItem(float d) {
+        return new FloatItem(d);
+    }
+
     public Item createDurationItem(Period p) {
         return new DurationItem(p);
     }

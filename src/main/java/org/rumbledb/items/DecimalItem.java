@@ -64,6 +64,10 @@ public class DecimalItem extends AtomicItem {
         return getDecimalValue().doubleValue();
     }
 
+    public float castToFloatValue() {
+        return getDecimalValue().floatValue();
+    }
+
     public BigDecimal castToDecimalValue() {
         return getDecimalValue();
     }
@@ -88,7 +92,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(ItemType.floatItem) || type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
@@ -98,6 +102,9 @@ public class DecimalItem extends AtomicItem {
         }
         if (itemType.equals(ItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+        }
+        if (itemType.equals(ItemType.floatItem)) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
         }
         if (itemType.equals(ItemType.decimalItem)) {
             return this;
@@ -170,6 +177,9 @@ public class DecimalItem extends AtomicItem {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
         }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + (other.getFloatValue()));
+        }
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
     }
 
@@ -177,6 +187,9 @@ public class DecimalItem extends AtomicItem {
     public Item subtract(Item other) {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
+        }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - (other.getFloatValue()));
         }
         return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
     }

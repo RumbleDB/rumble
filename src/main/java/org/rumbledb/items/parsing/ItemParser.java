@@ -162,7 +162,7 @@ public class ItemParser implements Serializable {
         } else if (dt.equals(DataTypes.IntegerType)) {
             return ItemType.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
-            return ItemType.doubleItem;
+            return ItemType.floatItem;
         } else if (dt.equals(decimalType)) {
             return ItemType.decimalItem;
         } else if (dt.equals(DataTypes.LongType)) {
@@ -231,7 +231,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Float) o;
             }
-            return ItemFactory.getInstance().createDoubleItem(value);
+            return ItemFactory.getInstance().createFloatItem(value);
         } else if (fieldType.equals(decimalType)) {
             BigDecimal value;
             if (row != null) {
@@ -357,6 +357,9 @@ public class ItemParser implements Serializable {
         if (itemTypeName.equals(ItemType.doubleItem.getName())) {
             return DataTypes.DoubleType;
         }
+        if (itemTypeName.equals(ItemType.floatItem.getName())) {
+            return DataTypes.FloatType;
+        }
         if (itemTypeName.equals(ItemType.decimalItem.getName())) {
             return decimalType;
         }
@@ -388,8 +391,11 @@ public class ItemParser implements Serializable {
         if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
             return ItemType.integerItem.getName();
         }
-        if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+        if (DataTypes.DoubleType.equals(dataType)) {
             return ItemType.doubleItem.getName();
+        }
+        if (DataTypes.FloatType.equals(dataType)) {
+            return ItemType.floatItem.getName();
         }
         if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
             return ItemType.decimalItem.getName();
@@ -480,6 +486,9 @@ public class ItemParser implements Serializable {
             }
             if (dataType.equals(DataTypes.DoubleType)) {
                 return item.castToDoubleValue();
+            }
+            if (dataType.equals(DataTypes.FloatType)) {
+                return item.castToFloatValue();
             }
             if (dataType.equals(decimalType)) {
                 return item.castToDecimalValue();

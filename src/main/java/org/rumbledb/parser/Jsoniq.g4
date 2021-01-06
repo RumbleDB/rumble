@@ -237,6 +237,8 @@ keyWordDecimal          : 'decimal';
 
 keyWordDouble           : 'double';
 
+keyWordFloat            : 'float';
+
 keyWordBoolean          : 'boolean';
 
 keyWordDuration         : 'duration';
@@ -261,6 +263,7 @@ typesKeywords           : keyWordString
                         | keyWordInteger
                         | keyWordDecimal
                         | keyWordDouble
+                        | keyWordFloat
                         | keyWordBoolean
                         | keyWordDuration
                         | keyWordYearMonthDuration

@@ -44,22 +44,20 @@ import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 
-public class DoubleItem implements Item {
+public class FloatItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private double value;
+    private float value;
 
-    public DoubleItem() {
-        super();
+    public FloatItem() {
     }
 
-    public DoubleItem(double value) {
-        super();
+    public FloatItem(float value) {
         this.value = value;
     }
 
     @Override
-    public double getDoubleValue() {
+    public float getFloatValue() {
         return this.value;
     }
 
@@ -70,23 +68,23 @@ public class DoubleItem implements Item {
 
     @Override
     public double castToDoubleValue() {
-        return this.value;
+        return (double) this.value;
     }
 
     @Override
     public float castToFloatValue() {
-        return (float) this.value;
+        return this.value;
     }
 
     public BigDecimal castToDecimalValue() {
-        if (Double.isNaN(this.value) || Double.isInfinite(this.value)) {
+        if (Float.isNaN(this.value) || Float.isInfinite(this.value)) {
             throw new IteratorFlowException("Cannot call castToDecimal on non numeric");
         }
-        return BigDecimal.valueOf(getDoubleValue());
+        return BigDecimal.valueOf(this.value);
     }
 
     public int castToIntValue() {
-        return Double.valueOf(this.value).intValue();
+        return Float.valueOf(this.value).intValue();
     }
 
     public BigInteger castToIntegerValue() {
@@ -94,7 +92,7 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public boolean isDouble() {
+    public boolean isFloat() {
         return true;
     }
 
@@ -103,11 +101,11 @@ public class DoubleItem implements Item {
         if (itemType.equals(ItemType.booleanItem)) {
             return ItemFactory.getInstance().createBooleanItem(this.value != 0);
         }
-        if (itemType.equals(ItemType.doubleItem)) {
+        if (itemType.equals(ItemType.floatItem)) {
             return this;
         }
-        if (itemType.equals(ItemType.floatItem)) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
+        if (itemType.equals(ItemType.doubleItem)) {
+            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
         }
         if (itemType.equals(ItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
@@ -126,7 +124,7 @@ public class DoubleItem implements Item {
         if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
             return false;
         } else if (itemType.equals(ItemType.decimalItem)) {
-            return !Double.isInfinite(this.value);
+            return !Float.isInfinite(this.value) && !Float.isNaN(this.value);
         } else if (itemType.equals(ItemType.integerItem)) {
             return !(Integer.MAX_VALUE < this.value) && !(Integer.MIN_VALUE > this.value);
         }
@@ -135,36 +133,36 @@ public class DoubleItem implements Item {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.value)) {
+        if (Float.isNaN(this.value)) {
             return "NaN";
         }
-        if (Double.isInfinite(this.value) && this.value > 0) {
+        if (Float.isInfinite(this.value) && this.value > 0) {
             return "INF";
         }
-        if (Double.isInfinite(this.value) && this.value < 0) {
+        if (Float.isInfinite(this.value) && this.value < 0) {
             return "-INF";
         }
-        if (Double.compare(this.value, 0d) == 0) {
+        if (Float.compare(this.value, 0f) == 0) {
             return "0";
         }
-        if (Double.compare(this.value, -0d) == 0) {
+        if (Float.compare(this.value, -0f) == 0) {
             return "-0";
         }
         double abs = Math.abs(this.value);
         if (abs >= 0.000001 && abs <= 1000000) {
             return this.castToDecimalValue().stripTrailingZeros().toPlainString();
         }
-        return Double.toString(this.value);
+        return Float.toString(this.value);
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeDouble(this.value);
+        output.writeFloat(this.value);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = input.readDouble();
+        this.value = input.readFloat();
     }
 
     public boolean equals(Object otherItem) {
@@ -176,7 +174,7 @@ public class DoubleItem implements Item {
     }
 
     public int hashCode() {
-        return (int) Math.round(getDoubleValue());
+        return (int) Math.round(this.value);
     }
 
     @Override
@@ -185,24 +183,32 @@ public class DoubleItem implements Item {
             return 1;
         }
         if (other.isNumeric()) {
-            return Double.compare(this.value, other.castToDoubleValue());
+            return Float.compare(this.value, other.castToFloatValue());
         }
-        throw new OurBadException("Comparing an int to something that is not a number.");
+        throw new OurBadException("Comparing a float to something that is not a number.");
     }
 
     @Override
     public Item add(Item other) {
-        return ItemFactory.getInstance().createDoubleItem(this.value + other.castToDoubleValue());
+        if(other.isDouble())
+        {
+            return other.add(this);
+        }
+        return ItemFactory.getInstance().createFloatItem(this.value + other.castToFloatValue());
     }
 
     @Override
     public Item subtract(Item other) {
-        return ItemFactory.getInstance().createDoubleItem(this.value - other.castToDoubleValue());
+        if(other.isDouble())
+        {
+            return other.subtract(this);
+        }
+        return ItemFactory.getInstance().createFloatItem(this.value - other.castToFloatValue());
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.doubleItem;
+        return ItemType.floatItem;
     }
 
     @Override
@@ -261,7 +267,7 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public boolean isFloat() {
+    public boolean isDouble() {
         return false;
     }
 
@@ -322,87 +328,87 @@ public class DoubleItem implements Item {
 
     @Override
     public List<Item> getItems() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Item getItemAt(int position) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public List<String> getKeys() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public List<Item> getValues() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Item getItemByKey(String key) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public int getSize() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public boolean getBooleanValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public int getIntValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public BigInteger getIntegerValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public BigDecimal getDecimalValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
-    public float getFloatValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+    public double getDoubleValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Period getDurationValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public DateTime getDateTimeValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public byte[] getBinaryValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public FunctionIdentifier getIdentifier() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public List<Name> getParameterNames() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public FunctionSignature getSignature() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
@@ -417,17 +423,17 @@ public class DoubleItem implements Item {
 
     @Override
     public void putItem(Item item) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public void append(Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public void putItemByKey(String key, Item value) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
@@ -437,31 +443,31 @@ public class DoubleItem implements Item {
 
     @Override
     public RuntimeIterator getBodyIterator() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public DynamicContext getDynamicModuleContext() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 
     @Override
     public String getStringValue() {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
+        throw new OurBadException(" Item '" + this.serialize() + "' is a float!");
     }
 }
