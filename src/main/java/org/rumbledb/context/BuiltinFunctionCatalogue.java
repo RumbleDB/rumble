@@ -1650,7 +1650,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction hexBinary = createBuiltinFunction(
         "hexBinary",
-        "string?",
+        "atomic?",
         "hexBinary?",
         HexBinaryFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1660,7 +1660,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction base64Binary = createBuiltinFunction(
         "base64Binary",
-        "string?",
+        "atomic?",
         "base64Binary?",
         Base64BinaryFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
