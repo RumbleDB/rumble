@@ -189,62 +189,6 @@ public class IntItem extends AtomicItem {
         throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + other.getFloatValue());
-        }
-        if (
-            other.isInt()
-                && (this.value < Integer.MAX_VALUE / 2
-                    && this.value > -Integer.MAX_VALUE / 2
-                    && other.getIntValue() > -Integer.MAX_VALUE / 2
-                    && other.getIntValue() < Integer.MAX_VALUE / 2)
-        ) {
-            return ItemFactory.getInstance().createIntItem(this.value + other.castToIntValue());
-        }
-        if (other.isInteger()) {
-            return ItemFactory.getInstance()
-                .createIntegerItem(this.castToIntegerValue().add(other.getIntegerValue()));
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
-        }
-        throw new OurBadException("Unexpected type encountered");
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - other.getFloatValue());
-        }
-        if (
-            other.isInt()
-                && (this.value < Integer.MAX_VALUE / 2
-                    && this.value > -Integer.MAX_VALUE / 2
-                    && other.getIntValue() > -Integer.MAX_VALUE / 2
-                    && other.getIntValue() < Integer.MAX_VALUE / 2)
-        ) {
-            return ItemFactory.getInstance().createIntItem(this.value - other.castToIntValue());
-        }
-        if (other.isInteger()) {
-            return ItemFactory.getInstance()
-                .createIntegerItem(this.castToIntegerValue().subtract(other.getIntegerValue()));
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
-        }
-        throw new OurBadException("Unexpected type encountered");
-    }
-
     @Override
     public ItemType getDynamicType() {
         return ItemType.integerItem;

@@ -31,9 +31,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
-import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -104,12 +105,17 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             });
             try {
                 // if input is empty sequence and zeroItem is not given 0 is returned
-                BigDecimal sumResult = new BigDecimal(0);
+                Item result = null;
                 for (Item r : results) {
-                    BigDecimal current = r.castToDecimalValue();
-                    sumResult = sumResult.add(current);
+                    if (result == null) {
+                        result = r;
+                    }
+                    result = AdditiveOperationIterator.processItem(result, r, false, getMetadata());
                 }
-                return ItemFactory.getInstance().createDecimalItem(sumResult);
+                if (result == null) {
+                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+                }
+                return result;
 
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());

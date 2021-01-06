@@ -523,16 +523,6 @@ public class StringItem implements Item {
     }
 
     @Override
-    public Item add(Item other) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
-    }
-
-    @Override
     public RuntimeIterator getBodyIterator() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
     }

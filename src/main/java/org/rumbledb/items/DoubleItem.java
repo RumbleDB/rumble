@@ -191,16 +191,6 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public Item add(Item other) {
-        return ItemFactory.getInstance().createDoubleItem(this.value + other.castToDoubleValue());
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        return ItemFactory.getInstance().createDoubleItem(this.value - other.castToDoubleValue());
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.doubleItem;
     }

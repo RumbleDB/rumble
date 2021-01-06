@@ -5,8 +5,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.DateTimeParser;
@@ -250,30 +248,6 @@ public class DateTimeItem extends AtomicItem {
         }
         dateTime = fixEndOfDay(dateTime);
         return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
-        } else {
-            throw new ClassCastException();
-        }
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDateTime()) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
-        }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
-        } else {
-            throw new ClassCastException();
-        }
     }
 
     @Override

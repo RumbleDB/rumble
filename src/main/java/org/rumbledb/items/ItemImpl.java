@@ -597,15 +597,6 @@ abstract class ItemImpl implements Item {
     @Override
     public abstract int hashCode();
 
-
-    public Item add(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
-    public Item subtract(Item other) {
-        throw new UnsupportedOperationException("Operation not defined");
-    }
-
     /**
      * Returns the dynamic type of the item (for error message purposes).
      * 

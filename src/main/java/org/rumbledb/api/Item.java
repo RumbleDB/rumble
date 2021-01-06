@@ -490,20 +490,6 @@ public interface Item extends Serializable, KryoSerializable {
      */
     int hashCode();
 
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item add(Item other);
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item subtract(Item other);
-
     String serialize();
 
     /**
