@@ -99,8 +99,6 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -121,6 +119,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -1337,13 +1336,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        List<QuantifiedExpressionVar> vars = new ArrayList<>();
-        QuantifiedExpression.Quantification operator;
+        Clause clause = null;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        boolean isUniversal = false;
         if (ctx.ev == null) {
-            operator = QuantifiedExpression.Quantification.SOME;
+            isUniversal = false;
         } else {
-            operator = QuantifiedExpression.Quantification.EVERY;
+            isUniversal = true;
         }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
@@ -1358,15 +1357,48 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
 
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
-            vars.add(
-                new QuantifiedExpressionVar(
-                        variableName,
-                        varExpression,
-                        sequenceType
-                )
+            Clause newClause = new ForClause(
+                    variableName,
+                    false,
+                    sequenceType,
+                    null,
+                    varExpression,
+                    createMetadataFromContext(currentVariable)
+            );
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
+            clause = newClause;
+        }
+        WhereClause whereClause = null;
+        if (!isUniversal) {
+            whereClause = new WhereClause(expression, createMetadataFromContext(ctx.exprSingle()));
+        } else {
+            whereClause = new WhereClause(
+                    new NotExpression(expression, createMetadataFromContext(ctx.exprSingle())),
+                    createMetadataFromContext(ctx.exprSingle())
             );
         }
-        return new QuantifiedExpression(operator, expression, vars, createMetadataFromContext(ctx));
+        clause.chainWith(whereClause);
+        ReturnClause returnClause = new ReturnClause(
+                new NullLiteralExpression(generateMetadata(ctx.start)),
+                generateMetadata(ctx.start)
+        );
+        whereClause.chainWith(returnClause);
+        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
+        if (!isUniversal) {
+            return new FunctionCallExpression(
+                    Name.createVariableInRumbleNamespace("exists"),
+                    Collections.singletonList(flworExpression),
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            return new FunctionCallExpression(
+                    Name.createVariableInRumbleNamespace("empty"),
+                    Collections.singletonList(flworExpression),
+                    createMetadataFromContext(ctx)
+            );
+        }
     }
 
     @Override
