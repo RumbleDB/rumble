@@ -190,8 +190,7 @@ public class FloatItem implements Item {
 
     @Override
     public Item add(Item other) {
-        if(other.isDouble())
-        {
+        if (other.isDouble()) {
             return other.add(this);
         }
         return ItemFactory.getInstance().createFloatItem(this.value + other.castToFloatValue());
@@ -199,8 +198,7 @@ public class FloatItem implements Item {
 
     @Override
     public Item subtract(Item other) {
-        if(other.isDouble())
-        {
+        if (other.isDouble()) {
             return other.subtract(this);
         }
         return ItemFactory.getInstance().createFloatItem(this.value - other.castToFloatValue());
