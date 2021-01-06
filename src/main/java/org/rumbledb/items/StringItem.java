@@ -80,6 +80,19 @@ public class StringItem implements Item {
         return Double.parseDouble(this.getValue());
     }
 
+    public float castToFloatValue() {
+        if (this.value.equals("INF") || this.value.equals("+INF")) {
+            return Float.POSITIVE_INFINITY;
+        }
+        if (this.value.equals("-INF")) {
+            return Float.NEGATIVE_INFINITY;
+        }
+        if (this.value.equals("NaN")) {
+            return Float.NaN;
+        }
+        return Float.parseFloat(this.getValue());
+    }
+
     public BigDecimal castToDecimalValue() {
         return new BigDecimal(this.value);
     }
@@ -112,6 +125,9 @@ public class StringItem implements Item {
         }
         if (itemType.equals(ItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(castToDoubleValue());
+        }
+        if (itemType.equals(ItemType.floatItem)) {
+            return ItemFactory.getInstance().createFloatItem(castToFloatValue());
         }
         if (itemType.equals(ItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
@@ -195,6 +211,16 @@ public class StringItem implements Item {
                     return true;
                 }
                 Double.parseDouble(this.getValue());
+            } else if (itemType.equals(ItemType.floatItem)) {
+                if (
+                    this.value.equals("INF")
+                        || this.value.equals("+INF")
+                        || this.value.equals("-INF")
+                        || this.value.equals("NaN")
+                ) {
+                    return true;
+                }
+                Float.parseFloat(this.getValue());
             } else if (itemType.equals(ItemType.nullItem)) {
                 return isNullLiteral(this.getValue());
             } else if (itemType.equals(ItemType.durationItem)) {
@@ -312,6 +338,11 @@ public class StringItem implements Item {
     }
 
     @Override
+    public boolean isFloat() {
+        return false;
+    }
+
+    @Override
     public boolean isInt() {
         return false;
     }
@@ -408,6 +439,11 @@ public class StringItem implements Item {
 
     @Override
     public double getDoubleValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
+    }
+
+    @Override
+    public float getFloatValue() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
     }
 

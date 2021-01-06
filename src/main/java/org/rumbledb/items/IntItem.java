@@ -69,6 +69,10 @@ public class IntItem extends AtomicItem {
         return new Integer(this.value).doubleValue();
     }
 
+    public float castToFloatValue() {
+        return new Integer(this.value).floatValue();
+    }
+
     public BigDecimal castToDecimalValue() {
         return BigDecimal.valueOf(this.value);
     }
@@ -105,7 +109,7 @@ public class IntItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(ItemType.floatItem) || type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
@@ -115,6 +119,9 @@ public class IntItem extends AtomicItem {
         }
         if (itemType.equals(ItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
+        }
+        if (itemType.equals(ItemType.floatItem)) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
         }
         if (itemType.equals(ItemType.decimalItem)) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
@@ -188,6 +195,9 @@ public class IntItem extends AtomicItem {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
         }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + other.getFloatValue());
+        }
         if (
             other.isInt()
                 && (this.value < Integer.MAX_VALUE / 2
@@ -211,6 +221,9 @@ public class IntItem extends AtomicItem {
     public Item subtract(Item other) {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
+        }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - other.getFloatValue());
         }
         if (
             other.isInt()

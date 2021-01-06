@@ -63,13 +63,12 @@ abstract class ItemImpl implements Item {
         return false;
     }
 
-    /**
-     * Casts the item to a double value.
-     *
-     * @return the double value.
-     */
     public double castToDoubleValue() {
         throw new IteratorFlowException("Cannot call castToDouble on non numeric");
+    }
+
+    public float castToFloatValue() {
+        throw new IteratorFlowException("Cannot call castToFloat on non numeric");
     }
 
     /**
@@ -274,13 +273,12 @@ abstract class ItemImpl implements Item {
         throw new OurBadException(" Item '" + this.serialize() + "' is not a boolean.");
     }
 
-    /**
-     * Returns the double value of the item, if it is a atomic item of type double.
-     *
-     * @return the double value.
-     */
     public double getDoubleValue() {
         throw new OurBadException(" Item '" + this.serialize() + "' is not a double.");
+    }
+
+    public float getFloatValue() {
+        throw new OurBadException(" Item '" + this.serialize() + "' is not a float.");
     }
 
     /**
@@ -455,12 +453,11 @@ abstract class ItemImpl implements Item {
         return false;
     }
 
-    /**
-     * Tests whether the item is an atomic item of type double.
-     *
-     * @return true if it is an atomic item of type double, false otherwise.
-     */
     public boolean isDouble() {
+        return false;
+    }
+
+    public boolean isFloat() {
         return false;
     }
 

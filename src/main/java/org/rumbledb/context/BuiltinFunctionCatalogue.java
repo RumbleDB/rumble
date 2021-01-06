@@ -70,6 +70,7 @@ import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.DoubleFunctionIterator;
+import org.rumbledb.runtime.functions.numerics.FloatFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.IntegerFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
@@ -708,6 +709,16 @@ public class BuiltinFunctionCatalogue {
         "item?",
         "double?",
         DoubleFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns the integer from the supplied argument
+     */
+    static final BuiltinFunction float_function = createBuiltinFunction(
+        "float",
+        "item?",
+        "float?",
+        FloatFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
@@ -1888,6 +1899,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(integer_function.getIdentifier(), integer_function);
         builtinFunctions.put(decimal_function.getIdentifier(), decimal_function);
         builtinFunctions.put(double_function.getIdentifier(), double_function);
+        builtinFunctions.put(float_function.getIdentifier(), float_function);
         builtinFunctions.put(abs.getIdentifier(), abs);
         builtinFunctions.put(ceiling.getIdentifier(), ceiling);
         builtinFunctions.put(floor.getIdentifier(), floor);

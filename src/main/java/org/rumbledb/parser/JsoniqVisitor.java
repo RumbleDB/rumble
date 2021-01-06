@@ -500,6 +500,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitKeyWordDouble(JsoniqParser.KeyWordDoubleContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#keyWordFloat}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitKeyWordFloat(JsoniqParser.KeyWordFloatContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

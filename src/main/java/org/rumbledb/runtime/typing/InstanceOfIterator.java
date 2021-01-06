@@ -145,6 +145,9 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
         if (itemType.equals(ItemType.doubleItem)) {
             return itemToMatch.isDouble();
         }
+        if (itemType.equals(ItemType.floatItem)) {
+            return itemToMatch.isFloat();
+        }
         if (itemType.equals(ItemType.booleanItem)) {
             return itemToMatch.isBoolean();
         }

@@ -36,6 +36,7 @@ public class ItemType implements Serializable {
     public static final ItemType integerItem = new ItemType("integer");
     public static final ItemType decimalItem = new ItemType("decimal");
     public static final ItemType doubleItem = new ItemType("double");
+    public static final ItemType floatItem = new ItemType("float");
     public static final ItemType booleanItem = new ItemType("boolean");
     public static final ItemType arrayItem = new ItemType("array");
     public static final ItemType nullItem = new ItemType("null");
@@ -81,6 +82,9 @@ public class ItemType implements Serializable {
         }
         if (name.equals(doubleItem.name)) {
             return doubleItem;
+        }
+        if (name.equals(floatItem.name)) {
+            return floatItem;
         }
         if (name.equals(booleanItem.name)) {
             return booleanItem;

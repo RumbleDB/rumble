@@ -66,6 +66,11 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
+    public float castToFloatValue() {
+        return this.value.floatValue();
+    }
+
+    @Override
     public BigDecimal castToDecimalValue() {
         return new BigDecimal(this.value);
     }
@@ -99,13 +104,16 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(ItemType.floatItem) || type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
     public Item castAs(ItemType itemType) {
         if (itemType.equals(ItemType.booleanItem)) {
             return ItemFactory.getInstance().createBooleanItem(!this.value.equals(BigInteger.ZERO));
+        }
+        if (itemType.equals(ItemType.floatItem)) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
         }
         if (itemType.equals(ItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
@@ -178,6 +186,9 @@ public class IntegerItem extends AtomicItem {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
         }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + other.getFloatValue());
+        }
         if (other.isDecimal()) {
             return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
         }
@@ -189,6 +200,9 @@ public class IntegerItem extends AtomicItem {
     public Item subtract(Item other) {
         if (other.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
+        }
+        if (other.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - other.getFloatValue());
         }
         if (other.isDecimal()) {
             return ItemFactory.getInstance()

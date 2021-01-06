@@ -126,6 +126,13 @@ public interface Item extends Serializable, KryoSerializable {
     boolean isDouble();
 
     /**
+     * Tests whether the item is an atomic item of type float.
+     *
+     * @return true if it is an atomic item of type float, false otherwise.
+     */
+    boolean isFloat();
+
+    /**
      * Tests whether the item is an atomic item of type duration.
      *
      * @return true if it is an atomic item of type duration, false otherwise.
@@ -259,6 +266,13 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the double value.
      */
     double getDoubleValue();
+
+    /**
+     * Returns the float value of the item, if it is a float.
+     *
+     * @return the float value.
+     */
+    float getFloatValue();
 
     /**
      * Returns the int value of the item, if it is an int.
@@ -412,6 +426,13 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the double value.
      */
     double castToDoubleValue();
+
+    /**
+     * Casts the item to a float value (must be a numeric).
+     *
+     * @return the float value.
+     */
+    float castToFloatValue();
 
     /**
      * Casts the item to a decimal value (must be a numeric).
