@@ -30,6 +30,7 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -263,7 +264,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
                 return processDateTimeDayTime(l, r, metadata);
             }
         }
-        throw new UnexpectedTypeException(
+        throw new InvalidArgumentTypeException(
                 " \""
                     + (isMinus ? "-" : "+")
                     + "\": operation not possible with parameters of type \""
