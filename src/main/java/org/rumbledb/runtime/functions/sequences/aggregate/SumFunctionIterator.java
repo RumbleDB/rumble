@@ -28,7 +28,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -116,16 +115,6 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     ) {
         List<Item> results = iterator.materialize(context);
 
-        results.forEach(r -> {
-            if (!r.isNumeric()) {
-                throw new InvalidArgumentTypeException(
-                        "Sum expression has non numeric args "
-                            +
-                            r.serialize(),
-                        metadata
-                );
-            }
-        });
         try {
             // if input is empty sequence and zeroItem is not given 0 is returned
             Item result = null;
