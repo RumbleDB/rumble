@@ -20,19 +20,25 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -43,8 +49,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
-    private Item zeroItem;
+    private Item item;
 
     public SumFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -57,75 +62,122 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(context);
-        if (!this.iterator.hasNext()) {
-            if (this.children.size() > 1) {
-                RuntimeIterator zeroIterator = this.children.get(1);
-                zeroIterator.open(this.currentDynamicContextForLocalExecution);
-                if (!zeroIterator.hasNext()) {
-                    this.hasNext = false;
-                    return;
-                } else {
-                    this.zeroItem = zeroIterator.next();
-                    if (!this.zeroItem.isAtomic()) {
-                        throw new NonAtomicKeyException(
-                                "Invalid args. Zero item has to be of an atomic type",
-                                getMetadata()
-                        );
-                    }
-                }
-            }
+        if (this.children.get(0).isDataFrame()) {
+            this.item = computeDataFrame(
+                zeroElement(),
+                this.children.get(0),
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
+            );
+        } else if (this.children.get(0).isRDDOrDataFrame()) {
+            this.item = computeRDD(
+                zeroElement(),
+                this.children.get(0),
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
+            );
+        } else {
+            this.item = computeLocally(
+                zeroElement(),
+                this.children.get(0),
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
+            );
         }
-        this.iterator.close();
-        this.hasNext = true;
+        this.hasNext = this.item != null;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
             this.hasNext = false;
-            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
-
-            // if input is empty sequence and zeroItem is given
-            if (results.size() == 0 && this.zeroItem != null) {
-                return this.zeroItem;
-            }
-
-            results.forEach(r -> {
-                if (!r.isNumeric()) {
-                    throw new InvalidArgumentTypeException(
-                            "Sum expression has non numeric args "
-                                +
-                                r.serialize(),
-                            getMetadata()
-                    );
-                }
-            });
-            try {
-                // if input is empty sequence and zeroItem is not given 0 is returned
-                Item result = null;
-                for (Item r : results) {
-                    if (result == null) {
-                        result = r;
-                    }
-                    result = AdditiveOperationIterator.processItem(result, r, false, getMetadata());
-                }
-                if (result == null) {
-                    return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
-                }
-                return result;
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+            return this.item;
         } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + "SUM function",
                     getMetadata()
             );
         }
+    }
+
+    private Item zeroElement() {
+        if (this.children.size() > 1) {
+            return this.children.get(1).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        } else {
+            return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+        }
+    }
+
+    private static Item computeLocally(
+            Item zeroElement,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        List<Item> results = iterator.materialize(context);
+
+        results.forEach(r -> {
+            if (!r.isNumeric()) {
+                throw new InvalidArgumentTypeException(
+                        "Sum expression has non numeric args "
+                            +
+                            r.serialize(),
+                        metadata
+                );
+            }
+        });
+        try {
+            // if input is empty sequence and zeroItem is not given 0 is returned
+            Item result = null;
+            for (Item r : results) {
+                if (result == null) {
+                    result = r;
+                }
+                result = AdditiveOperationIterator.processItem(result, r, false, metadata);
+            }
+            if (result == null) {
+                return zeroElement;
+            }
+            return result;
+
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), metadata);
+        }
+    }
+
+    private static Item computeRDD(
+            Item zeroElement,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        JavaRDD<Item> rdd = iterator.getRDD(context);
+        Item result = rdd.fold(zeroElement, new SumClosure(metadata));
+        return result;
+    }
+
+    private static Item computeDataFrame(
+            Item zeroElement,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        Dataset<Row> df = iterator.getDataFrame(context);
+        if (df.isEmpty()) {
+            return zeroElement;
+        }
+        df.createOrReplaceTempView("input");
+        Dataset<Row> summedDF = df.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT SUM(`%s`) as `%s` FROM input",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName
+                )
+            );
+        List<Row> result = summedDF.takeAsList(1);
+        DataType fieldType = summedDF.schema().fields()[0].dataType();
+        return ItemParser.convertValueToItem(result.get(0).get(0), fieldType, metadata);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

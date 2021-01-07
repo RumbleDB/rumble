@@ -113,6 +113,9 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             boolean isMinus,
             ExceptionMetadata metadata
     ) {
+        if (left.isNull() || right.isNull()) {
+            return ItemFactory.getInstance().createNullItem();
+        }
         if (
             left.isInt()
                 && right.isInt()
