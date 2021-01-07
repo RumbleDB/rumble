@@ -28,7 +28,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
@@ -122,7 +125,13 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
                 if (result == null) {
                     result = r;
                 }
-                result = AdditiveOperationIterator.processItem(result, r, false, metadata);
+                try {
+                    result = AdditiveOperationIterator.processItem(result, r, false, metadata);
+                } catch (UnexpectedTypeException e) {
+                    RumbleException re = new InvalidArgumentTypeException("Incompatible types for sum", metadata);
+                    re.initCause(e);
+                    throw re;
+                }
             }
             if (result == null) {
                 return zeroElement;

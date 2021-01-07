@@ -30,7 +30,6 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -186,61 +185,61 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         if (left.isDate() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isDate() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDayTimeDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationTime(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isYearMonthDuration() && right.isDateTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDayTimeDuration() && right.isDateTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDate() && right.isDate()) {
@@ -264,7 +263,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
                 return processDateTimeDayTime(l, r, metadata);
             }
         }
-        throw new InvalidArgumentTypeException(
+        throw new UnexpectedTypeException(
                 " \""
                     + (isMinus ? "-" : "+")
                     + "\": operation not possible with parameters of type \""
@@ -376,7 +375,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             .createDayTimeDurationItem(new Period(r, l, PeriodType.dayTime()));
     }
 
-    private static Item processDateDuration(
+    private static Item processDateTimeDurationDate(
             DateTime l,
             Period r,
             boolean isMinus,
@@ -392,7 +391,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         }
     }
 
-    private static Item processTimeDuration(
+    private static Item processDateTimeDurationTime(
             DateTime l,
             Period r,
             boolean isMinus,
@@ -408,7 +407,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         }
     }
 
-    private static Item processDateTimeDuration(
+    private static Item processDateTimeDurationDateTime(
             DateTime l,
             Period r,
             boolean isMinus,
