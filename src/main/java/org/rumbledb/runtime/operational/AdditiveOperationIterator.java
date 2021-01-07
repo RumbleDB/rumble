@@ -175,47 +175,47 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
             Period l = left.getDurationValue();
             Period r = right.getDurationValue();
-            return processDuration(l, r, isMinus, metadata);
+            return processYearMonthDuration(l, r, isMinus, metadata);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
             Period l = left.getDurationValue();
             Period r = right.getDurationValue();
-            return processDuration(l, r, isMinus, metadata);
+            return processDayTimeDuration(l, r, isMinus, metadata);
         }
         if (left.isDate() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateDuration(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isDate() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateDuration(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateDuration(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDayTimeDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateDuration(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processTimeDuration(l, r, isMinus, right.hasTimeZone(), metadata);
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processTimeDuration(r, l, isMinus, right.hasTimeZone(), metadata);
             }
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
@@ -246,21 +246,21 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTime(l, r, metadata);
+                return processDateTimeDayTime(l, r, metadata);
             }
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTime(l, r, metadata);
+                return processDateTimeDayTime(l, r, metadata);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTime(l, r, metadata);
+                return processDateTimeDayTime(l, r, metadata);
             }
         }
         throw new UnexpectedTypeException(
@@ -340,7 +340,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         }
     }
 
-    private static Item processDuration(
+    private static Item processYearMonthDuration(
             Period l,
             Period r,
             boolean isMinus,
@@ -353,7 +353,20 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         }
     }
 
-    private static Item processDateTime(
+    private static Item processDayTimeDuration(
+            Period l,
+            Period r,
+            boolean isMinus,
+            ExceptionMetadata metadata
+    ) {
+        if (isMinus) {
+            return ItemFactory.getInstance().createDayTimeDurationItem(l.minus(r));
+        } else {
+            return ItemFactory.getInstance().createDayTimeDurationItem(l.plus(r));
+        }
+    }
+
+    private static Item processDateTimeDayTime(
             DateTime l,
             DateTime r,
             ExceptionMetadata metadata
@@ -362,7 +375,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             .createDayTimeDurationItem(new Period(r, l, PeriodType.dayTime()));
     }
 
-    private static Item processDateTimeDuration(
+    private static Item processDateDuration(
             DateTime l,
             Period r,
             boolean isMinus,
@@ -375,6 +388,38 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         } else {
             return ItemFactory.getInstance()
                 .createDateItem(l.plus(r), timeZone);
+        }
+    }
+
+    private static Item processTimeDuration(
+            DateTime l,
+            Period r,
+            boolean isMinus,
+            boolean timeZone,
+            ExceptionMetadata metadata
+    ) {
+        if (isMinus) {
+            return ItemFactory.getInstance()
+                .createTimeItem(l.minus(r), timeZone);
+        } else {
+            return ItemFactory.getInstance()
+                .createTimeItem(l.plus(r), timeZone);
+        }
+    }
+
+    private static Item processDateTimeDuration(
+            DateTime l,
+            Period r,
+            boolean isMinus,
+            boolean timeZone,
+            ExceptionMetadata metadata
+    ) {
+        if (isMinus) {
+            return ItemFactory.getInstance()
+                .createDateTimeItem(l.minus(r), timeZone);
+        } else {
+            return ItemFactory.getInstance()
+                .createDateTimeItem(l.plus(r), timeZone);
         }
     }
 }
