@@ -69,7 +69,18 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
         this.hasNext = false;
-        return processItem(this.left, this.right, this.isMinus, getMetadata());
+        Item result = processItem(this.left, this.right, this.isMinus);
+        if (result == null) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
+        return result;
     }
 
     @Override
@@ -110,12 +121,8 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     public static Item processItem(
             Item left,
             Item right,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
-        if (left.isNull() || right.isNull()) {
-            return ItemFactory.getInstance().createNullItem();
-        }
         if (
             left.isInt()
                 && right.isInt()
@@ -127,7 +134,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
                         && right.getIntValue() > -Integer.MAX_VALUE / 2
                         && right.getIntValue() < Integer.MAX_VALUE / 2)
             ) {
-                return processInt(left.getIntValue(), right.getIntValue(), isMinus, metadata);
+                return processInt(left.getIntValue(), right.getIntValue(), isMinus);
             }
         }
 
@@ -140,12 +147,12 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             } else {
                 r = right.castToDoubleValue();
             }
-            return processDouble(l, r, isMinus, metadata);
+            return processDouble(l, r, isMinus);
         }
         if (right.isDouble() && left.isNumeric()) {
             double l = left.castToDoubleValue();
             double r = right.getDoubleValue();
-            return processDouble(l, r, isMinus, metadata);
+            return processDouble(l, r, isMinus);
         }
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
@@ -155,131 +162,121 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             } else {
                 r = right.castToFloatValue();
             }
-            return processFloat(l, r, isMinus, metadata);
+            return processFloat(l, r, isMinus);
         }
         if (right.isFloat() && left.isNumeric()) {
             float l = left.castToFloatValue();
             float r = right.getFloatValue();
-            return processFloat(l, r, isMinus, metadata);
+            return processFloat(l, r, isMinus);
         }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
             BigInteger r = right.getIntegerValue();
-            return processInteger(l, r, isMinus, metadata);
+            return processInteger(l, r, isMinus);
         }
         if (left.isDecimal() && right.isDecimal()) {
             BigDecimal l = left.getDecimalValue();
             BigDecimal r = right.getDecimalValue();
-            return processDecimal(l, r, isMinus, metadata);
+            return processDecimal(l, r, isMinus);
         }
         if (left.isYearMonthDuration() && right.isYearMonthDuration()) {
             Period l = left.getDurationValue();
             Period r = right.getDurationValue();
-            return processYearMonthDuration(l, r, isMinus, metadata);
+            return processYearMonthDuration(l, r, isMinus);
         }
         if (left.isDayTimeDuration() && right.isDayTimeDuration()) {
             Period l = left.getDurationValue();
             Period r = right.getDurationValue();
-            return processDayTimeDuration(l, r, isMinus, metadata);
+            return processDayTimeDuration(l, r, isMinus);
         }
         if (left.isDate() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone());
         }
         if (left.isDate() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDate()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDate(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationTime(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationTime(l, r, isMinus, right.hasTimeZone());
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDateTime() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone());
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone(), metadata);
+            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDateTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDayTimeDuration() && right.isDateTime()) {
             if (!isMinus) {
                 Period l = left.getDurationValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone(), metadata);
+                return processDateTimeDurationDateTime(r, l, isMinus, right.hasTimeZone());
             }
         }
         if (left.isDate() && right.isDate()) {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r, metadata);
+                return processDateTimeDayTime(l, r);
             }
         }
         if (left.isTime() && right.isTime()) {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r, metadata);
+                return processDateTimeDayTime(l, r);
             }
         }
         if (left.isDateTime() && right.isDateTime()) {
             if (isMinus) {
                 DateTime l = left.getDateTimeValue();
                 DateTime r = right.getDateTimeValue();
-                return processDateTimeDayTime(l, r, metadata);
+                return processDateTimeDayTime(l, r);
             }
         }
-        throw new UnexpectedTypeException(
-                " \""
-                    + (isMinus ? "-" : "+")
-                    + "\": operation not possible with parameters of type \""
-                    + left.getDynamicType().toString()
-                    + "\" and \""
-                    + right.getDynamicType().toString()
-                    + "\"",
-                metadata
-        );
+        return null;
     }
 
     private static Item processDouble(
             double l,
             double r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createDoubleItem(l - r);
@@ -291,8 +288,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processFloat(
             float l,
             float r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createFloatItem(l - r);
@@ -304,8 +300,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processDecimal(
             BigDecimal l,
             BigDecimal r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createDecimalItem(l.subtract(r));
@@ -317,8 +312,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processInteger(
             BigInteger l,
             BigInteger r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createIntegerItem(l.subtract(r));
@@ -330,8 +324,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processInt(
             int l,
             int r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createIntItem(l - r);
@@ -343,8 +336,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processYearMonthDuration(
             Period l,
             Period r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createYearMonthDurationItem(l.minus(r));
@@ -356,8 +348,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
     private static Item processDayTimeDuration(
             Period l,
             Period r,
-            boolean isMinus,
-            ExceptionMetadata metadata
+            boolean isMinus
     ) {
         if (isMinus) {
             return ItemFactory.getInstance().createDayTimeDurationItem(l.minus(r));
@@ -368,8 +359,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
 
     private static Item processDateTimeDayTime(
             DateTime l,
-            DateTime r,
-            ExceptionMetadata metadata
+            DateTime r
     ) {
         return ItemFactory.getInstance()
             .createDayTimeDurationItem(new Period(r, l, PeriodType.dayTime()));
@@ -379,8 +369,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             DateTime l,
             Period r,
             boolean isMinus,
-            boolean timeZone,
-            ExceptionMetadata metadata
+            boolean timeZone
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()
@@ -395,8 +384,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             DateTime l,
             Period r,
             boolean isMinus,
-            boolean timeZone,
-            ExceptionMetadata metadata
+            boolean timeZone
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()
@@ -411,8 +399,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             DateTime l,
             Period r,
             boolean isMinus,
-            boolean timeZone,
-            ExceptionMetadata metadata
+            boolean timeZone
     ) {
         if (isMinus) {
             return ItemFactory.getInstance()

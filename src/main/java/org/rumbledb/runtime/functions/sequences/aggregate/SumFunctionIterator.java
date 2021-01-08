@@ -30,8 +30,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.RumbleException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
@@ -117,30 +115,26 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata metadata
     ) {
         List<Item> results = iterator.materialize(context);
-
-        try {
-            // if input is empty sequence and zeroItem is not given 0 is returned
-            Item result = null;
-            for (Item r : results) {
-                if (result == null) {
-                    result = r;
-                }
-                try {
-                    result = AdditiveOperationIterator.processItem(result, r, false, metadata);
-                } catch (UnexpectedTypeException e) {
-                    RumbleException re = new InvalidArgumentTypeException("Incompatible types for sum", metadata);
-                    re.initCause(e);
-                    throw re;
-                }
-            }
-            if (result == null) {
-                return zeroElement;
-            }
-            return result;
-
-        } catch (IteratorFlowException e) {
-            throw new IteratorFlowException(e.getJSONiqErrorMessage(), metadata);
+        if (results.isEmpty()) {
+            return zeroElement;
         }
+
+        Item result = results.get(0);
+        for (int i = 1; i < results.size(); ++i) {
+            Item sum = AdditiveOperationIterator.processItem(result, results.get(i), false);
+            if (sum == null) {
+                throw new InvalidArgumentTypeException(
+                        " \"+\": operation not possible with parameters of type \""
+                            + result.getDynamicType().toString()
+                            + "\" and \""
+                            + results.get(i).getDynamicType().toString()
+                            + "\"",
+                        metadata
+                );
+            }
+            result = sum;
+        }
+        return result;
     }
 
     private static Item computeRDD(
