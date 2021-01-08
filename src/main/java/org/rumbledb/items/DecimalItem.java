@@ -173,28 +173,6 @@ public class DecimalItem extends AtomicItem {
     }
 
     @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + (other.getFloatValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - (other.getFloatValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.decimalItem;
     }

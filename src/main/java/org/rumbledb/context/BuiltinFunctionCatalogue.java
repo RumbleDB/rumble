@@ -513,7 +513,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
         "sum",
-        "item*",
+        "atomic*",
         "atomic?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL

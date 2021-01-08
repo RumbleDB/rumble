@@ -182,37 +182,6 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + other.getDoubleValue());
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() + other.getFloatValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue().add(other.getDecimalValue()));
-        }
-        return ItemFactory.getInstance()
-            .createIntegerItem(this.value.add(other.castToIntegerValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - other.getDoubleValue());
-        }
-        if (other.isFloat()) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue() - other.getFloatValue());
-        }
-        if (other.isDecimal()) {
-            return ItemFactory.getInstance()
-                .createDecimalItem(this.castToDecimalValue().subtract(other.getDecimalValue()));
-        }
-        return ItemFactory.getInstance()
-            .createIntegerItem(this.value.subtract(other.castToIntegerValue()));
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.integerItem;
     }
