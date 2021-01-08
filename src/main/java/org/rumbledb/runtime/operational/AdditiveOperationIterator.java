@@ -126,10 +126,10 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         // The int 0 is considered the default neutral element for addition in sum(), even though
         // it is technically incompatible with durations. In the future, we should
         // make sure an error is thrown if an actual 0 appears in the sum with durations.
-        if (!isMinus && left.isInt() && left.getIntValue() == 0) {
+        if (!isMinus && left.isInteger() && left.getIntegerValue().equals(BigInteger.ZERO)) {
             return right;
         }
-        if (!isMinus && right.isInt() && right.getIntValue() == 0) {
+        if (!isMinus && right.isInteger() && right.getIntegerValue().equals(BigInteger.ZERO)) {
             return left;
         }
         if (
