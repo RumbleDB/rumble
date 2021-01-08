@@ -113,7 +113,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
 
-    private static Item processItem(
+    public static Item processItem(
             Item left,
             Item right,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,

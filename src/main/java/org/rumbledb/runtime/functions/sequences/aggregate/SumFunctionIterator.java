@@ -62,10 +62,12 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        this.item = computeSum(zeroElement(),
+        this.item = computeSum(
+            zeroElement(),
             this.children.get(0),
             this.currentDynamicContextForLocalExecution,
-            getMetadata());
+            getMetadata()
+        );
         this.hasNext = this.item != null;
     }
 
@@ -90,10 +92,12 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         }
     }
 
-    public static Item computeSum(Item zeroElement,
+    public static Item computeSum(
+            Item zeroElement,
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata
+    ) {
         if (iterator.isDataFrame()) {
             return computeDataFrame(
                 zeroElement,

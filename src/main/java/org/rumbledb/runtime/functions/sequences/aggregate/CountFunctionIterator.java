@@ -68,7 +68,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             return computeCount(
                 this.children.get(0),
                 this.currentDynamicContextForLocalExecution,
-                getMetadata());
+                getMetadata()
+            );
         } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + " count function",
@@ -80,7 +81,8 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
     public static Item computeCount(
             RuntimeIterator iterator,
             DynamicContext context,
-            ExceptionMetadata metadata) {
+            ExceptionMetadata metadata
+    ) {
         if (iterator.isDataFrame()) {
             return computeDataFrame(
                 iterator,
