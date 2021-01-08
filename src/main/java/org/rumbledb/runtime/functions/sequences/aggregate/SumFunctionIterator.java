@@ -62,28 +62,10 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.children.get(0).isDataFrame()) {
-            this.item = computeDataFrame(
-                zeroElement(),
-                this.children.get(0),
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-        } else if (this.children.get(0).isRDDOrDataFrame()) {
-            this.item = computeRDD(
-                zeroElement(),
-                this.children.get(0),
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-        } else {
-            this.item = computeLocally(
-                zeroElement(),
-                this.children.get(0),
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-        }
+        this.item = computeSum(zeroElement(),
+            this.children.get(0),
+            this.currentDynamicContextForLocalExecution,
+            getMetadata());
         this.hasNext = this.item != null;
     }
 
@@ -105,6 +87,34 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             return this.children.get(1).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
+        }
+    }
+
+    public static Item computeSum(Item zeroElement,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata) {
+        if (iterator.isDataFrame()) {
+            return computeDataFrame(
+                zeroElement,
+                iterator,
+                context,
+                metadata
+            );
+        } else if (iterator.isRDDOrDataFrame()) {
+            return computeRDD(
+                zeroElement,
+                iterator,
+                context,
+                metadata
+            );
+        } else {
+            return computeLocally(
+                zeroElement,
+                iterator,
+                context,
+                metadata
+            );
         }
     }
 
