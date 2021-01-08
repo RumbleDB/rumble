@@ -55,13 +55,18 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        Item sum = SumFunctionIterator.computeSum(
-            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
+        Item count = CountFunctionIterator.computeCount(
             this.children.get(0),
             this.currentDynamicContextForLocalExecution,
             getMetadata()
         );
-        Item count = CountFunctionIterator.computeCount(
+        if(count == null)
+        {
+            this.hasNext = false;
+            return;
+        }
+        Item sum = SumFunctionIterator.computeSum(
+            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
             this.children.get(0),
             this.currentDynamicContextForLocalExecution,
             getMetadata()
@@ -72,7 +77,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             MultiplicativeExpression.MultiplicativeOperator.DIV,
             getMetadata()
         );
-        this.hasNext = this.item != null;
+        this.hasNext = true;
     }
 
     @Override
