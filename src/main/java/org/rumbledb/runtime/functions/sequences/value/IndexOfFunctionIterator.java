@@ -113,7 +113,12 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                int c = ComparisonOperationIterator.compareItems(item, this.search, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+                int c = ComparisonOperationIterator.compareItems(
+                    item,
+                    this.search,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
 
                 if (c == 0) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);

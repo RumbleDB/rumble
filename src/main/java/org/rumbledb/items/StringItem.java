@@ -267,9 +267,13 @@ public class StringItem implements Item {
 
     @Override
     public boolean equals(Object otherItem) {
-        if(otherItem instanceof Item)
-        {
-            int c = ComparisonOperationIterator.compareItems(this, (Item) otherItem, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+        if (otherItem instanceof Item) {
+            int c = ComparisonOperationIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
             return c == 0;
         }
         return false;

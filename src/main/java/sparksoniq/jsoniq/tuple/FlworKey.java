@@ -107,7 +107,12 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = ComparisonOperationIterator.compareItems(currentItem, comparisonItem, ComparisonOperator.VC_EQ, ExceptionMetadata.EMPTY_METADATA);
+                result = ComparisonOperationIterator.compareItems(
+                    currentItem,
+                    comparisonItem,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
             }
 
             // Simplify comparison result to -1/0/1
