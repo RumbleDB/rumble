@@ -60,7 +60,7 @@ public class CastableIterator extends LocalRuntimeIterator {
             }
 
             Item item = items.get(0);
-            checkInvalidCastable(item, getMetadata(), this.sequenceType);
+            checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
 
             return ItemFactory.getInstance()
                 .createBooleanItem(item.isCastableAs(this.sequenceType.getItemType()));
@@ -69,8 +69,8 @@ public class CastableIterator extends LocalRuntimeIterator {
         }
     }
 
-    static void checkInvalidCastable(Item item, ExceptionMetadata metadata, SequenceType type) {
-        if (type.getItemType().equals(ItemType.atomicItem)) {
+    static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
+        if (type.equals(ItemType.atomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
         if (item.isAtomic()) {

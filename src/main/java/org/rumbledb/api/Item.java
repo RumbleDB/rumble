@@ -497,12 +497,5 @@ public interface Item extends Serializable, KryoSerializable {
      *
      * @return a hash code as an int.
      */
-    Item castAs(ItemType itemType);
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
     boolean isCastableAs(ItemType itemType);
 }

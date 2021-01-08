@@ -21,9 +21,12 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 public class ItemType implements Serializable {
 
@@ -53,6 +56,32 @@ public class ItemType implements Serializable {
     public static final ItemType item = new ItemType("item");
     public static final ItemType functionItem = new ItemType("function");
 
+    private static List<ItemType> builtInItemTypes = Arrays.asList(
+        objectItem,
+        atomicItem,
+        stringItem,
+        integerItem,
+        decimalItem,
+        doubleItem,
+        floatItem,
+        booleanItem,
+        arrayItem,
+        nullItem,
+        JSONItem,
+        durationItem,
+        yearMonthDurationItem,
+        dayTimeDurationItem,
+        dateTimeItem,
+        dateItem,
+        timeItem,
+        hexBinaryItem,
+        anyURIItem,
+        base64BinaryItem,
+        item,
+        functionItem
+    );
+
+
     public ItemType() {
     }
 
@@ -62,6 +91,15 @@ public class ItemType implements Serializable {
 
     public String getName() {
         return this.name;
+    }
+
+    public static boolean typeExists(Name name) {
+        for (int i = 0; i < builtInItemTypes.size(); ++i) {
+            if (builtInItemTypes.get(i).getName().equals(name.getLocalName())) {
+                return true;
+            } ;
+        }
+        return false;
     }
 
     public static ItemType getItemTypeByName(String name) {
