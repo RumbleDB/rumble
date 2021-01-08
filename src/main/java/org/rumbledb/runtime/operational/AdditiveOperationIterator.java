@@ -192,12 +192,12 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         if (left.isDate() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone());
+            return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDate() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDate(l, r, isMinus, right.hasTimeZone());
+            return processDateTimeDurationDate(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDate()) {
             if (!isMinus) {
@@ -216,7 +216,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         if (left.isTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationTime(l, r, isMinus, right.hasTimeZone());
+            return processDateTimeDurationTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDayTimeDuration() && right.isTime()) {
             if (!isMinus) {
@@ -228,12 +228,12 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         if (left.isDateTime() && right.isYearMonthDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone());
+            return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isDateTime() && right.isDayTimeDuration()) {
             DateTime l = left.getDateTimeValue();
             Period r = right.getDurationValue();
-            return processDateTimeDurationDateTime(l, r, isMinus, right.hasTimeZone());
+            return processDateTimeDurationDateTime(l, r, isMinus, left.hasTimeZone());
         }
         if (left.isYearMonthDuration() && right.isDateTime()) {
             if (!isMinus) {
