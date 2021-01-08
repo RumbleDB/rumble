@@ -110,7 +110,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata metadata
     ) {
         List<Item> results = iterator.materialize(context);
-        return ItemFactory.getInstance().createIntItem(results.size());
+        return ItemFactory.getInstance().createLongItem(results.size());
     }
 
     private static Item computeRDD(
@@ -122,7 +122,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
-            return ItemFactory.getInstance().createIntItem((int) count);
+            return ItemFactory.getInstance().createLongItem(count);
         }
     }
 
@@ -135,7 +135,7 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         if (count > (long) Integer.MAX_VALUE) {
             throw new OurBadException("The count value is too big to convert to integer type.");
         } else {
-            return ItemFactory.getInstance().createIntItem((int) count);
+            return ItemFactory.getInstance().createLongItem(count);
         }
 
     }
