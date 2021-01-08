@@ -60,8 +60,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             this.currentDynamicContextForLocalExecution,
             getMetadata()
         );
-        if(count == null)
-        {
+        if (count == null) {
             this.hasNext = false;
             return;
         }
