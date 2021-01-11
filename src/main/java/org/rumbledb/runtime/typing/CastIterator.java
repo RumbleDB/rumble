@@ -47,7 +47,7 @@ public class CastIterator extends LocalRuntimeIterator {
         }
         this.hasNext = false;
 
-        if (!canTypeBeCastToType(item, this.sequenceType.getItemType(), getMetadata())) {
+        if (!canTypeBeCastToType(this.item, this.sequenceType.getItemType(), getMetadata())) {
             String message = String.format(
                 "\"%s\": a value of type %s is not castable to type %s",
                 item.serialize(),
@@ -57,7 +57,7 @@ public class CastIterator extends LocalRuntimeIterator {
             throw new UnexpectedTypeException(message, getMetadata());
         }
 
-        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        Item result = castItemToType(this.item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
             String message = String.format(
                 "\"%s\": this literal is not castable to type %s",
@@ -105,7 +105,7 @@ public class CastIterator extends LocalRuntimeIterator {
         }
 
         if (targetType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(item.getStringValue());
+            return ItemFactory.getInstance().createStringItem(item.serialize());
         }
 
         if (targetType.equals(ItemType.booleanItem)) {
