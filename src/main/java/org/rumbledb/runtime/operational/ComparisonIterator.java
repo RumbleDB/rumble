@@ -120,6 +120,11 @@ public class ComparisonIterator extends LocalRuntimeIterator {
                         getMetadata()
                 );
             }
+            if (this.left == null) {
+                this.hasNext = false;
+                return;
+            }
+
             try {
                 this.right = this.rightIterator.materializeAtMostOneItemOrNull(
                     this.currentDynamicContextForLocalExecution
@@ -130,7 +135,7 @@ public class ComparisonIterator extends LocalRuntimeIterator {
                         getMetadata()
                 );
             }
-            this.hasNext = this.left != null && this.right != null;
+            this.hasNext = this.right != null;
         } else {
             // general comparison always returns a boolean
             this.hasNext = true;
