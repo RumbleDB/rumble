@@ -127,9 +127,6 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             // general comparison always returns a boolean
             this.hasNext = true;
         }
-
-        this.leftIterator.close();
-        this.rightIterator.close();
     }
 
     /**
