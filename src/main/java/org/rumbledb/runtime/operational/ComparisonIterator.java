@@ -192,7 +192,6 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             ComparisonOperator comparisonOperator,
             ExceptionMetadata metadata
     ) {
-        System.out.println("Comparing " + left + " with " + right);
         if (left.isNull() && right.isNull()) {
             return 0;
         }
