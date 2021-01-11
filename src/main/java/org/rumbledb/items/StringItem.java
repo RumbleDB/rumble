@@ -37,7 +37,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -206,7 +206,7 @@ public class StringItem implements Item {
     @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
-            int c = ComparisonOperationIterator.compareItems(
+            int c = ComparisonIterator.compareItems(
                 this,
                 (Item) otherItem,
                 ComparisonOperator.VC_EQ,

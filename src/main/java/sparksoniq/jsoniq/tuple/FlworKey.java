@@ -29,8 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
-
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -107,7 +106,7 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = ComparisonOperationIterator.compareItems(
+                result = ComparisonIterator.compareItems(
                     currentItem,
                     comparisonItem,
                     ComparisonOperator.VC_EQ,
