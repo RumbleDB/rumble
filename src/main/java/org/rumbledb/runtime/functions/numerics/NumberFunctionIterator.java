@@ -53,12 +53,9 @@ public class NumberFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createDoubleItem(Double.NaN);
             }
 
-            if (anyItem.isCastableAs(ItemType.doubleItem)) {
-                Item result = CastIterator.castItemToType(anyItem, ItemType.doubleItem, getMetadata());
-                if (result != null) {
-                    return result;
-                }
-                return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+            Item result = CastIterator.castItemToType(anyItem, ItemType.doubleItem, getMetadata());
+            if (result != null) {
+                return result;
             }
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         } else
