@@ -29,10 +29,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -118,57 +116,6 @@ abstract class ItemImpl implements Item {
             return 1;
         }
         return this.serialize().compareTo(other.serialize());
-    }
-
-    /**
-     * Function that compare two items according to the operator defined for the comparison.
-     *
-     * @param other another Item
-     * @param comparisonOperator the operator used for the comparison
-     * @param metadata Metadata useful for throwing exceptions
-     * @return BooleanItem result of the comparison
-     */
-    public static Item compareItems(
-            Item left,
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        // Subclasses should override this method to perform additional typechecks,
-        // and then invoke it on super.
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison == 0);
-            }
-            case VC_NE:
-            case GC_NE: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison != 0);
-            }
-            case VC_LT:
-            case GC_LT: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison < 0);
-            }
-            case VC_LE:
-            case GC_LE: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison <= 0);
-            }
-            case VC_GT:
-            case GC_GT: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison > 0);
-            }
-            case VC_GE:
-            case GC_GE: {
-                int comparison = left.compareTo(other);
-                return ItemFactory.getInstance().createBooleanItem(comparison >= 0);
-            }
-        }
-        throw new IteratorFlowException("Unrecognized operator found", metadata);
     }
 
     /**
