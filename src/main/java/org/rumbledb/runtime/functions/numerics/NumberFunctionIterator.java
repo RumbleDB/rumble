@@ -54,11 +54,11 @@ public class NumberFunctionIterator extends LocalFunctionCallIterator {
             }
 
             if (anyItem.isCastableAs(ItemType.doubleItem)) {
-                try {
-                    return CastIterator.castItemToType(anyItem, ItemType.doubleItem, getMetadata());
-                } catch (ClassCastException e) {
-                    return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+                Item result = CastIterator.castItemToType(anyItem, ItemType.doubleItem, getMetadata());
+                if (result != null) {
+                    return result;
                 }
+                return ItemFactory.getInstance().createDoubleItem(Double.NaN);
             }
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         } else

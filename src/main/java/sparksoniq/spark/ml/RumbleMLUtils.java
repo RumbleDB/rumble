@@ -163,22 +163,58 @@ public class RumbleMLUtils {
     }
 
     private static Object convertRumbleAtomicToJava(Item atomicItem, String javaTypeName) {
+        Item castItem;
         switch (javaTypeName) {
             case "boolean":
-                return CastIterator.castItemToType(atomicItem, ItemType.booleanItem, ExceptionMetadata.EMPTY_METADATA)
-                    .getBooleanValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    ItemType.booleanItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getBooleanValue();
             case "String":
-                return CastIterator.castItemToType(atomicItem, ItemType.stringItem, ExceptionMetadata.EMPTY_METADATA)
-                    .getStringValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    ItemType.stringItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getStringValue();
             case "int":
-                return CastIterator.castItemToType(atomicItem, ItemType.integerItem, ExceptionMetadata.EMPTY_METADATA)
-                    .getIntValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    ItemType.integerItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getIntValue();
             case "double":
-                return CastIterator.castItemToType(atomicItem, ItemType.doubleItem, ExceptionMetadata.EMPTY_METADATA)
-                    .getDoubleValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    ItemType.doubleItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getDoubleValue();
             case "long":
-                return CastIterator.castItemToType(atomicItem, ItemType.decimalItem, ExceptionMetadata.EMPTY_METADATA)
-                    .getDecimalValue()
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    ItemType.decimalItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getDecimalValue()
                     .longValue();
             default:
                 throw new OurBadException(

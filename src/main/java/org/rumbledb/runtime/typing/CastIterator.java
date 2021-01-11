@@ -47,7 +47,27 @@ public class CastIterator extends LocalRuntimeIterator {
         }
         this.hasNext = false;
 
-        return castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        if (!canTypeBeCastToType(item, this.sequenceType.getItemType(), getMetadata())) {
+            String message = String.format(
+                "\"%s\": a value of type %s is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                this.sequenceType.getItemType()
+            );
+            throw new UnexpectedTypeException(message, getMetadata());
+        }
+
+        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        if (result == null) {
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                this.sequenceType.getItemType()
+            );
+            throw new CastException(message, getMetadata());
+        }
+        return result;
     }
 
     @Override
@@ -268,13 +288,190 @@ public class CastIterator extends LocalRuntimeIterator {
             }
         }
 
-        String message = String.format(
-            "\"%s\": value of type %s is not castable to type %s",
-            item.serialize(),
-            itemType,
-            targetType
-        );
+        return null;
+    }
 
-        throw new CastException(message, metadata);
+    public static boolean canTypeBeCastToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
+        String itemType = item.getDynamicType().toString();
+
+        if (itemType.equals(targetType.toString())) {
+            return true;
+        }
+
+        if (targetType.equals(ItemType.nullItem)) {
+            if (item.isString()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.stringItem)) {
+            return true;
+        }
+
+        if (targetType.equals(ItemType.booleanItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isInt()) {
+                return true;
+            }
+            if (item.isInteger()) {
+                return true;
+            }
+            if (item.isDecimal()) {
+                return true;
+            }
+            if (item.isDouble()) {
+                return true;
+            }
+            if (item.isFloat()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.doubleItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isBoolean()) {
+                return true;
+            }
+            if (item.isNumeric()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.floatItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isBoolean()) {
+                return true;
+            }
+            if (item.isNumeric()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.decimalItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isBoolean()) {
+                return true;
+            }
+            if (item.isNumeric()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.integerItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isBoolean()) {
+                return true;
+            }
+            if (item.isNumeric()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.intItem)) {
+            if (item.isString()) {
+            }
+            if (item.isBoolean()) {
+                return true;
+            }
+            if (item.isNumeric()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.anyURIItem)) {
+            if (item.isString()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.base64BinaryItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isHexBinary()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.hexBinaryItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isBase64Binary()) {
+                return true;
+            }
+        }
+
+        if (targetType.equals(ItemType.dateItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDateTime()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.timeItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDateTime()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.dateTimeItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDate()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.yearMonthDurationItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDuration()) {
+                return true;
+            }
+            if (item.isDayTimeDuration()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.dayTimeDurationItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDuration()) {
+                return true;
+            }
+            if (item.isYearMonthDuration()) {
+                return true;
+            }
+        }
+        if (targetType.equals(ItemType.durationItem)) {
+            if (item.isString()) {
+                return true;
+            }
+            if (item.isDayTimeDuration()) {
+                return true;
+            }
+            if (item.isYearMonthDuration()) {
+                return true;
+            }
+        }
+
+        return false;
     }
 }
