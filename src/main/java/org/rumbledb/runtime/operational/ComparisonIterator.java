@@ -82,13 +82,13 @@ public class ComparisonIterator extends LocalRuntimeIterator {
 
             // use stored values for value comparison
             if (this.comparisonOperator.isValueComparison()) {
-                return comparePair(this.left, this.right);
+                return valueComparison(this.left, this.right);
             } else {
                 // fetch all values and perform comparison
                 List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
                 List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
 
-                return compareAllPairs(left, right);
+                return generalComparison(left, right);
             }
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
@@ -139,10 +139,10 @@ public class ComparisonIterator extends LocalRuntimeIterator {
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    private Item compareAllPairs(List<Item> left, List<Item> right) {
+    private Item generalComparison(List<Item> left, List<Item> right) {
         for (Item l : left) {
             for (Item r : right) {
-                Item result = comparePair(l, r);
+                Item result = valueComparison(l, r);
                 if (result.getBooleanValue()) {
                     return result;
                 }
@@ -151,7 +151,7 @@ public class ComparisonIterator extends LocalRuntimeIterator {
         return ItemFactory.getInstance().createBooleanItem(false);
     }
 
-    private Item comparePair(Item left, Item right) {
+    private Item valueComparison(Item left, Item right) {
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException(
