@@ -1,5 +1,6 @@
 package org.rumbledb.runtime.typing;
 
+import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -9,6 +10,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -76,30 +78,95 @@ public class CastIterator extends LocalRuntimeIterator {
             return item;
         }
 
+        if (targetType.equals(ItemType.nullItem)) {
+            if (item.isString() && item.getStringValue().equals("")) {
+                return ItemFactory.getInstance().createNullItem();
+            }
+        }
+
         if (targetType.equals(ItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
 
         if (targetType.equals(ItemType.booleanItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(item.getStringValue()));
+            }
+            if (item.isInt()) {
+                return ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
+            }
+            if (item.isInteger()) {
+                return ItemFactory.getInstance().createBooleanItem(!item.getIntegerValue().equals(BigInteger.ZERO));
+            }
+            if (item.isDecimal()) {
+                return ItemFactory.getInstance().createBooleanItem(!item.getDecimalValue().equals(BigDecimal.ZERO));
+            }
+            if (item.isDouble()) {
+                return ItemFactory.getInstance().createBooleanItem(item.getDoubleValue() != 0);
+            }
+            if (item.isFloat()) {
+                return ItemFactory.getInstance().createBooleanItem(item.getFloatValue() != 0);
+            }
         }
 
         if (targetType.equals(ItemType.doubleItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+            }
             if (item.isBoolean()) {
                 return ItemFactory.getInstance().createDoubleItem(item.getBooleanValue() ? 1 : 0);
+            }
+            if (item.isNumeric()) {
+                return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+            }
+        }
+        if (targetType.equals(ItemType.floatItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
+            }
+            if (item.isBoolean()) {
+                return ItemFactory.getInstance().createFloatItem(item.getBooleanValue() ? 1 : 0);
+            }
+            if (item.isNumeric()) {
+                return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
             }
         }
 
         if (targetType.equals(ItemType.decimalItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createDecimalItem(new BigDecimal(item.getStringValue()));
+            }
             if (item.isBoolean()) {
                 return ItemFactory.getInstance()
                     .createDecimalItem(item.getBooleanValue() ? BigDecimal.ONE : BigDecimal.ZERO);
             }
+            if (item.isNumeric()) {
+                return ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
+            }
         }
 
         if (targetType.equals(ItemType.integerItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createIntegerItem(item.getStringValue());
+            }
             if (item.isBoolean()) {
                 return ItemFactory.getInstance()
                     .createIntegerItem(item.getBooleanValue() ? BigInteger.ONE : BigInteger.ZERO);
+            }
+            if (item.isNumeric()) {
+                return ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
+            }
+        }
+
+        if (targetType.equals(ItemType.intItem)) {
+            if (item.isString()) {
+            }
+            if (item.isBoolean()) {
+                return ItemFactory.getInstance()
+                    .createIntItem(item.getBooleanValue() ? 1 : 0);
+            }
+            if (item.isNumeric()) {
+                return ItemFactory.getInstance().createIntItem(item.castToIntValue());
             }
         }
 
@@ -113,14 +180,91 @@ public class CastIterator extends LocalRuntimeIterator {
             if (item.isString()) {
                 return ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue());
             }
+            if (item.isString()) {
+                return ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue());
+            }
+            if (item.isHexBinary()) {
+                return ItemFactory.getInstance()
+                    .createBase64BinaryItem(Base64.encodeBase64String(item.getBinaryValue()));
+            }
         }
 
         if (targetType.equals(ItemType.hexBinaryItem)) {
             if (item.isString()) {
                 return ItemFactory.getInstance().createHexBinaryItem(item.getStringValue());
             }
+            if (item.isString()) {
+                return ItemFactory.getInstance().createHexBinaryItem(item.getStringValue());
+            }
             if (item.isBase64Binary()) {
                 return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
+            }
+        }
+
+        if (targetType.equals(ItemType.dateItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createDateItem(item.getStringValue());
+            }
+            if (item.isDateTime()) {
+                return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+            }
+        }
+        if (targetType.equals(ItemType.timeItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createTimeItem(item.getStringValue());
+            }
+            if (item.isDateTime()) {
+                return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            }
+        }
+        if (targetType.equals(ItemType.dateTimeItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance().createDateTimeItem(item.getStringValue());
+            }
+            if (item.isDate()) {
+                return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+            }
+        }
+        if (targetType.equals(ItemType.yearMonthDurationItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance()
+                    .createYearMonthDurationItem(
+                        DurationItem.getDurationFromString(item.getStringValue(), ItemType.yearMonthDurationItem)
+                    );
+            }
+            if (item.isDuration()) {
+                return ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
+            }
+            if (item.isDayTimeDuration()) {
+                return ItemFactory.getInstance().createYearMonthDurationItem(item.getDurationValue());
+            }
+        }
+        if (targetType.equals(ItemType.dayTimeDurationItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance()
+                    .createDayTimeDurationItem(
+                        DurationItem.getDurationFromString(item.getStringValue(), ItemType.dayTimeDurationItem)
+                    );
+            }
+            if (item.isDuration()) {
+                return ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+            }
+            if (item.isYearMonthDuration()) {
+                return ItemFactory.getInstance().createDayTimeDurationItem(item.getDurationValue());
+            }
+        }
+        if (targetType.equals(ItemType.durationItem)) {
+            if (item.isString()) {
+                return ItemFactory.getInstance()
+                    .createDurationItem(
+                        DurationItem.getDurationFromString(item.getStringValue(), ItemType.durationItem)
+                    );
+            }
+            if (item.isDayTimeDuration()) {
+                return ItemFactory.getInstance().createDurationItem(item.getDurationValue());
+            }
+            if (item.isYearMonthDuration()) {
+                return ItemFactory.getInstance().createDurationItem(item.getDurationValue());
             }
         }
 

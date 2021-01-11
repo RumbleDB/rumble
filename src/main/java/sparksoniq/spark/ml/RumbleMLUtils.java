@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -164,15 +165,21 @@ public class RumbleMLUtils {
     private static Object convertRumbleAtomicToJava(Item atomicItem, String javaTypeName) {
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
+                return CastIterator.castItemToType(atomicItem, ItemType.booleanItem, ExceptionMetadata.EMPTY_METADATA)
+                    .getBooleanValue();
             case "String":
-                return atomicItem.castAs(ItemType.stringItem).getStringValue();
+                return CastIterator.castItemToType(atomicItem, ItemType.stringItem, ExceptionMetadata.EMPTY_METADATA)
+                    .getStringValue();
             case "int":
-                return atomicItem.castAs(ItemType.integerItem).getIntValue();
+                return CastIterator.castItemToType(atomicItem, ItemType.integerItem, ExceptionMetadata.EMPTY_METADATA)
+                    .getIntValue();
             case "double":
-                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
+                return CastIterator.castItemToType(atomicItem, ItemType.doubleItem, ExceptionMetadata.EMPTY_METADATA)
+                    .getDoubleValue();
             case "long":
-                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
+                return CastIterator.castItemToType(atomicItem, ItemType.decimalItem, ExceptionMetadata.EMPTY_METADATA)
+                    .getDecimalValue()
+                    .longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

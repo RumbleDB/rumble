@@ -481,8 +481,6 @@ public interface Item extends Serializable, KryoSerializable {
      */
     boolean canBePromotedTo(ItemType type);
 
-    Item promoteTo(ItemType type);
-
     /**
      * Computes a hash code.
      *

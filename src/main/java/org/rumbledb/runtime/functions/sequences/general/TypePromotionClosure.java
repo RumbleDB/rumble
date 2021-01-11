@@ -4,6 +4,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 
@@ -23,7 +24,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
     public Item call(Item input) throws Exception {
         if (input != null && !InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
             if (input.canBePromotedTo(this.sequenceType.getItemType())) {
-                return input.promoteTo(this.sequenceType.getItemType());
+                return CastIterator.castItemToType(input, this.sequenceType.getItemType(), metadata);
             }
             throw new UnexpectedTypeException(
                     this.exceptionMessage

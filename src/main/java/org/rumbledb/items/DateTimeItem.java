@@ -99,23 +99,6 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.dateItem)) {
-            return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
-        }
-        if (itemType.equals(ItemType.timeItem)) {
-            return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         return itemType.equals(ItemType.dateTimeItem)
             || itemType.equals(ItemType.dateItem)

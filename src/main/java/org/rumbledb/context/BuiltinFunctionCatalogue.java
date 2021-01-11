@@ -63,7 +63,6 @@ import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
 import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
@@ -677,17 +676,6 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         DeepEqualFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
-     * function that returns the integer from the supplied argument
-     */
-    static final BuiltinFunction decimal_function = createBuiltinFunction(
-        "decimal",
-        "item?",
-        "decimal?",
-        DecimalFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
