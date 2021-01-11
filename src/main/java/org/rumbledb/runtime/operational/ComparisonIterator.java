@@ -75,6 +75,14 @@ public class ComparisonIterator extends LocalRuntimeIterator {
         return this.comparisonOperator.equals(ComparisonExpression.ComparisonOperator.VC_EQ);
     }
 
+    public RuntimeIterator getLeftIterator() {
+        return this.leftIterator;
+    }
+
+    public RuntimeIterator getRightIterator() {
+        return this.rightIterator;
+    }
+
     @Override
     public Item next() {
         if (this.hasNext()) {
@@ -83,13 +91,13 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             // use stored values for value comparison
             if (this.comparisonOperator.isValueComparison()) {
                 return valueComparison(this.left, this.right);
-            } else {
-                // fetch all values and perform comparison
-                List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
-                List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-                return generalComparison(left, right);
             }
+
+            // fetch all values and perform comparison
+            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+            return generalComparison(left, right);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
