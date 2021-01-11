@@ -33,8 +33,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -200,24 +203,22 @@ public class StringItem implements Item {
         this.value = input.readString();
     }
 
+    @Override
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
+        if (otherItem instanceof Item) {
+            int c = ComparisonOperationIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
         }
-        Item o = (Item) otherItem;
-        if (!o.isString()) {
-            return false;
-        }
-        return (getStringValue().equals(o.getStringValue()));
+        return false;
     }
 
     public int hashCode() {
         return getStringValue().hashCode();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
     }
 
     @Override
