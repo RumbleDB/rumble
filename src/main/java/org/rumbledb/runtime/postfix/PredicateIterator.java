@@ -33,7 +33,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
 import org.rumbledb.runtime.operational.OrOperationIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
@@ -121,7 +121,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 || this.filter instanceof AndOperationIterator
                 || this.filter instanceof OrOperationIterator
                 || this.filter instanceof NotOperationIterator
-                || this.filter instanceof ComparisonOperationIterator);
+                || this.filter instanceof ComparisonIterator);
     }
 
     @Override
