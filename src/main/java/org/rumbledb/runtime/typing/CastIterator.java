@@ -88,6 +88,12 @@ public class CastIterator extends LocalRuntimeIterator {
                     getMetadata()
             );
         }
+        if (!this.item.isAtomic()) {
+            throw new UnexpectedTypeException(
+                    "Only atomics can be cast to atomic types.",
+                    getMetadata()
+            );
+        }
         this.hasNext = this.item != null;
     }
 
