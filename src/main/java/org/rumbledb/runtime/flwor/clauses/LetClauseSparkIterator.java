@@ -35,7 +35,6 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -615,44 +614,87 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame;
     }
 
-    private static void registerLetClauseUDF(Dataset<Row> dataFrame, RuntimeIterator newVariableExpression, DynamicContext context, StructType inputSchema, List<String> UDFcolumns, SequenceType sequenceType) {
+    private static void registerLetClauseUDF(
+            Dataset<Row> dataFrame,
+            RuntimeIterator newVariableExpression,
+            DynamicContext context,
+            StructType inputSchema,
+            List<String> UDFcolumns,
+            SequenceType sequenceType
+    ) {
         // for the moment we only consider natively types with single arity (what about optional)
-        if(sequenceType != null && !sequenceType.isEmptySequence() && sequenceType.getArity().equals(SequenceType.Arity.One)){
+        if (
+            sequenceType != null
+                && !sequenceType.isEmptySequence()
+                && sequenceType.getArity().equals(SequenceType.Arity.One)
+        ) {
             ItemType itemType = sequenceType.getItemType();
 
-            if(itemType.equals(AtomicItemType.stringItem)){
-                dataFrame.sparkSession().udf().register(
+            if (itemType.equals(AtomicItemType.stringItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<String>(newVariableExpression, context, inputSchema, UDFcolumns, "String"),
+                        new GenericLetClauseUDF<String>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "String"
+                        ),
                         DataTypes.StringType
-                );
+                    );
                 return;
             }
 
-            if(itemType.equals(AtomicItemType.integerItem)){
-                dataFrame.sparkSession().udf().register(
+            if (itemType.equals(AtomicItemType.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<Integer>(newVariableExpression, context, inputSchema, UDFcolumns, "Integer"),
+                        new GenericLetClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Integer"
+                        ),
                         DataTypes.IntegerType
-                );
+                    );
                 return;
             }
 
-            if(itemType.equals(AtomicItemType.decimalItem)){
-                dataFrame.sparkSession().udf().register(
+            if (itemType.equals(AtomicItemType.decimalItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<BigDecimal>(newVariableExpression, context, inputSchema, UDFcolumns, "BigDecimal"),
+                        new GenericLetClauseUDF<BigDecimal>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
                         DataTypes.createDecimalType()
-                );
+                    );
                 return;
             }
 
-            if(itemType.equals(AtomicItemType.doubleItem)){
-                dataFrame.sparkSession().udf().register(
+            if (itemType.equals(AtomicItemType.doubleItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
                         "letClauseUDF",
-                        new GenericLetClauseUDF<Double>(newVariableExpression, context, inputSchema, UDFcolumns, "Double"),
+                        new GenericLetClauseUDF<Double>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Double"
+                        ),
                         DataTypes.DoubleType
-                );
+                    );
                 return;
             }
         }

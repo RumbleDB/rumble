@@ -45,15 +45,20 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
 
     // TODO: check if there is a better/safer/faster way to do it
     @SuppressWarnings("unchecked")
-    public T toDFValue(){
+    public T toDFValue() {
         // Arity and type check are done by the treat expression that is inserted in the let clause
         // when using the 'as' syntax
         switch (this.classSimpleName) {
-            case "String": return (T) this.nextResult.get(0).getStringValue();
-            case "Integer": return (T) this.nextResult.get(0).getIntegerValue();
-            case "BigDecimal": return (T) this.nextResult.get(0).getDecimalValue();
-            case "Double": return (T) (Double) this.nextResult.get(0).getDoubleValue();
-            default: throw new OurBadException("Unexpected type in Generic Let UDF");
+            case "String":
+                return (T) this.nextResult.get(0).getStringValue();
+            case "Integer":
+                return (T) this.nextResult.get(0).getIntegerValue();
+            case "BigDecimal":
+                return (T) this.nextResult.get(0).getDecimalValue();
+            case "Double":
+                return (T) (Double) this.nextResult.get(0).getDoubleValue();
+            default:
+                throw new OurBadException("Unexpected type in Generic Let UDF");
         }
     }
 }
