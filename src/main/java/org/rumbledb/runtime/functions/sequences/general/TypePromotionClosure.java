@@ -25,7 +25,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
     public Item call(Item input) throws Exception {
         if (input != null && !InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
             if (input.canBePromotedTo(this.sequenceType.getItemType())) {
-                Item result = CastIterator.castItemToType(input, this.sequenceType.getItemType(), metadata);
+                Item result = CastIterator.castItemToType(input, this.sequenceType.getItemType(), this.metadata);
                 if (result == null) {
                     throw new OurBadException(
                             "We were not able to promote " + input + " to type " + this.sequenceType.getItemType()

@@ -50,19 +50,17 @@ public class CastIterator extends LocalRuntimeIterator {
         if (!canTypeBeCastToType(this.item, this.sequenceType.getItemType(), getMetadata())) {
             String message = String.format(
                 "\"%s\": a value of type %s is not castable to type %s",
-                item.serialize(),
-                item.getDynamicType(),
+                this.item.serialize(),
+                this.item.getDynamicType(),
                 this.sequenceType.getItemType()
             );
             throw new UnexpectedTypeException(message, getMetadata());
         }
-
         Item result = castItemToType(this.item, this.sequenceType.getItemType(), getMetadata());
         if (result == null) {
             String message = String.format(
                 "\"%s\": this literal is not castable to type %s",
-                item.serialize(),
-                item.getDynamicType(),
+                this.item.serialize(),
                 this.sequenceType.getItemType()
             );
             throw new CastException(message, getMetadata());
@@ -74,7 +72,7 @@ public class CastIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
         try {
-            item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type "
@@ -82,13 +80,41 @@ public class CastIterator extends LocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
+        if (this.item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()
             );
         }
-        this.hasNext = item != null;
+        this.hasNext = this.item != null;
+    }
+
+    @Override
+    public void close() {
+        super.close();
+        this.item = null;
+        this.hasNext = false;
+    }
+
+    @Override
+    public void reset(DynamicContext context) {
+        super.reset(context);
+        try {
+            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    " Sequence of more than one item can not be treated as type "
+                        + this.sequenceType.toString(),
+                    getMetadata()
+            );
+        }
+        if (this.item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero) {
+            throw new UnexpectedTypeException(
+                    " Empty sequence can not be cast to type with quantifier '1'",
+                    getMetadata()
+            );
+        }
+        this.hasNext = this.item != null;
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {
@@ -99,7 +125,7 @@ public class CastIterator extends LocalRuntimeIterator {
         }
 
         if (targetType.equals(ItemType.nullItem)) {
-            if (item.isString() && item.getStringValue().equals("")) {
+            if (item.isString() && item.getStringValue().equals("null")) {
                 return ItemFactory.getInstance().createNullItem();
             }
         }
