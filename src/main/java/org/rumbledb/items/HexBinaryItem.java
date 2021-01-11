@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
-import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -83,20 +82,6 @@ public class HexBinaryItem extends AtomicItem {
             itemType.equals(ItemType.base64BinaryItem)
             ||
             itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return ItemFactory.getInstance().createBase64BinaryItem(Base64.encodeBase64String(this.value));
-        }
-        throw new ClassCastException();
     }
 
     @Override

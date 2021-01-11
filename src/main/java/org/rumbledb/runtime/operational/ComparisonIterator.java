@@ -27,6 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -38,11 +39,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 
-public class ComparisonOperationIterator extends LocalRuntimeIterator {
+public class ComparisonIterator extends LocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -53,7 +54,7 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
     private RuntimeIterator rightIterator;
 
 
-    public ComparisonOperationIterator(
+    public ComparisonIterator(
             RuntimeIterator leftIterator,
             RuntimeIterator rightIterator,
             ComparisonExpression.ComparisonOperator comparisonOperator,
@@ -89,23 +90,14 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
 
             // use stored values for value comparison
             if (this.comparisonOperator.isValueComparison()) {
-                return comparePair(this.left, this.right);
-            } else {
-                // fetch all values and perform comparison
-                ArrayList<Item> left = new ArrayList<>();
-                ArrayList<Item> right = new ArrayList<>();
-                while (this.leftIterator.hasNext()) {
-                    left.add(this.leftIterator.next());
-                }
-                while (this.rightIterator.hasNext()) {
-                    right.add(this.rightIterator.next());
-                }
-
-                this.leftIterator.close();
-                this.rightIterator.close();
-
-                return compareAllPairs(left, right);
+                return valueComparison(this.left, this.right);
             }
+
+            // fetch all values and perform comparison
+            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
+            List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+            return generalComparison(left, right);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
     }
@@ -114,36 +106,40 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
-
         // value comparison may return an empty sequence
         if (this.comparisonOperator.isValueComparison()) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
-            if (!(this.leftIterator.hasNext() && this.rightIterator.hasNext())) {
-                this.hasNext = false;
-            } else {
-                this.left = this.leftIterator.next();
-                this.right = this.rightIterator.next();
-
-                // value comparison doesn't support more than 1 items
-                if (this.leftIterator.hasNext() || this.rightIterator.hasNext()) {
-                    throw new UnexpectedTypeException(
-                            "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
-                            getMetadata()
-                    );
-                }
-
-                this.hasNext = true;
+            try {
+                this.left = this.leftIterator.materializeAtMostOneItemOrNull(
+                    this.currentDynamicContextForLocalExecution
+                );
+            } catch (MoreThanOneItemException e) {
+                throw new UnexpectedTypeException(
+                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                        getMetadata()
+                );
             }
+            if (this.left == null) {
+                this.hasNext = false;
+                return;
+            }
+
+            try {
+                this.right = this.rightIterator.materializeAtMostOneItemOrNull(
+                    this.currentDynamicContextForLocalExecution
+                );
+            } catch (MoreThanOneItemException e) {
+                throw new UnexpectedTypeException(
+                        "Invalid args. Value comparison can't be performed on sequences with more than 1 items",
+                        getMetadata()
+                );
+            }
+            this.hasNext = this.right != null;
         } else {
             // general comparison always returns a boolean
             this.hasNext = true;
         }
-
-        this.leftIterator.close();
-        this.rightIterator.close();
     }
 
     /**
@@ -153,10 +149,10 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
      * @param right item list of right iterator
      * @return true if a single match is found, false if no matches. Given an empty sequence, false is returned.
      */
-    private Item compareAllPairs(ArrayList<Item> left, ArrayList<Item> right) {
+    private Item generalComparison(List<Item> left, List<Item> right) {
         for (Item l : left) {
             for (Item r : right) {
-                Item result = comparePair(l, r);
+                Item result = valueComparison(l, r);
                 if (result.getBooleanValue()) {
                     return result;
                 }
@@ -165,7 +161,7 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
         return ItemFactory.getInstance().createBooleanItem(false);
     }
 
-    private Item comparePair(Item left, Item right) {
+    private Item valueComparison(Item left, Item right) {
 
         if (left.isArray() || right.isArray()) {
             throw new NonAtomicKeyException(

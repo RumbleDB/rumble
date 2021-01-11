@@ -4,7 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
-import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
 
 public class DayTimeDurationItem extends DurationItem {
@@ -63,23 +62,6 @@ public class DayTimeDurationItem extends DurationItem {
             itemType.equals(ItemType.durationItem)
             ||
             itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.durationItem)) {
-            return ItemFactory.getInstance().createDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
     }
 
     @Override

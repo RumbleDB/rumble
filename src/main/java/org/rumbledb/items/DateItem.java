@@ -89,20 +89,6 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.dateItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return ItemFactory.getInstance().createDateTimeItem(this.getValue(), this.hasTimeZone);
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.dateItem) || super.isTypeOf(type);
     }

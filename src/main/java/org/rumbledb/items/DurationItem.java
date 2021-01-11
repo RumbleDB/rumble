@@ -133,23 +133,6 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.durationItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public String serialize() {
         if (this.isNegative) {
             return '-' + this.getValue().negated().toString();

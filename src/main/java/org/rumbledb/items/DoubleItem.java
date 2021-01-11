@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -102,29 +102,6 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(this.value != 0);
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.floatItem)) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
             return false;
@@ -173,7 +150,7 @@ public class DoubleItem implements Item {
     @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
-            int c = ComparisonOperationIterator.compareItems(
+            int c = ComparisonIterator.compareItems(
                 this,
                 (Item) otherItem,
                 ComparisonOperator.VC_EQ,
@@ -196,11 +173,6 @@ public class DoubleItem implements Item {
     @Override
     public boolean isNumeric() {
         return true;
-    }
-
-    @Override
-    public Item promoteTo(ItemType type) {
-        return this.castAs(type);
     }
 
     @Override

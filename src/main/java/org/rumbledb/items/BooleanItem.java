@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
-import java.math.BigDecimal;
 
 public class BooleanItem extends AtomicItem {
 
@@ -64,26 +63,6 @@ public class BooleanItem extends AtomicItem {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.booleanItem) || super.isTypeOf(type);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(this.hashCode());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(BigDecimal.valueOf(this.hashCode()));
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntItem(this.hashCode());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(String.valueOf(this.getBooleanValue()));
-        }
-        throw new ClassCastException();
     }
 
     @Override

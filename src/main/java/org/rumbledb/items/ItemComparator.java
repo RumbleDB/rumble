@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 
 import java.io.Serializable;
 import java.util.Comparator;
@@ -48,7 +48,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      */
     public int compare(Item v1, Item v2) {
         try {
-            return ComparisonOperationIterator.compareItems(
+            return ComparisonIterator.compareItems(
                 v1,
                 v2,
                 ComparisonExpression.ComparisonOperator.VC_LT,

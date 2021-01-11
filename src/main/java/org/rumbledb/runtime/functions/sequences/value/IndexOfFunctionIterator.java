@@ -32,8 +32,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
-
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import java.util.List;
 
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {
@@ -113,7 +112,7 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                int c = ComparisonOperationIterator.compareItems(
+                int c = ComparisonIterator.compareItems(
                     item,
                     this.search,
                     ComparisonOperator.VC_EQ,
