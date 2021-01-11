@@ -320,7 +320,7 @@ public class CastIterator extends LocalRuntimeIterator {
             }
 
             return null;
-        } catch (NumberFormatException e) {
+        } catch (Exception e) {
             return null;
         }
     }
