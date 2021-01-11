@@ -1156,7 +1156,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true);
-        if (ItemType.typeExists(name) && children.size() == 1) {
+        if (ItemType.typeExists(name) && children.size() == 1 && name.getNamespace().equals(Name.RUMBLE_NS) && !name.getLocalName().equals("boolean")) {
             return new CastExpression(
                     children.get(0),
                     SequenceType.createSequenceType(name.getLocalName() + "?"),
