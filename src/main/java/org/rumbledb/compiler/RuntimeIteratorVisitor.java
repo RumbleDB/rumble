@@ -108,7 +108,7 @@ import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
@@ -775,7 +775,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        RuntimeIterator runtimeIterator = new ComparisonOperationIterator(
+        RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
                 expression.getComparisonOperator(),

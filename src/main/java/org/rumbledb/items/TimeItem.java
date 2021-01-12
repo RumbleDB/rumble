@@ -88,17 +88,6 @@ public class TimeItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        if (itemType.equals(ItemType.timeItem)) {
-            return this;
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.timeItem) || super.isTypeOf(type);
     }

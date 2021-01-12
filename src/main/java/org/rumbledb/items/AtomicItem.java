@@ -20,7 +20,6 @@
 
 package org.rumbledb.items;
 
-import org.rumbledb.api.Item;
 import org.rumbledb.types.ItemType;
 
 public abstract class AtomicItem extends ItemImpl {
@@ -39,10 +38,5 @@ public abstract class AtomicItem extends ItemImpl {
     @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
-    }
-
-    @Override
-    public Item promoteTo(ItemType type) {
-        return this.castAs(type);
     }
 }

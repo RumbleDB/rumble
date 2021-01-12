@@ -33,9 +33,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -99,29 +102,6 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(this.value != 0);
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.floatItem)) {
-            return ItemFactory.getInstance().createFloatItem(this.castToFloatValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(this.castToDecimalValue());
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
             return false;
@@ -167,27 +147,22 @@ public class DoubleItem implements Item {
         this.value = input.readDouble();
     }
 
+    @Override
     public boolean equals(Object otherItem) {
-        try {
-            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch (IteratorFlowException e) {
-            return false;
+        if (otherItem instanceof Item) {
+            int c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
         }
+        return false;
     }
 
     public int hashCode() {
         return (int) Math.round(getDoubleValue());
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isNumeric()) {
-            return Double.compare(this.value, other.castToDoubleValue());
-        }
-        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override
@@ -198,11 +173,6 @@ public class DoubleItem implements Item {
     @Override
     public boolean isNumeric() {
         return true;
-    }
-
-    @Override
-    public Item promoteTo(ItemType type) {
-        return this.castAs(type);
     }
 
     @Override

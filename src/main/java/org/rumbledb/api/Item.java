@@ -464,24 +464,12 @@ public interface Item extends Serializable, KryoSerializable {
     boolean equals(Object other);
 
     /**
-     * Function that compares 2 items with the semantics of the le operator.
-     * Non-atomics can't be compared.
-     * Items have to be of comparable types or one of them has to be null (null is the least value).
-     *
-     * @param other another item.
-     * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
-     */
-    int compareTo(Item other);
-
-    /**
      * Please do not use (internal).
      *
      * @param type an ItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
     boolean canBePromotedTo(ItemType type);
-
-    Item promoteTo(ItemType type);
 
     /**
      * Computes a hash code.
@@ -491,13 +479,6 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     String serialize();
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item castAs(ItemType itemType);
 
     /**
      * Deprecated. Will be moved to iterator.

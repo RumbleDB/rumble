@@ -33,8 +33,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -116,68 +119,6 @@ public class StringItem implements Item {
     @Override
     public boolean isString() {
         return true;
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(this.getStringValue()));
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(castToDoubleValue());
-        }
-        if (itemType.equals(ItemType.floatItem)) {
-            return ItemFactory.getInstance().createFloatItem(castToFloatValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return ItemFactory.getInstance().createDecimalItem(new BigDecimal(this.getStringValue()));
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.nullItem)) {
-            return ItemFactory.getInstance().createNullItem();
-        }
-        if (itemType.equals(ItemType.durationItem)) {
-            return ItemFactory.getInstance()
-                .createDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.durationItem)
-                );
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return ItemFactory.getInstance()
-                .createYearMonthDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.yearMonthDurationItem)
-                );
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(
-                    DurationItem.getDurationFromString(this.getStringValue(), ItemType.dayTimeDurationItem)
-                );
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return ItemFactory.getInstance().createDateTimeItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.dateItem)) {
-            return ItemFactory.getInstance().createDateItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.timeItem)) {
-            return ItemFactory.getInstance().createTimeItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return ItemFactory.getInstance().createHexBinaryItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return ItemFactory.getInstance().createBase64BinaryItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.anyURIItem)) {
-            return ItemFactory.getInstance().createAnyURIItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return this;
-        }
-        throw new ClassCastException();
     }
 
     public boolean getEffectiveBooleanValue() {
@@ -262,15 +203,18 @@ public class StringItem implements Item {
         this.value = input.readString();
     }
 
+    @Override
     public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
+        if (otherItem instanceof Item) {
+            int c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
         }
-        Item o = (Item) otherItem;
-        if (!o.isString()) {
-            return false;
-        }
-        return (getStringValue().equals(o.getStringValue()));
+        return false;
     }
 
     public int hashCode() {
@@ -278,18 +222,8 @@ public class StringItem implements Item {
     }
 
     @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return ItemType.stringItem;
-    }
-
-    @Override
-    public Item promoteTo(ItemType type) {
-        return this.castAs(type);
     }
 
     @Override

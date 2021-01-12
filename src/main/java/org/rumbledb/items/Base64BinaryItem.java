@@ -3,7 +3,6 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
@@ -89,20 +88,6 @@ public class Base64BinaryItem extends AtomicItem {
             itemType.equals(ItemType.hexBinaryItem)
             ||
             itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
-        }
-        throw new ClassCastException();
     }
 
     @Override

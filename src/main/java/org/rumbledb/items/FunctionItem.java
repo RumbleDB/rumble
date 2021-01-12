@@ -332,11 +332,6 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a function!");
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         return false;
     }
