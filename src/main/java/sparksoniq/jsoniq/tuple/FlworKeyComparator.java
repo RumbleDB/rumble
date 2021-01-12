@@ -37,7 +37,7 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
 
     @Override
     public int compare(FlworKey key1, FlworKey key2) {
-        int result = key1.compareWithFlworKey(key2, expressions);
+        int result = key1.compareWithFlworKey(key2, this.expressions);
 
         if (result == 0) {
             return 0;
@@ -47,10 +47,6 @@ public class FlworKeyComparator implements Comparator<FlworKey>, Serializable {
         // subtract 1 to offset the effect of preventing multiplication w/ 0 in "compareWithFlworKey" method
         int expressionIndex = Math.abs(result) - 1;
         result = (int) Math.signum(result); // sign of the result gives comparison result (1 / -1)
-
-        // Java null shows that the ordering expression is empty
-        // Default behavior(NONE) for empty ordering expressions is determined by static context.
-        // if LAST is given, empty ordering expressions are the greatest (reverse the comparison)
 
         // Account for descending order
         if (!this.expressions.get(expressionIndex).isAscending()) {

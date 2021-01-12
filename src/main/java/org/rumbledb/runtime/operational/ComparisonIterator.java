@@ -198,15 +198,15 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             );
         }
         // NaN never compares successfully.
-        if(left.isDouble() && Double.isNaN(left.getDoubleValue()))
-        {
+        if (left.isDouble() && Double.isNaN(left.getDoubleValue())) {
             return ItemFactory
-                    .getInstance().createBooleanItem(false);
+                .getInstance()
+                .createBooleanItem(false);
         }
-        if(right.isDouble() && Double.isNaN(right.getDoubleValue()))
-        {
+        if (right.isDouble() && Double.isNaN(right.getDoubleValue())) {
             return ItemFactory
-                    .getInstance().createBooleanItem(false);
+                .getInstance()
+                .createBooleanItem(false);
         }
         return comparisonResultToBooleanItem(
             (int) comparison,
