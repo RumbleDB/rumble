@@ -49,13 +49,13 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      */
     public int compare(Item v1, Item v2) {
         try {
-            int comparison = ComparisonIterator.compareItems(
+            long comparison = ComparisonIterator.compareItems(
                 v1,
                 v2,
                 ComparisonExpression.ComparisonOperator.VC_LT,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            if (comparison == Integer.MIN_VALUE) {
+            if (comparison == Long.MIN_VALUE) {
 
                 throw new UnexpectedTypeException(
                         " \""
@@ -68,7 +68,7 @@ public class ItemComparator implements Comparator<Item>, Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            return comparison;
+            return (int) comparison;
         } catch (RumbleException e) {
             this.exception.initCause(e);
             throw this.exception;

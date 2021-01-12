@@ -184,8 +184,8 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
 
-        int comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
-        if (comparison == -Integer.MIN_VALUE) {
+        long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
+        if (comparison == -Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
                         + comparisonOperator
@@ -198,13 +198,13 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             );
         }
         return comparisonResultToBooleanItem(
-            comparison,
+            (int) comparison,
             this.comparisonOperator,
             getMetadata()
         );
     }
 
-    public static int compareItems(
+    public static long compareItems(
             Item left,
             Item right,
             ComparisonOperator comparisonOperator,
@@ -327,7 +327,7 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             String r = right.getStringValue();
             return processString(l, r);
         }
-        return Integer.MIN_VALUE;
+        return Long.MIN_VALUE;
     }
 
     private static int processDouble(

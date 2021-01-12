@@ -107,13 +107,13 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = ComparisonIterator.compareItems(
+                long comparison = ComparisonIterator.compareItems(
                     currentItem,
                     comparisonItem,
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
-                if (result == Integer.MIN_VALUE) {
+                if (comparison == Long.MIN_VALUE) {
                     throw new UnexpectedTypeException(
                             " \""
                                 + ComparisonOperator.VC_EQ
@@ -125,6 +125,7 @@ public class FlworKey implements KryoSerializable {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
+                result = (int) comparison;
             }
 
             // Simplify comparison result to -1/0/1
