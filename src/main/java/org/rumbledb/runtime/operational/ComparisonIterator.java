@@ -184,14 +184,27 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             throw new IteratorFlowException("Invalid comparison expression", getMetadata());
         }
 
+        long comparison = compareItems(left, right, this.comparisonOperator, getMetadata());
+        if (comparison == -Long.MIN_VALUE) {
+            throw new UnexpectedTypeException(
+                    " \""
+                        + comparisonOperator
+                        + "\": operation not possible with parameters of type \""
+                        + left.getDynamicType().toString()
+                        + "\" and \""
+                        + right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
         return comparisonResultToBooleanItem(
-            compareItems(left, right, this.comparisonOperator, getMetadata()),
+            (int) comparison,
             this.comparisonOperator,
             getMetadata()
         );
     }
 
-    public static int compareItems(
+    public static long compareItems(
             Item left,
             Item right,
             ComparisonOperator comparisonOperator,
@@ -314,16 +327,7 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             String r = right.getStringValue();
             return processString(l, r);
         }
-        throw new UnexpectedTypeException(
-                " \""
-                    + comparisonOperator
-                    + "\": operation not possible with parameters of type \""
-                    + left.getDynamicType().toString()
-                    + "\" and \""
-                    + right.getDynamicType().toString()
-                    + "\"",
-                metadata
-        );
+        return Long.MIN_VALUE;
     }
 
     private static int processDouble(

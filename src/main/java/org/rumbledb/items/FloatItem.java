@@ -148,7 +148,7 @@ public class FloatItem implements Item {
     @Override
     public boolean equals(Object otherItem) {
         if (otherItem instanceof Item) {
-            int c = ComparisonIterator.compareItems(
+            long c = ComparisonIterator.compareItems(
                 this,
                 (Item) otherItem,
                 ComparisonOperator.VC_EQ,

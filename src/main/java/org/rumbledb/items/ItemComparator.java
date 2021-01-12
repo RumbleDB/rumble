@@ -23,6 +23,7 @@ package org.rumbledb.items;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 
@@ -48,12 +49,26 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      */
     public int compare(Item v1, Item v2) {
         try {
-            return ComparisonIterator.compareItems(
+            long comparison = ComparisonIterator.compareItems(
                 v1,
                 v2,
                 ComparisonExpression.ComparisonOperator.VC_LT,
                 ExceptionMetadata.EMPTY_METADATA
             );
+            if (comparison == Long.MIN_VALUE) {
+
+                throw new UnexpectedTypeException(
+                        " \""
+                            + ComparisonExpression.ComparisonOperator.VC_LT
+                            + "\": operation not possible with parameters of type \""
+                            + v1.getDynamicType().toString()
+                            + "\" and \""
+                            + v2.getDynamicType().toString()
+                            + "\"",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            return (int) comparison;
         } catch (RumbleException e) {
             this.exception.initCause(e);
             throw this.exception;

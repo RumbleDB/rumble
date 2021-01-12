@@ -28,6 +28,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import java.util.ArrayList;
@@ -106,12 +107,25 @@ public class FlworKey implements KryoSerializable {
                     result = 1;
                 }
             } else {
-                result = ComparisonIterator.compareItems(
+                long comparison = ComparisonIterator.compareItems(
                     currentItem,
                     comparisonItem,
                     ComparisonOperator.VC_EQ,
                     ExceptionMetadata.EMPTY_METADATA
                 );
+                if (comparison == Long.MIN_VALUE) {
+                    throw new UnexpectedTypeException(
+                            " \""
+                                + ComparisonOperator.VC_EQ
+                                + "\": operation not possible with parameters of type \""
+                                + currentItem.getDynamicType().toString()
+                                + "\" and \""
+                                + comparisonItem.getDynamicType().toString()
+                                + "\"",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                result = (int) comparison;
             }
 
             // Simplify comparison result to -1/0/1
