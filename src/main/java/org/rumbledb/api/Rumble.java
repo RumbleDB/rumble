@@ -43,7 +43,7 @@ public class Rumble {
     public SequenceOfItems runQuery(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
-            RumbleRuntimeConfiguration.getDefaultConfiguration()
+            this.configuration
         );
         DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
