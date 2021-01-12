@@ -71,41 +71,43 @@ public class StringItem implements Item {
     }
 
     public double castToDoubleValue() {
-        if (this.value.equals("INF") || this.value.equals("+INF")) {
+        String trimmedValue = this.value.trim();
+        if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
             return Double.POSITIVE_INFINITY;
         }
-        if (this.value.equals("-INF")) {
+        if (trimmedValue.equals("-INF")) {
             return Double.NEGATIVE_INFINITY;
         }
-        if (this.value.equals("NaN")) {
+        if (trimmedValue.equals("NaN")) {
             return Double.NaN;
         }
         return Double.parseDouble(this.getValue());
     }
 
     public float castToFloatValue() {
-        if (this.value.equals("INF") || this.value.equals("+INF")) {
+        String trimmedValue = this.value.trim();
+        if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
             return Float.POSITIVE_INFINITY;
         }
-        if (this.value.equals("-INF")) {
+        if (trimmedValue.equals("-INF")) {
             return Float.NEGATIVE_INFINITY;
         }
-        if (this.value.equals("NaN")) {
+        if (trimmedValue.equals("NaN")) {
             return Float.NaN;
         }
         return Float.parseFloat(this.getValue());
     }
 
     public BigDecimal castToDecimalValue() {
-        return new BigDecimal(this.value);
+        return new BigDecimal(this.value.trim());
     }
 
     public BigInteger castToIntegerValue() {
-        return new BigInteger(this.value);
+        return new BigInteger(this.value.trim());
     }
 
     public int castToIntValue() {
-        return Integer.parseInt(this.value);
+        return Integer.parseInt(this.value.trim());
     }
 
     private boolean isBooleanLiteral(String value) {
