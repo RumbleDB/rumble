@@ -27,8 +27,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 
 import java.util.Map;
 
@@ -130,9 +132,17 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
                 } else {
                     // no match, do nothing
                 }
-            } else if (testValue.equals(caseValue)) {
-                this.matchingIterator = cases.get(caseKey);
-                break;
+            } else {
+                long comparison = ComparisonIterator.compareItems(
+                    testValue,
+                    caseValue,
+                    ComparisonOperator.VC_EQ,
+                    getMetadata()
+                );
+                if (comparison == 0) {
+                    this.matchingIterator = cases.get(caseKey);
+                    break;
+                }
             }
         }
 

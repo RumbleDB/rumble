@@ -14,6 +14,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.ItemType;
@@ -228,6 +229,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.nextResult = this.nextResult.promoteTo(this.sequenceType.getItemType());
+        this.nextResult = CastIterator.castItemToType(this.nextResult, this.sequenceType.getItemType(), getMetadata());
+        if (this.nextResult == null) {
+            throw new OurBadException(
+                    "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()
+            );
+        }
     }
 }

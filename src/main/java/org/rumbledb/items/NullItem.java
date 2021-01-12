@@ -24,8 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 
 public class NullItem extends AtomicItem {
@@ -57,17 +55,6 @@ public class NullItem extends AtomicItem {
         return itemType.equals(ItemType.nullItem)
             ||
             itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.nullItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
     }
 
     @Override
@@ -104,15 +91,6 @@ public class NullItem extends AtomicItem {
             return 0;
         }
         return -1;
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        return super.compareItem(other, comparisonOperator, metadata);
     }
 
     @Override

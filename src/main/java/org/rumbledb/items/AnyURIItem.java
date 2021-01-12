@@ -96,17 +96,6 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.anyURIItem)) {
-            return this;
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean isCastableAs(ItemType itemType) {
         return (itemType.equals(ItemType.anyURIItem) || itemType.equals(ItemType.stringItem));
     }

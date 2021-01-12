@@ -4,10 +4,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
-import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 
 public class DayTimeDurationItem extends DurationItem {
@@ -66,66 +62,6 @@ public class DayTimeDurationItem extends DurationItem {
             itemType.equals(ItemType.durationItem)
             ||
             itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.durationItem)) {
-            return ItemFactory.getInstance().createDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.dayTimeDurationItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.yearMonthDurationItem)) {
-            return ItemFactory.getInstance().createYearMonthDurationItem(this.getValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (other.isDuration() && !other.isDayTimeDuration() && !other.isYearMonthDuration()) {
-            return other.compareItem(this, comparisonOperator, metadata);
-        } else if (!other.isDayTimeDuration() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDateTime()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasTimeZone());
-        }
-        if (other.isDate()) {
-            return ItemFactory.getInstance()
-                .createDateItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
-        }
-        if (other.isTime()) {
-            return ItemFactory.getInstance()
-                .createTimeItem(other.getDateTimeValue().plus(this.getValue()), other.hasDateTime());
-        }
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().plus(other.getDurationValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        return ItemFactory.getInstance().createDayTimeDurationItem(this.getValue().minus(other.getDurationValue()));
     }
 
     @Override

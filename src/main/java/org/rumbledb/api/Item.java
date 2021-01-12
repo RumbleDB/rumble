@@ -14,8 +14,6 @@ import org.joda.time.Period;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -126,6 +124,13 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an atomic item of type double, false otherwise.
      */
     boolean isDouble();
+
+    /**
+     * Tests whether the item is an atomic item of type float.
+     *
+     * @return true if it is an atomic item of type float, false otherwise.
+     */
+    boolean isFloat();
 
     /**
      * Tests whether the item is an atomic item of type duration.
@@ -261,6 +266,13 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the double value.
      */
     double getDoubleValue();
+
+    /**
+     * Returns the float value of the item, if it is a float.
+     *
+     * @return the float value.
+     */
+    float getFloatValue();
 
     /**
      * Returns the int value of the item, if it is an int.
@@ -416,6 +428,13 @@ public interface Item extends Serializable, KryoSerializable {
     double castToDoubleValue();
 
     /**
+     * Casts the item to a float value (must be a numeric).
+     *
+     * @return the float value.
+     */
+    float castToFloatValue();
+
+    /**
      * Casts the item to a decimal value (must be a numeric).
      *
      * @return the BigDecimal value.
@@ -445,38 +464,12 @@ public interface Item extends Serializable, KryoSerializable {
     boolean equals(Object other);
 
     /**
-     * Function that compares 2 items with the semantics of the le operator.
-     * Non-atomics can't be compared.
-     * Items have to be of comparable types or one of them has to be null (null is the least value).
-     *
-     * @param other another item.
-     * @return -1 if this &lt; other; 0 if this == other; 1 if this &gt; other;
-     */
-    int compareTo(Item other);
-
-    /**
-     * Function that compare two items according to the operator defined for the comparison.
-     *
-     * @param other another Item
-     * @param comparisonOperator the operator used for the comparison
-     * @param metadata Metadata useful for throwing exceptions
-     * @return BooleanItem result of the comparison
-     */
-    Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    );
-
-    /**
      * Please do not use (internal).
      *
      * @param type an ItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
     boolean canBePromotedTo(ItemType type);
-
-    Item promoteTo(ItemType type);
 
     /**
      * Computes a hash code.
@@ -485,28 +478,7 @@ public interface Item extends Serializable, KryoSerializable {
      */
     int hashCode();
 
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item add(Item other);
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item subtract(Item other);
-
     String serialize();
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    Item castAs(ItemType itemType);
 
     /**
      * Deprecated. Will be moved to iterator.

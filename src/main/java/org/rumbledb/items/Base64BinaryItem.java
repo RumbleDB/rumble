@@ -3,14 +3,10 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -95,20 +91,6 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.base64BinaryItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.hexBinaryItem)) {
-            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
     public boolean equals(Object otherObject) {
         if (!(otherObject instanceof Item)) {
             return false;
@@ -135,43 +117,6 @@ public class Base64BinaryItem extends AtomicItem {
                     " with item of type "
                     + other.getDynamicType().toString()
         );
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isBase64Binary() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        if (other.isNull()) {
-            return super.compareItem(other, comparisonOperator, metadata);
-        }
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ:
-            case VC_NE:
-            case GC_NE:
-                return super.compareItem(other, comparisonOperator, metadata);
-            default:
-                throw new UnexpectedTypeException(
-                        "\""
-                            + this.getDynamicType().toString()
-                            + "\": invalid type: can not compare for equality to type \""
-                            + other.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
-        }
     }
 
     @Override

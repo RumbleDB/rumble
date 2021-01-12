@@ -113,7 +113,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
 
-    private static Item processItem(
+    public static Item processItem(
             Item left,
             Item right,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
@@ -157,6 +157,21 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             double l = left.castToDoubleValue();
             double r = right.getDoubleValue();
             return processDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isFloat() && right.isNumeric()) {
+            float l = left.getFloatValue();
+            float r = 0;
+            if (right.isFloat()) {
+                r = right.getFloatValue();
+            } else {
+                r = right.castToFloatValue();
+            }
+            return processFloat(l, r, multiplicativeOperator, metadata);
+        }
+        if (right.isFloat() && left.isNumeric()) {
+            float l = left.castToFloatValue();
+            float r = right.getFloatValue();
+            return processFloat(l, r, multiplicativeOperator, metadata);
         }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
@@ -253,6 +268,33 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     .createLongItem((long) (l / r));
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processFloat(
+            float l,
+            float r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createFloatItem(l * r);
+            case DIV:
+                return ItemFactory.getInstance().createFloatItem(l / r);
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createLongItem((long) (l / r));
+            case MOD:
+                return ItemFactory.getInstance().createFloatItem(l % r);
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,

@@ -20,8 +20,6 @@
 
 package org.rumbledb.items.parsing;
 
-import com.jsoniter.JsonIterator;
-import com.jsoniter.ValueType;
 import org.apache.commons.codec.binary.Hex;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
@@ -41,7 +39,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
@@ -62,13 +63,13 @@ public class ItemParser implements Serializable {
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
-    public static Item getItemFromObject(JsonIterator object, ExceptionMetadata metadata) {
+    public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         try {
-            if (object.whatIsNext().equals(ValueType.STRING)) {
-                return ItemFactory.getInstance().createStringItem(object.readString());
+            if (object.peek() == JsonToken.STRING) {
+                return ItemFactory.getInstance().createStringItem(object.nextString());
             }
-            if (object.whatIsNext().equals(ValueType.NUMBER)) {
-                String number = object.readNumberAsString();
+            if (object.peek() == JsonToken.NUMBER) {
+                String number = object.nextString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
                 }
@@ -77,37 +78,42 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (object.whatIsNext().equals(ValueType.BOOLEAN)) {
-                return ItemFactory.getInstance().createBooleanItem(object.readBoolean());
+            if (object.peek() == JsonToken.BOOLEAN) {
+                return ItemFactory.getInstance().createBooleanItem(object.nextBoolean());
             }
-            if (object.whatIsNext().equals(ValueType.ARRAY)) {
+            if (object.peek() == JsonToken.BEGIN_ARRAY) {
                 List<Item> values = new ArrayList<>();
-                while (object.readArray()) {
+                object.beginArray();
+                while (object.hasNext()) {
                     values.add(getItemFromObject(object, metadata));
                 }
+                object.endArray();
                 return ItemFactory.getInstance().createArrayItem(values);
             }
-            if (object.whatIsNext().equals(ValueType.OBJECT)) {
+            if (object.peek() == JsonToken.BEGIN_OBJECT) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                String s;
-                while ((s = object.readObject()) != null) {
-                    keys.add(s);
+                object.beginObject();
+                while (object.hasNext()) {
+                    keys.add(object.nextName());
                     values.add(getItemFromObject(object, metadata));
                 }
+                object.endObject();
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
-            if (object.whatIsNext().equals(ValueType.NULL)) {
-                object.readNull();
+            if (object.peek() == JsonToken.NULL) {
+                object.nextNull();
                 return ItemFactory.getInstance().createNullItem();
             }
             throw new ParsingException("Invalid value found while parsing. JSON is not well-formed!", metadata);
         } catch (Exception e) {
-            throw new ParsingException(
+            RumbleException r = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
                     metadata
             );
+            r.initCause(e);
+            throw r;
         }
     }
 
@@ -156,7 +162,7 @@ public class ItemParser implements Serializable {
         } else if (dt.equals(DataTypes.IntegerType)) {
             return ItemType.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
-            return ItemType.doubleItem;
+            return ItemType.floatItem;
         } else if (dt.equals(decimalType)) {
             return ItemType.decimalItem;
         } else if (dt.equals(DataTypes.LongType)) {
@@ -225,7 +231,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Float) o;
             }
-            return ItemFactory.getInstance().createDoubleItem(value);
+            return ItemFactory.getInstance().createFloatItem(value);
         } else if (fieldType.equals(decimalType)) {
             BigDecimal value;
             if (row != null) {
@@ -351,6 +357,9 @@ public class ItemParser implements Serializable {
         if (itemTypeName.equals(ItemType.doubleItem.getName())) {
             return DataTypes.DoubleType;
         }
+        if (itemTypeName.equals(ItemType.floatItem.getName())) {
+            return DataTypes.FloatType;
+        }
         if (itemTypeName.equals(ItemType.decimalItem.getName())) {
             return decimalType;
         }
@@ -382,8 +391,11 @@ public class ItemParser implements Serializable {
         if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
             return ItemType.integerItem.getName();
         }
-        if (DataTypes.DoubleType.equals(dataType) || DataTypes.FloatType.equals(dataType)) {
+        if (DataTypes.DoubleType.equals(dataType)) {
             return ItemType.doubleItem.getName();
+        }
+        if (DataTypes.FloatType.equals(dataType)) {
+            return ItemType.floatItem.getName();
         }
         if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
             return ItemType.decimalItem.getName();
@@ -474,6 +486,9 @@ public class ItemParser implements Serializable {
             }
             if (dataType.equals(DataTypes.DoubleType)) {
                 return item.castToDoubleValue();
+            }
+            if (dataType.equals(DataTypes.FloatType)) {
+                return item.castToFloatValue();
             }
             if (dataType.equals(decimalType)) {
                 return item.castToDecimalValue();

@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
@@ -145,11 +144,6 @@ public class ArrayItem extends JsonItem {
     @Override
     public ItemType getDynamicType() {
         return ItemType.arrayItem;
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is an array!");
     }
 
     @Override

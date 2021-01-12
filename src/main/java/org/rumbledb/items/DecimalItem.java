@@ -24,11 +24,8 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -67,6 +64,10 @@ public class DecimalItem extends AtomicItem {
         return getDecimalValue().doubleValue();
     }
 
+    public float castToFloatValue() {
+        return getDecimalValue().floatValue();
+    }
+
     public BigDecimal castToDecimalValue() {
         return getDecimalValue();
     }
@@ -91,27 +92,7 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.booleanItem)) {
-            return ItemFactory.getInstance().createBooleanItem(!this.getDecimalValue().equals(BigDecimal.ZERO));
-        }
-        if (itemType.equals(ItemType.doubleItem)) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue());
-        }
-        if (itemType.equals(ItemType.decimalItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.integerItem)) {
-            return ItemFactory.getInstance().createIntegerItem(this.castToIntegerValue());
-        }
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(serialize());
-        }
-        throw new ClassCastException();
+        return type.equals(ItemType.floatItem) || type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
     }
 
     @Override
@@ -166,41 +147,6 @@ public class DecimalItem extends AtomicItem {
             return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
         }
         throw new OurBadException("Comparing an int to something that is not a number.");
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isNumeric() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args for numerics comparison "
-                        + this.serialize()
-                        +
-                        ", "
-                        + other.serialize(),
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
-    public Item add(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() + (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().add(other.castToDecimalValue()));
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDouble()) {
-            return ItemFactory.getInstance().createDoubleItem(this.castToDoubleValue() - (other.getDoubleValue()));
-        }
-        return ItemFactory.getInstance().createDecimalItem(this.getDecimalValue().subtract(other.castToDecimalValue()));
     }
 
     @Override

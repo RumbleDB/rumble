@@ -11,20 +11,15 @@ import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
-import org.rumbledb.runtime.functions.binaries.Base64BinaryFunctionIterator;
-import org.rumbledb.runtime.functions.binaries.HexBinaryFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.DateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.TimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustTimeToTimezone;
@@ -60,16 +55,15 @@ import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
-import org.rumbledb.runtime.functions.input.TextFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
 import org.rumbledb.runtime.functions.io.JsonDocFunctionIterator;
 import org.rumbledb.runtime.functions.io.LocalTextFileFunctionIterator;
+import org.rumbledb.runtime.functions.io.ParseJsonFunctionIterator;
 import org.rumbledb.runtime.functions.io.TraceFunctionIterator;
+import org.rumbledb.runtime.functions.io.UnparsedTextFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.AbsFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.CeilingFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.DecimalFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.DoubleFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.FloorFunctionIterator;
-import org.rumbledb.runtime.functions.numerics.IntegerFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.NumberFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.PiFunctionIterator;
 import org.rumbledb.runtime.functions.numerics.RoundFunctionIterator;
@@ -95,7 +89,6 @@ import org.rumbledb.runtime.functions.object.ObjectKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectProjectFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectRemoveKeysFunctionIterator;
 import org.rumbledb.runtime.functions.object.ObjectValuesFunctionIterator;
-import org.rumbledb.runtime.functions.resources.AnyURIFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.AvgFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.CountFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.aggregate.MaxFunctionIterator;
@@ -128,7 +121,6 @@ import org.rumbledb.runtime.functions.strings.NormalizeUnicodeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
@@ -310,14 +302,36 @@ public class BuiltinFunctionCatalogue {
         JsonDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    static final BuiltinFunction parse_json = createBuiltinFunction(
+        "parse-json",
+        "string?",
+        "item?",
+        ParseJsonFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     /**
      * function that parses a text file
      */
+    static final BuiltinFunction unparsed_text = createBuiltinFunction(
+        "unparsed-text",
+        "string?",
+        "string?",
+        UnparsedTextFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction unparsed_text_lines = createBuiltinFunction(
+        "unparsed-text-lines",
+        "string?",
+        "string*",
+        UnparsedTextLinesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.RDD
+    );
     static final BuiltinFunction text_file1 = createBuiltinFunction(
         "text-file",
         "string",
         "item*",
-        TextFileFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
@@ -325,7 +339,7 @@ public class BuiltinFunctionCatalogue {
         "string",
         "integer?",
         "item*",
-        TextFileFunctionIterator.class,
+        UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     /**
@@ -488,7 +502,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
         "sum",
-        "item*",
+        "atomic*",
         "atomic?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -662,38 +676,6 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         DeepEqualFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-
-    /**
-     * function that returns the integer from the supplied argument
-     */
-    static final BuiltinFunction integer_function = createBuiltinFunction(
-        "integer",
-        "item?",
-        "integer?",
-        IntegerFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the integer from the supplied argument
-     */
-    static final BuiltinFunction double_function = createBuiltinFunction(
-        "double",
-        "item?",
-        "double?",
-        DoubleFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the integer from the supplied argument
-     */
-    static final BuiltinFunction decimal_function = createBuiltinFunction(
-        "decimal",
-        "item?",
-        "decimal?",
-        DecimalFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
@@ -908,17 +890,6 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
-
-    /**
-     * function that returns the string from the supplied argument
-     */
-    static final BuiltinFunction string_function = createBuiltinFunction(
-        "string",
-        "item?",
-        "string?",
-        StringFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
     /**
      * function that returns substrings
      */
@@ -1298,16 +1269,6 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * function that returns the dateTime item from the supplied string
-     */
-    static final BuiltinFunction dateTime = createBuiltinFunction(
-        "dateTime",
-        "string?",
-        "dateTime?",
-        DateTimeFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
      * function that returns the current dateTime item
      */
     static final BuiltinFunction current_dateTime = createBuiltinFunction(
@@ -1420,16 +1381,6 @@ public class BuiltinFunctionCatalogue {
 
 
     /**
-     * function that returns the date item from the supplied string
-     */
-    static final BuiltinFunction date = createBuiltinFunction(
-        "date",
-        "string?",
-        "date?",
-        DateFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
      * function that returns the current date item
      */
     static final BuiltinFunction current_date = createBuiltinFunction(
@@ -1511,16 +1462,6 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * function that returns the time item from the supplied string
-     */
-    static final BuiltinFunction time = createBuiltinFunction(
-        "time",
-        "string?",
-        "time?",
-        TimeFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
      * function that returns the current time item
      */
     static final BuiltinFunction current_time = createBuiltinFunction(
@@ -1596,38 +1537,6 @@ public class BuiltinFunctionCatalogue {
         "dayTimeDuration?",
         "time?",
         AdjustTimeToTimezone.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
-     * function that returns the time item from the supplied string
-     */
-    static final BuiltinFunction anyURI = createBuiltinFunction(
-        "anyURI",
-        "atomic?",
-        "anyURI?",
-        AnyURIFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-    /**
-     * function that returns the hexBinary item from the supplied string
-     */
-    static final BuiltinFunction hexBinary = createBuiltinFunction(
-        "hexBinary",
-        "string?",
-        "hexBinary?",
-        HexBinaryFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the base64Binary item from the supplied string
-     */
-    static final BuiltinFunction base64Binary = createBuiltinFunction(
-        "base64Binary",
-        "string?",
-        "base64Binary?",
-        Base64BinaryFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -1818,6 +1727,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(structured_json_file.getIdentifier(), structured_json_file);
         builtinFunctions.put(libsvm_file.getIdentifier(), libsvm_file);
         builtinFunctions.put(json_doc.getIdentifier(), json_doc);
+        builtinFunctions.put(unparsed_text.getIdentifier(), unparsed_text);
+        builtinFunctions.put(unparsed_text_lines.getIdentifier(), unparsed_text_lines);
         builtinFunctions.put(text_file1.getIdentifier(), text_file1);
         builtinFunctions.put(text_file2.getIdentifier(), text_file2);
         builtinFunctions.put(local_text_file.getIdentifier(), local_text_file);
@@ -1830,6 +1741,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(root_file2.getIdentifier(), root_file2);
         builtinFunctions.put(avro_file1.getIdentifier(), avro_file1);
         builtinFunctions.put(avro_file2.getIdentifier(), avro_file2);
+        builtinFunctions.put(parse_json.getIdentifier(), parse_json);
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
@@ -1858,9 +1770,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(index_of.getIdentifier(), index_of);
         builtinFunctions.put(deep_equal.getIdentifier(), deep_equal);
 
-        builtinFunctions.put(integer_function.getIdentifier(), integer_function);
-        builtinFunctions.put(decimal_function.getIdentifier(), decimal_function);
-        builtinFunctions.put(double_function.getIdentifier(), double_function);
         builtinFunctions.put(abs.getIdentifier(), abs);
         builtinFunctions.put(ceiling.getIdentifier(), ceiling);
         builtinFunctions.put(floor.getIdentifier(), floor);
@@ -1884,7 +1793,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(atan.getIdentifier(), atan);
         builtinFunctions.put(atan2.getIdentifier(), atan2);
 
-        builtinFunctions.put(string_function.getIdentifier(), string_function);
         builtinFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
         builtinFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
         builtinFunctions.put(replace.getIdentifier(), replace);
@@ -1928,7 +1836,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(minutes_from_duration.getIdentifier(), minutes_from_duration);
         builtinFunctions.put(seconds_from_duration.getIdentifier(), seconds_from_duration);
 
-        builtinFunctions.put(dateTime.getIdentifier(), dateTime);
         builtinFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtinFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
         builtinFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
@@ -1941,7 +1848,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_dateTime_to_timezone1.getIdentifier(), adjust_dateTime_to_timezone1);
         builtinFunctions.put(adjust_dateTime_to_timezone2.getIdentifier(), adjust_dateTime_to_timezone2);
 
-        builtinFunctions.put(date.getIdentifier(), date);
         builtinFunctions.put(current_date.getIdentifier(), current_date);
         builtinFunctions.put(format_date.getIdentifier(), format_date);
         builtinFunctions.put(year_from_date.getIdentifier(), year_from_date);
@@ -1951,7 +1857,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(adjust_date_to_timezone1.getIdentifier(), adjust_date_to_timezone1);
         builtinFunctions.put(adjust_date_to_timezone2.getIdentifier(), adjust_date_to_timezone2);
 
-        builtinFunctions.put(time.getIdentifier(), time);
         builtinFunctions.put(current_time.getIdentifier(), current_time);
         builtinFunctions.put(format_time.getIdentifier(), format_time);
         builtinFunctions.put(hours_from_time.getIdentifier(), hours_from_time);
@@ -1960,11 +1865,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(timezone_from_time.getIdentifier(), timezone_from_time);
         builtinFunctions.put(adjust_time_to_timezone1.getIdentifier(), adjust_time_to_timezone1);
         builtinFunctions.put(adjust_time_to_timezone2.getIdentifier(), adjust_time_to_timezone2);
-
-        builtinFunctions.put(anyURI.getIdentifier(), anyURI);
-
-        builtinFunctions.put(hexBinary.getIdentifier(), hexBinary);
-        builtinFunctions.put(base64Binary.getIdentifier(), base64Binary);
 
         builtinFunctions.put(keys.getIdentifier(), keys);
         builtinFunctions.put(members.getIdentifier(), members);

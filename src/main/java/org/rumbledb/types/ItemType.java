@@ -21,9 +21,12 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
 
 public class ItemType implements Serializable {
 
@@ -34,8 +37,10 @@ public class ItemType implements Serializable {
     public static final ItemType atomicItem = new ItemType("atomic");
     public static final ItemType stringItem = new ItemType("string");
     public static final ItemType integerItem = new ItemType("integer");
+    public static final ItemType intItem = new ItemType("int");
     public static final ItemType decimalItem = new ItemType("decimal");
     public static final ItemType doubleItem = new ItemType("double");
+    public static final ItemType floatItem = new ItemType("float");
     public static final ItemType booleanItem = new ItemType("boolean");
     public static final ItemType arrayItem = new ItemType("array");
     public static final ItemType nullItem = new ItemType("null");
@@ -52,6 +57,33 @@ public class ItemType implements Serializable {
     public static final ItemType item = new ItemType("item");
     public static final ItemType functionItem = new ItemType("function");
 
+    private static List<ItemType> builtInItemTypes = Arrays.asList(
+        objectItem,
+        atomicItem,
+        stringItem,
+        integerItem,
+        intItem,
+        decimalItem,
+        doubleItem,
+        floatItem,
+        booleanItem,
+        arrayItem,
+        nullItem,
+        JSONItem,
+        durationItem,
+        yearMonthDurationItem,
+        dayTimeDurationItem,
+        dateTimeItem,
+        dateItem,
+        timeItem,
+        hexBinaryItem,
+        anyURIItem,
+        base64BinaryItem,
+        item,
+        functionItem
+    );
+
+
     public ItemType() {
     }
 
@@ -63,66 +95,20 @@ public class ItemType implements Serializable {
         return this.name;
     }
 
+    public static boolean typeExists(Name name) {
+        for (int i = 0; i < builtInItemTypes.size(); ++i) {
+            if (builtInItemTypes.get(i).getName().equals(name.getLocalName())) {
+                return true;
+            } ;
+        }
+        return false;
+    }
+
     public static ItemType getItemTypeByName(String name) {
-        if (name.equals(objectItem.name)) {
-            return objectItem;
-        }
-        if (name.equals(atomicItem.name)) {
-            return atomicItem;
-        }
-        if (name.equals(stringItem.name)) {
-            return stringItem;
-        }
-        if (name.equals(integerItem.name)) {
-            return integerItem;
-        }
-        if (name.equals(decimalItem.name)) {
-            return decimalItem;
-        }
-        if (name.equals(doubleItem.name)) {
-            return doubleItem;
-        }
-        if (name.equals(booleanItem.name)) {
-            return booleanItem;
-        }
-        if (name.equals(nullItem.name)) {
-            return nullItem;
-        }
-        if (name.equals(arrayItem.name)) {
-            return arrayItem;
-        }
-        if (name.equals(JSONItem.name)) {
-            return JSONItem;
-        }
-        if (name.equals(durationItem.name)) {
-            return durationItem;
-        }
-        if (name.equals(yearMonthDurationItem.name)) {
-            return yearMonthDurationItem;
-        }
-        if (name.equals(dayTimeDurationItem.name)) {
-            return dayTimeDurationItem;
-        }
-        if (name.equals(dateTimeItem.name)) {
-            return dateTimeItem;
-        }
-        if (name.equals(dateItem.name)) {
-            return dateItem;
-        }
-        if (name.equals(timeItem.name)) {
-            return timeItem;
-        }
-        if (name.equals(anyURIItem.name)) {
-            return anyURIItem;
-        }
-        if (name.equals(hexBinaryItem.name)) {
-            return hexBinaryItem;
-        }
-        if (name.equals(base64BinaryItem.name)) {
-            return base64BinaryItem;
-        }
-        if (name.equals(item.name)) {
-            return item;
+        for (int i = 0; i < builtInItemTypes.size(); ++i) {
+            if (builtInItemTypes.get(i).getName().equals(name)) {
+                return builtInItemTypes.get(i);
+            } ;
         }
         throw new OurBadException("Type unrecognized: " + name);
     }
