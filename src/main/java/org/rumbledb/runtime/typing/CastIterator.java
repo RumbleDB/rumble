@@ -136,7 +136,7 @@ public class CastIterator extends LocalRuntimeIterator {
             }
 
             if (targetType.equals(ItemType.nullItem)) {
-                if (item.isString() && item.getStringValue().equals("null")) {
+                if (item.isString() && item.getStringValue().trim().equals("null")) {
                     return ItemFactory.getInstance().createNullItem();
                 }
             }
