@@ -133,7 +133,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
                     // no match, do nothing
                 }
             } else {
-                int comparison = ComparisonIterator.compareItems(
+                long comparison = ComparisonIterator.compareItems(
                     testValue,
                     caseValue,
                     ComparisonOperator.VC_EQ,
