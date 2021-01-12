@@ -24,11 +24,13 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -57,7 +59,7 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
     @Override
     public Item next() {
         if (this.hasNext) {
-            if (!this.child.isRDD()) {
+            if (!this.child.isRDDOrDataFrame()) {
                 List<Item> items = new ArrayList<>();
                 this.child.open(this.currentDynamicContextForLocalExecution);
 
@@ -77,7 +79,7 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
 
                 ItemType itemType = this.sequenceType.getItemType();
                 for (Item item : items) {
-                    if (!item.isTypeOf(itemType)) {
+                    if (!doesItemTypeMatchItem(itemType, item)) {
                         return ItemFactory.getInstance().createBooleanItem(false);
                     }
                 }
@@ -111,5 +113,81 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
                 && (this.sequenceType.getArity() == SequenceType.Arity.One
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrZero));
+    }
+
+    /**
+     * Item type tests. This supersedes the method isTypeOf() formerly located in the Item interface,
+     * as part of the efforts to cleanly separate item storage from item manipulation (which is
+     * the domain of responsibility of runtime iterators).
+     * 
+     * @param itemType the item type to match against the item.
+     * @param itemToMatch the item to match against the type.
+     * @return true if itemToMatch matches itemType.
+     */
+    public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
+        if (itemType.equals(ItemType.item)) {
+            return true;
+        }
+        if (itemType.equals(AtomicItemType.objectItem)) {
+            return itemToMatch.isObject();
+        }
+        if (itemType.equals(AtomicItemType.atomicItem)) {
+            return itemToMatch.isAtomic();
+        }
+        if (itemType.equals(AtomicItemType.stringItem)) {
+            return itemToMatch.isString();
+        }
+        if (itemType.equals(AtomicItemType.integerItem)) {
+            return itemToMatch.isInteger();
+        }
+        if (itemType.equals(AtomicItemType.decimalItem)) {
+            return itemToMatch.isDecimal();
+        }
+        if (itemType.equals(AtomicItemType.doubleItem)) {
+            return itemToMatch.isDouble();
+        }
+        if (itemType.equals(AtomicItemType.booleanItem)) {
+            return itemToMatch.isBoolean();
+        }
+        if (itemType.equals(AtomicItemType.nullItem)) {
+            return itemToMatch.isNull();
+        }
+        if (itemType.equals(AtomicItemType.arrayItem)) {
+            return itemToMatch.isArray();
+        }
+        if (itemType.equals(AtomicItemType.JSONItem)) {
+            return itemToMatch.isObject() || itemToMatch.isArray();
+        }
+        if (itemType.equals(AtomicItemType.durationItem)) {
+            return itemToMatch.isDuration();
+        }
+        if (itemType.equals(AtomicItemType.yearMonthDurationItem)) {
+            return itemToMatch.isYearMonthDuration();
+        }
+        if (itemType.equals(AtomicItemType.dayTimeDurationItem)) {
+            return itemToMatch.isDayTimeDuration();
+        }
+        if (itemType.equals(AtomicItemType.dateTimeItem)) {
+            return itemToMatch.isDateTime();
+        }
+        if (itemType.equals(AtomicItemType.dateItem)) {
+            return itemToMatch.isDate();
+        }
+        if (itemType.equals(AtomicItemType.timeItem)) {
+            return itemToMatch.isTime();
+        }
+        if (itemType.equals(AtomicItemType.anyURIItem)) {
+            return itemToMatch.isAnyURI();
+        }
+        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
+            return itemToMatch.isHexBinary();
+        }
+        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
+            return itemToMatch.isBase64Binary();
+        }
+        if (itemType.isFunctionItem()) {
+            return itemToMatch.isFunction();
+        }
+        throw new OurBadException("Type unrecognized: " + itemType);
     }
 }

@@ -34,20 +34,23 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
-import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
-import org.rumbledb.runtime.flwor.udfs.HashUDF;
-import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.udfs.*;
 import org.rumbledb.runtime.operational.ComparisonOperationIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,6 +65,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     private static final long serialVersionUID = 1L;
     private Name variableName; // for efficient use in local iteration
+    private SequenceType sequenceType;
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
@@ -69,12 +73,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
             Name variableName,
+            SequenceType sequenceType,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
+        this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
     }
 
@@ -134,7 +140,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (this.assignmentIterator.isDataFrame()) {
             Dataset<Row> df = this.assignmentIterator.getDataFrame(context);
             resultTuple.putValue(this.variableName, df);
-        } else if (this.assignmentIterator.isRDD()) {
+        } else if (this.assignmentIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(context);
             resultTuple.putValue(this.variableName, itemRDD);
         } else {
@@ -179,13 +185,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return df;
             }
 
-            if (this.assignmentIterator.isRDD()) {
+            if (this.assignmentIterator.isRDDOrDataFrame()) {
                 return getDataFrameAsJoin(context, parentProjection, df);
             }
 
             df = bindLetVariableInDataFrame(
                 df,
                 this.variableName,
+                this.sequenceType,
                 this.assignmentIterator,
                 context,
                 (this.child == null)
@@ -318,6 +325,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
             Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+            this.sequenceType,
             contextItemValueExpression,
             context,
             Collections.singletonList(Name.CONTEXT_ITEM),
@@ -328,6 +336,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+            this.sequenceType,
             inputTupleValueExpression,
             context,
             (this.child == null)
@@ -413,6 +422,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
             this.variableName,
+            this.sequenceType,
             filteringPredicateIterator,
             context,
             new ArrayList<Name>(this.getOutputTupleVariableNames()),
@@ -507,6 +517,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
      * 
      * @param dataFrame the DataFrame to extend
      * @param newVariableName the name of the new column (variable)
+     * @param sequenceType the sequence type of the new bound item, not used in case of hash
      * @param newVariableExpression the expression to evaluate
      * @param context the context (in addition to each tuple) in which to evaluation the expression
      * @param variablesInInputTuple the name of the variables that can be found in the input tuple (as opposed to those
@@ -518,6 +529,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public static Dataset<Row> bindLetVariableInDataFrame(
             Dataset<Row> dataFrame,
             Name newVariableName,
+            SequenceType sequenceType,
             RuntimeIterator newVariableExpression,
             DynamicContext context,
             List<Name> variablesInInputTuple,
@@ -560,13 +572,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         if (!hash) {
-            dataFrame.sparkSession()
-                .udf()
-                .register(
-                    "letClauseUDF",
-                    new LetClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
-                    DataTypes.BinaryType
-                );
+            registerLetClauseUDF(dataFrame, newVariableExpression, context, inputSchema, UDFcolumns, sequenceType);
         } else {
             dataFrame.sparkSession()
                 .udf()
@@ -608,6 +614,101 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame;
     }
 
+    private static void registerLetClauseUDF(
+            Dataset<Row> dataFrame,
+            RuntimeIterator newVariableExpression,
+            DynamicContext context,
+            StructType inputSchema,
+            List<String> UDFcolumns,
+            SequenceType sequenceType
+    ) {
+        // for the moment we only consider natively types with single arity (what about optional)
+        if (
+            sequenceType != null
+                && !sequenceType.isEmptySequence()
+                && sequenceType.getArity().equals(SequenceType.Arity.One)
+        ) {
+            ItemType itemType = sequenceType.getItemType();
+
+            if (itemType.equals(AtomicItemType.stringItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<String>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "String"
+                        ),
+                        DataTypes.StringType
+                    );
+                return;
+            }
+
+            if (itemType.equals(AtomicItemType.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Integer"
+                        ),
+                        DataTypes.IntegerType
+                    );
+                return;
+            }
+
+            if (itemType.equals(AtomicItemType.decimalItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<BigDecimal>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
+                        DataTypes.createDecimalType()
+                    );
+                return;
+            }
+
+            if (itemType.equals(AtomicItemType.doubleItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<Double>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Double"
+                        ),
+                        DataTypes.DoubleType
+                    );
+                return;
+            }
+        }
+
+        // if it is not one of the allowed sequence type we just return the default udf
+        dataFrame.sparkSession()
+            .udf()
+            .register(
+                "letClauseUDF",
+                new LetClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                DataTypes.BinaryType
+            );
+    }
+
     /**
      * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
      * otherwise it returns null
@@ -628,22 +729,22 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
-        try {
-            String nativeQuery = iterator.generateNativeQuery(inputSchema, context);
-            System.out.println("native query returned " + nativeQuery);
-            String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
-            dataFrame.createOrReplaceTempView("input");
-            return dataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "select %s (%s) as `%s` from input",
-                        selectSQL,
-                        nativeQuery,
-                        newVariableName
-                    )
-                );
-        } catch (Exception e) {
+        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
+        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+        System.out.println("native query returned " + nativeQuery.getResultingQuery());
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        dataFrame.createOrReplaceTempView("input");
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s (%s) as `%s` from input",
+                    selectSQL,
+                    nativeQuery.getResultingQuery(),
+                    newVariableName
+                )
+            );
     }
 }

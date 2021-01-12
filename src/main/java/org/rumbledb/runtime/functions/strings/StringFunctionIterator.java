@@ -8,10 +8,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.StringOfJSONiqItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.AtomicItemType;
 
 import java.util.List;
 
@@ -41,15 +40,14 @@ public class StringFunctionIterator extends LocalFunctionCallIterator {
                             getMetadata()
                     );
                 }
-                AtomicItem atomicItem = (AtomicItem) this.item;
-                String message = atomicItem.serialize()
+                String message = this.item.serialize()
                     +
                     ": value of type "
                     + this.item.getDynamicType().toString()
                     + " is not castable to type string.";
-                if (atomicItem.isCastableAs(ItemType.stringItem)) {
+                if (this.item.isCastableAs(AtomicItemType.stringItem)) {
                     try {
-                        return atomicItem.castAs(ItemType.stringItem);
+                        return this.item.castAs(AtomicItemType.stringItem);
                     } catch (ClassCastException e) {
                         throw new UnexpectedTypeException(message, getMetadata());
                     }

@@ -40,6 +40,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -66,7 +67,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         this.iterator = object;
     }
 
-    private void initLookupKey() {
+    private void initLookupKey(DynamicContext context) {
 
         RuntimeIterator lookupIterator = this.children.get(1);
 
@@ -75,7 +76,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         if (!this.contextLookup) {
 
             try {
-                this.lookupKey = lookupIterator.materializeExactlyOneItem(this.currentDynamicContextForLocalExecution);
+                this.lookupKey = lookupIterator.materializeExactlyOneItem(context);
             } catch (NoItemException e) {
                 throw new InvalidSelectorException(
                         "Invalid Lookup Key; Object lookup can't be performed with no key.",
@@ -126,7 +127,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        initLookupKey();
+        initLookupKey(this.currentDynamicContextForLocalExecution);
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -192,7 +193,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupKey();
+        initLookupKey(dynamicContext);
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
@@ -217,15 +218,30 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
-        initLookupKey();
-        return objectPart + "." + this.lookupKey.getStringValue();
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (newContext != NativeClauseContext.NoNativeQuery) {
+            initLookupKey(newContext.getContext());
+            String key = this.lookupKey.getStringValue();
+            DataType schema = newContext.getSchema();
+            if (!(schema instanceof StructType)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            StructType structSchema = (StructType) schema;
+            if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
+                newContext.setResultingQuery(newContext.getResultingQuery() + "." + key);
+                StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
+                newContext.setSchema(field.dataType());
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        initLookupKey();
+        initLookupKey(context);
         String key;
         if (this.contextLookup) {
             // For now this will always be an error. Later on we will pass the dynamic context from the parent iterator.
@@ -244,9 +260,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
             if (type instanceof StructType) {
-                return childDataFrame.sparkSession().sql(String.format("SELECT `%s`.* FROM object", key));
+                Dataset<Row> result = childDataFrame.sparkSession()
+                    .sql(String.format("SELECT `%s`.* FROM object", key));
+                return result;
             } else {
-                return childDataFrame.sparkSession()
+                Dataset<Row> result = childDataFrame.sparkSession()
                     .sql(
                         String.format(
                             "SELECT `%s` AS `%s` FROM object",
@@ -254,8 +272,10 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                             SparkSessionManager.atomicJSONiqItemColumnName
                         )
                     );
+                return result;
             }
         }
-        return childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
+        Dataset<Row> result = childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
+        return result;
     }
 }

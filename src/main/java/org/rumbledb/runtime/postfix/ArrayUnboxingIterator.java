@@ -33,14 +33,16 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ArrayItem;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
@@ -97,11 +99,10 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
-            if (item instanceof ArrayItem) {
-                ArrayItem arrItem = (ArrayItem) item;
+            if (item.isArray()) {
                 // if array is not empty, set the first item as the result
-                if (0 < arrItem.getSize()) {
-                    this.nextResults.addAll(arrItem.getItems());
+                if (0 < item.getSize()) {
+                    this.nextResults.addAll(item.getItems());
                     break;
                 }
             }
@@ -129,9 +130,32 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        String objectPart = this.iterator.generateNativeQuery(inputSchema, context);
-        return "explode( " + objectPart + " )";
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR) {
+            // unboxing only available for the FOR clause
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (newContext != NativeClauseContext.NoNativeQuery) {
+            DataType schema = newContext.getSchema();
+            if (!(schema instanceof ArrayType)) {
+                // let control to UDF when what we are unboxing is not an array
+                return NativeClauseContext.NoNativeQuery;
+            }
+            newContext.setSchema(((ArrayType) schema).elementType());
+            List<String> lateralViewPart = newContext.getLateralViewPart();
+            if (lateralViewPart.size() == 0) {
+                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+            } else {
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+                // previous
+                lateralViewPart.add(
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+                );
+            }
+            newContext.setResultingQuery(""); // dealt by for clause
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {

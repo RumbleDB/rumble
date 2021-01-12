@@ -35,9 +35,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -49,7 +47,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends Item {
+public class FunctionItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
@@ -181,7 +179,7 @@ public class FunctionItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.functionItem) || type.equals(ItemType.item);
+        return type.isFunctionItem() || type.equals(ItemType.item);
     }
 
     @Override
@@ -288,7 +286,8 @@ public class FunctionItem extends Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.functionItem;
+        // TODO: consider storing the itemType in the FunctionItem
+        return new FunctionItemType(this.signature);
     }
 
     public FunctionItem deepCopy() {
@@ -329,5 +328,20 @@ public class FunctionItem extends Item {
                 dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
+    }
+
+    @Override
+    public Item castAs(ItemType itemType) {
+        throw new OurBadException(" Item '" + this.serialize() + "' is a function!");
+    }
+
+    @Override
+    public boolean isCastableAs(ItemType itemType) {
+        return false;
+    }
+
+    @Override
+    public String getSparkSqlQuery() {
+        return null;
     }
 }

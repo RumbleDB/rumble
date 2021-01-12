@@ -28,6 +28,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 
 public class NotOperationIterator extends LocalRuntimeIterator {
 
@@ -50,5 +51,16 @@ public class NotOperationIterator extends LocalRuntimeIterator {
         this.child.close();
         this.hasNext = false;
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
+        if (childResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+
+        String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery);
     }
 }

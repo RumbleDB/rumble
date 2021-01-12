@@ -21,9 +21,10 @@
 package org.rumbledb.items;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public abstract class AtomicItem extends Item {
+public abstract class AtomicItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
 
@@ -38,15 +39,11 @@ public abstract class AtomicItem extends Item {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.atomicItem) || type.equals(ItemType.item);
+        return type.equals(AtomicItemType.atomicItem) || type.equals(ItemType.item);
     }
 
     @Override
     public Item promoteTo(ItemType type) {
         return this.castAs(type);
     }
-
-    public abstract Item castAs(ItemType itemType);
-
-    public abstract boolean isCastableAs(ItemType itemType);
 }

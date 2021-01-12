@@ -52,7 +52,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     // parametrized fields
-    private FunctionItem functionItem;
+    private Item functionItem;
     private List<RuntimeIterator> functionArguments;
 
     // calculated fields
@@ -62,7 +62,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
 
     public FunctionItemCallIterator(
-            FunctionItem functionItem,
+            Item functionItem,
             List<RuntimeIterator> functionArguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -181,7 +181,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
             } else {
                 if (argIterator.isDataFrame()) {
                     DFArgumentValues.put(argName, argIterator.getDataFrame(context));
-                } else if (argIterator.isRDD()) {
+                } else if (argIterator.isRDDOrDataFrame()) {
                     RDDArgumentValues.put(argName, argIterator.getRDD(context));
                 } else {
                     localArgumentValues.put(argName, argIterator.materialize(context));
@@ -228,7 +228,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
 
             if (argIterator.isDataFrame()) {
                 DFArgumentValues.put(argName, argIterator.getDataFrame(context));
-            } else if (argIterator.isRDD()) {
+            } else if (argIterator.isRDDOrDataFrame()) {
                 RDDArgumentValues.put(argName, argIterator.getRDD(context));
             } else {
                 localArgumentValues.put(argName, argIterator.materialize(context));

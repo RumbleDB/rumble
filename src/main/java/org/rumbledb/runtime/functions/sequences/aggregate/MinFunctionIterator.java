@@ -58,7 +58,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!this.iterator.isRDD()) {
+        if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(this.currentDynamicContextForLocalExecution);
             this.hasNext = this.iterator.hasNext();
             this.iterator.close();
@@ -93,7 +93,7 @@ public class MinFunctionIterator extends LocalFunctionCallIterator {
                         getMetadata()
                 )
         );
-        if (this.iterator.isRDD()) {
+        if (this.iterator.isRDDOrDataFrame()) {
             return this.result;
         }
         List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);

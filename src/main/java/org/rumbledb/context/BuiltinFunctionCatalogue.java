@@ -637,7 +637,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction distinct_values = createBuiltinFunction(
         "distinct-values",
-        "item*",
+        "atomic*",
         "atomic*",
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -1637,7 +1637,7 @@ public class BuiltinFunctionCatalogue {
     static final BuiltinFunction keys = createBuiltinFunction(
         "keys",
         "item*",
-        "item*",
+        "string*",
         ObjectKeysFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT_BUT_DATAFRAME_FALLSBACK_TO_LOCAL
     );

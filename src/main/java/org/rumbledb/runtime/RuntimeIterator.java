@@ -27,14 +27,14 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.AtomicItemType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -122,7 +122,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.canBePromotedTo(ItemType.stringItem)) {
+            } else if (item.canBePromotedTo(AtomicItemType.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
                 return true;
@@ -220,7 +220,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.highestExecutionMode;
     }
 
-    public boolean isRDD() {
+    public boolean isRDDOrDataFrame() {
         if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
@@ -348,7 +348,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     ) {
         if (this.isDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
-        } else if (this.isRDD()) {
+        } else if (this.isRDDOrDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
@@ -377,12 +377,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     /**
      * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
      *
-     * @return a string representing the spark-sql native query to get an equivalent result of the iterator, or null if
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
      *         it is not possible
-     * @param inputSchema schema of the dataframe
-     * @param context context
+     * @param nativeClauseContext context information to generate the native query
      */
-    public String generateNativeQuery(StructType inputSchema, DynamicContext context) {
-        throw new NoNativeQueryException();
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

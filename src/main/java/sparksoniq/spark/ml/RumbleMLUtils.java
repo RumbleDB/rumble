@@ -12,9 +12,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.AtomicItem;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.items.ItemFactory;
 
 import java.lang.reflect.InvocationTargetException;
@@ -105,7 +103,7 @@ public class RumbleMLUtils {
             ExceptionMetadata metadata
     ) {
         if (paramJavaTypeName.endsWith("[]")) {
-            if (!(param instanceof ArrayItem)) {
+            if (!(param.isArray())) {
                 throw new InvalidArgumentTypeException(paramName + " is expected to be an array type", metadata);
             }
             List<Object> paramAsListInJava = new ArrayList<>();
@@ -122,7 +120,7 @@ public class RumbleMLUtils {
             });
             return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
-            return convertRumbleAtomicToJava((AtomicItem) param, paramJavaTypeName);
+            return convertRumbleAtomicToJava(param, paramJavaTypeName);
         } else {
             // complex SparkML parameters such as Estimator, Transformer, Classifier etc. are not implemented yet
             throw new OurBadException("Not Implemented");
@@ -163,18 +161,18 @@ public class RumbleMLUtils {
             || javaTypeName.equals("long"));
     }
 
-    private static Object convertRumbleAtomicToJava(AtomicItem atomicItem, String javaTypeName) {
+    private static Object convertRumbleAtomicToJava(Item atomicItem, String javaTypeName) {
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
+                return atomicItem.castAs(AtomicItemType.booleanItem).getBooleanValue();
             case "String":
-                return atomicItem.castAs(ItemType.stringItem).getStringValue();
+                return atomicItem.castAs(AtomicItemType.stringItem).getStringValue();
             case "int":
-                return atomicItem.castAs(ItemType.integerItem).getIntValue();
+                return atomicItem.castAs(AtomicItemType.integerItem).getIntValue();
             case "double":
-                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
+                return atomicItem.castAs(AtomicItemType.doubleItem).getDoubleValue();
             case "long":
-                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
+                return atomicItem.castAs(AtomicItemType.decimalItem).getDecimalValue().longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

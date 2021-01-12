@@ -299,7 +299,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.arguments.containsKey("print-inferred-types")
             && this.arguments.get("print-inferred-types").equals("yes");
     }
-    
+
     public boolean getDeactivateJsoniterStreaming() {
         return this.deactivateJsoniterStreaming;
     }
