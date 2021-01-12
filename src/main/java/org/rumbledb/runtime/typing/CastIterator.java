@@ -147,7 +147,8 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.booleanItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createBooleanItem(Boolean.parseBoolean(item.getStringValue()));
+                    return ItemFactory.getInstance()
+                        .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
                 }
                 if (item.isInt()) {
                     return ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
@@ -191,7 +192,7 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.decimalItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(item.getStringValue()));
+                    return ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
@@ -204,7 +205,7 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.integerItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createIntegerItem(item.getStringValue());
+                    return ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
@@ -217,6 +218,7 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.intItem)) {
                 if (item.isString()) {
+                    return ItemFactory.getInstance().createIntItem(item.castToIntValue());
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
@@ -229,16 +231,13 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.anyURIItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createAnyURIItem(item.getStringValue());
+                    return ItemFactory.getInstance().createAnyURIItem(item.getStringValue().trim());
                 }
             }
 
             if (targetType.equals(ItemType.base64BinaryItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue());
-                }
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue());
+                    return ItemFactory.getInstance().createBase64BinaryItem(item.getStringValue().trim());
                 }
                 if (item.isHexBinary()) {
                     return ItemFactory.getInstance()
@@ -248,10 +247,7 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.hexBinaryItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createHexBinaryItem(item.getStringValue());
-                }
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createHexBinaryItem(item.getStringValue());
+                    return ItemFactory.getInstance().createHexBinaryItem(item.getStringValue().trim());
                 }
                 if (item.isBase64Binary()) {
                     return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
@@ -260,7 +256,7 @@ public class CastIterator extends LocalRuntimeIterator {
 
             if (targetType.equals(ItemType.dateItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createDateItem(item.getStringValue());
+                    return ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -268,7 +264,7 @@ public class CastIterator extends LocalRuntimeIterator {
             }
             if (targetType.equals(ItemType.timeItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createTimeItem(item.getStringValue());
+                    return ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -276,7 +272,7 @@ public class CastIterator extends LocalRuntimeIterator {
             }
             if (targetType.equals(ItemType.dateTimeItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createDateTimeItem(item.getStringValue());
+                    return ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
                 }
                 if (item.isDate()) {
                     return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -286,7 +282,10 @@ public class CastIterator extends LocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance()
                         .createYearMonthDurationItem(
-                            DurationItem.getDurationFromString(item.getStringValue(), ItemType.yearMonthDurationItem)
+                            DurationItem.getDurationFromString(
+                                item.getStringValue().trim(),
+                                ItemType.yearMonthDurationItem
+                            )
                         );
                 }
                 if (item.isDuration()) {
@@ -300,7 +299,10 @@ public class CastIterator extends LocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance()
                         .createDayTimeDurationItem(
-                            DurationItem.getDurationFromString(item.getStringValue(), ItemType.dayTimeDurationItem)
+                            DurationItem.getDurationFromString(
+                                item.getStringValue().trim(),
+                                ItemType.dayTimeDurationItem
+                            )
                         );
                 }
                 if (item.isDuration()) {
@@ -314,7 +316,7 @@ public class CastIterator extends LocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance()
                         .createDurationItem(
-                            DurationItem.getDurationFromString(item.getStringValue(), ItemType.durationItem)
+                            DurationItem.getDurationFromString(item.getStringValue().trim(), ItemType.durationItem)
                         );
                 }
                 if (item.isDayTimeDuration()) {
