@@ -86,13 +86,13 @@ public class StringItem implements Item {
 
     public float castToFloatValue() {
         String trimmedValue = this.value.trim();
-        if (this.value.equals("INF") || this.value.equals("+INF")) {
+        if (trimmedValue.equals("INF") || trimmedValue.equals("+INF")) {
             return Float.POSITIVE_INFINITY;
         }
-        if (this.value.equals("-INF")) {
+        if (trimmedValue.equals("-INF")) {
             return Float.NEGATIVE_INFINITY;
         }
-        if (this.value.equals("NaN")) {
+        if (trimmedValue.equals("NaN")) {
             return Float.NaN;
         }
         return Float.parseFloat(this.getValue());

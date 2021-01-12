@@ -188,7 +188,7 @@ public class ComparisonIterator extends LocalRuntimeIterator {
         if (comparison == -Long.MIN_VALUE) {
             throw new UnexpectedTypeException(
                     " \""
-                        + comparisonOperator
+                        + this.comparisonOperator
                         + "\": operation not possible with parameters of type \""
                         + left.getDynamicType().toString()
                         + "\" and \""
