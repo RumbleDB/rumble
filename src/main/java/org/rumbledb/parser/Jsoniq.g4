@@ -305,7 +305,7 @@ keyWords                : Kjsoniq
                         | Kjson
                         | Kleast
                         | Knot
-                        | Knull
+                        | NullLiteral
                         | Kof
                         | Kor
                         | Kthen
@@ -433,8 +433,6 @@ Kobject                 : 'object';
 
 Kitem                   : 'item';
 
-Knull                   : 'null';
-
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
@@ -445,7 +443,7 @@ fragment HEX            : [0-9a-fA-F];
 
 ArgumentPlaceholder     : '?';
 
-NullLiteral             : Knull;
+NullLiteral             : 'null';
 
 Literal                 : NumericLiteral | BooleanLiteral;
 
