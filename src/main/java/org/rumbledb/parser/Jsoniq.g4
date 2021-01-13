@@ -307,6 +307,7 @@ keyWords                : Kjsoniq
                         | Kleast
                         | Knot
                         | NullLiteral
+                        | Kobject
                         | Kof
                         | Kor
                         | Kthen
