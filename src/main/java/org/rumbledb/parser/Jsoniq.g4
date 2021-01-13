@@ -221,12 +221,12 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : 'item'
+itemType                : Kitem
                         | jSONItemTest
                         | atomicType;
 
-jSONItemTest            : 'object'
-                        | 'array'
+jSONItemTest            : Kobject
+                        | Karray
                         | Kjson;
 
 keyWordString           : 'string';
@@ -293,24 +293,26 @@ uriLiteral              : stringLiteral;
 stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
-                        | Kjson
-                        | Kversion
-                        | Ktypeswitch
-                        | Kor
                         | Kand
-                        | Knot
-                        | Kto
-                        | Kinstance
-                        | Kof
-                        | Ktreat
+                        | Karray
                         | Kcast
                         | Kcastable
-                        | Kdefault
-                        | Kthen
-                        | Kelse
                         | Kcollation
+                        | Kdefault
+                        | Kelse
                         | Kgreatest
+                        | Kinstance
+                        | Kjson
                         | Kleast
+                        | Knot
+                        | Knull
+                        | Kof
+                        | Kor
+                        | Kthen
+                        | Kto
+                        | Ktreat
+                        | Ktypeswitch
+                        | Kversion
                         | Kswitch
                         | Kcase
                         | Ktry
@@ -425,6 +427,14 @@ Kjsoniq                 : 'jsoniq';
 
 Kjson                   : 'json-item';
 
+Karray                  : 'array';
+
+Kobject                 : 'object';
+
+Kitem                   : 'item';
+
+Knull                   : 'null';
+
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
@@ -435,7 +445,7 @@ fragment HEX            : [0-9a-fA-F];
 
 ArgumentPlaceholder     : '?';
 
-NullLiteral             : 'null';
+NullLiteral             : Knull;
 
 Literal                 : NumericLiteral | BooleanLiteral;
 
