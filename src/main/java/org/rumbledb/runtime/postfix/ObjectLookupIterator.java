@@ -30,12 +30,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -221,7 +216,12 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            initLookupKey(newContext.getContext());
+            try {
+                initLookupKey(newContext.getContext());
+            } catch (RumbleException e){
+                return NativeClauseContext.NoNativeQuery;
+            }
+
             String key = this.lookupKey.getStringValue();
             DataType schema = newContext.getSchema();
             if (!(schema instanceof StructType)) {
