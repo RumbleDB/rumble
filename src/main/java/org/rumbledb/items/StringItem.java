@@ -39,6 +39,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -129,22 +130,22 @@ public class StringItem implements Item {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return true;
         }
         try {
-            if (itemType.equals(ItemType.integerItem)) {
+            if (itemType.equals(AtomicItemType.integerItem)) {
                 @SuppressWarnings("unused")
                 BigInteger i = new BigInteger(this.value);
                 return true;
-            } else if (itemType.equals(ItemType.anyURIItem)) {
+            } else if (itemType.equals(AtomicItemType.anyURIItem)) {
                 AnyURIItem.parseAnyURIString(this.getValue());
-            } else if (itemType.equals(ItemType.decimalItem)) {
+            } else if (itemType.equals(AtomicItemType.decimalItem)) {
                 if (this.getValue().contains("e") || this.getValue().contains("E")) {
                     return false;
                 }
                 Float.parseFloat(this.getValue());
-            } else if (itemType.equals(ItemType.doubleItem)) {
+            } else if (itemType.equals(AtomicItemType.doubleItem)) {
                 if (
                     this.value.equals("INF")
                         || this.value.equals("+INF")
@@ -154,7 +155,7 @@ public class StringItem implements Item {
                     return true;
                 }
                 Double.parseDouble(this.getValue());
-            } else if (itemType.equals(ItemType.floatItem)) {
+            } else if (itemType.equals(AtomicItemType.floatItem)) {
                 if (
                     this.value.equals("INF")
                         || this.value.equals("+INF")
@@ -164,23 +165,23 @@ public class StringItem implements Item {
                     return true;
                 }
                 Float.parseFloat(this.getValue());
-            } else if (itemType.equals(ItemType.nullItem)) {
+            } else if (itemType.equals(AtomicItemType.nullItem)) {
                 return isNullLiteral(this.getValue());
-            } else if (itemType.equals(ItemType.durationItem)) {
-                DurationItem.getDurationFromString(this.value, ItemType.durationItem);
-            } else if (itemType.equals(ItemType.yearMonthDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemType.yearMonthDurationItem);
-            } else if (itemType.equals(ItemType.dayTimeDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemType.dayTimeDurationItem);
-            } else if (itemType.equals(ItemType.dateTimeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateTimeItem);
-            } else if (itemType.equals(ItemType.dateItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateItem);
-            } else if (itemType.equals(ItemType.timeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.timeItem);
-            } else if (itemType.equals(ItemType.hexBinaryItem)) {
+            } else if (itemType.equals(AtomicItemType.durationItem)) {
+                DurationItem.getDurationFromString(this.value, AtomicItemType.durationItem);
+            } else if (itemType.equals(AtomicItemType.yearMonthDurationItem)) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicItemType.yearMonthDurationItem);
+            } else if (itemType.equals(AtomicItemType.dayTimeDurationItem)) {
+                DurationItem.getDurationFromString(this.getValue(), AtomicItemType.dayTimeDurationItem);
+            } else if (itemType.equals(AtomicItemType.dateTimeItem)) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicItemType.dateTimeItem);
+            } else if (itemType.equals(AtomicItemType.dateItem)) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicItemType.dateItem);
+            } else if (itemType.equals(AtomicItemType.timeItem)) {
+                DateTimeItem.parseDateTime(this.getValue(), AtomicItemType.timeItem);
+            } else if (itemType.equals(AtomicItemType.hexBinaryItem)) {
                 HexBinaryItem.parseHexBinaryString(this.getValue());
-            } else if (itemType.equals(ItemType.base64BinaryItem)) {
+            } else if (itemType.equals(AtomicItemType.base64BinaryItem)) {
                 Base64BinaryItem.parseBase64BinaryString(this.getValue());
             } else {
                 return isBooleanLiteral(this.getValue());
@@ -225,7 +226,7 @@ public class StringItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.stringItem;
+        return AtomicItemType.stringItem;
     }
 
     @Override

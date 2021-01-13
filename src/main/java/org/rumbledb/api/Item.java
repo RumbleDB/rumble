@@ -466,7 +466,7 @@ public interface Item extends Serializable, KryoSerializable {
     /**
      * Please do not use (internal).
      *
-     * @param type an ItemType.
+     * @param type an AtomicItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
     boolean canBePromotedTo(ItemType type);

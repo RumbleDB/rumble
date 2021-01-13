@@ -39,8 +39,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.ItemType;
-
+import org.rumbledb.types.AtomicItemType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -127,7 +126,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.canBePromotedTo(ItemType.stringItem)) {
+            } else if (item.canBePromotedTo(AtomicItemType.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
                 return true;

@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 public class NullItem extends AtomicItem {
@@ -47,14 +48,14 @@ public class NullItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.nullItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.nullItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.nullItem)
+        return itemType.equals(AtomicItemType.nullItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
@@ -95,6 +96,6 @@ public class NullItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.nullItem;
+        return AtomicItemType.nullItem;
     }
 }

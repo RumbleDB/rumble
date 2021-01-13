@@ -40,6 +40,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -103,11 +104,11 @@ public class DoubleItem implements Item {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
+        if (itemType.equals(AtomicItemType.atomicItem) || itemType.equals(AtomicItemType.nullItem)) {
             return false;
-        } else if (itemType.equals(ItemType.decimalItem)) {
+        } else if (itemType.equals(AtomicItemType.decimalItem)) {
             return !Double.isInfinite(this.value);
-        } else if (itemType.equals(ItemType.integerItem)) {
+        } else if (itemType.equals(AtomicItemType.integerItem)) {
             return !(Integer.MAX_VALUE < this.value) && !(Integer.MIN_VALUE > this.value);
         }
         return true;
@@ -167,7 +168,7 @@ public class DoubleItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.doubleItem;
+        return AtomicItemType.doubleItem;
     }
 
     @Override

@@ -292,7 +292,7 @@ abstract class ItemImpl implements Item {
     /**
      * Please do not use, item type API not publicly released yet.
      *
-     * @param type an ItemType.
+     * @param type an AtomicItemType.
      * @return true if it matches the item type.
      */
     public abstract boolean isTypeOf(ItemType type);
@@ -300,7 +300,7 @@ abstract class ItemImpl implements Item {
     /**
      * Please do not use, item type API not publicly released yet.
      *
-     * @param type an ItemType.
+     * @param type an AtomicItemType.
      * @return true if the item can be promoted to the type passed in as argument.
      */
     public boolean canBePromotedTo(ItemType type) {

@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.net.URI;
@@ -92,12 +93,12 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.stringItem);
+        return type.equals(AtomicItemType.stringItem);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return (itemType.equals(ItemType.anyURIItem) || itemType.equals(ItemType.stringItem));
+        return (itemType.equals(AtomicItemType.anyURIItem) || itemType.equals(AtomicItemType.stringItem));
     }
 
     @Override
@@ -122,11 +123,11 @@ public class AnyURIItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.anyURIItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.anyURIItem) || super.isTypeOf(type);
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.anyURIItem;
+        return AtomicItemType.anyURIItem;
     }
 }

@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -181,7 +182,7 @@ public class FunctionItem extends ItemImpl {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.functionItem) || type.equals(ItemType.item);
+        return type.equals(AtomicItemType.functionItem) || type.equals(ItemType.item);
     }
 
     @Override
@@ -288,7 +289,7 @@ public class FunctionItem extends ItemImpl {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.functionItem;
+        return AtomicItemType.functionItem;
     }
 
     public FunctionItem deepCopy() {

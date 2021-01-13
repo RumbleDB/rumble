@@ -12,6 +12,7 @@ import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
@@ -118,18 +119,18 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.durationItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.durationItem) || super.isTypeOf(type);
     }
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.durationItem)
+        return itemType.equals(AtomicItemType.durationItem)
             ||
-            itemType.equals(ItemType.yearMonthDurationItem)
+            itemType.equals(AtomicItemType.yearMonthDurationItem)
             ||
-            itemType.equals(ItemType.dayTimeDurationItem)
+            itemType.equals(AtomicItemType.dayTimeDurationItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
@@ -147,17 +148,17 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemType.durationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), AtomicItemType.durationItem).normalizedStandard(
             PeriodType.yearMonthDayTime()
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     private static PeriodFormatter getPeriodFormatter(ItemType durationType) {
-        if (durationType.equals(ItemType.durationItem)) {
+        if (durationType.equals(AtomicItemType.durationItem)) {
             return ISOPeriodFormat.standard();
         }
-        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
             return new PeriodFormatterBuilder().appendLiteral("P")
                 .appendYears()
                 .appendSuffix("Y")
@@ -166,7 +167,7 @@ public class DurationItem extends AtomicItem {
                 .toFormatter();
         }
 
-        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
             return new PeriodFormatterBuilder().appendLiteral("P")
                 .appendDays()
                 .appendSuffix("D")
@@ -183,28 +184,28 @@ public class DurationItem extends AtomicItem {
     }
 
     private static PeriodType getPeriodType(ItemType durationType) {
-        if (durationType.equals(ItemType.durationItem)) {
+        if (durationType.equals(AtomicItemType.durationItem)) {
             return PeriodType.yearMonthDayTime();
         }
-        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
             return PeriodType.forFields(
                 new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
             );
         }
-        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
             return PeriodType.dayTime();
         }
         throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDurationFormat(String duration, ItemType durationType) {
-        if (durationType.equals(ItemType.durationItem)) {
+        if (durationType.equals(AtomicItemType.durationItem)) {
             return durationPattern.matcher(duration).matches();
         }
-        if (durationType.equals(ItemType.yearMonthDurationItem)) {
+        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
             return yearMonthDurationPattern.matcher(duration).matches();
         }
-        if (durationType.equals(ItemType.dayTimeDurationItem)) {
+        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
             return dayTimeDurationPattern.matcher(duration).matches();
         }
         return false;
@@ -247,6 +248,6 @@ public class DurationItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.durationItem;
+        return AtomicItemType.durationItem;
     }
 }

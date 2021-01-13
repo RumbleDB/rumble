@@ -4,6 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 public class DayTimeDurationItem extends DurationItem {
@@ -42,12 +43,12 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.dayTimeDurationItem) || super.isTypeOf(type);
+        return type.equals(AtomicItemType.dayTimeDurationItem) || super.isTypeOf(type);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemType.dayTimeDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), AtomicItemType.dayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()
         );
         this.isNegative = this.value.toString().contains("-");
@@ -55,17 +56,17 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.dayTimeDurationItem)
+        return itemType.equals(AtomicItemType.dayTimeDurationItem)
             ||
-            itemType.equals(ItemType.yearMonthDurationItem)
+            itemType.equals(AtomicItemType.yearMonthDurationItem)
             ||
-            itemType.equals(ItemType.durationItem)
+            itemType.equals(AtomicItemType.durationItem)
             ||
-            itemType.equals(ItemType.stringItem);
+            itemType.equals(AtomicItemType.stringItem);
     }
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.dayTimeDurationItem;
+        return AtomicItemType.dayTimeDurationItem;
     }
 }

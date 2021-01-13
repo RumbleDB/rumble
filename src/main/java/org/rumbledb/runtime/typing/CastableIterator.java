@@ -10,6 +10,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -61,7 +62,7 @@ public class CastableIterator extends LocalRuntimeIterator {
     }
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
-        if (type.equals(ItemType.atomicItem)) {
+        if (type.equals(AtomicItemType.atomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
         }
         if (item.isAtomic()) {
