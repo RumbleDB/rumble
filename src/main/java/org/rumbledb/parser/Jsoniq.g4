@@ -302,6 +302,7 @@ keyWords                : Kjsoniq
                         | Kelse
                         | Kgreatest
                         | Kinstance
+                        | Kitem
                         | Kjson
                         | Kleast
                         | Knot
