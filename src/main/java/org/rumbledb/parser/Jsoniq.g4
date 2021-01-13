@@ -57,7 +57,7 @@ varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':='
 
 functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' fn_body=expr '}' | 'external');
+                          ('{' (fn_body=expr)? '}' | 'external');
 
 paramList               : param (',' param)*;
 
@@ -211,7 +211,7 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' fn_body=expr '}');
+                           ('{' (fn_body=expr)? '}');
 
 ///////////////////////// Types
 
