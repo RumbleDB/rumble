@@ -229,7 +229,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             StructType structSchema = (StructType) schema;
             if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
-                newContext.setResultingQuery(newContext.getResultingQuery() + "." + key);
+                newContext.setResultingQuery(newContext.getResultingQuery() + ".`" + key + "`");
                 StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
                 newContext.setSchema(field.dataType());
             } else {
