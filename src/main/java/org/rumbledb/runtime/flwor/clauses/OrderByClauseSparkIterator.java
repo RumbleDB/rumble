@@ -281,7 +281,10 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 
-                if (!columnType.equals(StringFlagForEmptySequence) && !columnType.equals(AtomicItemType.nullItem.getName())) {
+                if (
+                    !columnType.equals(StringFlagForEmptySequence)
+                        && !columnType.equals(AtomicItemType.nullItem.getName())
+                ) {
                     String currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);

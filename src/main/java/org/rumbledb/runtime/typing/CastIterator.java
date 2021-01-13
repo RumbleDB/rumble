@@ -317,7 +317,10 @@ public class CastIterator extends LocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance()
                         .createDurationItem(
-                            DurationItem.getDurationFromString(item.getStringValue().trim(), AtomicItemType.durationItem)
+                            DurationItem.getDurationFromString(
+                                item.getStringValue().trim(),
+                                AtomicItemType.durationItem
+                            )
                         );
                 }
                 if (item.isDayTimeDuration()) {

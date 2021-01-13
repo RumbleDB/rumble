@@ -60,7 +60,7 @@ public class AtomicItemType extends ItemType implements Serializable {
         item,
         functionItem
     );
-    
+
     public AtomicItemType() {
     }
 

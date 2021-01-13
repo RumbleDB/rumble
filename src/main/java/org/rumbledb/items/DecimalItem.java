@@ -93,7 +93,9 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean canBePromotedTo(ItemType type) {
-        return type.equals(AtomicItemType.floatItem) || type.equals(AtomicItemType.doubleItem) || super.canBePromotedTo(type);
+        return type.equals(AtomicItemType.floatItem)
+            || type.equals(AtomicItemType.doubleItem)
+            || super.canBePromotedTo(type);
     }
 
     @Override
