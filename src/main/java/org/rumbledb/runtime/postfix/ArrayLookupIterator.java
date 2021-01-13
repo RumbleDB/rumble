@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -39,6 +40,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
+import java.util.Map;
 
 public class ArrayLookupIterator extends HybridRuntimeIterator {
 
@@ -160,13 +162,22 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            try {
-                initLookupPosition(newContext.getContext());
-            } catch (RumbleException e){
-                return NativeClauseContext.NoNativeQuery;
+            // check if the key has variable dependencies inside the FLWOR expression
+            // in that case we switch over to UDF
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1).getVariableDependencies();
+            // we use nativeClauseContext that contains the top level schema
+            DataType schema = nativeClauseContext.getSchema();
+            StructType structSchema;
+            if (schema instanceof StructType) {
+                structSchema = (StructType) schema;
+                if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))){
+                    return NativeClauseContext.NoNativeQuery;
+                }
             }
 
-            DataType schema = newContext.getSchema();
+            initLookupPosition(newContext.getContext());
+
+            schema = newContext.getSchema();
             if (!(schema instanceof ArrayType)) {
                 return NativeClauseContext.NoNativeQuery;
             }
