@@ -386,7 +386,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
         }
 
-        Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
+        Expression bodyExpression = null;
+        if (ctx.fn_body != null) {
+            bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
+        } else {
+            bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
+        }
 
         return new InlineFunctionExpression(
                 name,
@@ -1261,7 +1266,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        Expression expr = (Expression) this.visitExpr(ctx.fn_body);
+        Expression expr = null;
+        if (ctx.fn_body != null) {
+            expr = (Expression) this.visitExpr(ctx.fn_body);
+        } else {
+            expr = new CommaExpression(createMetadataFromContext(ctx));
+        }
 
         return new InlineFunctionExpression(
                 null,
