@@ -27,7 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public class BooleanItem extends ItemImpl {
+public class BooleanItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -89,11 +89,6 @@ public class BooleanItem extends ItemImpl {
 
     public int hashCode() {
         return getBooleanValue() ? 1 : 0;
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : Boolean.compare(this.getBooleanValue(), other.getBooleanValue());
     }
 
     @Override

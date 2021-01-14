@@ -6,13 +6,15 @@ import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class HexBinaryItem extends ItemImpl {
+public class HexBinaryItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private byte[] value;
@@ -30,6 +32,20 @@ public class HexBinaryItem extends ItemImpl {
     HexBinaryItem(String stringValue) {
         this.stringValue = stringValue;
         this.value = parseHexBinaryString(stringValue);
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     public byte[] getValue() {
@@ -67,37 +83,13 @@ public class HexBinaryItem extends ItemImpl {
     }
 
     @Override
-    public boolean isHexBinary() {
+    public boolean isBinary() {
         return true;
     }
 
     @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isHexBinary()) {
-            return Arrays.equals(this.getBinaryValue(), otherItem.getBinaryValue());
-        }
-        return false;
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isHexBinary()) {
-            return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
+    public boolean isHexBinary() {
+        return true;
     }
 
     @Override
@@ -108,10 +100,6 @@ public class HexBinaryItem extends ItemImpl {
     @Override
     public String serialize() {
         return this.getStringValue().toUpperCase();
-    }
-
-    private String serializeValue() {
-        return Arrays.toString(this.getValue());
     }
 
     @Override

@@ -6,11 +6,13 @@ import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public class DateItem extends ItemImpl {
+public class DateItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private DateTime value;
@@ -32,6 +34,20 @@ public class DateItem extends ItemImpl {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     public DateTime getValue() {
@@ -64,37 +80,8 @@ public class DateItem extends ItemImpl {
     }
 
     @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isDate()) {
-            return this.getValue().isEqual(otherItem.getDateTimeValue());
-        }
-        return false;
-    }
-
-    @Override
     public int hashCode() {
         return this.getValue().hashCode();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isDate()) {
-            return this.getValue().compareTo(other.getDateTimeValue());
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
     }
 
     @Override

@@ -11,13 +11,15 @@ import org.joda.time.format.ISOPeriodFormat;
 import org.joda.time.format.PeriodFormatter;
 import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
-public class DurationItem extends ItemImpl {
+public class DurationItem implements Item {
 
     private static final String prefix = "(-)?P";
     private static final String duYearFrag = "(\\d)+Y";
@@ -74,6 +76,20 @@ public class DurationItem extends ItemImpl {
         this.isNegative = this.value.toString().contains("-");
     }
 
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
     public Period getValue() {
         return this.value;
     }
@@ -94,21 +110,6 @@ public class DurationItem extends ItemImpl {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        Instant now = new Instant();
-        if (otherItem.isDuration()) {
-            return this.getDurationValue()
-                .toDurationFrom(now)
-                .isEqual(otherItem.getDurationValue().toDurationFrom(now));
-        }
         return false;
     }
 
@@ -210,24 +211,6 @@ public class DurationItem extends ItemImpl {
         return isNegative
             ? period.negated().normalizedStandard(getPeriodType(durationType))
             : period.normalizedStandard(getPeriodType(durationType));
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        Instant now = new Instant();
-        if (other.isDuration()) {
-            return this.getDurationValue().toDurationFrom(now).compareTo(other.getDurationValue().toDurationFrom(now));
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
     }
 
     @Override

@@ -50,7 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends ItemImpl {
+public class FunctionItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
