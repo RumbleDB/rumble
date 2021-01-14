@@ -20,9 +20,6 @@
 
 package org.rumbledb.items;
 
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.ItemType;
-
 public abstract class JsonItem extends ItemImpl {
 
 
@@ -40,10 +37,5 @@ public abstract class JsonItem extends ItemImpl {
     @Override
     public boolean isAtomic() {
         return false;
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.JSONItem) || type.equals(ItemType.item);
     }
 }

@@ -42,11 +42,6 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.dayTimeDurationItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public void read(Kryo kryo, Input input) {
         this.value = getDurationFromString(input.readString(), AtomicItemType.dayTimeDurationItem).normalizedStandard(
             PeriodType.dayTime()

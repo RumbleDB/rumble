@@ -76,11 +76,6 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.arrayItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("[");

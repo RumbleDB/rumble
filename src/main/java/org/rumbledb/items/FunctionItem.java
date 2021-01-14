@@ -181,11 +181,6 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.functionItem) || type.equals(ItemType.item);
-    }
-
-    @Override
     public boolean isFunction() {
         return true;
     }

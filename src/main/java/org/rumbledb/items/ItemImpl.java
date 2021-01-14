@@ -289,33 +289,8 @@ abstract class ItemImpl implements Item {
         return false;
     }
 
-    /**
-     * Please do not use, item type API not publicly released yet.
-     *
-     * @param type an AtomicItemType.
-     * @return true if it matches the item type.
-     */
-    public abstract boolean isTypeOf(ItemType type);
-
-    /**
-     * Please do not use, item type API not publicly released yet.
-     *
-     * @param type an AtomicItemType.
-     * @return true if the item can be promoted to the type passed in as argument.
-     */
-    public boolean canBePromotedTo(ItemType type) {
-        return this.isTypeOf(type);
-    }
-
 
     public Item promoteTo(ItemType type) {
-        if (!this.canBePromotedTo(type)) {
-            throw new RuntimeException(
-                    this.getDynamicType().toString()
-                        + " cannot be promoted to type "
-                        + type.toString()
-            );
-        }
         return this;
     }
 

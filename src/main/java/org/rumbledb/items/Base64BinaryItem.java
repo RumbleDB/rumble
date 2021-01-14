@@ -68,11 +68,6 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.base64BinaryItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }

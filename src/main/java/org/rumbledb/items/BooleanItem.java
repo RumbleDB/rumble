@@ -62,11 +62,6 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.booleanItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         return String.valueOf(this.getValue());
     }

@@ -92,11 +92,6 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public String serialize() {
         return this.getStringValue();
     }
@@ -114,11 +109,6 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public boolean isAnyURI() {
         return true;
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.anyURIItem) || super.isTypeOf(type);
     }
 
     @Override

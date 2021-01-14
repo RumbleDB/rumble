@@ -122,11 +122,6 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.dateTimeItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         String value = this.getValue().toString();
         String zoneString = this.getValue().getZone() == DateTimeZone.UTC

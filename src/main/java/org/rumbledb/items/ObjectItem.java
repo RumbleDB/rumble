@@ -130,11 +130,6 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.objectItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("{ ");

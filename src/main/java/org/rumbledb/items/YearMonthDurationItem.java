@@ -44,11 +44,6 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.yearMonthDurationItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public void read(Kryo kryo, Input input) {
         this.value = getDurationFromString(input.readString(), AtomicItemType.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType

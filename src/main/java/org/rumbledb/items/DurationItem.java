@@ -118,11 +118,6 @@ public class DurationItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.durationItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         if (this.isNegative) {
             return '-' + this.getValue().negated().toString();

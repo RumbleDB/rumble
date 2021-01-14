@@ -97,20 +97,6 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.integerItem)
-            || type.equals(AtomicItemType.decimalItem)
-            || super.isTypeOf(type);
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(AtomicItemType.floatItem)
-            || type.equals(AtomicItemType.doubleItem)
-            || super.canBePromotedTo(type);
-    }
-
-    @Override
     public String serialize() {
         return String.valueOf(this.value);
     }

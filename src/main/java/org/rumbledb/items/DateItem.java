@@ -81,11 +81,6 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.dateItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public int compareTo(Item other) {
         if (other.isNull()) {
             return 1;
