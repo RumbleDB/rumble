@@ -27,70 +27,6 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-    public static ItemType getItemTypeByName(String name) {
-        if (name.equals(AtomicItemType.objectItem.getName())) {
-            return AtomicItemType.objectItem;
-        }
-        if (name.equals(AtomicItemType.atomicItem.getName())) {
-            return AtomicItemType.atomicItem;
-        }
-        if (name.equals(AtomicItemType.stringItem.getName())) {
-            return AtomicItemType.stringItem;
-        }
-        if (name.equals(AtomicItemType.integerItem.getName())) {
-            return AtomicItemType.integerItem;
-        }
-        if (name.equals(AtomicItemType.decimalItem.getName())) {
-            return AtomicItemType.decimalItem;
-        }
-        if (name.equals(AtomicItemType.doubleItem.getName())) {
-            return AtomicItemType.doubleItem;
-        }
-        if (name.equals(AtomicItemType.booleanItem.getName())) {
-            return AtomicItemType.booleanItem;
-        }
-        if (name.equals(AtomicItemType.nullItem.getName())) {
-            return AtomicItemType.nullItem;
-        }
-        if (name.equals(AtomicItemType.arrayItem.getName())) {
-            return AtomicItemType.arrayItem;
-        }
-        if (name.equals(AtomicItemType.JSONItem.getName())) {
-            return AtomicItemType.JSONItem;
-        }
-        if (name.equals(AtomicItemType.durationItem.getName())) {
-            return AtomicItemType.durationItem;
-        }
-        if (name.equals(AtomicItemType.yearMonthDurationItem.getName())) {
-            return AtomicItemType.yearMonthDurationItem;
-        }
-        if (name.equals(AtomicItemType.dayTimeDurationItem.getName())) {
-            return AtomicItemType.dayTimeDurationItem;
-        }
-        if (name.equals(AtomicItemType.dateTimeItem.getName())) {
-            return AtomicItemType.dateTimeItem;
-        }
-        if (name.equals(AtomicItemType.dateItem.getName())) {
-            return AtomicItemType.dateItem;
-        }
-        if (name.equals(AtomicItemType.timeItem.getName())) {
-            return AtomicItemType.timeItem;
-        }
-        if (name.equals(AtomicItemType.anyURIItem.getName())) {
-            return AtomicItemType.anyURIItem;
-        }
-        if (name.equals(AtomicItemType.hexBinaryItem.getName())) {
-            return AtomicItemType.hexBinaryItem;
-        }
-        if (name.equals(AtomicItemType.base64BinaryItem.getName())) {
-            return AtomicItemType.base64BinaryItem;
-        }
-        if (name.equals(item.name)) {
-            return item;
-        }
-        throw new OurBadException("Type unrecognized: " + name);
-    }
-
     protected static final long serialVersionUID = 1L;
     protected String name;
 
@@ -171,7 +107,7 @@ public class ItemType implements Serializable {
      * @param other a strict subtype of atomic item type to which we are trying to cast
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
-    public boolean staticallyCastableAs(ItemType other) {
+    public boolean isStaticallyCastableAs(ItemType other) {
         // this is not atomic and therefore cannot be casted
         // TODO: consider throwing error here
         return false;

@@ -117,7 +117,7 @@ public class AtomicItemType extends ItemType implements Serializable {
                 || this.equals(dayTimeDurationItem)
                 || this.equals(durationItem);
         } else if (superType.equals(decimalItem)) {
-            return this.equals(integerItem) || this.equals(decimalItem);
+            return this.equals(integerItem) || this.equals(decimalItem) || this.equals(intItem);
         }
         return this.equals(superType);
     }
@@ -140,7 +140,7 @@ public class AtomicItemType extends ItemType implements Serializable {
     }
 
     @Override
-    public boolean staticallyCastableAs(ItemType other) {
+    public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
         if (this.equals(other))
             return true;
@@ -149,12 +149,21 @@ public class AtomicItemType extends ItemType implements Serializable {
             return true;
         // boolean and numeric can be cast between themselves
         if (
-            this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)
+            this.equals(booleanItem)
+                || this.equals(intItem)
+                || this.equals(integerItem)
+                || this.equals(doubleItem)
+                || this.equals(floatItem)
+                || this.equals(decimalItem)
         ) {
             if (
-                other.equals(integerItem)
+                other.equals(intItem)
+                    ||
+                    other.equals(integerItem)
                     ||
                     other.equals(doubleItem)
+                    ||
+                    other.equals(floatItem)
                     ||
                     other.equals(decimalItem)
                     ||
