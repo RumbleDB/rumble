@@ -221,12 +221,12 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : 'item'
+itemType                : Kitem
                         | jSONItemTest
                         | atomicType;
 
-jSONItemTest            : 'object'
-                        | 'array'
+jSONItemTest            : Kobject
+                        | Karray
                         | Kjson;
 
 keyWordString           : 'string';
@@ -293,24 +293,28 @@ uriLiteral              : stringLiteral;
 stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
-                        | Kjson
-                        | Kversion
-                        | Ktypeswitch
-                        | Kor
                         | Kand
-                        | Knot
-                        | Kto
-                        | Kinstance
-                        | Kof
-                        | Ktreat
+                        | Karray
                         | Kcast
                         | Kcastable
-                        | Kdefault
-                        | Kthen
-                        | Kelse
                         | Kcollation
+                        | Kdefault
+                        | Kelse
                         | Kgreatest
+                        | Kinstance
+                        | Kitem
+                        | Kjson
                         | Kleast
+                        | Knot
+                        | NullLiteral
+                        | Kobject
+                        | Kof
+                        | Kor
+                        | Kthen
+                        | Kto
+                        | Ktreat
+                        | Ktypeswitch
+                        | Kversion
                         | Kswitch
                         | Kcase
                         | Ktry
@@ -424,6 +428,12 @@ Kversion                : 'version';
 Kjsoniq                 : 'jsoniq';
 
 Kjson                   : 'json-item';
+
+Karray                  : 'array';
+
+Kobject                 : 'object';
+
+Kitem                   : 'item';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
