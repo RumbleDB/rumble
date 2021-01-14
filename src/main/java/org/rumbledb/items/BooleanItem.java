@@ -27,7 +27,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public class BooleanItem extends AtomicItem {
+public class BooleanItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;
@@ -99,5 +99,10 @@ public class BooleanItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.booleanItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

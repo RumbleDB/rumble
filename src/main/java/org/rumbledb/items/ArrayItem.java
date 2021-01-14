@@ -30,7 +30,7 @@ import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayItem extends JsonItem {
+public class ArrayItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;
@@ -140,5 +140,15 @@ public class ArrayItem extends JsonItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.arrayItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return false;
     }
 }

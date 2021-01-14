@@ -10,7 +10,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
-public class DateItem extends AtomicItem {
+public class DateItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private DateTime value;
@@ -123,5 +123,10 @@ public class DateItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.dateItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

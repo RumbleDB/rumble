@@ -34,7 +34,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ObjectItem extends JsonItem {
+public class ObjectItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;
@@ -210,6 +210,16 @@ public class ObjectItem extends JsonItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.objectItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return false;
     }
 
 }

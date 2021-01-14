@@ -31,7 +31,7 @@ import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class IntegerItem extends AtomicItem {
+public class IntegerItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;

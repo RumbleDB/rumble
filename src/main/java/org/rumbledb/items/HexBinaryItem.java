@@ -12,7 +12,7 @@ import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class HexBinaryItem extends AtomicItem {
+public class HexBinaryItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private byte[] value;
@@ -130,5 +130,10 @@ public class HexBinaryItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.hexBinaryItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

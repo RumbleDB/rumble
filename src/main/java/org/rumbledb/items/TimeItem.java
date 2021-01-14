@@ -11,7 +11,7 @@ import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
-public class TimeItem extends AtomicItem {
+public class TimeItem extends ItemImpl {
 
     private static final long serialVersionUID = 1L;
     private DateTime value;
@@ -126,5 +126,10 @@ public class TimeItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.timeItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

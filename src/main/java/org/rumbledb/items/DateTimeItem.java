@@ -18,7 +18,7 @@ import java.util.regex.Pattern;
 
 import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
-public class DateTimeItem extends AtomicItem {
+public class DateTimeItem extends ItemImpl {
 
     private static final String yearFrag = "((-)?(([1-9]\\d\\d(\\d)+)|(0\\d\\d\\d)))";
     private static final String monthFrag = "((0[1-9])|(1[0-2]))";
@@ -77,11 +77,6 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public DateTime getDateTimeValue() {
         return this.getValue();
-    }
-
-    @Override
-    public boolean isAtomic() {
-        return true;
     }
 
     @Override
@@ -241,5 +236,10 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.dateTimeItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

@@ -30,7 +30,7 @@ import org.rumbledb.types.ItemType;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class AnyURIItem extends AtomicItem {
+public class AnyURIItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;
@@ -114,5 +114,10 @@ public class AnyURIItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.anyURIItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

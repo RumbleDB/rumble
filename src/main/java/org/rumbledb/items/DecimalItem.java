@@ -32,7 +32,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 
 
-public class DecimalItem extends AtomicItem {
+public class DecimalItem extends ItemImpl {
 
 
     private static final long serialVersionUID = 1L;
@@ -140,6 +140,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
         return true;
     }
 }

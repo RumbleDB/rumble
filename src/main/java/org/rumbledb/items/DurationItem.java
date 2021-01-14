@@ -17,7 +17,7 @@ import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
-public class DurationItem extends AtomicItem {
+public class DurationItem extends ItemImpl {
 
     private static final String prefix = "(-)?P";
     private static final String duYearFrag = "(\\d)+Y";

@@ -13,7 +13,7 @@ import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class Base64BinaryItem extends AtomicItem {
+public class Base64BinaryItem extends ItemImpl {
 
     private static final String b04char = "([AQgw])";
     private static final String b04 = "(" + b04char + "(\\s)?)";
@@ -136,5 +136,10 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.base64BinaryItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }
