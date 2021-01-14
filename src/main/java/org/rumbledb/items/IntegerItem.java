@@ -149,4 +149,9 @@ public class IntegerItem extends ItemImpl {
     public boolean isNumeric() {
         return true;
     }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
+    }
 }
