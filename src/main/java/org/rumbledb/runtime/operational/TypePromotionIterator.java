@@ -220,7 +220,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (this.nextResult.isFunction()) {
             return;
         }
-        if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType())) {
+        if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         + this.nextResult.getDynamicType().toString()

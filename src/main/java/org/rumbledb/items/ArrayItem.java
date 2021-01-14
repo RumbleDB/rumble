@@ -146,9 +146,4 @@ public class ArrayItem extends JsonItem {
     public ItemType getDynamicType() {
         return AtomicItemType.arrayItem;
     }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
-    }
 }

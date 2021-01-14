@@ -100,14 +100,6 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.dateTimeItem)
-            || itemType.equals(AtomicItemType.dateItem)
-            || itemType.equals(AtomicItemType.timeItem)
-            || itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }

@@ -67,13 +67,6 @@ public class BooleanItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(AtomicItemType.atomicItem)
-            &&
-            !itemType.equals(AtomicItemType.nullItem);
-    }
-
-    @Override
     public String serialize() {
         return String.valueOf(this.getValue());
     }

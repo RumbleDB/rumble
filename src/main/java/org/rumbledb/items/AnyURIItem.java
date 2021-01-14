@@ -97,11 +97,6 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return (itemType.equals(AtomicItemType.anyURIItem) || itemType.equals(AtomicItemType.stringItem));
-    }
-
-    @Override
     public String serialize() {
         return this.getStringValue();
     }

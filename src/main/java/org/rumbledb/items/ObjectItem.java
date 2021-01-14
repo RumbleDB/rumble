@@ -217,9 +217,4 @@ public class ObjectItem extends JsonItem {
         return AtomicItemType.objectItem;
     }
 
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
-    }
-
 }

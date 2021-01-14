@@ -81,15 +81,6 @@ public class DateItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.dateItem)
-            ||
-            itemType.equals(AtomicItemType.dateTimeItem)
-            ||
-            itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public boolean isTypeOf(ItemType type) {
         return type.equals(AtomicItemType.dateItem) || super.isTypeOf(type);
     }

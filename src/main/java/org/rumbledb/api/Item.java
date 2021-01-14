@@ -464,14 +464,6 @@ public interface Item extends Serializable, KryoSerializable {
     boolean equals(Object other);
 
     /**
-     * Please do not use (internal).
-     *
-     * @param type an AtomicItemType.
-     * @return true if the item can be promoted to the type passed in as argument.
-     */
-    boolean canBePromotedTo(ItemType type);
-
-    /**
      * Computes a hash code.
      *
      * @return a hash code as an int.
@@ -479,11 +471,4 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     String serialize();
-
-    /**
-     * Deprecated. Will be moved to iterator.
-     *
-     * @return a hash code as an int.
-     */
-    boolean isCastableAs(ItemType itemType);
 }

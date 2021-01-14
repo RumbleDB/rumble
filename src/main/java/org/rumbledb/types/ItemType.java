@@ -118,8 +118,8 @@ public class ItemType implements Serializable {
         return false;
     }
 
-    // returns [true] if this can be promoted to string
-    public boolean canBePromotedToString() {
+    // returns [true] if this can be promoted to itemType
+    public boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
 

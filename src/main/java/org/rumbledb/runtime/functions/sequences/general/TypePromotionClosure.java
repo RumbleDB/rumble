@@ -24,7 +24,7 @@ public class TypePromotionClosure implements Function<Item, Item> {
     @Override
     public Item call(Item input) throws Exception {
         if (input != null && !InstanceOfIterator.doesItemTypeMatchItem(this.sequenceType.getItemType(), input)) {
-            if (input.canBePromotedTo(this.sequenceType.getItemType())) {
+            if (input.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
                 Item result = CastIterator.castItemToType(input, this.sequenceType.getItemType(), this.metadata);
                 if (result == null) {
                     throw new OurBadException(

@@ -55,17 +55,6 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.dayTimeDurationItem)
-            ||
-            itemType.equals(AtomicItemType.yearMonthDurationItem)
-            ||
-            itemType.equals(AtomicItemType.durationItem)
-            ||
-            itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public ItemType getDynamicType() {
         return AtomicItemType.dayTimeDurationItem;
     }

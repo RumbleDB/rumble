@@ -52,13 +52,6 @@ public class NullItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.nullItem)
-            ||
-            itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public String serialize() {
         return "null";
     }

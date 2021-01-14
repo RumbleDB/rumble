@@ -126,7 +126,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.canBePromotedTo(AtomicItemType.stringItem)) {
+            } else if (item.getDynamicType().canBePromotedTo(AtomicItemType.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
                 return true;

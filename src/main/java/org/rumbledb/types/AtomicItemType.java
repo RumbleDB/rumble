@@ -207,7 +207,13 @@ public class AtomicItemType extends ItemType implements Serializable {
     }
 
     @Override
-    public boolean canBePromotedToString() {
-        return this.equals(stringItem) || this.equals(anyURIItem);
+    public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(stringItem)) {
+            return this.equals(stringItem) || this.equals(anyURIItem);
+        }
+        if (other.equals(doubleItem)) {
+            return this.isNumeric();
+        }
+        return false;
     }
 }

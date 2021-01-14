@@ -331,9 +331,4 @@ public class FunctionItem extends ItemImpl {
             );
         }
     }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
-    }
 }

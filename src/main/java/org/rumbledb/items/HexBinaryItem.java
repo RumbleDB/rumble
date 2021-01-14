@@ -77,15 +77,6 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.hexBinaryItem)
-            ||
-            itemType.equals(AtomicItemType.base64BinaryItem)
-            ||
-            itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
     public boolean equals(Object otherObject) {
         if (!(otherObject instanceof Item)) {
             return false;
