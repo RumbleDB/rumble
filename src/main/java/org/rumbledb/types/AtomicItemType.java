@@ -153,7 +153,7 @@ public class AtomicItemType extends ItemType implements Serializable {
                 || this.isNumeric()
         ) {
             if (
-                other.equals(intItem)
+                other.equals(booleanItem)
                     ||
                     other.isNumeric()
             )
