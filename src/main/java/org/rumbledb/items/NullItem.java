@@ -38,8 +38,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
@@ -51,6 +54,20 @@ public class NullItem implements Item {
 
     public NullItem() {
         super();
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     @Override
@@ -77,14 +94,6 @@ public class NullItem implements Item {
     public void read(Kryo kryo, Input input) {
         kryo.readObjectOrNull(input, Item.class);
 
-    }
-
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        return o.isNull();
     }
 
     public int hashCode() {

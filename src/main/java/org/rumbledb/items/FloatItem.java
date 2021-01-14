@@ -60,6 +60,20 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
+    @Override
     public float getFloatValue() {
         return this.value;
     }
@@ -131,20 +145,6 @@ public class FloatItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readFloat();
-    }
-
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     public int hashCode() {

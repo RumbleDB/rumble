@@ -62,6 +62,20 @@ public class DoubleItem implements Item {
     }
 
     @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
+    @Override
     public double getDoubleValue() {
         return this.value;
     }
@@ -133,20 +147,6 @@ public class DoubleItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readDouble();
-    }
-
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     public int hashCode() {

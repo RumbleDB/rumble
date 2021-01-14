@@ -61,6 +61,20 @@ public class StringItem implements Item {
         this.value = value;
     }
 
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
     public String getValue() {
         return this.value;
     }
@@ -131,20 +145,6 @@ public class StringItem implements Item {
     @Override
     public void read(Kryo kryo, Input input) {
         this.value = input.readString();
-    }
-
-    @Override
-    public boolean equals(Object otherItem) {
-        if (otherItem instanceof Item) {
-            long c = ComparisonIterator.compareItems(
-                this,
-                (Item) otherItem,
-                ComparisonOperator.VC_EQ,
-                ExceptionMetadata.EMPTY_METADATA
-            );
-            return c == 0;
-        }
-        return false;
     }
 
     public int hashCode() {
