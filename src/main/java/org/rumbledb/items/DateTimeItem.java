@@ -11,6 +11,7 @@ import org.joda.time.format.DateTimeParser;
 import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
@@ -62,7 +63,7 @@ public class DateTimeItem extends AtomicItem {
     }
 
     DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, ItemType.dateTimeItem);
+        this.value = parseDateTime(dateTimeString, AtomicItemType.dateTimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -99,14 +100,6 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.dateTimeItem)
-            || itemType.equals(ItemType.dateItem)
-            || itemType.equals(ItemType.timeItem)
-            || itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -126,11 +119,6 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public int hashCode() {
         return this.getValue().hashCode();
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.dateTimeItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -162,10 +150,10 @@ public class DateTimeItem extends AtomicItem {
     }
 
     private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+        if (dateTimeType.equals(AtomicItemType.dateTimeItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
-        if (dateTimeType.equals(ItemType.dateItem)) {
+        if (dateTimeType.equals(AtomicItemType.dateItem)) {
             DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                 ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
             ).toParser();
@@ -174,20 +162,20 @@ public class DateTimeItem extends AtomicItem {
                 .toFormatter()
                 .withOffsetParsed();
         }
-        if (dateTimeType.equals(ItemType.timeItem)) {
+        if (dateTimeType.equals(AtomicItemType.timeItem)) {
             return ISODateTimeFormat.timeParser().withOffsetParsed();
         }
         throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
-        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+        if (dateTimeType.equals(AtomicItemType.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(ItemType.dateItem)) {
+        if (dateTimeType.equals(AtomicItemType.dateItem)) {
             return datePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(ItemType.timeItem)) {
+        if (dateTimeType.equals(AtomicItemType.timeItem)) {
             return timePattern.matcher(dateTime).matches();
         }
         return false;
@@ -252,6 +240,6 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.dateTimeItem;
+        return AtomicItemType.dateTimeItem;
     }
 }
