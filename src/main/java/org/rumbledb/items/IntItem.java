@@ -24,27 +24,14 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
-import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.joda.time.DateTime;
-import org.joda.time.Period;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.FunctionIdentifier;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.List;
-import java.util.Map;
 
 public class IntItem implements Item {
 
