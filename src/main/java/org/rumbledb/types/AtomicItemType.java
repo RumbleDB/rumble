@@ -150,24 +150,12 @@ public class AtomicItemType extends ItemType implements Serializable {
         // boolean and numeric can be cast between themselves
         if (
             this.equals(booleanItem)
-                || this.equals(intItem)
-                || this.equals(integerItem)
-                || this.equals(doubleItem)
-                || this.equals(floatItem)
-                || this.equals(decimalItem)
+                || this.isNumeric()
         ) {
             if (
                 other.equals(intItem)
                     ||
-                    other.equals(integerItem)
-                    ||
-                    other.equals(doubleItem)
-                    ||
-                    other.equals(floatItem)
-                    ||
-                    other.equals(decimalItem)
-                    ||
-                    other.equals(booleanItem)
+                    other.isNumeric()
             )
                 return true;
             else
@@ -211,7 +199,11 @@ public class AtomicItemType extends ItemType implements Serializable {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(integerItem) || this.equals(decimalItem) || this.equals(doubleItem);
+        return this.equals(intItem)
+            || this.equals(integerItem)
+            || this.equals(decimalItem)
+            || this.equals(doubleItem)
+            || this.equals(floatItem);
     }
 
     @Override
