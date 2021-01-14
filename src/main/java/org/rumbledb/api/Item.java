@@ -479,7 +479,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if the Item has a timeZone, false otherwise
      */
     default boolean hasTimeZone() {
-        throw new UnsupportedOperationException("Operation not defined");
+        return false;
     }
 
     /**
@@ -488,7 +488,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return true if it is an atomic item of type time, date or dateTime, false otherwise.
      */
     default boolean hasDateTime() {
-        throw new UnsupportedOperationException("Operation not defined");
+        return false;
     }
 
     /**
