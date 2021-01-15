@@ -468,8 +468,7 @@ public class ItemParser implements Serializable {
     private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
-                if(!item.isArray())
-                {
+                if (!item.isArray()) {
                     throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
                 }
                 List<Item> arrayItems = item.getItems();
@@ -483,116 +482,151 @@ public class ItemParser implements Serializable {
             }
 
             if (dataType instanceof StructType) {
-                if(!item.isObject())
-                {
+                if (!item.isObject()) {
                     throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
                 }
                 return getRowFromItemUsingSchema(item, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
-                if(!item.isBoolean())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.booleanItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isBoolean()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.booleanItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getBooleanValue();
                 }
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
-                if(!item.isInt())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.intItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isInt()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.intItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getIntValue();
                 }
                 return item.getIntValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
-                if(!item.isDouble())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.doubleItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isDouble()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.doubleItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getDoubleValue();
                 }
                 return item.getDoubleValue();
             }
             if (dataType.equals(DataTypes.FloatType)) {
-                if(!item.isFloat())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.floatItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isFloat()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.floatItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getFloatValue();
                 }
                 return item.getFloatValue();
             }
             if (dataType.equals(decimalType)) {
-                if(!item.isDecimal())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.decimalItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isDecimal()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.decimalItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getDecimalValue();
                 }
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
-                if(!item.isString())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.stringItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isString()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.stringItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return i.getStringValue();
                 }
                 return item.getStringValue();
             }
             if (dataType.equals(DataTypes.NullType)) {
-                if(!item.isNull())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.nullItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isNull()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.nullItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return null;
                 }
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
-                if(!item.isDate())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.dateItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isDate()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.dateItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return new Date(item.getDateTimeValue().getMillis());
                 }
                 return new Date(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                if(!item.isDateTime())
-                {
-                    Item i = CastIterator.castItemToType(item, AtomicItemType.dateTimeItem, ExceptionMetadata.EMPTY_METADATA);
-                    if(i == null)
-                    {
-                        throw new MLInvalidDataFrameSchemaException("Type mismatch and cast unsuccessful to " + dataType);
+                if (!item.isDateTime()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.dateTimeItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
                     }
                     return new Timestamp(item.getDateTimeValue().getMillis());
                 }
