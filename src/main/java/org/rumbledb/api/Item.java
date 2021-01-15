@@ -254,7 +254,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the list of the array members.
      */
     default List<Item> getItems() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -264,7 +264,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the member at position position.
      */
     default Item getItemAt(int position) {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -273,7 +273,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the list of the keys.
      */
     default List<String> getKeys() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -282,7 +282,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the list of the value items.
      */
     default List<Item> getValues() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -292,7 +292,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the value associated with key.
      */
     default Item getItemByKey(String key) {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -301,7 +301,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the size as an int.
      */
     default int getSize() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -310,7 +310,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the string value.
      */
     default String getStringValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -319,7 +319,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the boolean value.
      */
     default boolean getBooleanValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -328,7 +328,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the double value.
      */
     default double getDoubleValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -337,7 +337,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the float value.
      */
     default float getFloatValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -346,7 +346,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the integer value as an int.
      */
     default int getIntValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -355,7 +355,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the integer value as a BigInteger.
      */
     default BigInteger getIntegerValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -364,7 +364,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the decimal value as a BigDecimal.
      */
     default BigDecimal getDecimalValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -373,7 +373,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the period value as a Period.
      */
     default Period getDurationValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -382,7 +382,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the dateTime value as a DateTime.
      */
     default DateTime getDateTimeValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -391,7 +391,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the binary value as an array of bytes.
      */
     default byte[] getBinaryValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -400,7 +400,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the dynamic type as an item type.
      */
     default ItemType getDynamicType() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -409,7 +409,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function identifier.
      */
     default FunctionIdentifier getIdentifier() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -418,7 +418,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function parameter names.
      */
     default List<Name> getParameterNames() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -427,7 +427,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default FunctionSignature getSignature() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -436,7 +436,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default public RuntimeIterator getBodyIterator() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -445,7 +445,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default public Map<Name, List<Item>> getLocalVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -454,7 +454,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default public Map<Name, JavaRDD<Item>> getRDDVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -463,7 +463,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -472,7 +472,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the function signature.
      */
     default public DynamicContext getDynamicModuleContext() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -497,7 +497,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the effective boolean value.
      */
     default boolean getEffectiveBooleanValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -506,7 +506,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param item an item.
      */
     default void putItem(Item item) {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -515,7 +515,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param value a value.
      */
     default void append(Item value) {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -525,7 +525,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @param value a value.
      */
     default void putItemByKey(String key, Item value) {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -534,7 +534,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the double value.
      */
     default double castToDoubleValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -543,7 +543,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the float value.
      */
     default float castToFloatValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -552,7 +552,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the BigDecimal value.
      */
     default BigDecimal castToDecimalValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -561,7 +561,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the BigInteger value.
      */
     default BigInteger castToIntegerValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
@@ -570,7 +570,7 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the int value.
      */
     default int castToIntValue() {
-        throw new UnsupportedOperationException("Operation not defined");
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**
