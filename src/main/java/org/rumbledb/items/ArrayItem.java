@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
@@ -72,11 +73,6 @@ public class ArrayItem extends JsonItem {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.arrayItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -143,11 +139,6 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.arrayItem;
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
+        return AtomicItemType.arrayItem;
     }
 }

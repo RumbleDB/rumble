@@ -39,7 +39,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -102,18 +102,6 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        if (itemType.equals(ItemType.atomicItem) || itemType.equals(ItemType.nullItem)) {
-            return false;
-        } else if (itemType.equals(ItemType.decimalItem)) {
-            return !Double.isInfinite(this.value);
-        } else if (itemType.equals(ItemType.integerItem)) {
-            return !(Integer.MAX_VALUE < this.value) && !(Integer.MIN_VALUE > this.value);
-        }
-        return true;
-    }
-
-    @Override
     public String serialize() {
         if (Double.isNaN(this.value)) {
             return "NaN";
@@ -167,7 +155,7 @@ public class DoubleItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.doubleItem;
+        return AtomicItemType.doubleItem;
     }
 
     @Override
@@ -388,11 +376,6 @@ public class DoubleItem implements Item {
     @Override
     public void putItemByKey(String key, Item value) {
         throw new OurBadException(" Item '" + this.serialize() + "' is a double!");
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return InstanceOfIterator.doesItemTypeMatchItem(type, this);
     }
 
     @Override

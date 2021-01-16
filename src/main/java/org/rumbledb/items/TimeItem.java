@@ -7,6 +7,7 @@ import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
@@ -27,7 +28,7 @@ public class TimeItem extends AtomicItem {
     }
 
     TimeItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, ItemType.timeItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicItemType.timeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -81,18 +82,6 @@ public class TimeItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.timeItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.timeItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public int compareTo(Item other) {
         if (other.isNull()) {
             return 1;
@@ -136,6 +125,6 @@ public class TimeItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.timeItem;
+        return AtomicItemType.timeItem;
     }
 }

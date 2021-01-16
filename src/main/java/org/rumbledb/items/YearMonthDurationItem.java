@@ -6,6 +6,7 @@ import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
@@ -43,31 +44,15 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.yearMonthDurationItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), ItemType.yearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), AtomicItemType.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.yearMonthDurationItem)
-            ||
-            itemType.equals(ItemType.dayTimeDurationItem)
-            ||
-            itemType.equals(ItemType.durationItem)
-            ||
-            itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.yearMonthDurationItem;
+        return AtomicItemType.yearMonthDurationItem;
     }
 }

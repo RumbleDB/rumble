@@ -26,6 +26,7 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -96,25 +97,6 @@ public class IntegerItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.integerItem)
-            || type.equals(ItemType.decimalItem)
-            || super.isTypeOf(type);
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.floatItem) || type.equals(ItemType.doubleItem) || super.canBePromotedTo(type);
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return !itemType.equals(ItemType.atomicItem)
-            &&
-            !itemType.equals(ItemType.nullItem);
-    }
-
-    @Override
     public String serialize() {
         return String.valueOf(this.value);
     }
@@ -160,7 +142,7 @@ public class IntegerItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.integerItem;
+        return AtomicItemType.integerItem;
     }
 
     @Override

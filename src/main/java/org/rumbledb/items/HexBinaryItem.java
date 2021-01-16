@@ -7,6 +7,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -61,11 +62,6 @@ public class HexBinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.hexBinaryItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -73,15 +69,6 @@ public class HexBinaryItem extends AtomicItem {
     @Override
     public boolean isHexBinary() {
         return true;
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.hexBinaryItem)
-            ||
-            itemType.equals(ItemType.base64BinaryItem)
-            ||
-            itemType.equals(ItemType.stringItem);
     }
 
     @Override
@@ -142,6 +129,6 @@ public class HexBinaryItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.hexBinaryItem;
+        return AtomicItemType.hexBinaryItem;
     }
 }

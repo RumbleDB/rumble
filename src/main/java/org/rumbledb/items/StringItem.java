@@ -38,7 +38,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
-import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -110,14 +110,6 @@ public class StringItem implements Item {
         return Integer.parseInt(this.value.trim());
     }
 
-    private boolean isBooleanLiteral(String value) {
-        return "true".equals(value) || "false".equals(value);
-    }
-
-    private boolean isNullLiteral(String value) {
-        return "null".equals(value);
-    }
-
     @Override
     public boolean isString() {
         return true;
@@ -125,70 +117,6 @@ public class StringItem implements Item {
 
     public boolean getEffectiveBooleanValue() {
         return !this.getStringValue().isEmpty();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return true;
-        }
-        try {
-            if (itemType.equals(ItemType.integerItem)) {
-                @SuppressWarnings("unused")
-                BigInteger i = new BigInteger(this.value);
-                return true;
-            } else if (itemType.equals(ItemType.anyURIItem)) {
-                AnyURIItem.parseAnyURIString(this.getValue());
-            } else if (itemType.equals(ItemType.decimalItem)) {
-                if (this.getValue().contains("e") || this.getValue().contains("E")) {
-                    return false;
-                }
-                Float.parseFloat(this.getValue());
-            } else if (itemType.equals(ItemType.doubleItem)) {
-                if (
-                    this.value.equals("INF")
-                        || this.value.equals("+INF")
-                        || this.value.equals("-INF")
-                        || this.value.equals("NaN")
-                ) {
-                    return true;
-                }
-                Double.parseDouble(this.getValue());
-            } else if (itemType.equals(ItemType.floatItem)) {
-                if (
-                    this.value.equals("INF")
-                        || this.value.equals("+INF")
-                        || this.value.equals("-INF")
-                        || this.value.equals("NaN")
-                ) {
-                    return true;
-                }
-                Float.parseFloat(this.getValue());
-            } else if (itemType.equals(ItemType.nullItem)) {
-                return isNullLiteral(this.getValue());
-            } else if (itemType.equals(ItemType.durationItem)) {
-                DurationItem.getDurationFromString(this.value, ItemType.durationItem);
-            } else if (itemType.equals(ItemType.yearMonthDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemType.yearMonthDurationItem);
-            } else if (itemType.equals(ItemType.dayTimeDurationItem)) {
-                DurationItem.getDurationFromString(this.getValue(), ItemType.dayTimeDurationItem);
-            } else if (itemType.equals(ItemType.dateTimeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateTimeItem);
-            } else if (itemType.equals(ItemType.dateItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.dateItem);
-            } else if (itemType.equals(ItemType.timeItem)) {
-                DateTimeItem.parseDateTime(this.getValue(), ItemType.timeItem);
-            } else if (itemType.equals(ItemType.hexBinaryItem)) {
-                HexBinaryItem.parseHexBinaryString(this.getValue());
-            } else if (itemType.equals(ItemType.base64BinaryItem)) {
-                Base64BinaryItem.parseBase64BinaryString(this.getValue());
-            } else {
-                return isBooleanLiteral(this.getValue());
-            }
-        } catch (UnsupportedOperationException | IllegalArgumentException e) {
-            return false;
-        }
-        return true;
     }
 
     public String serialize() {
@@ -225,7 +153,7 @@ public class StringItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.stringItem;
+        return AtomicItemType.stringItem;
     }
 
     @Override
@@ -451,11 +379,6 @@ public class StringItem implements Item {
     @Override
     public void putItemByKey(String key, Item value) {
         throw new OurBadException(" Item '" + this.serialize() + "' is a string!");
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return InstanceOfIterator.doesItemTypeMatchItem(type, this);
     }
 
     @Override

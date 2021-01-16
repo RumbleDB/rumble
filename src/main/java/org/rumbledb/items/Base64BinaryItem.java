@@ -7,6 +7,7 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -67,11 +68,6 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.base64BinaryItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -79,15 +75,6 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public boolean isBase64Binary() {
         return true;
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.base64BinaryItem)
-            ||
-            itemType.equals(ItemType.hexBinaryItem)
-            ||
-            itemType.equals(ItemType.stringItem);
     }
 
     @Override
@@ -148,6 +135,6 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.base64BinaryItem;
+        return AtomicItemType.base64BinaryItem;
     }
 }
