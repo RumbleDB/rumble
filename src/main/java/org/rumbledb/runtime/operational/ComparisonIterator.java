@@ -427,7 +427,6 @@ public class ComparisonIterator extends LocalRuntimeIterator {
                 return compare;
             }
             ++i;
-            continue;
         }
     }
 
