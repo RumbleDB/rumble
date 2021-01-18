@@ -411,7 +411,28 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             byte[] l,
             byte[] r
     ) {
-        return Arrays.toString(l).compareTo(Arrays.toString(r));
+        int i = 0;
+        while(true)
+        {
+            if(i == l.length && i == r.length)
+            {
+                return 0;
+            }
+            if(i == l.length)
+            {
+                return -1;
+            }
+            if(i == r.length)
+            {
+                return 1;
+            }
+            int compare = Byte.compare(l[i], r[i]);
+            if(compare != 0) {
+                return compare;
+            }
+            ++i;
+            continue;
+        }
     }
 
     private static Item comparisonResultToBooleanItem(
