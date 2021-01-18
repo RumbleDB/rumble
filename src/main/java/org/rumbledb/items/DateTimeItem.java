@@ -10,7 +10,9 @@ import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.DateTimeParser;
 import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
@@ -18,7 +20,7 @@ import java.util.regex.Pattern;
 
 import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
-public class DateTimeItem extends AtomicItem {
+public class DateTimeItem implements Item {
 
     private static final String yearFrag = "((-)?(([1-9]\\d\\d(\\d)+)|(0\\d\\d\\d)))";
     private static final String monthFrag = "((0[1-9])|(1[0-2]))";
@@ -70,6 +72,20 @@ public class DateTimeItem extends AtomicItem {
         }
     }
 
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
     public DateTime getValue() {
         return this.value;
     }
@@ -77,11 +93,6 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public DateTime getDateTimeValue() {
         return this.getValue();
-    }
-
-    @Override
-    public boolean isAtomic() {
-        return true;
     }
 
     @Override
@@ -101,18 +112,6 @@ public class DateTimeItem extends AtomicItem {
 
     @Override
     public boolean getEffectiveBooleanValue() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isDateTime()) {
-            return this.getValue().isEqual(otherItem.getDateTimeValue());
-        }
         return false;
     }
 
@@ -222,24 +221,12 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isDateTime()) {
-            return this.getValue().compareTo(other.getDateTimeValue());
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
+    public ItemType getDynamicType() {
+        return AtomicItemType.dateTimeItem;
     }
 
     @Override
-    public ItemType getDynamicType() {
-        return AtomicItemType.dateTimeItem;
+    public boolean isAtomic() {
+        return true;
     }
 }
