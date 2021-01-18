@@ -184,17 +184,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                                     expressionWithIterator.getIterator().getMetadata()
                             );
                         }
-                        if (resultItem.isBinary()) {
-                            String itemType = resultItem.getDynamicType().toString();
-                            throw new UnexpectedTypeException(
-                                    "\""
-                                        + itemType
-                                        + "\": invalid type: can not compare for equality to type \""
-                                        + itemType
-                                        + "\"",
-                                    getMetadata()
-                            );
-                        }
                     }
                     isFieldEmpty = false;
                     results.add(resultItem);

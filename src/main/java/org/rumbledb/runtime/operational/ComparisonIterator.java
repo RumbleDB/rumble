@@ -292,6 +292,8 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             switch (comparisonOperator) {
                 case VC_EQ:
                 case GC_EQ:
+                case VC_NE:
+                case GC_NE:
                     Period l = left.getDurationValue();
                     Period r = right.getDurationValue();
                     return processDuration(l, r);
