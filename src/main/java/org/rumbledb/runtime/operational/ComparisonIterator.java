@@ -412,22 +412,18 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             byte[] r
     ) {
         int i = 0;
-        while(true)
-        {
-            if(i == l.length && i == r.length)
-            {
+        while (true) {
+            if (i == l.length && i == r.length) {
                 return 0;
             }
-            if(i == l.length)
-            {
+            if (i == l.length) {
                 return -1;
             }
-            if(i == r.length)
-            {
+            if (i == r.length) {
                 return 1;
             }
-            int compare = Byte.compare(l[i], r[i]);
-            if(compare != 0) {
+            int compare = Integer.compare(Byte.toUnsignedInt(l[i]), Byte.toUnsignedInt(r[i]));
+            if (compare != 0) {
                 return compare;
             }
             ++i;
