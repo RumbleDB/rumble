@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, false, false, true, false, false)" :)
+(:JIQS: ShouldRun; Output="(true, true, true, true, true, true, false, false, false, true, false, false, false)" :)
 duration("P20M") eq duration("P1Y8M"),
 duration(()) ne duration("PT0S"),
 duration(()) eq duration("PT0S"),
@@ -19,4 +19,5 @@ return (
   $dtdur le $dtdur,
   $ymdur > $ymdur,
   $dtdur eq $ymdur
-)
+),
+duration("P1Y") ne duration("P1Y")

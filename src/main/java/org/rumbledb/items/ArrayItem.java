@@ -30,7 +30,7 @@ import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayItem extends JsonItem {
+public class ArrayItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -44,6 +44,25 @@ public class ArrayItem extends JsonItem {
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
+    }
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isArray()) {
+            return false;
+        }
+        if (getSize() != o.getSize()) {
+            return false;
+        }
+        for (int i = 0; i < getSize(); ++i) {
+            if (!getItemAt(i).equals(o.getItemAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void append(Item other) {
@@ -109,25 +128,6 @@ public class ArrayItem extends JsonItem {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
-            return false;
-        }
-        if (getSize() != o.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public int hashCode() {
         int result = 0;
         result += getSize();
@@ -140,5 +140,10 @@ public class ArrayItem extends JsonItem {
     @Override
     public ItemType getDynamicType() {
         return AtomicItemType.arrayItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 }

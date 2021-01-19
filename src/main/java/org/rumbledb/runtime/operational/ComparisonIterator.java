@@ -292,6 +292,8 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             switch (comparisonOperator) {
                 case VC_EQ:
                 case GC_EQ:
+                case VC_NE:
+                case GC_NE:
                     Period l = left.getDurationValue();
                     Period r = right.getDurationValue();
                     return processDuration(l, r);
@@ -409,7 +411,23 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             byte[] l,
             byte[] r
     ) {
-        return Arrays.toString(l).compareTo(Arrays.toString(r));
+        int i = 0;
+        while (true) {
+            if (i == l.length && i == r.length) {
+                return 0;
+            }
+            if (i == l.length) {
+                return -1;
+            }
+            if (i == r.length) {
+                return 1;
+            }
+            int compare = Integer.compare(Byte.toUnsignedInt(l[i]), Byte.toUnsignedInt(r[i]));
+            if (compare != 0) {
+                return compare;
+            }
+            ++i;
+        }
     }
 
     private static Item comparisonResultToBooleanItem(

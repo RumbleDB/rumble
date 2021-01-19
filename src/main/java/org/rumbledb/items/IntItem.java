@@ -23,15 +23,17 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
-public class IntItem extends AtomicItem {
+public class IntItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -44,6 +46,20 @@ public class IntItem extends AtomicItem {
     public IntItem(int value) {
         super();
         this.value = value;
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     @Override
@@ -102,6 +118,11 @@ public class IntItem extends AtomicItem {
     }
 
     @Override
+    public boolean isDouble() {
+        return false;
+    }
+
+    @Override
     public String serialize() {
         return String.valueOf(this.value);
     }
@@ -116,36 +137,8 @@ public class IntItem extends AtomicItem {
         this.value = input.readInt();
     }
 
-    public boolean equals(Object otherItem) {
-        try {
-            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch (IteratorFlowException e) {
-            return false;
-        }
-    }
-
     public int hashCode() {
         return getIntValue();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isInt()) {
-            return Integer.compare(this.value, other.getIntValue());
-        }
-        if (other.isInteger()) {
-            return this.castToIntegerValue().compareTo(other.getIntegerValue());
-        }
-        if (other.isDecimal()) {
-            return this.castToDecimalValue().compareTo(other.getDecimalValue());
-        }
-        if (other.isDouble()) {
-            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
-        }
-        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override
@@ -155,6 +148,11 @@ public class IntItem extends AtomicItem {
 
     @Override
     public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
         return true;
     }
 }

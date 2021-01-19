@@ -24,15 +24,16 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 
 
-public class DecimalItem extends AtomicItem {
+public class DecimalItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -45,6 +46,20 @@ public class DecimalItem extends AtomicItem {
     public DecimalItem(BigDecimal decimal) {
         super();
         this.value = decimal;
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     public BigDecimal getValue() {
@@ -101,36 +116,11 @@ public class DecimalItem extends AtomicItem {
         this.value = kryo.readObject(input, BigDecimal.class);
     }
 
-    public boolean equals(Object otherItem) {
-        try {
-            return (otherItem instanceof Item) && this.compareTo((Item) otherItem) == 0;
-        } catch (IteratorFlowException e) {
-            return false;
-        }
-    }
-
     public int hashCode() {
         if (getDecimalValue().stripTrailingZeros().scale() == 0) {
             return getDecimalValue().intValue();
         }
         return getDecimalValue().hashCode();
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isInteger()) {
-            return this.value.compareTo(other.castToDecimalValue());
-        }
-        if (other.isDecimal()) {
-            return this.value.compareTo(other.getDecimalValue());
-        }
-        if (other.isDouble()) {
-            return Double.compare(this.castToDoubleValue(), other.getDoubleValue());
-        }
-        throw new OurBadException("Comparing an int to something that is not a number.");
     }
 
     @Override
@@ -140,6 +130,11 @@ public class DecimalItem extends AtomicItem {
 
     @Override
     public boolean isNumeric() {
+        return true;
+    }
+
+    @Override
+    public boolean isAtomic() {
         return true;
     }
 }

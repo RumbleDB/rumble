@@ -41,6 +41,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
+
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 
@@ -466,6 +468,9 @@ public class ItemParser implements Serializable {
     private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
+                if (!item.isArray()) {
+                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
+                }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
                 DataType elementType = ((ArrayType) dataType).elementType();
@@ -477,37 +482,154 @@ public class ItemParser implements Serializable {
             }
 
             if (dataType instanceof StructType) {
+                if (!item.isObject()) {
+                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
+                }
                 return getRowFromItemUsingSchema(item, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
+                if (!item.isBoolean()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.booleanItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getBooleanValue();
+                }
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
-                return item.castToIntValue();
+                if (!item.isInt()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.intItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getIntValue();
+                }
+                return item.getIntValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
-                return item.castToDoubleValue();
+                if (!item.isDouble()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.doubleItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getDoubleValue();
+                }
+                return item.getDoubleValue();
             }
             if (dataType.equals(DataTypes.FloatType)) {
-                return item.castToFloatValue();
+                if (!item.isFloat()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.floatItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getFloatValue();
+                }
+                return item.getFloatValue();
             }
             if (dataType.equals(decimalType)) {
-                return item.castToDecimalValue();
+                if (!item.isDecimal()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.decimalItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getDecimalValue();
+                }
+                return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
+                if (!item.isString()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.stringItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getStringValue();
+                }
                 return item.getStringValue();
             }
             if (dataType.equals(DataTypes.NullType)) {
                 if (!item.isNull()) {
-                    throw new OurBadException("Item '" + item.serialize() + " is not null");
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.nullItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return null;
                 }
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
+                if (!item.isDate()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.dateItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return new Date(item.getDateTimeValue().getMillis());
+                }
                 return new Date(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
+                if (!item.isDateTime()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        AtomicItemType.dateTimeItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new MLInvalidDataFrameSchemaException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return new Timestamp(item.getDateTimeValue().getMillis());
+                }
                 return new Timestamp(item.getDateTimeValue().getMillis());
             }
         } catch (OurBadException ex) {
