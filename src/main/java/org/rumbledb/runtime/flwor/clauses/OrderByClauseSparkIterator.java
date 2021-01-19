@@ -214,6 +214,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             throw new OurBadException("Invalid orderby clause.");
         }
 
+        int numberOfOrderingKeys = this.expressionsWithIterator.size();
+
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             if (expressionWithIterator.getIterator().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
@@ -267,7 +269,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
-            for (int columnIndex = 0; columnIndex < columnsTypesOfRowAsList.size(); columnIndex++) {
+            for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
                 String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
 
                 if (
@@ -322,7 +324,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         List<StructField> typedFields = new ArrayList<>(); // Determine the return type for ordering UDF
         StringBuilder orderingSQL = new StringBuilder(); // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
-        for (int columnIndex = 0; columnIndex < typesForAllColumns.size(); columnIndex++) {
+        for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
             String columnTypeString = typesForAllColumns.get(columnIndex);
             String columnName;
             DataType columnType;
@@ -333,7 +335,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
             // create fields for the given value types
             columnName = columnIndex + "-valueField";
-            if (columnTypeString.equals(AtomicItemType.booleanItem.getName())) {
+            if (columnTypeString == null) {
+                columnType = DataTypes.BooleanType;
+            } else if (columnTypeString.equals(AtomicItemType.booleanItem.getName())) {
                 columnType = DataTypes.BooleanType;
             } else if (columnTypeString.equals(AtomicItemType.stringItem.getName())) {
                 columnType = DataTypes.StringType;
@@ -381,7 +385,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             orderingSQL.append("`.`");
             orderingSQL.append(columnIndex);
             orderingSQL.append("-valueField`");
-            if (columnIndex != typesForAllColumns.size() - 1) {
+            if (columnIndex != numberOfOrderingKeys - 1) {
                 if (expressionWithIterator.isAscending()) {
                     orderingSQL.append(", ");
                 } else {
