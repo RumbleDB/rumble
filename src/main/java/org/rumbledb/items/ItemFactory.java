@@ -4,7 +4,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -77,13 +76,7 @@ public class ItemFactory {
         if (lexicalValue.length() >= 10) {
             return new IntegerItem(new BigInteger(lexicalValue));
         }
-        try {
-            return new IntItem(Integer.parseInt(lexicalValue));
-        } catch (NumberFormatException e) {
-            OurBadException obe = new OurBadException("Issue with parsing integer " + lexicalValue);
-            obe.initCause(e);
-            throw obe;
-        }
+        return new IntItem(Integer.parseInt(lexicalValue));
     }
 
     public Item createDoubleItem(double d) {
@@ -97,6 +90,10 @@ public class ItemFactory {
             return this.NaNDoubleItem;
         }
         return new DoubleItem(d);
+    }
+
+    public Item createFloatItem(float d) {
+        return new FloatItem(d);
     }
 
     public Item createDurationItem(Period p) {

@@ -1,6 +1,6 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:22:COLUMN:44:" :)
+(:JIQS: ShouldParse :)
 let $correct := (
-    for $item in jn:parse-json(f:read-text("confusion_sample.json"))
+    for $item in parse-json(unparsed-text("confusion_sample.json"))
     let $guess := $item."guess", $target := $item."target"
     where $guess = $target
     group by $target
@@ -8,7 +8,7 @@ let $correct := (
 "Correct guesses": count($guess)})
 
 let $incorrect := (
-for $item in jn:parse-json(f:read-text("confusion_sample.json"))
+for $item in parse-json(unparsed-text("confusion_sample.json"))
 let $guess := $item."guess", $target := $item."target"
 where $guess != $target
 group by $target

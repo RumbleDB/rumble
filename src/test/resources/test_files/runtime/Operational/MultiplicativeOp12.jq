@@ -1,19 +1,28 @@
-(:JIQS: ShouldRun; Output="(1, 0, 0, 0, 3333333333, 1, 990099009, 813008, 3, 0, 1, 0, 4100, 0, 1217, 1)" :)
+(:JIQS: ShouldRun; Output="(1, 0, 0, 0, 0, 3333333333, 1, 990099009, 813008, 813008, 3, 0, 1, 0, 0, 4100, 0, 1217, 1, 1, 4100, 0, 1217, 1, 1)" :)
 3 idiv 3,
 3 idiv 10000000000,
 3 idiv 10.1,
 3 idiv 1.23e4,
+3 idiv float(1.23e4),
 10000000000 idiv 3,
 10000000000 idiv 10000000000,
 10000000000 idiv 10.1,
 10000000000 idiv 1.23e4,
+10000000000 idiv float(1.23e4),
 10.1 idiv 3,
 10.1 idiv 10000000000,
 10.1 idiv 10.1,
 10.1 idiv 1.23e4,
+10.1 idiv float(1.23e4),
 1.23e4 idiv 3,
 1.23e4 idiv 10000000000,
 1.23e4 idiv 10.1,
-1.23e4 idiv 1.23e4
+1.23e4 idiv 1.23e4,
+1.23e4 idiv float(1.23e4),
+float(1.23e4) idiv 3,
+float(1.23e4) idiv 10000000000,
+float(1.23e4) idiv 10.1,
+float(1.23e4) idiv 1.23e4,
+float(1.23e4) idiv 1.23e4
 
 (: empty sequence :)

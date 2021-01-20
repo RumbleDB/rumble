@@ -57,7 +57,7 @@ varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':='
 
 functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' fn_body=expr '}' | 'external');
+                          ('{' (fn_body=expr)? '}' | 'external');
 
 paramList               : param (',' param)*;
 
@@ -211,7 +211,7 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' fn_body=expr '}');
+                           ('{' (fn_body=expr)? '}');
 
 ///////////////////////// Types
 
@@ -221,12 +221,12 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : 'item'
+itemType                : Kitem
                         | jSONItemTest
                         | atomicType;
 
-jSONItemTest            : 'object'
-                        | 'array'
+jSONItemTest            : Kobject
+                        | Karray
                         | Kjson;
 
 keyWordString           : 'string';
@@ -236,6 +236,8 @@ keyWordInteger          : 'integer';
 keyWordDecimal          : 'decimal';
 
 keyWordDouble           : 'double';
+
+keyWordFloat            : 'float';
 
 keyWordBoolean          : 'boolean';
 
@@ -261,6 +263,7 @@ typesKeywords           : keyWordString
                         | keyWordInteger
                         | keyWordDecimal
                         | keyWordDouble
+                        | keyWordFloat
                         | keyWordBoolean
                         | keyWordDuration
                         | keyWordYearMonthDuration
@@ -290,24 +293,28 @@ uriLiteral              : stringLiteral;
 stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
-                        | Kjson
-                        | Kversion
-                        | Ktypeswitch
-                        | Kor
                         | Kand
-                        | Knot
-                        | Kto
-                        | Kinstance
-                        | Kof
-                        | Ktreat
+                        | Karray
                         | Kcast
                         | Kcastable
-                        | Kdefault
-                        | Kthen
-                        | Kelse
                         | Kcollation
+                        | Kdefault
+                        | Kelse
                         | Kgreatest
+                        | Kinstance
+                        | Kitem
+                        | Kjson
                         | Kleast
+                        | Knot
+                        | NullLiteral
+                        | Kobject
+                        | Kof
+                        | Kor
+                        | Kthen
+                        | Kto
+                        | Ktreat
+                        | Ktypeswitch
+                        | Kversion
                         | Kswitch
                         | Kcase
                         | Ktry
@@ -421,6 +428,12 @@ Kversion                : 'version';
 Kjsoniq                 : 'jsoniq';
 
 Kjson                   : 'json-item';
+
+Karray                  : 'array';
+
+Kobject                 : 'object';
+
+Kitem                   : 'item';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 

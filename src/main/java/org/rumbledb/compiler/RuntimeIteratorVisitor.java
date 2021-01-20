@@ -82,7 +82,6 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -109,7 +108,7 @@ import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
@@ -132,8 +131,6 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
-import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -778,7 +775,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        RuntimeIterator runtimeIterator = new ComparisonOperationIterator(
+        RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
                 expression.getComparisonOperator(),
@@ -849,35 +846,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new CastIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
-        return runtimeIterator;
-    }
-    // endregion
-
-    // region quantifiers
-    @Override
-    public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
-        List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
-        expression.getVariables()
-            .forEach(
-                var -> variables.add(
-                    new QuantifiedExpressionVarIterator(
-                            var.getVariableName(),
-                            var.getSequenceType(),
-                            this.visit(var.getExpression(), argument),
-                            expression.getHighestExecutionMode(this.visitorConfig),
-                            expression.getMetadata()
-                    )
-                )
-            );
-        RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
-        RuntimeIterator runtimeIterator = new QuantifiedExpressionIterator(
-                expression.getOperator(),
-                variables,
-                evaluationExpression,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

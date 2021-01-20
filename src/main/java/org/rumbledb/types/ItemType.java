@@ -27,35 +27,15 @@ import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-    private static final long serialVersionUID = 1L;
-    private String name;
+    protected static final long serialVersionUID = 1L;
+    protected String name;
 
-    public static final ItemType objectItem = new ItemType("object");
-    public static final ItemType atomicItem = new ItemType("atomic");
-    public static final ItemType stringItem = new ItemType("string");
-    public static final ItemType integerItem = new ItemType("integer");
-    public static final ItemType decimalItem = new ItemType("decimal");
-    public static final ItemType doubleItem = new ItemType("double");
-    public static final ItemType booleanItem = new ItemType("boolean");
-    public static final ItemType arrayItem = new ItemType("array");
-    public static final ItemType nullItem = new ItemType("null");
-    public static final ItemType JSONItem = new ItemType("json-item");
-    public static final ItemType durationItem = new ItemType("duration");
-    public static final ItemType yearMonthDurationItem = new ItemType("yearMonthDuration");
-    public static final ItemType dayTimeDurationItem = new ItemType("dayTimeDuration");
-    public static final ItemType dateTimeItem = new ItemType("dateTime");
-    public static final ItemType dateItem = new ItemType("date");
-    public static final ItemType timeItem = new ItemType("time");
-    public static final ItemType hexBinaryItem = new ItemType("hexBinary");
-    public static final ItemType anyURIItem = new ItemType("anyURI");
-    public static final ItemType base64BinaryItem = new ItemType("base64Binary");
     public static final ItemType item = new ItemType("item");
-    public static final ItemType functionItem = new ItemType("function");
 
     public ItemType() {
     }
 
-    private ItemType(String name) {
+    protected ItemType(String name) {
         this.name = name;
     }
 
@@ -63,105 +43,83 @@ public class ItemType implements Serializable {
         return this.name;
     }
 
-    public static ItemType getItemTypeByName(String name) {
-        if (name.equals(objectItem.name)) {
-            return objectItem;
-        }
-        if (name.equals(atomicItem.name)) {
-            return atomicItem;
-        }
-        if (name.equals(stringItem.name)) {
-            return stringItem;
-        }
-        if (name.equals(integerItem.name)) {
-            return integerItem;
-        }
-        if (name.equals(decimalItem.name)) {
-            return decimalItem;
-        }
-        if (name.equals(doubleItem.name)) {
-            return doubleItem;
-        }
-        if (name.equals(booleanItem.name)) {
-            return booleanItem;
-        }
-        if (name.equals(nullItem.name)) {
-            return nullItem;
-        }
-        if (name.equals(arrayItem.name)) {
-            return arrayItem;
-        }
-        if (name.equals(JSONItem.name)) {
-            return JSONItem;
-        }
-        if (name.equals(durationItem.name)) {
-            return durationItem;
-        }
-        if (name.equals(yearMonthDurationItem.name)) {
-            return yearMonthDurationItem;
-        }
-        if (name.equals(dayTimeDurationItem.name)) {
-            return dayTimeDurationItem;
-        }
-        if (name.equals(dateTimeItem.name)) {
-            return dateTimeItem;
-        }
-        if (name.equals(dateItem.name)) {
-            return dateItem;
-        }
-        if (name.equals(timeItem.name)) {
-            return timeItem;
-        }
-        if (name.equals(anyURIItem.name)) {
-            return anyURIItem;
-        }
-        if (name.equals(hexBinaryItem.name)) {
-            return hexBinaryItem;
-        }
-        if (name.equals(base64BinaryItem.name)) {
-            return base64BinaryItem;
-        }
-        if (name.equals(item.name)) {
-            return item;
-        }
-        throw new OurBadException("Type unrecognized: " + name);
-    }
-
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.equals(((ItemType) other).getName());
+        return this.name.equals(other.toString());
     }
 
+    // Returns true if [this] is a function item
+    public boolean isFunctionItem() {
+        return false;
+    }
 
+    // Returns the signature of a function item
+    public FunctionSignature getSignature() {
+        throw new OurBadException("called getSignature on a non-function item");
+    }
+
+    // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
         if (superType.equals(item)) {
             return true;
+        } else if (superType.equals(AtomicItemType.JSONItem)) {
+            return this.equals(AtomicItemType.objectItem)
+                || this.equals(AtomicItemType.arrayItem)
+                || this.equals(AtomicItemType.JSONItem);
+        } else if (superType.equals(AtomicItemType.atomicItem)) {
+            return this.equals(AtomicItemType.stringItem)
+                || this.equals(AtomicItemType.integerItem)
+                || this.equals(AtomicItemType.decimalItem)
+                || this.equals(AtomicItemType.doubleItem)
+                || this.equals(AtomicItemType.booleanItem)
+                || this.equals(AtomicItemType.nullItem)
+                || this.equals(AtomicItemType.anyURIItem)
+                || this.equals(AtomicItemType.hexBinaryItem)
+                || this.equals(AtomicItemType.base64BinaryItem)
+                || this.equals(AtomicItemType.dateTimeItem)
+                || this.equals(AtomicItemType.dateItem)
+                || this.equals(AtomicItemType.timeItem)
+                || this.equals(AtomicItemType.durationItem)
+                || this.equals(AtomicItemType.yearMonthDurationItem)
+                || this.equals(AtomicItemType.dayTimeDurationItem)
+                || this.equals(AtomicItemType.atomicItem);
+        } else if (superType.equals(AtomicItemType.durationItem)) {
+            return this.equals(AtomicItemType.yearMonthDurationItem)
+                || this.equals(AtomicItemType.dayTimeDurationItem)
+                || this.equals(AtomicItemType.durationItem);
+        } else if (superType.equals(AtomicItemType.decimalItem)) {
+            return this.equals(AtomicItemType.integerItem) || this.equals(AtomicItemType.decimalItem);
         }
-        if (superType.equals(this)) {
-            return true;
-        }
-        if (superType.equals(decimalItem)) {
-            return this.equals(decimalItem)
-                || this.equals(integerItem);
-        }
-        if (superType.equals(JSONItem)) {
-            return this.equals(objectItem)
-                || this.equals(arrayItem)
-                || this.equals(JSONItem);
-        }
+        return this.equals(superType);
+    }
 
-        if (superType.equals(atomicItem)) {
-            return this.equals(stringItem)
-                || this.equals(integerItem)
-                || this.equals(decimalItem)
-                || this.equals(doubleItem)
-                || this.equals(booleanItem)
-                || this.equals(anyURIItem);
-        }
+    public ItemType findCommonSuperType(ItemType other) {
+        // item is the most generic type
+        return this;
+    }
 
+    /**
+     * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
+     *
+     * @param other a strict subtype of atomic item type to which we are trying to cast
+     * @return true if it is possible at static time to cast [this] to [other], false otherwise
+     */
+    public boolean isStaticallyCastableAs(ItemType other) {
+        // this is not atomic and therefore cannot be casted
+        // TODO: consider throwing error here
+        return false;
+    }
+
+    // return [true] if this is a numeric type (i.e. [integerItem], [decimalItem] or [doubleItem]), false otherwise
+    public boolean isNumeric() {
+        return false;
+    }
+
+    // returns [true] if this can be promoted to itemType
+    public boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
 

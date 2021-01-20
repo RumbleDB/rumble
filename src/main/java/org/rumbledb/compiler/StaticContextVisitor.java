@@ -52,9 +52,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -269,7 +267,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
                 clause.getPositionalVariableName(),
-                new SequenceType(ItemType.integerItem),
+                new SequenceType(AtomicItemType.integerItem),
                 clause.getMetadata(),
                 ExecutionMode.LOCAL
             );
@@ -323,7 +321,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
-            new SequenceType(ItemType.integerItem, SequenceType.Arity.One),
+            new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );
@@ -331,32 +329,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         return result;
     }
 
-    // endregion
-
-    // region quantifiers
-    @Override
-    public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
-        StaticContext contextWithQuantifiedExpressionVariables = argument;
-        for (QuantifiedExpressionVar clause : expression.getVariables()) {
-            this.visit(clause.getExpression(), contextWithQuantifiedExpressionVariables);
-            expression.initHighestExecutionMode(this.visitorConfig);
-
-            // create a child context, add the variable and return it
-            StaticContext result = new StaticContext(contextWithQuantifiedExpressionVariables);
-            result.addVariable(
-                clause.getVariableName(),
-                clause.getSequenceType(),
-                expression.getMetadata(),
-                ExecutionMode.LOCAL
-            );
-            contextWithQuantifiedExpressionVariables = result;
-        }
-        // validate expression with the defined variables
-        this.visit(expression.getEvaluationExpression(), contextWithQuantifiedExpressionVariables);
-        expression.initHighestExecutionMode(this.visitorConfig);
-        // return the given context unchanged as defined variables go out of scope
-        return argument;
-    }
     // endregion
 
     // region control

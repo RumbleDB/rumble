@@ -14,8 +14,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -189,7 +191,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             return df;
         }
         ItemType dataItemType = TreatIterator.getItemType(df);
-        if (dataItemType.isSubtypeOf(ItemType.decimalItem) && this.itemType.equals(ItemType.doubleItem)) {
+        if (dataItemType.isSubtypeOf(AtomicItemType.decimalItem) && this.itemType.equals(AtomicItemType.doubleItem)) {
             df.createOrReplaceTempView("input");
             df = df.sparkSession()
                 .sql(
@@ -218,7 +220,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         if (this.nextResult.isFunction()) {
             return;
         }
-        if (!this.nextResult.canBePromotedTo(this.sequenceType.getItemType())) {
+        if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         + this.nextResult.getDynamicType().toString()
@@ -228,6 +230,11 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        this.nextResult = this.nextResult.promoteTo(this.sequenceType.getItemType());
+        this.nextResult = CastIterator.castItemToType(this.nextResult, this.sequenceType.getItemType(), getMetadata());
+        if (this.nextResult == null) {
+            throw new OurBadException(
+                    "We were not able to promote " + this.nextResult + " to type " + this.sequenceType.getItemType()
+            );
+        }
     }
 }
