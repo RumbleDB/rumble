@@ -148,7 +148,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     public void materialize(DynamicContext context, List<Item> result) {
         if (!isRDDOrDataFrame()) {
-            super.materialize(context,  result);
+            super.materialize(context, result);
             return;
         }
         JavaRDD<Item> items = this.getRDD(context);
@@ -158,7 +158,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
         if (!isRDDOrDataFrame()) {
-            super.materializeNFirstItems(context,  result, n);
+            super.materializeNFirstItems(context, result, n);
             return;
         }
         JavaRDD<Item> items = this.getRDD(context);
@@ -174,8 +174,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         JavaRDD<Item> items = this.getRDD(context);
         List<Item> collectedItems = items.take(1);
-        if(collectedItems.size() == 1)
-        {
+        if (collectedItems.size() == 1) {
             return collectedItems.get(0);
         } else {
             return null;
@@ -192,12 +191,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         JavaRDD<Item> items = this.getRDD(context);
         List<Item> collectedItems = items.take(2);
-        if(collectedItems.size() == 1)
-        {
+        if (collectedItems.size() == 1) {
             return collectedItems.get(0);
         }
-        if(collectedItems.size() == 0)
-        {
+        if (collectedItems.size() == 0) {
             throw new NoItemException();
         }
         throw new MoreThanOneItemException();
@@ -212,12 +209,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
         JavaRDD<Item> items = this.getRDD(context);
         List<Item> collectedItems = items.take(2);
-        if(collectedItems.size() == 1)
-        {
+        if (collectedItems.size() == 1) {
             return collectedItems.get(0);
         }
-        if(collectedItems.size() == 0)
-        {
+        if (collectedItems.size() == 0) {
             return null;
         }
         throw new MoreThanOneItemException();

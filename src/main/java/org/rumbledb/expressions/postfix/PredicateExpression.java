@@ -72,13 +72,14 @@ public class PredicateExpression extends Expression {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if(this.predicateExpression instanceof IntegerLiteralExpression)
-        {
-            String lexicalValue = ((IntegerLiteralExpression)this.predicateExpression).getLexicalValue();
-            if(ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt())
-            {
-                if(ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.staticContext.getRumbleCOnfiguration().getResultSizeCap())
-                {
+        if (this.predicateExpression instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) this.predicateExpression).getLexicalValue();
+            if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                if (
+                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.staticContext
+                        .getRumbleCOnfiguration()
+                        .getResultSizeCap()
+                ) {
                     this.highestExecutionMode = ExecutionMode.LOCAL;
                     return;
                 }

@@ -84,12 +84,15 @@ public class SequenceLookupIterator extends LocalRuntimeIterator {
         super.open(dynamicContext);
         init();
     }
-    
+
     private void init() {
         List<Item> materializedItems = new ArrayList<>();
-        this.iterator.materializeNFirstItems(this.currentDynamicContextForLocalExecution, materializedItems, this.position);
-        if(materializedItems.size() >= this.position)
-        {
+        this.iterator.materializeNFirstItems(
+            this.currentDynamicContextForLocalExecution,
+            materializedItems,
+            this.position
+        );
+        if (materializedItems.size() >= this.position) {
             this.nextResult = materializedItems.get(this.position - 1);
             this.hasNext = true;
         } else {
