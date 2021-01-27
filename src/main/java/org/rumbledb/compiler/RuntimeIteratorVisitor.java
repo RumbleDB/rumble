@@ -339,14 +339,18 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             String lexicalValue = ((IntegerLiteralExpression)expression.getPredicateExpression()).getLexicalValue();
             if(ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt())
             {
-                RuntimeIterator runtimeIterator = new SequenceLookupIterator(
-                    mainIterator,
-                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue(),
-                    expression.getHighestExecutionMode(this.visitorConfig),
-                    expression.getMetadata()
-                );
-                runtimeIterator.setStaticContext(expression.getStaticContext());
-                return runtimeIterator;
+                int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                if(n <= this.config.getResultSizeCap())
+                {
+                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                        mainIterator,
+                        n,
+                        expression.getHighestExecutionMode(this.visitorConfig),
+                        expression.getMetadata()
+                    );
+                    runtimeIterator.setStaticContext(expression.getStaticContext());
+                    return runtimeIterator;
+                }
             }
         }
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
