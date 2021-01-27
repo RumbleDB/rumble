@@ -64,6 +64,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -121,6 +122,7 @@ import org.rumbledb.runtime.postfix.ArrayLookupIterator;
 import org.rumbledb.runtime.postfix.ArrayUnboxingIterator;
 import org.rumbledb.runtime.postfix.ObjectLookupIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
+import org.rumbledb.runtime.postfix.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -332,6 +334,21 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitPredicateExpression(PredicateExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        if(expression.getPredicateExpression() instanceof IntegerLiteralExpression)
+        {
+            String lexicalValue = ((IntegerLiteralExpression)expression.getPredicateExpression()).getLexicalValue();
+            if(ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt())
+            {
+                RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                    mainIterator,
+                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue(),
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+                );
+                runtimeIterator.setStaticContext(expression.getStaticContext());
+                return runtimeIterator;
+            }
+        }
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,
