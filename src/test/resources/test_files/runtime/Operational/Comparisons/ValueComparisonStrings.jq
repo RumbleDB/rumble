@@ -14,9 +14,9 @@
 string("example.com/") eq anyURI("example.com/"),
 anyURI("example.com/") eq string("example.com/"),
 anyURI("example.com/") eq anyURI("example.com/"),
-string("example.com/") eq anyURI("example.com/"),
-anyURI("example.com/") eq string("example.com/"),
-anyURI("example.com/") eq anyURI("example.com/"),
+string("example.com/") ne anyURI("example.com/"),
+anyURI("example.com/") ne string("example.com/"),
+anyURI("example.com/") ne anyURI("example.com/"),
 string("example.com/") lt anyURI("example.com/"),
 anyURI("example.com/") lt string("example.com/"),
 anyURI("example.com/") lt anyURI("example.com/")
