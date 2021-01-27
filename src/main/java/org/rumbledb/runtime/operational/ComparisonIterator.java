@@ -340,6 +340,16 @@ public class ComparisonIterator extends LocalRuntimeIterator {
             String r = right.getStringValue();
             return processString(l, r);
         }
+        if (left.isString() && right.isAnyURI()) {
+            String l = left.getStringValue();
+            String r = right.serialize();
+            return processString(l, r);
+        }
+        if (left.isAnyURI() && right.isString()) {
+            String l = left.serialize();
+            String r = right.getStringValue();
+            return processString(l, r);
+        }
         return Long.MIN_VALUE;
     }
 
