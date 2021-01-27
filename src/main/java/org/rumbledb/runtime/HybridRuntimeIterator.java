@@ -152,8 +152,9 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
             return;
         }
         JavaRDD<Item> items = this.getRDD(context);
+        List<Item> collectedItems = SparkSessionManager.collectRDDwithLimit(items, this.getMetadata());
         result.clear();
-        result.addAll(items.collect());
+        result.addAll(collectedItems);
     }
 
     public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
