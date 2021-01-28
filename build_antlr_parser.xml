@@ -50,4 +50,26 @@
         </java>
     </target>
 
+    <target name="clean-xquery-parser">
+        <delete file="/org/rumbledb/parser/XQueryParser.tokens"/>
+<!--        <delete file="/org/rumbledb/parser/XQueryLexer.java"/>-->
+        <delete file="/org/rumbledb/parser/XQueryParser.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserVisitor.java"/>
+<!--        <delete file="/org/rumbledb/parser/XQueryLexer.tokens"/>-->
+    </target>
+
+    <target name="generate-xquery-parser">
+        <echo message="ANTLR4 ${parser.dir}/XQuery.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/XQueryParser.g4"/>
+            <arg value="-o"/>
+            <!-- <arg value="${parser.dir}" /> -->
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
+            <arg value="-visitor"/>
+        </java>
+    </target>
+
 </project>
