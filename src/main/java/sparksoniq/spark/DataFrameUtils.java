@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -119,10 +120,10 @@ public class DataFrameUtils {
         }
 
         if (item.isString()) {
-            Name itemTypeName = AtomicItemType.getItemTypeByName(
+            ItemType itemType = AtomicItemType.getItemTypeByName(
                 Name.createVariableInDefaultTypeNamespace(item.getStringValue())
-            ).getName();
-            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName);
+            );
+            return ItemParser.getDataFrameDataTypeFromItemType(itemType);
         }
 
         throw new MLInvalidDataFrameSchemaException(
