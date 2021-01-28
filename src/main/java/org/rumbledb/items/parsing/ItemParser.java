@@ -386,7 +386,9 @@ public class ItemParser implements Serializable {
         if (itemTypeName.equals(AtomicItemType.objectItem.getName())) {
             return vectorType;
         }
-        throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+        throw new IllegalArgumentException(
+                "Unexpected item type found: '" + itemTypeName + "' in namespace " + itemTypeName.getNamespace() + "."
+        );
     }
 
     public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
