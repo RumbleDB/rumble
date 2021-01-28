@@ -47,10 +47,10 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     public static final List<Name> transformerParameterNames = new ArrayList<>(
             Arrays.asList(
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224"
                 ),
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
                 )
             )
@@ -132,7 +132,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                Name.createVariableInRumbleNamespace(
+                                Name.createVariableInDefaultFunctionNamespace(
                                     this.transformerSparkMLClass.getName()
                                 ),
                                 2

@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
@@ -28,18 +29,18 @@ import java.io.Serializable;
 public class ItemType implements Serializable {
 
     protected static final long serialVersionUID = 1L;
-    protected String name;
+    protected Name name;
 
-    public static final ItemType item = new ItemType("item");
+    public static final ItemType item = new ItemType(Name.createVariableInDefaultTypeNamespace("item"));
 
     public ItemType() {
     }
 
-    protected ItemType(String name) {
+    protected ItemType(Name name) {
         this.name = name;
     }
 
-    public String getName() {
+    public Name getName() {
         return this.name;
     }
 
@@ -48,7 +49,7 @@ public class ItemType implements Serializable {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.equals(other.toString());
+        return this.name.equals(((ItemType) other).getName());
     }
 
     // Returns true if [this] is a function item
@@ -125,6 +126,6 @@ public class ItemType implements Serializable {
 
     @Override
     public String toString() {
-        return this.name;
+        return this.name.toString();
     }
 }

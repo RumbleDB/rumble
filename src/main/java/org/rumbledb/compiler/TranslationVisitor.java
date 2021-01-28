@@ -338,7 +338,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInRumbleNamespace(localName);
+                name = Name.createVariableInDefaultFunctionNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -987,9 +987,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.ci != null) {
             return this.visitContextItemExpr(ctx.ci);
         }
-        if (ctx.tkw != null) {
-            return new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
-        }
 
         throw new OurBadException("Unrecognized object lookup.");
     }
@@ -1123,7 +1120,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.item == null) {
             return SequenceType.EMPTY_SEQUENCE;
         }
-        ItemType itemType = AtomicItemType.getItemTypeByName(ctx.item.getText());
+        ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -1150,7 +1147,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return SequenceType.EMPTY_SEQUENCE;
         }
 
-        ItemType itemType = AtomicItemType.getItemTypeByName(ctx.item.getText());
+        ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -1160,12 +1157,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new SequenceType(itemType);
     }
 
+    public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.NullLiteral() != null) {
+            return AtomicItemType.nullItem;
+        }
+        return AtomicItemType.getItemTypeByName(parseName(itemTypeContext.qname(), false));
+    }
+
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true);
         if (
             AtomicItemType.typeExists(name)
                 && children.size() == 1
-                && name.getNamespace().equals(Name.RUMBLE_NS)
+                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)
                 && !name.getLocalName().equals("boolean")
         ) {
             return new CastExpression(
@@ -1249,7 +1253,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
-                            Name.createVariableInRumbleNamespace("inline-function`"),
+                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
                             paramName,
                             createMetadataFromContext(param)
                     );
@@ -1411,13 +1415,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
         if (!isUniversal) {
             return new FunctionCallExpression(
-                    Name.createVariableInRumbleNamespace("exists"),
+                    Name.createVariableInDefaultFunctionNamespace("exists"),
                     Collections.singletonList(flworExpression),
                     createMetadataFromContext(ctx)
             );
         } else {
             return new FunctionCallExpression(
-                    Name.createVariableInRumbleNamespace("empty"),
+                    Name.createVariableInDefaultFunctionNamespace("empty"),
                     Collections.singletonList(flworExpression),
                     createMetadataFromContext(ctx)
             );

@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
@@ -351,7 +352,7 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
+    public static DataType getDataFrameDataTypeFromItemTypeName(Name itemTypeName) {
         if (itemTypeName.equals(AtomicItemType.booleanItem.getName())) {
             return DataTypes.BooleanType;
         }
@@ -382,13 +383,13 @@ public class ItemParser implements Serializable {
         if (itemTypeName.equals(AtomicItemType.hexBinaryItem.getName())) {
             return DataTypes.BinaryType;
         }
-        if (itemTypeName.equals("object")) {
+        if (itemTypeName.equals(AtomicItemType.objectItem.getName())) {
             return vectorType;
         }
         throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
     }
 
-    public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
+    public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
             return AtomicItemType.booleanItem.getName();
         }
@@ -420,7 +421,7 @@ public class ItemParser implements Serializable {
             return AtomicItemType.hexBinaryItem.getName();
         }
         if (vectorType.equals(dataType)) {
-            return "object";
+            return AtomicItemType.objectItem.getName();
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }

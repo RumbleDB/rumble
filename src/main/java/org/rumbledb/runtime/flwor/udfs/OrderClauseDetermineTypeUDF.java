@@ -25,6 +25,7 @@ import org.apache.spark.sql.api.java.UDF1;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -33,13 +34,13 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import java.util.ArrayList;
 import java.util.List;
 
-public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
+public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<Name>> {
     private static final long serialVersionUID = 1L;
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
     private Item nextItem;
-    private List<String> result;
+    private List<Name> result;
 
     public OrderClauseDetermineTypeUDF(
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
@@ -54,7 +55,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
     }
 
     @Override
-    public List<String> call(Row row) {
+    public List<Name> call(Row row) {
         this.dataFrameContext.setFromRow(row);
 
         this.result.clear();

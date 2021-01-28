@@ -47,10 +47,10 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
                 ),
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
                 )
             )
@@ -132,7 +132,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                Name.createVariableInRumbleNamespace(
+                                Name.createVariableInDefaultFunctionNamespace(
                                     this.estimatorSparkMLClass.getName()
                                 ),
                                 2

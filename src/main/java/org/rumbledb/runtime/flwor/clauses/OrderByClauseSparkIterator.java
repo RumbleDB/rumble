@@ -60,7 +60,7 @@ import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
-    public static final String StringFlagForEmptySequence = "empty-sequence";
+    public static final Name StringFlagForEmptySequence = Name.createVariableInDefaultTypeNamespace("empty-sequence");
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
@@ -266,17 +266,17 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
         // Every column represents an order by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
+        Map<Integer, Name> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
-                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
+                Name columnType = (Name) columnsTypesOfRowAsList.get(columnIndex);
 
                 if (
                     !columnType.equals(StringFlagForEmptySequence)
                         && !columnType.equals(AtomicItemType.nullItem.getName())
                 ) {
-                    String currentColumnType = typesForAllColumns.get(columnIndex);
+                    Name currentColumnType = typesForAllColumns.get(columnIndex);
                     if (currentColumnType == null) {
                         typesForAllColumns.put(columnIndex, columnType);
                     } else if (
@@ -325,7 +325,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder orderingSQL = new StringBuilder(); // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
         for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
+            Name columnTypeString = typesForAllColumns.get(columnIndex);
             String columnName;
             DataType columnType;
 

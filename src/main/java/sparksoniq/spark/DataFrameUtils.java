@@ -9,6 +9,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
@@ -115,7 +116,7 @@ public class DataFrameUtils {
         }
 
         if (item.isString()) {
-            String itemTypeName = item.getStringValue();
+            Name itemTypeName = Name.createVariableInDefaultTypeNamespace(item.getStringValue());
             return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName);
         }
 
