@@ -40,6 +40,9 @@ decimalFormatDecl       : 'declare'
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=nCNameOrKeyWord | local_namekw = keyWords);
 
+nCNameOrKeyWord         : NCName
+                        | NullLiteral;
+
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
                         | 'infinity'
@@ -172,7 +175,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw=typesKeywords);
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
                         | Literal
@@ -221,68 +224,10 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : Kitem
-                        | jSONItemTest
-                        | atomicType;
-
-jSONItemTest            : Kobject
-                        | Karray
-                        | Kjson;
-
-keyWordString           : 'string';
-
-keyWordInteger          : 'integer';
-
-keyWordDecimal          : 'decimal';
-
-keyWordDouble           : 'double';
-
-keyWordFloat            : 'float';
-
-keyWordBoolean          : 'boolean';
-
-keyWordDuration         : 'duration';
-
-keyWordYearMonthDuration: 'yearMonthDuration';
-
-keyWordDayTimeDuration  : 'dayTimeDuration';
-
-keyWordHexBinary        : 'hexBinary';
-
-keyWordBase64Binary     : 'base64Binary';
-
-keyWordDateTime         : 'dateTime';
-
-keyWordDate             : 'date';
-
-keyWordTime             : 'time';
-
-keyWordAnyURI           : 'anyURI';
-
-typesKeywords           : keyWordString
-                        | keyWordInteger
-                        | keyWordDecimal
-                        | keyWordDouble
-                        | keyWordFloat
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordDate
-                        | keyWordTime
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordAnyURI;
-
-singleType              : item=atomicType (question +='?')?;
-
-atomicType              : 'atomic'
-                        | typesKeywords
+itemType                : qname
                         | NullLiteral;
 
-nCNameOrKeyWord         : NCName
-                        | typesKeywords;
+singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
@@ -294,7 +239,6 @@ stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
                         | Kand
-                        | Karray
                         | Kcast
                         | Kcastable
                         | Kcollation
@@ -302,12 +246,9 @@ keyWords                : Kjsoniq
                         | Kelse
                         | Kgreatest
                         | Kinstance
-                        | Kitem
-                        | Kjson
                         | Kleast
                         | Knot
                         | NullLiteral
-                        | Kobject
                         | Kof
                         | Kor
                         | Kthen
@@ -426,14 +367,6 @@ Kcastable               : 'castable';
 Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
-
-Kjson                   : 'json-item';
-
-Karray                  : 'array';
-
-Kobject                 : 'object';
-
-Kitem                   : 'item';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
