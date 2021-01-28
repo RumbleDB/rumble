@@ -44,6 +44,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.AtomicItemType;
+
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -60,7 +61,7 @@ import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
-    public static final Name StringFlagForEmptySequence = Name.createVariableInDefaultTypeNamespace("empty-sequence");
+    public static final String StringFlagForEmptySequence = Name.createVariableInDefaultTypeNamespace("empty-sequence");
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
@@ -270,7 +271,9 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
-                Name columnType = (Name) columnsTypesOfRowAsList.get(columnIndex);
+                Name columnType = AtomicItemType.getItemTypeByName(
+                    Name.createVariableInDefaultTypeNamespace((String) columnsTypesOfRowAsList.get(columnIndex))
+                ).getName();
 
                 if (
                     !columnType.equals(StringFlagForEmptySequence)
