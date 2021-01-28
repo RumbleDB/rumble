@@ -1169,7 +1169,17 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (
             AtomicItemType.typeExists(name)
                 && children.size() == 1
-                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)
+        ) {
+            return new CastExpression(
+                    children.get(0),
+                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (
+            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+                && children.size() == 1
+                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
                 && !name.getLocalName().equals("boolean")
         ) {
             return new CastExpression(
