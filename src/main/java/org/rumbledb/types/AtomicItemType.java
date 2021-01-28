@@ -106,7 +106,7 @@ public class AtomicItemType extends ItemType implements Serializable {
 
     public static boolean typeExists(Name name) {
         for (int i = 0; i < builtInItemTypes.size(); ++i) {
-            if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
                     return true;
                 }
@@ -121,7 +121,7 @@ public class AtomicItemType extends ItemType implements Serializable {
 
     public static ItemType getItemTypeByName(Name name) {
         for (int i = 0; i < builtInItemTypes.size(); ++i) {
-            if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
                 if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
                     return builtInItemTypes.get(i);
                 }
@@ -131,7 +131,7 @@ public class AtomicItemType extends ItemType implements Serializable {
                 }
             }
         }
-        throw new OurBadException("Type unrecognized: " + name);
+        throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
     }
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
