@@ -44,6 +44,7 @@ import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
 import org.rumbledb.types.AtomicItemType;
+
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworKeyComparator;
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -266,55 +267,59 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
         // Every column represents an order by expression
         // Check that every column contains a matching atomic type in all rows (nulls and empty-sequences are allowed)
-        Map<Integer, String> typesForAllColumns = new LinkedHashMap<>();
+        Map<Integer, Name> typesForAllColumns = new LinkedHashMap<>();
         for (Row columnTypesOfRow : columnTypesOfRows) {
             List<Object> columnsTypesOfRowAsList = columnTypesOfRow.getList(0);
             for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
-                String columnType = (String) columnsTypesOfRowAsList.get(columnIndex);
-
-                if (
-                    !columnType.equals(StringFlagForEmptySequence)
-                        && !columnType.equals(AtomicItemType.nullItem.getName())
-                ) {
-                    String currentColumnType = typesForAllColumns.get(columnIndex);
-                    if (currentColumnType == null) {
-                        typesForAllColumns.put(columnIndex, columnType);
-                    } else if (
-                        (currentColumnType.equals(AtomicItemType.integerItem.getName())
-                            || currentColumnType.equals(AtomicItemType.doubleItem.getName())
-                            || currentColumnType.equals(AtomicItemType.decimalItem.getName()))
-                            && (columnType.equals(AtomicItemType.integerItem.getName())
-                                || columnType.equals(AtomicItemType.doubleItem.getName())
-                                || columnType.equals(AtomicItemType.decimalItem.getName()))
+                String typeString = (String) columnsTypesOfRowAsList.get(columnIndex);
+                boolean isEmptySequence = typeString.contentEquals(StringFlagForEmptySequence);
+                if (!isEmptySequence) {
+                    Name columnType = AtomicItemType.getItemTypeByName(
+                        Name.createVariableInDefaultTypeNamespace(typeString)
+                    ).getName();
+                    if (
+                        !columnType.equals(AtomicItemType.nullItem.getName())
                     ) {
-                        // the numeric type calculation is identical to Item::getNumericResultType()
-                        if (
-                            currentColumnType.equals(AtomicItemType.doubleItem.getName())
-                                || columnType.equals(AtomicItemType.doubleItem.getName())
-                        ) {
-                            typesForAllColumns.put(columnIndex, AtomicItemType.doubleItem.getName());
+                        Name currentColumnType = typesForAllColumns.get(columnIndex);
+                        if (currentColumnType == null) {
+                            typesForAllColumns.put(columnIndex, columnType);
                         } else if (
-                            currentColumnType.equals(AtomicItemType.decimalItem.getName())
-                                || columnType.equals(AtomicItemType.decimalItem.getName())
+                            (currentColumnType.equals(AtomicItemType.integerItem.getName())
+                                || currentColumnType.equals(AtomicItemType.doubleItem.getName())
+                                || currentColumnType.equals(AtomicItemType.decimalItem.getName()))
+                                && (columnType.equals(AtomicItemType.integerItem.getName())
+                                    || columnType.equals(AtomicItemType.doubleItem.getName())
+                                    || columnType.equals(AtomicItemType.decimalItem.getName()))
                         ) {
-                            typesForAllColumns.put(columnIndex, AtomicItemType.decimalItem.getName());
-                        } else {
-                            // do nothing, type is already set to integer
+                            // the numeric type calculation is identical to Item::getNumericResultType()
+                            if (
+                                currentColumnType.equals(AtomicItemType.doubleItem.getName())
+                                    || columnType.equals(AtomicItemType.doubleItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, AtomicItemType.doubleItem.getName());
+                            } else if (
+                                currentColumnType.equals(AtomicItemType.decimalItem.getName())
+                                    || columnType.equals(AtomicItemType.decimalItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, AtomicItemType.decimalItem.getName());
+                            } else {
+                                // do nothing, type is already set to integer
+                            }
+                        } else if (
+                            (currentColumnType.equals(AtomicItemType.dayTimeDurationItem.getName())
+                                || currentColumnType.equals(AtomicItemType.yearMonthDurationItem.getName())
+                                || currentColumnType.equals(AtomicItemType.durationItem.getName()))
+                                && (columnType.equals(AtomicItemType.dayTimeDurationItem.getName())
+                                    || columnType.equals(AtomicItemType.yearMonthDurationItem.getName())
+                                    || columnType.equals(AtomicItemType.durationItem.getName()))
+                        ) {
+                            typesForAllColumns.put(columnIndex, AtomicItemType.durationItem.getName());
+                        } else if (!currentColumnType.equals(columnType)) {
+                            throw new UnexpectedTypeException(
+                                    "Order by variable must contain values of a single type.",
+                                    getMetadata()
+                            );
                         }
-                    } else if (
-                        (currentColumnType.equals(AtomicItemType.dayTimeDurationItem.getName())
-                            || currentColumnType.equals(AtomicItemType.yearMonthDurationItem.getName())
-                            || currentColumnType.equals(AtomicItemType.durationItem.getName()))
-                            && (columnType.equals(AtomicItemType.dayTimeDurationItem.getName())
-                                || columnType.equals(AtomicItemType.yearMonthDurationItem.getName())
-                                || columnType.equals(AtomicItemType.durationItem.getName()))
-                    ) {
-                        typesForAllColumns.put(columnIndex, AtomicItemType.durationItem.getName());
-                    } else if (!currentColumnType.equals(columnType)) {
-                        throw new UnexpectedTypeException(
-                                "Order by variable must contain values of a single type.",
-                                getMetadata()
-                        );
                     }
                 }
             }
@@ -325,7 +330,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder orderingSQL = new StringBuilder(); // Prepare the SQL statement for the order by query
         String appendedOrderingColumnsName = "ordering_columns";
         for (int columnIndex = 0; columnIndex < numberOfOrderingKeys; columnIndex++) {
-            String columnTypeString = typesForAllColumns.get(columnIndex);
+            Name columnTypeString = typesForAllColumns.get(columnIndex);
             String columnName;
             DataType columnType;
 

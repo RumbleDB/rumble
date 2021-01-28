@@ -144,7 +144,6 @@ import java.util.stream.Collectors;
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     private VisitorConfig visitorConfig;
-    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration config;
 
     public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {

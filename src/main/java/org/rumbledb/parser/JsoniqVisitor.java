@@ -92,6 +92,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitQname(JsoniqParser.QnameContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWord}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitNCNameOrKeyWord(JsoniqParser.NCNameOrKeyWordContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#dfPropertyName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -470,125 +476,11 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitItemType(JsoniqParser.ItemTypeContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#jSONItemTest}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitJSONItemTest(JsoniqParser.JSONItemTestContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordString}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordString(JsoniqParser.KeyWordStringContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordInteger}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordInteger(JsoniqParser.KeyWordIntegerContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDecimal}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDecimal(JsoniqParser.KeyWordDecimalContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDouble}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDouble(JsoniqParser.KeyWordDoubleContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordFloat}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordFloat(JsoniqParser.KeyWordFloatContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBoolean}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordBoolean(JsoniqParser.KeyWordBooleanContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDuration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDuration(JsoniqParser.KeyWordDurationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordYearMonthDuration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordYearMonthDuration(JsoniqParser.KeyWordYearMonthDurationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDayTimeDuration}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDayTimeDuration(JsoniqParser.KeyWordDayTimeDurationContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordHexBinary}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordHexBinary(JsoniqParser.KeyWordHexBinaryContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordBase64Binary}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordBase64Binary(JsoniqParser.KeyWordBase64BinaryContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDateTime}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDateTime(JsoniqParser.KeyWordDateTimeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordDate}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordDate(JsoniqParser.KeyWordDateContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordTime}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordTime(JsoniqParser.KeyWordTimeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#keyWordAnyURI}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitKeyWordAnyURI(JsoniqParser.KeyWordAnyURIContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#typesKeywords}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitTypesKeywords(JsoniqParser.TypesKeywordsContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#singleType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
 	 */
 	T visitSingleType(JsoniqParser.SingleTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#atomicType}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitAtomicType(JsoniqParser.AtomicTypeContext ctx);
-	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWord}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNCNameOrKeyWord(JsoniqParser.NCNameOrKeyWordContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#pairConstructor}.
 	 * @param ctx the parse tree

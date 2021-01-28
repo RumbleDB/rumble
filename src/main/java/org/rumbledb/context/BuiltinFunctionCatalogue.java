@@ -158,7 +158,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 0),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace(functionLocalName), 0),
                 new FunctionSignature(
                         Collections.emptyList(),
                         SequenceType.createSequenceType(returnType)
@@ -176,7 +176,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 1),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace(functionLocalName), 1),
                 new FunctionSignature(
                         Collections.singletonList(SequenceType.createSequenceType(param1Type)),
                         SequenceType.createSequenceType(returnType)
@@ -195,7 +195,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 2),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace(functionLocalName), 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -220,7 +220,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 3),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace(functionLocalName), 3),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -939,7 +939,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction concat =
         new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace("concat"), 100),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), 100),
                 new FunctionSignature(
                         Collections.nCopies(
                             100,
@@ -1802,7 +1802,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(substring_after.getIdentifier(), substring_after);
         for (int i = 0; i < 100; i++) {
             builtinFunctions.put(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace("concat"), i),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), i),
                 concat
             );
         }
