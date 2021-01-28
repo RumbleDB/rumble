@@ -55,7 +55,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        initNamespaces();
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -65,20 +64,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
-        initNamespaces();
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
-    }
-
-    public void initNamespaces() {
-        bindNamespace("fn", Name.FN_NS);
-        bindNamespace("xs", Name.XS_NS);
-        bindNamespace("jn", Name.JN_NS);
-        bindNamespace("js", Name.JS_NS);
     }
 
     public StaticContext getParent() {
