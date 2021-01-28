@@ -33,7 +33,7 @@ public class AtomicItemType extends ItemType implements Serializable {
     public static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean")
     );
-    public static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "null"));
+    public static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
     public static final AtomicItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration")
     );
