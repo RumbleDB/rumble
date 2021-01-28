@@ -59,6 +59,12 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
+    public Name() {
+        this.namespace = null;
+        this.prefix = null;
+        this.localName = null;
+    }
+
     public Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;
