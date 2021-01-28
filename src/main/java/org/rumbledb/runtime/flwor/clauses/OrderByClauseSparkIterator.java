@@ -61,7 +61,7 @@ import static org.rumbledb.items.parsing.ItemParser.decimalType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
-    public static final String StringFlagForEmptySequence = Name.createVariableInDefaultTypeNamespace("empty-sequence");
+    public static final String StringFlagForEmptySequence = "empty-sequence";
     private static final long serialVersionUID = 1L;
     private final List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
     private Map<Name, DynamicContext.VariableDependency> dependencies;
