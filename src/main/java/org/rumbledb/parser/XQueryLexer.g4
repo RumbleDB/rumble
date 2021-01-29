@@ -15,6 +15,11 @@ tokens {EscapeQuot, EscapeApos, DOUBLE_LBRACE, DOUBLE_RBRACE}
     private int bracesInside = 0;
 }
 
+@header {
+// Java header
+package org.rumbledb.parser;
+}
+
 IntegerLiteral: Digits ;
 DecimalLiteral: '.' Digits | Digits '.' [0-9]* ;
 DoubleLiteral: ('.' Digits | Digits ('.' [0-9]*)?) [eE] [+-]? Digits ;

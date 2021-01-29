@@ -25,8 +25,8 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
-import org.rumbledb.parser.JsoniqLexer;
-import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.XQueryLexer;
+import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -87,16 +87,15 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
-        JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        XQueryLexer lexer = new XQueryLexer(stream);
+        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.MainModuleContext main = module.module().main;
+            XQueryParser.MainModuleContext main = parser.mainModule();
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -125,18 +124,17 @@ public class VisitorHelpers {
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
-        JsoniqLexer lexer = new JsoniqLexer(stream);
-        JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
+        XQueryLexer lexer = new XQueryLexer(stream);
+        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration);
         try {
             // TODO Handle module extras
-            JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
-            JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
+            XQueryParser.LibraryModuleContext main = parser.libraryModule();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.

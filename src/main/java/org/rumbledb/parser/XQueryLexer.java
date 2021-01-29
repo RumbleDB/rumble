@@ -1,4 +1,8 @@
 // Generated from ./XQueryLexer.g4 by ANTLR 4.7
+
+// Java header
+package org.rumbledb.parser;
+
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
