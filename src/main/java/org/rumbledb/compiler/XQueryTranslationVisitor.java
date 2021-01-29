@@ -6,16 +6,30 @@ import org.antlr.v4.runtime.tree.ParseTree;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.arithmetic.AdditiveExpression;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.OrExpression;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
+import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import java.net.URI;
 import java.util.ArrayList;
@@ -271,17 +285,236 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     // endregion
 
     // region operational
+    @Override
+    public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
+        Expression result = (Expression) this.visitAndExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (XQueryParser.AndExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitAndExpr(child);
+            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
+    }
+
+    @Override
+    public Node visitAndExpr(XQueryParser.AndExprContext ctx) {
+        Expression result = (Expression) this.visitComparisonExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (XQueryParser.ComparisonExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitComparisonExpr(child);
+            result = new AndExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
+    }
+
+    @Override
+    public Node visitComparisonExpr(XQueryParser.ComparisonExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitStringConcatExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
+        Expression childExpression = (Expression) this.visitStringConcatExpr(child);
+        String op = "";
+        // TODO figure out the nodeComp and put it in else if. We do not have from symbol for it!
+        // is, <<, >>
+        if (ctx.nodeComp() != null)
+            return null;
+        // eq, ne, ge, gt, le, lt
+        if (ctx.valueComp() != null)
+            op = ctx.valueComp().getText();
+        // ==, !=, >=, >, <=, <
+        if (ctx.generalComp() != null)
+            op = ctx.generalComp().getText();
+        return new ComparisonExpression(
+                mainExpression,
+                childExpression,
+                ComparisonExpression.ComparisonOperator.fromSymbol(op),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+
+    @Override
+    public Node visitStringConcatExpr(XQueryParser.StringConcatExprContext ctx) {
+        Expression result = (Expression) this.visitRangeExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (XQueryParser.RangeExprContext child : ctx.rhs) {
+            Expression rightExpression = (Expression) this.visitRangeExpr(child);
+            result = new StringConcatExpression(result, rightExpression, createMetadataFromContext(ctx));
+        }
+        return result;
+    }
+
+    @Override
+    public Node visitRangeExpr(XQueryParser.RangeExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitAdditiveExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.AdditiveExprContext child = ctx.rhs.get(0);
+        Expression childExpression = (Expression) this.visitAdditiveExpr(child);
+        return new RangeExpression(
+                mainExpression,
+                childExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitAdditiveExpr(XQueryParser.AdditiveExprContext ctx) {
+        Expression result = (Expression) this.visitMultiplicativeExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            XQueryParser.MultiplicativeExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitMultiplicativeExpr(child);
+            result = new AdditiveExpression(
+                    result,
+                    rightExpression,
+                    ctx.op.get(i).getText().equals("-"),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
+    }
+
+    // TODO Insert unionExpr and intersectExceptExpr
+
+    @Override
+    public Node visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx) {
+        Expression result = (Expression) this.visitInstanceOfExpr(ctx.main_expr);
+        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.rhs.size(); ++i) {
+            XQueryParser.InstanceOfExprContext child = ctx.rhs.get(i);
+            Expression rightExpression = (Expression) this.visitInstanceOfExpr(child);
+            result = new MultiplicativeExpression(
+                    result,
+                    rightExpression,
+                    MultiplicativeExpression.MultiplicativeOperator.fromSymbol(ctx.op.get(i).getText()),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
+    }
+
+    @Override
+    public Node visitInstanceOfExpr(XQueryParser.InstanceOfExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitTreatExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new InstanceOfExpression(
+                mainExpression,
+                sequenceType,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public SequenceType processSequenceType(XQueryParser.SequenceTypeContext ctx) {
+        if (ctx.item == null) {
+            return SequenceType.EMPTY_SEQUENCE;
+        }
+        ItemType itemType = AtomicItemType.getItemTypeByName(ctx.item.getText());
+        if (ctx.question.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrZero
+            );
+        }
+        if (ctx.star.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.ZeroOrMore
+            );
+        }
+        if (ctx.plus.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrMore
+            );
+        }
+        return new SequenceType(itemType);
+    }
+
+    @Override
+    public Node visitTreatExpr(XQueryParser.TreatExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitCastableExpr(ctx.main_expr);
+        if (ctx.seq == null || ctx.seq.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SequenceTypeContext child = ctx.seq;
+        SequenceType sequenceType = this.processSequenceType(child);
+        return new TreatExpression(
+                mainExpression,
+                sequenceType,
+                ErrorCode.DynamicTypeTreatErrorCode,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitCastableExpr(XQueryParser.CastableExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitCastExpr(ctx.main_expr);
+        if (ctx.single == null || ctx.single.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SingleTypeContext child = ctx.single;
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastableExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+    }
+
+    public SequenceType processSingleType(XQueryParser.SingleTypeContext ctx) {
+        if (ctx.item == null) {
+            return SequenceType.EMPTY_SEQUENCE;
+        }
+
+        ItemType itemType = AtomicItemType.getItemTypeByName(ctx.item.getText());
+        if (ctx.question.size() > 0) {
+            return new SequenceType(
+                    itemType,
+                    SequenceType.Arity.OneOrZero
+            );
+        }
+        return new SequenceType(itemType);
+    }
+
+    @Override
+    public Node visitCastExpr(XQueryParser.CastExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitArrowExpr(ctx.main_expr);
+        if (ctx.single == null || ctx.single.isEmpty()) {
+            return mainExpression;
+        }
+        XQueryParser.SingleTypeContext child = ctx.single;
+        SequenceType sequenceType = this.processSingleType(child);
+        return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
+    }
+
 //    @Override
-//    public Node visitOrExpr(XQueryParser.OrExprContext ctx) {
-//        Expression result = (Expression) this.visitAndExpr(ctx.andExpr(0)); // Had to access first
-//        if (ctx.rhs == null || ctx.rhs.isEmpty()) {
-//            return result;
+//    public Node visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
+//        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+//
+//        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
+//            XQueryParser.FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+//            List<Expression> children = new ArrayList<Expression>();
+//            children.add(mainExpression);
+//            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
+//            mainExpression = processFunctionCall(functionCallContext, children);
 //        }
-//        for (XQueryParser.AndExprContext child : ctx.rhs) {
-//            Expression rightExpression = (Expression) this.visitAndExpr(child);
-//            result = new OrExpression(result, rightExpression, createMetadataFromContext(ctx));
-//        }
-//        return result;
+//        return mainExpression;
+//
 //    }
+
     // endregion
 }

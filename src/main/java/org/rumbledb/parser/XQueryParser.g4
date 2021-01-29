@@ -244,35 +244,37 @@ existInsertExpr: KW_INSERT exprSingle (KW_INTO | KW_PRECEDING | KW_FOLLOWING) ex
 existDeleteExpr: KW_DELETE exprSingle;
 existRenameExpr: KW_RENAME exprSingle KW_AS exprSingle;
 
-orExpr: andExpr (KW_OR andExpr)* ;
+orExpr: main_expr=andExpr (KW_OR rhs+=andExpr)* ;
 
-andExpr: comparisonExpr (KW_AND comparisonExpr)* ;
+andExpr: main_expr=comparisonExpr (KW_AND rhs+=comparisonExpr)* ;
 
-comparisonExpr: stringConcatExpr ( (valueComp | generalComp | nodeComp) stringConcatExpr )? ;
+comparisonExpr: main_expr=stringConcatExpr ( (valueComp | generalComp | nodeComp) rhs+=stringConcatExpr )?;
 
-stringConcatExpr: rangeExpr (CONCATENATION rangeExpr)* ;
+stringConcatExpr: main_expr=rangeExpr (CONCATENATION rhs+=rangeExpr)* ;
 
-rangeExpr: additiveExpr (KW_TO additiveExpr)? ;
+rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
-additiveExpr: multiplicativeExpr ( (PLUS | MINUS) multiplicativeExpr )* ;
+additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr: unionExpr ( (STAR | KW_DIV | KW_IDIV | KW_MOD) unionExpr )* ;
+multiplicativeExpr: main_expr=instanceOfExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=instanceOfExpr )* ;
 
-unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
+//multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
-intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
+//unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
 
-instanceOfExpr: treatExpr ( KW_INSTANCE KW_OF sequenceType)? ;
+//intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
 
-treatExpr: castableExpr ( KW_TREAT KW_AS sequenceType)? ;
+instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
-castableExpr: castExpr ( KW_CASTABLE KW_AS singleType)?;
+treatExpr: main_expr=castableExpr ( KW_TREAT KW_AS seq=sequenceType)? ;
 
-castExpr: arrowExpr (KW_CAST KW_AS singleType)? ;
+castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType)?;
 
-arrowExpr: unaryExpression (ARROW arrowFunctionSpecifier argumentList)* ;
+castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
-unaryExpression: (MINUS | PLUS)* valueExpr ;
+arrowExpr: main_expr=unaryExpr (ARROW arrowFunctionSpecifier function_call_expr+=argumentList)* ;
+
+unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
 valueExpr: validateExpr | extensionExpr | simpleMapExpr ;
 
@@ -519,11 +521,11 @@ unaryLookup: QUESTION keySpecifier ;
 
 // TYPES AND TYPE TESTS ////////////////////////////////////////////////////////
 
-singleType: simpleTypeName QUESTION? ;
+singleType: item=simpleTypeName question+=QUESTION? ;
 
 typeDeclaration: KW_AS sequenceType ;
 
-sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (itemType occurrence=(QUESTION|STAR|PLUS)? );
+sequenceType: (KW_EMPTY_SEQUENCE LPAREN RPAREN) | (item=itemType (question+=QUESTION | star+=STAR | plus+=PLUS)?);
 
 itemType: kindTest
         | (KW_ITEM LPAREN RPAREN)
