@@ -65,7 +65,20 @@
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
             <arg value="${parser.dir}/XQueryParser.g4"/>
             <arg value="-o"/>
-            <!-- <arg value="${parser.dir}" /> -->
+<!--             <arg value="${parser.dir}" />-->
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
+            <arg value="-visitor"/>
+        </java>
+    </target>
+
+    <target name="generate-xquery-lexer">
+        <echo message="ANTLR4 ${parser.dir}/XQuery.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/XQueryLexer.g4"/>
+            <arg value="-o"/>
+            <!--             <arg value="${parser.dir}" />-->
             <arg value="."/>   <!-- put results in *.g4's directory -->
             <arg value="-no-listener"/>
             <arg value="-visitor"/>
