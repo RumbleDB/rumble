@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/XQueryLexer.g4 by ANTLR 4.7
+// Generated from ./XQueryLexer.g4 by ANTLR 4.7
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;

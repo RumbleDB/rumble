@@ -18,32 +18,41 @@
   ~
   -->
 
-<project name="antlr-parser" default="generate-parser"
+<project name="antlr-parser" default="generate-xquery-parser"
          basedir="."> <!-- "." here is evaluated to full path and set to basedir-->
 
     <!-- Set project properties. -->
-    <!-- <property name="src.dir" value="${basedir}/src/main/java/sparksoniq"/> prepends full path as comment-->
-    <property name="src.dir" value="./src/main/java/org/rumbledb"/>
-    <property name="parser.dir" value="${src.dir}/parser"/>
-    <property name="antlr.jar" value="./lib/antlr-4.7-complete.jar"/>
+    <property name="antlr.jar" value="../../../../../../lib/antlr-4.7-complete.jar"/>
 
-
-    <target name="clean-parser">
-        <delete file="/org/rumbledb/parser/Jsoniq.tokens"/>
-        <delete file="/org/rumbledb/parser/JsoniqLexer.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqParser.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqBaseVisitor.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqVisitor.java"/>
-        <delete file="/org/rumbledb/parser/JsoniqLexer.tokens"/>
+    <target name="clean-xquery-parser">
+        <delete file="./XQueryParser.tokens"/>
+        <delete file="./XQueryLexer.java"/>
+        <delete file="./XQueryParser.java"/>
+        <delete file="./XQueryParserBaseVisitor.java"/>
+        <delete file="./XQueryParserVisitor.java"/>
+<!--        Never delete below file because we need it in original when executing generate-xquery-parser-->
+<!--        <delete file="/org/rumbledb/parser/XQueryLexer.tokens"/>-->
     </target>
 
-    <target name="generate-parser">
-        <echo message="ANTLR4 ${parser.dir}/Jsoniq.g4" level="info"/>
+    <target name="generate-xquery-parser">
+        <echo message="ANTLR4 XQueryParser.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="${parser.dir}/Jsoniq.g4"/>
+            <arg value="./XQueryParser.g4"/>
             <arg value="-o"/>
-            <!-- <arg value="${parser.dir}" /> -->
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
+            <arg value="-visitor"/>
+        </java>
+    </target>
+
+    <target name="generate-xquery-lexer">
+        <echo message="ANTLR4 XQueryLexer.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="./XQueryLexer.g4"/>
+            <arg value="-o"/>
+            <!--             <arg value="${parser.dir}" />-->
             <arg value="."/>   <!-- put results in *.g4's directory -->
             <arg value="-no-listener"/>
             <arg value="-visitor"/>
