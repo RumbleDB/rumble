@@ -30,17 +30,16 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
 
 
-public class AdditiveOperationIterator extends LocalRuntimeIterator {
+public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -63,30 +62,9 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         this.isMinus = isMinus;
     }
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasNext = false;
-        Item result = processItem(this.left, this.right, this.isMinus);
-        if (result == null) {
-            throw new UnexpectedTypeException(
-                    " \"+\": operation not possible with parameters of type \""
-                        + this.left.getDynamicType().toString()
-                        + "\" and \""
-                        + this.right.getDynamicType().toString()
-                        + "\"",
-                    getMetadata()
-            );
-        }
-        return result;
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
         try {
             this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
         } catch (MoreThanOneItemException e) {
@@ -106,7 +84,7 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
 
         // if left or right equals empty sequence, return empty sequence
         if (this.left == null || this.right == null) {
-            this.hasNext = false;
+            return null;
         } else {
             ComparisonUtil.checkBinaryOperation(
                 this.left,
@@ -114,8 +92,19 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
                 this.isMinus ? "-" : "+",
                 getMetadata()
             );
-            this.hasNext = true;
         }
+        Item result = processItem(this.left, this.right, this.isMinus);
+        if (result == null) {
+            throw new UnexpectedTypeException(
+                    " \"+\": operation not possible with parameters of type \""
+                        + this.left.getDynamicType().toString()
+                        + "\" and \""
+                        + this.right.getDynamicType().toString()
+                        + "\"",
+                    getMetadata()
+            );
+        }
+        return result;
     }
 
     public static Item processItem(
