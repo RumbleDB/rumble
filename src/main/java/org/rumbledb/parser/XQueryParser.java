@@ -5435,7 +5435,7 @@ public class XQueryParser extends Parser {
 			setState(1109);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
 				setState(1108);
 				expr();
@@ -6586,8 +6586,8 @@ public class XQueryParser extends Parser {
 
 	public static class ArrowExprContext extends ParserRuleContext {
 		public UnaryExprContext main_expr;
-		public ArgumentListContext argumentList;
-		public List<ArgumentListContext> function_call_expr = new ArrayList<ArgumentListContext>();
+		public FunctionCallContext functionCall;
+		public List<FunctionCallContext> function_call_expr = new ArrayList<FunctionCallContext>();
 		public UnaryExprContext unaryExpr() {
 			return getRuleContext(UnaryExprContext.class,0);
 		}
@@ -6595,17 +6595,11 @@ public class XQueryParser extends Parser {
 		public TerminalNode ARROW(int i) {
 			return getToken(XQueryParser.ARROW, i);
 		}
-		public List<ArrowFunctionSpecifierContext> arrowFunctionSpecifier() {
-			return getRuleContexts(ArrowFunctionSpecifierContext.class);
+		public List<FunctionCallContext> functionCall() {
+			return getRuleContexts(FunctionCallContext.class);
 		}
-		public ArrowFunctionSpecifierContext arrowFunctionSpecifier(int i) {
-			return getRuleContext(ArrowFunctionSpecifierContext.class,i);
-		}
-		public List<ArgumentListContext> argumentList() {
-			return getRuleContexts(ArgumentListContext.class);
-		}
-		public ArgumentListContext argumentList(int i) {
-			return getRuleContext(ArgumentListContext.class,i);
+		public FunctionCallContext functionCall(int i) {
+			return getRuleContext(FunctionCallContext.class,i);
 		}
 		public ArrowExprContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -6627,7 +6621,7 @@ public class XQueryParser extends Parser {
 			{
 			setState(1231);
 			((ArrowExprContext)_localctx).main_expr = unaryExpr();
-			setState(1238);
+			setState(1236);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,93,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
@@ -6637,14 +6631,12 @@ public class XQueryParser extends Parser {
 					setState(1232);
 					match(ARROW);
 					setState(1233);
-					arrowFunctionSpecifier();
-					setState(1234);
-					((ArrowExprContext)_localctx).argumentList = argumentList();
-					((ArrowExprContext)_localctx).function_call_expr.add(((ArrowExprContext)_localctx).argumentList);
+					((ArrowExprContext)_localctx).functionCall = functionCall();
+					((ArrowExprContext)_localctx).function_call_expr.add(((ArrowExprContext)_localctx).functionCall);
 					}
 					} 
 				}
-				setState(1240);
+				setState(1238);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,93,_ctx);
 			}
@@ -6665,7 +6657,7 @@ public class XQueryParser extends Parser {
 		public Token MINUS;
 		public List<Token> op = new ArrayList<Token>();
 		public Token PLUS;
-		public Token _tset1973;
+		public Token _tset1976;
 		public ValueExprContext main_expr;
 		public ValueExprContext valueExpr() {
 			return getRuleContext(ValueExprContext.class,0);
@@ -6696,31 +6688,31 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1244);
+			setState(1242);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==PLUS || _la==MINUS) {
 				{
 				{
-				setState(1241);
-				((UnaryExprContext)_localctx)._tset1973 = _input.LT(1);
+				setState(1239);
+				((UnaryExprContext)_localctx)._tset1976 = _input.LT(1);
 				_la = _input.LA(1);
 				if ( !(_la==PLUS || _la==MINUS) ) {
-					((UnaryExprContext)_localctx)._tset1973 = (Token)_errHandler.recoverInline(this);
+					((UnaryExprContext)_localctx)._tset1976 = (Token)_errHandler.recoverInline(this);
 				}
 				else {
 					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1973);
+				((UnaryExprContext)_localctx).op.add(((UnaryExprContext)_localctx)._tset1976);
 				}
 				}
-				setState(1246);
+				setState(1244);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(1247);
+			setState(1245);
 			((UnaryExprContext)_localctx).main_expr = valueExpr();
 			}
 		}
@@ -6760,27 +6752,27 @@ public class XQueryParser extends Parser {
 		ValueExprContext _localctx = new ValueExprContext(_ctx, getState());
 		enterRule(_localctx, 192, RULE_valueExpr);
 		try {
-			setState(1252);
+			setState(1250);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,95,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1249);
+				setState(1247);
 				validateExpr();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1250);
+				setState(1248);
 				extensionExpr();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1251);
+				setState(1249);
 				simpleMapExpr();
 				}
 				break;
@@ -6817,27 +6809,27 @@ public class XQueryParser extends Parser {
 		GeneralCompContext _localctx = new GeneralCompContext(_ctx, getState());
 		enterRule(_localctx, 194, RULE_generalComp);
 		try {
-			setState(1262);
+			setState(1260);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,96,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1254);
+				setState(1252);
 				match(EQUAL);
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1255);
+				setState(1253);
 				match(NOT_EQUAL);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1256);
+				setState(1254);
 				match(LANGLE);
 				}
 				break;
@@ -6845,9 +6837,9 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 4);
 				{
 				{
-				setState(1257);
+				setState(1255);
 				match(LANGLE);
-				setState(1258);
+				setState(1256);
 				match(EQUAL);
 				}
 				}
@@ -6855,7 +6847,7 @@ public class XQueryParser extends Parser {
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1259);
+				setState(1257);
 				match(RANGLE);
 				}
 				break;
@@ -6863,9 +6855,9 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 6);
 				{
 				{
-				setState(1260);
+				setState(1258);
 				match(RANGLE);
-				setState(1261);
+				setState(1259);
 				match(EQUAL);
 				}
 				}
@@ -6908,7 +6900,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1264);
+			setState(1262);
 			_la = _input.LA(1);
 			if ( !(((((_la - 92)) & ~0x3f) == 0 && ((1L << (_la - 92)) & ((1L << (KW_EQ - 92)) | (1L << (KW_GE - 92)) | (1L << (KW_GT - 92)) | (1L << (KW_LE - 92)) | (1L << (KW_LT - 92)) | (1L << (KW_NE - 92)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -6956,13 +6948,13 @@ public class XQueryParser extends Parser {
 		NodeCompContext _localctx = new NodeCompContext(_ctx, getState());
 		enterRule(_localctx, 198, RULE_nodeComp);
 		try {
-			setState(1271);
+			setState(1269);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_IS:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1266);
+				setState(1264);
 				match(KW_IS);
 				}
 				break;
@@ -6970,9 +6962,9 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				{
-				setState(1267);
+				setState(1265);
 				match(LANGLE);
-				setState(1268);
+				setState(1266);
 				match(LANGLE);
 				}
 				}
@@ -6981,9 +6973,9 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 3);
 				{
 				{
-				setState(1269);
+				setState(1267);
 				match(RANGLE);
-				setState(1270);
+				setState(1268);
 				match(RANGLE);
 				}
 				}
@@ -7034,15 +7026,15 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1273);
+			setState(1271);
 			match(KW_VALIDATE);
-			setState(1277);
+			setState(1275);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_LAX:
 			case KW_STRICT:
 				{
-				setState(1274);
+				setState(1272);
 				validationMode();
 				}
 				break;
@@ -7050,7 +7042,7 @@ public class XQueryParser extends Parser {
 			case KW_TYPE:
 				{
 				{
-				setState(1275);
+				setState(1273);
 				_la = _input.LA(1);
 				if ( !(_la==KW_AS || _la==KW_TYPE) ) {
 				_errHandler.recoverInline(this);
@@ -7060,7 +7052,7 @@ public class XQueryParser extends Parser {
 					_errHandler.reportMatch(this);
 					consume();
 				}
-				setState(1276);
+				setState(1274);
 				typeName();
 				}
 				}
@@ -7070,7 +7062,7 @@ public class XQueryParser extends Parser {
 			default:
 				break;
 			}
-			setState(1279);
+			setState(1277);
 			enclosedExpression();
 			}
 		}
@@ -7106,7 +7098,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1281);
+			setState(1279);
 			_la = _input.LA(1);
 			if ( !(_la==KW_LAX || _la==KW_STRICT) ) {
 			_errHandler.recoverInline(this);
@@ -7157,25 +7149,25 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1284); 
+			setState(1282); 
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			do {
 				{
 				{
-				setState(1283);
+				setState(1281);
 				match(PRAGMA);
 				}
 				}
-				setState(1286); 
+				setState(1284); 
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			} while ( _la==PRAGMA );
-			setState(1288);
+			setState(1286);
 			match(LBRACE);
-			setState(1289);
+			setState(1287);
 			expr();
-			setState(1290);
+			setState(1288);
 			match(RBRACE);
 			}
 		}
@@ -7191,11 +7183,14 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class SimpleMapExprContext extends ParserRuleContext {
-		public List<PathExprContext> pathExpr() {
-			return getRuleContexts(PathExprContext.class);
+		public PostfixExprContext main_expr;
+		public PostfixExprContext postfixExpr;
+		public List<PostfixExprContext> map_expr = new ArrayList<PostfixExprContext>();
+		public List<PostfixExprContext> postfixExpr() {
+			return getRuleContexts(PostfixExprContext.class);
 		}
-		public PathExprContext pathExpr(int i) {
-			return getRuleContext(PathExprContext.class,i);
+		public PostfixExprContext postfixExpr(int i) {
+			return getRuleContext(PostfixExprContext.class,i);
 		}
 		public List<TerminalNode> BANG() { return getTokens(XQueryParser.BANG); }
 		public TerminalNode BANG(int i) {
@@ -7219,23 +7214,24 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1292);
-			pathExpr();
-			setState(1297);
+			setState(1290);
+			((SimpleMapExprContext)_localctx).main_expr = postfixExpr();
+			setState(1295);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,100,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(1293);
+					setState(1291);
 					match(BANG);
-					setState(1294);
-					pathExpr();
+					setState(1292);
+					((SimpleMapExprContext)_localctx).postfixExpr = postfixExpr();
+					((SimpleMapExprContext)_localctx).map_expr.add(((SimpleMapExprContext)_localctx).postfixExpr);
 					}
 					} 
 				}
-				setState(1299);
+				setState(1297);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,100,_ctx);
 			}
@@ -7272,26 +7268,27 @@ public class XQueryParser extends Parser {
 	public final PathExprContext pathExpr() throws RecognitionException {
 		PathExprContext _localctx = new PathExprContext(_ctx, getState());
 		enterRule(_localctx, 208, RULE_pathExpr);
+		int _la;
 		try {
-			setState(1307);
+			setState(1305);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case SLASH:
 				enterOuterAlt(_localctx, 1);
 				{
 				{
-				setState(1300);
+				setState(1298);
 				match(SLASH);
-				setState(1302);
+				setState(1300);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,101,_ctx) ) {
-				case 1:
+				_la = _input.LA(1);
+				if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 					{
-					setState(1301);
+					setState(1299);
 					relativePathExpr();
 					}
-					break;
 				}
+
 				}
 				}
 				break;
@@ -7299,9 +7296,9 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				{
-				setState(1304);
+				setState(1302);
 				match(DSLASH);
-				setState(1305);
+				setState(1303);
 				relativePathExpr();
 				}
 				}
@@ -7462,7 +7459,7 @@ public class XQueryParser extends Parser {
 			case ENTER_STRING:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1306);
+				setState(1304);
 				relativePathExpr();
 				}
 				break;
@@ -7513,37 +7510,34 @@ public class XQueryParser extends Parser {
 		enterRule(_localctx, 210, RULE_relativePathExpr);
 		int _la;
 		try {
-			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1309);
+			setState(1307);
 			stepExpr();
-			setState(1314);
+			setState(1312);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,103,_ctx);
-			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
-				if ( _alt==1 ) {
-					{
-					{
-					setState(1310);
-					((RelativePathExprContext)_localctx).sep = _input.LT(1);
-					_la = _input.LA(1);
-					if ( !(_la==SLASH || _la==DSLASH) ) {
-						((RelativePathExprContext)_localctx).sep = (Token)_errHandler.recoverInline(this);
-					}
-					else {
-						if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
-						_errHandler.reportMatch(this);
-						consume();
-					}
-					setState(1311);
-					stepExpr();
-					}
-					} 
+			_la = _input.LA(1);
+			while (_la==SLASH || _la==DSLASH) {
+				{
+				{
+				setState(1308);
+				((RelativePathExprContext)_localctx).sep = _input.LT(1);
+				_la = _input.LA(1);
+				if ( !(_la==SLASH || _la==DSLASH) ) {
+					((RelativePathExprContext)_localctx).sep = (Token)_errHandler.recoverInline(this);
 				}
-				setState(1316);
+				else {
+					if ( _input.LA(1)==Token.EOF ) matchedEOF = true;
+					_errHandler.reportMatch(this);
+					consume();
+				}
+				setState(1309);
+				stepExpr();
+				}
+				}
+				setState(1314);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,103,_ctx);
+				_la = _input.LA(1);
 			}
 			}
 		}
@@ -7580,20 +7574,20 @@ public class XQueryParser extends Parser {
 		StepExprContext _localctx = new StepExprContext(_ctx, getState());
 		enterRule(_localctx, 212, RULE_stepExpr);
 		try {
-			setState(1319);
+			setState(1317);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,104,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1317);
+				setState(1315);
 				postfixExpr();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1318);
+				setState(1316);
 				axisStep();
 				}
 				break;
@@ -7637,23 +7631,23 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1323);
+			setState(1321);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,105,_ctx) ) {
 			case 1:
 				{
-				setState(1321);
+				setState(1319);
 				reverseStep();
 				}
 				break;
 			case 2:
 				{
-				setState(1322);
+				setState(1320);
 				forwardStep();
 				}
 				break;
 			}
-			setState(1325);
+			setState(1323);
 			predicateList();
 			}
 		}
@@ -7693,22 +7687,22 @@ public class XQueryParser extends Parser {
 		ForwardStepContext _localctx = new ForwardStepContext(_ctx, getState());
 		enterRule(_localctx, 216, RULE_forwardStep);
 		try {
-			setState(1331);
+			setState(1329);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,106,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1327);
+				setState(1325);
 				forwardAxis();
-				setState(1328);
+				setState(1326);
 				nodeTest();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1330);
+				setState(1328);
 				abbrevForwardStep();
 				}
 				break;
@@ -7755,7 +7749,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1333);
+			setState(1331);
 			_la = _input.LA(1);
 			if ( !(((((_la - 61)) & ~0x3f) == 0 && ((1L << (_la - 61)) & ((1L << (KW_ATTRIBUTE - 61)) | (1L << (KW_CHILD - 61)) | (1L << (KW_DESCENDANT - 61)) | (1L << (KW_DESCENDANT_OR_SELF - 61)) | (1L << (KW_FOLLOWING - 61)) | (1L << (KW_FOLLOWING_SIBLING - 61)))) != 0) || _la==KW_SELF) ) {
 			_errHandler.recoverInline(this);
@@ -7765,9 +7759,9 @@ public class XQueryParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(1334);
+			setState(1332);
 			match(COLON);
-			setState(1335);
+			setState(1333);
 			match(COLON);
 			}
 		}
@@ -7805,17 +7799,17 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1338);
+			setState(1336);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==AT) {
 				{
-				setState(1337);
+				setState(1335);
 				match(AT);
 				}
 			}
 
-			setState(1340);
+			setState(1338);
 			nodeTest();
 			}
 		}
@@ -7855,7 +7849,7 @@ public class XQueryParser extends Parser {
 		ReverseStepContext _localctx = new ReverseStepContext(_ctx, getState());
 		enterRule(_localctx, 222, RULE_reverseStep);
 		try {
-			setState(1346);
+			setState(1344);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_ANCESTOR:
@@ -7865,16 +7859,16 @@ public class XQueryParser extends Parser {
 			case KW_PRECEDING_SIBLING:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1342);
+				setState(1340);
 				reverseAxis();
-				setState(1343);
+				setState(1341);
 				nodeTest();
 				}
 				break;
 			case DDOT:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1345);
+				setState(1343);
 				abbrevReverseStep();
 				}
 				break;
@@ -7921,7 +7915,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1348);
+			setState(1346);
 			_la = _input.LA(1);
 			if ( !(_la==KW_ANCESTOR || _la==KW_ANCESTOR_OR_SELF || ((((_la - 135)) & ~0x3f) == 0 && ((1L << (_la - 135)) & ((1L << (KW_PARENT - 135)) | (1L << (KW_PRECEDING - 135)) | (1L << (KW_PRECEDING_SIBLING - 135)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -7931,9 +7925,9 @@ public class XQueryParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(1349);
+			setState(1347);
 			match(COLON);
-			setState(1350);
+			setState(1348);
 			match(COLON);
 			}
 		}
@@ -7967,7 +7961,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1352);
+			setState(1350);
 			match(DDOT);
 			}
 		}
@@ -8004,20 +7998,20 @@ public class XQueryParser extends Parser {
 		NodeTestContext _localctx = new NodeTestContext(_ctx, getState());
 		enterRule(_localctx, 228, RULE_nodeTest);
 		try {
-			setState(1356);
+			setState(1354);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,109,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1354);
+				setState(1352);
 				nameTest();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1355);
+				setState(1353);
 				kindTest();
 				}
 				break;
@@ -8056,7 +8050,7 @@ public class XQueryParser extends Parser {
 		NameTestContext _localctx = new NameTestContext(_ctx, getState());
 		enterRule(_localctx, 230, RULE_nameTest);
 		try {
-			setState(1360);
+			setState(1358);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -8195,7 +8189,7 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1358);
+				setState(1356);
 				eqName();
 				}
 				break;
@@ -8204,7 +8198,7 @@ public class XQueryParser extends Parser {
 			case NCNameWithPrefixWildcard:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1359);
+				setState(1357);
 				wildcard();
 				}
 				break;
@@ -8266,14 +8260,14 @@ public class XQueryParser extends Parser {
 		WildcardContext _localctx = new WildcardContext(_ctx, getState());
 		enterRule(_localctx, 232, RULE_wildcard);
 		try {
-			setState(1365);
+			setState(1363);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case STAR:
 				_localctx = new AllNamesContext(_localctx);
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1362);
+				setState(1360);
 				match(STAR);
 				}
 				break;
@@ -8281,7 +8275,7 @@ public class XQueryParser extends Parser {
 				_localctx = new AllWithNSContext(_localctx);
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1363);
+				setState(1361);
 				match(NCNameWithLocalWildcard);
 				}
 				break;
@@ -8289,7 +8283,7 @@ public class XQueryParser extends Parser {
 				_localctx = new AllWithLocalContext(_localctx);
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1364);
+				setState(1362);
 				match(NCNameWithPrefixWildcard);
 				}
 				break;
@@ -8309,6 +8303,7 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class PostfixExprContext extends ParserRuleContext {
+		public PrimaryExprContext main_expr;
 		public PrimaryExprContext primaryExpr() {
 			return getRuleContext(PrimaryExprContext.class,0);
 		}
@@ -8348,32 +8343,32 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1367);
-			primaryExpr();
-			setState(1373);
+			setState(1365);
+			((PostfixExprContext)_localctx).main_expr = primaryExpr();
+			setState(1371);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,113,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
-					setState(1371);
+					setState(1369);
 					_errHandler.sync(this);
 					switch (_input.LA(1)) {
 					case LBRACKET:
 						{
-						setState(1368);
+						setState(1366);
 						predicate();
 						}
 						break;
 					case LPAREN:
 						{
-						setState(1369);
+						setState(1367);
 						argumentList();
 						}
 						break;
 					case QUESTION:
 						{
-						setState(1370);
+						setState(1368);
 						lookup();
 						}
 						break;
@@ -8382,7 +8377,7 @@ public class XQueryParser extends Parser {
 					}
 					} 
 				}
-				setState(1375);
+				setState(1373);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,113,_ctx);
 			}
@@ -8400,6 +8395,8 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class ArgumentListContext extends ParserRuleContext {
+		public ArgumentContext argument;
+		public List<ArgumentContext> args = new ArrayList<ArgumentContext>();
 		public TerminalNode LPAREN() { return getToken(XQueryParser.LPAREN, 0); }
 		public TerminalNode RPAREN() { return getToken(XQueryParser.RPAREN, 0); }
 		public List<ArgumentContext> argument() {
@@ -8430,35 +8427,34 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1376);
+			setState(1374);
 			match(LPAREN);
-			setState(1385);
+			setState(1381);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			while (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
+				{
+				setState(1375);
+				((ArgumentListContext)_localctx).argument = argument();
+				((ArgumentListContext)_localctx).args.add(((ArgumentListContext)_localctx).argument);
 				setState(1377);
-				argument();
-				setState(1382);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				while (_la==COMMA) {
+				if (_la==COMMA) {
 					{
-					{
-					setState(1378);
+					setState(1376);
 					match(COMMA);
-					setState(1379);
-					argument();
 					}
-					}
-					setState(1384);
-					_errHandler.sync(this);
-					_la = _input.LA(1);
 				}
-				}
-			}
 
-			setState(1387);
+				}
+				}
+				setState(1383);
+				_errHandler.sync(this);
+				_la = _input.LA(1);
+			}
+			setState(1384);
 			match(RPAREN);
 			}
 		}
@@ -8494,25 +8490,23 @@ public class XQueryParser extends Parser {
 	public final PredicateListContext predicateList() throws RecognitionException {
 		PredicateListContext _localctx = new PredicateListContext(_ctx, getState());
 		enterRule(_localctx, 238, RULE_predicateList);
+		int _la;
 		try {
-			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1392);
+			setState(1389);
 			_errHandler.sync(this);
-			_alt = getInterpreter().adaptivePredict(_input,116,_ctx);
-			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
-				if ( _alt==1 ) {
-					{
-					{
-					setState(1389);
-					predicate();
-					}
-					} 
+			_la = _input.LA(1);
+			while (_la==LBRACKET) {
+				{
+				{
+				setState(1386);
+				predicate();
 				}
-				setState(1394);
+				}
+				setState(1391);
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,116,_ctx);
+				_la = _input.LA(1);
 			}
 			}
 		}
@@ -8550,11 +8544,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1395);
+			setState(1392);
 			match(LBRACKET);
-			setState(1396);
+			setState(1393);
 			expr();
-			setState(1397);
+			setState(1394);
 			match(RBRACKET);
 			}
 		}
@@ -8591,9 +8585,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1399);
+			setState(1396);
 			match(QUESTION);
-			setState(1400);
+			setState(1397);
 			keySpecifier();
 			}
 		}
@@ -8632,7 +8626,7 @@ public class XQueryParser extends Parser {
 		KeySpecifierContext _localctx = new KeySpecifierContext(_ctx, getState());
 		enterRule(_localctx, 244, RULE_keySpecifier);
 		try {
-			setState(1406);
+			setState(1403);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -8769,28 +8763,28 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1402);
+				setState(1399);
 				ncName();
 				}
 				break;
 			case IntegerLiteral:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1403);
+				setState(1400);
 				match(IntegerLiteral);
 				}
 				break;
 			case LPAREN:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1404);
+				setState(1401);
 				parenthesizedExpr();
 				}
 				break;
 			case STAR:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1405);
+				setState(1402);
 				match(STAR);
 				}
 				break;
@@ -8834,7 +8828,7 @@ public class XQueryParser extends Parser {
 		ArrowFunctionSpecifierContext _localctx = new ArrowFunctionSpecifierContext(_ctx, getState());
 		enterRule(_localctx, 246, RULE_arrowFunctionSpecifier);
 		try {
-			setState(1411);
+			setState(1408);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -8973,21 +8967,21 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1408);
+				setState(1405);
 				eqName();
 				}
 				break;
 			case DOLLAR:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1409);
+				setState(1406);
 				varRef();
 				}
 				break;
 			case LPAREN:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1410);
+				setState(1407);
 				parenthesizedExpr();
 				}
 				break;
@@ -9061,97 +9055,97 @@ public class XQueryParser extends Parser {
 		PrimaryExprContext _localctx = new PrimaryExprContext(_ctx, getState());
 		enterRule(_localctx, 248, RULE_primaryExpr);
 		try {
-			setState(1426);
+			setState(1423);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,119,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1413);
+				setState(1410);
 				literal();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1414);
+				setState(1411);
 				varRef();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1415);
+				setState(1412);
 				parenthesizedExpr();
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1416);
+				setState(1413);
 				contextItemExpr();
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1417);
+				setState(1414);
 				functionCall();
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1418);
+				setState(1415);
 				orderedExpr();
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(1419);
+				setState(1416);
 				unorderedExpr();
 				}
 				break;
 			case 8:
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(1420);
+				setState(1417);
 				nodeConstructor();
 				}
 				break;
 			case 9:
 				enterOuterAlt(_localctx, 9);
 				{
-				setState(1421);
+				setState(1418);
 				functionItemExpr();
 				}
 				break;
 			case 10:
 				enterOuterAlt(_localctx, 10);
 				{
-				setState(1422);
+				setState(1419);
 				mapConstructor();
 				}
 				break;
 			case 11:
 				enterOuterAlt(_localctx, 11);
 				{
-				setState(1423);
+				setState(1420);
 				arrayConstructor();
 				}
 				break;
 			case 12:
 				enterOuterAlt(_localctx, 12);
 				{
-				setState(1424);
+				setState(1421);
 				stringConstructor();
 				}
 				break;
 			case 13:
 				enterOuterAlt(_localctx, 13);
 				{
-				setState(1425);
+				setState(1422);
 				unaryLookup();
 				}
 				break;
@@ -9190,7 +9184,7 @@ public class XQueryParser extends Parser {
 		LiteralContext _localctx = new LiteralContext(_ctx, getState());
 		enterRule(_localctx, 250, RULE_literal);
 		try {
-			setState(1430);
+			setState(1427);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case IntegerLiteral:
@@ -9198,7 +9192,7 @@ public class XQueryParser extends Parser {
 			case DoubleLiteral:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1428);
+				setState(1425);
 				numericLiteral();
 				}
 				break;
@@ -9206,7 +9200,7 @@ public class XQueryParser extends Parser {
 			case Apos:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1429);
+				setState(1426);
 				stringLiteral();
 				}
 				break;
@@ -9247,7 +9241,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1432);
+			setState(1429);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << IntegerLiteral) | (1L << DecimalLiteral) | (1L << DoubleLiteral))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -9292,9 +9286,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1434);
+			setState(1431);
 			match(DOLLAR);
-			setState(1435);
+			setState(1432);
 			eqName();
 			}
 		}
@@ -9330,7 +9324,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1437);
+			setState(1434);
 			eqName();
 			}
 		}
@@ -9369,19 +9363,19 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1439);
+			setState(1436);
 			match(LPAREN);
-			setState(1441);
+			setState(1438);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
-				setState(1440);
+				setState(1437);
 				expr();
 				}
 			}
 
-			setState(1443);
+			setState(1440);
 			match(RPAREN);
 			}
 		}
@@ -9415,7 +9409,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1445);
+			setState(1442);
 			match(DOT);
 			}
 		}
@@ -9452,9 +9446,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1447);
+			setState(1444);
 			match(KW_ORDERED);
-			setState(1448);
+			setState(1445);
 			enclosedExpression();
 			}
 		}
@@ -9491,9 +9485,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1450);
+			setState(1447);
 			match(KW_UNORDERED);
-			setState(1451);
+			setState(1448);
 			enclosedExpression();
 			}
 		}
@@ -9509,11 +9503,12 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class FunctionCallContext extends ParserRuleContext {
-		public EqNameContext eqName() {
-			return getRuleContext(EqNameContext.class,0);
-		}
+		public EqNameContext fn_name;
 		public ArgumentListContext argumentList() {
 			return getRuleContext(ArgumentListContext.class,0);
+		}
+		public EqNameContext eqName() {
+			return getRuleContext(EqNameContext.class,0);
 		}
 		public FunctionCallContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -9532,9 +9527,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1453);
-			eqName();
-			setState(1454);
+			setState(1450);
+			((FunctionCallContext)_localctx).fn_name = eqName();
+			setState(1451);
 			argumentList();
 			}
 		}
@@ -9569,20 +9564,20 @@ public class XQueryParser extends Parser {
 		ArgumentContext _localctx = new ArgumentContext(_ctx, getState());
 		enterRule(_localctx, 268, RULE_argument);
 		try {
-			setState(1458);
+			setState(1455);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,122,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1456);
+				setState(1453);
 				exprSingle();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1457);
+				setState(1454);
 				match(QUESTION);
 				}
 				break;
@@ -9621,7 +9616,7 @@ public class XQueryParser extends Parser {
 		NodeConstructorContext _localctx = new NodeConstructorContext(_ctx, getState());
 		enterRule(_localctx, 270, RULE_nodeConstructor);
 		try {
-			setState(1462);
+			setState(1459);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case COMMENT:
@@ -9629,7 +9624,7 @@ public class XQueryParser extends Parser {
 			case LANGLE:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1460);
+				setState(1457);
 				directConstructor();
 				}
 				break;
@@ -9648,7 +9643,7 @@ public class XQueryParser extends Parser {
 			case KW_OBJECT_NODE:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1461);
+				setState(1458);
 				computedConstructor();
 				}
 				break;
@@ -9692,27 +9687,27 @@ public class XQueryParser extends Parser {
 		enterRule(_localctx, 272, RULE_directConstructor);
 		int _la;
 		try {
-			setState(1467);
+			setState(1464);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,124,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1464);
+				setState(1461);
 				dirElemConstructorOpenClose();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1465);
+				setState(1462);
 				dirElemConstructorSingleTag();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1466);
+				setState(1463);
 				_la = _input.LA(1);
 				if ( !(_la==COMMENT || _la==PI) ) {
 				_errHandler.recoverInline(this);
@@ -9785,37 +9780,37 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1469);
+			setState(1466);
 			match(LANGLE);
-			setState(1470);
+			setState(1467);
 			((DirElemConstructorOpenCloseContext)_localctx).openName = qName();
-			setState(1471);
+			setState(1468);
 			dirAttributeList();
-			setState(1472);
+			setState(1469);
 			((DirElemConstructorOpenCloseContext)_localctx).endOpen = match(RANGLE);
-			setState(1476);
+			setState(1473);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,125,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
 					{
-					setState(1473);
+					setState(1470);
 					dirElemContent();
 					}
 					} 
 				}
-				setState(1478);
+				setState(1475);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,125,_ctx);
 			}
-			setState(1479);
+			setState(1476);
 			((DirElemConstructorOpenCloseContext)_localctx).startClose = match(LANGLE);
-			setState(1480);
+			setState(1477);
 			((DirElemConstructorOpenCloseContext)_localctx).slashClose = match(SLASH);
-			setState(1481);
+			setState(1478);
 			((DirElemConstructorOpenCloseContext)_localctx).closeName = qName();
-			setState(1482);
+			setState(1479);
 			match(RANGLE);
 			}
 		}
@@ -9859,15 +9854,15 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1484);
+			setState(1481);
 			match(LANGLE);
-			setState(1485);
+			setState(1482);
 			((DirElemConstructorSingleTagContext)_localctx).openName = qName();
-			setState(1486);
+			setState(1483);
 			dirAttributeList();
-			setState(1487);
+			setState(1484);
 			((DirElemConstructorSingleTagContext)_localctx).slashClose = match(SLASH);
-			setState(1488);
+			setState(1485);
 			match(RANGLE);
 			}
 		}
@@ -9917,21 +9912,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1496);
+			setState(1493);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DFPropertyName) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (FullQName - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
 				{
-				setState(1490);
+				setState(1487);
 				qName();
-				setState(1491);
+				setState(1488);
 				match(EQUAL);
-				setState(1492);
+				setState(1489);
 				dirAttributeValue();
 				}
 				}
-				setState(1498);
+				setState(1495);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -9989,32 +9984,32 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1499);
+			setState(1496);
 			match(Quot);
-			setState(1506);
+			setState(1503);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,128,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
-					setState(1504);
+					setState(1501);
 					_errHandler.sync(this);
 					switch (_input.LA(1)) {
 					case PredefinedEntityRef:
 						{
-						setState(1500);
+						setState(1497);
 						match(PredefinedEntityRef);
 						}
 						break;
 					case CharRef:
 						{
-						setState(1501);
+						setState(1498);
 						match(CharRef);
 						}
 						break;
 					case EscapeQuot:
 						{
-						setState(1502);
+						setState(1499);
 						match(EscapeQuot);
 						}
 						break;
@@ -10024,7 +10019,7 @@ public class XQueryParser extends Parser {
 					case LBRACE:
 					case ContentChar:
 						{
-						setState(1503);
+						setState(1500);
 						dirAttributeContentQuot();
 						}
 						break;
@@ -10033,11 +10028,11 @@ public class XQueryParser extends Parser {
 					}
 					} 
 				}
-				setState(1508);
+				setState(1505);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,128,_ctx);
 			}
-			setState(1509);
+			setState(1506);
 			match(Quot);
 			}
 		}
@@ -10093,32 +10088,32 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1511);
+			setState(1508);
 			match(Apos);
-			setState(1518);
+			setState(1515);
 			_errHandler.sync(this);
 			_alt = getInterpreter().adaptivePredict(_input,130,_ctx);
 			while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER ) {
 				if ( _alt==1 ) {
 					{
-					setState(1516);
+					setState(1513);
 					_errHandler.sync(this);
 					switch (_input.LA(1)) {
 					case PredefinedEntityRef:
 						{
-						setState(1512);
+						setState(1509);
 						match(PredefinedEntityRef);
 						}
 						break;
 					case CharRef:
 						{
-						setState(1513);
+						setState(1510);
 						match(CharRef);
 						}
 						break;
 					case EscapeApos:
 						{
-						setState(1514);
+						setState(1511);
 						match(EscapeApos);
 						}
 						break;
@@ -10128,7 +10123,7 @@ public class XQueryParser extends Parser {
 					case LBRACE:
 					case ContentChar:
 						{
-						setState(1515);
+						setState(1512);
 						dirAttributeContentApos();
 						}
 						break;
@@ -10137,11 +10132,11 @@ public class XQueryParser extends Parser {
 					}
 					} 
 				}
-				setState(1520);
+				setState(1517);
 				_errHandler.sync(this);
 				_alt = getInterpreter().adaptivePredict(_input,130,_ctx);
 			}
-			setState(1521);
+			setState(1518);
 			match(Apos);
 			}
 		}
@@ -10178,20 +10173,20 @@ public class XQueryParser extends Parser {
 		DirAttributeValueContext _localctx = new DirAttributeValueContext(_ctx, getState());
 		enterRule(_localctx, 284, RULE_dirAttributeValue);
 		try {
-			setState(1525);
+			setState(1522);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Quot:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1523);
+				setState(1520);
 				dirAttributeValueApos();
 				}
 				break;
 			case Apos:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1524);
+				setState(1521);
 				dirAttributeValueQuot();
 				}
 				break;
@@ -10242,13 +10237,13 @@ public class XQueryParser extends Parser {
 		int _la;
 		try {
 			int _alt;
-			setState(1540);
+			setState(1537);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ContentChar:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1528); 
+				setState(1525); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -10256,7 +10251,7 @@ public class XQueryParser extends Parser {
 					case 1:
 						{
 						{
-						setState(1527);
+						setState(1524);
 						match(ContentChar);
 						}
 						}
@@ -10264,7 +10259,7 @@ public class XQueryParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(1530); 
+					setState(1527); 
 					_errHandler.sync(this);
 					_alt = getInterpreter().adaptivePredict(_input,132,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
@@ -10273,40 +10268,40 @@ public class XQueryParser extends Parser {
 			case DOUBLE_LBRACE:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1532);
+				setState(1529);
 				match(DOUBLE_LBRACE);
 				}
 				break;
 			case DOUBLE_RBRACE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1533);
+				setState(1530);
 				match(DOUBLE_RBRACE);
 				}
 				break;
 			case Quot:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1534);
+				setState(1531);
 				dirAttributeValueApos();
 				}
 				break;
 			case LBRACE:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1535);
+				setState(1532);
 				match(LBRACE);
-				setState(1537);
+				setState(1534);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+				if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 					{
-					setState(1536);
+					setState(1533);
 					expr();
 					}
 				}
 
-				setState(1539);
+				setState(1536);
 				match(RBRACE);
 				}
 				break;
@@ -10357,13 +10352,13 @@ public class XQueryParser extends Parser {
 		int _la;
 		try {
 			int _alt;
-			setState(1555);
+			setState(1552);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case ContentChar:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1543); 
+				setState(1540); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -10371,7 +10366,7 @@ public class XQueryParser extends Parser {
 					case 1:
 						{
 						{
-						setState(1542);
+						setState(1539);
 						match(ContentChar);
 						}
 						}
@@ -10379,7 +10374,7 @@ public class XQueryParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(1545); 
+					setState(1542); 
 					_errHandler.sync(this);
 					_alt = getInterpreter().adaptivePredict(_input,135,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
@@ -10388,40 +10383,40 @@ public class XQueryParser extends Parser {
 			case DOUBLE_LBRACE:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1547);
+				setState(1544);
 				match(DOUBLE_LBRACE);
 				}
 				break;
 			case DOUBLE_RBRACE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1548);
+				setState(1545);
 				match(DOUBLE_RBRACE);
 				}
 				break;
 			case Apos:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1549);
+				setState(1546);
 				dirAttributeValueQuot();
 				}
 				break;
 			case LBRACE:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1550);
+				setState(1547);
 				match(LBRACE);
-				setState(1552);
+				setState(1549);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
-				if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+				if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 					{
-					setState(1551);
+					setState(1548);
 					expr();
 					}
 				}
 
-				setState(1554);
+				setState(1551);
 				match(RBRACE);
 				}
 				break;
@@ -10468,48 +10463,48 @@ public class XQueryParser extends Parser {
 		DirElemContentContext _localctx = new DirElemContentContext(_ctx, getState());
 		enterRule(_localctx, 290, RULE_dirElemContent);
 		try {
-			setState(1563);
+			setState(1560);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,138,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1557);
+				setState(1554);
 				directConstructor();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1558);
+				setState(1555);
 				commonContent();
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1559);
+				setState(1556);
 				match(CDATA);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1560);
+				setState(1557);
 				match(Quot);
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1561);
+				setState(1558);
 				match(Apos);
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1562);
+				setState(1559);
 				noQuotesNoBracesNoAmpNoLAng();
 				}
 				break;
@@ -10556,13 +10551,13 @@ public class XQueryParser extends Parser {
 		enterRule(_localctx, 292, RULE_commonContent);
 		int _la;
 		try {
-			setState(1574);
+			setState(1571);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,139,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1565);
+				setState(1562);
 				_la = _input.LA(1);
 				if ( !(_la==PredefinedEntityRef || _la==CharRef) ) {
 				_errHandler.recoverInline(this);
@@ -10577,29 +10572,29 @@ public class XQueryParser extends Parser {
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1566);
+				setState(1563);
 				match(LBRACE);
-				setState(1567);
+				setState(1564);
 				match(LBRACE);
 				}
 				break;
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1568);
+				setState(1565);
 				match(RBRACE);
-				setState(1569);
+				setState(1566);
 				match(RBRACE);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1570);
+				setState(1567);
 				match(LBRACE);
-				setState(1571);
+				setState(1568);
 				expr();
-				setState(1572);
+				setState(1569);
 				match(RBRACE);
 				}
 				break;
@@ -10656,55 +10651,55 @@ public class XQueryParser extends Parser {
 		ComputedConstructorContext _localctx = new ComputedConstructorContext(_ctx, getState());
 		enterRule(_localctx, 294, RULE_computedConstructor);
 		try {
-			setState(1584);
+			setState(1581);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_DOCUMENT:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1576);
+				setState(1573);
 				compDocConstructor();
 				}
 				break;
 			case KW_ELEMENT:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1577);
+				setState(1574);
 				compElemConstructor();
 				}
 				break;
 			case KW_ATTRIBUTE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1578);
+				setState(1575);
 				compAttrConstructor();
 				}
 				break;
 			case KW_NAMESPACE:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1579);
+				setState(1576);
 				compNamespaceConstructor();
 				}
 				break;
 			case KW_TEXT:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1580);
+				setState(1577);
 				compTextConstructor();
 				}
 				break;
 			case KW_COMMENT:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1581);
+				setState(1578);
 				compCommentConstructor();
 				}
 				break;
 			case KW_PI:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(1582);
+				setState(1579);
 				compPIConstructor();
 				}
 				break;
@@ -10716,7 +10711,7 @@ public class XQueryParser extends Parser {
 			case KW_OBJECT_NODE:
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(1583);
+				setState(1580);
 				compMLJSONConstructor();
 				}
 				break;
@@ -10769,48 +10764,48 @@ public class XQueryParser extends Parser {
 		CompMLJSONConstructorContext _localctx = new CompMLJSONConstructorContext(_ctx, getState());
 		enterRule(_localctx, 296, RULE_compMLJSONConstructor);
 		try {
-			setState(1592);
+			setState(1589);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_ARRAY_NODE:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1586);
+				setState(1583);
 				compMLJSONArrayConstructor();
 				}
 				break;
 			case KW_OBJECT_NODE:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1587);
+				setState(1584);
 				compMLJSONObjectConstructor();
 				}
 				break;
 			case KW_NUMBER_NODE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1588);
+				setState(1585);
 				compMLJSONNumberConstructor();
 				}
 				break;
 			case KW_BOOLEAN_NODE:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1589);
+				setState(1586);
 				compMLJSONBooleanConstructor();
 				}
 				break;
 			case KW_NULL_NODE:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1590);
+				setState(1587);
 				compMLJSONNullConstructor();
 				}
 				break;
 			case KW_BINARY:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1591);
+				setState(1588);
 				compBinaryConstructor();
 				}
 				break;
@@ -10851,9 +10846,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1594);
+			setState(1591);
 			match(KW_ARRAY_NODE);
-			setState(1595);
+			setState(1592);
 			enclosedContentExpr();
 			}
 		}
@@ -10904,45 +10899,45 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1597);
+			setState(1594);
 			match(KW_OBJECT_NODE);
-			setState(1598);
+			setState(1595);
 			match(LBRACE);
-			setState(1612);
+			setState(1609);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
-				setState(1599);
+				setState(1596);
 				exprSingle();
-				setState(1600);
+				setState(1597);
 				match(COLON);
-				setState(1601);
+				setState(1598);
 				exprSingle();
-				setState(1609);
+				setState(1606);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					setState(1602);
+					setState(1599);
 					match(COMMA);
-					setState(1603);
+					setState(1600);
 					exprSingle();
-					setState(1604);
+					setState(1601);
 					match(COLON);
-					setState(1605);
+					setState(1602);
 					exprSingle();
 					}
 					}
-					setState(1611);
+					setState(1608);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
 				}
 			}
 
-			setState(1614);
+			setState(1611);
 			match(RBRACE);
 			}
 		}
@@ -10979,9 +10974,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1616);
+			setState(1613);
 			match(KW_NUMBER_NODE);
-			setState(1617);
+			setState(1614);
 			enclosedContentExpr();
 			}
 		}
@@ -11020,13 +11015,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1619);
+			setState(1616);
 			match(KW_BOOLEAN_NODE);
-			setState(1620);
+			setState(1617);
 			match(LBRACE);
-			setState(1621);
+			setState(1618);
 			exprSingle();
-			setState(1622);
+			setState(1619);
 			match(RBRACE);
 			}
 		}
@@ -11062,11 +11057,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1624);
+			setState(1621);
 			match(KW_NULL_NODE);
-			setState(1625);
+			setState(1622);
 			match(LBRACE);
-			setState(1626);
+			setState(1623);
 			match(RBRACE);
 			}
 		}
@@ -11103,9 +11098,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1628);
+			setState(1625);
 			match(KW_BINARY);
-			setState(1629);
+			setState(1626);
 			enclosedContentExpr();
 			}
 		}
@@ -11142,9 +11137,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1631);
+			setState(1628);
 			match(KW_DOCUMENT);
-			setState(1632);
+			setState(1629);
 			enclosedExpression();
 			}
 		}
@@ -11189,9 +11184,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1634);
+			setState(1631);
 			match(KW_ELEMENT);
-			setState(1640);
+			setState(1637);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -11329,18 +11324,18 @@ public class XQueryParser extends Parser {
 			case FullQName:
 			case NCName:
 				{
-				setState(1635);
+				setState(1632);
 				eqName();
 				}
 				break;
 			case LBRACE:
 				{
 				{
-				setState(1636);
+				setState(1633);
 				match(LBRACE);
-				setState(1637);
+				setState(1634);
 				expr();
-				setState(1638);
+				setState(1635);
 				match(RBRACE);
 				}
 				}
@@ -11348,7 +11343,7 @@ public class XQueryParser extends Parser {
 			default:
 				throw new NoViableAltException(this);
 			}
-			setState(1642);
+			setState(1639);
 			enclosedContentExpr();
 			}
 		}
@@ -11384,7 +11379,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1644);
+			setState(1641);
 			enclosedExpression();
 			}
 		}
@@ -11429,9 +11424,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1646);
+			setState(1643);
 			match(KW_ATTRIBUTE);
-			setState(1652);
+			setState(1649);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -11569,18 +11564,18 @@ public class XQueryParser extends Parser {
 			case FullQName:
 			case NCName:
 				{
-				setState(1647);
+				setState(1644);
 				eqName();
 				}
 				break;
 			case LBRACE:
 				{
 				{
-				setState(1648);
+				setState(1645);
 				match(LBRACE);
-				setState(1649);
+				setState(1646);
 				expr();
-				setState(1650);
+				setState(1647);
 				match(RBRACE);
 				}
 				}
@@ -11588,7 +11583,7 @@ public class XQueryParser extends Parser {
 			default:
 				throw new NoViableAltException(this);
 			}
-			setState(1654);
+			setState(1651);
 			enclosedExpression();
 			}
 		}
@@ -11631,9 +11626,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1656);
+			setState(1653);
 			match(KW_NAMESPACE);
-			setState(1659);
+			setState(1656);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -11769,20 +11764,20 @@ public class XQueryParser extends Parser {
 			case KW_RENAME:
 			case NCName:
 				{
-				setState(1657);
+				setState(1654);
 				prefix();
 				}
 				break;
 			case LBRACE:
 				{
-				setState(1658);
+				setState(1655);
 				enclosedPrefixExpr();
 				}
 				break;
 			default:
 				throw new NoViableAltException(this);
 			}
-			setState(1661);
+			setState(1658);
 			enclosedURIExpr();
 			}
 		}
@@ -11818,7 +11813,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1663);
+			setState(1660);
 			ncName();
 			}
 		}
@@ -11854,7 +11849,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1665);
+			setState(1662);
 			enclosedExpression();
 			}
 		}
@@ -11890,7 +11885,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1667);
+			setState(1664);
 			enclosedExpression();
 			}
 		}
@@ -11927,9 +11922,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1669);
+			setState(1666);
 			match(KW_TEXT);
-			setState(1670);
+			setState(1667);
 			enclosedExpression();
 			}
 		}
@@ -11966,9 +11961,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1672);
+			setState(1669);
 			match(KW_COMMENT);
-			setState(1673);
+			setState(1670);
 			enclosedExpression();
 			}
 		}
@@ -12013,9 +12008,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1675);
+			setState(1672);
 			match(KW_PI);
-			setState(1681);
+			setState(1678);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -12151,18 +12146,18 @@ public class XQueryParser extends Parser {
 			case KW_RENAME:
 			case NCName:
 				{
-				setState(1676);
+				setState(1673);
 				ncName();
 				}
 				break;
 			case LBRACE:
 				{
 				{
-				setState(1677);
+				setState(1674);
 				match(LBRACE);
-				setState(1678);
+				setState(1675);
 				expr();
-				setState(1679);
+				setState(1676);
 				match(RBRACE);
 				}
 				}
@@ -12170,7 +12165,7 @@ public class XQueryParser extends Parser {
 			default:
 				throw new NoViableAltException(this);
 			}
-			setState(1683);
+			setState(1680);
 			enclosedExpression();
 			}
 		}
@@ -12207,20 +12202,20 @@ public class XQueryParser extends Parser {
 		FunctionItemExprContext _localctx = new FunctionItemExprContext(_ctx, getState());
 		enterRule(_localctx, 332, RULE_functionItemExpr);
 		try {
-			setState(1687);
+			setState(1684);
 			_errHandler.sync(this);
 			switch ( getInterpreter().adaptivePredict(_input,148,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1685);
+				setState(1682);
 				namedFunctionRef();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1686);
+				setState(1683);
 				inlineFunctionRef();
 				}
 				break;
@@ -12238,10 +12233,12 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class NamedFunctionRefContext extends ParserRuleContext {
+		public EqNameContext fn_name;
+		public Token arity;
+		public TerminalNode HASH() { return getToken(XQueryParser.HASH, 0); }
 		public EqNameContext eqName() {
 			return getRuleContext(EqNameContext.class,0);
 		}
-		public TerminalNode HASH() { return getToken(XQueryParser.HASH, 0); }
 		public TerminalNode IntegerLiteral() { return getToken(XQueryParser.IntegerLiteral, 0); }
 		public NamedFunctionRefContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -12260,12 +12257,12 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1689);
-			eqName();
-			setState(1690);
+			setState(1686);
+			((NamedFunctionRefContext)_localctx).fn_name = eqName();
+			setState(1687);
 			match(HASH);
-			setState(1691);
-			match(IntegerLiteral);
+			setState(1688);
+			((NamedFunctionRefContext)_localctx).arity = match(IntegerLiteral);
 			}
 		}
 		catch (RecognitionException re) {
@@ -12280,6 +12277,7 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class InlineFunctionRefContext extends ParserRuleContext {
+		public SequenceTypeContext return_type;
 		public AnnotationsContext annotations() {
 			return getRuleContext(AnnotationsContext.class,0);
 		}
@@ -12314,37 +12312,37 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1693);
+			setState(1690);
 			annotations();
-			setState(1694);
+			setState(1691);
 			match(KW_FUNCTION);
-			setState(1695);
+			setState(1692);
 			match(LPAREN);
-			setState(1697);
+			setState(1694);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==DOLLAR) {
 				{
-				setState(1696);
+				setState(1693);
 				functionParams();
 				}
 			}
 
-			setState(1699);
+			setState(1696);
 			match(RPAREN);
-			setState(1702);
+			setState(1699);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==KW_AS) {
 				{
-				setState(1700);
+				setState(1697);
 				match(KW_AS);
-				setState(1701);
-				sequenceType();
+				setState(1698);
+				((InlineFunctionRefContext)_localctx).return_type = sequenceType();
 				}
 			}
 
-			setState(1704);
+			setState(1701);
 			functionBody();
 			}
 		}
@@ -12380,7 +12378,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1706);
+			setState(1703);
 			enclosedExpression();
 			}
 		}
@@ -12427,37 +12425,37 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1708);
+			setState(1705);
 			match(KW_MAP);
-			setState(1709);
+			setState(1706);
 			match(LBRACE);
-			setState(1718);
+			setState(1715);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
-				setState(1710);
+				setState(1707);
 				mapConstructorEntry();
-				setState(1715);
+				setState(1712);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					setState(1711);
+					setState(1708);
 					match(COMMA);
-					setState(1712);
+					setState(1709);
 					mapConstructorEntry();
 					}
 					}
-					setState(1717);
+					setState(1714);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
 				}
 			}
 
-			setState(1720);
+			setState(1717);
 			match(RBRACE);
 			}
 		}
@@ -12501,9 +12499,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1722);
+			setState(1719);
 			((MapConstructorEntryContext)_localctx).mapKey = exprSingle();
-			setState(1723);
+			setState(1720);
 			_la = _input.LA(1);
 			if ( !(_la==COLON || _la==COLON_EQ) ) {
 			_errHandler.recoverInline(this);
@@ -12513,7 +12511,7 @@ public class XQueryParser extends Parser {
 				_errHandler.reportMatch(this);
 				consume();
 			}
-			setState(1724);
+			setState(1721);
 			((MapConstructorEntryContext)_localctx).mapValue = exprSingle();
 			}
 		}
@@ -12550,20 +12548,20 @@ public class XQueryParser extends Parser {
 		ArrayConstructorContext _localctx = new ArrayConstructorContext(_ctx, getState());
 		enterRule(_localctx, 344, RULE_arrayConstructor);
 		try {
-			setState(1728);
+			setState(1725);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case LBRACKET:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1726);
+				setState(1723);
 				squareArrayConstructor();
 				}
 				break;
 			case KW_ARRAY:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1727);
+				setState(1724);
 				curlyArrayConstructor();
 				}
 				break;
@@ -12585,15 +12583,8 @@ public class XQueryParser extends Parser {
 	public static class SquareArrayConstructorContext extends ParserRuleContext {
 		public TerminalNode LBRACKET() { return getToken(XQueryParser.LBRACKET, 0); }
 		public TerminalNode RBRACKET() { return getToken(XQueryParser.RBRACKET, 0); }
-		public List<ExprSingleContext> exprSingle() {
-			return getRuleContexts(ExprSingleContext.class);
-		}
-		public ExprSingleContext exprSingle(int i) {
-			return getRuleContext(ExprSingleContext.class,i);
-		}
-		public List<TerminalNode> COMMA() { return getTokens(XQueryParser.COMMA); }
-		public TerminalNode COMMA(int i) {
-			return getToken(XQueryParser.COMMA, i);
+		public ExprContext expr() {
+			return getRuleContext(ExprContext.class,0);
 		}
 		public SquareArrayConstructorContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
@@ -12613,35 +12604,19 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1730);
+			setState(1727);
 			match(LBRACKET);
-			setState(1739);
+			setState(1729);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
-			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (STAR - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (DDOT - 5)) | (1L << (SLASH - 5)) | (1L << (DSLASH - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (AT - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCNameWithLocalWildcard - 133)) | (1L << (NCNameWithPrefixWildcard - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
+			if (((((_la - 5)) & ~0x3f) == 0 && ((1L << (_la - 5)) & ((1L << (IntegerLiteral - 5)) | (1L << (DecimalLiteral - 5)) | (1L << (DoubleLiteral - 5)) | (1L << (DFPropertyName - 5)) | (1L << (Quot - 5)) | (1L << (Apos - 5)) | (1L << (COMMENT - 5)) | (1L << (PI - 5)) | (1L << (PRAGMA - 5)) | (1L << (LPAREN - 5)) | (1L << (LBRACKET - 5)) | (1L << (PLUS - 5)) | (1L << (MINUS - 5)) | (1L << (DOT - 5)) | (1L << (LANGLE - 5)) | (1L << (QUESTION - 5)) | (1L << (DOLLAR - 5)) | (1L << (MOD - 5)) | (1L << (KW_ALLOWING - 5)) | (1L << (KW_ANCESTOR - 5)) | (1L << (KW_ANCESTOR_OR_SELF - 5)) | (1L << (KW_AND - 5)) | (1L << (KW_ARRAY - 5)) | (1L << (KW_AS - 5)) | (1L << (KW_ASCENDING - 5)) | (1L << (KW_AT - 5)) | (1L << (KW_ATTRIBUTE - 5)) | (1L << (KW_BASE_URI - 5)) | (1L << (KW_BOUNDARY_SPACE - 5)) | (1L << (KW_BINARY - 5)) | (1L << (KW_BY - 5)) | (1L << (KW_CASE - 5)) | (1L << (KW_CAST - 5)) | (1L << (KW_CASTABLE - 5)))) != 0) || ((((_la - 69)) & ~0x3f) == 0 && ((1L << (_la - 69)) & ((1L << (KW_CATCH - 69)) | (1L << (KW_CHILD - 69)) | (1L << (KW_COLLATION - 69)) | (1L << (KW_COMMENT - 69)) | (1L << (KW_CONSTRUCTION - 69)) | (1L << (KW_CONTEXT - 69)) | (1L << (KW_COPY_NS - 69)) | (1L << (KW_COUNT - 69)) | (1L << (KW_DECLARE - 69)) | (1L << (KW_DEFAULT - 69)) | (1L << (KW_DESCENDANT - 69)) | (1L << (KW_DESCENDANT_OR_SELF - 69)) | (1L << (KW_DESCENDING - 69)) | (1L << (KW_DECIMAL_FORMAT - 69)) | (1L << (KW_DIV - 69)) | (1L << (KW_DOCUMENT - 69)) | (1L << (KW_DOCUMENT_NODE - 69)) | (1L << (KW_ELEMENT - 69)) | (1L << (KW_ELSE - 69)) | (1L << (KW_EMPTY - 69)) | (1L << (KW_EMPTY_SEQUENCE - 69)) | (1L << (KW_ENCODING - 69)) | (1L << (KW_END - 69)) | (1L << (KW_EQ - 69)) | (1L << (KW_EVERY - 69)) | (1L << (KW_EXCEPT - 69)) | (1L << (KW_EXTERNAL - 69)) | (1L << (KW_FOLLOWING - 69)) | (1L << (KW_FOLLOWING_SIBLING - 69)) | (1L << (KW_FOR - 69)) | (1L << (KW_FUNCTION - 69)) | (1L << (KW_GE - 69)) | (1L << (KW_GREATEST - 69)) | (1L << (KW_GROUP - 69)) | (1L << (KW_GT - 69)) | (1L << (KW_IDIV - 69)) | (1L << (KW_IF - 69)) | (1L << (KW_IMPORT - 69)) | (1L << (KW_IN - 69)) | (1L << (KW_INHERIT - 69)) | (1L << (KW_INSTANCE - 69)) | (1L << (KW_INTERSECT - 69)) | (1L << (KW_IS - 69)) | (1L << (KW_ITEM - 69)) | (1L << (KW_LAX - 69)) | (1L << (KW_LE - 69)) | (1L << (KW_LEAST - 69)) | (1L << (KW_LET - 69)) | (1L << (KW_LT - 69)) | (1L << (KW_MAP - 69)) | (1L << (KW_MOD - 69)) | (1L << (KW_MODULE - 69)) | (1L << (KW_NAMESPACE - 69)) | (1L << (KW_NE - 69)) | (1L << (KW_NEXT - 69)) | (1L << (KW_NAMESPACE_NODE - 69)) | (1L << (KW_NO_INHERIT - 69)) | (1L << (KW_NO_PRESERVE - 69)) | (1L << (KW_NODE - 69)) | (1L << (KW_OF - 69)) | (1L << (KW_ONLY - 69)) | (1L << (KW_OPTION - 69)) | (1L << (KW_OR - 69)) | (1L << (KW_ORDER - 69)))) != 0) || ((((_la - 133)) & ~0x3f) == 0 && ((1L << (_la - 133)) & ((1L << (KW_ORDERED - 133)) | (1L << (KW_ORDERING - 133)) | (1L << (KW_PARENT - 133)) | (1L << (KW_PRECEDING - 133)) | (1L << (KW_PRECEDING_SIBLING - 133)) | (1L << (KW_PRESERVE - 133)) | (1L << (KW_PI - 133)) | (1L << (KW_RETURN - 133)) | (1L << (KW_SATISFIES - 133)) | (1L << (KW_SCHEMA - 133)) | (1L << (KW_SCHEMA_ATTR - 133)) | (1L << (KW_SCHEMA_ELEM - 133)) | (1L << (KW_SELF - 133)) | (1L << (KW_SLIDING - 133)) | (1L << (KW_SOME - 133)) | (1L << (KW_STABLE - 133)) | (1L << (KW_START - 133)) | (1L << (KW_STRICT - 133)) | (1L << (KW_STRIP - 133)) | (1L << (KW_SWITCH - 133)) | (1L << (KW_TEXT - 133)) | (1L << (KW_THEN - 133)) | (1L << (KW_TO - 133)) | (1L << (KW_TREAT - 133)) | (1L << (KW_TRY - 133)) | (1L << (KW_TUMBLING - 133)) | (1L << (KW_TYPE - 133)) | (1L << (KW_TYPESWITCH - 133)) | (1L << (KW_UNION - 133)) | (1L << (KW_UNORDERED - 133)) | (1L << (KW_UPDATE - 133)) | (1L << (KW_VALIDATE - 133)) | (1L << (KW_VARIABLE - 133)) | (1L << (KW_VERSION - 133)) | (1L << (KW_WHEN - 133)) | (1L << (KW_WHERE - 133)) | (1L << (KW_WINDOW - 133)) | (1L << (KW_XQUERY - 133)) | (1L << (KW_ARRAY_NODE - 133)) | (1L << (KW_BOOLEAN_NODE - 133)) | (1L << (KW_NULL_NODE - 133)) | (1L << (KW_NUMBER_NODE - 133)) | (1L << (KW_OBJECT_NODE - 133)) | (1L << (KW_REPLACE - 133)) | (1L << (KW_WITH - 133)) | (1L << (KW_VALUE - 133)) | (1L << (KW_INSERT - 133)) | (1L << (KW_INTO - 133)) | (1L << (KW_DELETE - 133)) | (1L << (KW_RENAME - 133)) | (1L << (URIQualifiedName - 133)) | (1L << (FullQName - 133)) | (1L << (NCName - 133)) | (1L << (ENTER_STRING - 133)))) != 0)) {
 				{
-				setState(1731);
-				exprSingle();
-				setState(1736);
-				_errHandler.sync(this);
-				_la = _input.LA(1);
-				while (_la==COMMA) {
-					{
-					{
-					setState(1732);
-					match(COMMA);
-					setState(1733);
-					exprSingle();
-					}
-					}
-					setState(1738);
-					_errHandler.sync(this);
-					_la = _input.LA(1);
-				}
+				setState(1728);
+				expr();
 				}
 			}
 
-			setState(1741);
+			setState(1731);
 			match(RBRACKET);
 			}
 		}
@@ -12678,9 +12653,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1743);
+			setState(1733);
 			match(KW_ARRAY);
-			setState(1744);
+			setState(1734);
 			enclosedExpression();
 			}
 		}
@@ -12718,11 +12693,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1746);
+			setState(1736);
 			match(ENTER_STRING);
-			setState(1747);
+			setState(1737);
 			stringConstructorContent();
-			setState(1748);
+			setState(1738);
 			match(EXIT_STRING);
 			}
 		}
@@ -12768,21 +12743,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1750);
+			setState(1740);
 			stringConstructorChars();
-			setState(1756);
+			setState(1746);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==ENTER_INTERPOLATION) {
 				{
 				{
-				setState(1751);
+				setState(1741);
 				stringConstructorInterpolation();
-				setState(1752);
+				setState(1742);
 				stringConstructorChars();
 				}
 				}
-				setState(1758);
+				setState(1748);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -12821,7 +12796,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1759);
+			setState(1749);
 			_la = _input.LA(1);
 			if ( !(_la==RBRACKET || _la==LBRACE || _la==BASIC_CHAR) ) {
 			_errHandler.recoverInline(this);
@@ -12866,7 +12841,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1761);
+			setState(1751);
 			_la = _input.LA(1);
 			if ( !(_la==RBRACKET || _la==GRAVE || _la==BASIC_CHAR) ) {
 			_errHandler.recoverInline(this);
@@ -12911,7 +12886,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1763);
+			setState(1753);
 			_la = _input.LA(1);
 			if ( !(_la==LBRACE || _la==GRAVE || _la==BASIC_CHAR) ) {
 			_errHandler.recoverInline(this);
@@ -12979,53 +12954,53 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1777);
+			setState(1767);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << RBRACKET) | (1L << LBRACE) | (1L << GRAVE))) != 0) || _la==BASIC_CHAR) {
 				{
-				setState(1775);
+				setState(1765);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,157,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,156,_ctx) ) {
 				case 1:
 					{
-					setState(1765);
+					setState(1755);
 					match(BASIC_CHAR);
 					}
 					break;
 				case 2:
 					{
-					setState(1766);
+					setState(1756);
 					charNoGrave();
-					setState(1767);
+					setState(1757);
 					charNoLBrace();
 					}
 					break;
 				case 3:
 					{
-					setState(1769);
+					setState(1759);
 					charNoRBrack();
-					setState(1770);
+					setState(1760);
 					charNoGrave();
-					setState(1771);
+					setState(1761);
 					charNoGrave();
 					}
 					break;
 				case 4:
 					{
-					setState(1773);
+					setState(1763);
 					charNoGrave();
 					}
 					break;
 				case 5:
 					{
-					setState(1774);
+					setState(1764);
 					match(LBRACE);
 					}
 					break;
 				}
 				}
-				setState(1779);
+				setState(1769);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
@@ -13065,11 +13040,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1780);
+			setState(1770);
 			match(ENTER_INTERPOLATION);
-			setState(1781);
+			setState(1771);
 			expr();
-			setState(1782);
+			setState(1772);
 			match(EXIT_INTERPOLATION);
 			}
 		}
@@ -13106,9 +13081,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1784);
+			setState(1774);
 			match(QUESTION);
-			setState(1785);
+			setState(1775);
 			keySpecifier();
 			}
 		}
@@ -13148,14 +13123,14 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1787);
+			setState(1777);
 			((SingleTypeContext)_localctx).item = simpleTypeName();
-			setState(1789);
+			setState(1779);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,159,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,158,_ctx) ) {
 			case 1:
 				{
-				setState(1788);
+				setState(1778);
 				((SingleTypeContext)_localctx).QUESTION = match(QUESTION);
 				((SingleTypeContext)_localctx).question.add(((SingleTypeContext)_localctx).QUESTION);
 				}
@@ -13196,9 +13171,9 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1791);
+			setState(1781);
 			match(KW_AS);
-			setState(1792);
+			setState(1782);
 			sequenceType();
 			}
 		}
@@ -13245,18 +13220,18 @@ public class XQueryParser extends Parser {
 		SequenceTypeContext _localctx = new SequenceTypeContext(_ctx, getState());
 		enterRule(_localctx, 370, RULE_sequenceType);
 		try {
-			setState(1803);
+			setState(1793);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,161,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,160,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
 				{
-				setState(1794);
+				setState(1784);
 				match(KW_EMPTY_SEQUENCE);
-				setState(1795);
+				setState(1785);
 				match(LPAREN);
-				setState(1796);
+				setState(1786);
 				match(RPAREN);
 				}
 				}
@@ -13265,28 +13240,28 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				{
-				setState(1797);
+				setState(1787);
 				((SequenceTypeContext)_localctx).item = itemType();
-				setState(1801);
+				setState(1791);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,160,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,159,_ctx) ) {
 				case 1:
 					{
-					setState(1798);
+					setState(1788);
 					((SequenceTypeContext)_localctx).QUESTION = match(QUESTION);
 					((SequenceTypeContext)_localctx).question.add(((SequenceTypeContext)_localctx).QUESTION);
 					}
 					break;
 				case 2:
 					{
-					setState(1799);
+					setState(1789);
 					((SequenceTypeContext)_localctx).STAR = match(STAR);
 					((SequenceTypeContext)_localctx).star.add(((SequenceTypeContext)_localctx).STAR);
 					}
 					break;
 				case 3:
 					{
-					setState(1800);
+					setState(1790);
 					((SequenceTypeContext)_localctx).PLUS = match(PLUS);
 					((SequenceTypeContext)_localctx).plus.add(((SequenceTypeContext)_localctx).PLUS);
 					}
@@ -13345,13 +13320,13 @@ public class XQueryParser extends Parser {
 		ItemTypeContext _localctx = new ItemTypeContext(_ctx, getState());
 		enterRule(_localctx, 372, RULE_itemType);
 		try {
-			setState(1814);
+			setState(1804);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,162,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,161,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1805);
+				setState(1795);
 				kindTest();
 				}
 				break;
@@ -13359,11 +13334,11 @@ public class XQueryParser extends Parser {
 				enterOuterAlt(_localctx, 2);
 				{
 				{
-				setState(1806);
+				setState(1796);
 				match(KW_ITEM);
-				setState(1807);
+				setState(1797);
 				match(LPAREN);
-				setState(1808);
+				setState(1798);
 				match(RPAREN);
 				}
 				}
@@ -13371,35 +13346,35 @@ public class XQueryParser extends Parser {
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1809);
+				setState(1799);
 				functionTest();
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1810);
+				setState(1800);
 				mapTest();
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1811);
+				setState(1801);
 				arrayTest();
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1812);
+				setState(1802);
 				atomicOrUnionType();
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(1813);
+				setState(1803);
 				parenthesizedItemTest();
 				}
 				break;
@@ -13437,7 +13412,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1816);
+			setState(1806);
 			eqName();
 			}
 		}
@@ -13504,69 +13479,69 @@ public class XQueryParser extends Parser {
 		KindTestContext _localctx = new KindTestContext(_ctx, getState());
 		enterRule(_localctx, 376, RULE_kindTest);
 		try {
-			setState(1830);
+			setState(1820);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_DOCUMENT_NODE:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1818);
+				setState(1808);
 				documentTest();
 				}
 				break;
 			case KW_ELEMENT:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1819);
+				setState(1809);
 				elementTest();
 				}
 				break;
 			case KW_ATTRIBUTE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1820);
+				setState(1810);
 				attributeTest();
 				}
 				break;
 			case KW_SCHEMA_ELEM:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1821);
+				setState(1811);
 				schemaElementTest();
 				}
 				break;
 			case KW_SCHEMA_ATTR:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1822);
+				setState(1812);
 				schemaAttributeTest();
 				}
 				break;
 			case KW_PI:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(1823);
+				setState(1813);
 				piTest();
 				}
 				break;
 			case KW_COMMENT:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(1824);
+				setState(1814);
 				commentTest();
 				}
 				break;
 			case KW_TEXT:
 				enterOuterAlt(_localctx, 8);
 				{
-				setState(1825);
+				setState(1815);
 				textTest();
 				}
 				break;
 			case KW_NAMESPACE_NODE:
 				enterOuterAlt(_localctx, 9);
 				{
-				setState(1826);
+				setState(1816);
 				namespaceNodeTest();
 				}
 				break;
@@ -13577,21 +13552,21 @@ public class XQueryParser extends Parser {
 			case KW_OBJECT_NODE:
 				enterOuterAlt(_localctx, 10);
 				{
-				setState(1827);
+				setState(1817);
 				mlNodeTest();
 				}
 				break;
 			case KW_BINARY:
 				enterOuterAlt(_localctx, 11);
 				{
-				setState(1828);
+				setState(1818);
 				binaryNodeTest();
 				}
 				break;
 			case KW_NODE:
 				enterOuterAlt(_localctx, 12);
 				{
-				setState(1829);
+				setState(1819);
 				anyKindTest();
 				}
 				break;
@@ -13633,21 +13608,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1832);
+			setState(1822);
 			match(KW_NODE);
-			setState(1833);
+			setState(1823);
 			match(LPAREN);
-			setState(1835);
+			setState(1825);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==STAR) {
 				{
-				setState(1834);
+				setState(1824);
 				match(STAR);
 				}
 			}
 
-			setState(1837);
+			setState(1827);
 			match(RPAREN);
 			}
 		}
@@ -13683,11 +13658,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1839);
+			setState(1829);
 			match(KW_BINARY);
-			setState(1840);
+			setState(1830);
 			match(LPAREN);
-			setState(1841);
+			setState(1831);
 			match(RPAREN);
 			}
 		}
@@ -13729,22 +13704,22 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1843);
+			setState(1833);
 			match(KW_DOCUMENT_NODE);
-			setState(1844);
+			setState(1834);
 			match(LPAREN);
-			setState(1847);
+			setState(1837);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_ELEMENT:
 				{
-				setState(1845);
+				setState(1835);
 				elementTest();
 				}
 				break;
 			case KW_SCHEMA_ELEM:
 				{
-				setState(1846);
+				setState(1836);
 				schemaElementTest();
 				}
 				break;
@@ -13753,7 +13728,7 @@ public class XQueryParser extends Parser {
 			default:
 				break;
 			}
-			setState(1849);
+			setState(1839);
 			match(RPAREN);
 			}
 		}
@@ -13789,11 +13764,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1851);
+			setState(1841);
 			match(KW_TEXT);
-			setState(1852);
+			setState(1842);
 			match(LPAREN);
-			setState(1853);
+			setState(1843);
 			match(RPAREN);
 			}
 		}
@@ -13829,11 +13804,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1855);
+			setState(1845);
 			match(KW_COMMENT);
-			setState(1856);
+			setState(1846);
 			match(LPAREN);
-			setState(1857);
+			setState(1847);
 			match(RPAREN);
 			}
 		}
@@ -13869,11 +13844,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1859);
+			setState(1849);
 			match(KW_NAMESPACE_NODE);
-			setState(1860);
+			setState(1850);
 			match(LPAREN);
-			setState(1861);
+			setState(1851);
 			match(RPAREN);
 			}
 		}
@@ -13915,11 +13890,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1863);
+			setState(1853);
 			match(KW_PI);
-			setState(1864);
+			setState(1854);
 			match(LPAREN);
-			setState(1867);
+			setState(1857);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -14055,14 +14030,14 @@ public class XQueryParser extends Parser {
 			case KW_RENAME:
 			case NCName:
 				{
-				setState(1865);
+				setState(1855);
 				ncName();
 				}
 				break;
 			case Quot:
 			case Apos:
 				{
-				setState(1866);
+				setState(1856);
 				stringLiteral();
 				}
 				break;
@@ -14071,7 +14046,7 @@ public class XQueryParser extends Parser {
 			default:
 				break;
 			}
-			setState(1869);
+			setState(1859);
 			match(RPAREN);
 			}
 		}
@@ -14116,25 +14091,25 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1871);
+			setState(1861);
 			match(KW_ATTRIBUTE);
-			setState(1872);
+			setState(1862);
 			match(LPAREN);
-			setState(1878);
+			setState(1868);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DFPropertyName) | (1L << STAR) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (URIQualifiedName - 128)) | (1L << (FullQName - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
-				setState(1873);
+				setState(1863);
 				attributeNameOrWildcard();
-				setState(1876);
+				setState(1866);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==COMMA) {
 					{
-					setState(1874);
+					setState(1864);
 					match(COMMA);
-					setState(1875);
+					setState(1865);
 					((AttributeTestContext)_localctx).type = typeName();
 					}
 				}
@@ -14142,7 +14117,7 @@ public class XQueryParser extends Parser {
 				}
 			}
 
-			setState(1880);
+			setState(1870);
 			match(RPAREN);
 			}
 		}
@@ -14177,7 +14152,7 @@ public class XQueryParser extends Parser {
 		AttributeNameOrWildcardContext _localctx = new AttributeNameOrWildcardContext(_ctx, getState());
 		enterRule(_localctx, 394, RULE_attributeNameOrWildcard);
 		try {
-			setState(1884);
+			setState(1874);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -14316,14 +14291,14 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1882);
+				setState(1872);
 				attributeName();
 				}
 				break;
 			case STAR:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1883);
+				setState(1873);
 				match(STAR);
 				}
 				break;
@@ -14366,13 +14341,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1886);
+			setState(1876);
 			match(KW_SCHEMA_ATTR);
-			setState(1887);
+			setState(1877);
 			match(LPAREN);
-			setState(1888);
+			setState(1878);
 			attributeDeclaration();
-			setState(1889);
+			setState(1879);
 			match(RPAREN);
 			}
 		}
@@ -14418,32 +14393,32 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1891);
+			setState(1881);
 			match(KW_ELEMENT);
-			setState(1892);
+			setState(1882);
 			match(LPAREN);
-			setState(1901);
+			setState(1891);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DFPropertyName) | (1L << STAR) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (URIQualifiedName - 128)) | (1L << (FullQName - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
-				setState(1893);
+				setState(1883);
 				elementNameOrWildcard();
-				setState(1899);
+				setState(1889);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				if (_la==COMMA) {
 					{
-					setState(1894);
+					setState(1884);
 					match(COMMA);
-					setState(1895);
+					setState(1885);
 					typeName();
-					setState(1897);
+					setState(1887);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 					if (_la==QUESTION) {
 						{
-						setState(1896);
+						setState(1886);
 						((ElementTestContext)_localctx).optional = match(QUESTION);
 						}
 					}
@@ -14454,7 +14429,7 @@ public class XQueryParser extends Parser {
 				}
 			}
 
-			setState(1903);
+			setState(1893);
 			match(RPAREN);
 			}
 		}
@@ -14489,7 +14464,7 @@ public class XQueryParser extends Parser {
 		ElementNameOrWildcardContext _localctx = new ElementNameOrWildcardContext(_ctx, getState());
 		enterRule(_localctx, 400, RULE_elementNameOrWildcard);
 		try {
-			setState(1907);
+			setState(1897);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -14628,14 +14603,14 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1905);
+				setState(1895);
 				elementName();
 				}
 				break;
 			case STAR:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1906);
+				setState(1896);
 				match(STAR);
 				}
 				break;
@@ -14678,13 +14653,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1909);
+			setState(1899);
 			match(KW_SCHEMA_ELEM);
-			setState(1910);
+			setState(1900);
 			match(LPAREN);
-			setState(1911);
+			setState(1901);
 			elementDeclaration();
-			setState(1912);
+			setState(1902);
 			match(RPAREN);
 			}
 		}
@@ -14720,7 +14695,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1914);
+			setState(1904);
 			elementName();
 			}
 		}
@@ -14756,7 +14731,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1916);
+			setState(1906);
 			eqName();
 			}
 		}
@@ -14792,7 +14767,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1918);
+			setState(1908);
 			eqName();
 			}
 		}
@@ -14828,7 +14803,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1920);
+			setState(1910);
 			typeName();
 			}
 		}
@@ -14864,7 +14839,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1922);
+			setState(1912);
 			eqName();
 			}
 		}
@@ -14910,32 +14885,32 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1927);
+			setState(1917);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while (_la==MOD) {
 				{
 				{
-				setState(1924);
+				setState(1914);
 				annotation();
 				}
 				}
-				setState(1929);
+				setState(1919);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(1932);
+			setState(1922);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,175,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,174,_ctx) ) {
 			case 1:
 				{
-				setState(1930);
+				setState(1920);
 				anyFunctionTest();
 				}
 				break;
 			case 2:
 				{
-				setState(1931);
+				setState(1921);
 				typedFunctionTest();
 				}
 				break;
@@ -14975,13 +14950,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1934);
+			setState(1924);
 			match(KW_FUNCTION);
-			setState(1935);
+			setState(1925);
 			match(LPAREN);
-			setState(1936);
+			setState(1926);
 			match(STAR);
-			setState(1937);
+			setState(1927);
 			match(RPAREN);
 			}
 		}
@@ -15029,41 +15004,41 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1939);
+			setState(1929);
 			match(KW_FUNCTION);
-			setState(1940);
+			setState(1930);
 			match(LPAREN);
-			setState(1949);
+			setState(1939);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DFPropertyName) | (1L << LPAREN) | (1L << MOD) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (URIQualifiedName - 128)) | (1L << (FullQName - 128)) | (1L << (NCName - 128)))) != 0)) {
 				{
-				setState(1941);
+				setState(1931);
 				sequenceType();
-				setState(1946);
+				setState(1936);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 				while (_la==COMMA) {
 					{
 					{
-					setState(1942);
+					setState(1932);
 					match(COMMA);
-					setState(1943);
+					setState(1933);
 					sequenceType();
 					}
 					}
-					setState(1948);
+					setState(1938);
 					_errHandler.sync(this);
 					_la = _input.LA(1);
 				}
 				}
 			}
 
-			setState(1951);
+			setState(1941);
 			match(RPAREN);
-			setState(1952);
+			setState(1942);
 			match(KW_AS);
-			setState(1953);
+			setState(1943);
 			sequenceType();
 			}
 		}
@@ -15100,20 +15075,20 @@ public class XQueryParser extends Parser {
 		MapTestContext _localctx = new MapTestContext(_ctx, getState());
 		enterRule(_localctx, 420, RULE_mapTest);
 		try {
-			setState(1957);
+			setState(1947);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,178,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,177,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1955);
+				setState(1945);
 				anyMapTest();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1956);
+				setState(1946);
 				typedMapTest();
 				}
 				break;
@@ -15152,13 +15127,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1959);
+			setState(1949);
 			match(KW_MAP);
-			setState(1960);
+			setState(1950);
 			match(LPAREN);
-			setState(1961);
+			setState(1951);
 			match(STAR);
-			setState(1962);
+			setState(1952);
 			match(RPAREN);
 			}
 		}
@@ -15201,17 +15176,17 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1964);
+			setState(1954);
 			match(KW_MAP);
-			setState(1965);
+			setState(1955);
 			match(LPAREN);
-			setState(1966);
+			setState(1956);
 			eqName();
-			setState(1967);
+			setState(1957);
 			match(COMMA);
-			setState(1968);
+			setState(1958);
 			sequenceType();
-			setState(1969);
+			setState(1959);
 			match(RPAREN);
 			}
 		}
@@ -15248,20 +15223,20 @@ public class XQueryParser extends Parser {
 		ArrayTestContext _localctx = new ArrayTestContext(_ctx, getState());
 		enterRule(_localctx, 426, RULE_arrayTest);
 		try {
-			setState(1973);
+			setState(1963);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,179,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,178,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1971);
+				setState(1961);
 				anyArrayTest();
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1972);
+				setState(1962);
 				typedArrayTest();
 				}
 				break;
@@ -15300,13 +15275,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1975);
+			setState(1965);
 			match(KW_ARRAY);
-			setState(1976);
+			setState(1966);
 			match(LPAREN);
-			setState(1977);
+			setState(1967);
 			match(STAR);
-			setState(1978);
+			setState(1968);
 			match(RPAREN);
 			}
 		}
@@ -15345,13 +15320,13 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1980);
+			setState(1970);
 			match(KW_ARRAY);
-			setState(1981);
+			setState(1971);
 			match(LPAREN);
-			setState(1982);
+			setState(1972);
 			sequenceType();
-			setState(1983);
+			setState(1973);
 			match(RPAREN);
 			}
 		}
@@ -15389,11 +15364,11 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1985);
+			setState(1975);
 			match(LPAREN);
-			setState(1986);
+			setState(1976);
 			itemType();
-			setState(1987);
+			setState(1977);
 			match(RPAREN);
 			}
 		}
@@ -15429,7 +15404,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1989);
+			setState(1979);
 			attributeName();
 			}
 		}
@@ -15475,41 +15450,41 @@ public class XQueryParser extends Parser {
 		MlNodeTestContext _localctx = new MlNodeTestContext(_ctx, getState());
 		enterRule(_localctx, 436, RULE_mlNodeTest);
 		try {
-			setState(1996);
+			setState(1986);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_ARRAY_NODE:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(1991);
+				setState(1981);
 				mlArrayNodeTest();
 				}
 				break;
 			case KW_OBJECT_NODE:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(1992);
+				setState(1982);
 				mlObjectNodeTest();
 				}
 				break;
 			case KW_NUMBER_NODE:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(1993);
+				setState(1983);
 				mlNumberNodeTest();
 				}
 				break;
 			case KW_BOOLEAN_NODE:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(1994);
+				setState(1984);
 				mlBooleanNodeTest();
 				}
 				break;
 			case KW_NULL_NODE:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(1995);
+				setState(1985);
 				mlNullNodeTest();
 				}
 				break;
@@ -15553,21 +15528,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(1998);
+			setState(1988);
 			match(KW_ARRAY_NODE);
-			setState(1999);
+			setState(1989);
 			match(LPAREN);
-			setState(2001);
+			setState(1991);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Quot || _la==Apos) {
 				{
-				setState(2000);
+				setState(1990);
 				stringLiteral();
 				}
 			}
 
-			setState(2003);
+			setState(1993);
 			match(RPAREN);
 			}
 		}
@@ -15607,21 +15582,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2005);
+			setState(1995);
 			match(KW_OBJECT_NODE);
-			setState(2006);
+			setState(1996);
 			match(LPAREN);
-			setState(2008);
+			setState(1998);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Quot || _la==Apos) {
 				{
-				setState(2007);
+				setState(1997);
 				stringLiteral();
 				}
 			}
 
-			setState(2010);
+			setState(2000);
 			match(RPAREN);
 			}
 		}
@@ -15661,21 +15636,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2012);
+			setState(2002);
 			match(KW_NUMBER_NODE);
-			setState(2013);
+			setState(2003);
 			match(LPAREN);
-			setState(2015);
+			setState(2005);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Quot || _la==Apos) {
 				{
-				setState(2014);
+				setState(2004);
 				stringLiteral();
 				}
 			}
 
-			setState(2017);
+			setState(2007);
 			match(RPAREN);
 			}
 		}
@@ -15715,21 +15690,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2019);
+			setState(2009);
 			match(KW_BOOLEAN_NODE);
-			setState(2020);
+			setState(2010);
 			match(LPAREN);
-			setState(2022);
+			setState(2012);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Quot || _la==Apos) {
 				{
-				setState(2021);
+				setState(2011);
 				stringLiteral();
 				}
 			}
 
-			setState(2024);
+			setState(2014);
 			match(RPAREN);
 			}
 		}
@@ -15769,21 +15744,21 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2026);
+			setState(2016);
 			match(KW_NULL_NODE);
-			setState(2027);
+			setState(2017);
 			match(LPAREN);
-			setState(2029);
+			setState(2019);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			if (_la==Quot || _la==Apos) {
 				{
-				setState(2028);
+				setState(2018);
 				stringLiteral();
 				}
 			}
 
-			setState(2031);
+			setState(2021);
 			match(RPAREN);
 			}
 		}
@@ -15818,7 +15793,7 @@ public class XQueryParser extends Parser {
 		EqNameContext _localctx = new EqNameContext(_ctx, getState());
 		enterRule(_localctx, 448, RULE_eqName);
 		try {
-			setState(2035);
+			setState(2025);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case DFPropertyName:
@@ -15956,14 +15931,14 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2033);
+				setState(2023);
 				qName();
 				}
 				break;
 			case URIQualifiedName:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2034);
+				setState(2024);
 				match(URIQualifiedName);
 				}
 				break;
@@ -16002,13 +15977,13 @@ public class XQueryParser extends Parser {
 		QNameContext _localctx = new QNameContext(_ctx, getState());
 		enterRule(_localctx, 450, RULE_qName);
 		try {
-			setState(2039);
+			setState(2029);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case FullQName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2037);
+				setState(2027);
 				match(FullQName);
 				}
 				break;
@@ -16146,7 +16121,7 @@ public class XQueryParser extends Parser {
 			case NCName:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2038);
+				setState(2028);
 				ncName();
 				}
 				break;
@@ -16166,6 +16141,8 @@ public class XQueryParser extends Parser {
 	}
 
 	public static class NcNameContext extends ParserRuleContext {
+		public Token local_name;
+		public KeywordContext local_namekw;
 		public TerminalNode NCName() { return getToken(XQueryParser.NCName, 0); }
 		public KeywordContext keyword() {
 			return getRuleContext(KeywordContext.class,0);
@@ -16185,14 +16162,14 @@ public class XQueryParser extends Parser {
 		NcNameContext _localctx = new NcNameContext(_ctx, getState());
 		enterRule(_localctx, 452, RULE_ncName);
 		try {
-			setState(2043);
+			setState(2033);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case NCName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2041);
-				match(NCName);
+				setState(2031);
+				((NcNameContext)_localctx).local_name = match(NCName);
 				}
 				break;
 			case DFPropertyName:
@@ -16328,8 +16305,8 @@ public class XQueryParser extends Parser {
 			case KW_RENAME:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2042);
-				keyword();
+				setState(2032);
+				((NcNameContext)_localctx).local_namekw = keyword();
 				}
 				break;
 			default:
@@ -16369,27 +16346,27 @@ public class XQueryParser extends Parser {
 		FunctionNameContext _localctx = new FunctionNameContext(_ctx, getState());
 		enterRule(_localctx, 454, RULE_functionName);
 		try {
-			setState(2049);
+			setState(2039);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case FullQName:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2045);
+				setState(2035);
 				match(FullQName);
 				}
 				break;
 			case NCName:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2046);
+				setState(2036);
 				match(NCName);
 				}
 				break;
 			case URIQualifiedName:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(2047);
+				setState(2037);
 				match(URIQualifiedName);
 				}
 				break;
@@ -16480,7 +16457,7 @@ public class XQueryParser extends Parser {
 			case KW_XQUERY:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(2048);
+				setState(2038);
 				keywordOKForFunction();
 				}
 				break;
@@ -16521,7 +16498,7 @@ public class XQueryParser extends Parser {
 		KeywordContext _localctx = new KeywordContext(_ctx, getState());
 		enterRule(_localctx, 456, RULE_keyword);
 		try {
-			setState(2053);
+			setState(2043);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case KW_ANCESTOR:
@@ -16611,7 +16588,7 @@ public class XQueryParser extends Parser {
 			case KW_XQUERY:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2051);
+				setState(2041);
 				keywordOKForFunction();
 				}
 				break;
@@ -16663,7 +16640,7 @@ public class XQueryParser extends Parser {
 			case KW_RENAME:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2052);
+				setState(2042);
 				keywordNotOKForFunction();
 				}
 				break;
@@ -16747,7 +16724,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2055);
+			setState(2045);
 			_la = _input.LA(1);
 			if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << DFPropertyName) | (1L << KW_ALLOWING) | (1L << KW_ARRAY) | (1L << KW_ATTRIBUTE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_END - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 129)) & ~0x3f) == 0 && ((1L << (_la - 129)) & ((1L << (KW_ONLY - 129)) | (1L << (KW_PI - 129)) | (1L << (KW_SCHEMA_ATTR - 129)) | (1L << (KW_SCHEMA_ELEM - 129)) | (1L << (KW_SLIDING - 129)) | (1L << (KW_SWITCH - 129)) | (1L << (KW_TEXT - 129)) | (1L << (KW_TRY - 129)) | (1L << (KW_TUMBLING - 129)) | (1L << (KW_TYPE - 129)) | (1L << (KW_TYPESWITCH - 129)) | (1L << (KW_UPDATE - 129)) | (1L << (KW_WHEN - 129)) | (1L << (KW_WINDOW - 129)) | (1L << (KW_ARRAY_NODE - 129)) | (1L << (KW_BOOLEAN_NODE - 129)) | (1L << (KW_NULL_NODE - 129)) | (1L << (KW_NUMBER_NODE - 129)) | (1L << (KW_OBJECT_NODE - 129)) | (1L << (KW_REPLACE - 129)) | (1L << (KW_WITH - 129)) | (1L << (KW_VALUE - 129)) | (1L << (KW_INSERT - 129)) | (1L << (KW_INTO - 129)) | (1L << (KW_DELETE - 129)) | (1L << (KW_RENAME - 129)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -16874,7 +16851,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2057);
+			setState(2047);
 			_la = _input.LA(1);
 			if ( !(((((_la - 54)) & ~0x3f) == 0 && ((1L << (_la - 54)) & ((1L << (KW_ANCESTOR - 54)) | (1L << (KW_ANCESTOR_OR_SELF - 54)) | (1L << (KW_AND - 54)) | (1L << (KW_AS - 54)) | (1L << (KW_ASCENDING - 54)) | (1L << (KW_AT - 54)) | (1L << (KW_BASE_URI - 54)) | (1L << (KW_BOUNDARY_SPACE - 54)) | (1L << (KW_BY - 54)) | (1L << (KW_CASE - 54)) | (1L << (KW_CAST - 54)) | (1L << (KW_CASTABLE - 54)) | (1L << (KW_CHILD - 54)) | (1L << (KW_COLLATION - 54)) | (1L << (KW_CONSTRUCTION - 54)) | (1L << (KW_COPY_NS - 54)) | (1L << (KW_DECLARE - 54)) | (1L << (KW_DEFAULT - 54)) | (1L << (KW_DESCENDANT - 54)) | (1L << (KW_DESCENDANT_OR_SELF - 54)) | (1L << (KW_DESCENDING - 54)) | (1L << (KW_DIV - 54)) | (1L << (KW_DOCUMENT - 54)) | (1L << (KW_ELSE - 54)) | (1L << (KW_EMPTY - 54)) | (1L << (KW_ENCODING - 54)) | (1L << (KW_EQ - 54)) | (1L << (KW_EVERY - 54)) | (1L << (KW_EXCEPT - 54)) | (1L << (KW_EXTERNAL - 54)) | (1L << (KW_FOLLOWING - 54)) | (1L << (KW_FOLLOWING_SIBLING - 54)) | (1L << (KW_FOR - 54)) | (1L << (KW_FUNCTION - 54)) | (1L << (KW_GE - 54)) | (1L << (KW_GREATEST - 54)) | (1L << (KW_GROUP - 54)) | (1L << (KW_GT - 54)) | (1L << (KW_IDIV - 54)) | (1L << (KW_IMPORT - 54)) | (1L << (KW_IN - 54)) | (1L << (KW_INHERIT - 54)) | (1L << (KW_INSTANCE - 54)) | (1L << (KW_INTERSECT - 54)) | (1L << (KW_IS - 54)) | (1L << (KW_LAX - 54)) | (1L << (KW_LE - 54)) | (1L << (KW_LEAST - 54)) | (1L << (KW_LET - 54)) | (1L << (KW_LT - 54)))) != 0) || ((((_la - 119)) & ~0x3f) == 0 && ((1L << (_la - 119)) & ((1L << (KW_MOD - 119)) | (1L << (KW_MODULE - 119)) | (1L << (KW_NAMESPACE - 119)) | (1L << (KW_NE - 119)) | (1L << (KW_NO_INHERIT - 119)) | (1L << (KW_NO_PRESERVE - 119)) | (1L << (KW_OF - 119)) | (1L << (KW_OPTION - 119)) | (1L << (KW_OR - 119)) | (1L << (KW_ORDER - 119)) | (1L << (KW_ORDERED - 119)) | (1L << (KW_ORDERING - 119)) | (1L << (KW_PARENT - 119)) | (1L << (KW_PRECEDING - 119)) | (1L << (KW_PRECEDING_SIBLING - 119)) | (1L << (KW_PRESERVE - 119)) | (1L << (KW_RETURN - 119)) | (1L << (KW_SATISFIES - 119)) | (1L << (KW_SCHEMA - 119)) | (1L << (KW_SELF - 119)) | (1L << (KW_SOME - 119)) | (1L << (KW_STABLE - 119)) | (1L << (KW_START - 119)) | (1L << (KW_STRICT - 119)) | (1L << (KW_STRIP - 119)) | (1L << (KW_THEN - 119)) | (1L << (KW_TO - 119)) | (1L << (KW_TREAT - 119)) | (1L << (KW_UNION - 119)) | (1L << (KW_UNORDERED - 119)) | (1L << (KW_VALIDATE - 119)) | (1L << (KW_VARIABLE - 119)) | (1L << (KW_VERSION - 119)) | (1L << (KW_WHERE - 119)) | (1L << (KW_XQUERY - 119)))) != 0)) ) {
 			_errHandler.recoverInline(this);
@@ -16918,7 +16895,7 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2059);
+			setState(2049);
 			stringLiteral();
 			}
 		}
@@ -16974,31 +16951,31 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2061);
+			setState(2051);
 			match(Quot);
-			setState(2068);
+			setState(2058);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << EscapeQuot) | (1L << DOUBLE_LBRACE) | (1L << DOUBLE_RBRACE) | (1L << IntegerLiteral) | (1L << DecimalLiteral) | (1L << DoubleLiteral) | (1L << DFPropertyName) | (1L << PredefinedEntityRef) | (1L << CharRef) | (1L << Apos) | (1L << COMMENT) | (1L << PRAGMA) | (1L << EQUAL) | (1L << NOT_EQUAL) | (1L << LPAREN) | (1L << RPAREN) | (1L << LBRACKET) | (1L << RBRACKET) | (1L << LBRACE) | (1L << RBRACE) | (1L << STAR) | (1L << PLUS) | (1L << MINUS) | (1L << COMMA) | (1L << DOT) | (1L << DDOT) | (1L << COLON) | (1L << COLON_EQ) | (1L << SEMICOLON) | (1L << SLASH) | (1L << DSLASH) | (1L << BACKSLASH) | (1L << VBAR) | (1L << RANGLE) | (1L << QUESTION) | (1L << AT) | (1L << DOLLAR) | (1L << MOD) | (1L << BANG) | (1L << HASH) | (1L << CARAT) | (1L << ARROW) | (1L << GRAVE) | (1L << TILDE) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PREVIOUS - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (URIQualifiedName - 128)) | (1L << (FullQName - 128)) | (1L << (NCNameWithLocalWildcard - 128)) | (1L << (NCNameWithPrefixWildcard - 128)) | (1L << (NCName - 128)) | (1L << (XQDOC_COMMENT_START - 128)))) != 0) || _la==ContentChar) {
 				{
-				setState(2066);
+				setState(2056);
 				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case PredefinedEntityRef:
 					{
-					setState(2062);
+					setState(2052);
 					match(PredefinedEntityRef);
 					}
 					break;
 				case CharRef:
 					{
-					setState(2063);
+					setState(2053);
 					match(CharRef);
 					}
 					break;
 				case EscapeQuot:
 					{
-					setState(2064);
+					setState(2054);
 					match(EscapeQuot);
 					}
 					break;
@@ -17182,7 +17159,7 @@ public class XQueryParser extends Parser {
 				case XQDOC_COMMENT_START:
 				case ContentChar:
 					{
-					setState(2065);
+					setState(2055);
 					stringContentQuot();
 					}
 					break;
@@ -17190,11 +17167,11 @@ public class XQueryParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				setState(2070);
+				setState(2060);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(2071);
+			setState(2061);
 			match(Quot);
 			}
 		}
@@ -17250,31 +17227,31 @@ public class XQueryParser extends Parser {
 		try {
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2073);
+			setState(2063);
 			match(Apos);
-			setState(2080);
+			setState(2070);
 			_errHandler.sync(this);
 			_la = _input.LA(1);
 			while ((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << EscapeApos) | (1L << DOUBLE_LBRACE) | (1L << DOUBLE_RBRACE) | (1L << IntegerLiteral) | (1L << DecimalLiteral) | (1L << DoubleLiteral) | (1L << DFPropertyName) | (1L << PredefinedEntityRef) | (1L << CharRef) | (1L << Quot) | (1L << COMMENT) | (1L << PRAGMA) | (1L << EQUAL) | (1L << NOT_EQUAL) | (1L << LPAREN) | (1L << RPAREN) | (1L << LBRACKET) | (1L << RBRACKET) | (1L << LBRACE) | (1L << RBRACE) | (1L << STAR) | (1L << PLUS) | (1L << MINUS) | (1L << COMMA) | (1L << DOT) | (1L << DDOT) | (1L << COLON) | (1L << COLON_EQ) | (1L << SEMICOLON) | (1L << SLASH) | (1L << DSLASH) | (1L << BACKSLASH) | (1L << VBAR) | (1L << RANGLE) | (1L << QUESTION) | (1L << AT) | (1L << DOLLAR) | (1L << MOD) | (1L << BANG) | (1L << HASH) | (1L << CARAT) | (1L << ARROW) | (1L << GRAVE) | (1L << TILDE) | (1L << KW_ALLOWING) | (1L << KW_ANCESTOR) | (1L << KW_ANCESTOR_OR_SELF) | (1L << KW_AND) | (1L << KW_ARRAY) | (1L << KW_AS) | (1L << KW_ASCENDING) | (1L << KW_AT) | (1L << KW_ATTRIBUTE) | (1L << KW_BASE_URI) | (1L << KW_BOUNDARY_SPACE))) != 0) || ((((_la - 64)) & ~0x3f) == 0 && ((1L << (_la - 64)) & ((1L << (KW_BINARY - 64)) | (1L << (KW_BY - 64)) | (1L << (KW_CASE - 64)) | (1L << (KW_CAST - 64)) | (1L << (KW_CASTABLE - 64)) | (1L << (KW_CATCH - 64)) | (1L << (KW_CHILD - 64)) | (1L << (KW_COLLATION - 64)) | (1L << (KW_COMMENT - 64)) | (1L << (KW_CONSTRUCTION - 64)) | (1L << (KW_CONTEXT - 64)) | (1L << (KW_COPY_NS - 64)) | (1L << (KW_COUNT - 64)) | (1L << (KW_DECLARE - 64)) | (1L << (KW_DEFAULT - 64)) | (1L << (KW_DESCENDANT - 64)) | (1L << (KW_DESCENDANT_OR_SELF - 64)) | (1L << (KW_DESCENDING - 64)) | (1L << (KW_DECIMAL_FORMAT - 64)) | (1L << (KW_DIV - 64)) | (1L << (KW_DOCUMENT - 64)) | (1L << (KW_DOCUMENT_NODE - 64)) | (1L << (KW_ELEMENT - 64)) | (1L << (KW_ELSE - 64)) | (1L << (KW_EMPTY - 64)) | (1L << (KW_EMPTY_SEQUENCE - 64)) | (1L << (KW_ENCODING - 64)) | (1L << (KW_END - 64)) | (1L << (KW_EQ - 64)) | (1L << (KW_EVERY - 64)) | (1L << (KW_EXCEPT - 64)) | (1L << (KW_EXTERNAL - 64)) | (1L << (KW_FOLLOWING - 64)) | (1L << (KW_FOLLOWING_SIBLING - 64)) | (1L << (KW_FOR - 64)) | (1L << (KW_FUNCTION - 64)) | (1L << (KW_GE - 64)) | (1L << (KW_GREATEST - 64)) | (1L << (KW_GROUP - 64)) | (1L << (KW_GT - 64)) | (1L << (KW_IDIV - 64)) | (1L << (KW_IF - 64)) | (1L << (KW_IMPORT - 64)) | (1L << (KW_IN - 64)) | (1L << (KW_INHERIT - 64)) | (1L << (KW_INSTANCE - 64)) | (1L << (KW_INTERSECT - 64)) | (1L << (KW_IS - 64)) | (1L << (KW_ITEM - 64)) | (1L << (KW_LAX - 64)) | (1L << (KW_LE - 64)) | (1L << (KW_LEAST - 64)) | (1L << (KW_LET - 64)) | (1L << (KW_LT - 64)) | (1L << (KW_MAP - 64)) | (1L << (KW_MOD - 64)) | (1L << (KW_MODULE - 64)) | (1L << (KW_NAMESPACE - 64)) | (1L << (KW_NE - 64)) | (1L << (KW_NEXT - 64)) | (1L << (KW_NAMESPACE_NODE - 64)) | (1L << (KW_NO_INHERIT - 64)) | (1L << (KW_NO_PRESERVE - 64)) | (1L << (KW_NODE - 64)))) != 0) || ((((_la - 128)) & ~0x3f) == 0 && ((1L << (_la - 128)) & ((1L << (KW_OF - 128)) | (1L << (KW_ONLY - 128)) | (1L << (KW_OPTION - 128)) | (1L << (KW_OR - 128)) | (1L << (KW_ORDER - 128)) | (1L << (KW_ORDERED - 128)) | (1L << (KW_ORDERING - 128)) | (1L << (KW_PARENT - 128)) | (1L << (KW_PRECEDING - 128)) | (1L << (KW_PRECEDING_SIBLING - 128)) | (1L << (KW_PRESERVE - 128)) | (1L << (KW_PREVIOUS - 128)) | (1L << (KW_PI - 128)) | (1L << (KW_RETURN - 128)) | (1L << (KW_SATISFIES - 128)) | (1L << (KW_SCHEMA - 128)) | (1L << (KW_SCHEMA_ATTR - 128)) | (1L << (KW_SCHEMA_ELEM - 128)) | (1L << (KW_SELF - 128)) | (1L << (KW_SLIDING - 128)) | (1L << (KW_SOME - 128)) | (1L << (KW_STABLE - 128)) | (1L << (KW_START - 128)) | (1L << (KW_STRICT - 128)) | (1L << (KW_STRIP - 128)) | (1L << (KW_SWITCH - 128)) | (1L << (KW_TEXT - 128)) | (1L << (KW_THEN - 128)) | (1L << (KW_TO - 128)) | (1L << (KW_TREAT - 128)) | (1L << (KW_TRY - 128)) | (1L << (KW_TUMBLING - 128)) | (1L << (KW_TYPE - 128)) | (1L << (KW_TYPESWITCH - 128)) | (1L << (KW_UNION - 128)) | (1L << (KW_UNORDERED - 128)) | (1L << (KW_UPDATE - 128)) | (1L << (KW_VALIDATE - 128)) | (1L << (KW_VARIABLE - 128)) | (1L << (KW_VERSION - 128)) | (1L << (KW_WHEN - 128)) | (1L << (KW_WHERE - 128)) | (1L << (KW_WINDOW - 128)) | (1L << (KW_XQUERY - 128)) | (1L << (KW_ARRAY_NODE - 128)) | (1L << (KW_BOOLEAN_NODE - 128)) | (1L << (KW_NULL_NODE - 128)) | (1L << (KW_NUMBER_NODE - 128)) | (1L << (KW_OBJECT_NODE - 128)) | (1L << (KW_REPLACE - 128)) | (1L << (KW_WITH - 128)) | (1L << (KW_VALUE - 128)) | (1L << (KW_INSERT - 128)) | (1L << (KW_INTO - 128)) | (1L << (KW_DELETE - 128)) | (1L << (KW_RENAME - 128)) | (1L << (URIQualifiedName - 128)) | (1L << (FullQName - 128)) | (1L << (NCNameWithLocalWildcard - 128)) | (1L << (NCNameWithPrefixWildcard - 128)) | (1L << (NCName - 128)) | (1L << (XQDOC_COMMENT_START - 128)))) != 0) || _la==ContentChar) {
 				{
-				setState(2078);
+				setState(2068);
 				_errHandler.sync(this);
 				switch (_input.LA(1)) {
 				case PredefinedEntityRef:
 					{
-					setState(2074);
+					setState(2064);
 					match(PredefinedEntityRef);
 					}
 					break;
 				case CharRef:
 					{
-					setState(2075);
+					setState(2065);
 					match(CharRef);
 					}
 					break;
 				case EscapeApos:
 					{
-					setState(2076);
+					setState(2066);
 					match(EscapeApos);
 					}
 					break;
@@ -17458,7 +17435,7 @@ public class XQueryParser extends Parser {
 				case XQDOC_COMMENT_START:
 				case ContentChar:
 					{
-					setState(2077);
+					setState(2067);
 					stringContentApos();
 					}
 					break;
@@ -17466,11 +17443,11 @@ public class XQueryParser extends Parser {
 					throw new NoViableAltException(this);
 				}
 				}
-				setState(2082);
+				setState(2072);
 				_errHandler.sync(this);
 				_la = _input.LA(1);
 			}
-			setState(2083);
+			setState(2073);
 			match(Apos);
 			}
 		}
@@ -17507,20 +17484,20 @@ public class XQueryParser extends Parser {
 		StringLiteralContext _localctx = new StringLiteralContext(_ctx, getState());
 		enterRule(_localctx, 468, RULE_stringLiteral);
 		try {
-			setState(2087);
+			setState(2077);
 			_errHandler.sync(this);
 			switch (_input.LA(1)) {
 			case Quot:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2085);
+				setState(2075);
 				stringLiteralQuot();
 				}
 				break;
 			case Apos:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2086);
+				setState(2076);
 				stringLiteralApos();
 				}
 				break;
@@ -17573,13 +17550,13 @@ public class XQueryParser extends Parser {
 		enterRule(_localctx, 470, RULE_stringContentQuot);
 		try {
 			int _alt;
-			setState(2106);
+			setState(2096);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,199,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,198,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2090); 
+				setState(2080); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -17587,7 +17564,7 @@ public class XQueryParser extends Parser {
 					case 1:
 						{
 						{
-						setState(2089);
+						setState(2079);
 						match(ContentChar);
 						}
 						}
@@ -17595,33 +17572,33 @@ public class XQueryParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(2092); 
+					setState(2082); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,196,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,195,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2094);
+				setState(2084);
 				match(LBRACE);
-				setState(2096);
+				setState(2086);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,197,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,196,_ctx) ) {
 				case 1:
 					{
-					setState(2095);
+					setState(2085);
 					expr();
 					}
 					break;
 				}
-				setState(2099);
+				setState(2089);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,198,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,197,_ctx) ) {
 				case 1:
 					{
-					setState(2098);
+					setState(2088);
 					match(RBRACE);
 					}
 					break;
@@ -17631,35 +17608,35 @@ public class XQueryParser extends Parser {
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(2101);
+				setState(2091);
 				match(RBRACE);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(2102);
+				setState(2092);
 				match(DOUBLE_LBRACE);
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(2103);
+				setState(2093);
 				match(DOUBLE_RBRACE);
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(2104);
+				setState(2094);
 				noQuotesNoBracesNoAmpNoLAng();
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(2105);
+				setState(2095);
 				stringLiteralApos();
 				}
 				break;
@@ -17710,13 +17687,13 @@ public class XQueryParser extends Parser {
 		enterRule(_localctx, 472, RULE_stringContentApos);
 		try {
 			int _alt;
-			setState(2125);
+			setState(2115);
 			_errHandler.sync(this);
-			switch ( getInterpreter().adaptivePredict(_input,203,_ctx) ) {
+			switch ( getInterpreter().adaptivePredict(_input,202,_ctx) ) {
 			case 1:
 				enterOuterAlt(_localctx, 1);
 				{
-				setState(2109); 
+				setState(2099); 
 				_errHandler.sync(this);
 				_alt = 1;
 				do {
@@ -17724,7 +17701,7 @@ public class XQueryParser extends Parser {
 					case 1:
 						{
 						{
-						setState(2108);
+						setState(2098);
 						match(ContentChar);
 						}
 						}
@@ -17732,33 +17709,33 @@ public class XQueryParser extends Parser {
 					default:
 						throw new NoViableAltException(this);
 					}
-					setState(2111); 
+					setState(2101); 
 					_errHandler.sync(this);
-					_alt = getInterpreter().adaptivePredict(_input,200,_ctx);
+					_alt = getInterpreter().adaptivePredict(_input,199,_ctx);
 				} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 				}
 				break;
 			case 2:
 				enterOuterAlt(_localctx, 2);
 				{
-				setState(2113);
+				setState(2103);
 				match(LBRACE);
-				setState(2115);
+				setState(2105);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,201,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,200,_ctx) ) {
 				case 1:
 					{
-					setState(2114);
+					setState(2104);
 					expr();
 					}
 					break;
 				}
-				setState(2118);
+				setState(2108);
 				_errHandler.sync(this);
-				switch ( getInterpreter().adaptivePredict(_input,202,_ctx) ) {
+				switch ( getInterpreter().adaptivePredict(_input,201,_ctx) ) {
 				case 1:
 					{
-					setState(2117);
+					setState(2107);
 					match(RBRACE);
 					}
 					break;
@@ -17768,35 +17745,35 @@ public class XQueryParser extends Parser {
 			case 3:
 				enterOuterAlt(_localctx, 3);
 				{
-				setState(2120);
+				setState(2110);
 				match(RBRACE);
 				}
 				break;
 			case 4:
 				enterOuterAlt(_localctx, 4);
 				{
-				setState(2121);
+				setState(2111);
 				match(DOUBLE_LBRACE);
 				}
 				break;
 			case 5:
 				enterOuterAlt(_localctx, 5);
 				{
-				setState(2122);
+				setState(2112);
 				match(DOUBLE_RBRACE);
 				}
 				break;
 			case 6:
 				enterOuterAlt(_localctx, 6);
 				{
-				setState(2123);
+				setState(2113);
 				noQuotesNoBracesNoAmpNoLAng();
 				}
 				break;
 			case 7:
 				enterOuterAlt(_localctx, 7);
 				{
-				setState(2124);
+				setState(2114);
 				stringLiteralQuot();
 				}
 				break;
@@ -18015,25 +17992,25 @@ public class XQueryParser extends Parser {
 			int _alt;
 			enterOuterAlt(_localctx, 1);
 			{
-			setState(2129); 
+			setState(2119); 
 			_errHandler.sync(this);
 			_alt = 1;
 			do {
 				switch (_alt) {
 				case 1:
 					{
-					setState(2129);
+					setState(2119);
 					_errHandler.sync(this);
-					switch ( getInterpreter().adaptivePredict(_input,204,_ctx) ) {
+					switch ( getInterpreter().adaptivePredict(_input,203,_ctx) ) {
 					case 1:
 						{
-						setState(2127);
+						setState(2117);
 						keyword();
 						}
 						break;
 					case 2:
 						{
-						setState(2128);
+						setState(2118);
 						_la = _input.LA(1);
 						if ( !((((_la) & ~0x3f) == 0 && ((1L << _la) & ((1L << IntegerLiteral) | (1L << DecimalLiteral) | (1L << DoubleLiteral) | (1L << COMMENT) | (1L << PRAGMA) | (1L << EQUAL) | (1L << NOT_EQUAL) | (1L << LPAREN) | (1L << RPAREN) | (1L << LBRACKET) | (1L << RBRACKET) | (1L << STAR) | (1L << PLUS) | (1L << MINUS) | (1L << COMMA) | (1L << DOT) | (1L << DDOT) | (1L << COLON) | (1L << COLON_EQ) | (1L << SEMICOLON) | (1L << SLASH) | (1L << DSLASH) | (1L << BACKSLASH) | (1L << VBAR) | (1L << RANGLE) | (1L << QUESTION) | (1L << AT) | (1L << DOLLAR) | (1L << MOD) | (1L << BANG) | (1L << HASH) | (1L << CARAT) | (1L << ARROW) | (1L << GRAVE) | (1L << TILDE))) != 0) || ((((_la - 123)) & ~0x3f) == 0 && ((1L << (_la - 123)) & ((1L << (KW_NEXT - 123)) | (1L << (KW_PREVIOUS - 123)) | (1L << (URIQualifiedName - 123)) | (1L << (FullQName - 123)) | (1L << (NCNameWithLocalWildcard - 123)))) != 0) || ((((_la - 187)) & ~0x3f) == 0 && ((1L << (_la - 187)) & ((1L << (NCNameWithPrefixWildcard - 187)) | (1L << (NCName - 187)) | (1L << (XQDOC_COMMENT_START - 187)) | (1L << (ContentChar - 187)))) != 0)) ) {
 						_errHandler.recoverInline(this);
@@ -18051,9 +18028,9 @@ public class XQueryParser extends Parser {
 				default:
 					throw new NoViableAltException(this);
 				}
-				setState(2131); 
+				setState(2121); 
 				_errHandler.sync(this);
-				_alt = getInterpreter().adaptivePredict(_input,205,_ctx);
+				_alt = getInterpreter().adaptivePredict(_input,204,_ctx);
 			} while ( _alt!=2 && _alt!=org.antlr.v4.runtime.atn.ATN.INVALID_ALT_NUMBER );
 			}
 		}
@@ -18069,7 +18046,7 @@ public class XQueryParser extends Parser {
 	}
 
 	public static final String _serializedATN =
-		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\u00cd\u0858\4\2\t"+
+		"\3\u608b\ua72a\u8133\ub9ed\u417c\u3be7\u7786\u5964\3\u00cd\u084e\4\2\t"+
 		"\2\4\3\t\3\4\4\t\4\4\5\t\5\4\6\t\6\4\7\t\7\4\b\t\b\4\t\t\t\4\n\t\n\4\13"+
 		"\t\13\4\f\t\f\4\r\t\r\4\16\t\16\4\17\t\17\4\20\t\20\4\21\t\21\4\22\t\22"+
 		"\4\23\t\23\4\24\t\24\4\25\t\25\4\26\t\26\4\27\t\27\4\30\t\30\4\31\t\31"+
@@ -18160,199 +18137,198 @@ public class XQueryParser extends Parser {
 		"\nX\fX\16X\u04a3\13X\3Y\3Y\3Y\5Y\u04a8\nY\3Z\3Z\3Z\7Z\u04ad\nZ\fZ\16Z"+
 		"\u04b0\13Z\3[\3[\3[\7[\u04b5\n[\f[\16[\u04b8\13[\3\\\3\\\3\\\3\\\5\\\u04be"+
 		"\n\\\3]\3]\3]\3]\5]\u04c4\n]\3^\3^\3^\3^\5^\u04ca\n^\3_\3_\3_\3_\5_\u04d0"+
-		"\n_\3`\3`\3`\3`\3`\7`\u04d7\n`\f`\16`\u04da\13`\3a\7a\u04dd\na\fa\16a"+
-		"\u04e0\13a\3a\3a\3b\3b\3b\5b\u04e7\nb\3c\3c\3c\3c\3c\3c\3c\3c\5c\u04f1"+
-		"\nc\3d\3d\3e\3e\3e\3e\3e\5e\u04fa\ne\3f\3f\3f\3f\5f\u0500\nf\3f\3f\3g"+
-		"\3g\3h\6h\u0507\nh\rh\16h\u0508\3h\3h\3h\3h\3i\3i\3i\7i\u0512\ni\fi\16"+
-		"i\u0515\13i\3j\3j\5j\u0519\nj\3j\3j\3j\5j\u051e\nj\3k\3k\3k\7k\u0523\n"+
-		"k\fk\16k\u0526\13k\3l\3l\5l\u052a\nl\3m\3m\5m\u052e\nm\3m\3m\3n\3n\3n"+
-		"\3n\5n\u0536\nn\3o\3o\3o\3o\3p\5p\u053d\np\3p\3p\3q\3q\3q\3q\5q\u0545"+
-		"\nq\3r\3r\3r\3r\3s\3s\3t\3t\5t\u054f\nt\3u\3u\5u\u0553\nu\3v\3v\3v\5v"+
-		"\u0558\nv\3w\3w\3w\3w\7w\u055e\nw\fw\16w\u0561\13w\3x\3x\3x\3x\7x\u0567"+
-		"\nx\fx\16x\u056a\13x\5x\u056c\nx\3x\3x\3y\7y\u0571\ny\fy\16y\u0574\13"+
-		"y\3z\3z\3z\3z\3{\3{\3{\3|\3|\3|\3|\5|\u0581\n|\3}\3}\3}\5}\u0586\n}\3"+
-		"~\3~\3~\3~\3~\3~\3~\3~\3~\3~\3~\3~\3~\5~\u0595\n~\3\177\3\177\5\177\u0599"+
-		"\n\177\3\u0080\3\u0080\3\u0081\3\u0081\3\u0081\3\u0082\3\u0082\3\u0083"+
-		"\3\u0083\5\u0083\u05a4\n\u0083\3\u0083\3\u0083\3\u0084\3\u0084\3\u0085"+
-		"\3\u0085\3\u0085\3\u0086\3\u0086\3\u0086\3\u0087\3\u0087\3\u0087\3\u0088"+
-		"\3\u0088\5\u0088\u05b5\n\u0088\3\u0089\3\u0089\5\u0089\u05b9\n\u0089\3"+
-		"\u008a\3\u008a\3\u008a\5\u008a\u05be\n\u008a\3\u008b\3\u008b\3\u008b\3"+
-		"\u008b\3\u008b\7\u008b\u05c5\n\u008b\f\u008b\16\u008b\u05c8\13\u008b\3"+
-		"\u008b\3\u008b\3\u008b\3\u008b\3\u008b\3\u008c\3\u008c\3\u008c\3\u008c"+
-		"\3\u008c\3\u008c\3\u008d\3\u008d\3\u008d\3\u008d\7\u008d\u05d9\n\u008d"+
-		"\f\u008d\16\u008d\u05dc\13\u008d\3\u008e\3\u008e\3\u008e\3\u008e\3\u008e"+
-		"\7\u008e\u05e3\n\u008e\f\u008e\16\u008e\u05e6\13\u008e\3\u008e\3\u008e"+
-		"\3\u008f\3\u008f\3\u008f\3\u008f\3\u008f\7\u008f\u05ef\n\u008f\f\u008f"+
-		"\16\u008f\u05f2\13\u008f\3\u008f\3\u008f\3\u0090\3\u0090\5\u0090\u05f8"+
-		"\n\u0090\3\u0091\6\u0091\u05fb\n\u0091\r\u0091\16\u0091\u05fc\3\u0091"+
-		"\3\u0091\3\u0091\3\u0091\3\u0091\5\u0091\u0604\n\u0091\3\u0091\5\u0091"+
-		"\u0607\n\u0091\3\u0092\6\u0092\u060a\n\u0092\r\u0092\16\u0092\u060b\3"+
-		"\u0092\3\u0092\3\u0092\3\u0092\3\u0092\5\u0092\u0613\n\u0092\3\u0092\5"+
-		"\u0092\u0616\n\u0092\3\u0093\3\u0093\3\u0093\3\u0093\3\u0093\3\u0093\5"+
-		"\u0093\u061e\n\u0093\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3"+
-		"\u0094\3\u0094\3\u0094\5\u0094\u0629\n\u0094\3\u0095\3\u0095\3\u0095\3"+
-		"\u0095\3\u0095\3\u0095\3\u0095\3\u0095\5\u0095\u0633\n\u0095\3\u0096\3"+
-		"\u0096\3\u0096\3\u0096\3\u0096\3\u0096\5\u0096\u063b\n\u0096\3\u0097\3"+
-		"\u0097\3\u0097\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098"+
-		"\3\u0098\3\u0098\3\u0098\7\u0098\u064a\n\u0098\f\u0098\16\u0098\u064d"+
-		"\13\u0098\5\u0098\u064f\n\u0098\3\u0098\3\u0098\3\u0099\3\u0099\3\u0099"+
-		"\3\u009a\3\u009a\3\u009a\3\u009a\3\u009a\3\u009b\3\u009b\3\u009b\3\u009b"+
-		"\3\u009c\3\u009c\3\u009c\3\u009d\3\u009d\3\u009d\3\u009e\3\u009e\3\u009e"+
-		"\3\u009e\3\u009e\3\u009e\5\u009e\u066b\n\u009e\3\u009e\3\u009e\3\u009f"+
-		"\3\u009f\3\u00a0\3\u00a0\3\u00a0\3\u00a0\3\u00a0\3\u00a0\5\u00a0\u0677"+
-		"\n\u00a0\3\u00a0\3\u00a0\3\u00a1\3\u00a1\3\u00a1\5\u00a1\u067e\n\u00a1"+
-		"\3\u00a1\3\u00a1\3\u00a2\3\u00a2\3\u00a3\3\u00a3\3\u00a4\3\u00a4\3\u00a5"+
-		"\3\u00a5\3\u00a5\3\u00a6\3\u00a6\3\u00a6\3\u00a7\3\u00a7\3\u00a7\3\u00a7"+
-		"\3\u00a7\3\u00a7\5\u00a7\u0694\n\u00a7\3\u00a7\3\u00a7\3\u00a8\3\u00a8"+
-		"\5\u00a8\u069a\n\u00a8\3\u00a9\3\u00a9\3\u00a9\3\u00a9\3\u00aa\3\u00aa"+
-		"\3\u00aa\3\u00aa\5\u00aa\u06a4\n\u00aa\3\u00aa\3\u00aa\3\u00aa\5\u00aa"+
-		"\u06a9\n\u00aa\3\u00aa\3\u00aa\3\u00ab\3\u00ab\3\u00ac\3\u00ac\3\u00ac"+
-		"\3\u00ac\3\u00ac\7\u00ac\u06b4\n\u00ac\f\u00ac\16\u00ac\u06b7\13\u00ac"+
-		"\5\u00ac\u06b9\n\u00ac\3\u00ac\3\u00ac\3\u00ad\3\u00ad\3\u00ad\3\u00ad"+
-		"\3\u00ae\3\u00ae\5\u00ae\u06c3\n\u00ae\3\u00af\3\u00af\3\u00af\3\u00af"+
-		"\7\u00af\u06c9\n\u00af\f\u00af\16\u00af\u06cc\13\u00af\5\u00af\u06ce\n"+
-		"\u00af\3\u00af\3\u00af\3\u00b0\3\u00b0\3\u00b0\3\u00b1\3\u00b1\3\u00b1"+
-		"\3\u00b1\3\u00b2\3\u00b2\3\u00b2\3\u00b2\7\u00b2\u06dd\n\u00b2\f\u00b2"+
-		"\16\u00b2\u06e0\13\u00b2\3\u00b3\3\u00b3\3\u00b4\3\u00b4\3\u00b5\3\u00b5"+
-		"\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6"+
-		"\3\u00b6\7\u00b6\u06f2\n\u00b6\f\u00b6\16\u00b6\u06f5\13\u00b6\3\u00b7"+
-		"\3\u00b7\3\u00b7\3\u00b7\3\u00b8\3\u00b8\3\u00b8\3\u00b9\3\u00b9\5\u00b9"+
-		"\u0700\n\u00b9\3\u00ba\3\u00ba\3\u00ba\3\u00bb\3\u00bb\3\u00bb\3\u00bb"+
-		"\3\u00bb\3\u00bb\3\u00bb\5\u00bb\u070c\n\u00bb\5\u00bb\u070e\n\u00bb\3"+
-		"\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc"+
-		"\5\u00bc\u0719\n\u00bc\3\u00bd\3\u00bd\3\u00be\3\u00be\3\u00be\3\u00be"+
-		"\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\5\u00be"+
-		"\u0729\n\u00be\3\u00bf\3\u00bf\3\u00bf\5\u00bf\u072e\n\u00bf\3\u00bf\3"+
-		"\u00bf\3\u00c0\3\u00c0\3\u00c0\3\u00c0\3\u00c1\3\u00c1\3\u00c1\3\u00c1"+
-		"\5\u00c1\u073a\n\u00c1\3\u00c1\3\u00c1\3\u00c2\3\u00c2\3\u00c2\3\u00c2"+
-		"\3\u00c3\3\u00c3\3\u00c3\3\u00c3\3\u00c4\3\u00c4\3\u00c4\3\u00c4\3\u00c5"+
-		"\3\u00c5\3\u00c5\3\u00c5\5\u00c5\u074e\n\u00c5\3\u00c5\3\u00c5\3\u00c6"+
-		"\3\u00c6\3\u00c6\3\u00c6\3\u00c6\5\u00c6\u0757\n\u00c6\5\u00c6\u0759\n"+
-		"\u00c6\3\u00c6\3\u00c6\3\u00c7\3\u00c7\5\u00c7\u075f\n\u00c7\3\u00c8\3"+
-		"\u00c8\3\u00c8\3\u00c8\3\u00c8\3\u00c9\3\u00c9\3\u00c9\3\u00c9\3\u00c9"+
-		"\3\u00c9\5\u00c9\u076c\n\u00c9\5\u00c9\u076e\n\u00c9\5\u00c9\u0770\n\u00c9"+
-		"\3\u00c9\3\u00c9\3\u00ca\3\u00ca\5\u00ca\u0776\n\u00ca\3\u00cb\3\u00cb"+
-		"\3\u00cb\3\u00cb\3\u00cb\3\u00cc\3\u00cc\3\u00cd\3\u00cd\3\u00ce\3\u00ce"+
-		"\3\u00cf\3\u00cf\3\u00d0\3\u00d0\3\u00d1\7\u00d1\u0788\n\u00d1\f\u00d1"+
-		"\16\u00d1\u078b\13\u00d1\3\u00d1\3\u00d1\5\u00d1\u078f\n\u00d1\3\u00d2"+
-		"\3\u00d2\3\u00d2\3\u00d2\3\u00d2\3\u00d3\3\u00d3\3\u00d3\3\u00d3\3\u00d3"+
-		"\7\u00d3\u079b\n\u00d3\f\u00d3\16\u00d3\u079e\13\u00d3\5\u00d3\u07a0\n"+
-		"\u00d3\3\u00d3\3\u00d3\3\u00d3\3\u00d3\3\u00d4\3\u00d4\5\u00d4\u07a8\n"+
-		"\u00d4\3\u00d5\3\u00d5\3\u00d5\3\u00d5\3\u00d5\3\u00d6\3\u00d6\3\u00d6"+
-		"\3\u00d6\3\u00d6\3\u00d6\3\u00d6\3\u00d7\3\u00d7\5\u00d7\u07b8\n\u00d7"+
-		"\3\u00d8\3\u00d8\3\u00d8\3\u00d8\3\u00d8\3\u00d9\3\u00d9\3\u00d9\3\u00d9"+
-		"\3\u00d9\3\u00da\3\u00da\3\u00da\3\u00da\3\u00db\3\u00db\3\u00dc\3\u00dc"+
-		"\3\u00dc\3\u00dc\3\u00dc\5\u00dc\u07cf\n\u00dc\3\u00dd\3\u00dd\3\u00dd"+
-		"\5\u00dd\u07d4\n\u00dd\3\u00dd\3\u00dd\3\u00de\3\u00de\3\u00de\5\u00de"+
-		"\u07db\n\u00de\3\u00de\3\u00de\3\u00df\3\u00df\3\u00df\5\u00df\u07e2\n"+
-		"\u00df\3\u00df\3\u00df\3\u00e0\3\u00e0\3\u00e0\5\u00e0\u07e9\n\u00e0\3"+
-		"\u00e0\3\u00e0\3\u00e1\3\u00e1\3\u00e1\5\u00e1\u07f0\n\u00e1\3\u00e1\3"+
-		"\u00e1\3\u00e2\3\u00e2\5\u00e2\u07f6\n\u00e2\3\u00e3\3\u00e3\5\u00e3\u07fa"+
-		"\n\u00e3\3\u00e4\3\u00e4\5\u00e4\u07fe\n\u00e4\3\u00e5\3\u00e5\3\u00e5"+
-		"\3\u00e5\5\u00e5\u0804\n\u00e5\3\u00e6\3\u00e6\5\u00e6\u0808\n\u00e6\3"+
-		"\u00e7\3\u00e7\3\u00e8\3\u00e8\3\u00e9\3\u00e9\3\u00ea\3\u00ea\3\u00ea"+
-		"\3\u00ea\3\u00ea\7\u00ea\u0815\n\u00ea\f\u00ea\16\u00ea\u0818\13\u00ea"+
-		"\3\u00ea\3\u00ea\3\u00eb\3\u00eb\3\u00eb\3\u00eb\3\u00eb\7\u00eb\u0821"+
-		"\n\u00eb\f\u00eb\16\u00eb\u0824\13\u00eb\3\u00eb\3\u00eb\3\u00ec\3\u00ec"+
-		"\5\u00ec\u082a\n\u00ec\3\u00ed\6\u00ed\u082d\n\u00ed\r\u00ed\16\u00ed"+
-		"\u082e\3\u00ed\3\u00ed\5\u00ed\u0833\n\u00ed\3\u00ed\5\u00ed\u0836\n\u00ed"+
-		"\3\u00ed\3\u00ed\3\u00ed\3\u00ed\3\u00ed\5\u00ed\u083d\n\u00ed\3\u00ee"+
-		"\6\u00ee\u0840\n\u00ee\r\u00ee\16\u00ee\u0841\3\u00ee\3\u00ee\5\u00ee"+
-		"\u0846\n\u00ee\3\u00ee\5\u00ee\u0849\n\u00ee\3\u00ee\3\u00ee\3\u00ee\3"+
-		"\u00ee\3\u00ee\5\u00ee\u0850\n\u00ee\3\u00ef\3\u00ef\6\u00ef\u0854\n\u00ef"+
-		"\r\u00ef\16\u00ef\u0855\3\u00ef\2\2\u00f0\2\4\6\b\n\f\16\20\22\24\26\30"+
-		"\32\34\36 \"$&(*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080"+
-		"\u0082\u0084\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094\u0096\u0098"+
-		"\u009a\u009c\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac\u00ae\u00b0"+
-		"\u00b2\u00b4\u00b6\u00b8\u00ba\u00bc\u00be\u00c0\u00c2\u00c4\u00c6\u00c8"+
-		"\u00ca\u00cc\u00ce\u00d0\u00d2\u00d4\u00d6\u00d8\u00da\u00dc\u00de\u00e0"+
-		"\u00e2\u00e4\u00e6\u00e8\u00ea\u00ec\u00ee\u00f0\u00f2\u00f4\u00f6\u00f8"+
-		"\u00fa\u00fc\u00fe\u0100\u0102\u0104\u0106\u0108\u010a\u010c\u010e\u0110"+
-		"\u0112\u0114\u0116\u0118\u011a\u011c\u011e\u0120\u0122\u0124\u0126\u0128"+
-		"\u012a\u012c\u012e\u0130\u0132\u0134\u0136\u0138\u013a\u013c\u013e\u0140"+
-		"\u0142\u0144\u0146\u0148\u014a\u014c\u014e\u0150\u0152\u0154\u0156\u0158"+
-		"\u015a\u015c\u015e\u0160\u0162\u0164\u0166\u0168\u016a\u016c\u016e\u0170"+
-		"\u0172\u0174\u0176\u0178\u017a\u017c\u017e\u0180\u0182\u0184\u0186\u0188"+
-		"\u018a\u018c\u018e\u0190\u0192\u0194\u0196\u0198\u019a\u019c\u019e\u01a0"+
-		"\u01a2\u01a4\u01a6\u01a8\u01aa\u01ac\u01ae\u01b0\u01b2\u01b4\u01b6\u01b8"+
-		"\u01ba\u01bc\u01be\u01c0\u01c2\u01c4\u01c6\u01c8\u01ca\u01cc\u01ce\u01d0"+
-		"\u01d2\u01d4\u01d6\u01d8\u01da\u01dc\2\35\4\2XXee\4\2\u008c\u008c\u009a"+
-		"\u009a\4\2\u0087\u0087\u00a5\u00a5\4\2gguu\4\2\u0080\u0080\u008c\u008c"+
-		"\4\2nn\177\177\4\2==SS\4\2__\u0096\u0096\5\2bb\u008a\u008a\u00b7\u00b7"+
-		"\3\2\36\37\6\2\35\35UUjjyy\b\2^^ffiittww||\4\2<<\u00a2\u00a2\4\2ss\u0099"+
-		"\u0099\3\2&\'\7\2??HHQRbc\u0094\u0094\4\289\u0089\u008b\3\2\7\t\4\2\17"+
-		"\17\21\21\3\2\13\f\3\2#$\4\2\32\33\u00c7\u00c7\5\2\32\32\64\64\u00c7\u00c7"+
-		"\5\2\33\33\64\64\u00c7\u00c7\36\2\n\n\67\67;;??BBGGJJLLNNTTWX[[]]kkrr"+
-		"xx}~\u0081\u0081\u0083\u0083\u008e\u008e\u0092\u0093\u0095\u0095\u009b"+
-		"\u009c\u00a0\u00a3\u00a6\u00a6\u00aa\u00aa\u00ac\u00ac\u00ae\u00b9\34"+
-		"\28:<>@ACFHIKKMMOSUVYZ\\\\^jlqswy|\177\u0080\u0082\u0082\u0084\u008c\u008f"+
-		"\u0091\u0094\u0094\u0096\u009a\u009d\u009f\u00a4\u00a5\u00a7\u00a9\u00ab"+
-		"\u00ab\u00ad\u00ad\r\2\7\t\17\17\23\23\25\32\35)+\64\66\66}}\u008d\u008d"+
-		"\u00ba\u00bf\u00c6\u00c6\2\u08ae\2\u01df\3\2\2\2\4\u01f5\3\2\2\2\6\u01f7"+
-		"\3\2\2\2\b\u0200\3\2\2\2\n\u0203\3\2\2\2\f\u0205\3\2\2\2\16\u0208\3\2"+
-		"\2\2\20\u021a\3\2\2\2\22\u022d\3\2\2\2\24\u023b\3\2\2\2\26\u023d\3\2\2"+
-		"\2\30\u0241\3\2\2\2\32\u0246\3\2\2\2\34\u024a\3\2\2\2\36\u024e\3\2\2\2"+
-		" \u0252\3\2\2\2\"\u0258\3\2\2\2$\u025e\3\2\2\2&\u0260\3\2\2\2(\u0262\3"+
-		"\2\2\2*\u0271\3\2\2\2,\u0289\3\2\2\2.\u028b\3\2\2\2\60\u029f\3\2\2\2\62"+
-		"\u02a5\3\2\2\2\64\u02c4\3\2\2\2\66\u02c6\3\2\2\28\u02c8\3\2\2\2:\u02d8"+
-		"\3\2\2\2<\u02eb\3\2\2\2>\u02f3\3\2\2\2@\u02fb\3\2\2\2B\u02fe\3\2\2\2D"+
-		"\u0306\3\2\2\2F\u030e\3\2\2\2H\u0310\3\2\2\2J\u0313\3\2\2\2L\u0318\3\2"+
-		"\2\2N\u0328\3\2\2\2P\u032a\3\2\2\2R\u0336\3\2\2\2T\u033d\3\2\2\2V\u033f"+
-		"\3\2\2\2X\u0348\3\2\2\2Z\u0356\3\2\2\2\\\u0359\3\2\2\2^\u035d\3\2\2\2"+
-		"`\u0366\3\2\2\2b\u036e\3\2\2\2d\u0373\3\2\2\2f\u0380\3\2\2\2h\u038c\3"+
-		"\2\2\2j\u0392\3\2\2\2l\u039b\3\2\2\2n\u03aa\3\2\2\2p\u03ae\3\2\2\2r\u03b1"+
-		"\3\2\2\2t\u03b5\3\2\2\2v\u03bd\3\2\2\2x\u03cb\3\2\2\2z\u03d7\3\2\2\2|"+
-		"\u03e3\3\2\2\2~\u03e6\3\2\2\2\u0080\u03f2\3\2\2\2\u0082\u03fa\3\2\2\2"+
-		"\u0084\u0409\3\2\2\2\u0086\u0410\3\2\2\2\u0088\u0412\3\2\2\2\u008a\u0423"+
-		"\3\2\2\2\u008c\u042e\3\2\2\2\u008e\u0436\3\2\2\2\u0090\u043f\3\2\2\2\u0092"+
+		"\n_\3`\3`\3`\7`\u04d5\n`\f`\16`\u04d8\13`\3a\7a\u04db\na\fa\16a\u04de"+
+		"\13a\3a\3a\3b\3b\3b\5b\u04e5\nb\3c\3c\3c\3c\3c\3c\3c\3c\5c\u04ef\nc\3"+
+		"d\3d\3e\3e\3e\3e\3e\5e\u04f8\ne\3f\3f\3f\3f\5f\u04fe\nf\3f\3f\3g\3g\3"+
+		"h\6h\u0505\nh\rh\16h\u0506\3h\3h\3h\3h\3i\3i\3i\7i\u0510\ni\fi\16i\u0513"+
+		"\13i\3j\3j\5j\u0517\nj\3j\3j\3j\5j\u051c\nj\3k\3k\3k\7k\u0521\nk\fk\16"+
+		"k\u0524\13k\3l\3l\5l\u0528\nl\3m\3m\5m\u052c\nm\3m\3m\3n\3n\3n\3n\5n\u0534"+
+		"\nn\3o\3o\3o\3o\3p\5p\u053b\np\3p\3p\3q\3q\3q\3q\5q\u0543\nq\3r\3r\3r"+
+		"\3r\3s\3s\3t\3t\5t\u054d\nt\3u\3u\5u\u0551\nu\3v\3v\3v\5v\u0556\nv\3w"+
+		"\3w\3w\3w\7w\u055c\nw\fw\16w\u055f\13w\3x\3x\3x\5x\u0564\nx\7x\u0566\n"+
+		"x\fx\16x\u0569\13x\3x\3x\3y\7y\u056e\ny\fy\16y\u0571\13y\3z\3z\3z\3z\3"+
+		"{\3{\3{\3|\3|\3|\3|\5|\u057e\n|\3}\3}\3}\5}\u0583\n}\3~\3~\3~\3~\3~\3"+
+		"~\3~\3~\3~\3~\3~\3~\3~\5~\u0592\n~\3\177\3\177\5\177\u0596\n\177\3\u0080"+
+		"\3\u0080\3\u0081\3\u0081\3\u0081\3\u0082\3\u0082\3\u0083\3\u0083\5\u0083"+
+		"\u05a1\n\u0083\3\u0083\3\u0083\3\u0084\3\u0084\3\u0085\3\u0085\3\u0085"+
+		"\3\u0086\3\u0086\3\u0086\3\u0087\3\u0087\3\u0087\3\u0088\3\u0088\5\u0088"+
+		"\u05b2\n\u0088\3\u0089\3\u0089\5\u0089\u05b6\n\u0089\3\u008a\3\u008a\3"+
+		"\u008a\5\u008a\u05bb\n\u008a\3\u008b\3\u008b\3\u008b\3\u008b\3\u008b\7"+
+		"\u008b\u05c2\n\u008b\f\u008b\16\u008b\u05c5\13\u008b\3\u008b\3\u008b\3"+
+		"\u008b\3\u008b\3\u008b\3\u008c\3\u008c\3\u008c\3\u008c\3\u008c\3\u008c"+
+		"\3\u008d\3\u008d\3\u008d\3\u008d\7\u008d\u05d6\n\u008d\f\u008d\16\u008d"+
+		"\u05d9\13\u008d\3\u008e\3\u008e\3\u008e\3\u008e\3\u008e\7\u008e\u05e0"+
+		"\n\u008e\f\u008e\16\u008e\u05e3\13\u008e\3\u008e\3\u008e\3\u008f\3\u008f"+
+		"\3\u008f\3\u008f\3\u008f\7\u008f\u05ec\n\u008f\f\u008f\16\u008f\u05ef"+
+		"\13\u008f\3\u008f\3\u008f\3\u0090\3\u0090\5\u0090\u05f5\n\u0090\3\u0091"+
+		"\6\u0091\u05f8\n\u0091\r\u0091\16\u0091\u05f9\3\u0091\3\u0091\3\u0091"+
+		"\3\u0091\3\u0091\5\u0091\u0601\n\u0091\3\u0091\5\u0091\u0604\n\u0091\3"+
+		"\u0092\6\u0092\u0607\n\u0092\r\u0092\16\u0092\u0608\3\u0092\3\u0092\3"+
+		"\u0092\3\u0092\3\u0092\5\u0092\u0610\n\u0092\3\u0092\5\u0092\u0613\n\u0092"+
+		"\3\u0093\3\u0093\3\u0093\3\u0093\3\u0093\3\u0093\5\u0093\u061b\n\u0093"+
+		"\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094\3\u0094"+
+		"\5\u0094\u0626\n\u0094\3\u0095\3\u0095\3\u0095\3\u0095\3\u0095\3\u0095"+
+		"\3\u0095\3\u0095\5\u0095\u0630\n\u0095\3\u0096\3\u0096\3\u0096\3\u0096"+
+		"\3\u0096\3\u0096\5\u0096\u0638\n\u0096\3\u0097\3\u0097\3\u0097\3\u0098"+
+		"\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098\3\u0098"+
+		"\7\u0098\u0647\n\u0098\f\u0098\16\u0098\u064a\13\u0098\5\u0098\u064c\n"+
+		"\u0098\3\u0098\3\u0098\3\u0099\3\u0099\3\u0099\3\u009a\3\u009a\3\u009a"+
+		"\3\u009a\3\u009a\3\u009b\3\u009b\3\u009b\3\u009b\3\u009c\3\u009c\3\u009c"+
+		"\3\u009d\3\u009d\3\u009d\3\u009e\3\u009e\3\u009e\3\u009e\3\u009e\3\u009e"+
+		"\5\u009e\u0668\n\u009e\3\u009e\3\u009e\3\u009f\3\u009f\3\u00a0\3\u00a0"+
+		"\3\u00a0\3\u00a0\3\u00a0\3\u00a0\5\u00a0\u0674\n\u00a0\3\u00a0\3\u00a0"+
+		"\3\u00a1\3\u00a1\3\u00a1\5\u00a1\u067b\n\u00a1\3\u00a1\3\u00a1\3\u00a2"+
+		"\3\u00a2\3\u00a3\3\u00a3\3\u00a4\3\u00a4\3\u00a5\3\u00a5\3\u00a5\3\u00a6"+
+		"\3\u00a6\3\u00a6\3\u00a7\3\u00a7\3\u00a7\3\u00a7\3\u00a7\3\u00a7\5\u00a7"+
+		"\u0691\n\u00a7\3\u00a7\3\u00a7\3\u00a8\3\u00a8\5\u00a8\u0697\n\u00a8\3"+
+		"\u00a9\3\u00a9\3\u00a9\3\u00a9\3\u00aa\3\u00aa\3\u00aa\3\u00aa\5\u00aa"+
+		"\u06a1\n\u00aa\3\u00aa\3\u00aa\3\u00aa\5\u00aa\u06a6\n\u00aa\3\u00aa\3"+
+		"\u00aa\3\u00ab\3\u00ab\3\u00ac\3\u00ac\3\u00ac\3\u00ac\3\u00ac\7\u00ac"+
+		"\u06b1\n\u00ac\f\u00ac\16\u00ac\u06b4\13\u00ac\5\u00ac\u06b6\n\u00ac\3"+
+		"\u00ac\3\u00ac\3\u00ad\3\u00ad\3\u00ad\3\u00ad\3\u00ae\3\u00ae\5\u00ae"+
+		"\u06c0\n\u00ae\3\u00af\3\u00af\5\u00af\u06c4\n\u00af\3\u00af\3\u00af\3"+
+		"\u00b0\3\u00b0\3\u00b0\3\u00b1\3\u00b1\3\u00b1\3\u00b1\3\u00b2\3\u00b2"+
+		"\3\u00b2\3\u00b2\7\u00b2\u06d3\n\u00b2\f\u00b2\16\u00b2\u06d6\13\u00b2"+
+		"\3\u00b3\3\u00b3\3\u00b4\3\u00b4\3\u00b5\3\u00b5\3\u00b6\3\u00b6\3\u00b6"+
+		"\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\3\u00b6\7\u00b6\u06e8"+
+		"\n\u00b6\f\u00b6\16\u00b6\u06eb\13\u00b6\3\u00b7\3\u00b7\3\u00b7\3\u00b7"+
+		"\3\u00b8\3\u00b8\3\u00b8\3\u00b9\3\u00b9\5\u00b9\u06f6\n\u00b9\3\u00ba"+
+		"\3\u00ba\3\u00ba\3\u00bb\3\u00bb\3\u00bb\3\u00bb\3\u00bb\3\u00bb\3\u00bb"+
+		"\5\u00bb\u0702\n\u00bb\5\u00bb\u0704\n\u00bb\3\u00bc\3\u00bc\3\u00bc\3"+
+		"\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\3\u00bc\5\u00bc\u070f\n\u00bc\3"+
+		"\u00bd\3\u00bd\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be"+
+		"\3\u00be\3\u00be\3\u00be\3\u00be\3\u00be\5\u00be\u071f\n\u00be\3\u00bf"+
+		"\3\u00bf\3\u00bf\5\u00bf\u0724\n\u00bf\3\u00bf\3\u00bf\3\u00c0\3\u00c0"+
+		"\3\u00c0\3\u00c0\3\u00c1\3\u00c1\3\u00c1\3\u00c1\5\u00c1\u0730\n\u00c1"+
+		"\3\u00c1\3\u00c1\3\u00c2\3\u00c2\3\u00c2\3\u00c2\3\u00c3\3\u00c3\3\u00c3"+
+		"\3\u00c3\3\u00c4\3\u00c4\3\u00c4\3\u00c4\3\u00c5\3\u00c5\3\u00c5\3\u00c5"+
+		"\5\u00c5\u0744\n\u00c5\3\u00c5\3\u00c5\3\u00c6\3\u00c6\3\u00c6\3\u00c6"+
+		"\3\u00c6\5\u00c6\u074d\n\u00c6\5\u00c6\u074f\n\u00c6\3\u00c6\3\u00c6\3"+
+		"\u00c7\3\u00c7\5\u00c7\u0755\n\u00c7\3\u00c8\3\u00c8\3\u00c8\3\u00c8\3"+
+		"\u00c8\3\u00c9\3\u00c9\3\u00c9\3\u00c9\3\u00c9\3\u00c9\5\u00c9\u0762\n"+
+		"\u00c9\5\u00c9\u0764\n\u00c9\5\u00c9\u0766\n\u00c9\3\u00c9\3\u00c9\3\u00ca"+
+		"\3\u00ca\5\u00ca\u076c\n\u00ca\3\u00cb\3\u00cb\3\u00cb\3\u00cb\3\u00cb"+
+		"\3\u00cc\3\u00cc\3\u00cd\3\u00cd\3\u00ce\3\u00ce\3\u00cf\3\u00cf\3\u00d0"+
+		"\3\u00d0\3\u00d1\7\u00d1\u077e\n\u00d1\f\u00d1\16\u00d1\u0781\13\u00d1"+
+		"\3\u00d1\3\u00d1\5\u00d1\u0785\n\u00d1\3\u00d2\3\u00d2\3\u00d2\3\u00d2"+
+		"\3\u00d2\3\u00d3\3\u00d3\3\u00d3\3\u00d3\3\u00d3\7\u00d3\u0791\n\u00d3"+
+		"\f\u00d3\16\u00d3\u0794\13\u00d3\5\u00d3\u0796\n\u00d3\3\u00d3\3\u00d3"+
+		"\3\u00d3\3\u00d3\3\u00d4\3\u00d4\5\u00d4\u079e\n\u00d4\3\u00d5\3\u00d5"+
+		"\3\u00d5\3\u00d5\3\u00d5\3\u00d6\3\u00d6\3\u00d6\3\u00d6\3\u00d6\3\u00d6"+
+		"\3\u00d6\3\u00d7\3\u00d7\5\u00d7\u07ae\n\u00d7\3\u00d8\3\u00d8\3\u00d8"+
+		"\3\u00d8\3\u00d8\3\u00d9\3\u00d9\3\u00d9\3\u00d9\3\u00d9\3\u00da\3\u00da"+
+		"\3\u00da\3\u00da\3\u00db\3\u00db\3\u00dc\3\u00dc\3\u00dc\3\u00dc\3\u00dc"+
+		"\5\u00dc\u07c5\n\u00dc\3\u00dd\3\u00dd\3\u00dd\5\u00dd\u07ca\n\u00dd\3"+
+		"\u00dd\3\u00dd\3\u00de\3\u00de\3\u00de\5\u00de\u07d1\n\u00de\3\u00de\3"+
+		"\u00de\3\u00df\3\u00df\3\u00df\5\u00df\u07d8\n\u00df\3\u00df\3\u00df\3"+
+		"\u00e0\3\u00e0\3\u00e0\5\u00e0\u07df\n\u00e0\3\u00e0\3\u00e0\3\u00e1\3"+
+		"\u00e1\3\u00e1\5\u00e1\u07e6\n\u00e1\3\u00e1\3\u00e1\3\u00e2\3\u00e2\5"+
+		"\u00e2\u07ec\n\u00e2\3\u00e3\3\u00e3\5\u00e3\u07f0\n\u00e3\3\u00e4\3\u00e4"+
+		"\5\u00e4\u07f4\n\u00e4\3\u00e5\3\u00e5\3\u00e5\3\u00e5\5\u00e5\u07fa\n"+
+		"\u00e5\3\u00e6\3\u00e6\5\u00e6\u07fe\n\u00e6\3\u00e7\3\u00e7\3\u00e8\3"+
+		"\u00e8\3\u00e9\3\u00e9\3\u00ea\3\u00ea\3\u00ea\3\u00ea\3\u00ea\7\u00ea"+
+		"\u080b\n\u00ea\f\u00ea\16\u00ea\u080e\13\u00ea\3\u00ea\3\u00ea\3\u00eb"+
+		"\3\u00eb\3\u00eb\3\u00eb\3\u00eb\7\u00eb\u0817\n\u00eb\f\u00eb\16\u00eb"+
+		"\u081a\13\u00eb\3\u00eb\3\u00eb\3\u00ec\3\u00ec\5\u00ec\u0820\n\u00ec"+
+		"\3\u00ed\6\u00ed\u0823\n\u00ed\r\u00ed\16\u00ed\u0824\3\u00ed\3\u00ed"+
+		"\5\u00ed\u0829\n\u00ed\3\u00ed\5\u00ed\u082c\n\u00ed\3\u00ed\3\u00ed\3"+
+		"\u00ed\3\u00ed\3\u00ed\5\u00ed\u0833\n\u00ed\3\u00ee\6\u00ee\u0836\n\u00ee"+
+		"\r\u00ee\16\u00ee\u0837\3\u00ee\3\u00ee\5\u00ee\u083c\n\u00ee\3\u00ee"+
+		"\5\u00ee\u083f\n\u00ee\3\u00ee\3\u00ee\3\u00ee\3\u00ee\3\u00ee\5\u00ee"+
+		"\u0846\n\u00ee\3\u00ef\3\u00ef\6\u00ef\u084a\n\u00ef\r\u00ef\16\u00ef"+
+		"\u084b\3\u00ef\2\2\u00f0\2\4\6\b\n\f\16\20\22\24\26\30\32\34\36 \"$&("+
+		"*,.\60\62\64\668:<>@BDFHJLNPRTVXZ\\^`bdfhjlnprtvxz|~\u0080\u0082\u0084"+
+		"\u0086\u0088\u008a\u008c\u008e\u0090\u0092\u0094\u0096\u0098\u009a\u009c"+
+		"\u009e\u00a0\u00a2\u00a4\u00a6\u00a8\u00aa\u00ac\u00ae\u00b0\u00b2\u00b4"+
+		"\u00b6\u00b8\u00ba\u00bc\u00be\u00c0\u00c2\u00c4\u00c6\u00c8\u00ca\u00cc"+
+		"\u00ce\u00d0\u00d2\u00d4\u00d6\u00d8\u00da\u00dc\u00de\u00e0\u00e2\u00e4"+
+		"\u00e6\u00e8\u00ea\u00ec\u00ee\u00f0\u00f2\u00f4\u00f6\u00f8\u00fa\u00fc"+
+		"\u00fe\u0100\u0102\u0104\u0106\u0108\u010a\u010c\u010e\u0110\u0112\u0114"+
+		"\u0116\u0118\u011a\u011c\u011e\u0120\u0122\u0124\u0126\u0128\u012a\u012c"+
+		"\u012e\u0130\u0132\u0134\u0136\u0138\u013a\u013c\u013e\u0140\u0142\u0144"+
+		"\u0146\u0148\u014a\u014c\u014e\u0150\u0152\u0154\u0156\u0158\u015a\u015c"+
+		"\u015e\u0160\u0162\u0164\u0166\u0168\u016a\u016c\u016e\u0170\u0172\u0174"+
+		"\u0176\u0178\u017a\u017c\u017e\u0180\u0182\u0184\u0186\u0188\u018a\u018c"+
+		"\u018e\u0190\u0192\u0194\u0196\u0198\u019a\u019c\u019e\u01a0\u01a2\u01a4"+
+		"\u01a6\u01a8\u01aa\u01ac\u01ae\u01b0\u01b2\u01b4\u01b6\u01b8\u01ba\u01bc"+
+		"\u01be\u01c0\u01c2\u01c4\u01c6\u01c8\u01ca\u01cc\u01ce\u01d0\u01d2\u01d4"+
+		"\u01d6\u01d8\u01da\u01dc\2\35\4\2XXee\4\2\u008c\u008c\u009a\u009a\4\2"+
+		"\u0087\u0087\u00a5\u00a5\4\2gguu\4\2\u0080\u0080\u008c\u008c\4\2nn\177"+
+		"\177\4\2==SS\4\2__\u0096\u0096\5\2bb\u008a\u008a\u00b7\u00b7\3\2\36\37"+
+		"\6\2\35\35UUjjyy\b\2^^ffiittww||\4\2<<\u00a2\u00a2\4\2ss\u0099\u0099\3"+
+		"\2&\'\7\2??HHQRbc\u0094\u0094\4\289\u0089\u008b\3\2\7\t\4\2\17\17\21\21"+
+		"\3\2\13\f\3\2#$\4\2\32\33\u00c7\u00c7\5\2\32\32\64\64\u00c7\u00c7\5\2"+
+		"\33\33\64\64\u00c7\u00c7\36\2\n\n\67\67;;??BBGGJJLLNNTTWX[[]]kkrrxx}~"+
+		"\u0081\u0081\u0083\u0083\u008e\u008e\u0092\u0093\u0095\u0095\u009b\u009c"+
+		"\u00a0\u00a3\u00a6\u00a6\u00aa\u00aa\u00ac\u00ac\u00ae\u00b9\34\28:<>"+
+		"@ACFHIKKMMOSUVYZ\\\\^jlqswy|\177\u0080\u0082\u0082\u0084\u008c\u008f\u0091"+
+		"\u0094\u0094\u0096\u009a\u009d\u009f\u00a4\u00a5\u00a7\u00a9\u00ab\u00ab"+
+		"\u00ad\u00ad\r\2\7\t\17\17\23\23\25\32\35)+\64\66\66}}\u008d\u008d\u00ba"+
+		"\u00bf\u00c6\u00c6\2\u08a3\2\u01df\3\2\2\2\4\u01f5\3\2\2\2\6\u01f7\3\2"+
+		"\2\2\b\u0200\3\2\2\2\n\u0203\3\2\2\2\f\u0205\3\2\2\2\16\u0208\3\2\2\2"+
+		"\20\u021a\3\2\2\2\22\u022d\3\2\2\2\24\u023b\3\2\2\2\26\u023d\3\2\2\2\30"+
+		"\u0241\3\2\2\2\32\u0246\3\2\2\2\34\u024a\3\2\2\2\36\u024e\3\2\2\2 \u0252"+
+		"\3\2\2\2\"\u0258\3\2\2\2$\u025e\3\2\2\2&\u0260\3\2\2\2(\u0262\3\2\2\2"+
+		"*\u0271\3\2\2\2,\u0289\3\2\2\2.\u028b\3\2\2\2\60\u029f\3\2\2\2\62\u02a5"+
+		"\3\2\2\2\64\u02c4\3\2\2\2\66\u02c6\3\2\2\28\u02c8\3\2\2\2:\u02d8\3\2\2"+
+		"\2<\u02eb\3\2\2\2>\u02f3\3\2\2\2@\u02fb\3\2\2\2B\u02fe\3\2\2\2D\u0306"+
+		"\3\2\2\2F\u030e\3\2\2\2H\u0310\3\2\2\2J\u0313\3\2\2\2L\u0318\3\2\2\2N"+
+		"\u0328\3\2\2\2P\u032a\3\2\2\2R\u0336\3\2\2\2T\u033d\3\2\2\2V\u033f\3\2"+
+		"\2\2X\u0348\3\2\2\2Z\u0356\3\2\2\2\\\u0359\3\2\2\2^\u035d\3\2\2\2`\u0366"+
+		"\3\2\2\2b\u036e\3\2\2\2d\u0373\3\2\2\2f\u0380\3\2\2\2h\u038c\3\2\2\2j"+
+		"\u0392\3\2\2\2l\u039b\3\2\2\2n\u03aa\3\2\2\2p\u03ae\3\2\2\2r\u03b1\3\2"+
+		"\2\2t\u03b5\3\2\2\2v\u03bd\3\2\2\2x\u03cb\3\2\2\2z\u03d7\3\2\2\2|\u03e3"+
+		"\3\2\2\2~\u03e6\3\2\2\2\u0080\u03f2\3\2\2\2\u0082\u03fa\3\2\2\2\u0084"+
+		"\u0409\3\2\2\2\u0086\u0410\3\2\2\2\u0088\u0412\3\2\2\2\u008a\u0423\3\2"+
+		"\2\2\u008c\u042e\3\2\2\2\u008e\u0436\3\2\2\2\u0090\u043f\3\2\2\2\u0092"+
 		"\u0445\3\2\2\2\u0094\u0448\3\2\2\2\u0096\u044a\3\2\2\2\u0098\u0455\3\2"+
 		"\2\2\u009a\u045b\3\2\2\2\u009c\u0463\3\2\2\2\u009e\u046b\3\2\2\2\u00a0"+
 		"\u0470\3\2\2\2\u00a2\u0475\3\2\2\2\u00a4\u047a\3\2\2\2\u00a6\u047d\3\2"+
 		"\2\2\u00a8\u0482\3\2\2\2\u00aa\u048a\3\2\2\2\u00ac\u0492\3\2\2\2\u00ae"+
 		"\u049c\3\2\2\2\u00b0\u04a4\3\2\2\2\u00b2\u04a9\3\2\2\2\u00b4\u04b1\3\2"+
 		"\2\2\u00b6\u04b9\3\2\2\2\u00b8\u04bf\3\2\2\2\u00ba\u04c5\3\2\2\2\u00bc"+
-		"\u04cb\3\2\2\2\u00be\u04d1\3\2\2\2\u00c0\u04de\3\2\2\2\u00c2\u04e6\3\2"+
-		"\2\2\u00c4\u04f0\3\2\2\2\u00c6\u04f2\3\2\2\2\u00c8\u04f9\3\2\2\2\u00ca"+
-		"\u04fb\3\2\2\2\u00cc\u0503\3\2\2\2\u00ce\u0506\3\2\2\2\u00d0\u050e\3\2"+
-		"\2\2\u00d2\u051d\3\2\2\2\u00d4\u051f\3\2\2\2\u00d6\u0529\3\2\2\2\u00d8"+
-		"\u052d\3\2\2\2\u00da\u0535\3\2\2\2\u00dc\u0537\3\2\2\2\u00de\u053c\3\2"+
-		"\2\2\u00e0\u0544\3\2\2\2\u00e2\u0546\3\2\2\2\u00e4\u054a\3\2\2\2\u00e6"+
-		"\u054e\3\2\2\2\u00e8\u0552\3\2\2\2\u00ea\u0557\3\2\2\2\u00ec\u0559\3\2"+
-		"\2\2\u00ee\u0562\3\2\2\2\u00f0\u0572\3\2\2\2\u00f2\u0575\3\2\2\2\u00f4"+
-		"\u0579\3\2\2\2\u00f6\u0580\3\2\2\2\u00f8\u0585\3\2\2\2\u00fa\u0594\3\2"+
-		"\2\2\u00fc\u0598\3\2\2\2\u00fe\u059a\3\2\2\2\u0100\u059c\3\2\2\2\u0102"+
-		"\u059f\3\2\2\2\u0104\u05a1\3\2\2\2\u0106\u05a7\3\2\2\2\u0108\u05a9\3\2"+
-		"\2\2\u010a\u05ac\3\2\2\2\u010c\u05af\3\2\2\2\u010e\u05b4\3\2\2\2\u0110"+
-		"\u05b8\3\2\2\2\u0112\u05bd\3\2\2\2\u0114\u05bf\3\2\2\2\u0116\u05ce\3\2"+
-		"\2\2\u0118\u05da\3\2\2\2\u011a\u05dd\3\2\2\2\u011c\u05e9\3\2\2\2\u011e"+
-		"\u05f7\3\2\2\2\u0120\u0606\3\2\2\2\u0122\u0615\3\2\2\2\u0124\u061d\3\2"+
-		"\2\2\u0126\u0628\3\2\2\2\u0128\u0632\3\2\2\2\u012a\u063a\3\2\2\2\u012c"+
-		"\u063c\3\2\2\2\u012e\u063f\3\2\2\2\u0130\u0652\3\2\2\2\u0132\u0655\3\2"+
-		"\2\2\u0134\u065a\3\2\2\2\u0136\u065e\3\2\2\2\u0138\u0661\3\2\2\2\u013a"+
-		"\u0664\3\2\2\2\u013c\u066e\3\2\2\2\u013e\u0670\3\2\2\2\u0140\u067a\3\2"+
-		"\2\2\u0142\u0681\3\2\2\2\u0144\u0683\3\2\2\2\u0146\u0685\3\2\2\2\u0148"+
-		"\u0687\3\2\2\2\u014a\u068a\3\2\2\2\u014c\u068d\3\2\2\2\u014e\u0699\3\2"+
-		"\2\2\u0150\u069b\3\2\2\2\u0152\u069f\3\2\2\2\u0154\u06ac\3\2\2\2\u0156"+
-		"\u06ae\3\2\2\2\u0158\u06bc\3\2\2\2\u015a\u06c2\3\2\2\2\u015c\u06c4\3\2"+
-		"\2\2\u015e\u06d1\3\2\2\2\u0160\u06d4\3\2\2\2\u0162\u06d8\3\2\2\2\u0164"+
-		"\u06e1\3\2\2\2\u0166\u06e3\3\2\2\2\u0168\u06e5\3\2\2\2\u016a\u06f3\3\2"+
-		"\2\2\u016c\u06f6\3\2\2\2\u016e\u06fa\3\2\2\2\u0170\u06fd\3\2\2\2\u0172"+
-		"\u0701\3\2\2\2\u0174\u070d\3\2\2\2\u0176\u0718\3\2\2\2\u0178\u071a\3\2"+
-		"\2\2\u017a\u0728\3\2\2\2\u017c\u072a\3\2\2\2\u017e\u0731\3\2\2\2\u0180"+
-		"\u0735\3\2\2\2\u0182\u073d\3\2\2\2\u0184\u0741\3\2\2\2\u0186\u0745\3\2"+
-		"\2\2\u0188\u0749\3\2\2\2\u018a\u0751\3\2\2\2\u018c\u075e\3\2\2\2\u018e"+
-		"\u0760\3\2\2\2\u0190\u0765\3\2\2\2\u0192\u0775\3\2\2\2\u0194\u0777\3\2"+
-		"\2\2\u0196\u077c\3\2\2\2\u0198\u077e\3\2\2\2\u019a\u0780\3\2\2\2\u019c"+
-		"\u0782\3\2\2\2\u019e\u0784\3\2\2\2\u01a0\u0789\3\2\2\2\u01a2\u0790\3\2"+
-		"\2\2\u01a4\u0795\3\2\2\2\u01a6\u07a7\3\2\2\2\u01a8\u07a9\3\2\2\2\u01aa"+
-		"\u07ae\3\2\2\2\u01ac\u07b7\3\2\2\2\u01ae\u07b9\3\2\2\2\u01b0\u07be\3\2"+
-		"\2\2\u01b2\u07c3\3\2\2\2\u01b4\u07c7\3\2\2\2\u01b6\u07ce\3\2\2\2\u01b8"+
-		"\u07d0\3\2\2\2\u01ba\u07d7\3\2\2\2\u01bc\u07de\3\2\2\2\u01be\u07e5\3\2"+
-		"\2\2\u01c0\u07ec\3\2\2\2\u01c2\u07f5\3\2\2\2\u01c4\u07f9\3\2\2\2\u01c6"+
-		"\u07fd\3\2\2\2\u01c8\u0803\3\2\2\2\u01ca\u0807\3\2\2\2\u01cc\u0809\3\2"+
-		"\2\2\u01ce\u080b\3\2\2\2\u01d0\u080d\3\2\2\2\u01d2\u080f\3\2\2\2\u01d4"+
-		"\u081b\3\2\2\2\u01d6\u0829\3\2\2\2\u01d8\u083c\3\2\2\2\u01da\u084f\3\2"+
-		"\2\2\u01dc\u0853\3\2\2\2\u01de\u01e0\5\4\3\2\u01df\u01de\3\2\2\2\u01df"+
+		"\u04cb\3\2\2\2\u00be\u04d1\3\2\2\2\u00c0\u04dc\3\2\2\2\u00c2\u04e4\3\2"+
+		"\2\2\u00c4\u04ee\3\2\2\2\u00c6\u04f0\3\2\2\2\u00c8\u04f7\3\2\2\2\u00ca"+
+		"\u04f9\3\2\2\2\u00cc\u0501\3\2\2\2\u00ce\u0504\3\2\2\2\u00d0\u050c\3\2"+
+		"\2\2\u00d2\u051b\3\2\2\2\u00d4\u051d\3\2\2\2\u00d6\u0527\3\2\2\2\u00d8"+
+		"\u052b\3\2\2\2\u00da\u0533\3\2\2\2\u00dc\u0535\3\2\2\2\u00de\u053a\3\2"+
+		"\2\2\u00e0\u0542\3\2\2\2\u00e2\u0544\3\2\2\2\u00e4\u0548\3\2\2\2\u00e6"+
+		"\u054c\3\2\2\2\u00e8\u0550\3\2\2\2\u00ea\u0555\3\2\2\2\u00ec\u0557\3\2"+
+		"\2\2\u00ee\u0560\3\2\2\2\u00f0\u056f\3\2\2\2\u00f2\u0572\3\2\2\2\u00f4"+
+		"\u0576\3\2\2\2\u00f6\u057d\3\2\2\2\u00f8\u0582\3\2\2\2\u00fa\u0591\3\2"+
+		"\2\2\u00fc\u0595\3\2\2\2\u00fe\u0597\3\2\2\2\u0100\u0599\3\2\2\2\u0102"+
+		"\u059c\3\2\2\2\u0104\u059e\3\2\2\2\u0106\u05a4\3\2\2\2\u0108\u05a6\3\2"+
+		"\2\2\u010a\u05a9\3\2\2\2\u010c\u05ac\3\2\2\2\u010e\u05b1\3\2\2\2\u0110"+
+		"\u05b5\3\2\2\2\u0112\u05ba\3\2\2\2\u0114\u05bc\3\2\2\2\u0116\u05cb\3\2"+
+		"\2\2\u0118\u05d7\3\2\2\2\u011a\u05da\3\2\2\2\u011c\u05e6\3\2\2\2\u011e"+
+		"\u05f4\3\2\2\2\u0120\u0603\3\2\2\2\u0122\u0612\3\2\2\2\u0124\u061a\3\2"+
+		"\2\2\u0126\u0625\3\2\2\2\u0128\u062f\3\2\2\2\u012a\u0637\3\2\2\2\u012c"+
+		"\u0639\3\2\2\2\u012e\u063c\3\2\2\2\u0130\u064f\3\2\2\2\u0132\u0652\3\2"+
+		"\2\2\u0134\u0657\3\2\2\2\u0136\u065b\3\2\2\2\u0138\u065e\3\2\2\2\u013a"+
+		"\u0661\3\2\2\2\u013c\u066b\3\2\2\2\u013e\u066d\3\2\2\2\u0140\u0677\3\2"+
+		"\2\2\u0142\u067e\3\2\2\2\u0144\u0680\3\2\2\2\u0146\u0682\3\2\2\2\u0148"+
+		"\u0684\3\2\2\2\u014a\u0687\3\2\2\2\u014c\u068a\3\2\2\2\u014e\u0696\3\2"+
+		"\2\2\u0150\u0698\3\2\2\2\u0152\u069c\3\2\2\2\u0154\u06a9\3\2\2\2\u0156"+
+		"\u06ab\3\2\2\2\u0158\u06b9\3\2\2\2\u015a\u06bf\3\2\2\2\u015c\u06c1\3\2"+
+		"\2\2\u015e\u06c7\3\2\2\2\u0160\u06ca\3\2\2\2\u0162\u06ce\3\2\2\2\u0164"+
+		"\u06d7\3\2\2\2\u0166\u06d9\3\2\2\2\u0168\u06db\3\2\2\2\u016a\u06e9\3\2"+
+		"\2\2\u016c\u06ec\3\2\2\2\u016e\u06f0\3\2\2\2\u0170\u06f3\3\2\2\2\u0172"+
+		"\u06f7\3\2\2\2\u0174\u0703\3\2\2\2\u0176\u070e\3\2\2\2\u0178\u0710\3\2"+
+		"\2\2\u017a\u071e\3\2\2\2\u017c\u0720\3\2\2\2\u017e\u0727\3\2\2\2\u0180"+
+		"\u072b\3\2\2\2\u0182\u0733\3\2\2\2\u0184\u0737\3\2\2\2\u0186\u073b\3\2"+
+		"\2\2\u0188\u073f\3\2\2\2\u018a\u0747\3\2\2\2\u018c\u0754\3\2\2\2\u018e"+
+		"\u0756\3\2\2\2\u0190\u075b\3\2\2\2\u0192\u076b\3\2\2\2\u0194\u076d\3\2"+
+		"\2\2\u0196\u0772\3\2\2\2\u0198\u0774\3\2\2\2\u019a\u0776\3\2\2\2\u019c"+
+		"\u0778\3\2\2\2\u019e\u077a\3\2\2\2\u01a0\u077f\3\2\2\2\u01a2\u0786\3\2"+
+		"\2\2\u01a4\u078b\3\2\2\2\u01a6\u079d\3\2\2\2\u01a8\u079f\3\2\2\2\u01aa"+
+		"\u07a4\3\2\2\2\u01ac\u07ad\3\2\2\2\u01ae\u07af\3\2\2\2\u01b0\u07b4\3\2"+
+		"\2\2\u01b2\u07b9\3\2\2\2\u01b4\u07bd\3\2\2\2\u01b6\u07c4\3\2\2\2\u01b8"+
+		"\u07c6\3\2\2\2\u01ba\u07cd\3\2\2\2\u01bc\u07d4\3\2\2\2\u01be\u07db\3\2"+
+		"\2\2\u01c0\u07e2\3\2\2\2\u01c2\u07eb\3\2\2\2\u01c4\u07ef\3\2\2\2\u01c6"+
+		"\u07f3\3\2\2\2\u01c8\u07f9\3\2\2\2\u01ca\u07fd\3\2\2\2\u01cc\u07ff\3\2"+
+		"\2\2\u01ce\u0801\3\2\2\2\u01d0\u0803\3\2\2\2\u01d2\u0805\3\2\2\2\u01d4"+
+		"\u0811\3\2\2\2\u01d6\u081f\3\2\2\2\u01d8\u0832\3\2\2\2\u01da\u0845\3\2"+
+		"\2\2\u01dc\u0849\3\2\2\2\u01de\u01e0\5\4\3\2\u01df\u01de\3\2\2\2\u01df"+
 		"\u01e0\3\2\2\2\u01e0\u01e2\3\2\2\2\u01e1\u01e3\5\6\4\2\u01e2\u01e1\3\2"+
 		"\2\2\u01e2\u01e3\3\2\2\2\u01e3\u01e5\3\2\2\2\u01e4\u01e6\5\4\3\2\u01e5"+
 		"\u01e4\3\2\2\2\u01e5\u01e6\3\2\2\2\u01e6\u01f3\3\2\2\2\u01e7\u01f4\5\f"+
@@ -18604,342 +18580,339 @@ public class XQueryParser extends Parser {
 		"\u0170\u00b9\2\u04c9\u04c6\3\2\2\2\u04c9\u04ca\3\2\2\2\u04ca\u00bb\3\2"+
 		"\2\2\u04cb\u04cf\5\u00be`\2\u04cc\u04cd\7E\2\2\u04cd\u04ce\7<\2\2\u04ce"+
 		"\u04d0\5\u0170\u00b9\2\u04cf\u04cc\3\2\2\2\u04cf\u04d0\3\2\2\2\u04d0\u00bd"+
-		"\3\2\2\2\u04d1\u04d8\5\u00c0a\2\u04d2\u04d3\7\63\2\2\u04d3\u04d4\5\u00f8"+
-		"}\2\u04d4\u04d5\5\u00eex\2\u04d5\u04d7\3\2\2\2\u04d6\u04d2\3\2\2\2\u04d7"+
-		"\u04da\3\2\2\2\u04d8\u04d6\3\2\2\2\u04d8\u04d9\3\2\2\2\u04d9\u00bf\3\2"+
-		"\2\2\u04da\u04d8\3\2\2\2\u04db\u04dd\t\13\2\2\u04dc\u04db\3\2\2\2\u04dd"+
-		"\u04e0\3\2\2\2\u04de\u04dc\3\2\2\2\u04de\u04df\3\2\2\2\u04df\u04e1\3\2"+
-		"\2\2\u04e0\u04de\3\2\2\2\u04e1\u04e2\5\u00c2b\2\u04e2\u00c1\3\2\2\2\u04e3"+
-		"\u04e7\5\u00caf\2\u04e4\u04e7\5\u00ceh\2\u04e5\u04e7\5\u00d0i\2\u04e6"+
-		"\u04e3\3\2\2\2\u04e6\u04e4\3\2\2\2\u04e6\u04e5\3\2\2\2\u04e7\u00c3\3\2"+
-		"\2\2\u04e8\u04f1\7\25\2\2\u04e9\u04f1\7\26\2\2\u04ea\u04f1\7*\2\2\u04eb"+
-		"\u04ec\7*\2\2\u04ec\u04f1\7\25\2\2\u04ed\u04f1\7+\2\2\u04ee\u04ef\7+\2"+
-		"\2\u04ef\u04f1\7\25\2\2\u04f0\u04e8\3\2\2\2\u04f0\u04e9\3\2\2\2\u04f0"+
-		"\u04ea\3\2\2\2\u04f0\u04eb\3\2\2\2\u04f0\u04ed\3\2\2\2\u04f0\u04ee\3\2"+
-		"\2\2\u04f1\u00c5\3\2\2\2\u04f2\u04f3\t\r\2\2\u04f3\u00c7\3\2\2\2\u04f4"+
-		"\u04fa\7q\2\2\u04f5\u04f6\7*\2\2\u04f6\u04fa\7*\2\2\u04f7\u04f8\7+\2\2"+
-		"\u04f8\u04fa\7+\2\2\u04f9\u04f4\3\2\2\2\u04f9\u04f5\3\2\2\2\u04f9\u04f7"+
-		"\3\2\2\2\u04fa\u00c9\3\2\2\2\u04fb\u04ff\7\u00a7\2\2\u04fc\u0500\5\u00cc"+
-		"g\2\u04fd\u04fe\t\16\2\2\u04fe\u0500\5\u019e\u00d0\2\u04ff\u04fc\3\2\2"+
-		"\2\u04ff\u04fd\3\2\2\2\u04ff\u0500\3\2\2\2\u0500\u0501\3\2\2\2\u0501\u0502"+
-		"\5\u0098M\2\u0502\u00cb\3\2\2\2\u0503\u0504\t\17\2\2\u0504\u00cd\3\2\2"+
-		"\2\u0505\u0507\7\23\2\2\u0506\u0505\3\2\2\2\u0507\u0508\3\2\2\2\u0508"+
-		"\u0506\3\2\2\2\u0508\u0509\3\2\2\2\u0509\u050a\3\2\2\2\u050a\u050b\7\33"+
-		"\2\2\u050b\u050c\5L\'\2\u050c\u050d\7\34\2\2\u050d\u00cf\3\2\2\2\u050e"+
-		"\u0513\5\u00d2j\2\u050f\u0510\7\60\2\2\u0510\u0512\5\u00d2j\2\u0511\u050f"+
-		"\3\2\2\2\u0512\u0515\3\2\2\2\u0513\u0511\3\2\2\2\u0513\u0514\3\2\2\2\u0514"+
-		"\u00d1\3\2\2\2\u0515\u0513\3\2\2\2\u0516\u0518\7&\2\2\u0517\u0519\5\u00d4"+
-		"k\2\u0518\u0517\3\2\2\2\u0518\u0519\3\2\2\2\u0519\u051e\3\2\2\2\u051a"+
-		"\u051b\7\'\2\2\u051b\u051e\5\u00d4k\2\u051c\u051e\5\u00d4k\2\u051d\u0516"+
-		"\3\2\2\2\u051d\u051a\3\2\2\2\u051d\u051c\3\2\2\2\u051e\u00d3\3\2\2\2\u051f"+
-		"\u0524\5\u00d6l\2\u0520\u0521\t\20\2\2\u0521\u0523\5\u00d6l\2\u0522\u0520"+
-		"\3\2\2\2\u0523\u0526\3\2\2\2\u0524\u0522\3\2\2\2\u0524\u0525\3\2\2\2\u0525"+
-		"\u00d5\3\2\2\2\u0526\u0524\3\2\2\2\u0527\u052a\5\u00ecw\2\u0528\u052a"+
-		"\5\u00d8m\2\u0529\u0527\3\2\2\2\u0529\u0528\3\2\2\2\u052a\u00d7\3\2\2"+
-		"\2\u052b\u052e\5\u00e0q\2\u052c\u052e\5\u00dan\2\u052d\u052b\3\2\2\2\u052d"+
-		"\u052c\3\2\2\2\u052e\u052f\3\2\2\2\u052f\u0530\5\u00f0y\2\u0530\u00d9"+
-		"\3\2\2\2\u0531\u0532\5\u00dco\2\u0532\u0533\5\u00e6t\2\u0533\u0536\3\2"+
-		"\2\2\u0534\u0536\5\u00dep\2\u0535\u0531\3\2\2\2\u0535\u0534\3\2\2\2\u0536"+
-		"\u00db\3\2\2\2\u0537\u0538\t\21\2\2\u0538\u0539\7#\2\2\u0539\u053a\7#"+
-		"\2\2\u053a\u00dd\3\2\2\2\u053b\u053d\7-\2\2\u053c\u053b\3\2\2\2\u053c"+
-		"\u053d\3\2\2\2\u053d\u053e\3\2\2\2\u053e\u053f\5\u00e6t\2\u053f\u00df"+
-		"\3\2\2\2\u0540\u0541\5\u00e2r\2\u0541\u0542\5\u00e6t\2\u0542\u0545\3\2"+
-		"\2\2\u0543\u0545\5\u00e4s\2\u0544\u0540\3\2\2\2\u0544\u0543\3\2\2\2\u0545"+
-		"\u00e1\3\2\2\2\u0546\u0547\t\22\2\2\u0547\u0548\7#\2\2\u0548\u0549\7#"+
-		"\2\2\u0549\u00e3\3\2\2\2\u054a\u054b\7\"\2\2\u054b\u00e5\3\2\2\2\u054c"+
-		"\u054f\5\u00e8u\2\u054d\u054f\5\u017a\u00be\2\u054e\u054c\3\2\2\2\u054e"+
-		"\u054d\3\2\2\2\u054f\u00e7\3\2\2\2\u0550\u0553\5\u01c2\u00e2\2\u0551\u0553"+
-		"\5\u00eav\2\u0552\u0550\3\2\2\2\u0552\u0551\3\2\2\2\u0553\u00e9\3\2\2"+
-		"\2\u0554\u0558\7\35\2\2\u0555\u0558\7\u00bc\2\2\u0556\u0558\7\u00bd\2"+
-		"\2\u0557\u0554\3\2\2\2\u0557\u0555\3\2\2\2\u0557\u0556\3\2\2\2\u0558\u00eb"+
-		"\3\2\2\2\u0559\u055f\5\u00fa~\2\u055a\u055e\5\u00f2z\2\u055b\u055e\5\u00ee"+
-		"x\2\u055c\u055e\5\u00f4{\2\u055d\u055a\3\2\2\2\u055d\u055b\3\2\2\2\u055d"+
-		"\u055c\3\2\2\2\u055e\u0561\3\2\2\2\u055f\u055d\3\2\2\2\u055f\u0560\3\2"+
-		"\2\2\u0560\u00ed\3\2\2\2\u0561\u055f\3\2\2\2\u0562\u056b\7\27\2\2\u0563"+
-		"\u0568\5\u010e\u0088\2\u0564\u0565\7 \2\2\u0565\u0567\5\u010e\u0088\2"+
-		"\u0566\u0564\3\2\2\2\u0567\u056a\3\2\2\2\u0568\u0566\3\2\2\2\u0568\u0569"+
-		"\3\2\2\2\u0569\u056c\3\2\2\2\u056a\u0568\3\2\2\2\u056b\u0563\3\2\2\2\u056b"+
-		"\u056c\3\2\2\2\u056c\u056d\3\2\2\2\u056d\u056e\7\30\2\2\u056e\u00ef\3"+
-		"\2\2\2\u056f\u0571\5\u00f2z\2\u0570\u056f\3\2\2\2\u0571\u0574\3\2\2\2"+
-		"\u0572\u0570\3\2\2\2\u0572\u0573\3\2\2\2\u0573\u00f1\3\2\2\2\u0574\u0572"+
-		"\3\2\2\2\u0575\u0576\7\31\2\2\u0576\u0577\5L\'\2\u0577\u0578\7\32\2\2"+
-		"\u0578\u00f3\3\2\2\2\u0579\u057a\7,\2\2\u057a\u057b\5\u00f6|\2\u057b\u00f5"+
-		"\3\2\2\2\u057c\u0581\5\u01c6\u00e4\2\u057d\u0581\7\7\2\2\u057e\u0581\5"+
-		"\u0104\u0083\2\u057f\u0581\7\35\2\2\u0580\u057c\3\2\2\2\u0580\u057d\3"+
-		"\2\2\2\u0580\u057e\3\2\2\2\u0580\u057f\3\2\2\2\u0581\u00f7\3\2\2\2\u0582"+
-		"\u0586\5\u01c2\u00e2\2\u0583\u0586\5\u0100\u0081\2\u0584\u0586\5\u0104"+
-		"\u0083\2\u0585\u0582\3\2\2\2\u0585\u0583\3\2\2\2\u0585\u0584\3\2\2\2\u0586"+
-		"\u00f9\3\2\2\2\u0587\u0595\5\u00fc\177\2\u0588\u0595\5\u0100\u0081\2\u0589"+
-		"\u0595\5\u0104\u0083\2\u058a\u0595\5\u0106\u0084\2\u058b\u0595\5\u010c"+
-		"\u0087\2\u058c\u0595\5\u0108\u0085\2\u058d\u0595\5\u010a\u0086\2\u058e"+
-		"\u0595\5\u0110\u0089\2\u058f\u0595\5\u014e\u00a8\2\u0590\u0595\5\u0156"+
-		"\u00ac\2\u0591\u0595\5\u015a\u00ae\2\u0592\u0595\5\u0160\u00b1\2\u0593"+
-		"\u0595\5\u016e\u00b8\2\u0594\u0587\3\2\2\2\u0594\u0588\3\2\2\2\u0594\u0589"+
-		"\3\2\2\2\u0594\u058a\3\2\2\2\u0594\u058b\3\2\2\2\u0594\u058c\3\2\2\2\u0594"+
-		"\u058d\3\2\2\2\u0594\u058e\3\2\2\2\u0594\u058f\3\2\2\2\u0594\u0590\3\2"+
-		"\2\2\u0594\u0591\3\2\2\2\u0594\u0592\3\2\2\2\u0594\u0593\3\2\2\2\u0595"+
-		"\u00fb\3\2\2\2\u0596\u0599\5\u00fe\u0080\2\u0597\u0599\5\u01d6\u00ec\2"+
-		"\u0598\u0596\3\2\2\2\u0598\u0597\3\2\2\2\u0599\u00fd\3\2\2\2\u059a\u059b"+
-		"\t\23\2\2\u059b\u00ff\3\2\2\2\u059c\u059d\7.\2\2\u059d\u059e\5\u01c2\u00e2"+
-		"\2\u059e\u0101\3\2\2\2\u059f\u05a0\5\u01c2\u00e2\2\u05a0\u0103\3\2\2\2"+
-		"\u05a1\u05a3\7\27\2\2\u05a2\u05a4\5L\'\2\u05a3\u05a2\3\2\2\2\u05a3\u05a4"+
-		"\3\2\2\2\u05a4\u05a5\3\2\2\2\u05a5\u05a6\7\30\2\2\u05a6\u0105\3\2\2\2"+
-		"\u05a7\u05a8\7!\2\2\u05a8\u0107\3\2\2\2\u05a9\u05aa\7\u0087\2\2\u05aa"+
-		"\u05ab\5\u0098M\2\u05ab\u0109\3\2\2\2\u05ac\u05ad\7\u00a5\2\2\u05ad\u05ae"+
-		"\5\u0098M\2\u05ae\u010b\3\2\2\2\u05af\u05b0\5\u01c2\u00e2\2\u05b0\u05b1"+
-		"\5\u00eex\2\u05b1\u010d\3\2\2\2\u05b2\u05b5\5N(\2\u05b3\u05b5\7,\2\2\u05b4"+
-		"\u05b2\3\2\2\2\u05b4\u05b3\3\2\2\2\u05b5\u010f\3\2\2\2\u05b6\u05b9\5\u0112"+
-		"\u008a\2\u05b7\u05b9\5\u0128\u0095\2\u05b8\u05b6\3\2\2\2\u05b8\u05b7\3"+
-		"\2\2\2\u05b9\u0111\3\2\2\2\u05ba\u05be\5\u0114\u008b\2\u05bb\u05be\5\u0116"+
-		"\u008c\2\u05bc\u05be\t\24\2\2\u05bd\u05ba\3\2\2\2\u05bd\u05bb\3\2\2\2"+
-		"\u05bd\u05bc\3\2\2\2\u05be\u0113\3\2\2\2\u05bf\u05c0\7*\2\2\u05c0\u05c1"+
-		"\5\u01c4\u00e3\2\u05c1\u05c2\5\u0118\u008d\2\u05c2\u05c6\7+\2\2\u05c3"+
-		"\u05c5\5\u0124\u0093\2\u05c4\u05c3\3\2\2\2\u05c5\u05c8\3\2\2\2\u05c6\u05c4"+
-		"\3\2\2\2\u05c6\u05c7\3\2\2\2\u05c7\u05c9\3\2\2\2\u05c8\u05c6\3\2\2\2\u05c9"+
-		"\u05ca\7*\2\2\u05ca\u05cb\7&\2\2\u05cb\u05cc\5\u01c4\u00e3\2\u05cc\u05cd"+
-		"\7+\2\2\u05cd\u0115\3\2\2\2\u05ce\u05cf\7*\2\2\u05cf\u05d0\5\u01c4\u00e3"+
-		"\2\u05d0\u05d1\5\u0118\u008d\2\u05d1\u05d2\7&\2\2\u05d2\u05d3\7+\2\2\u05d3"+
-		"\u0117\3\2\2\2\u05d4\u05d5\5\u01c4\u00e3\2\u05d5\u05d6\7\25\2\2\u05d6"+
-		"\u05d7\5\u011e\u0090\2\u05d7\u05d9\3\2\2\2\u05d8\u05d4\3\2\2\2\u05d9\u05dc"+
-		"\3\2\2\2\u05da\u05d8\3\2\2\2\u05da\u05db\3\2\2\2\u05db\u0119\3\2\2\2\u05dc"+
-		"\u05da\3\2\2\2\u05dd\u05e4\7\r\2\2\u05de\u05e3\7\13\2\2\u05df\u05e3\7"+
-		"\f\2\2\u05e0\u05e3\7\3\2\2\u05e1\u05e3\5\u0120\u0091\2\u05e2\u05de\3\2"+
-		"\2\2\u05e2\u05df\3\2\2\2\u05e2\u05e0\3\2\2\2\u05e2\u05e1\3\2\2\2\u05e3"+
-		"\u05e6\3\2\2\2\u05e4\u05e2\3\2\2\2\u05e4\u05e5\3\2\2\2\u05e5\u05e7\3\2"+
-		"\2\2\u05e6\u05e4\3\2\2\2\u05e7\u05e8\7\r\2\2\u05e8\u011b\3\2\2\2\u05e9"+
-		"\u05f0\7\16\2\2\u05ea\u05ef\7\13\2\2\u05eb\u05ef\7\f\2\2\u05ec\u05ef\7"+
-		"\4\2\2\u05ed\u05ef\5\u0122\u0092\2\u05ee\u05ea\3\2\2\2\u05ee\u05eb\3\2"+
-		"\2\2\u05ee\u05ec\3\2\2\2\u05ee\u05ed\3\2\2\2\u05ef\u05f2\3\2\2\2\u05f0"+
-		"\u05ee\3\2\2\2\u05f0\u05f1\3\2\2\2\u05f1\u05f3\3\2\2\2\u05f2\u05f0\3\2"+
-		"\2\2\u05f3\u05f4\7\16\2\2\u05f4\u011d\3\2\2\2\u05f5\u05f8\5\u011a\u008e"+
-		"\2\u05f6\u05f8\5\u011c\u008f\2\u05f7\u05f5\3\2\2\2\u05f7\u05f6\3\2\2\2"+
-		"\u05f8\u011f\3\2\2\2\u05f9\u05fb\7\u00c6\2\2\u05fa\u05f9\3\2\2\2\u05fb"+
-		"\u05fc\3\2\2\2\u05fc\u05fa\3\2\2\2\u05fc\u05fd\3\2\2\2\u05fd\u0607\3\2"+
-		"\2\2\u05fe\u0607\7\5\2\2\u05ff\u0607\7\6\2\2\u0600\u0607\5\u011a\u008e"+
-		"\2\u0601\u0603\7\33\2\2\u0602\u0604\5L\'\2\u0603\u0602\3\2\2\2\u0603\u0604"+
-		"\3\2\2\2\u0604\u0605\3\2\2\2\u0605\u0607\7\34\2\2\u0606\u05fa\3\2\2\2"+
-		"\u0606\u05fe\3\2\2\2\u0606\u05ff\3\2\2\2\u0606\u0600\3\2\2\2\u0606\u0601"+
-		"\3\2\2\2\u0607\u0121\3\2\2\2\u0608\u060a\7\u00c6\2\2\u0609\u0608\3\2\2"+
-		"\2\u060a\u060b\3\2\2\2\u060b\u0609\3\2\2\2\u060b\u060c\3\2\2\2\u060c\u0616"+
-		"\3\2\2\2\u060d\u0616\7\5\2\2\u060e\u0616\7\6\2\2\u060f\u0616\5\u011c\u008f"+
-		"\2\u0610\u0612\7\33\2\2\u0611\u0613\5L\'\2\u0612\u0611\3\2\2\2\u0612\u0613"+
-		"\3\2\2\2\u0613\u0614\3\2\2\2\u0614\u0616\7\34\2\2\u0615\u0609\3\2\2\2"+
-		"\u0615\u060d\3\2\2\2\u0615\u060e\3\2\2\2\u0615\u060f\3\2\2\2\u0615\u0610"+
-		"\3\2\2\2\u0616\u0123\3\2\2\2\u0617\u061e\5\u0112\u008a\2\u0618\u061e\5"+
-		"\u0126\u0094\2\u0619\u061e\7\22\2\2\u061a\u061e\7\r\2\2\u061b\u061e\7"+
-		"\16\2\2\u061c\u061e\5\u01dc\u00ef\2\u061d\u0617\3\2\2\2\u061d\u0618\3"+
-		"\2\2\2\u061d\u0619\3\2\2\2\u061d\u061a\3\2\2\2\u061d\u061b\3\2\2\2\u061d"+
-		"\u061c\3\2\2\2\u061e\u0125\3\2\2\2\u061f\u0629\t\25\2\2\u0620\u0621\7"+
-		"\33\2\2\u0621\u0629\7\33\2\2\u0622\u0623\7\34\2\2\u0623\u0629\7\34\2\2"+
-		"\u0624\u0625\7\33\2\2\u0625\u0626\5L\'\2\u0626\u0627\7\34\2\2\u0627\u0629"+
-		"\3\2\2\2\u0628\u061f\3\2\2\2\u0628\u0620\3\2\2\2\u0628\u0622\3\2\2\2\u0628"+
-		"\u0624\3\2\2\2\u0629\u0127\3\2\2\2\u062a\u0633\5\u0138\u009d\2\u062b\u0633"+
-		"\5\u013a\u009e\2\u062c\u0633\5\u013e\u00a0\2\u062d\u0633\5\u0140\u00a1"+
-		"\2\u062e\u0633\5\u0148\u00a5\2\u062f\u0633\5\u014a\u00a6\2\u0630\u0633"+
-		"\5\u014c\u00a7\2\u0631\u0633\5\u012a\u0096\2\u0632\u062a\3\2\2\2\u0632"+
-		"\u062b\3\2\2\2\u0632\u062c\3\2\2\2\u0632\u062d\3\2\2\2\u0632\u062e\3\2"+
-		"\2\2\u0632\u062f\3\2\2\2\u0632\u0630\3\2\2\2\u0632\u0631\3\2\2\2\u0633"+
-		"\u0129\3\2\2\2\u0634\u063b\5\u012c\u0097\2\u0635\u063b\5\u012e\u0098\2"+
-		"\u0636\u063b\5\u0130\u0099\2\u0637\u063b\5\u0132\u009a\2\u0638\u063b\5"+
-		"\u0134\u009b\2\u0639\u063b\5\u0136\u009c\2\u063a\u0634\3\2\2\2\u063a\u0635"+
-		"\3\2\2\2\u063a\u0636\3\2\2\2\u063a\u0637\3\2\2\2\u063a\u0638\3\2\2\2\u063a"+
-		"\u0639\3\2\2\2\u063b\u012b\3\2\2\2\u063c\u063d\7\u00ae\2\2\u063d\u063e"+
-		"\5\u013c\u009f\2\u063e\u012d\3\2\2\2\u063f\u0640\7\u00b2\2\2\u0640\u064e"+
-		"\7\33\2\2\u0641\u0642\5N(\2\u0642\u0643\7#\2\2\u0643\u064b\5N(\2\u0644"+
-		"\u0645\7 \2\2\u0645\u0646\5N(\2\u0646\u0647\7#\2\2\u0647\u0648\5N(\2\u0648"+
-		"\u064a\3\2\2\2\u0649\u0644\3\2\2\2\u064a\u064d\3\2\2\2\u064b\u0649\3\2"+
-		"\2\2\u064b\u064c\3\2\2\2\u064c\u064f\3\2\2\2\u064d\u064b\3\2\2\2\u064e"+
-		"\u0641\3\2\2\2\u064e\u064f\3\2\2\2\u064f\u0650\3\2\2\2\u0650\u0651\7\34"+
-		"\2\2\u0651\u012f\3\2\2\2\u0652\u0653\7\u00b1\2\2\u0653\u0654\5\u013c\u009f"+
-		"\2\u0654\u0131\3\2\2\2\u0655\u0656\7\u00af\2\2\u0656\u0657\7\33\2\2\u0657"+
-		"\u0658\5N(\2\u0658\u0659\7\34\2\2\u0659\u0133\3\2\2\2\u065a\u065b\7\u00b0"+
-		"\2\2\u065b\u065c\7\33\2\2\u065c\u065d\7\34\2\2\u065d\u0135\3\2\2\2\u065e"+
-		"\u065f\7B\2\2\u065f\u0660\5\u013c\u009f\2\u0660\u0137\3\2\2\2\u0661\u0662"+
-		"\7V\2\2\u0662\u0663\5\u0098M\2\u0663\u0139\3\2\2\2\u0664\u066a\7X\2\2"+
-		"\u0665\u066b\5\u01c2\u00e2\2\u0666\u0667\7\33\2\2\u0667\u0668\5L\'\2\u0668"+
-		"\u0669\7\34\2\2\u0669\u066b\3\2\2\2\u066a\u0665\3\2\2\2\u066a\u0666\3"+
-		"\2\2\2\u066b\u066c\3\2\2\2\u066c\u066d\5\u013c\u009f\2\u066d\u013b\3\2"+
-		"\2\2\u066e\u066f\5\u0098M\2\u066f\u013d\3\2\2\2\u0670\u0676\7?\2\2\u0671"+
-		"\u0677\5\u01c2\u00e2\2\u0672\u0673\7\33\2\2\u0673\u0674\5L\'\2\u0674\u0675"+
-		"\7\34\2\2\u0675\u0677\3\2\2\2\u0676\u0671\3\2\2\2\u0676\u0672\3\2\2\2"+
-		"\u0677\u0678\3\2\2\2\u0678\u0679\5\u0098M\2\u0679\u013f\3\2\2\2\u067a"+
-		"\u067d\7{\2\2\u067b\u067e\5\u0142\u00a2\2\u067c\u067e\5\u0144\u00a3\2"+
-		"\u067d\u067b\3\2\2\2\u067d\u067c\3\2\2\2\u067e\u067f\3\2\2\2\u067f\u0680"+
-		"\5\u0146\u00a4\2\u0680\u0141\3\2\2\2\u0681\u0682\5\u01c6\u00e4\2\u0682"+
-		"\u0143\3\2\2\2\u0683\u0684\5\u0098M\2\u0684\u0145\3\2\2\2\u0685\u0686"+
-		"\5\u0098M\2\u0686\u0147\3\2\2\2\u0687\u0688\7\u009c\2\2\u0688\u0689\5"+
-		"\u0098M\2\u0689\u0149\3\2\2\2\u068a\u068b\7J\2\2\u068b\u068c\5\u0098M"+
-		"\2\u068c\u014b\3\2\2\2\u068d\u0693\7\u008e\2\2\u068e\u0694\5\u01c6\u00e4"+
-		"\2\u068f\u0690\7\33\2\2\u0690\u0691\5L\'\2\u0691\u0692\7\34\2\2\u0692"+
-		"\u0694\3\2\2\2\u0693\u068e\3\2\2\2\u0693\u068f\3\2\2\2\u0694\u0695\3\2"+
-		"\2\2\u0695\u0696\5\u0098M\2\u0696\u014d\3\2\2\2\u0697\u069a\5\u0150\u00a9"+
-		"\2\u0698\u069a\5\u0152\u00aa\2\u0699\u0697\3\2\2\2\u0699\u0698\3\2\2\2"+
-		"\u069a\u014f\3\2\2\2\u069b\u069c\5\u01c2\u00e2\2\u069c\u069d\7\61\2\2"+
-		"\u069d\u069e\7\7\2\2\u069e\u0151\3\2\2\2\u069f\u06a0\5@!\2\u06a0\u06a1"+
-		"\7e\2\2\u06a1\u06a3\7\27\2\2\u06a2\u06a4\5<\37\2\u06a3\u06a2\3\2\2\2\u06a3"+
-		"\u06a4\3\2\2\2\u06a4\u06a5\3\2\2\2\u06a5\u06a8\7\30\2\2\u06a6\u06a7\7"+
-		"<\2\2\u06a7\u06a9\5\u0174\u00bb\2\u06a8\u06a6\3\2\2\2\u06a8\u06a9\3\2"+
-		"\2\2\u06a9\u06aa\3\2\2\2\u06aa\u06ab\5\u0154\u00ab\2\u06ab\u0153\3\2\2"+
-		"\2\u06ac\u06ad\5\u0098M\2\u06ad\u0155\3\2\2\2\u06ae\u06af\7x\2\2\u06af"+
-		"\u06b8\7\33\2\2\u06b0\u06b5\5\u0158\u00ad\2\u06b1\u06b2\7 \2\2\u06b2\u06b4"+
-		"\5\u0158\u00ad\2\u06b3\u06b1\3\2\2\2\u06b4\u06b7\3\2\2\2\u06b5\u06b3\3"+
-		"\2\2\2\u06b5\u06b6\3\2\2\2\u06b6\u06b9\3\2\2\2\u06b7\u06b5\3\2\2\2\u06b8"+
-		"\u06b0\3\2\2\2\u06b8\u06b9\3\2\2\2\u06b9\u06ba\3\2\2\2\u06ba\u06bb\7\34"+
-		"\2\2\u06bb\u0157\3\2\2\2\u06bc\u06bd\5N(\2\u06bd\u06be\t\26\2\2\u06be"+
-		"\u06bf\5N(\2\u06bf\u0159\3\2\2\2\u06c0\u06c3\5\u015c\u00af\2\u06c1\u06c3"+
-		"\5\u015e\u00b0\2\u06c2\u06c0\3\2\2\2\u06c2\u06c1\3\2\2\2\u06c3\u015b\3"+
-		"\2\2\2\u06c4\u06cd\7\31\2\2\u06c5\u06ca\5N(\2\u06c6\u06c7\7 \2\2\u06c7"+
-		"\u06c9\5N(\2\u06c8\u06c6\3\2\2\2\u06c9\u06cc\3\2\2\2\u06ca\u06c8\3\2\2"+
-		"\2\u06ca\u06cb\3\2\2\2\u06cb\u06ce\3\2\2\2\u06cc\u06ca\3\2\2\2\u06cd\u06c5"+
-		"\3\2\2\2\u06cd\u06ce\3\2\2\2\u06ce\u06cf\3\2\2\2\u06cf\u06d0\7\32\2\2"+
-		"\u06d0\u015d\3\2\2\2\u06d1\u06d2\7;\2\2\u06d2\u06d3\5\u0098M\2\u06d3\u015f"+
-		"\3\2\2\2\u06d4\u06d5\7\u00c4\2\2\u06d5\u06d6\5\u0162\u00b2\2\u06d6\u06d7"+
-		"\7\u00c9\2\2\u06d7\u0161\3\2\2\2\u06d8\u06de\5\u016a\u00b6\2\u06d9\u06da"+
-		"\5\u016c\u00b7\2\u06da\u06db\5\u016a\u00b6\2\u06db\u06dd\3\2\2\2\u06dc"+
-		"\u06d9\3\2\2\2\u06dd\u06e0\3\2\2\2\u06de\u06dc\3\2\2\2\u06de\u06df\3\2"+
-		"\2\2\u06df\u0163\3\2\2\2\u06e0\u06de\3\2\2\2\u06e1\u06e2\t\27\2\2\u06e2"+
-		"\u0165\3\2\2\2\u06e3\u06e4\t\30\2\2\u06e4\u0167\3\2\2\2\u06e5\u06e6\t"+
-		"\31\2\2\u06e6\u0169\3\2\2\2\u06e7\u06f2\7\u00c7\2\2\u06e8\u06e9\5\u0164"+
-		"\u00b3\2\u06e9\u06ea\5\u0166\u00b4\2\u06ea\u06f2\3\2\2\2\u06eb\u06ec\5"+
-		"\u0168\u00b5\2\u06ec\u06ed\5\u0164\u00b3\2\u06ed\u06ee\5\u0164\u00b3\2"+
-		"\u06ee\u06f2\3\2\2\2\u06ef\u06f2\5\u0164\u00b3\2\u06f0\u06f2\7\33\2\2"+
-		"\u06f1\u06e7\3\2\2\2\u06f1\u06e8\3\2\2\2\u06f1\u06eb\3\2\2\2\u06f1\u06ef"+
-		"\3\2\2\2\u06f1\u06f0\3\2\2\2\u06f2\u06f5\3\2\2\2\u06f3\u06f1\3\2\2\2\u06f3"+
-		"\u06f4\3\2\2\2\u06f4\u016b\3\2\2\2\u06f5\u06f3\3\2\2\2\u06f6\u06f7\7\u00c8"+
-		"\2\2\u06f7\u06f8\5L\'\2\u06f8\u06f9\7\u00c5\2\2\u06f9\u016d\3\2\2\2\u06fa"+
-		"\u06fb\7,\2\2\u06fb\u06fc\5\u00f6|\2\u06fc\u016f\3\2\2\2\u06fd\u06ff\5"+
-		"\u019c\u00cf\2\u06fe\u0700\7,\2\2\u06ff\u06fe\3\2\2\2\u06ff\u0700\3\2"+
-		"\2\2\u0700\u0171\3\2\2\2\u0701\u0702\7<\2\2\u0702\u0703\5\u0174\u00bb"+
-		"\2\u0703\u0173\3\2\2\2\u0704\u0705\7[\2\2\u0705\u0706\7\27\2\2\u0706\u070e"+
-		"\7\30\2\2\u0707\u070b\5\u0176\u00bc\2\u0708\u070c\7,\2\2\u0709\u070c\7"+
-		"\35\2\2\u070a\u070c\7\36\2\2\u070b\u0708\3\2\2\2\u070b\u0709\3\2\2\2\u070b"+
-		"\u070a\3\2\2\2\u070b\u070c\3\2\2\2\u070c\u070e\3\2\2\2\u070d\u0704\3\2"+
-		"\2\2\u070d\u0707\3\2\2\2\u070e\u0175\3\2\2\2\u070f\u0719\5\u017a\u00be"+
-		"\2\u0710\u0711\7r\2\2\u0711\u0712\7\27\2\2\u0712\u0719\7\30\2\2\u0713"+
-		"\u0719\5\u01a0\u00d1\2\u0714\u0719\5\u01a6\u00d4\2\u0715\u0719\5\u01ac"+
-		"\u00d7\2\u0716\u0719\5\u0178\u00bd\2\u0717\u0719\5\u01b2\u00da\2\u0718"+
-		"\u070f\3\2\2\2\u0718\u0710\3\2\2\2\u0718\u0713\3\2\2\2\u0718\u0714\3\2"+
-		"\2\2\u0718\u0715\3\2\2\2\u0718\u0716\3\2\2\2\u0718\u0717\3\2\2\2\u0719"+
-		"\u0177\3\2\2\2\u071a\u071b\5\u01c2\u00e2\2\u071b\u0179\3\2\2\2\u071c\u0729"+
-		"\5\u0180\u00c1\2\u071d\u0729\5\u0190\u00c9\2\u071e\u0729\5\u018a\u00c6"+
-		"\2\u071f\u0729\5\u0194\u00cb\2\u0720\u0729\5\u018e\u00c8\2\u0721\u0729"+
-		"\5\u0188\u00c5\2\u0722\u0729\5\u0184\u00c3\2\u0723\u0729\5\u0182\u00c2"+
-		"\2\u0724\u0729\5\u0186\u00c4\2\u0725\u0729\5\u01b6\u00dc\2\u0726\u0729"+
-		"\5\u017e\u00c0\2\u0727\u0729\5\u017c\u00bf\2\u0728\u071c\3\2\2\2\u0728"+
-		"\u071d\3\2\2\2\u0728\u071e\3\2\2\2\u0728\u071f\3\2\2\2\u0728\u0720\3\2"+
-		"\2\2\u0728\u0721\3\2\2\2\u0728\u0722\3\2\2\2\u0728\u0723\3\2\2\2\u0728"+
-		"\u0724\3\2\2\2\u0728\u0725\3\2\2\2\u0728\u0726\3\2\2\2\u0728\u0727\3\2"+
-		"\2\2\u0729\u017b\3\2\2\2\u072a\u072b\7\u0081\2\2\u072b\u072d\7\27\2\2"+
-		"\u072c\u072e\7\35\2\2\u072d\u072c\3\2\2\2\u072d\u072e\3\2\2\2\u072e\u072f"+
-		"\3\2\2\2\u072f\u0730\7\30\2\2\u0730\u017d\3\2\2\2\u0731\u0732\7B\2\2\u0732"+
-		"\u0733\7\27\2\2\u0733\u0734\7\30\2\2\u0734\u017f\3\2\2\2\u0735\u0736\7"+
-		"W\2\2\u0736\u0739\7\27\2\2\u0737\u073a\5\u0190\u00c9\2\u0738\u073a\5\u0194"+
-		"\u00cb\2\u0739\u0737\3\2\2\2\u0739\u0738\3\2\2\2\u0739\u073a\3\2\2\2\u073a"+
-		"\u073b\3\2\2\2\u073b\u073c\7\30\2\2\u073c\u0181\3\2\2\2\u073d\u073e\7"+
-		"\u009c\2\2\u073e\u073f\7\27\2\2\u073f\u0740\7\30\2\2\u0740\u0183\3\2\2"+
-		"\2\u0741\u0742\7J\2\2\u0742\u0743\7\27\2\2\u0743\u0744\7\30\2\2\u0744"+
-		"\u0185\3\2\2\2\u0745\u0746\7~\2\2\u0746\u0747\7\27\2\2\u0747\u0748\7\30"+
-		"\2\2\u0748\u0187\3\2\2\2\u0749\u074a\7\u008e\2\2\u074a\u074d\7\27\2\2"+
-		"\u074b\u074e\5\u01c6\u00e4\2\u074c\u074e\5\u01d6\u00ec\2\u074d\u074b\3"+
-		"\2\2\2\u074d\u074c\3\2\2\2\u074d\u074e\3\2\2\2\u074e\u074f\3\2\2\2\u074f"+
-		"\u0750\7\30\2\2\u0750\u0189\3\2\2\2\u0751\u0752\7?\2\2\u0752\u0758\7\27"+
-		"\2\2\u0753\u0756\5\u018c\u00c7\2\u0754\u0755\7 \2\2\u0755\u0757\5\u019e"+
-		"\u00d0\2\u0756\u0754\3\2\2\2\u0756\u0757\3\2\2\2\u0757\u0759\3\2\2\2\u0758"+
-		"\u0753\3\2\2\2\u0758\u0759\3\2\2\2\u0759\u075a\3\2\2\2\u075a\u075b\7\30"+
-		"\2\2\u075b\u018b\3\2\2\2\u075c\u075f\5\u0198\u00cd\2\u075d\u075f\7\35"+
-		"\2\2\u075e\u075c\3\2\2\2\u075e\u075d\3\2\2\2\u075f\u018d\3\2\2\2\u0760"+
-		"\u0761\7\u0092\2\2\u0761\u0762\7\27\2\2\u0762\u0763\5\u01b4\u00db\2\u0763"+
-		"\u0764\7\30\2\2\u0764\u018f\3\2\2\2\u0765\u0766\7X\2\2\u0766\u076f\7\27"+
-		"\2\2\u0767\u076d\5\u0192\u00ca\2\u0768\u0769\7 \2\2\u0769\u076b\5\u019e"+
-		"\u00d0\2\u076a\u076c\7,\2\2\u076b\u076a\3\2\2\2\u076b\u076c\3\2\2\2\u076c"+
-		"\u076e\3\2\2\2\u076d\u0768\3\2\2\2\u076d\u076e\3\2\2\2\u076e\u0770\3\2"+
-		"\2\2\u076f\u0767\3\2\2\2\u076f\u0770\3\2\2\2\u0770\u0771\3\2\2\2\u0771"+
-		"\u0772\7\30\2\2\u0772\u0191\3\2\2\2\u0773\u0776\5\u019a\u00ce\2\u0774"+
-		"\u0776\7\35\2\2\u0775\u0773\3\2\2\2\u0775\u0774\3\2\2\2\u0776\u0193\3"+
-		"\2\2\2\u0777\u0778\7\u0093\2\2\u0778\u0779\7\27\2\2\u0779\u077a\5\u0196"+
-		"\u00cc\2\u077a\u077b\7\30\2\2\u077b\u0195\3\2\2\2\u077c\u077d\5\u019a"+
-		"\u00ce\2\u077d\u0197\3\2\2\2\u077e\u077f\5\u01c2\u00e2\2\u077f\u0199\3"+
-		"\2\2\2\u0780\u0781\5\u01c2\u00e2\2\u0781\u019b\3\2\2\2\u0782\u0783\5\u019e"+
-		"\u00d0\2\u0783\u019d\3\2\2\2\u0784\u0785\5\u01c2\u00e2\2\u0785\u019f\3"+
-		"\2\2\2\u0786\u0788\5B\"\2\u0787\u0786\3\2\2\2\u0788\u078b\3\2\2\2\u0789"+
-		"\u0787\3\2\2\2\u0789\u078a\3\2\2\2\u078a\u078e\3\2\2\2\u078b\u0789\3\2"+
-		"\2\2\u078c\u078f\5\u01a2\u00d2\2\u078d\u078f\5\u01a4\u00d3\2\u078e\u078c"+
-		"\3\2\2\2\u078e\u078d\3\2\2\2\u078f\u01a1\3\2\2\2\u0790\u0791\7e\2\2\u0791"+
-		"\u0792\7\27\2\2\u0792\u0793\7\35\2\2\u0793\u0794\7\30\2\2\u0794\u01a3"+
-		"\3\2\2\2\u0795\u0796\7e\2\2\u0796\u079f\7\27\2\2\u0797\u079c\5\u0174\u00bb"+
-		"\2\u0798\u0799\7 \2\2\u0799\u079b\5\u0174\u00bb\2\u079a\u0798\3\2\2\2"+
-		"\u079b\u079e\3\2\2\2\u079c\u079a\3\2\2\2\u079c\u079d\3\2\2\2\u079d\u07a0"+
-		"\3\2\2\2\u079e\u079c\3\2\2\2\u079f\u0797\3\2\2\2\u079f\u07a0\3\2\2\2\u07a0"+
-		"\u07a1\3\2\2\2\u07a1\u07a2\7\30\2\2\u07a2\u07a3\7<\2\2\u07a3\u07a4\5\u0174"+
-		"\u00bb\2\u07a4\u01a5\3\2\2\2\u07a5\u07a8\5\u01a8\u00d5\2\u07a6\u07a8\5"+
-		"\u01aa\u00d6\2\u07a7\u07a5\3\2\2\2\u07a7\u07a6\3\2\2\2\u07a8\u01a7\3\2"+
-		"\2\2\u07a9\u07aa\7x\2\2\u07aa\u07ab\7\27\2\2\u07ab\u07ac\7\35\2\2\u07ac"+
-		"\u07ad\7\30\2\2\u07ad\u01a9\3\2\2\2\u07ae\u07af\7x\2\2\u07af\u07b0\7\27"+
-		"\2\2\u07b0\u07b1\5\u01c2\u00e2\2\u07b1\u07b2\7 \2\2\u07b2\u07b3\5\u0174"+
-		"\u00bb\2\u07b3\u07b4\7\30\2\2\u07b4\u01ab\3\2\2\2\u07b5\u07b8\5\u01ae"+
-		"\u00d8\2\u07b6\u07b8\5\u01b0\u00d9\2\u07b7\u07b5\3\2\2\2\u07b7\u07b6\3"+
-		"\2\2\2\u07b8\u01ad\3\2\2\2\u07b9\u07ba\7;\2\2\u07ba\u07bb\7\27\2\2\u07bb"+
-		"\u07bc\7\35\2\2\u07bc\u07bd\7\30\2\2\u07bd\u01af\3\2\2\2\u07be\u07bf\7"+
-		";\2\2\u07bf\u07c0\7\27\2\2\u07c0\u07c1\5\u0174\u00bb\2\u07c1\u07c2\7\30"+
-		"\2\2\u07c2\u01b1\3\2\2\2\u07c3\u07c4\7\27\2\2\u07c4\u07c5\5\u0176\u00bc"+
-		"\2\u07c5\u07c6\7\30\2\2\u07c6\u01b3\3\2\2\2\u07c7\u07c8\5\u0198\u00cd"+
-		"\2\u07c8\u01b5\3\2\2\2\u07c9\u07cf\5\u01b8\u00dd\2\u07ca\u07cf\5\u01ba"+
-		"\u00de\2\u07cb\u07cf\5\u01bc\u00df\2\u07cc\u07cf\5\u01be\u00e0\2\u07cd"+
-		"\u07cf\5\u01c0\u00e1\2\u07ce\u07c9\3\2\2\2\u07ce\u07ca\3\2\2\2\u07ce\u07cb"+
-		"\3\2\2\2\u07ce\u07cc\3\2\2\2\u07ce\u07cd\3\2\2\2\u07cf\u01b7\3\2\2\2\u07d0"+
-		"\u07d1\7\u00ae\2\2\u07d1\u07d3\7\27\2\2\u07d2\u07d4\5\u01d6\u00ec\2\u07d3"+
-		"\u07d2\3\2\2\2\u07d3\u07d4\3\2\2\2\u07d4\u07d5\3\2\2\2\u07d5\u07d6\7\30"+
-		"\2\2\u07d6\u01b9\3\2\2\2\u07d7\u07d8\7\u00b2\2\2\u07d8\u07da\7\27\2\2"+
-		"\u07d9\u07db\5\u01d6\u00ec\2\u07da\u07d9\3\2\2\2\u07da\u07db\3\2\2\2\u07db"+
-		"\u07dc\3\2\2\2\u07dc\u07dd\7\30\2\2\u07dd\u01bb\3\2\2\2\u07de\u07df\7"+
-		"\u00b1\2\2\u07df\u07e1\7\27\2\2\u07e0\u07e2\5\u01d6\u00ec\2\u07e1\u07e0"+
-		"\3\2\2\2\u07e1\u07e2\3\2\2\2\u07e2\u07e3\3\2\2\2\u07e3\u07e4\7\30\2\2"+
-		"\u07e4\u01bd\3\2\2\2\u07e5\u07e6\7\u00af\2\2\u07e6\u07e8\7\27\2\2\u07e7"+
-		"\u07e9\5\u01d6\u00ec\2\u07e8\u07e7\3\2\2\2\u07e8\u07e9\3\2\2\2\u07e9\u07ea"+
-		"\3\2\2\2\u07ea\u07eb\7\30\2\2\u07eb\u01bf\3\2\2\2\u07ec\u07ed\7\u00b0"+
-		"\2\2\u07ed\u07ef\7\27\2\2\u07ee\u07f0\5\u01d6\u00ec\2\u07ef\u07ee\3\2"+
-		"\2\2\u07ef\u07f0\3\2\2\2\u07f0\u07f1\3\2\2\2\u07f1\u07f2\7\30\2\2\u07f2"+
-		"\u01c1\3\2\2\2\u07f3\u07f6\5\u01c4\u00e3\2\u07f4\u07f6\7\u00ba\2\2\u07f5"+
-		"\u07f3\3\2\2\2\u07f5\u07f4\3\2\2\2\u07f6\u01c3\3\2\2\2\u07f7\u07fa\7\u00bb"+
-		"\2\2\u07f8\u07fa\5\u01c6\u00e4\2\u07f9\u07f7\3\2\2\2\u07f9\u07f8\3\2\2"+
-		"\2\u07fa\u01c5\3\2\2\2\u07fb\u07fe\7\u00be\2\2\u07fc\u07fe\5\u01ca\u00e6"+
-		"\2\u07fd\u07fb\3\2\2\2\u07fd\u07fc\3\2\2\2\u07fe\u01c7\3\2\2\2\u07ff\u0804"+
-		"\7\u00bb\2\2\u0800\u0804\7\u00be\2\2\u0801\u0804\7\u00ba\2\2\u0802\u0804"+
-		"\5\u01ce\u00e8\2\u0803\u07ff\3\2\2\2\u0803\u0800\3\2\2\2\u0803\u0801\3"+
-		"\2\2\2\u0803\u0802\3\2\2\2\u0804\u01c9\3\2\2\2\u0805\u0808\5\u01ce\u00e8"+
-		"\2\u0806\u0808\5\u01cc\u00e7\2\u0807\u0805\3\2\2\2\u0807\u0806\3\2\2\2"+
-		"\u0808\u01cb\3\2\2\2\u0809\u080a\t\32\2\2\u080a\u01cd\3\2\2\2\u080b\u080c"+
-		"\t\33\2\2\u080c\u01cf\3\2\2\2\u080d\u080e\5\u01d6\u00ec\2\u080e\u01d1"+
-		"\3\2\2\2\u080f\u0816\7\r\2\2\u0810\u0815\7\13\2\2\u0811\u0815\7\f\2\2"+
-		"\u0812\u0815\7\3\2\2\u0813\u0815\5\u01d8\u00ed\2\u0814\u0810\3\2\2\2\u0814"+
-		"\u0811\3\2\2\2\u0814\u0812\3\2\2\2\u0814\u0813\3\2\2\2\u0815\u0818\3\2"+
-		"\2\2\u0816\u0814\3\2\2\2\u0816\u0817\3\2\2\2\u0817\u0819\3\2\2\2\u0818"+
-		"\u0816\3\2\2\2\u0819\u081a\7\r\2\2\u081a\u01d3\3\2\2\2\u081b\u0822\7\16"+
-		"\2\2\u081c\u0821\7\13\2\2\u081d\u0821\7\f\2\2\u081e\u0821\7\4\2\2\u081f"+
-		"\u0821\5\u01da\u00ee\2\u0820\u081c\3\2\2\2\u0820\u081d\3\2\2\2\u0820\u081e"+
-		"\3\2\2\2\u0820\u081f\3\2\2\2\u0821\u0824\3\2\2\2\u0822\u0820\3\2\2\2\u0822"+
-		"\u0823\3\2\2\2\u0823\u0825\3\2\2\2\u0824\u0822\3\2\2\2\u0825\u0826\7\16"+
-		"\2\2\u0826\u01d5\3\2\2\2\u0827\u082a\5\u01d2\u00ea\2\u0828\u082a\5\u01d4"+
-		"\u00eb\2\u0829\u0827\3\2\2\2\u0829\u0828\3\2\2\2\u082a\u01d7\3\2\2\2\u082b"+
-		"\u082d\7\u00c6\2\2\u082c\u082b\3\2\2\2\u082d\u082e\3\2\2\2\u082e\u082c"+
-		"\3\2\2\2\u082e\u082f\3\2\2\2\u082f\u083d\3\2\2\2\u0830\u0832\7\33\2\2"+
-		"\u0831\u0833\5L\'\2\u0832\u0831\3\2\2\2\u0832\u0833\3\2\2\2\u0833\u0835"+
-		"\3\2\2\2\u0834\u0836\7\34\2\2\u0835\u0834\3\2\2\2\u0835\u0836\3\2\2\2"+
-		"\u0836\u083d\3\2\2\2\u0837\u083d\7\34\2\2\u0838\u083d\7\5\2\2\u0839\u083d"+
-		"\7\6\2\2\u083a\u083d\5\u01dc\u00ef\2\u083b\u083d\5\u01d4\u00eb\2\u083c"+
-		"\u082c\3\2\2\2\u083c\u0830\3\2\2\2\u083c\u0837\3\2\2\2\u083c\u0838\3\2"+
-		"\2\2\u083c\u0839\3\2\2\2\u083c\u083a\3\2\2\2\u083c\u083b\3\2\2\2\u083d"+
-		"\u01d9\3\2\2\2\u083e\u0840\7\u00c6\2\2\u083f\u083e\3\2\2\2\u0840\u0841"+
-		"\3\2\2\2\u0841\u083f\3\2\2\2\u0841\u0842\3\2\2\2\u0842\u0850\3\2\2\2\u0843"+
-		"\u0845\7\33\2\2\u0844\u0846\5L\'\2\u0845\u0844\3\2\2\2\u0845\u0846\3\2"+
-		"\2\2\u0846\u0848\3\2\2\2\u0847\u0849\7\34\2\2\u0848\u0847\3\2\2\2\u0848"+
-		"\u0849\3\2\2\2\u0849\u0850\3\2\2\2\u084a\u0850\7\34\2\2\u084b\u0850\7"+
-		"\5\2\2\u084c\u0850\7\6\2\2\u084d\u0850\5\u01dc\u00ef\2\u084e\u0850\5\u01d2"+
-		"\u00ea\2\u084f\u083f\3\2\2\2\u084f\u0843\3\2\2\2\u084f\u084a\3\2\2\2\u084f"+
-		"\u084b\3\2\2\2\u084f\u084c\3\2\2\2\u084f\u084d\3\2\2\2\u084f\u084e\3\2"+
-		"\2\2\u0850\u01db\3\2\2\2\u0851\u0854\5\u01ca\u00e6\2\u0852\u0854\t\34"+
-		"\2\2\u0853\u0851\3\2\2\2\u0853\u0852\3\2\2\2\u0854\u0855\3\2\2\2\u0855"+
-		"\u0853\3\2\2\2\u0855\u0856\3\2\2\2\u0856\u01dd\3\2\2\2\u00d0\u01df\u01e2"+
+		"\3\2\2\2\u04d1\u04d6\5\u00c0a\2\u04d2\u04d3\7\63\2\2\u04d3\u04d5\5\u010c"+
+		"\u0087\2\u04d4\u04d2\3\2\2\2\u04d5\u04d8\3\2\2\2\u04d6\u04d4\3\2\2\2\u04d6"+
+		"\u04d7\3\2\2\2\u04d7\u00bf\3\2\2\2\u04d8\u04d6\3\2\2\2\u04d9\u04db\t\13"+
+		"\2\2\u04da\u04d9\3\2\2\2\u04db\u04de\3\2\2\2\u04dc\u04da\3\2\2\2\u04dc"+
+		"\u04dd\3\2\2\2\u04dd\u04df\3\2\2\2\u04de\u04dc\3\2\2\2\u04df\u04e0\5\u00c2"+
+		"b\2\u04e0\u00c1\3\2\2\2\u04e1\u04e5\5\u00caf\2\u04e2\u04e5\5\u00ceh\2"+
+		"\u04e3\u04e5\5\u00d0i\2\u04e4\u04e1\3\2\2\2\u04e4\u04e2\3\2\2\2\u04e4"+
+		"\u04e3\3\2\2\2\u04e5\u00c3\3\2\2\2\u04e6\u04ef\7\25\2\2\u04e7\u04ef\7"+
+		"\26\2\2\u04e8\u04ef\7*\2\2\u04e9\u04ea\7*\2\2\u04ea\u04ef\7\25\2\2\u04eb"+
+		"\u04ef\7+\2\2\u04ec\u04ed\7+\2\2\u04ed\u04ef\7\25\2\2\u04ee\u04e6\3\2"+
+		"\2\2\u04ee\u04e7\3\2\2\2\u04ee\u04e8\3\2\2\2\u04ee\u04e9\3\2\2\2\u04ee"+
+		"\u04eb\3\2\2\2\u04ee\u04ec\3\2\2\2\u04ef\u00c5\3\2\2\2\u04f0\u04f1\t\r"+
+		"\2\2\u04f1\u00c7\3\2\2\2\u04f2\u04f8\7q\2\2\u04f3\u04f4\7*\2\2\u04f4\u04f8"+
+		"\7*\2\2\u04f5\u04f6\7+\2\2\u04f6\u04f8\7+\2\2\u04f7\u04f2\3\2\2\2\u04f7"+
+		"\u04f3\3\2\2\2\u04f7\u04f5\3\2\2\2\u04f8\u00c9\3\2\2\2\u04f9\u04fd\7\u00a7"+
+		"\2\2\u04fa\u04fe\5\u00ccg\2\u04fb\u04fc\t\16\2\2\u04fc\u04fe\5\u019e\u00d0"+
+		"\2\u04fd\u04fa\3\2\2\2\u04fd\u04fb\3\2\2\2\u04fd\u04fe\3\2\2\2\u04fe\u04ff"+
+		"\3\2\2\2\u04ff\u0500\5\u0098M\2\u0500\u00cb\3\2\2\2\u0501\u0502\t\17\2"+
+		"\2\u0502\u00cd\3\2\2\2\u0503\u0505\7\23\2\2\u0504\u0503\3\2\2\2\u0505"+
+		"\u0506\3\2\2\2\u0506\u0504\3\2\2\2\u0506\u0507\3\2\2\2\u0507\u0508\3\2"+
+		"\2\2\u0508\u0509\7\33\2\2\u0509\u050a\5L\'\2\u050a\u050b\7\34\2\2\u050b"+
+		"\u00cf\3\2\2\2\u050c\u0511\5\u00ecw\2\u050d\u050e\7\60\2\2\u050e\u0510"+
+		"\5\u00ecw\2\u050f\u050d\3\2\2\2\u0510\u0513\3\2\2\2\u0511\u050f\3\2\2"+
+		"\2\u0511\u0512\3\2\2\2\u0512\u00d1\3\2\2\2\u0513\u0511\3\2\2\2\u0514\u0516"+
+		"\7&\2\2\u0515\u0517\5\u00d4k\2\u0516\u0515\3\2\2\2\u0516\u0517\3\2\2\2"+
+		"\u0517\u051c\3\2\2\2\u0518\u0519\7\'\2\2\u0519\u051c\5\u00d4k\2\u051a"+
+		"\u051c\5\u00d4k\2\u051b\u0514\3\2\2\2\u051b\u0518\3\2\2\2\u051b\u051a"+
+		"\3\2\2\2\u051c\u00d3\3\2\2\2\u051d\u0522\5\u00d6l\2\u051e\u051f\t\20\2"+
+		"\2\u051f\u0521\5\u00d6l\2\u0520\u051e\3\2\2\2\u0521\u0524\3\2\2\2\u0522"+
+		"\u0520\3\2\2\2\u0522\u0523\3\2\2\2\u0523\u00d5\3\2\2\2\u0524\u0522\3\2"+
+		"\2\2\u0525\u0528\5\u00ecw\2\u0526\u0528\5\u00d8m\2\u0527\u0525\3\2\2\2"+
+		"\u0527\u0526\3\2\2\2\u0528\u00d7\3\2\2\2\u0529\u052c\5\u00e0q\2\u052a"+
+		"\u052c\5\u00dan\2\u052b\u0529\3\2\2\2\u052b\u052a\3\2\2\2\u052c\u052d"+
+		"\3\2\2\2\u052d\u052e\5\u00f0y\2\u052e\u00d9\3\2\2\2\u052f\u0530\5\u00dc"+
+		"o\2\u0530\u0531\5\u00e6t\2\u0531\u0534\3\2\2\2\u0532\u0534\5\u00dep\2"+
+		"\u0533\u052f\3\2\2\2\u0533\u0532\3\2\2\2\u0534\u00db\3\2\2\2\u0535\u0536"+
+		"\t\21\2\2\u0536\u0537\7#\2\2\u0537\u0538\7#\2\2\u0538\u00dd\3\2\2\2\u0539"+
+		"\u053b\7-\2\2\u053a\u0539\3\2\2\2\u053a\u053b\3\2\2\2\u053b\u053c\3\2"+
+		"\2\2\u053c\u053d\5\u00e6t\2\u053d\u00df\3\2\2\2\u053e\u053f\5\u00e2r\2"+
+		"\u053f\u0540\5\u00e6t\2\u0540\u0543\3\2\2\2\u0541\u0543\5\u00e4s\2\u0542"+
+		"\u053e\3\2\2\2\u0542\u0541\3\2\2\2\u0543\u00e1\3\2\2\2\u0544\u0545\t\22"+
+		"\2\2\u0545\u0546\7#\2\2\u0546\u0547\7#\2\2\u0547\u00e3\3\2\2\2\u0548\u0549"+
+		"\7\"\2\2\u0549\u00e5\3\2\2\2\u054a\u054d\5\u00e8u\2\u054b\u054d\5\u017a"+
+		"\u00be\2\u054c\u054a\3\2\2\2\u054c\u054b\3\2\2\2\u054d\u00e7\3\2\2\2\u054e"+
+		"\u0551\5\u01c2\u00e2\2\u054f\u0551\5\u00eav\2\u0550\u054e\3\2\2\2\u0550"+
+		"\u054f\3\2\2\2\u0551\u00e9\3\2\2\2\u0552\u0556\7\35\2\2\u0553\u0556\7"+
+		"\u00bc\2\2\u0554\u0556\7\u00bd\2\2\u0555\u0552\3\2\2\2\u0555\u0553\3\2"+
+		"\2\2\u0555\u0554\3\2\2\2\u0556\u00eb\3\2\2\2\u0557\u055d\5\u00fa~\2\u0558"+
+		"\u055c\5\u00f2z\2\u0559\u055c\5\u00eex\2\u055a\u055c\5\u00f4{\2\u055b"+
+		"\u0558\3\2\2\2\u055b\u0559\3\2\2\2\u055b\u055a\3\2\2\2\u055c\u055f\3\2"+
+		"\2\2\u055d\u055b\3\2\2\2\u055d\u055e\3\2\2\2\u055e\u00ed\3\2\2\2\u055f"+
+		"\u055d\3\2\2\2\u0560\u0567\7\27\2\2\u0561\u0563\5\u010e\u0088\2\u0562"+
+		"\u0564\7 \2\2\u0563\u0562\3\2\2\2\u0563\u0564\3\2\2\2\u0564\u0566\3\2"+
+		"\2\2\u0565\u0561\3\2\2\2\u0566\u0569\3\2\2\2\u0567\u0565\3\2\2\2\u0567"+
+		"\u0568\3\2\2\2\u0568\u056a\3\2\2\2\u0569\u0567\3\2\2\2\u056a\u056b\7\30"+
+		"\2\2\u056b\u00ef\3\2\2\2\u056c\u056e\5\u00f2z\2\u056d\u056c\3\2\2\2\u056e"+
+		"\u0571\3\2\2\2\u056f\u056d\3\2\2\2\u056f\u0570\3\2\2\2\u0570\u00f1\3\2"+
+		"\2\2\u0571\u056f\3\2\2\2\u0572\u0573\7\31\2\2\u0573\u0574\5L\'\2\u0574"+
+		"\u0575\7\32\2\2\u0575\u00f3\3\2\2\2\u0576\u0577\7,\2\2\u0577\u0578\5\u00f6"+
+		"|\2\u0578\u00f5\3\2\2\2\u0579\u057e\5\u01c6\u00e4\2\u057a\u057e\7\7\2"+
+		"\2\u057b\u057e\5\u0104\u0083\2\u057c\u057e\7\35\2\2\u057d\u0579\3\2\2"+
+		"\2\u057d\u057a\3\2\2\2\u057d\u057b\3\2\2\2\u057d\u057c\3\2\2\2\u057e\u00f7"+
+		"\3\2\2\2\u057f\u0583\5\u01c2\u00e2\2\u0580\u0583\5\u0100\u0081\2\u0581"+
+		"\u0583\5\u0104\u0083\2\u0582\u057f\3\2\2\2\u0582\u0580\3\2\2\2\u0582\u0581"+
+		"\3\2\2\2\u0583\u00f9\3\2\2\2\u0584\u0592\5\u00fc\177\2\u0585\u0592\5\u0100"+
+		"\u0081\2\u0586\u0592\5\u0104\u0083\2\u0587\u0592\5\u0106\u0084\2\u0588"+
+		"\u0592\5\u010c\u0087\2\u0589\u0592\5\u0108\u0085\2\u058a\u0592\5\u010a"+
+		"\u0086\2\u058b\u0592\5\u0110\u0089\2\u058c\u0592\5\u014e\u00a8\2\u058d"+
+		"\u0592\5\u0156\u00ac\2\u058e\u0592\5\u015a\u00ae\2\u058f\u0592\5\u0160"+
+		"\u00b1\2\u0590\u0592\5\u016e\u00b8\2\u0591\u0584\3\2\2\2\u0591\u0585\3"+
+		"\2\2\2\u0591\u0586\3\2\2\2\u0591\u0587\3\2\2\2\u0591\u0588\3\2\2\2\u0591"+
+		"\u0589\3\2\2\2\u0591\u058a\3\2\2\2\u0591\u058b\3\2\2\2\u0591\u058c\3\2"+
+		"\2\2\u0591\u058d\3\2\2\2\u0591\u058e\3\2\2\2\u0591\u058f\3\2\2\2\u0591"+
+		"\u0590\3\2\2\2\u0592\u00fb\3\2\2\2\u0593\u0596\5\u00fe\u0080\2\u0594\u0596"+
+		"\5\u01d6\u00ec\2\u0595\u0593\3\2\2\2\u0595\u0594\3\2\2\2\u0596\u00fd\3"+
+		"\2\2\2\u0597\u0598\t\23\2\2\u0598\u00ff\3\2\2\2\u0599\u059a\7.\2\2\u059a"+
+		"\u059b\5\u01c2\u00e2\2\u059b\u0101\3\2\2\2\u059c\u059d\5\u01c2\u00e2\2"+
+		"\u059d\u0103\3\2\2\2\u059e\u05a0\7\27\2\2\u059f\u05a1\5L\'\2\u05a0\u059f"+
+		"\3\2\2\2\u05a0\u05a1\3\2\2\2\u05a1\u05a2\3\2\2\2\u05a2\u05a3\7\30\2\2"+
+		"\u05a3\u0105\3\2\2\2\u05a4\u05a5\7!\2\2\u05a5\u0107\3\2\2\2\u05a6\u05a7"+
+		"\7\u0087\2\2\u05a7\u05a8\5\u0098M\2\u05a8\u0109\3\2\2\2\u05a9\u05aa\7"+
+		"\u00a5\2\2\u05aa\u05ab\5\u0098M\2\u05ab\u010b\3\2\2\2\u05ac\u05ad\5\u01c2"+
+		"\u00e2\2\u05ad\u05ae\5\u00eex\2\u05ae\u010d\3\2\2\2\u05af\u05b2\5N(\2"+
+		"\u05b0\u05b2\7,\2\2\u05b1\u05af\3\2\2\2\u05b1\u05b0\3\2\2\2\u05b2\u010f"+
+		"\3\2\2\2\u05b3\u05b6\5\u0112\u008a\2\u05b4\u05b6\5\u0128\u0095\2\u05b5"+
+		"\u05b3\3\2\2\2\u05b5\u05b4\3\2\2\2\u05b6\u0111\3\2\2\2\u05b7\u05bb\5\u0114"+
+		"\u008b\2\u05b8\u05bb\5\u0116\u008c\2\u05b9\u05bb\t\24\2\2\u05ba\u05b7"+
+		"\3\2\2\2\u05ba\u05b8\3\2\2\2\u05ba\u05b9\3\2\2\2\u05bb\u0113\3\2\2\2\u05bc"+
+		"\u05bd\7*\2\2\u05bd\u05be\5\u01c4\u00e3\2\u05be\u05bf\5\u0118\u008d\2"+
+		"\u05bf\u05c3\7+\2\2\u05c0\u05c2\5\u0124\u0093\2\u05c1\u05c0\3\2\2\2\u05c2"+
+		"\u05c5\3\2\2\2\u05c3\u05c1\3\2\2\2\u05c3\u05c4\3\2\2\2\u05c4\u05c6\3\2"+
+		"\2\2\u05c5\u05c3\3\2\2\2\u05c6\u05c7\7*\2\2\u05c7\u05c8\7&\2\2\u05c8\u05c9"+
+		"\5\u01c4\u00e3\2\u05c9\u05ca\7+\2\2\u05ca\u0115\3\2\2\2\u05cb\u05cc\7"+
+		"*\2\2\u05cc\u05cd\5\u01c4\u00e3\2\u05cd\u05ce\5\u0118\u008d\2\u05ce\u05cf"+
+		"\7&\2\2\u05cf\u05d0\7+\2\2\u05d0\u0117\3\2\2\2\u05d1\u05d2\5\u01c4\u00e3"+
+		"\2\u05d2\u05d3\7\25\2\2\u05d3\u05d4\5\u011e\u0090\2\u05d4\u05d6\3\2\2"+
+		"\2\u05d5\u05d1\3\2\2\2\u05d6\u05d9\3\2\2\2\u05d7\u05d5\3\2\2\2\u05d7\u05d8"+
+		"\3\2\2\2\u05d8\u0119\3\2\2\2\u05d9\u05d7\3\2\2\2\u05da\u05e1\7\r\2\2\u05db"+
+		"\u05e0\7\13\2\2\u05dc\u05e0\7\f\2\2\u05dd\u05e0\7\3\2\2\u05de\u05e0\5"+
+		"\u0120\u0091\2\u05df\u05db\3\2\2\2\u05df\u05dc\3\2\2\2\u05df\u05dd\3\2"+
+		"\2\2\u05df\u05de\3\2\2\2\u05e0\u05e3\3\2\2\2\u05e1\u05df\3\2\2\2\u05e1"+
+		"\u05e2\3\2\2\2\u05e2\u05e4\3\2\2\2\u05e3\u05e1\3\2\2\2\u05e4\u05e5\7\r"+
+		"\2\2\u05e5\u011b\3\2\2\2\u05e6\u05ed\7\16\2\2\u05e7\u05ec\7\13\2\2\u05e8"+
+		"\u05ec\7\f\2\2\u05e9\u05ec\7\4\2\2\u05ea\u05ec\5\u0122\u0092\2\u05eb\u05e7"+
+		"\3\2\2\2\u05eb\u05e8\3\2\2\2\u05eb\u05e9\3\2\2\2\u05eb\u05ea\3\2\2\2\u05ec"+
+		"\u05ef\3\2\2\2\u05ed\u05eb\3\2\2\2\u05ed\u05ee\3\2\2\2\u05ee\u05f0\3\2"+
+		"\2\2\u05ef\u05ed\3\2\2\2\u05f0\u05f1\7\16\2\2\u05f1\u011d\3\2\2\2\u05f2"+
+		"\u05f5\5\u011a\u008e\2\u05f3\u05f5\5\u011c\u008f\2\u05f4\u05f2\3\2\2\2"+
+		"\u05f4\u05f3\3\2\2\2\u05f5\u011f\3\2\2\2\u05f6\u05f8\7\u00c6\2\2\u05f7"+
+		"\u05f6\3\2\2\2\u05f8\u05f9\3\2\2\2\u05f9\u05f7\3\2\2\2\u05f9\u05fa\3\2"+
+		"\2\2\u05fa\u0604\3\2\2\2\u05fb\u0604\7\5\2\2\u05fc\u0604\7\6\2\2\u05fd"+
+		"\u0604\5\u011a\u008e\2\u05fe\u0600\7\33\2\2\u05ff\u0601\5L\'\2\u0600\u05ff"+
+		"\3\2\2\2\u0600\u0601\3\2\2\2\u0601\u0602\3\2\2\2\u0602\u0604\7\34\2\2"+
+		"\u0603\u05f7\3\2\2\2\u0603\u05fb\3\2\2\2\u0603\u05fc\3\2\2\2\u0603\u05fd"+
+		"\3\2\2\2\u0603\u05fe\3\2\2\2\u0604\u0121\3\2\2\2\u0605\u0607\7\u00c6\2"+
+		"\2\u0606\u0605\3\2\2\2\u0607\u0608\3\2\2\2\u0608\u0606\3\2\2\2\u0608\u0609"+
+		"\3\2\2\2\u0609\u0613\3\2\2\2\u060a\u0613\7\5\2\2\u060b\u0613\7\6\2\2\u060c"+
+		"\u0613\5\u011c\u008f\2\u060d\u060f\7\33\2\2\u060e\u0610\5L\'\2\u060f\u060e"+
+		"\3\2\2\2\u060f\u0610\3\2\2\2\u0610\u0611\3\2\2\2\u0611\u0613\7\34\2\2"+
+		"\u0612\u0606\3\2\2\2\u0612\u060a\3\2\2\2\u0612\u060b\3\2\2\2\u0612\u060c"+
+		"\3\2\2\2\u0612\u060d\3\2\2\2\u0613\u0123\3\2\2\2\u0614\u061b\5\u0112\u008a"+
+		"\2\u0615\u061b\5\u0126\u0094\2\u0616\u061b\7\22\2\2\u0617\u061b\7\r\2"+
+		"\2\u0618\u061b\7\16\2\2\u0619\u061b\5\u01dc\u00ef\2\u061a\u0614\3\2\2"+
+		"\2\u061a\u0615\3\2\2\2\u061a\u0616\3\2\2\2\u061a\u0617\3\2\2\2\u061a\u0618"+
+		"\3\2\2\2\u061a\u0619\3\2\2\2\u061b\u0125\3\2\2\2\u061c\u0626\t\25\2\2"+
+		"\u061d\u061e\7\33\2\2\u061e\u0626\7\33\2\2\u061f\u0620\7\34\2\2\u0620"+
+		"\u0626\7\34\2\2\u0621\u0622\7\33\2\2\u0622\u0623\5L\'\2\u0623\u0624\7"+
+		"\34\2\2\u0624\u0626\3\2\2\2\u0625\u061c\3\2\2\2\u0625\u061d\3\2\2\2\u0625"+
+		"\u061f\3\2\2\2\u0625\u0621\3\2\2\2\u0626\u0127\3\2\2\2\u0627\u0630\5\u0138"+
+		"\u009d\2\u0628\u0630\5\u013a\u009e\2\u0629\u0630\5\u013e\u00a0\2\u062a"+
+		"\u0630\5\u0140\u00a1\2\u062b\u0630\5\u0148\u00a5\2\u062c\u0630\5\u014a"+
+		"\u00a6\2\u062d\u0630\5\u014c\u00a7\2\u062e\u0630\5\u012a\u0096\2\u062f"+
+		"\u0627\3\2\2\2\u062f\u0628\3\2\2\2\u062f\u0629\3\2\2\2\u062f\u062a\3\2"+
+		"\2\2\u062f\u062b\3\2\2\2\u062f\u062c\3\2\2\2\u062f\u062d\3\2\2\2\u062f"+
+		"\u062e\3\2\2\2\u0630\u0129\3\2\2\2\u0631\u0638\5\u012c\u0097\2\u0632\u0638"+
+		"\5\u012e\u0098\2\u0633\u0638\5\u0130\u0099\2\u0634\u0638\5\u0132\u009a"+
+		"\2\u0635\u0638\5\u0134\u009b\2\u0636\u0638\5\u0136\u009c\2\u0637\u0631"+
+		"\3\2\2\2\u0637\u0632\3\2\2\2\u0637\u0633\3\2\2\2\u0637\u0634\3\2\2\2\u0637"+
+		"\u0635\3\2\2\2\u0637\u0636\3\2\2\2\u0638\u012b\3\2\2\2\u0639\u063a\7\u00ae"+
+		"\2\2\u063a\u063b\5\u013c\u009f\2\u063b\u012d\3\2\2\2\u063c\u063d\7\u00b2"+
+		"\2\2\u063d\u064b\7\33\2\2\u063e\u063f\5N(\2\u063f\u0640\7#\2\2\u0640\u0648"+
+		"\5N(\2\u0641\u0642\7 \2\2\u0642\u0643\5N(\2\u0643\u0644\7#\2\2\u0644\u0645"+
+		"\5N(\2\u0645\u0647\3\2\2\2\u0646\u0641\3\2\2\2\u0647\u064a\3\2\2\2\u0648"+
+		"\u0646\3\2\2\2\u0648\u0649\3\2\2\2\u0649\u064c\3\2\2\2\u064a\u0648\3\2"+
+		"\2\2\u064b\u063e\3\2\2\2\u064b\u064c\3\2\2\2\u064c\u064d\3\2\2\2\u064d"+
+		"\u064e\7\34\2\2\u064e\u012f\3\2\2\2\u064f\u0650\7\u00b1\2\2\u0650\u0651"+
+		"\5\u013c\u009f\2\u0651\u0131\3\2\2\2\u0652\u0653\7\u00af\2\2\u0653\u0654"+
+		"\7\33\2\2\u0654\u0655\5N(\2\u0655\u0656\7\34\2\2\u0656\u0133\3\2\2\2\u0657"+
+		"\u0658\7\u00b0\2\2\u0658\u0659\7\33\2\2\u0659\u065a\7\34\2\2\u065a\u0135"+
+		"\3\2\2\2\u065b\u065c\7B\2\2\u065c\u065d\5\u013c\u009f\2\u065d\u0137\3"+
+		"\2\2\2\u065e\u065f\7V\2\2\u065f\u0660\5\u0098M\2\u0660\u0139\3\2\2\2\u0661"+
+		"\u0667\7X\2\2\u0662\u0668\5\u01c2\u00e2\2\u0663\u0664\7\33\2\2\u0664\u0665"+
+		"\5L\'\2\u0665\u0666\7\34\2\2\u0666\u0668\3\2\2\2\u0667\u0662\3\2\2\2\u0667"+
+		"\u0663\3\2\2\2\u0668\u0669\3\2\2\2\u0669\u066a\5\u013c\u009f\2\u066a\u013b"+
+		"\3\2\2\2\u066b\u066c\5\u0098M\2\u066c\u013d\3\2\2\2\u066d\u0673\7?\2\2"+
+		"\u066e\u0674\5\u01c2\u00e2\2\u066f\u0670\7\33\2\2\u0670\u0671\5L\'\2\u0671"+
+		"\u0672\7\34\2\2\u0672\u0674\3\2\2\2\u0673\u066e\3\2\2\2\u0673\u066f\3"+
+		"\2\2\2\u0674\u0675\3\2\2\2\u0675\u0676\5\u0098M\2\u0676\u013f\3\2\2\2"+
+		"\u0677\u067a\7{\2\2\u0678\u067b\5\u0142\u00a2\2\u0679\u067b\5\u0144\u00a3"+
+		"\2\u067a\u0678\3\2\2\2\u067a\u0679\3\2\2\2\u067b\u067c\3\2\2\2\u067c\u067d"+
+		"\5\u0146\u00a4\2\u067d\u0141\3\2\2\2\u067e\u067f\5\u01c6\u00e4\2\u067f"+
+		"\u0143\3\2\2\2\u0680\u0681\5\u0098M\2\u0681\u0145\3\2\2\2\u0682\u0683"+
+		"\5\u0098M\2\u0683\u0147\3\2\2\2\u0684\u0685\7\u009c\2\2\u0685\u0686\5"+
+		"\u0098M\2\u0686\u0149\3\2\2\2\u0687\u0688\7J\2\2\u0688\u0689\5\u0098M"+
+		"\2\u0689\u014b\3\2\2\2\u068a\u0690\7\u008e\2\2\u068b\u0691\5\u01c6\u00e4"+
+		"\2\u068c\u068d\7\33\2\2\u068d\u068e\5L\'\2\u068e\u068f\7\34\2\2\u068f"+
+		"\u0691\3\2\2\2\u0690\u068b\3\2\2\2\u0690\u068c\3\2\2\2\u0691\u0692\3\2"+
+		"\2\2\u0692\u0693\5\u0098M\2\u0693\u014d\3\2\2\2\u0694\u0697\5\u0150\u00a9"+
+		"\2\u0695\u0697\5\u0152\u00aa\2\u0696\u0694\3\2\2\2\u0696\u0695\3\2\2\2"+
+		"\u0697\u014f\3\2\2\2\u0698\u0699\5\u01c2\u00e2\2\u0699\u069a\7\61\2\2"+
+		"\u069a\u069b\7\7\2\2\u069b\u0151\3\2\2\2\u069c\u069d\5@!\2\u069d\u069e"+
+		"\7e\2\2\u069e\u06a0\7\27\2\2\u069f\u06a1\5<\37\2\u06a0\u069f\3\2\2\2\u06a0"+
+		"\u06a1\3\2\2\2\u06a1\u06a2\3\2\2\2\u06a2\u06a5\7\30\2\2\u06a3\u06a4\7"+
+		"<\2\2\u06a4\u06a6\5\u0174\u00bb\2\u06a5\u06a3\3\2\2\2\u06a5\u06a6\3\2"+
+		"\2\2\u06a6\u06a7\3\2\2\2\u06a7\u06a8\5\u0154\u00ab\2\u06a8\u0153\3\2\2"+
+		"\2\u06a9\u06aa\5\u0098M\2\u06aa\u0155\3\2\2\2\u06ab\u06ac\7x\2\2\u06ac"+
+		"\u06b5\7\33\2\2\u06ad\u06b2\5\u0158\u00ad\2\u06ae\u06af\7 \2\2\u06af\u06b1"+
+		"\5\u0158\u00ad\2\u06b0\u06ae\3\2\2\2\u06b1\u06b4\3\2\2\2\u06b2\u06b0\3"+
+		"\2\2\2\u06b2\u06b3\3\2\2\2\u06b3\u06b6\3\2\2\2\u06b4\u06b2\3\2\2\2\u06b5"+
+		"\u06ad\3\2\2\2\u06b5\u06b6\3\2\2\2\u06b6\u06b7\3\2\2\2\u06b7\u06b8\7\34"+
+		"\2\2\u06b8\u0157\3\2\2\2\u06b9\u06ba\5N(\2\u06ba\u06bb\t\26\2\2\u06bb"+
+		"\u06bc\5N(\2\u06bc\u0159\3\2\2\2\u06bd\u06c0\5\u015c\u00af\2\u06be\u06c0"+
+		"\5\u015e\u00b0\2\u06bf\u06bd\3\2\2\2\u06bf\u06be\3\2\2\2\u06c0\u015b\3"+
+		"\2\2\2\u06c1\u06c3\7\31\2\2\u06c2\u06c4\5L\'\2\u06c3\u06c2\3\2\2\2\u06c3"+
+		"\u06c4\3\2\2\2\u06c4\u06c5\3\2\2\2\u06c5\u06c6\7\32\2\2\u06c6\u015d\3"+
+		"\2\2\2\u06c7\u06c8\7;\2\2\u06c8\u06c9\5\u0098M\2\u06c9\u015f\3\2\2\2\u06ca"+
+		"\u06cb\7\u00c4\2\2\u06cb\u06cc\5\u0162\u00b2\2\u06cc\u06cd\7\u00c9\2\2"+
+		"\u06cd\u0161\3\2\2\2\u06ce\u06d4\5\u016a\u00b6\2\u06cf\u06d0\5\u016c\u00b7"+
+		"\2\u06d0\u06d1\5\u016a\u00b6\2\u06d1\u06d3\3\2\2\2\u06d2\u06cf\3\2\2\2"+
+		"\u06d3\u06d6\3\2\2\2\u06d4\u06d2\3\2\2\2\u06d4\u06d5\3\2\2\2\u06d5\u0163"+
+		"\3\2\2\2\u06d6\u06d4\3\2\2\2\u06d7\u06d8\t\27\2\2\u06d8\u0165\3\2\2\2"+
+		"\u06d9\u06da\t\30\2\2\u06da\u0167\3\2\2\2\u06db\u06dc\t\31\2\2\u06dc\u0169"+
+		"\3\2\2\2\u06dd\u06e8\7\u00c7\2\2\u06de\u06df\5\u0164\u00b3\2\u06df\u06e0"+
+		"\5\u0166\u00b4\2\u06e0\u06e8\3\2\2\2\u06e1\u06e2\5\u0168\u00b5\2\u06e2"+
+		"\u06e3\5\u0164\u00b3\2\u06e3\u06e4\5\u0164\u00b3\2\u06e4\u06e8\3\2\2\2"+
+		"\u06e5\u06e8\5\u0164\u00b3\2\u06e6\u06e8\7\33\2\2\u06e7\u06dd\3\2\2\2"+
+		"\u06e7\u06de\3\2\2\2\u06e7\u06e1\3\2\2\2\u06e7\u06e5\3\2\2\2\u06e7\u06e6"+
+		"\3\2\2\2\u06e8\u06eb\3\2\2\2\u06e9\u06e7\3\2\2\2\u06e9\u06ea\3\2\2\2\u06ea"+
+		"\u016b\3\2\2\2\u06eb\u06e9\3\2\2\2\u06ec\u06ed\7\u00c8\2\2\u06ed\u06ee"+
+		"\5L\'\2\u06ee\u06ef\7\u00c5\2\2\u06ef\u016d\3\2\2\2\u06f0\u06f1\7,\2\2"+
+		"\u06f1\u06f2\5\u00f6|\2\u06f2\u016f\3\2\2\2\u06f3\u06f5\5\u019c\u00cf"+
+		"\2\u06f4\u06f6\7,\2\2\u06f5\u06f4\3\2\2\2\u06f5\u06f6\3\2\2\2\u06f6\u0171"+
+		"\3\2\2\2\u06f7\u06f8\7<\2\2\u06f8\u06f9\5\u0174\u00bb\2\u06f9\u0173\3"+
+		"\2\2\2\u06fa\u06fb\7[\2\2\u06fb\u06fc\7\27\2\2\u06fc\u0704\7\30\2\2\u06fd"+
+		"\u0701\5\u0176\u00bc\2\u06fe\u0702\7,\2\2\u06ff\u0702\7\35\2\2\u0700\u0702"+
+		"\7\36\2\2\u0701\u06fe\3\2\2\2\u0701\u06ff\3\2\2\2\u0701\u0700\3\2\2\2"+
+		"\u0701\u0702\3\2\2\2\u0702\u0704\3\2\2\2\u0703\u06fa\3\2\2\2\u0703\u06fd"+
+		"\3\2\2\2\u0704\u0175\3\2\2\2\u0705\u070f\5\u017a\u00be\2\u0706\u0707\7"+
+		"r\2\2\u0707\u0708\7\27\2\2\u0708\u070f\7\30\2\2\u0709\u070f\5\u01a0\u00d1"+
+		"\2\u070a\u070f\5\u01a6\u00d4\2\u070b\u070f\5\u01ac\u00d7\2\u070c\u070f"+
+		"\5\u0178\u00bd\2\u070d\u070f\5\u01b2\u00da\2\u070e\u0705\3\2\2\2\u070e"+
+		"\u0706\3\2\2\2\u070e\u0709\3\2\2\2\u070e\u070a\3\2\2\2\u070e\u070b\3\2"+
+		"\2\2\u070e\u070c\3\2\2\2\u070e\u070d\3\2\2\2\u070f\u0177\3\2\2\2\u0710"+
+		"\u0711\5\u01c2\u00e2\2\u0711\u0179\3\2\2\2\u0712\u071f\5\u0180\u00c1\2"+
+		"\u0713\u071f\5\u0190\u00c9\2\u0714\u071f\5\u018a\u00c6\2\u0715\u071f\5"+
+		"\u0194\u00cb\2\u0716\u071f\5\u018e\u00c8\2\u0717\u071f\5\u0188\u00c5\2"+
+		"\u0718\u071f\5\u0184\u00c3\2\u0719\u071f\5\u0182\u00c2\2\u071a\u071f\5"+
+		"\u0186\u00c4\2\u071b\u071f\5\u01b6\u00dc\2\u071c\u071f\5\u017e\u00c0\2"+
+		"\u071d\u071f\5\u017c\u00bf\2\u071e\u0712\3\2\2\2\u071e\u0713\3\2\2\2\u071e"+
+		"\u0714\3\2\2\2\u071e\u0715\3\2\2\2\u071e\u0716\3\2\2\2\u071e\u0717\3\2"+
+		"\2\2\u071e\u0718\3\2\2\2\u071e\u0719\3\2\2\2\u071e\u071a\3\2\2\2\u071e"+
+		"\u071b\3\2\2\2\u071e\u071c\3\2\2\2\u071e\u071d\3\2\2\2\u071f\u017b\3\2"+
+		"\2\2\u0720\u0721\7\u0081\2\2\u0721\u0723\7\27\2\2\u0722\u0724\7\35\2\2"+
+		"\u0723\u0722\3\2\2\2\u0723\u0724\3\2\2\2\u0724\u0725\3\2\2\2\u0725\u0726"+
+		"\7\30\2\2\u0726\u017d\3\2\2\2\u0727\u0728\7B\2\2\u0728\u0729\7\27\2\2"+
+		"\u0729\u072a\7\30\2\2\u072a\u017f\3\2\2\2\u072b\u072c\7W\2\2\u072c\u072f"+
+		"\7\27\2\2\u072d\u0730\5\u0190\u00c9\2\u072e\u0730\5\u0194\u00cb\2\u072f"+
+		"\u072d\3\2\2\2\u072f\u072e\3\2\2\2\u072f\u0730\3\2\2\2\u0730\u0731\3\2"+
+		"\2\2\u0731\u0732\7\30\2\2\u0732\u0181\3\2\2\2\u0733\u0734\7\u009c\2\2"+
+		"\u0734\u0735\7\27\2\2\u0735\u0736\7\30\2\2\u0736\u0183\3\2\2\2\u0737\u0738"+
+		"\7J\2\2\u0738\u0739\7\27\2\2\u0739\u073a\7\30\2\2\u073a\u0185\3\2\2\2"+
+		"\u073b\u073c\7~\2\2\u073c\u073d\7\27\2\2\u073d\u073e\7\30\2\2\u073e\u0187"+
+		"\3\2\2\2\u073f\u0740\7\u008e\2\2\u0740\u0743\7\27\2\2\u0741\u0744\5\u01c6"+
+		"\u00e4\2\u0742\u0744\5\u01d6\u00ec\2\u0743\u0741\3\2\2\2\u0743\u0742\3"+
+		"\2\2\2\u0743\u0744\3\2\2\2\u0744\u0745\3\2\2\2\u0745\u0746\7\30\2\2\u0746"+
+		"\u0189\3\2\2\2\u0747\u0748\7?\2\2\u0748\u074e\7\27\2\2\u0749\u074c\5\u018c"+
+		"\u00c7\2\u074a\u074b\7 \2\2\u074b\u074d\5\u019e\u00d0\2\u074c\u074a\3"+
+		"\2\2\2\u074c\u074d\3\2\2\2\u074d\u074f\3\2\2\2\u074e\u0749\3\2\2\2\u074e"+
+		"\u074f\3\2\2\2\u074f\u0750\3\2\2\2\u0750\u0751\7\30\2\2\u0751\u018b\3"+
+		"\2\2\2\u0752\u0755\5\u0198\u00cd\2\u0753\u0755\7\35\2\2\u0754\u0752\3"+
+		"\2\2\2\u0754\u0753\3\2\2\2\u0755\u018d\3\2\2\2\u0756\u0757\7\u0092\2\2"+
+		"\u0757\u0758\7\27\2\2\u0758\u0759\5\u01b4\u00db\2\u0759\u075a\7\30\2\2"+
+		"\u075a\u018f\3\2\2\2\u075b\u075c\7X\2\2\u075c\u0765\7\27\2\2\u075d\u0763"+
+		"\5\u0192\u00ca\2\u075e\u075f\7 \2\2\u075f\u0761\5\u019e\u00d0\2\u0760"+
+		"\u0762\7,\2\2\u0761\u0760\3\2\2\2\u0761\u0762\3\2\2\2\u0762\u0764\3\2"+
+		"\2\2\u0763\u075e\3\2\2\2\u0763\u0764\3\2\2\2\u0764\u0766\3\2\2\2\u0765"+
+		"\u075d\3\2\2\2\u0765\u0766\3\2\2\2\u0766\u0767\3\2\2\2\u0767\u0768\7\30"+
+		"\2\2\u0768\u0191\3\2\2\2\u0769\u076c\5\u019a\u00ce\2\u076a\u076c\7\35"+
+		"\2\2\u076b\u0769\3\2\2\2\u076b\u076a\3\2\2\2\u076c\u0193\3\2\2\2\u076d"+
+		"\u076e\7\u0093\2\2\u076e\u076f\7\27\2\2\u076f\u0770\5\u0196\u00cc\2\u0770"+
+		"\u0771\7\30\2\2\u0771\u0195\3\2\2\2\u0772\u0773\5\u019a\u00ce\2\u0773"+
+		"\u0197\3\2\2\2\u0774\u0775\5\u01c2\u00e2\2\u0775\u0199\3\2\2\2\u0776\u0777"+
+		"\5\u01c2\u00e2\2\u0777\u019b\3\2\2\2\u0778\u0779\5\u019e\u00d0\2\u0779"+
+		"\u019d\3\2\2\2\u077a\u077b\5\u01c2\u00e2\2\u077b\u019f\3\2\2\2\u077c\u077e"+
+		"\5B\"\2\u077d\u077c\3\2\2\2\u077e\u0781\3\2\2\2\u077f\u077d\3\2\2\2\u077f"+
+		"\u0780\3\2\2\2\u0780\u0784\3\2\2\2\u0781\u077f\3\2\2\2\u0782\u0785\5\u01a2"+
+		"\u00d2\2\u0783\u0785\5\u01a4\u00d3\2\u0784\u0782\3\2\2\2\u0784\u0783\3"+
+		"\2\2\2\u0785\u01a1\3\2\2\2\u0786\u0787\7e\2\2\u0787\u0788\7\27\2\2\u0788"+
+		"\u0789\7\35\2\2\u0789\u078a\7\30\2\2\u078a\u01a3\3\2\2\2\u078b\u078c\7"+
+		"e\2\2\u078c\u0795\7\27\2\2\u078d\u0792\5\u0174\u00bb\2\u078e\u078f\7 "+
+		"\2\2\u078f\u0791\5\u0174\u00bb\2\u0790\u078e\3\2\2\2\u0791\u0794\3\2\2"+
+		"\2\u0792\u0790\3\2\2\2\u0792\u0793\3\2\2\2\u0793\u0796\3\2\2\2\u0794\u0792"+
+		"\3\2\2\2\u0795\u078d\3\2\2\2\u0795\u0796\3\2\2\2\u0796\u0797\3\2\2\2\u0797"+
+		"\u0798\7\30\2\2\u0798\u0799\7<\2\2\u0799\u079a\5\u0174\u00bb\2\u079a\u01a5"+
+		"\3\2\2\2\u079b\u079e\5\u01a8\u00d5\2\u079c\u079e\5\u01aa\u00d6\2\u079d"+
+		"\u079b\3\2\2\2\u079d\u079c\3\2\2\2\u079e\u01a7\3\2\2\2\u079f\u07a0\7x"+
+		"\2\2\u07a0\u07a1\7\27\2\2\u07a1\u07a2\7\35\2\2\u07a2\u07a3\7\30\2\2\u07a3"+
+		"\u01a9\3\2\2\2\u07a4\u07a5\7x\2\2\u07a5\u07a6\7\27\2\2\u07a6\u07a7\5\u01c2"+
+		"\u00e2\2\u07a7\u07a8\7 \2\2\u07a8\u07a9\5\u0174\u00bb\2\u07a9\u07aa\7"+
+		"\30\2\2\u07aa\u01ab\3\2\2\2\u07ab\u07ae\5\u01ae\u00d8\2\u07ac\u07ae\5"+
+		"\u01b0\u00d9\2\u07ad\u07ab\3\2\2\2\u07ad\u07ac\3\2\2\2\u07ae\u01ad\3\2"+
+		"\2\2\u07af\u07b0\7;\2\2\u07b0\u07b1\7\27\2\2\u07b1\u07b2\7\35\2\2\u07b2"+
+		"\u07b3\7\30\2\2\u07b3\u01af\3\2\2\2\u07b4\u07b5\7;\2\2\u07b5\u07b6\7\27"+
+		"\2\2\u07b6\u07b7\5\u0174\u00bb\2\u07b7\u07b8\7\30\2\2\u07b8\u01b1\3\2"+
+		"\2\2\u07b9\u07ba\7\27\2\2\u07ba\u07bb\5\u0176\u00bc\2\u07bb\u07bc\7\30"+
+		"\2\2\u07bc\u01b3\3\2\2\2\u07bd\u07be\5\u0198\u00cd\2\u07be\u01b5\3\2\2"+
+		"\2\u07bf\u07c5\5\u01b8\u00dd\2\u07c0\u07c5\5\u01ba\u00de\2\u07c1\u07c5"+
+		"\5\u01bc\u00df\2\u07c2\u07c5\5\u01be\u00e0\2\u07c3\u07c5\5\u01c0\u00e1"+
+		"\2\u07c4\u07bf\3\2\2\2\u07c4\u07c0\3\2\2\2\u07c4\u07c1\3\2\2\2\u07c4\u07c2"+
+		"\3\2\2\2\u07c4\u07c3\3\2\2\2\u07c5\u01b7\3\2\2\2\u07c6\u07c7\7\u00ae\2"+
+		"\2\u07c7\u07c9\7\27\2\2\u07c8\u07ca\5\u01d6\u00ec\2\u07c9\u07c8\3\2\2"+
+		"\2\u07c9\u07ca\3\2\2\2\u07ca\u07cb\3\2\2\2\u07cb\u07cc\7\30\2\2\u07cc"+
+		"\u01b9\3\2\2\2\u07cd\u07ce\7\u00b2\2\2\u07ce\u07d0\7\27\2\2\u07cf\u07d1"+
+		"\5\u01d6\u00ec\2\u07d0\u07cf\3\2\2\2\u07d0\u07d1\3\2\2\2\u07d1\u07d2\3"+
+		"\2\2\2\u07d2\u07d3\7\30\2\2\u07d3\u01bb\3\2\2\2\u07d4\u07d5\7\u00b1\2"+
+		"\2\u07d5\u07d7\7\27\2\2\u07d6\u07d8\5\u01d6\u00ec\2\u07d7\u07d6\3\2\2"+
+		"\2\u07d7\u07d8\3\2\2\2\u07d8\u07d9\3\2\2\2\u07d9\u07da\7\30\2\2\u07da"+
+		"\u01bd\3\2\2\2\u07db\u07dc\7\u00af\2\2\u07dc\u07de\7\27\2\2\u07dd\u07df"+
+		"\5\u01d6\u00ec\2\u07de\u07dd\3\2\2\2\u07de\u07df\3\2\2\2\u07df\u07e0\3"+
+		"\2\2\2\u07e0\u07e1\7\30\2\2\u07e1\u01bf\3\2\2\2\u07e2\u07e3\7\u00b0\2"+
+		"\2\u07e3\u07e5\7\27\2\2\u07e4\u07e6\5\u01d6\u00ec\2\u07e5\u07e4\3\2\2"+
+		"\2\u07e5\u07e6\3\2\2\2\u07e6\u07e7\3\2\2\2\u07e7\u07e8\7\30\2\2\u07e8"+
+		"\u01c1\3\2\2\2\u07e9\u07ec\5\u01c4\u00e3\2\u07ea\u07ec\7\u00ba\2\2\u07eb"+
+		"\u07e9\3\2\2\2\u07eb\u07ea\3\2\2\2\u07ec\u01c3\3\2\2\2\u07ed\u07f0\7\u00bb"+
+		"\2\2\u07ee\u07f0\5\u01c6\u00e4\2\u07ef\u07ed\3\2\2\2\u07ef\u07ee\3\2\2"+
+		"\2\u07f0\u01c5\3\2\2\2\u07f1\u07f4\7\u00be\2\2\u07f2\u07f4\5\u01ca\u00e6"+
+		"\2\u07f3\u07f1\3\2\2\2\u07f3\u07f2\3\2\2\2\u07f4\u01c7\3\2\2\2\u07f5\u07fa"+
+		"\7\u00bb\2\2\u07f6\u07fa\7\u00be\2\2\u07f7\u07fa\7\u00ba\2\2\u07f8\u07fa"+
+		"\5\u01ce\u00e8\2\u07f9\u07f5\3\2\2\2\u07f9\u07f6\3\2\2\2\u07f9\u07f7\3"+
+		"\2\2\2\u07f9\u07f8\3\2\2\2\u07fa\u01c9\3\2\2\2\u07fb\u07fe\5\u01ce\u00e8"+
+		"\2\u07fc\u07fe\5\u01cc\u00e7\2\u07fd\u07fb\3\2\2\2\u07fd\u07fc\3\2\2\2"+
+		"\u07fe\u01cb\3\2\2\2\u07ff\u0800\t\32\2\2\u0800\u01cd\3\2\2\2\u0801\u0802"+
+		"\t\33\2\2\u0802\u01cf\3\2\2\2\u0803\u0804\5\u01d6\u00ec\2\u0804\u01d1"+
+		"\3\2\2\2\u0805\u080c\7\r\2\2\u0806\u080b\7\13\2\2\u0807\u080b\7\f\2\2"+
+		"\u0808\u080b\7\3\2\2\u0809\u080b\5\u01d8\u00ed\2\u080a\u0806\3\2\2\2\u080a"+
+		"\u0807\3\2\2\2\u080a\u0808\3\2\2\2\u080a\u0809\3\2\2\2\u080b\u080e\3\2"+
+		"\2\2\u080c\u080a\3\2\2\2\u080c\u080d\3\2\2\2\u080d\u080f\3\2\2\2\u080e"+
+		"\u080c\3\2\2\2\u080f\u0810\7\r\2\2\u0810\u01d3\3\2\2\2\u0811\u0818\7\16"+
+		"\2\2\u0812\u0817\7\13\2\2\u0813\u0817\7\f\2\2\u0814\u0817\7\4\2\2\u0815"+
+		"\u0817\5\u01da\u00ee\2\u0816\u0812\3\2\2\2\u0816\u0813\3\2\2\2\u0816\u0814"+
+		"\3\2\2\2\u0816\u0815\3\2\2\2\u0817\u081a\3\2\2\2\u0818\u0816\3\2\2\2\u0818"+
+		"\u0819\3\2\2\2\u0819\u081b\3\2\2\2\u081a\u0818\3\2\2\2\u081b\u081c\7\16"+
+		"\2\2\u081c\u01d5\3\2\2\2\u081d\u0820\5\u01d2\u00ea\2\u081e\u0820\5\u01d4"+
+		"\u00eb\2\u081f\u081d\3\2\2\2\u081f\u081e\3\2\2\2\u0820\u01d7\3\2\2\2\u0821"+
+		"\u0823\7\u00c6\2\2\u0822\u0821\3\2\2\2\u0823\u0824\3\2\2\2\u0824\u0822"+
+		"\3\2\2\2\u0824\u0825\3\2\2\2\u0825\u0833\3\2\2\2\u0826\u0828\7\33\2\2"+
+		"\u0827\u0829\5L\'\2\u0828\u0827\3\2\2\2\u0828\u0829\3\2\2\2\u0829\u082b"+
+		"\3\2\2\2\u082a\u082c\7\34\2\2\u082b\u082a\3\2\2\2\u082b\u082c\3\2\2\2"+
+		"\u082c\u0833\3\2\2\2\u082d\u0833\7\34\2\2\u082e\u0833\7\5\2\2\u082f\u0833"+
+		"\7\6\2\2\u0830\u0833\5\u01dc\u00ef\2\u0831\u0833\5\u01d4\u00eb\2\u0832"+
+		"\u0822\3\2\2\2\u0832\u0826\3\2\2\2\u0832\u082d\3\2\2\2\u0832\u082e\3\2"+
+		"\2\2\u0832\u082f\3\2\2\2\u0832\u0830\3\2\2\2\u0832\u0831\3\2\2\2\u0833"+
+		"\u01d9\3\2\2\2\u0834\u0836\7\u00c6\2\2\u0835\u0834\3\2\2\2\u0836\u0837"+
+		"\3\2\2\2\u0837\u0835\3\2\2\2\u0837\u0838\3\2\2\2\u0838\u0846\3\2\2\2\u0839"+
+		"\u083b\7\33\2\2\u083a\u083c\5L\'\2\u083b\u083a\3\2\2\2\u083b\u083c\3\2"+
+		"\2\2\u083c\u083e\3\2\2\2\u083d\u083f\7\34\2\2\u083e\u083d\3\2\2\2\u083e"+
+		"\u083f\3\2\2\2\u083f\u0846\3\2\2\2\u0840\u0846\7\34\2\2\u0841\u0846\7"+
+		"\5\2\2\u0842\u0846\7\6\2\2\u0843\u0846\5\u01dc\u00ef\2\u0844\u0846\5\u01d2"+
+		"\u00ea\2\u0845\u0835\3\2\2\2\u0845\u0839\3\2\2\2\u0845\u0840\3\2\2\2\u0845"+
+		"\u0841\3\2\2\2\u0845\u0842\3\2\2\2\u0845\u0843\3\2\2\2\u0845\u0844\3\2"+
+		"\2\2\u0846\u01db\3\2\2\2\u0847\u084a\5\u01ca\u00e6\2\u0848\u084a\t\34"+
+		"\2\2\u0849\u0847\3\2\2\2\u0849\u0848\3\2\2\2\u084a\u084b\3\2\2\2\u084b"+
+		"\u0849\3\2\2\2\u084b\u084c\3\2\2\2\u084c\u01dd\3\2\2\2\u00cf\u01df\u01e2"+
 		"\u01e5\u01eb\u01f0\u01f3\u01fc\u0214\u021a\u021e\u0224\u022a\u023b\u0267"+
 		"\u026e\u0274\u027d\u0280\u0289\u0291\u029a\u029d\u02a8\u02ae\u02b5\u02c0"+
 		"\u02c2\u02cd\u02d4\u02d6\u02db\u02e1\u02e5\u02e9\u02f0\u02f6\u02fb\u0304"+
@@ -18947,16 +18920,16 @@ public class XQueryParser extends Parser {
 		"\u0371\u0378\u037e\u0385\u0392\u039b\u039e\u03a3\u03a8\u03ba\u03c0\u03c4"+
 		"\u03c8\u03cb\u03d4\u03d9\u03dd\u03e1\u03ec\u03f5\u0401\u040b\u0419\u041e"+
 		"\u0428\u0433\u0443\u0451\u0457\u0460\u0469\u0487\u048f\u0496\u049a\u04a1"+
-		"\u04a7\u04ae\u04b6\u04bd\u04c3\u04c9\u04cf\u04d8\u04de\u04e6\u04f0\u04f9"+
-		"\u04ff\u0508\u0513\u0518\u051d\u0524\u0529\u052d\u0535\u053c\u0544\u054e"+
-		"\u0552\u0557\u055d\u055f\u0568\u056b\u0572\u0580\u0585\u0594\u0598\u05a3"+
-		"\u05b4\u05b8\u05bd\u05c6\u05da\u05e2\u05e4\u05ee\u05f0\u05f7\u05fc\u0603"+
-		"\u0606\u060b\u0612\u0615\u061d\u0628\u0632\u063a\u064b\u064e\u066a\u0676"+
-		"\u067d\u0693\u0699\u06a3\u06a8\u06b5\u06b8\u06c2\u06ca\u06cd\u06de\u06f1"+
-		"\u06f3\u06ff\u070b\u070d\u0718\u0728\u072d\u0739\u074d\u0756\u0758\u075e"+
-		"\u076b\u076d\u076f\u0775\u0789\u078e\u079c\u079f\u07a7\u07b7\u07ce\u07d3"+
-		"\u07da\u07e1\u07e8\u07ef\u07f5\u07f9\u07fd\u0803\u0807\u0814\u0816\u0820"+
-		"\u0822\u0829\u082e\u0832\u0835\u083c\u0841\u0845\u0848\u084f\u0853\u0855";
+		"\u04a7\u04ae\u04b6\u04bd\u04c3\u04c9\u04cf\u04d6\u04dc\u04e4\u04ee\u04f7"+
+		"\u04fd\u0506\u0511\u0516\u051b\u0522\u0527\u052b\u0533\u053a\u0542\u054c"+
+		"\u0550\u0555\u055b\u055d\u0563\u0567\u056f\u057d\u0582\u0591\u0595\u05a0"+
+		"\u05b1\u05b5\u05ba\u05c3\u05d7\u05df\u05e1\u05eb\u05ed\u05f4\u05f9\u0600"+
+		"\u0603\u0608\u060f\u0612\u061a\u0625\u062f\u0637\u0648\u064b\u0667\u0673"+
+		"\u067a\u0690\u0696\u06a0\u06a5\u06b2\u06b5\u06bf\u06c3\u06d4\u06e7\u06e9"+
+		"\u06f5\u0701\u0703\u070e\u071e\u0723\u072f\u0743\u074c\u074e\u0754\u0761"+
+		"\u0763\u0765\u076b\u077f\u0784\u0792\u0795\u079d\u07ad\u07c4\u07c9\u07d0"+
+		"\u07d7\u07de\u07e5\u07eb\u07ef\u07f3\u07f9\u07fd\u080a\u080c\u0816\u0818"+
+		"\u081f\u0824\u0828\u082b\u0832\u0837\u083b\u083e\u0845\u0849\u084b";
 	public static final ATN _ATN =
 		new ATNDeserializer().deserialize(_serializedATN.toCharArray());
 	static {

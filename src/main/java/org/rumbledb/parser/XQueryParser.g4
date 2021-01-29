@@ -258,6 +258,7 @@ additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicat
 
 multiplicativeExpr: main_expr=instanceOfExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=instanceOfExpr )* ;
 
+// TODO
 //multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
 //unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
@@ -272,7 +273,10 @@ castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType)?;
 
 castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
-arrowExpr: main_expr=unaryExpr (ARROW arrowFunctionSpecifier function_call_expr+=argumentList)* ;
+// TODO
+//arrowExpr: main_expr=unaryExpr (ARROW arrowFunctionSpecifier argumentList)* ;
+
+arrowExpr: main_expr=unaryExpr (ARROW function_call_expr+=functionCall)*;
 
 unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
@@ -290,7 +294,9 @@ validationMode: KW_LAX | KW_STRICT ;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
-simpleMapExpr: pathExpr (BANG pathExpr)* ;
+//simpleMapExpr: pathExpr (BANG pathExpr)* ;
+
+simpleMapExpr: main_expr=postfixExpr (BANG map_expr+=postfixExpr)* ;
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
@@ -334,9 +340,12 @@ wildcard: STAR            # allNames
         ;
 
 
-postfixExpr: primaryExpr (predicate | argumentList | lookup)* ;
+postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
-argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
+// TODO
+argumentList: LPAREN (args+=argument COMMA?)* RPAREN ;
+
+//argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
 
 predicateList: predicate*;
 
@@ -379,7 +388,7 @@ orderedExpr: KW_ORDERED enclosedExpression ;
 
 unorderedExpr: KW_UNORDERED enclosedExpression ;
 
-functionCall: eqName argumentList  ;
+functionCall: fn_name=eqName argumentList  ;
 
 argument: exprSingle | QUESTION ;
 
@@ -485,9 +494,9 @@ compPIConstructor: KW_PI (ncName | (LBRACE expr RBRACE)) enclosedExpression ;
 
 functionItemExpr: namedFunctionRef | inlineFunctionRef ;
 
-namedFunctionRef: eqName HASH IntegerLiteral ;
+namedFunctionRef: fn_name=eqName HASH arity=IntegerLiteral ;
 
-inlineFunctionRef: annotations KW_FUNCTION LPAREN functionParams? RPAREN (KW_AS sequenceType)? functionBody ;
+inlineFunctionRef: annotations KW_FUNCTION LPAREN functionParams? RPAREN (KW_AS return_type=sequenceType)? functionBody ;
 
 functionBody: enclosedExpression ;
 
@@ -497,7 +506,10 @@ mapConstructorEntry: mapKey=exprSingle (COLON | COLON_EQ) mapValue=exprSingle ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
-squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
+// TODO
+//squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
+
+squareArrayConstructor: LBRACKET expr? RBRACKET ;
 
 curlyArrayConstructor: KW_ARRAY enclosedExpression ;
 
@@ -637,7 +649,7 @@ eqName: qName | URIQualifiedName ;
 qName: FullQName | ncName ;
 
 
-ncName: NCName | keyword ;
+ncName: local_name=NCName | local_namekw=keyword ;
 
 functionName: FullQName | NCName | URIQualifiedName | keywordOKForFunction ;
 

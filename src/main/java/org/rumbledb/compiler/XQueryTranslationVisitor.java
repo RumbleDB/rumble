@@ -3,7 +3,9 @@ package org.rumbledb.compiler;
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
+import org.antlr.v4.runtime.tree.TerminalNode;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -13,13 +15,16 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
+import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.*;
-import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.postfix.*;
+import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
@@ -31,11 +36,9 @@ import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.math.BigDecimal;
 import java.net.URI;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node>{
     private StaticContext moduleContext;
@@ -320,6 +323,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         XQueryParser.StringConcatExprContext child = ctx.rhs.get(0);
         Expression childExpression = (Expression) this.visitStringConcatExpr(child);
         String op = "";
+        // TODO ComparisonExprContext is complicated and can be (valueComp | generalComp | nodeComp)
         // TODO figure out the nodeComp and put it in else if. We do not have from symbol for it!
         // is, <<, >>
         if (ctx.nodeComp() != null)
@@ -501,20 +505,360 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         return new CastExpression(mainExpression, sequenceType, createMetadataFromContext(ctx));
     }
 
-//    @Override
-//    public Node visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
-//        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
-//
-//        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
-//            XQueryParser.FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
-//            List<Expression> children = new ArrayList<Expression>();
-//            children.add(mainExpression);
-//            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
-//            mainExpression = processFunctionCall(functionCallContext, children);
-//        }
-//        return mainExpression;
-//
-//    }
+    @Override
+    public Node visitArrowExpr(XQueryParser.ArrowExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
 
+        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
+            XQueryParser.FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+            List<Expression> children = new ArrayList<Expression>();
+            children.add(mainExpression);
+            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
+            mainExpression = processFunctionCall(functionCallContext, children);
+        }
+        return mainExpression;
+
+    }
+
+    private List<Expression> getArgumentsFromArgumentListContext(XQueryParser.ArgumentListContext ctx) {
+        List<Expression> arguments = new ArrayList<>();
+        if (ctx.args != null) {
+            for (XQueryParser.ArgumentContext arg : ctx.args) {
+                Expression currentArg = (Expression) this.visitArgument(arg);
+                arguments.add(currentArg);
+            }
+        }
+        return arguments;
+    }
+
+    private Expression processFunctionCall(XQueryParser.FunctionCallContext ctx, List<Expression> children) {
+        Name name = parseName(ctx.fn_name, true);
+        if (
+                AtomicItemType.typeExists(name)
+                        && children.size() == 1
+                        && name.getNamespace().equals(Name.RUMBLE_NS)
+                        && !name.getLocalName().equals("boolean")
+        ) {
+            return new CastExpression(
+                    children.get(0),
+                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return new FunctionCallExpression(
+                name,
+                children,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    public Name parseName(XQueryParser.EqNameContext ctx, boolean isFunction) {
+        // TODO we have complicated EqNameContext that can be qName or URIQualifiedName (we are missing URI handle)
+        // Fourny's implementation does not have separation. Here where it exists we can clearly identify
+        // Whether qName is FullQName with prefix or a simple one. If it is simple we get name or kw
+        // If it is not simple we separate it on : and then assign the values
+        if (ctx.qName() == null)
+            return null;
+        XQueryParser.QNameContext newCtx = ctx.qName();
+        return parseName(newCtx, isFunction);
+    }
+
+    public Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction) {
+        String localName = null;
+        String prefix = null;
+        Name name = null;
+        if (newCtx.ncName() != null){
+            if (newCtx.ncName().local_name != null) {
+                localName = newCtx.ncName().local_name.getText();
+            } else {
+                localName = newCtx.ncName().local_namekw.getText();
+            }
+        }
+        else {
+            String fullText = newCtx.FullQName().getText();
+            prefix = fullText.split(":")[0];
+            localName = fullText.split(":")[1];
+        }
+        if (prefix == null) {
+            if (isFunction) {
+                name = Name.createVariableInRumbleNamespace(localName);
+            } else {
+                name = Name.createVariableInNoNamespace(localName);
+            }
+        } else {
+            name = Name.createVariableResolvingPrefix(prefix, localName, this.moduleContext);
+        }
+        if (name != null) {
+            return name;
+        }
+        throw new PrefixCannotBeExpandedException(
+                "Cannot expand prefix " + prefix,
+                generateMetadata(newCtx.getStop())
+        );
+    }
+
+    @Override
+    public Node visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
+        // TODO main_expr is valueExpr and can be validateExpr | extensionExpr | simpleMapExpr
+        if (ctx.main_expr.simpleMapExpr() == null)
+            return null;
+        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr.simpleMapExpr());
+        if (ctx.op == null || ctx.op.isEmpty()) {
+            return mainExpression;
+        }
+        boolean negated = false;
+        for (Token t : ctx.op) {
+            if (t.getText().contentEquals("-")) {
+                negated = !negated;
+            }
+        }
+        return new UnaryExpression(
+                mainExpression,
+                negated,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
+        Expression result = (Expression) this.visitPostfixExpr(ctx.main_expr);
+        if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
+            return result;
+        }
+        for (int i = 0; i < ctx.map_expr.size(); ++i) {
+            XQueryParser.PostfixExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPostfixExpr(child);
+            result = new SimpleMapExpression(
+                    result,
+                    rightExpression,
+                    createMetadataFromContext(ctx)
+            );
+        }
+        return result;
+    }
+
+    // region postfix
+    @Override
+    public Node visitPostfixExpr(XQueryParser.PostfixExprContext ctx) {
+        Expression mainExpression = (Expression) this.visitPrimaryExpr(ctx.main_expr);
+        for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
+            if (child instanceof XQueryParser.PredicateContext) {
+                Expression expr = (Expression) this.visitPredicate((XQueryParser.PredicateContext) child);
+                mainExpression = new PredicateExpression(
+                        mainExpression,
+                        expr,
+                        createMetadataFromContext(ctx)
+                );
+            } else if (child instanceof XQueryParser.ArgumentListContext) {
+                List<Expression> arguments = getArgumentsFromArgumentListContext(
+                        (XQueryParser.ArgumentListContext) child
+                );
+                mainExpression = new DynamicFunctionCallExpression(
+                        mainExpression,
+                        arguments,
+                        createMetadataFromContext(ctx)
+                );
+            }
+            // TODO missing implementation for Lookup. This is UNARY LOOKUP WITH ? I THINK
+            else {
+                throw new OurBadException("Unrecognized postfix expression found.");
+            }
+        }
+        return mainExpression;
+    }
+
+    // TODO [EXPRVISITOR] orderedExpr unorderedExpr;
+    @Override
+    public Node visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.VarRefContext) {
+            return this.visitVarRef((XQueryParser.VarRefContext) child);
+        }
+        if (child instanceof XQueryParser.MapConstructorContext) {
+            return this.visitMapConstructor((XQueryParser.MapConstructorContext) child);
+        }
+        if (child instanceof XQueryParser.ArrayConstructorContext) {
+            return this.visitArrayConstructor((XQueryParser.ArrayConstructorContext) child);
+        }
+        if (child instanceof XQueryParser.ParenthesizedExprContext) {
+            return this.visitParenthesizedExpr((XQueryParser.ParenthesizedExprContext) child);
+        }
+        if (child instanceof XQueryParser.StringLiteralContext) {
+            return new StringLiteralExpression(
+                    child.getText().substring(1, child.getText().length() - 1),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (child instanceof TerminalNode) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+        }
+        if (child instanceof XQueryParser.ContextItemExprContext) {
+            return this.visitContextItemExpr((XQueryParser.ContextItemExprContext) child);
+        }
+        if (child instanceof XQueryParser.FunctionCallContext) {
+            return this.visitFunctionCall((XQueryParser.FunctionCallContext) child);
+        }
+        if (child instanceof XQueryParser.FunctionItemExprContext) {
+            return this.visitFunctionItemExpr((XQueryParser.FunctionItemExprContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Primary expression not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitVarRef(XQueryParser.VarRefContext ctx) {
+        Name name = parseName(ctx.eqName(), false);
+        return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitMapConstructor(XQueryParser.MapConstructorContext ctx) {
+        // TODO in XQuery parser we have no merging constructor, just visit the k/v pairs
+        List<Expression> keys = new ArrayList<>();
+        List<Expression> values = new ArrayList<>();
+        for (XQueryParser.MapConstructorEntryContext currentPair : ctx.mapConstructorEntry()) {
+            // TODO in XQuery parser we have no name
+            keys.add((Expression) this.visitExprSingle(currentPair.mapKey));
+            values.add((Expression) this.visitExprSingle(currentPair.mapValue));
+        }
+        return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
+
+    }
+
+    @Override
+    public Node visitArrayConstructor(XQueryParser.ArrayConstructorContext ctx) {
+        // TODO introduce handler for curly brackets
+        if (ctx.squareArrayConstructor() == null)
+            return null;
+        if (ctx.squareArrayConstructor().expr() == null) {
+            return new ArrayConstructorExpression(createMetadataFromContext(ctx));
+        }
+        Expression content = (Expression) this.visitExpr(ctx.squareArrayConstructor().expr());
+        return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitParenthesizedExpr(XQueryParser.ParenthesizedExprContext ctx) {
+        if (ctx.expr() == null) {
+            return new CommaExpression(createMetadataFromContext(ctx));
+        }
+        return this.visitExpr(ctx.expr());
+    }
+
+    private static Expression getLiteralExpressionFromToken(String token, ExceptionMetadata metadataFromContext) {
+        // TODO check that we cannot have null, true, false as Terminal nodes. Check if any other handling needed
+        //        switch (token) {
+//            case "null":
+//                return new NullLiteralExpression(metadataFromContext);
+//            case "true":
+//                return new BooleanLiteralExpression(true, metadataFromContext);
+//            case "false":
+//                return new BooleanLiteralExpression(false, metadataFromContext);
+//            default:
+//        }
+        if (token.contains("E") || token.contains("e")) {
+            return new DoubleLiteralExpression(Double.parseDouble(token), metadataFromContext);
+        }
+        if (token.contains(".")) {
+            return new DecimalLiteralExpression(new BigDecimal(token), metadataFromContext);
+        }
+        return new IntegerLiteralExpression(token, metadataFromContext);
+    }
+
+    @Override
+    public Node visitContextItemExpr(XQueryParser.ContextItemExprContext ctx) {
+        return new ContextItemExpression(createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitFunctionCall(XQueryParser.FunctionCallContext ctx) {
+        return processFunctionCall(ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
+    }
+
+    @Override
+    public Node visitFunctionItemExpr(XQueryParser.FunctionItemExprContext ctx) {
+        ParseTree child = ctx.children.get(0);
+        if (child instanceof XQueryParser.NamedFunctionRefContext) {
+            return this.visitNamedFunctionRef((XQueryParser.NamedFunctionRefContext) child);
+        }
+        if (child instanceof XQueryParser.InlineFunctionRefContext) {
+            return this.visitInlineFunctionRef((XQueryParser.InlineFunctionRefContext) child);
+        }
+        throw new UnsupportedFeatureException(
+                "Function item expression not yet implemented",
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitNamedFunctionRef(XQueryParser.NamedFunctionRefContext ctx) {
+        Name name = parseName(ctx.fn_name, true);
+        int arity = 0;
+        try {
+            arity = Integer.parseInt(ctx.arity.getText());
+        } catch (NumberFormatException e) {
+            throw new RumbleException(
+                    "Parser error: In a named function reference, arity must be an integer."
+            );
+        }
+        return new NamedFunctionReferenceExpression(
+                new FunctionIdentifier(name, arity),
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitInlineFunctionRef(XQueryParser.InlineFunctionRefContext ctx) {
+        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+        Name paramName;
+        SequenceType paramType;
+        if (ctx.functionParams() != null) {
+            for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
+                // TODO here we have qname instead eqName
+                paramName = parseName(param.name, false);
+                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                if (fnParams.containsKey(paramName)) {
+                    throw new DuplicateParamNameException(
+                            Name.createVariableInRumbleNamespace("inline-function`"),
+                            paramName,
+                            createMetadataFromContext(param)
+                    );
+                }
+                if (param.type.sequenceType() != null) {
+                    paramType = this.processSequenceType(param.type.sequenceType());
+                } else {
+                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                }
+                fnParams.put(paramName, paramType);
+            }
+        }
+
+        if (ctx.return_type != null) {
+            fnReturnType = this.processSequenceType(ctx.return_type);
+        }
+
+        Expression expr = null;
+        if (ctx.functionBody().enclosedExpression().expr() != null) {
+            expr = (Expression) this.visitExpr(ctx.functionBody().enclosedExpression().expr());
+        } else {
+            expr = new CommaExpression(createMetadataFromContext(ctx));
+        }
+
+        return new InlineFunctionExpression(
+                null,
+                fnParams,
+                fnReturnType,
+                expr,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitPredicate(XQueryParser.PredicateContext ctx) {
+        return this.visitExpr(ctx.expr());
+    }
     // endregion
 }
