@@ -136,6 +136,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             List<RuntimeIterator> arguments,
             StaticContext staticContext,
             ExecutionMode executionMode,
+            boolean checkReturnTypesOfBuiltinFunctions,
             ExceptionMetadata metadata
     ) {
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
@@ -176,6 +177,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (!checkReturnTypesOfBuiltinFunctions) {
+                return functionCallIterator;
+            }
             functionCallIterator.setStaticContext(staticContext);
             return new TypePromotionIterator(
                     functionCallIterator,

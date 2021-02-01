@@ -529,6 +529,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 // This might be worth a more fine-grained adjustment later.
                 expression.getStaticContext(),
                 expression.getHighestExecutionMode(this.visitorConfig),
+                this.config.isCheckReturnTypeOfBuiltinFunctions(),
                 iteratorMetadata
             );
         } else {
