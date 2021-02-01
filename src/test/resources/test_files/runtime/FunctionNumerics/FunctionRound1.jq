@@ -6,7 +6,7 @@ round(1.125, 2),
 round(8452, -2),
 round(3.1415e0, 2),
 round((), 2),
-round((), ())
+round((), ()),
 round(double("NaN")),
 round(double("INF")),
 round(double("-INF")),
