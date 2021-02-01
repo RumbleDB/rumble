@@ -63,26 +63,24 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         int precision;
         if (this.children.size() > 1) {
             precision = this.children.get(1)
-                .materializeFirstItemOrNull(dynamicContext).getIntValue();
+                .materializeFirstItemOrNull(dynamicContext)
+                .getIntValue();
         }
         // if second param is not given precision is set as 0 (rounds to a whole number)
         else {
             precision = 0;
         }
         try {
-            if(value.isDecimal())
-            {
+            if (value.isDecimal()) {
                 BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
-            if(value.isDouble())
-            {
+            if (value.isDouble()) {
                 BigDecimal bd = new BigDecimal(value.getDoubleValue());
                 bd = bd.setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
             }
-            if(value.isFloat())
-            {
+            if (value.isFloat()) {
                 BigDecimal bd = new BigDecimal(value.getFloatValue());
                 bd = bd.setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
