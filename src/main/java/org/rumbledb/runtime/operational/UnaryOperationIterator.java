@@ -23,19 +23,18 @@ package org.rumbledb.runtime.operational;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
 
-public class UnaryOperationIterator extends LocalRuntimeIterator {
+public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private boolean negated;
     private final RuntimeIterator child;
@@ -55,11 +54,18 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        try {
+            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Unary expression requires at most one item in its input sequence.",
+                    getMetadata()
+            );
         }
-        this.hasNext = false;
+        if (this.item == null) {
+            return null;
+        }
 
         if (!this.negated) {
             return this.item;
@@ -85,20 +91,4 @@ public class UnaryOperationIterator extends LocalRuntimeIterator {
                 getMetadata()
         );
     }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        try {
-            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Unary expression requires at most one item in its input sequence.",
-                    getMetadata()
-            );
-        }
-        this.hasNext = this.item != null;
-    }
-
 }

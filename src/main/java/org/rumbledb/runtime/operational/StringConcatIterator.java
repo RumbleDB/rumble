@@ -23,15 +23,15 @@ package org.rumbledb.runtime.operational;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-public class StringConcatIterator extends LocalRuntimeIterator {
+public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
@@ -49,43 +49,39 @@ public class StringConcatIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-            this.rightIterator.open(this.currentDynamicContextForLocalExecution);
-            Item left;
-            Item right;
-            // empty sequences are treated as empty strings in concatenation
-            if (this.leftIterator.hasNext()) {
-                left = this.leftIterator.next();
-            } else {
-                left = ItemFactory.getInstance().createStringItem("");
-            }
-            if (this.rightIterator.hasNext()) {
-                right = this.rightIterator.next();
-            } else {
-                right = ItemFactory.getInstance().createStringItem("");
-            }
-            if (!(left.isAtomic()) || !(right.isAtomic())) {
-                throw new UnexpectedTypeException(
-                        "String concat expression has arguments that can't be converted to a string "
-                            +
-                            left.serialize()
-                            + ", "
-                            + right.serialize(),
-                        getMetadata()
-                );
-            }
-
-            String leftStringValue = left.serialize();
-            String rightStringValue = right.serialize();
-
-            this.leftIterator.close();
-            this.rightIterator.close();
-            this.hasNext = false;
-            return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        this.leftIterator.open(dynamicContext);
+        this.rightIterator.open(dynamicContext);
+        Item left;
+        Item right;
+        // empty sequences are treated as empty strings in concatenation
+        if (this.leftIterator.hasNext()) {
+            left = this.leftIterator.next();
+        } else {
+            left = ItemFactory.getInstance().createStringItem("");
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+        if (this.rightIterator.hasNext()) {
+            right = this.rightIterator.next();
+        } else {
+            right = ItemFactory.getInstance().createStringItem("");
+        }
+        if (!(left.isAtomic()) || !(right.isAtomic())) {
+            throw new UnexpectedTypeException(
+                    "String concat expression has arguments that can't be converted to a string "
+                        +
+                        left.serialize()
+                        + ", "
+                        + right.serialize(),
+                    getMetadata()
+            );
+        }
 
+        String leftStringValue = left.serialize();
+        String rightStringValue = right.serialize();
+
+        this.leftIterator.close();
+        this.rightIterator.close();
+        this.hasNext = false;
+        return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
     }
 }

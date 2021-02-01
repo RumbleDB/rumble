@@ -30,17 +30,16 @@ import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
 
 
-public class AdditiveOperationIterator extends LocalRuntimeIterator {
+public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -63,12 +62,37 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
         this.isMinus = isMinus;
     }
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        try {
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Addition expression requires at most one item in its left input sequence.",
+                    getMetadata()
+            );
         }
-        this.hasNext = false;
+        try {
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "Addition expression requires at most one item in its right input sequence.",
+                    getMetadata()
+            );
+        }
+
+        // if left or right equals empty sequence, return empty sequence
+        if (this.left == null || this.right == null) {
+            return null;
+        } else {
+            ComparisonUtil.checkBinaryOperation(
+                this.left,
+                this.right,
+                this.isMinus ? "-" : "+",
+                getMetadata()
+            );
+        }
         Item result = processItem(this.left, this.right, this.isMinus);
         if (result == null) {
             throw new UnexpectedTypeException(
@@ -81,41 +105,6 @@ public class AdditiveOperationIterator extends LocalRuntimeIterator {
             );
         }
         return result;
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Addition expression requires at most one item in its left input sequence.",
-                    getMetadata()
-            );
-        }
-        try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    "Addition expression requires at most one item in its right input sequence.",
-                    getMetadata()
-            );
-        }
-
-        // if left or right equals empty sequence, return empty sequence
-        if (this.left == null || this.right == null) {
-            this.hasNext = false;
-        } else {
-            ComparisonUtil.checkBinaryOperation(
-                this.left,
-                this.right,
-                this.isMinus ? "-" : "+",
-                getMetadata()
-            );
-            this.hasNext = true;
-        }
     }
 
     public static Item processItem(

@@ -23,13 +23,14 @@ package org.rumbledb.runtime.operational;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
-public class OrOperationIterator extends LocalRuntimeIterator {
+public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -48,16 +49,15 @@ public class OrOperationIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        this.leftIterator.open(dynamicContext);
+        this.rightIterator.open(dynamicContext);
 
         boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(this.leftIterator);
         boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(this.rightIterator);
 
         this.leftIterator.close();
         this.rightIterator.close();
-        this.hasNext = false;
         return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }
 }
