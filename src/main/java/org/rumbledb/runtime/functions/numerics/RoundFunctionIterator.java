@@ -77,13 +77,13 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             if(value.isDouble())
             {
-                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+                BigDecimal bd = new BigDecimal(value.getDoubleValue());
                 bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
             }
             if(value.isFloat())
             {
-                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+                BigDecimal bd = new BigDecimal(value.getFloatValue());
                 bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
             }
