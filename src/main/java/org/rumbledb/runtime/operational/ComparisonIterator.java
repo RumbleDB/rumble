@@ -34,7 +34,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
@@ -43,7 +43,7 @@ import java.util.Arrays;
 import java.util.List;
 
 
-public class ComparisonIterator extends LocalRuntimeIterator {
+public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -84,35 +84,14 @@ public class ComparisonIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-
-            // use stored values for value comparison
-            if (this.comparisonOperator.isValueComparison()) {
-                return valueComparison(this.left, this.right);
-            }
-
-            // fetch all values and perform comparison
-            List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
-            List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
-
-            return generalComparison(left, right);
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         // value comparison may return an empty sequence
         if (this.comparisonOperator.isValueComparison()) {
             // if EMPTY SEQUENCE - eg. () or ((),())
             // this check is added here to provide lazy evaluation: eg. () eq (2,3) = () instead of exception
             try {
                 this.left = this.leftIterator.materializeAtMostOneItemOrNull(
-                    this.currentDynamicContextForLocalExecution
+                    dynamicContext
                 );
             } catch (MoreThanOneItemException e) {
                 throw new UnexpectedTypeException(
@@ -121,13 +100,12 @@ public class ComparisonIterator extends LocalRuntimeIterator {
                 );
             }
             if (this.left == null) {
-                this.hasNext = false;
-                return;
+                return null;
             }
 
             try {
                 this.right = this.rightIterator.materializeAtMostOneItemOrNull(
-                    this.currentDynamicContextForLocalExecution
+                    dynamicContext
                 );
             } catch (MoreThanOneItemException e) {
                 throw new UnexpectedTypeException(
@@ -135,11 +113,21 @@ public class ComparisonIterator extends LocalRuntimeIterator {
                         getMetadata()
                 );
             }
-            this.hasNext = this.right != null;
-        } else {
-            // general comparison always returns a boolean
-            this.hasNext = true;
+            if (this.right == null) {
+                return null;
+            }
         }
+
+        // use stored values for value comparison
+        if (this.comparisonOperator.isValueComparison()) {
+            return valueComparison(this.left, this.right);
+        }
+
+        // fetch all values and perform comparison
+        List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
+
+        return generalComparison(left, right);
     }
 
     /**

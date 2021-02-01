@@ -55,6 +55,7 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         return this.rightIterator;
     }
 
+    @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
