@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -59,19 +60,34 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value.isDouble() && value.getDoubleValue() == 0d) {
             return value;
         }
-        Item precision;
+        int precision;
         if (this.children.size() > 1) {
             precision = this.children.get(1)
-                .materializeFirstItemOrNull(dynamicContext);
+                .materializeFirstItemOrNull(dynamicContext).getIntValue();
         }
         // if second param is not given precision is set as 0 (rounds to a whole number)
         else {
-            precision = ItemFactory.getInstance().createIntItem(0);
+            precision = 0;
         }
         try {
-            BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-            bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_UP);
-            return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
+            if(value.isDecimal())
+            {
+                BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createDecimalItem(bd);
+            }
+            if(value.isDouble())
+            {
+                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+                bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
+            }
+            if(value.isFloat())
+            {
+                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+                bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+            }
+            throw new OurBadException("Unexpected value in round(): " + value);
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
