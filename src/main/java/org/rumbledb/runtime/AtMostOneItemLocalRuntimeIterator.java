@@ -51,7 +51,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
     public void open(DynamicContext dynamicContext) {
         super.open(dynamicContext);
         this.result = materializeFirstItemOrNull(dynamicContext);
-        this.hasNext = result != null;
+        this.hasNext = this.result != null;
     }
 
     @Override
@@ -60,14 +60,14 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
             throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
         }
         this.hasNext = false;
-        return result;
+        return this.result;
     }
 
     @Override
     public void reset(DynamicContext dynamicContext) {
         super.reset(dynamicContext);
         this.result = materializeFirstItemOrNull(dynamicContext);
-        this.hasNext = result != null;
+        this.hasNext = this.result != null;
     }
 
     @Override

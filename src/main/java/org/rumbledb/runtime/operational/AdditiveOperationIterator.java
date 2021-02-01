@@ -66,7 +66,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             DynamicContext dynamicContext
     ) {
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its left input sequence.",
@@ -74,7 +74,7 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             );
         }
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Addition expression requires at most one item in its right input sequence.",

@@ -58,8 +58,8 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
-        this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-        this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+        this.leftIterator.open(dynamicContext);
+        this.rightIterator.open(dynamicContext);
 
         boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(this.leftIterator);
         boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(this.rightIterator);
