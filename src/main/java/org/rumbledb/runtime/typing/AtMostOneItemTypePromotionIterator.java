@@ -85,6 +85,9 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     }
 
     private Item checkTypePromotion(Item item) {
+        if (item.isFunction()) {
+            return item;
+        }
         if (!item.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
