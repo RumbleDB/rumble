@@ -94,7 +94,27 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 executionMode,
                 metadata
         );
-        if (!functionItem.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        SequenceType sequenceType = functionItem.getSignature().getReturnType();
+        if (sequenceType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            return functionCallIterator;
+        }
+        if (
+            sequenceType.isEmptySequence()
+                || sequenceType.getArity().equals(Arity.One)
+                || sequenceType.getArity().equals(Arity.OneOrZero)
+        ) {
+            return new AtMostOneItemTypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + ((functionItem.getIdentifier().getName() == null)
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    executionMode,
+                    metadata
+            );
+        } else {
             return new TypePromotionIterator(
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
@@ -107,7 +127,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     metadata
             );
         }
-        return functionCallIterator;
+
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
