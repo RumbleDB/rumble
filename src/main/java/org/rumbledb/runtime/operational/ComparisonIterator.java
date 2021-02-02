@@ -124,8 +124,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         // fetch all values and perform comparison
-        List<Item> left = this.leftIterator.materialize(this.currentDynamicContextForLocalExecution);
-        List<Item> right = this.rightIterator.materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> left = this.leftIterator.materialize(dynamicContext);
+        List<Item> right = this.rightIterator.materialize(dynamicContext);
 
         return generalComparison(left, right);
     }
