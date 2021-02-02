@@ -47,14 +47,12 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        if (
-            !executionMode.equals(ExecutionMode.LOCAL)
-                && (sequenceType.isEmptySequence()
+        if ((sequenceType.isEmptySequence()
                     || sequenceType.getArity().equals(Arity.One)
                     || sequenceType.getArity().equals(Arity.OneOrZero))
         ) {
             throw new OurBadException(
-                    "A promotion iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
+                "This promotion iterator is not meant to be used if the sequence type arity is 0, 1 or ?."
             );
         }
     }
@@ -119,9 +117,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     private void checkEmptySequence(long size) {
         if (
             size == 0
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
+                && this.sequenceType.getArity() == SequenceType.Arity.OneOrMore
         ) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
@@ -138,22 +134,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             throw new UnexpectedTypeException(
                     this.exceptionMessage
                         + "Expecting empty sequence, but the value provided has at least one item.",
-                    getMetadata()
-            );
-        }
-
-
-        if (
-            size > 1
-                && (this.sequenceType.getArity() == SequenceType.Arity.One
-                    ||
-                    this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
-        ) {
-            throw new UnexpectedTypeException(
-                    this.exceptionMessage
-                        + "Expecting"
-                        + ((this.sequenceType.getArity() == SequenceType.Arity.OneOrZero) ? " at most" : "")
-                        + " one item, but the value provided has at least two items.",
                     getMetadata()
             );
         }
