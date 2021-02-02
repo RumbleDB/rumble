@@ -179,7 +179,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * Singleton atomic values are evaluated to their effective boolean value.
      * Multiple atomic values throw an exception.
      *
-     * @param iterator has to be opened before calling this function
+     * @param dynamicContext the dynamic context
      * @return the effective boolean value.
      */
     public boolean getEffectiveBooleanValue(DynamicContext dynamicContext) {

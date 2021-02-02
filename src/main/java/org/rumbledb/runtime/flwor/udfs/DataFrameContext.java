@@ -75,6 +75,7 @@ public class DataFrameContext implements Serializable {
      * Builds a new data frame context.
      * 
      * @param context the parent dynamic context, which contains all variable values except those in input tuples.
+     * @param schema the schema.
      * @param columnNames the names of the DataFrame column names applicable to the calling clause, organized by
      *        types (currently Long for non-materialized counts, or byte[] for serialized sequences).
      */
