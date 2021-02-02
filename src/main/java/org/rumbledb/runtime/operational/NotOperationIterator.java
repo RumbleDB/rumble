@@ -46,9 +46,7 @@ public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        this.child.open(dynamicContext);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(this.child);
-        this.child.close();
+        boolean effectiveBooleanValue = this.child.getEffectiveBooleanValue(dynamicContext);
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
     }
 }

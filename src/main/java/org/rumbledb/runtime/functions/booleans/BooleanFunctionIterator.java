@@ -47,9 +47,9 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
         if (this.hasNext) {
             this.hasNext = false;
             RuntimeIterator iterator = this.children.get(0);
-            iterator.open(this.currentDynamicContextForLocalExecution);
-            boolean effectiveBooleanValue = getEffectiveBooleanValue(iterator);
-            iterator.close();
+            boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
+                this.currentDynamicContextForLocalExecution
+            );
             return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " boolean function", getMetadata());

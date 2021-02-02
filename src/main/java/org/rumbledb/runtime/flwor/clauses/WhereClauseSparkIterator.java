@@ -126,9 +126,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                                                                                                    // variables from new
                                                                                                    // tuple
 
-            this.expression.open(this.tupleContext);
-            boolean effectiveBooleanValue = RuntimeIterator.getEffectiveBooleanValue(this.expression);
-            this.expression.close();
+            boolean effectiveBooleanValue = this.expression.getEffectiveBooleanValue(this.tupleContext);
             if (effectiveBooleanValue) {
                 this.nextLocalTupleResult = inputTuple;
                 this.hasNext = true;

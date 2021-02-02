@@ -23,11 +23,18 @@ package org.rumbledb.runtime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.types.AtomicItemType;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.List;
 
 public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIterator {
@@ -114,5 +121,55 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
             result.add(item);
         }
         this.close();
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
+        Item item = materializeFirstItemOrNull(dynamicContext);
+        if (item == null) {
+            return false;
+        }
+        if (item.isBoolean()) {
+            return item.getBooleanValue();
+        }
+        if (item.isNumeric()) {
+            if (position == null) {
+                if (item.isInt()) {
+                    return item.getIntValue() != 0;
+                } else if (item.isInteger()) {
+                    return !item.getIntegerValue().equals(BigInteger.ZERO);
+                } else if (item.isDouble()) {
+                    return item.getDoubleValue() != 0;
+                } else if (item.isFloat()) {
+                    return item.getFloatValue() != 0;
+                } else if (item.isDecimal()) {
+                    return !item.getDecimalValue().equals(BigDecimal.ZERO);
+                } else {
+                    throw new OurBadException(
+                            "Unexpected numeric type found while calculating effective boolean value."
+                    );
+                }
+            } else {
+                return ComparisonIterator.compareItems(item, position, ComparisonOperator.VC_EQ, getMetadata()) == 0;
+            }
+        }
+        if (item.isNull()) {
+            return false;
+        }
+        if (item.getDynamicType().canBePromotedTo(AtomicItemType.stringItem)) {
+            return !item.getStringValue().isEmpty();
+        }
+        if (item.isObject()) {
+            return true;
+        }
+        if (item.isArray()) {
+            return true;
+        }
+        throw new InvalidArgumentTypeException(
+                "Effective boolean value not defined for items of type "
+                    +
+                    item.getDynamicType().toString(),
+                getMetadata()
+        );
     }
 }
