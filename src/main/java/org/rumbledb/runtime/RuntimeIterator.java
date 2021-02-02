@@ -96,13 +96,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * If the sequence is a single numeric item and a non-null position is supplied, then instead
      * it is checked whether the numeric item is equal to the position.
      *
-     * @param iterator has to be opened before calling this function
+     * @param dynamicContext the dynamic context
      * @param position the context position, or null if none
      * @return the effective boolean value.
      */
-    public static boolean getEffectiveBooleanValueOrCheckPosition(RuntimeIterator iterator, Item position) {
-        if (iterator.hasNext()) {
-            Item item = iterator.next();
+    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
+        open(dynamicContext);
+        if (hasNext()) {
+            Item item = this.next();
             boolean result;
             if (item.isBoolean()) {
                 result = item.getBooleanValue();
@@ -114,6 +115,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                         result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
+                    } else if (item.isFloat()) {
+                        result = item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
                         result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                     } else {
@@ -129,30 +132,34 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             } else if (item.getDynamicType().canBePromotedTo(AtomicItemType.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
+                this.close();
                 return true;
             } else if (item.isArray()) {
+                this.close();
                 return true;
             } else {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
                             item.getDynamicType().toString(),
-                        iterator.getMetadata()
+                        getMetadata()
                 );
             }
 
-            if (iterator.hasNext()) {
+            if (hasNext()) {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for sequences of more than one atomic item. "
                             + "Sequence containing: "
                             + item.serialize()
                             + " must be a singleton.",
-                        iterator.getMetadata()
+                        getMetadata()
                 );
             }
 
+            this.close();
             return result;
         } else {
+            this.close();
             return false;
         }
 
@@ -168,8 +175,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * @param iterator has to be opened before calling this function
      * @return the effective boolean value.
      */
-    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
-        return getEffectiveBooleanValueOrCheckPosition(iterator, null);
+    public boolean getEffectiveBooleanValue(DynamicContext dynamicContext) {
+        return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
     public void open(DynamicContext context) {

@@ -50,14 +50,9 @@ public class OrOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        this.leftIterator.open(dynamicContext);
-        this.rightIterator.open(dynamicContext);
+        boolean leftEffectiveBooleanValue = this.leftIterator.getEffectiveBooleanValue(dynamicContext);
+        boolean rightEffectiveBooleanValue = this.rightIterator.getEffectiveBooleanValue(dynamicContext);
 
-        boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(this.leftIterator);
-        boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(this.rightIterator);
-
-        this.leftIterator.close();
-        this.rightIterator.close();
         return ItemFactory.getInstance().createBooleanItem((leftEffectiveBooleanValue || rightEffectiveBooleanValue));
     }
 }

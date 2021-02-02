@@ -82,9 +82,9 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         }
         if (this.selectedIterator == null) {
             RuntimeIterator condition = this.children.get(0);
-            condition.open(this.currentDynamicContextForLocalExecution);
-            boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
-            condition.close();
+            boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(
+                this.currentDynamicContextForLocalExecution
+            );
             if (effectiveBooleanValue) {
                 this.selectedIterator = this.children.get(1);
             } else {
@@ -108,9 +108,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         RuntimeIterator condition = this.children.get(0);
-        condition.open(this.currentDynamicContextForLocalExecution);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(condition);
-        condition.close();
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(this.currentDynamicContextForLocalExecution);
 
         if (effectiveBooleanValue) {
             return this.children.get(1).getRDD(dynamicContext);
