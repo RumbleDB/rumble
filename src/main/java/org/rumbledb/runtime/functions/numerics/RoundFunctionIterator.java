@@ -24,7 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -85,7 +85,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 bd = bd.setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
             }
-            throw new OurBadException("Unexpected value in round(): " + value);
+            throw new UnexpectedTypeException("Unexpected value in round(): " + value.getDynamicType(), getMetadata());
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
