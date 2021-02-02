@@ -29,6 +29,8 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 
 import java.math.BigDecimal;
@@ -148,7 +150,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
                     );
                 }
             } else {
-                return item.equals(position);
+                return ComparisonIterator.compareItems(item, position, ComparisonOperator.VC_EQ, getMetadata()) == 0;
             }
         }
         if (item.isNull()) {

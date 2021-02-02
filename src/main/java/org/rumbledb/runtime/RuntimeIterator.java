@@ -39,6 +39,8 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -125,7 +127,12 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                         );
                     }
                 } else {
-                    result = item.equals(position);
+                    result = ComparisonIterator.compareItems(
+                        item,
+                        position,
+                        ComparisonOperator.VC_EQ,
+                        getMetadata()
+                    ) == 0;
                 }
             } else if (item.isNull()) {
                 result = false;
