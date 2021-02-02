@@ -121,6 +121,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
         this.close();
     }
 
+    @Override
     public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
         Item item = materializeFirstItemOrNull(dynamicContext);
         if (item == null) {
