@@ -29,10 +29,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
-import org.rumbledb.runtime.typing.TypePromotionIterator;
+import org.rumbledb.runtime.operational.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -149,32 +147,15 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     .get(i)
                     .equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)
             ) {
-                SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
-                if (
-                    sequenceType.isEmptySequence()
-                        || sequenceType.getArity().equals(Arity.One)
-                        || sequenceType.getArity().equals(Arity.OneOrZero)
-                ) {
-                    RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
-                            arguments.get(i),
-                            sequenceType,
-                            "Invalid argument for function " + identifier.getName() + ". ",
-                            arguments.get(i).getHighestExecutionMode(),
-                            arguments.get(i).getMetadata()
-                    );
+                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                        arguments.get(i),
+                        builtinFunction.getSignature().getParameterTypes().get(i),
+                        "Invalid argument for function " + identifier.getName() + ". ",
+                        arguments.get(i).getHighestExecutionMode(),
+                        arguments.get(i).getMetadata()
+                );
 
-                    arguments.set(i, typePromotionIterator);
-                } else {
-                    TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
-                            arguments.get(i),
-                            sequenceType,
-                            "Invalid argument for function " + identifier.getName() + ". ",
-                            arguments.get(i).getHighestExecutionMode(),
-                            arguments.get(i).getMetadata()
-                    );
-
-                    arguments.set(i, typePromotionIterator);
-                }
+                arguments.set(i, typePromotionIterator);
             }
         }
 
@@ -200,28 +181,13 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 return functionCallIterator;
             }
             functionCallIterator.setStaticContext(staticContext);
-            SequenceType sequenceType = builtinFunction.getSignature().getReturnType();
-            if (
-                sequenceType.isEmptySequence()
-                    || sequenceType.getArity().equals(Arity.One)
-                    || sequenceType.getArity().equals(Arity.OneOrZero)
-            ) {
-                return new AtMostOneItemTypePromotionIterator(
-                        functionCallIterator,
-                        sequenceType,
-                        "Invalid return type for function " + identifier.getName() + ". ",
-                        functionCallIterator.getHighestExecutionMode(),
-                        functionCallIterator.getMetadata()
-                );
-            } else {
-                return new TypePromotionIterator(
-                        functionCallIterator,
-                        sequenceType,
-                        "Invalid return type for function " + identifier.getName() + ". ",
-                        functionCallIterator.getHighestExecutionMode(),
-                        functionCallIterator.getMetadata()
-                );
-            }
+            return new TypePromotionIterator(
+                    functionCallIterator,
+                    builtinFunction.getSignature().getReturnType(),
+                    "Invalid return type for function " + identifier.getName() + ". ",
+                    functionCallIterator.getHighestExecutionMode(),
+                    functionCallIterator.getMetadata()
+            );
         }
         return functionCallIterator;
     }

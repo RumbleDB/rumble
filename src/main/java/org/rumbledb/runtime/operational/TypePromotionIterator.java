@@ -1,4 +1,4 @@
-package org.rumbledb.runtime.typing;
+package org.rumbledb.runtime.operational;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -14,6 +14,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
