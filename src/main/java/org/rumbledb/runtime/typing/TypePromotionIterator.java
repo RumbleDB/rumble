@@ -47,12 +47,13 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.iterator = iterator;
         this.sequenceType = sequenceType;
         this.itemType = this.sequenceType.getItemType();
-        if ((sequenceType.isEmptySequence()
-                    || sequenceType.getArity().equals(Arity.One)
-                    || sequenceType.getArity().equals(Arity.OneOrZero))
+        if (
+            (sequenceType.isEmptySequence()
+                || sequenceType.getArity().equals(Arity.One)
+                || sequenceType.getArity().equals(Arity.OneOrZero))
         ) {
             throw new OurBadException(
-                "This promotion iterator is not meant to be used if the sequence type arity is 0, 1 or ?."
+                    "This promotion iterator is not meant to be used if the sequence type arity is 0, 1 or ?."
             );
         }
     }
@@ -195,7 +196,14 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
 
     private void checkTypePromotion() {
         if (this.nextResult.isFunction()) {
-            return;
+            throw new UnexpectedTypeException(
+                    this.exceptionMessage
+                        + this.nextResult.getDynamicType().toString()
+                        + " cannot be promoted to type "
+                        + this.sequenceType
+                        + ".",
+                    getMetadata()
+            );
         }
         if (!this.nextResult.getDynamicType().canBePromotedTo(this.sequenceType.getItemType())) {
             throw new UnexpectedTypeException(
