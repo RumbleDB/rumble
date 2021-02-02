@@ -46,6 +46,8 @@
                     <compilerId>eclipse</compilerId>
                     <source>1.8</source>
                     <target>1.8</target>
+                    <debug>true</debug>
+                    <debuglevel>lines,vars,source</debuglevel>
                     <compilerArguments>
                         <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
                     </compilerArguments>
@@ -63,6 +65,32 @@
                     </dependency>
                 </dependencies>
             </plugin>
+<!--            <plugin>-->
+<!--                <groupId>org.codehaus.mojo</groupId>-->
+<!--                <artifactId>exec-maven-plugin</artifactId>-->
+<!--                <version>1.4.0</version>-->
+<!--                <executions>-->
+<!--                    <execution>-->
+<!--                        <goals>-->
+<!--                            <goal>exec</goal>-->
+<!--                        </goals>-->
+<!--                    </execution>-->
+<!--                </executions>-->
+<!--                <configuration>-->
+<!--                    <executable>-->
+<!--                        spark-submit-->
+<!--                    </executable>-->
+<!--&lt;!&ndash;                    <mainClass>org.rumbledb.cli.Main</mainClass>&ndash;&gt;-->
+<!--                    <commandlineArgs>-->
+<!--&lt;!&ndash;                        &#45;&#45;class "org.rumbledb.cli.Main" &#45;&#45;master "local[4]" ${project.build.directory}/${project.build.finalName}.${project.packaging}&ndash;&gt;-->
+<!--&lt;!&ndash;                        &#45;&#45;shell yes&ndash;&gt;-->
+<!--&lt;!&ndash;                        &#45;&#45;class class "org.rumbledb.cli.Main" spark-rumble-1.10.0-jar-with-dependencies.jar &#45;&#45;shell yes&ndash;&gt;-->
+<!--&lt;!&ndash;                        spark-rumble-1.10.0-jar-with-dependencies.jar &#45;&#45;shell yes ->>>> "File file:/Users/mstevan/Documents/rumble-test-suite/rumble/spark-rumble-1.10.0-jar-with-dependencies.jar does not exist"&ndash;&gt;-->
+<!--&lt;!&ndash;                        &#45;&#45;class "org.rumbledb.cli.Main" &#45;&#45;master "local[4]" ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar &#45;&#45;shell yes&ndash;&gt;-->
+<!--                        ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar &#45;&#45;shell yes-->
+<!--                    </commandlineArgs>-->
+<!--                </configuration>-->
+<!--            </plugin>-->
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
