@@ -109,6 +109,10 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
         }
         Dataset<Row> df = this.child.getDataFrame(context, projection);
+
+        // unescape backticks (`)
+        df = df.sparkSession().createDataFrame(df.rdd(), FlworDataFrameUtils.escapeSchema(df.schema(), true));
+
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,

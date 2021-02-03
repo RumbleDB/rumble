@@ -28,7 +28,9 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -67,6 +69,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collector;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -78,6 +81,9 @@ import static org.apache.spark.sql.functions.sum;
 import static org.apache.spark.sql.functions.udf;
 
 public class FlworDataFrameUtils {
+
+    // we use UUID to escape backtick within DataFrame columns
+    public static String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
 
     private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
@@ -329,13 +335,45 @@ public class FlworDataFrameUtils {
             queryColumnString.append(comma);
             comma = ",";
             queryColumnString.append("`");
-            queryColumnString.append(var);
+            // replace any backtick (`) with uuid
+            queryColumnString.append(var.replace("`", backtickEscape));
             queryColumnString.append("`");
         }
         if (trailingComma) {
             queryColumnString.append(comma);
         }
         return queryColumnString.toString();
+    }
+
+    public static StructField[] recursiveRename(StructType schema, boolean inverse){
+        return Arrays.stream(schema.fields()).map(field -> {
+            String newName = inverse ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`") : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
+            if(field.dataType() instanceof StructType){
+                StructType castedField = (StructType) field.dataType();
+                return new StructField(newName, new StructType(recursiveRename(castedField, inverse)), field.nullable(), field.metadata());
+            } else if(field.dataType() instanceof ArrayType){
+                ArrayType castedField = (ArrayType) field.dataType();
+                if(castedField.elementType() instanceof StructType){
+                    StructType castedElementType = (StructType) castedField.elementType();
+                    return new StructField(newName, new ArrayType(new StructType(recursiveRename(castedElementType, inverse)), castedField.containsNull()), field.nullable(), field.metadata());
+                } else {
+                    return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+                }
+            } else {
+                return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+            }
+        }).toArray(StructField[]::new);
+    }
+
+    /**
+     * recursevely escape/de-escape backticks from all fields in a sparkSql schema
+     *
+     * @param schema schema to escape
+     * @param inverse if true, perform de-escaping, otherwise escape
+     * @return the new schema appropriately escaped/de-escaped
+     */
+    public static StructType escapeSchema(StructType schema, boolean inverse){
+        return new StructType(recursiveRename(schema, inverse));
     }
 
     /**

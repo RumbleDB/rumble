@@ -35,6 +35,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 
@@ -232,7 +233,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
             initLookupKey(newContext.getContext());
 
-            String key = this.lookupKey.getStringValue();
+            // get key (escape backtick)
+            String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
             schema = newContext.getSchema();
             if (!(schema instanceof StructType)) {
                 return NativeClauseContext.NoNativeQuery;

@@ -22,6 +22,7 @@ package org.rumbledb.runtime.flwor.clauses;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
+import org.apache.spark.sql.Column;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
@@ -68,6 +69,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.Stack;
 import java.util.TreeMap;
+
+import static org.apache.spark.sql.functions.struct;
 
 public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -1029,8 +1032,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
-            rows.createOrReplaceTempView("assignment");
             String[] fields = rows.schema().fieldNames();
+            
+            // escape backticks (`)
+            rows = rows.sparkSession().createDataFrame(rows.rdd(), FlworDataFrameUtils.escapeSchema(rows.schema(), false));
+
+            rows.createOrReplaceTempView("assignment");
             String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
             df = rows.sparkSession()
                 .sql(

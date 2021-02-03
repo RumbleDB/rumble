@@ -34,6 +34,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.SequenceType;
 
@@ -91,9 +92,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         }
         // check if name is in the schema
         StructType structSchema = (StructType) schema;
-        if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(name))) {
-            NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, name);
-            StructField field = structSchema.fields()[structSchema.fieldIndex(name)];
+        // we need to escape the backtick
+        String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
+        if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(escapedName))) {
+            NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, escapedName);
+            StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
             DataType fieldType = field.dataType();
             if (fieldType.typeName().equals("binary")) {
                 return NativeClauseContext.NoNativeQuery;
