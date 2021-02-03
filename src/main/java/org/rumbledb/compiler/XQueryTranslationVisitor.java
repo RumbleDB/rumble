@@ -671,26 +671,30 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
+        // TODO had to separate differently because literal consists of numericLiteral | stringLiteral
+        // In JSONiq we had stringLiteral separated from LITERAL that could then be NumericLiteral | BooleanLiteral
+        if (child instanceof XQueryParser.LiteralContext){
+            ParseTree nestedChild;
+            if (((XQueryParser.LiteralContext) child).numericLiteral() != null)
+                nestedChild = (XQueryParser.NumericLiteralContext) ((XQueryParser.LiteralContext) child).numericLiteral();
+            else
+                nestedChild = (XQueryParser.StringLiteralContext) ((XQueryParser.LiteralContext) child).stringLiteral();
+
+            if (nestedChild instanceof XQueryParser.StringLiteralContext) {
+                return new StringLiteralExpression(
+                        nestedChild.getText().substring(1, nestedChild.getText().length() - 1),
+                        createMetadataFromContext(ctx)
+                );
+            }
+            else {
+                return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
+            }
+        }
         if (child instanceof XQueryParser.VarRefContext) {
             return this.visitVarRef((XQueryParser.VarRefContext) child);
         }
-        if (child instanceof XQueryParser.MapConstructorContext) {
-            return this.visitMapConstructor((XQueryParser.MapConstructorContext) child);
-        }
-        if (child instanceof XQueryParser.ArrayConstructorContext) {
-            return this.visitArrayConstructor((XQueryParser.ArrayConstructorContext) child);
-        }
         if (child instanceof XQueryParser.ParenthesizedExprContext) {
             return this.visitParenthesizedExpr((XQueryParser.ParenthesizedExprContext) child);
-        }
-        if (child instanceof XQueryParser.StringLiteralContext) {
-            return new StringLiteralExpression(
-                    child.getText().substring(1, child.getText().length() - 1),
-                    createMetadataFromContext(ctx)
-            );
-        }
-        if (child instanceof TerminalNode) {
-            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         if (child instanceof XQueryParser.ContextItemExprContext) {
             return this.visitContextItemExpr((XQueryParser.ContextItemExprContext) child);
@@ -698,8 +702,34 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (child instanceof XQueryParser.FunctionCallContext) {
             return this.visitFunctionCall((XQueryParser.FunctionCallContext) child);
         }
+        // TODO still missing
+//        if (child instanceof XQueryParser.OrderedExprContext) {
+//            return this.visitOrderedExpr((XQueryParser.OrderedExprContext) child);
+//        }
+//        if (child instanceof XQueryParser.UnorderedExprContext) {
+//            return this.visitUnorderedExpr((XQueryParser.UnorderedExprContext) child);
+//        }
+//        if (child instanceof XQueryParser.NodeConstructorContext) {
+//            return this.visitNodeConstructor((XQueryParser.NodeConstructorContext) child);
+//        }
         if (child instanceof XQueryParser.FunctionItemExprContext) {
             return this.visitFunctionItemExpr((XQueryParser.FunctionItemExprContext) child);
+        }
+        if (child instanceof XQueryParser.MapConstructorContext) {
+            return this.visitMapConstructor((XQueryParser.MapConstructorContext) child);
+        }
+        if (child instanceof XQueryParser.ArrayConstructorContext) {
+            return this.visitArrayConstructor((XQueryParser.ArrayConstructorContext) child);
+        }
+        // TODO still missing
+//        if (child instanceof XQueryParser.StringConstructorContext) {
+//            return this.visitStringConstructor((XQueryParser.StringConstructorContext) child);
+//        }
+//        if (child instanceof XQueryParser.UnaryLookupContext) {
+//            return this.visitUnaryLookup((XQueryParser.UnaryLookupContext) child);
+//        }
+        if (child instanceof TerminalNode) {
+            return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
         }
         throw new UnsupportedFeatureException(
                 "Primary expression not yet implemented",

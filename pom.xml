@@ -46,8 +46,6 @@
                     <compilerId>eclipse</compilerId>
                     <source>1.8</source>
                     <target>1.8</target>
-                    <debug>true</debug>
-                    <debuglevel>lines,vars,source</debuglevel>
                     <compilerArguments>
                         <properties>${project.basedir}/org.eclipse.jdt.core.prefs</properties>
                     </compilerArguments>
@@ -64,32 +62,6 @@
                         <version>3.20.0</version>
                     </dependency>
                 </dependencies>
-            </plugin>
-            <plugin>
-                <groupId>org.codehaus.mojo</groupId>
-                <artifactId>exec-maven-plugin</artifactId>
-                <version>1.4.0</version>
-                <executions>
-                    <execution>
-                        <goals>
-                            <goal>exec</goal>
-                        </goals>
-                    </execution>
-                </executions>
-                <configuration>
-                    <executable>
-                        spark-submit
-                    </executable>
-<!--                    <mainClass>org.rumbledb.cli.Main</mainClass>-->
-                    <commandlineArgs>
-<!--                        &#45;&#45;class "org.rumbledb.cli.Main" &#45;&#45;master "local[4]" ${project.build.directory}/${project.build.finalName}.${project.packaging}-->
-<!--                        &#45;&#45;shell yes-->
-<!--                        &#45;&#45;class class "org.rumbledb.cli.Main" spark-rumble-1.10.0-jar-with-dependencies.jar &#45;&#45;shell yes-->
-<!--                        spark-rumble-1.10.0-jar-with-dependencies.jar &#45;&#45;shell yes ->>>> "File file:/Users/mstevan/Documents/rumble-test-suite/rumble/spark-rumble-1.10.0-jar-with-dependencies.jar does not exist"-->
-<!--                        &#45;&#45;class "org.rumbledb.cli.Main" &#45;&#45;master "local[4]" ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar &#45;&#45;shell yes-->
-                        ${project.build.directory}/${project.build.finalName}-jar-with-dependencies.jar --shell yes
-                    </commandlineArgs>
-                </configuration>
             </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
