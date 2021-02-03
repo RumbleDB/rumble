@@ -12,7 +12,7 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 

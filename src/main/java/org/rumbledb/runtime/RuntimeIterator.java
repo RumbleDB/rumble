@@ -40,7 +40,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

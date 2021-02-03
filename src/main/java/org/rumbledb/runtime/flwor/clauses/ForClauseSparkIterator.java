@@ -48,9 +48,9 @@ import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
-import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
-import org.rumbledb.runtime.postfix.PredicateIterator;
+import org.rumbledb.runtime.logics.AndOperationIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;

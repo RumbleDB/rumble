@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.arithmetics;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;

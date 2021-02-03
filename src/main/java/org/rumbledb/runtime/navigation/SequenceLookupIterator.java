@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;

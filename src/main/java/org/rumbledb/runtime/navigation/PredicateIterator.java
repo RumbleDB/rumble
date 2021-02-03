@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
@@ -32,10 +32,10 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.AndOperationIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
-import org.rumbledb.runtime.operational.NotOperationIterator;
-import org.rumbledb.runtime.operational.OrOperationIterator;
+import org.rumbledb.runtime.logics.AndOperationIterator;
+import org.rumbledb.runtime.logics.NotOperationIterator;
+import org.rumbledb.runtime.logics.OrOperationIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import scala.Tuple2;
 

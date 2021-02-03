@@ -32,7 +32,8 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+
 import java.util.ArrayList;
 import java.util.List;
 
