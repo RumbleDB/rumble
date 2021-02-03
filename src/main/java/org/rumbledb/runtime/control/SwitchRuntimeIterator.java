@@ -30,7 +30,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.Map;
 

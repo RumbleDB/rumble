@@ -32,7 +32,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+
 import java.util.List;
 
 public class IndexOfFunctionIterator extends HybridRuntimeIterator {

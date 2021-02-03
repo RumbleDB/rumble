@@ -29,8 +29,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.math.BigInteger;

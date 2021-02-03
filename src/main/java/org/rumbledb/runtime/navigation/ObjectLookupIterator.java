@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;

@@ -18,38 +18,35 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
-import org.apache.spark.api.java.function.Function;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
-public class PredicateClosure implements Function<Item, Boolean> {
+public class ObjectLookupClosure implements FlatMapFunction<Item, Item> {
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator expression;
-    private final DynamicContext dynamicContext;
+    private final String key;
 
-    public PredicateClosure(RuntimeIterator expression, DynamicContext dynamicContext) {
-        this.expression = expression;
-        this.dynamicContext = dynamicContext;
+    public ObjectLookupClosure(String key) {
+        this.key = key;
     }
 
-    @Override
-    public Boolean call(Item v1) throws Exception {
-        List<Item> currentItems = new ArrayList<>();
-        currentItems.add(v1);
-        DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
-        dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
+    public Iterator<Item> call(Item arg0) throws Exception {
+        List<Item> results = new ArrayList<Item>();
 
-        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
-        return result;
+        if (!(arg0.isObject())) {
+            return results.iterator();
+        }
 
+        Item item = arg0.getItemByKey(this.key);
+        if (item != null) {
+            results.add(item);
+        }
+        return results.iterator();
     }
-
 };

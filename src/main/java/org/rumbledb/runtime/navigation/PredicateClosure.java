@@ -18,45 +18,38 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
-import scala.Tuple2;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Boolean> {
+public class PredicateClosure implements Function<Item, Boolean> {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator expression;
     private final DynamicContext dynamicContext;
-    private final long contextSize;
 
-    public PredicateClosureZipped(RuntimeIterator expression, DynamicContext dynamicContext, long contextSize) {
+    public PredicateClosure(RuntimeIterator expression, DynamicContext dynamicContext) {
         this.expression = expression;
         this.dynamicContext = dynamicContext;
-        this.contextSize = contextSize;
     }
 
     @Override
-    public Boolean call(Tuple2<Item, Long> v1) throws Exception {
+    public Boolean call(Item v1) throws Exception {
         List<Item> currentItems = new ArrayList<>();
-        currentItems.add(v1._1());
+        currentItems.add(v1);
         DynamicContext dynamicContext = new DynamicContext(this.dynamicContext);
         dynamicContext.getVariableValues().addVariableValue(Name.CONTEXT_ITEM, currentItems);
-        dynamicContext.getVariableValues().setPosition(v1._2() + 1);
-        dynamicContext.getVariableValues().setLast(this.contextSize);
 
-        boolean result = this.expression.getEffectiveBooleanValueOrCheckPosition(
-            dynamicContext,
-            dynamicContext.getVariableValues().getPosition()
-        );
+        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
         return result;
+
     }
 
 };

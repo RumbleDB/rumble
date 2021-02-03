@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.logics;
 
 import java.util.Collections;
 

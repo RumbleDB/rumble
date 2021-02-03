@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.operational.base;
+package org.rumbledb.runtime.misc;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;

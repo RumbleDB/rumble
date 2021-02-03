@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.misc;
 
 import org.joda.time.DateTime;
 import org.joda.time.Instant;
