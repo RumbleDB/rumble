@@ -96,15 +96,21 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
             }
 
+            String path = uri.toString();
+            if (uri.getScheme().contentEquals("file")) {
+                path = path.replaceAll("%20", " ");
+            }
+
+            System.out.println(path);
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
-                    .textFile(uri.toString());
+                    .textFile(path);
             } else {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()
                     .textFile(
-                        uri.toString(),
+                        path,
                         partitions
                     );
             }
