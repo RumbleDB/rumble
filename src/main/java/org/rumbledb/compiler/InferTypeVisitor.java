@@ -25,8 +25,6 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.*;
 import org.rumbledb.types.*;
 import org.rumbledb.types.AtomicItemType;
@@ -426,7 +424,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         : ErrorCode.AtomizationError
             );
         }
-        if (!expressionSequenceType.getItemType().staticallyCastableAs(castedSequenceType.getItemType())) {
+        if (!expressionSequenceType.getItemType().isStaticallyCastableAs(castedSequenceType.getItemType())) {
             throw new UnexpectedStaticTypeException(
                     "It is never possible to cast a "
                         +
@@ -889,7 +887,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     !(leftItemType.isSubtypeOf(AtomicItemType.durationItem)
                         && rightItemType.isSubtypeOf(AtomicItemType.durationItem))
                     &&
-                    !(leftItemType.canBePromotedToString() && rightItemType.canBePromotedToString())
+                    !(leftItemType.canBePromotedTo(AtomicItemType.stringItem) && rightItemType.canBePromotedTo(AtomicItemType.stringItem))
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
@@ -1177,54 +1175,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         System.out.println("visiting Concat expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
-
-    // endregion
-
-    // region quantified
-
-    @Override
-    public StaticContext visitQuantifiedExpression(QuantifiedExpression expression, StaticContext argument) {
-        Expression evaluationExpression = (Expression) expression.getEvaluationExpression();
-        boolean skipTestInference = false;
-        for (QuantifiedExpressionVar var : expression.getVariables()) {
-            visit(var.getExpression(), argument);
-            SequenceType inferredType = var.getExpression().getInferredSequenceType();
-            basicChecks(inferredType, expression.getClass().getSimpleName(), true, false);
-
-            SequenceType varType = var.getActualSequenceType();
-
-            if (inferredType.isEmptySequence()) {
-                skipTestInference = true;
-            } else {
-                // we use the single arity version of the inferred type
-                checkVariableType(
-                    varType,
-                    new SequenceType(inferredType.getItemType()),
-                    evaluationExpression.getStaticContext(),
-                    expression.getClass().getSimpleName(),
-                    var.getVariableName()
-                );
-            }
-        }
-
-        if (!skipTestInference) {
-            visit(evaluationExpression, argument);
-            SequenceType evaluationType = evaluationExpression.getInferredSequenceType();
-            basicChecks(evaluationType, expression.getClass().getSimpleName(), true, false);
-            if (!evaluationType.hasEffectiveBooleanValue()) {
-                throw new UnexpectedStaticTypeException(
-                        "evaluation expression of quantified expression has "
-                            + evaluationType
-                            + " inferred type, which has no effective boolean value"
-                );
-            }
-        }
-
-        expression.setInferredSequenceType(new SequenceType(AtomicItemType.booleanItem));
-        System.out.println("visiting Quantified expression, type set to: " + expression.getInferredSequenceType());
-        return argument;
-    }
-
 
     // endregion
 
