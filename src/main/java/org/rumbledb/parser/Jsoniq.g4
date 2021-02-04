@@ -153,7 +153,9 @@ additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=mu
 
 multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : main_expr=treatExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
+
+isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;
 
 treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 
@@ -246,6 +248,8 @@ keyWords                : Kjsoniq
                         | Kelse
                         | Kgreatest
                         | Kinstance
+                        | Kstatically
+                        | Kis
                         | Kleast
                         | Knot
                         | NullLiteral
@@ -357,6 +361,10 @@ Kto                     : 'to' ;
 Kinstance               : 'instance' ;
 
 Kof                     : 'of' ;
+
+Kstatically             : 'statically' ;
+
+Kis                     : 'is' ;
 
 Ktreat                  : 'treat';
 
