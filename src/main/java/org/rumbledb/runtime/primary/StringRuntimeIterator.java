@@ -47,6 +47,10 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return new NativeClauseContext(nativeClauseContext, '"' + this.item.getStringValue() + '"', AtomicItemType.stringItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                '"' + this.item.getStringValue() + '"',
+                AtomicItemType.stringItem
+        );
     }
 }

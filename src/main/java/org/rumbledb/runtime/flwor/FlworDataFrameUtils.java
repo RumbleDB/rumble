@@ -67,7 +67,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collector;
 
 import static org.apache.spark.sql.functions.col;
 import static org.apache.spark.sql.functions.count;
@@ -342,17 +341,32 @@ public class FlworDataFrameUtils {
         return queryColumnString.toString();
     }
 
-    public static StructField[] recursiveRename(StructType schema, boolean inverse){
+    public static StructField[] recursiveRename(StructType schema, boolean inverse) {
         return Arrays.stream(schema.fields()).map(field -> {
-            String newName = inverse ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`") : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
-            if(field.dataType() instanceof StructType){
+            String newName = inverse
+                ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
+                : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
+            if (field.dataType() instanceof StructType) {
                 StructType castedField = (StructType) field.dataType();
-                return new StructField(newName, new StructType(recursiveRename(castedField, inverse)), field.nullable(), field.metadata());
-            } else if(field.dataType() instanceof ArrayType){
+                return new StructField(
+                        newName,
+                        new StructType(recursiveRename(castedField, inverse)),
+                        field.nullable(),
+                        field.metadata()
+                );
+            } else if (field.dataType() instanceof ArrayType) {
                 ArrayType castedField = (ArrayType) field.dataType();
-                if(castedField.elementType() instanceof StructType){
+                if (castedField.elementType() instanceof StructType) {
                     StructType castedElementType = (StructType) castedField.elementType();
-                    return new StructField(newName, new ArrayType(new StructType(recursiveRename(castedElementType, inverse)), castedField.containsNull()), field.nullable(), field.metadata());
+                    return new StructField(
+                            newName,
+                            new ArrayType(
+                                    new StructType(recursiveRename(castedElementType, inverse)),
+                                    castedField.containsNull()
+                            ),
+                            field.nullable(),
+                            field.metadata()
+                    );
                 } else {
                     return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
                 }
@@ -369,20 +383,20 @@ public class FlworDataFrameUtils {
      * @param inverse if true, perform de-escaping, otherwise escape
      * @return the new schema appropriately escaped/de-escaped
      */
-    public static StructType escapeSchema(StructType schema, boolean inverse){
+    public static StructType escapeSchema(StructType schema, boolean inverse) {
         return new StructType(recursiveRename(schema, inverse));
     }
 
-    public static ItemType mapToJsoniqType(DataType type){
+    public static ItemType mapToJsoniqType(DataType type) {
         // TODO: once type mapping is defined add string field to determine and document properly
-        if(type == DataTypes.StringType) {
+        if (type == DataTypes.StringType) {
             return AtomicItemType.stringItem;
-        } else if(type == DataTypes.IntegerType) {
+        } else if (type == DataTypes.IntegerType) {
             return AtomicItemType.integerItem;
-        } else if(type.equals(DataTypes.createDecimalType())) {
+        } else if (type.equals(DataTypes.createDecimalType())) {
             // TODO: test correct working
             return AtomicItemType.integerItem;
-        } else if(type == DataTypes.DoubleType) {
+        } else if (type == DataTypes.DoubleType) {
             return AtomicItemType.doubleItem;
         } else {
             return null;

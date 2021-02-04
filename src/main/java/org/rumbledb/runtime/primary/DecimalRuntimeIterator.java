@@ -49,6 +49,10 @@ public class DecimalRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return new NativeClauseContext(nativeClauseContext, "" + this.item.getDecimalValue(), AtomicItemType.decimalItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getDecimalValue(),
+                AtomicItemType.decimalItem
+        );
     }
 }

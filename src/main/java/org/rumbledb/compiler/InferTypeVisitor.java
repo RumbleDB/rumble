@@ -887,7 +887,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     !(leftItemType.isSubtypeOf(AtomicItemType.durationItem)
                         && rightItemType.isSubtypeOf(AtomicItemType.durationItem))
                     &&
-                    !(leftItemType.canBePromotedTo(AtomicItemType.stringItem) && rightItemType.canBePromotedTo(AtomicItemType.stringItem))
+                    !(leftItemType.canBePromotedTo(AtomicItemType.stringItem)
+                        && rightItemType.canBePromotedTo(AtomicItemType.stringItem))
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType

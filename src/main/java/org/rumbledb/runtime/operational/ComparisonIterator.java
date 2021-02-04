@@ -477,7 +477,10 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             // TODO: once done type system do proper comparison
-            if(!(leftResult.getResultingType().isNumeric() && rightResult.getResultingType().isNumeric() || leftResult.getResultingType() == rightResult.getResultingType())){
+            if (
+                !(leftResult.getResultingType().isNumeric() && rightResult.getResultingType().isNumeric()
+                    || leftResult.getResultingType() == rightResult.getResultingType())
+            ) {
                 return NativeClauseContext.NoNativeQuery;
             }
 

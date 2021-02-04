@@ -56,6 +56,7 @@ public class ItemType implements Serializable {
     public boolean isFunctionItem() {
         return false;
     }
+
     // Returns the signature of a function item
     public FunctionSignature getSignature() {
         throw new OurBadException("called getSignature on a non-function item");

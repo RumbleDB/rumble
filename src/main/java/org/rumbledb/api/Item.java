@@ -593,6 +593,7 @@ public interface Item extends Serializable, KryoSerializable {
 
     /**
      * Get sparkSql string for the item
+     * 
      * @param context input context
      * @return String representing the item in a sparksql query or null if it is not supported for the item
      */

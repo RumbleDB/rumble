@@ -220,13 +220,17 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         if (newContext != NativeClauseContext.NoNativeQuery) {
             // check if the key has variable dependencies inside the FLWOR expression
             // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1).getVariableDependencies();
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+                .getVariableDependencies();
             // we use nativeClauseContext that contains the top level schema
             DataType schema = nativeClauseContext.getSchema();
             StructType structSchema;
             if (schema instanceof StructType) {
                 structSchema = (StructType) schema;
-                if(Arrays.stream(structSchema.fieldNames()).anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))){
+                if (
+                    Arrays.stream(structSchema.fieldNames())
+                        .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
+                ) {
                     return NativeClauseContext.NoNativeQuery;
                 }
             }
