@@ -20,7 +20,12 @@
 package org.rumbledb.cli;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Level;
+import org.apache.log4j.Logger;
+import org.apache.log4j.PatternLayout;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
@@ -34,6 +39,11 @@ public class Main {
     public static RumbleJLineShell terminal = null;
 
     public static void main(String[] args) throws IOException {
+        ConsoleAppender ca = new ConsoleAppender();
+        ca.setWriter(new OutputStreamWriter(System.out));
+        //Logger.getRootLogger().addAppender(ca);
+        Logger.getLogger("org").setLevel(Level.INFO);
+        Logger.getLogger("akka").setLevel(Level.INFO);
         RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
         try {

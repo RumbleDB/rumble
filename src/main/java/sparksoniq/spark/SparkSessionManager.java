@@ -20,8 +20,6 @@
 
 package sparksoniq.spark;
 
-import org.apache.log4j.Level;
-import org.apache.log4j.Logger;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
@@ -53,7 +51,6 @@ public class SparkSessionManager {
     private static final String APP_NAME = "jsoniq-on-spark";
     public static int COLLECT_ITEM_LIMIT = 0;
     private static SparkSessionManager instance;
-    private static Level LOG_LEVEL = Level.FATAL;
     private SparkConf configuration;
     private SparkSession session;
     private JavaSparkContext javaSparkContext;
@@ -105,8 +102,6 @@ public class SparkSessionManager {
     private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
-            Logger.getLogger("org").setLevel(LOG_LEVEL);
-            Logger.getLogger("akka").setLevel(LOG_LEVEL);
 
             this.session = SparkSession.builder().config(this.configuration).getOrCreate();
         } else {

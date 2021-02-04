@@ -20,6 +20,8 @@
 
 package org.rumbledb.cli;
 
+import org.apache.log4j.ConsoleAppender;
+import org.apache.log4j.Logger;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.DataFrameWriter;
 import org.apache.spark.sql.Dataset;
@@ -45,10 +47,13 @@ import java.util.stream.Collectors;
 
 public class JsoniqQueryExecutor {
     private RumbleRuntimeConfiguration configuration;
+    private Logger logger;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        this.logger = Logger.getLogger("org.rumbledb.cli.JSONiqQueryExecutor");
+        this.logger.addAppender(new ConsoleAppender());
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
@@ -121,10 +126,10 @@ public class JsoniqQueryExecutor {
             Map<String, String> options = this.configuration.getOutputFormatOptions();
             for (String key : options.keySet()) {
                 writer.option(key, options.get(key));
-                System.err.println("[INFO] Writing with option " + key + " : " + options.get(key));
+                this.logger.info("Writing with option " + key + " : " + options.get(key));
             }
             String format = this.configuration.getOutputFormat();
-            System.err.println("[INFO] Writing to format " + format);
+            this.logger.info("Writing to format " + format);
             switch (format) {
                 case "json":
                     writer.json(outputPath);
@@ -156,7 +161,7 @@ public class JsoniqQueryExecutor {
                 System.out.println(String.join("\n", lines));
             }
             if (materializationCount != -1) {
-                System.err.println(
+                this.logger.warn(
                     "Warning! The output sequence contains "
                         + materializationCount
                         + " items but its materialization was capped at "
@@ -164,7 +169,7 @@ public class JsoniqQueryExecutor {
                         + " items. This value can be configured with the --materialization-cap parameter at startup"
                 );
                 if (outputPath == null) {
-                    System.err.println(
+                    this.logger.warn(
                         "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
                     );
                 }
