@@ -62,6 +62,12 @@ public interface XQueryParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitProlog(XQueryParser.PrologContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link XQueryParser#annotatedDecl}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnnotatedDecl(XQueryParser.AnnotatedDeclContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link XQueryParser#defaultNamespaceDecl}.
 	 * @param ctx the parse tree
 	 * @return the visitor result

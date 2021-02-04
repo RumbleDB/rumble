@@ -31,13 +31,13 @@ import org.rumbledb.expressions.typing.CastExpression;
 import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
-import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.*;
@@ -79,17 +79,15 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                     createMetadataFromContext(ctx)
             );
         }
-        //        TODO
-        else return null;
-//        else {
-//            if (ctx.libraryModule() != null) {
-//                return this.visitLibraryModule(ctx.libraryModule());
-//            }
-//            throw new ParsingException(
-//                    "Library module expected, but main module found.",
-//                    createMetadataFromContext(ctx)
-//            );
-//        }
+        else {
+            if (ctx.libraryModule() != null) {
+                return this.visitLibraryModule(ctx.libraryModule());
+            }
+            throw new ParsingException(
+                    "Library module expected, but main module found.",
+                    createMetadataFromContext(ctx)
+            );
+        }
     }
 
     private ExceptionMetadata createMetadataFromContext(ParserRuleContext ctx) {
@@ -113,141 +111,238 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         return module;
     }
 
-//TODO
-//    @Override
-//    public Node visitLibraryModule(JsoniqParser.LibraryModuleContext ctx) {
-//        String prefix = ctx.NCName().getText();
-//        String namespace = processURILiteral(ctx.uriLiteral());
-//        if (namespace.equals("")) {
-//            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
-//        }
-//        URI resolvedURI = FileSystemUtil.resolveURI(
-//                this.moduleContext.getStaticBaseURI(),
-//                namespace,
-//                generateMetadata(ctx.getStop())
-//        );
-//        bindNamespace(
-//                prefix,
-//                resolvedURI.toString(),
-//                generateMetadata(ctx.getStop())
-//        );
-//
-//        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
-//        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
-//        module.setStaticContext(this.moduleContext);
-//        return module;
-//    }
+    // region Library
 
-    // TODO
-//    @Override
-//    public Node visitProlog(XQueryParser.PrologContext ctx) {
-//        // bind namespaces
-//        for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
-//            this.processNamespaceDecl(namespace);
-//        }
-//        List<XQueryParser.SetterContext> setters = ctx.setter();
-//        boolean emptyOrderSet = false;
-//        boolean defaultCollationSet = false;
-//        for (XQueryParser.SetterContext setterContext : setters) {
-//            if (setterContext.emptyOrderDecl() != null) {
-//                if (emptyOrderSet) {
-//                    throw new MoreThanOneEmptyOrderDeclarationException(
-//                            "The empty order was already set.",
-//                            createMetadataFromContext(setterContext.emptyOrderDecl())
-//                    );
-//                }
-//                processEmptySequenceOrder(setterContext.emptyOrderDecl());
-//                emptyOrderSet = true;
-//                continue;
-//            }
-//            if (setterContext.defaultCollationDecl() != null) {
-//                if (defaultCollationSet) {
-//                    throw new DefaultCollationException(
-//                            "The default collation was already set.",
-//                            createMetadataFromContext(setterContext.defaultCollationDecl())
-//                    );
-//                }
-//                processDefaultCollation(setterContext.defaultCollationDecl());
-//                defaultCollationSet = true;
-//                continue;
-//            }
-//            throw new UnsupportedFeatureException(
-//                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
-//                    createMetadataFromContext(setterContext)
-//            );
-//        }
-//        List<LibraryModule> libraryModules = new ArrayList<>();
-//        Set<String> namespaces = new HashSet<>();
-//        for (XQueryParser.ModuleImportContext namespace : ctx.moduleImport()) {
-//            LibraryModule libraryModule = this.processModuleImport(namespace);
-//            libraryModules.add(libraryModule);
-//            if (namespaces.contains(libraryModule.getNamespace())) {
-//                throw new DuplicateModuleTargetNamespaceException(
-//                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
-//                        createMetadataFromContext(namespace)
-//                );
-//            }
-//            namespaces.add(libraryModule.getNamespace());
-//        }
-//
-//        // parse variables and function
-//        List<VariableDeclaration> globalVariables = new ArrayList<>();
-//        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
-//        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
-//            if (annotatedDeclaration.varDecl() != null) {
-//                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
-//                        annotatedDeclaration.varDecl()
-//                );
-//                if (!this.isMainModule) {
-//                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
-//                    String variableNamespace = variableDeclaration.getVariableName().getNamespace();
-//                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
-//                        throw new NamespaceDoesNotMatchModuleException(
-//                                "Variable "
-//                                        + variableDeclaration.getVariableName().getLocalName()
-//                                        + ": namespace "
-//                                        + variableNamespace
-//                                        + " must match module namespace "
-//                                        + moduleNamespace,
-//                                generateMetadata(annotatedDeclaration.getStop())
-//                        );
-//                    }
-//                }
-//                globalVariables.add(variableDeclaration);
-//            } else if (annotatedDeclaration.functionDecl() != null) {
-//                InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
-//                        annotatedDeclaration.functionDecl()
-//                );
-//                if (!this.isMainModule) {
-//                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
-//                    String functionNamespace = inlineFunctionExpression.getName().getNamespace();
-//                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
-//                        throw new NamespaceDoesNotMatchModuleException(
-//                                "Function "
-//                                        + inlineFunctionExpression.getName().getLocalName()
-//                                        + ": namespace "
-//                                        + functionNamespace
-//                                        + " must match module namespace "
-//                                        + moduleNamespace,
-//                                generateMetadata(annotatedDeclaration.getStop())
-//                        );
-//                    }
-//                }
-//                functionDeclarations.add(
-//                        new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
-//                );
-//            }
-//        }
-//        for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
-//            this.visitModuleImport(module);
-//        }
-//
-//        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
-//        for (LibraryModule libraryModule : libraryModules) {
-//            prolog.addImportedModule(libraryModule);
-//        }
-//        return prolog;
+    @Override
+    public Node visitLibraryModule(XQueryParser.LibraryModuleContext ctx) {
+        String prefix = ctx.moduleDecl().ncName().getText();
+        String namespace = processURILiteral(ctx.moduleDecl().uriLiteral());
+        if (namespace.equals("")) {
+            throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
+        }
+        URI resolvedURI = FileSystemUtil.resolveURI(
+                this.moduleContext.getStaticBaseURI(),
+                namespace,
+                generateMetadata(ctx.getStop())
+        );
+        bindNamespace(
+                prefix,
+                resolvedURI.toString(),
+                generateMetadata(ctx.getStop())
+        );
 
+        Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
+        LibraryModule module = new LibraryModule(prolog, resolvedURI.toString(), createMetadataFromContext(ctx));
+        module.setStaticContext(this.moduleContext);
+        return module;
+    }
+
+    public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
+        boolean success = this.moduleContext.bindNamespace(
+                prefix,
+                namespace
+        );
+        if (!success) {
+            throw new NamespacePrefixBoundTwiceException(
+                    "Prefix " + prefix + " is bound twice.",
+                    metadata
+            );
+        }
+    }
+
+
+    @Override
+    public Node visitProlog(XQueryParser.PrologContext ctx) {
+        // bind namespaces
+        for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
+            this.processNamespaceDecl(namespace);
+        }
+        List<XQueryParser.SetterContext> setters = ctx.setter();
+        boolean emptyOrderSet = false;
+        boolean defaultCollationSet = false;
+        for (XQueryParser.SetterContext setterContext : setters) {
+            if (setterContext.emptyOrderDecl() != null) {
+                if (emptyOrderSet) {
+                    throw new MoreThanOneEmptyOrderDeclarationException(
+                            "The empty order was already set.",
+                            createMetadataFromContext(setterContext.emptyOrderDecl())
+                    );
+                }
+                processEmptySequenceOrder(setterContext.emptyOrderDecl());
+                emptyOrderSet = true;
+                continue;
+            }
+            if (setterContext.defaultCollationDecl() != null) {
+                if (defaultCollationSet) {
+                    throw new DefaultCollationException(
+                            "The default collation was already set.",
+                            createMetadataFromContext(setterContext.defaultCollationDecl())
+                    );
+                }
+                processDefaultCollation(setterContext.defaultCollationDecl());
+                defaultCollationSet = true;
+                continue;
+            }
+            throw new UnsupportedFeatureException(
+                    "Setters are not supported yet, except for empty sequence ordering and default collations.",
+                    createMetadataFromContext(setterContext)
+            );
+        }
+        List<LibraryModule> libraryModules = new ArrayList<>();
+        Set<String> namespaces = new HashSet<>();
+        for (XQueryParser.ModuleImportContext namespace : ctx.moduleImport()) {
+            LibraryModule libraryModule = this.processModuleImport(namespace);
+            libraryModules.add(libraryModule);
+            if (namespaces.contains(libraryModule.getNamespace())) {
+                throw new DuplicateModuleTargetNamespaceException(
+                        "Duplicate module target namespace: " + libraryModule.getNamespace(),
+                        createMetadataFromContext(namespace)
+                );
+            }
+            namespaces.add(libraryModule.getNamespace());
+        }
+
+        // parse variables and function
+        List<VariableDeclaration> globalVariables = new ArrayList<>();
+        List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
+        for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
+            if (annotatedDeclaration.varDecl() != null) {
+                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
+                        annotatedDeclaration.varDecl()
+                );
+                if (!this.isMainModule) {
+                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
+                    String variableNamespace = variableDeclaration.getVariableName().getNamespace();
+                    if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
+                        throw new NamespaceDoesNotMatchModuleException(
+                                "Variable "
+                                        + variableDeclaration.getVariableName().getLocalName()
+                                        + ": namespace "
+                                        + variableNamespace
+                                        + " must match module namespace "
+                                        + moduleNamespace,
+                                generateMetadata(annotatedDeclaration.getStop())
+                        );
+                    }
+                }
+                globalVariables.add(variableDeclaration);
+            } else if (annotatedDeclaration.functionDecl() != null) {
+                InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
+                        annotatedDeclaration.functionDecl()
+                );
+                if (!this.isMainModule) {
+                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
+                    String functionNamespace = inlineFunctionExpression.getName().getNamespace();
+                    if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
+                        throw new NamespaceDoesNotMatchModuleException(
+                                "Function "
+                                        + inlineFunctionExpression.getName().getLocalName()
+                                        + ": namespace "
+                                        + functionNamespace
+                                        + " must match module namespace "
+                                        + moduleNamespace,
+                                generateMetadata(annotatedDeclaration.getStop())
+                        );
+                    }
+                }
+                functionDeclarations.add(
+                        new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                );
+            } else if (annotatedDeclaration.contextItemDecl() != null){
+                // TODO
+            } else if (annotatedDeclaration.optionDecl() != null){
+                // TODO
+            }
+        }
+
+        for (XQueryParser.ModuleImportContext module : ctx.moduleImport()) {
+            this.visitModuleImport(module);
+        }
+
+        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        for (LibraryModule libraryModule : libraryModules) {
+            prolog.addImportedModule(libraryModule);
+        }
+        return prolog;
+    }
+
+    public void processNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
+        bindNamespace(
+                ctx.ncName().getText(),
+                processURILiteral(ctx.uriLiteral()),
+                generateMetadata(ctx.getStop())
+        );
+    }
+
+    private void processEmptySequenceOrder(XQueryParser.EmptyOrderDeclContext ctx) {
+        if (ctx.type.getText().equals("least")) {
+            this.moduleContext.setEmptySequenceOrderLeast(true);
+        }
+        if (ctx.type.getText().equals("greatest")) {
+            this.moduleContext.setEmptySequenceOrderLeast(false);
+        }
+    }
+
+    private void processDefaultCollation(XQueryParser.DefaultCollationDeclContext ctx) {
+        String uri = processURILiteral(ctx.uriLiteral());
+        if (!uri.equals(Name.DEFAULT_COLLATION_NS)) {
+            throw new DefaultCollationException(
+                    "Unknown collation: " + uri,
+                    createMetadataFromContext(ctx.uriLiteral())
+            );
+        }
+    }
+
+    public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
+        String namespace = processURILiteral(ctx.nsURI);
+        URI resolvedURI = FileSystemUtil.resolveURI(
+                this.moduleContext.getStaticBaseURI(),
+                namespace,
+                generateMetadata(ctx.getStop())
+        );
+        LibraryModule libraryModule = null;
+        try {
+            libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
+                    resolvedURI,
+                    this.configuration,
+                    this.moduleContext,
+                    generateMetadata(ctx.getStop())
+            );
+            if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
+                throw new ModuleNotFoundException(
+                        "A module with namespace "
+                                + resolvedURI.toString()
+                                + " was not found. The namespace of the module at this location was: "
+                                + libraryModule.getNamespace(),
+                        generateMetadata(ctx.getStop())
+                );
+            }
+        } catch (IOException e) {
+            RumbleException exception = new ModuleNotFoundException(
+                    "I/O error while attempting to import a module: " + namespace + " Cause: " + e.getMessage(),
+                    generateMetadata(ctx.getStop())
+            );
+            exception.initCause(e);
+            throw exception;
+        } catch (CannotRetrieveResourceException e) {
+            RumbleException exception = new ModuleNotFoundException(
+                    "Module not found: " + namespace + " Cause: " + e.getMessage(),
+                    generateMetadata(ctx.getStop())
+            );
+            exception.initCause(e);
+            throw exception;
+        }
+        if (ctx.ncName() != null) {
+            bindNamespace(
+                    ctx.ncName().getText(),
+                    resolvedURI.toString(),
+                    generateMetadata(ctx.getStop())
+            );
+        }
+        return libraryModule;
+    }
+
+    // endregion
 
     // region expr
     @Override

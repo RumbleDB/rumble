@@ -76,6 +76,13 @@ public class XQueryParserBaseVisitor<T> extends AbstractParseTreeVisitor<T> impl
 	 * <p>The default implementation returns the result of calling
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
+	@Override public T visitAnnotatedDecl(XQueryParser.AnnotatedDeclContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
 	@Override public T visitDefaultNamespaceDecl(XQueryParser.DefaultNamespaceDeclContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}

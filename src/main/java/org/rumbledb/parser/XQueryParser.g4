@@ -35,12 +35,19 @@ queryBody: expr ;
 
 libraryModule: moduleDecl prolog;
 
-moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uri=stringLiteral SEMICOLON ;
+// uri=stringLiteral replaced with uriLiteral
+moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uriLiteral SEMICOLON ;
 
 // MODULE PROLOG ///////////////////////////////////////////////////////////////
 
 prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
-        ( xqDocComment? (varDecl | functionDecl | contextItemDecl | optionDecl) SEMICOLON)* ;
+        ( xqDocComment? annotatedDecl SEMICOLON)* ;
+
+// Introduced annotatedDecl as intermediate for easier handling
+annotatedDecl: varDecl
+             | functionDecl
+             | contextItemDecl
+             | optionDecl;
 
 defaultNamespaceDecl: KW_DECLARE KW_DEFAULT
                       type=(KW_ELEMENT | KW_FUNCTION)
@@ -259,9 +266,9 @@ additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicat
 
 multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
-unionExpr: lhs=intersectExceptExpr ( (KW_UNION | VBAR) rhs+=intersectExceptExpr)* ;
+unionExpr: main_expr=intersectExceptExpr ( (KW_UNION | VBAR) rhs+=intersectExceptExpr)* ;
 
-intersectExceptExpr: lhs=instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) rhs+=instanceOfExpr)* ;
+intersectExceptExpr: main_expr=instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) rhs+=instanceOfExpr)* ;
 
 instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
