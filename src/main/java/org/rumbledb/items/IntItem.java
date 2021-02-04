@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -261,8 +262,8 @@ public class IntItem extends AtomicItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return "" + this.value;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, "" + this.value, AtomicItemType.integerItem);
     }
 
     @Override

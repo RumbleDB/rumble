@@ -8,6 +8,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
@@ -135,7 +136,7 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

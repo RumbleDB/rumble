@@ -29,6 +29,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.AtomicItemType;
 
 public class NotOperationIterator extends LocalRuntimeIterator {
 
@@ -61,6 +62,6 @@ public class NotOperationIterator extends LocalRuntimeIterator {
         }
 
         String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, AtomicItemType.booleanItem);
     }
 }

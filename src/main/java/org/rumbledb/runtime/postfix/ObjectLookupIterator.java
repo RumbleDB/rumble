@@ -244,6 +244,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 newContext.setResultingQuery(newContext.getResultingQuery() + ".`" + key + "`");
                 StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
                 newContext.setSchema(field.dataType());
+                newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(field.dataType()));
             } else {
                 return NativeClauseContext.NoNativeQuery;
             }

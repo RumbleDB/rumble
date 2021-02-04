@@ -1032,11 +1032,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
-            String[] fields = rows.schema().fieldNames();
             
             // escape backticks (`)
             rows = rows.sparkSession().createDataFrame(rows.rdd(), FlworDataFrameUtils.escapeSchema(rows.schema(), false));
 
+            String[] fields = rows.schema().fieldNames();
             rows.createOrReplaceTempView("assignment");
             String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
             df = rows.sparkSession()

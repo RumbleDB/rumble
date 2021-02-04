@@ -17,6 +17,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -519,6 +520,7 @@ public interface Item extends Serializable, KryoSerializable {
      * Get sparkSql string for the item
      * 
      * @return String representing the item in a sparksql query or null if it is not supported for the item
+     * @param context
      */
-    String getSparkSqlQuery();
+    NativeClauseContext generateNativeQuery(NativeClauseContext context);
 }

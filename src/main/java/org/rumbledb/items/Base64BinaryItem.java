@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
@@ -208,7 +209,7 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

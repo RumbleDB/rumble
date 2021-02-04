@@ -37,6 +37,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -142,7 +143,9 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
                 // let control to UDF when what we are unboxing is not an array
                 return NativeClauseContext.NoNativeQuery;
             }
-            newContext.setSchema(((ArrayType) schema).elementType());
+            ArrayType arraySchema = (ArrayType) schema;
+            newContext.setSchema(arraySchema.elementType());
+            newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(arraySchema.elementType()));
             List<String> lateralViewPart = newContext.getLateralViewPart();
             if (lateralViewPart.size() == 0) {
                 lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");

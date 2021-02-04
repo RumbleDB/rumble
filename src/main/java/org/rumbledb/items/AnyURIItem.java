@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
@@ -143,7 +144,7 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

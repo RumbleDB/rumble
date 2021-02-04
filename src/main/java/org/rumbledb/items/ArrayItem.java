@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
@@ -159,7 +160,7 @@ public class ArrayItem extends JsonItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

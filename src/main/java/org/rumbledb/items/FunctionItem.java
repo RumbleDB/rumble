@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.*;
 
 import java.io.ByteArrayInputStream;
@@ -341,7 +342,7 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

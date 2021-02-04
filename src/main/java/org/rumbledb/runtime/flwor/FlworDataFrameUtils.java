@@ -28,10 +28,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
-import org.apache.spark.sql.types.ArrayType;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.*;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -56,6 +53,7 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -335,8 +333,7 @@ public class FlworDataFrameUtils {
             queryColumnString.append(comma);
             comma = ",";
             queryColumnString.append("`");
-            // replace any backtick (`) with uuid
-            queryColumnString.append(var.replace("`", backtickEscape));
+            queryColumnString.append(var);
             queryColumnString.append("`");
         }
         if (trailingComma) {
@@ -374,6 +371,22 @@ public class FlworDataFrameUtils {
      */
     public static StructType escapeSchema(StructType schema, boolean inverse){
         return new StructType(recursiveRename(schema, inverse));
+    }
+
+    public static ItemType mapToJsoniqType(DataType type){
+        // TODO: once type mapping is defined add string field to determine and document properly
+        if(type == DataTypes.StringType) {
+            return AtomicItemType.stringItem;
+        } else if(type == DataTypes.IntegerType) {
+            return AtomicItemType.integerItem;
+        } else if(type.equals(DataTypes.createDecimalType())) {
+            // TODO: test correct working
+            return AtomicItemType.integerItem;
+        } else if(type == DataTypes.DoubleType) {
+            return AtomicItemType.doubleItem;
+        } else {
+            return null;
+        }
     }
 
     /**

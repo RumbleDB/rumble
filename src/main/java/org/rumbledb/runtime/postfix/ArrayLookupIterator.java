@@ -36,6 +36,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -183,6 +184,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             ArrayType arraySchema = (ArrayType) schema;
             newContext.setSchema(arraySchema.elementType());
+            newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(arraySchema.elementType()));
             newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
         }
         return newContext;

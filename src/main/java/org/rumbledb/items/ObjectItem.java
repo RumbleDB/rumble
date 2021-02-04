@@ -27,6 +27,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.ItemType;
@@ -229,8 +230,8 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
     }
 
 }

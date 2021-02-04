@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.AtomicItemType;
 
 import java.math.BigDecimal;
 
@@ -62,6 +63,6 @@ public class DecimalRuntimeIterator extends AtomicRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return new NativeClauseContext(nativeClauseContext, "" + this.item.getDecimalValue());
+        return new NativeClauseContext(nativeClauseContext, "" + this.item.getDecimalValue(), AtomicItemType.decimalItem);
     }
 }

@@ -37,6 +37,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
@@ -285,8 +286,8 @@ public class StringItem implements Item {
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return '"' + this.value + '"';
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, '"' + this.value + '"', AtomicItemType.stringItem);
     }
 
     @Override

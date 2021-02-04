@@ -32,6 +32,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.AtomicItemType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -195,6 +196,11 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
                 return NativeClauseContext.NoNativeQuery;
             }
 
+            // TODO: once done type system do proper comparison
+            if(!(leftResult.getResultingType().isNumeric() && rightResult.getResultingType().isNumeric() || leftResult.getResultingType() == rightResult.getResultingType())){
+                return NativeClauseContext.NoNativeQuery;
+            }
+
             String operator = " = ";
             switch (this.comparisonOperator.name()) {
                 case "eq":
@@ -217,7 +223,7 @@ public class ComparisonOperationIterator extends LocalRuntimeIterator {
                     break;
             }
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
-            return new NativeClauseContext(nativeClauseContext, query);
+            return new NativeClauseContext(nativeClauseContext, query, AtomicItemType.booleanItem);
         } else {
             return NativeClauseContext.NoNativeQuery;
         }
