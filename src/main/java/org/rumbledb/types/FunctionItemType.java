@@ -15,14 +15,24 @@ public class FunctionItemType extends ItemType {
         }
         this.isGeneric = false;
         this.signature = signature;
-        this.name = new Name(Name.XS_NS, "xs", signature.toString());
+        this.name = null;
     }
 
     // we have a parameter because the empty one is public and inherited
     private FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
-        this.name = new Name(Name.XS_NS, "xs", "function(*)");
+        this.name = null;
+    }
+
+    @Override
+    public Name getName() {
+        throw new UnsupportedOperationException("function types have no name");
+    }
+
+    @Override
+    public String toString() {
+        return this.isGeneric ? "function(*)" : this.signature.toString();
     }
 
     @Override
@@ -37,10 +47,10 @@ public class FunctionItemType extends ItemType {
 
     @Override
     public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
+        if (!(other instanceof FunctionItemType)) {
             return false;
         }
-        return this.name.toString().equals(other.toString());
+        return this.toString().equals(other.toString());
     }
 
     @Override

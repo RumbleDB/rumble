@@ -67,9 +67,6 @@ public class AtomicItemType extends ItemType implements Serializable {
             new Name(Name.JS_NS, "js", "array")
     );
     public static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
-    public static final AtomicItemType functionItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "function")
-    );
 
     private static List<ItemType> builtInItemTypes = Arrays.asList(
         objectItem,
@@ -93,8 +90,7 @@ public class AtomicItemType extends ItemType implements Serializable {
         hexBinaryItem,
         anyURIItem,
         base64BinaryItem,
-        item,
-        functionItem
+        item
     );
 
     public AtomicItemType() {
