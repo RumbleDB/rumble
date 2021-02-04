@@ -533,7 +533,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             // special check to avoid ordering by an integer constant in an ordering clause
             // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
             // and jsoniq (order by a costant, so no actual ordering is performed)
-            if (nativeQuery.getResultingType() == AtomicItemType.integerItem) {
+            if (nativeQuery.getResultingType() == AtomicItemType.integerItem || nativeQuery.getResultingType() == AtomicItemType.intItem) {
                 orderSql.append('"');
                 orderSql.append(nativeQuery.getResultingQuery());
                 orderSql.append('"');
