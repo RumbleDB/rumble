@@ -20,7 +20,8 @@ package org.rumbledb.parser;
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
-module : xqDocComment? versionDecl? xqDocComment? (libraryModule | (mainModule (SEMICOLON versionDecl? mainModule)* )) ;
+// According to https://www.w3.org/TR/xquery-31/#id-query-prolog, we only have single mainModule
+module : xqDocComment? versionDecl? xqDocComment? (libraryModule | mainModule) ;
 
 xqDocComment: XQDocComment ;
 
@@ -150,8 +151,8 @@ intermediateClause: initialClause
 
 forClause: KW_FOR vars+=forBinding (COMMA vars+=forBinding)* ;
 
-forBinding: DOLLAR name=varName type=typeDeclaration? allowingEmpty? positionalVar?
-        KW_IN in=exprSingle ;
+forBinding: DOLLAR name=varName seq=typeDeclaration? flag=allowingEmpty? at=positionalVar?
+        KW_IN ex=exprSingle ;
 
 allowingEmpty: KW_ALLOWING KW_EMPTY;
 
@@ -185,7 +186,7 @@ whereClause: KW_WHERE whereExpr=exprSingle ;
 
 groupByClause: KW_GROUP KW_BY groupingSpecList ;
 
-groupingSpecList: groupingSpec (COMMA groupingSpec)* ;
+groupingSpecList: vars+=groupingSpec (COMMA vars+=groupingSpec)* ;
 
 groupingSpec: DOLLAR name=varName
                     (type=typeDeclaration? COLON_EQ exprSingle)?
@@ -193,39 +194,39 @@ groupingSpec: DOLLAR name=varName
 
 orderByClause: KW_STABLE? KW_ORDER KW_BY specs+=orderSpec (COMMA specs+=orderSpec)* ;
 
-orderSpec: value=exprSingle
-           order=(KW_ASCENDING | KW_DESCENDING)?
-           (KW_EMPTY empty=(KW_GREATEST|KW_LEAST))?
-           (KW_COLLATION collation=uriLiteral)?
+orderSpec: ex=exprSingle
+           (KW_ASCENDING | desc=KW_DESCENDING)?
+           (KW_EMPTY (gr=KW_GREATEST | ls=KW_LEAST))?
+           (KW_COLLATION uril=uriLiteral)?
          ;
 
 returnClause: KW_RETURN exprSingle ;
 
-quantifiedExpr: quantifier=(KW_SOME | KW_EVERY) quantifiedVar (COMMA quantifiedVar)*
+quantifiedExpr: (so=KW_SOME | ev=KW_EVERY) vars+=quantifiedVar (COMMA vars+=quantifiedVar)*
                 KW_SATISFIES value=exprSingle ;
 
 quantifiedVar: DOLLAR varName typeDeclaration? KW_IN exprSingle ;
 
-switchExpr: KW_SWITCH LPAREN expr RPAREN
-                switchCaseClause+
-                KW_DEFAULT KW_RETURN returnExpr=exprSingle ;
+switchExpr: KW_SWITCH LPAREN cond=expr RPAREN
+                cases+=switchCaseClause+
+                KW_DEFAULT KW_RETURN def=exprSingle ;
 
-switchCaseClause: (KW_CASE switchCaseOperand)+ KW_RETURN exprSingle ;
+switchCaseClause: (KW_CASE cond+=switchCaseOperand)+ KW_RETURN ret=exprSingle ;
 
 switchCaseOperand: exprSingle ;
 
-typeswitchExpr: KW_TYPESWITCH LPAREN expr RPAREN
-                clauses=caseClause+
-                KW_DEFAULT (DOLLAR var=varName)? KW_RETURN returnExpr=exprSingle ;
+typeswitchExpr: KW_TYPESWITCH LPAREN cond=expr RPAREN
+                cses+=caseClause+
+                KW_DEFAULT (DOLLAR var_ref=varName)? KW_RETURN def=exprSingle ;
 
-caseClause: KW_CASE (DOLLAR var=varName KW_AS)? type=sequenceUnionType KW_RETURN
-            returnExpr=exprSingle ;
+caseClause: KW_CASE (DOLLAR var_ref=varName KW_AS)? union=sequenceUnionType KW_RETURN
+            ret=exprSingle ;
 
-sequenceUnionType: sequenceType ( VBAR sequenceType )* ;
+sequenceUnionType: seq+=sequenceType ( VBAR seq+=sequenceType )* ;
 
-ifExpr: KW_IF LPAREN conditionExpr=expr RPAREN
-        KW_THEN thenExpr=exprSingle
-        KW_ELSE elseExpr=exprSingle ;
+ifExpr: KW_IF LPAREN test_condition=expr RPAREN
+        KW_THEN branch=exprSingle
+        KW_ELSE else_branch=exprSingle ;
 
 tryCatchExpr: tryClause catchClause+ ;
 tryClause: KW_TRY enclosedTryTargetExpression ;
@@ -256,14 +257,11 @@ rangeExpr: main_expr=additiveExpr (KW_TO rhs+=additiveExpr)? ;
 
 additiveExpr: main_expr=multiplicativeExpr ( op+=(PLUS | MINUS) rhs+=multiplicativeExpr )* ;
 
-multiplicativeExpr: main_expr=instanceOfExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=instanceOfExpr )* ;
+multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
 
-// TODO
-//multiplicativeExpr: main_expr=unionExpr ( op+=(STAR | KW_DIV | KW_IDIV | KW_MOD) rhs+=unionExpr )* ;
+unionExpr: lhs=intersectExceptExpr ( (KW_UNION | VBAR) rhs+=intersectExceptExpr)* ;
 
-//unionExpr: intersectExceptExpr ( (KW_UNION | VBAR) intersectExceptExpr)* ;
-
-//intersectExceptExpr: instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) instanceOfExpr)* ;
+intersectExceptExpr: lhs=instanceOfExpr ( (KW_INTERSECT | KW_EXCEPT) rhs+=instanceOfExpr)* ;
 
 instanceOfExpr: main_expr=treatExpr ( KW_INSTANCE KW_OF seq=sequenceType)? ;
 
@@ -342,7 +340,7 @@ wildcard: STAR            # allNames
 
 postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
-// TODO
+// TODO check if this is okay or can I just args+=argument and then again args+=argument
 argumentList: LPAREN (args+=argument COMMA?)* RPAREN ;
 
 //argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
@@ -506,7 +504,7 @@ mapConstructorEntry: mapKey=exprSingle (COLON | COLON_EQ) mapValue=exprSingle ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
-// TODO
+// TODO check if this is okay
 //squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
 
 squareArrayConstructor: LBRACKET expr? RBRACKET ;

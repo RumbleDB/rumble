@@ -87,6 +87,7 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
+        // TODO PEEK!, do not read it, the first char of stream and then decide whether to instantiate XQUery or JSONiq
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());

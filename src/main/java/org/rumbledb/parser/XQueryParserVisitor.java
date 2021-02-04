@@ -554,6 +554,18 @@ public interface XQueryParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitMultiplicativeExpr(XQueryParser.MultiplicativeExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link XQueryParser#unionExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitUnionExpr(XQueryParser.UnionExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link XQueryParser#intersectExceptExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitIntersectExceptExpr(XQueryParser.IntersectExceptExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link XQueryParser#instanceOfExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
