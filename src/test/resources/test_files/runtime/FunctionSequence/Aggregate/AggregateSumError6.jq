@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="FORG0006"; ErrorMetadata="LINE:2:COLUMN:0:" :)
+(:JIQS: ShouldCrash; ErrorCode="XPTY0004"; ErrorMetadata="LINE:2:COLUMN:5:" :)
 sum((2, 3, {"a": 4}))
 
-(: non-numeric error :)
+(: non-atomic error :)

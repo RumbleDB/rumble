@@ -1,41 +1,143 @@
 package org.rumbledb.types;
 
 import java.io.Serializable;
+import java.util.Arrays;
+import java.util.List;
+
+import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 
 public class AtomicItemType extends ItemType implements Serializable {
 
+    private static final long serialVersionUID = 1L;
+
     // TODO: extract array and object into its own types
-    public static final AtomicItemType atomicItem = new AtomicItemType("atomic");
-    public static final AtomicItemType stringItem = new AtomicItemType("string");
-    public static final AtomicItemType integerItem = new AtomicItemType("integer");
-    public static final AtomicItemType decimalItem = new AtomicItemType("decimal");
-    public static final AtomicItemType doubleItem = new AtomicItemType("double");
-    public static final AtomicItemType booleanItem = new AtomicItemType("boolean");
-    public static final AtomicItemType nullItem = new AtomicItemType("null");
-    public static final AtomicItemType durationItem = new AtomicItemType("duration");
-    public static final AtomicItemType yearMonthDurationItem = new AtomicItemType("yearMonthDuration");
-    public static final AtomicItemType dayTimeDurationItem = new AtomicItemType("dayTimeDuration");
-    public static final AtomicItemType dateTimeItem = new AtomicItemType("dateTime");
-    public static final AtomicItemType dateItem = new AtomicItemType("date");
-    public static final AtomicItemType timeItem = new AtomicItemType("time");
-    public static final AtomicItemType hexBinaryItem = new AtomicItemType("hexBinary");
-    public static final AtomicItemType anyURIItem = new AtomicItemType("anyURI");
-    public static final AtomicItemType base64BinaryItem = new AtomicItemType("base64Binary");
-    public static final AtomicItemType JSONItem = new AtomicItemType("json-item");
-    public static final AtomicItemType objectItem = new AtomicItemType("object");
-    public static final AtomicItemType arrayItem = new AtomicItemType("array");
+    public static final AtomicItemType atomicItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "atomic")
+    );
+    public static final AtomicItemType stringItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "string")
+    );
+    public static final AtomicItemType integerItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "integer")
+    );
+    public static final AtomicItemType decimalItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "decimal")
+    );
+    public static final AtomicItemType doubleItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "double")
+    );
+    public static final AtomicItemType floatItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "float")
+    );
+    public static final AtomicItemType booleanItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "boolean")
+    );
+    public static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
+    public static final AtomicItemType durationItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "duration")
+    );
+    public static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "yearMonthDuration")
+    );
+    public static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dayTimeDuration")
+    );
+    public static final AtomicItemType dateTimeItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTime")
+    );
+    public static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
+    public static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
+    public static final AtomicItemType hexBinaryItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "hexBinary")
+    );
+    public static final AtomicItemType anyURIItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "anyURI")
+    );
+    public static final AtomicItemType base64BinaryItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "base64Binary")
+    );
+    public static final AtomicItemType JSONItem = new AtomicItemType(
+            new Name(Name.JS_NS, "xs", "json-item")
+    );
+    public static final AtomicItemType objectItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "object")
+    );
+    public static final AtomicItemType arrayItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "array")
+    );
+    public static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
+    public static final AtomicItemType functionItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "function")
+    );
+
+    private static List<ItemType> builtInItemTypes = Arrays.asList(
+        objectItem,
+        atomicItem,
+        stringItem,
+        integerItem,
+        intItem,
+        decimalItem,
+        doubleItem,
+        floatItem,
+        booleanItem,
+        arrayItem,
+        nullItem,
+        JSONItem,
+        durationItem,
+        yearMonthDurationItem,
+        dayTimeDurationItem,
+        dateTimeItem,
+        dateItem,
+        timeItem,
+        hexBinaryItem,
+        anyURIItem,
+        base64BinaryItem,
+        item,
+        functionItem
+    );
 
     public AtomicItemType() {
     }
 
-    private AtomicItemType(String name) {
+    private AtomicItemType(Name name) {
         super(name);
+    }
+
+    public static boolean typeExists(Name name) {
+        for (int i = 0; i < builtInItemTypes.size(); ++i) {
+            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+                if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
+                    return true;
+                }
+            } else {
+                if (builtInItemTypes.get(i).getName().equals(name)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    public static ItemType getItemTypeByName(Name name) {
+        for (int i = 0; i < builtInItemTypes.size(); ++i) {
+            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
+                if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
+                    return builtInItemTypes.get(i);
+                }
+            } else {
+                if (builtInItemTypes.get(i).getName().equals(name)) {
+                    return builtInItemTypes.get(i);
+                }
+            }
+        }
+        throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
     }
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(ItemType.item)) {
+        if (superType.equals(AtomicItemType.item)) {
             return true;
         } else if (superType.equals(JSONItem)) {
             return this.equals(objectItem)
@@ -63,7 +165,7 @@ public class AtomicItemType extends ItemType implements Serializable {
                 || this.equals(dayTimeDurationItem)
                 || this.equals(durationItem);
         } else if (superType.equals(decimalItem)) {
-            return this.equals(integerItem) || this.equals(decimalItem);
+            return this.equals(integerItem) || this.equals(decimalItem) || this.equals(intItem);
         }
         return this.equals(superType);
     }
@@ -81,12 +183,12 @@ public class AtomicItemType extends ItemType implements Serializable {
         } else if (this.isSubtypeOf(JSONItem) && other.isSubtypeOf(JSONItem)) {
             return JSONItem;
         } else {
-            return ItemType.item;
+            return AtomicItemType.item;
         }
     }
 
     @Override
-    public boolean staticallyCastableAs(ItemType other) {
+    public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
         if (this.equals(other))
             return true;
@@ -95,16 +197,13 @@ public class AtomicItemType extends ItemType implements Serializable {
             return true;
         // boolean and numeric can be cast between themselves
         if (
-            this.equals(booleanItem) || this.equals(integerItem) || this.equals(doubleItem) || this.equals(decimalItem)
+            this.equals(booleanItem)
+                || this.isNumeric()
         ) {
             if (
-                other.equals(integerItem)
+                other.equals(booleanItem)
                     ||
-                    other.equals(doubleItem)
-                    ||
-                    other.equals(decimalItem)
-                    ||
-                    other.equals(booleanItem)
+                    other.isNumeric()
             )
                 return true;
             else
@@ -148,11 +247,21 @@ public class AtomicItemType extends ItemType implements Serializable {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(integerItem) || this.equals(decimalItem) || this.equals(doubleItem);
+        return this.equals(intItem)
+            || this.equals(integerItem)
+            || this.equals(decimalItem)
+            || this.equals(doubleItem)
+            || this.equals(floatItem);
     }
 
     @Override
-    public boolean canBePromotedToString() {
-        return this.equals(stringItem) || this.equals(anyURIItem);
+    public boolean canBePromotedTo(ItemType other) {
+        if (other.equals(stringItem)) {
+            return this.equals(stringItem) || this.equals(anyURIItem);
+        }
+        if (other.equals(doubleItem)) {
+            return this.isNumeric();
+        }
+        return false;
     }
 }

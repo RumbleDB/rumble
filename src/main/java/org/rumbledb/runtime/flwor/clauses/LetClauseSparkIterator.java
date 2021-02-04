@@ -39,8 +39,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.udfs.*;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.flwor.udfs.HashUDF;
+import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.AtomicItemType;
@@ -236,14 +239,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // Is the predicate a comparison?
-        if (!(predicateIterator instanceof ComparisonOperationIterator)) {
+        if (!(predicateIterator instanceof ComparisonIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not a comparison.",
                     getMetadata()
             );
 
         }
-        ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
+        ComparisonIterator comparisonIterator = (ComparisonIterator) predicateIterator;
         // Is the predicate a value equality comparison?
         if (!comparisonIterator.isValueEquality()) {
             throw new JobWithinAJobException(
@@ -374,8 +377,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
                     SparkSessionManager.expressionHashColumnName,
                     this.variableName,
-                    this.variableName,
-                    SparkSessionManager.expressionHashColumnName
+                    this.variableName
                 )
             );
         expressionDF.createOrReplaceTempView("groupedAndSerializedResults");

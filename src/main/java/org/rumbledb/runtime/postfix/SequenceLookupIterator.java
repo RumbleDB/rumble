@@ -18,83 +18,86 @@
  *
  */
 
-package org.rumbledb.runtime.quantifiers;
+package org.rumbledb.runtime.postfix;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.SequenceType;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 
-public class QuantifiedExpressionVarIterator extends LocalRuntimeIterator {
-
+public class SequenceLookupIterator extends LocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private final Name variableReference;
-    // private final SequenceType sequenceType;
     private RuntimeIterator iterator;
     private Item nextResult;
+    private int position;
 
-    /*
-     * private List<Item> result = null;
-     * private int currentResultIndex;
-     */
-
-    public QuantifiedExpressionVarIterator(
-            Name variableReference,
-            SequenceType sequenceType,
-            RuntimeIterator expression,
+    public SequenceLookupIterator(
+            RuntimeIterator sequence,
+            int position,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(null, executionMode, iteratorMetadata);
-        this.children.add(expression);
-        this.variableReference = variableReference;
-        // this.sequenceType = sequenceType;
+        super(Arrays.asList(sequence), executionMode, iteratorMetadata);
+        this.iterator = sequence;
+        this.position = position;
     }
 
-    public Name getVariableReference() {
-        return this.variableReference;
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-
-        setNextResult();
+    public RuntimeIterator sequenceIterator() {
+        return this.iterator;
     }
 
     @Override
     public Item next() {
         if (this.hasNext == true) {
+            this.hasNext = false;
             Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
             return result;
         }
-        throw new IteratorFlowException("Invalid next() call in QuantifiedExpressionVar", getMetadata());
+        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
     }
 
-    public void setNextResult() {
-        this.nextResult = null;
+    @Override
+    public boolean hasNext() {
+        return this.hasNext;
+    }
 
-        while (this.iterator.hasNext()) {
-            this.nextResult = this.iterator.next();
-            break;
-        }
+    @Override
+    public void reset(DynamicContext dynamicContext) {
+        super.reset(dynamicContext);
+        init();
+    }
 
+    @Override
+    public void close() {
+        super.close();
+    }
 
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.iterator.close();
-        } else {
+    @Override
+    public void open(DynamicContext dynamicContext) {
+        super.open(dynamicContext);
+        init();
+    }
+
+    private void init() {
+        List<Item> materializedItems = new ArrayList<>();
+        this.iterator.materializeNFirstItems(
+            this.currentDynamicContextForLocalExecution,
+            materializedItems,
+            this.position
+        );
+        if (materializedItems.size() >= this.position) {
+            this.nextResult = materializedItems.get(this.position - 1);
             this.hasNext = true;
+        } else {
+            this.hasNext = false;
         }
     }
+
 }

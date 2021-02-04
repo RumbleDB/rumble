@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 public class FunctionItemType extends ItemType {
@@ -14,14 +15,14 @@ public class FunctionItemType extends ItemType {
         }
         this.isGeneric = false;
         this.signature = signature;
-        this.name = signature.toString();
+        this.name = new Name(Name.XS_NS, "xs", signature.toString());
     }
 
     // we have a parameter because the empty one is public and inherited
     private FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
-        this.name = "function(*)";
+        this.name = new Name(Name.XS_NS, "xs", "function(*)");
     }
 
     @Override
@@ -39,7 +40,7 @@ public class FunctionItemType extends ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.equals(other.toString());
+        return this.name.toString().equals(other.toString());
     }
 
     @Override

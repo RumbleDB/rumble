@@ -35,8 +35,10 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.*;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -48,7 +50,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FunctionItem extends ItemImpl {
+public class FunctionItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private FunctionIdentifier identifier;
@@ -179,11 +181,6 @@ public class FunctionItem extends ItemImpl {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.isFunctionItem() || type.equals(ItemType.item);
-    }
-
-    @Override
     public boolean isFunction() {
         return true;
     }
@@ -287,8 +284,7 @@ public class FunctionItem extends ItemImpl {
 
     @Override
     public ItemType getDynamicType() {
-        // TODO: consider storing the itemType in the FunctionItem
-        return new FunctionItemType(this.signature);
+        return AtomicItemType.functionItem;
     }
 
     public FunctionItem deepCopy() {
@@ -329,20 +325,5 @@ public class FunctionItem extends ItemImpl {
                 dynamicContext.getVariableValues().getDataFrameVariableValue(variable, metadata)
             );
         }
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is a function!");
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
-    }
-
-    @Override
-    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return NativeClauseContext.NoNativeQuery;
     }
 }

@@ -20,6 +20,7 @@
 
 package org.rumbledb.context;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
@@ -34,7 +35,6 @@ import com.esotericsoftware.kryo.io.Output;
 
 import java.io.Serializable;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
@@ -49,9 +49,12 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+
     // TODO: should these be transient?
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+
+    private RumbleRuntimeConfiguration configuration;
 
     public StaticContext() {
         this.parent = null;
@@ -60,11 +63,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
+        this.configuration = null;
     }
 
-    public StaticContext(URI staticBaseURI) {
+    public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
         this.parent = null;
         this.staticBaseURI = staticBaseURI;
+        this.configuration = configuration;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
@@ -78,10 +83,21 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.userDefinedFunctionExecutionModes = null;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.configuration = null;
     }
 
     public StaticContext getParent() {
         return this.parent;
+    }
+
+    public RumbleRuntimeConfiguration getRumbleCOnfiguration() {
+        if (this.configuration != null) {
+            return this.configuration;
+        }
+        if (this.parent != null) {
+            return this.parent.getRumbleCOnfiguration();
+        }
+        throw new OurBadException("Configuration not set.");
     }
 
     public URI getStaticBaseURI() {
@@ -281,14 +297,6 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.isEmptySequenceOrderLeast();
         }
         return this.emptySequenceOrderLeast;
-    }
-
-    public static StaticContext createRumbleStaticContext() {
-        try {
-            return new StaticContext(new URI(Name.RUMBLE_NS));
-        } catch (URISyntaxException e) {
-            throw new OurBadException("Rumble namespace not recognized as a URI.");
-        }
     }
 
     public StaticContext getModuleContext() {

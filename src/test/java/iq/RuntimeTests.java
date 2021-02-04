@@ -21,7 +21,6 @@
 package iq;
 
 import iq.base.AnnotationsTestsBase;
-import org.rumbledb.utils.JsonIterUtils;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -94,8 +93,6 @@ public class RuntimeTests extends AnnotationsTestsBase {
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
         System.err.println("Spark version: " + SparkSessionManager.getInstance().getJavaSparkContext().version());
-
-        JsonIterUtils.applyJsonIterFaultyInitializationWorkAround(configuration);
     }
 
     @Test(timeout = 1000000)

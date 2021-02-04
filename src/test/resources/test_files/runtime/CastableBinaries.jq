@@ -4,5 +4,5 @@
 "lmno" castable as hexBinary,
 "0 FB8 0F+9" castable as base64Binary,
 "Q Q = =" castable as base64Binary,
-"1A3" castable as base64Binary,
-"Q===" castable as base64Binary
+"1A3  " castable as base64Binary,
+" Q=== " castable as base64Binary

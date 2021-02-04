@@ -64,6 +64,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
@@ -82,7 +83,6 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -109,7 +109,7 @@ import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.operational.AndOperationIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.operational.NotOperationIterator;
@@ -122,6 +122,7 @@ import org.rumbledb.runtime.postfix.ArrayLookupIterator;
 import org.rumbledb.runtime.postfix.ArrayUnboxingIterator;
 import org.rumbledb.runtime.postfix.ObjectLookupIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
+import org.rumbledb.runtime.postfix.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -132,8 +133,6 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.runtime.quantifiers.QuantifiedExpressionIterator;
-import org.rumbledb.runtime.quantifiers.QuantifiedExpressionVarIterator;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -145,7 +144,6 @@ import java.util.stream.Collectors;
 public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator> {
 
     private VisitorConfig visitorConfig;
-    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration config;
 
     public RuntimeIteratorVisitor(RumbleRuntimeConfiguration config) {
@@ -336,6 +334,22 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFilterExpression(FilterExpression expression, RuntimeIterator argument) {
         RuntimeIterator mainIterator = this.visit(expression.getMainExpression(), argument);
+        if (expression.getPredicateExpression() instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) expression.getPredicateExpression()).getLexicalValue();
+            if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                int n = ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue();
+                if (n <= this.config.getResultSizeCap()) {
+                    RuntimeIterator runtimeIterator = new SequenceLookupIterator(
+                            mainIterator,
+                            n,
+                            expression.getHighestExecutionMode(this.visitorConfig),
+                            expression.getMetadata()
+                    );
+                    runtimeIterator.setStaticContext(expression.getStaticContext());
+                    return runtimeIterator;
+                }
+            }
+        }
         RuntimeIterator filterIterator = this.visit(expression.getPredicateExpression(), argument);
         RuntimeIterator runtimeIterator = new PredicateIterator(
                 mainIterator,
@@ -516,6 +530,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 // This might be worth a more fine-grained adjustment later.
                 expression.getStaticContext(),
                 expression.getHighestExecutionMode(this.visitorConfig),
+                this.config.isCheckReturnTypeOfBuiltinFunctions(),
                 iteratorMetadata
             );
         } else {
@@ -779,7 +794,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitComparisonExpr(ComparisonExpression expression, RuntimeIterator argument) {
         RuntimeIterator left = this.visit(expression.getChildren().get(0), argument);
         RuntimeIterator right = this.visit(expression.getChildren().get(1), argument);
-        RuntimeIterator runtimeIterator = new ComparisonOperationIterator(
+        RuntimeIterator runtimeIterator = new ComparisonIterator(
                 left,
                 right,
                 expression.getComparisonOperator(),
@@ -850,35 +865,6 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator runtimeIterator = new CastIterator(
                 childExpression,
                 expression.getSequenceType(),
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
-        return runtimeIterator;
-    }
-    // endregion
-
-    // region quantifiers
-    @Override
-    public RuntimeIterator visitQuantifiedExpression(QuantifiedExpression expression, RuntimeIterator argument) {
-        List<QuantifiedExpressionVarIterator> variables = new ArrayList<>();
-        expression.getVariables()
-            .forEach(
-                var -> variables.add(
-                    new QuantifiedExpressionVarIterator(
-                            var.getVariableName(),
-                            var.getSequenceType(),
-                            this.visit(var.getExpression(), argument),
-                            expression.getHighestExecutionMode(this.visitorConfig),
-                            expression.getMetadata()
-                    )
-                )
-            );
-        RuntimeIterator evaluationExpression = this.visit(expression.getEvaluationExpression(), argument);
-        RuntimeIterator runtimeIterator = new QuantifiedExpressionIterator(
-                expression.getOperator(),
-                variables,
-                evaluationExpression,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

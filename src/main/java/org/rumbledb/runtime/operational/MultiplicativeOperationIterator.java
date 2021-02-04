@@ -32,7 +32,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -41,12 +40,12 @@ import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.YearMonthDurationItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.base.ComparisonUtil;
 
 
-public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
+public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -70,11 +69,10 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
 
         try {
-            this.left = this.leftIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.left = this.leftIterator.materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its left input sequence.",
@@ -82,7 +80,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             );
         }
         try {
-            this.right = this.rightIterator.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.right = this.rightIterator.materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Multiplication expression requires at most one item in its right input sequence.",
@@ -92,7 +90,7 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
 
         // if left or right equals empty sequence, return empty sequence
         if (this.left == null || this.right == null) {
-            this.hasNext = false;
+            return null;
         } else {
             ComparisonUtil.checkBinaryOperation(
                 this.left,
@@ -100,20 +98,11 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                 this.multiplicativeOperator.toString(),
                 getMetadata()
             );
-            this.hasNext = true;
         }
-    }
-
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasNext = false;
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }
 
-    private static Item processItem(
+    public static Item processItem(
             Item left,
             Item right,
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
@@ -157,6 +146,21 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
             double l = left.castToDoubleValue();
             double r = right.getDoubleValue();
             return processDouble(l, r, multiplicativeOperator, metadata);
+        }
+        if (left.isFloat() && right.isNumeric()) {
+            float l = left.getFloatValue();
+            float r = 0;
+            if (right.isFloat()) {
+                r = right.getFloatValue();
+            } else {
+                r = right.castToFloatValue();
+            }
+            return processFloat(l, r, multiplicativeOperator, metadata);
+        }
+        if (right.isFloat() && left.isNumeric()) {
+            float l = left.castToFloatValue();
+            float r = right.getFloatValue();
+            return processFloat(l, r, multiplicativeOperator, metadata);
         }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
@@ -253,6 +257,33 @@ public class MultiplicativeOperationIterator extends LocalRuntimeIterator {
                     .createLongItem((long) (l / r));
             case MOD:
                 return ItemFactory.getInstance().createDoubleItem(l % r);
+            default:
+                throw new OurBadException(
+                        "Non recognized multiplicative operator: " + multiplicativeOperator,
+                        metadata
+                );
+        }
+    }
+
+    private static Item processFloat(
+            float l,
+            float r,
+            MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
+            ExceptionMetadata metadata
+    ) {
+        switch (multiplicativeOperator) {
+            case MUL:
+                return ItemFactory.getInstance().createFloatItem(l * r);
+            case DIV:
+                return ItemFactory.getInstance().createFloatItem(l / r);
+            case IDIV:
+                if (r == 0) {
+                    throw new DivisionByZeroException(metadata);
+                }
+                return ItemFactory.getInstance()
+                    .createLongItem((long) (l / r));
+            case MOD:
+                return ItemFactory.getInstance().createFloatItem(l % r);
             default:
                 throw new OurBadException(
                         "Non recognized multiplicative operator: " + multiplicativeOperator,

@@ -34,7 +34,7 @@ public class SequenceType implements Serializable {
     private boolean isEmptySequence = false;
 
     public final static SequenceType MOST_GENERAL_SEQUENCE_TYPE = new SequenceType(
-            ItemType.item,
+            AtomicItemType.item,
             Arity.ZeroOrMore
     );
 
@@ -92,9 +92,7 @@ public class SequenceType implements Serializable {
         return this.isAritySubtypeOf(superType.arity)
             && (this.itemType.isSubtypeOf(superType.getItemType())
                 ||
-                (this.itemType.canBePromotedToString() && superType.itemType.equals(AtomicItemType.stringItem))
-                ||
-                (this.itemType.isNumeric() && superType.itemType.equals(AtomicItemType.doubleItem)));
+                (this.itemType.canBePromotedTo(superType.itemType)));
     }
 
     // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
@@ -267,10 +265,10 @@ public class SequenceType implements Serializable {
 
     static {
         sequenceTypes = new HashMap<>();
-        sequenceTypes.put("item", new SequenceType(ItemType.item, SequenceType.Arity.One));
-        sequenceTypes.put("item?", new SequenceType(ItemType.item, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("item*", new SequenceType(ItemType.item, SequenceType.Arity.ZeroOrMore));
-        sequenceTypes.put("item+", new SequenceType(ItemType.item, SequenceType.Arity.OneOrMore));
+        sequenceTypes.put("item", new SequenceType(AtomicItemType.item, SequenceType.Arity.One));
+        sequenceTypes.put("item?", new SequenceType(AtomicItemType.item, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("item*", new SequenceType(AtomicItemType.item, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put("item+", new SequenceType(AtomicItemType.item, SequenceType.Arity.OneOrMore));
 
         sequenceTypes.put("object", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.One));
         sequenceTypes.put("object+", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.OneOrMore));
@@ -297,6 +295,9 @@ public class SequenceType implements Serializable {
 
         sequenceTypes.put("double", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.One));
         sequenceTypes.put("double?", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("float", new SequenceType(AtomicItemType.floatItem, SequenceType.Arity.One));
+        sequenceTypes.put("float?", new SequenceType(AtomicItemType.floatItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.One));
         sequenceTypes.put("boolean?", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.OneOrZero));

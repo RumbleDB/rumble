@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StructType;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
@@ -43,7 +44,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Map<Integer, String> sortingKeyTypes;
+    private Map<Integer, Name> sortingKeyTypes;
 
     private List<Object> results;
 
@@ -60,7 +61,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             StructType schema,
-            Map<Integer, String> sortingKeyTypes,
+            Map<Integer, Name> sortingKeyTypes,
             List<String> columnNames
     ) {
         this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
@@ -115,7 +116,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(valueOrderIndex);
 
             // extract type information for the sorting column
-            String typeName = this.sortingKeyTypes.get(expressionIndex);
+            Name typeName = this.sortingKeyTypes.get(expressionIndex);
             try {
                 if (typeName.equals(AtomicItemType.booleanItem.getName())) {
                     this.results.add(nextItem.getBooleanValue());

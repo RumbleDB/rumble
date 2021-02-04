@@ -21,89 +21,26 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
 
 public class ItemType implements Serializable {
 
-    public static ItemType getItemTypeByName(String name) {
-        if (name.equals(AtomicItemType.objectItem.getName())) {
-            return AtomicItemType.objectItem;
-        }
-        if (name.equals(AtomicItemType.atomicItem.getName())) {
-            return AtomicItemType.atomicItem;
-        }
-        if (name.equals(AtomicItemType.stringItem.getName())) {
-            return AtomicItemType.stringItem;
-        }
-        if (name.equals(AtomicItemType.integerItem.getName())) {
-            return AtomicItemType.integerItem;
-        }
-        if (name.equals(AtomicItemType.decimalItem.getName())) {
-            return AtomicItemType.decimalItem;
-        }
-        if (name.equals(AtomicItemType.doubleItem.getName())) {
-            return AtomicItemType.doubleItem;
-        }
-        if (name.equals(AtomicItemType.booleanItem.getName())) {
-            return AtomicItemType.booleanItem;
-        }
-        if (name.equals(AtomicItemType.nullItem.getName())) {
-            return AtomicItemType.nullItem;
-        }
-        if (name.equals(AtomicItemType.arrayItem.getName())) {
-            return AtomicItemType.arrayItem;
-        }
-        if (name.equals(AtomicItemType.JSONItem.getName())) {
-            return AtomicItemType.JSONItem;
-        }
-        if (name.equals(AtomicItemType.durationItem.getName())) {
-            return AtomicItemType.durationItem;
-        }
-        if (name.equals(AtomicItemType.yearMonthDurationItem.getName())) {
-            return AtomicItemType.yearMonthDurationItem;
-        }
-        if (name.equals(AtomicItemType.dayTimeDurationItem.getName())) {
-            return AtomicItemType.dayTimeDurationItem;
-        }
-        if (name.equals(AtomicItemType.dateTimeItem.getName())) {
-            return AtomicItemType.dateTimeItem;
-        }
-        if (name.equals(AtomicItemType.dateItem.getName())) {
-            return AtomicItemType.dateItem;
-        }
-        if (name.equals(AtomicItemType.timeItem.getName())) {
-            return AtomicItemType.timeItem;
-        }
-        if (name.equals(AtomicItemType.anyURIItem.getName())) {
-            return AtomicItemType.anyURIItem;
-        }
-        if (name.equals(AtomicItemType.hexBinaryItem.getName())) {
-            return AtomicItemType.hexBinaryItem;
-        }
-        if (name.equals(AtomicItemType.base64BinaryItem.getName())) {
-            return AtomicItemType.base64BinaryItem;
-        }
-        if (name.equals(item.name)) {
-            return item;
-        }
-        throw new OurBadException("Type unrecognized: " + name);
-    }
-
     protected static final long serialVersionUID = 1L;
-    protected String name;
+    protected Name name;
 
-    public static final ItemType item = new ItemType("item");
+    public static final ItemType item = new ItemType(Name.createVariableInDefaultTypeNamespace("item"));
 
     public ItemType() {
     }
 
-    protected ItemType(String name) {
+    protected ItemType(Name name) {
         this.name = name;
     }
 
-    public String getName() {
+    public Name getName() {
         return this.name;
     }
 
@@ -112,14 +49,13 @@ public class ItemType implements Serializable {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.equals(other.toString());
+        return this.name.toString().equals(other.toString());
     }
 
     // Returns true if [this] is a function item
     public boolean isFunctionItem() {
         return false;
     }
-
     // Returns the signature of a function item
     public FunctionSignature getSignature() {
         throw new OurBadException("called getSignature on a non-function item");
@@ -127,6 +63,36 @@ public class ItemType implements Serializable {
 
     // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
     public boolean isSubtypeOf(ItemType superType) {
+        if (superType.equals(item)) {
+            return true;
+        } else if (superType.equals(AtomicItemType.JSONItem)) {
+            return this.equals(AtomicItemType.objectItem)
+                || this.equals(AtomicItemType.arrayItem)
+                || this.equals(AtomicItemType.JSONItem);
+        } else if (superType.equals(AtomicItemType.atomicItem)) {
+            return this.equals(AtomicItemType.stringItem)
+                || this.equals(AtomicItemType.integerItem)
+                || this.equals(AtomicItemType.decimalItem)
+                || this.equals(AtomicItemType.doubleItem)
+                || this.equals(AtomicItemType.booleanItem)
+                || this.equals(AtomicItemType.nullItem)
+                || this.equals(AtomicItemType.anyURIItem)
+                || this.equals(AtomicItemType.hexBinaryItem)
+                || this.equals(AtomicItemType.base64BinaryItem)
+                || this.equals(AtomicItemType.dateTimeItem)
+                || this.equals(AtomicItemType.dateItem)
+                || this.equals(AtomicItemType.timeItem)
+                || this.equals(AtomicItemType.durationItem)
+                || this.equals(AtomicItemType.yearMonthDurationItem)
+                || this.equals(AtomicItemType.dayTimeDurationItem)
+                || this.equals(AtomicItemType.atomicItem);
+        } else if (superType.equals(AtomicItemType.durationItem)) {
+            return this.equals(AtomicItemType.yearMonthDurationItem)
+                || this.equals(AtomicItemType.dayTimeDurationItem)
+                || this.equals(AtomicItemType.durationItem);
+        } else if (superType.equals(AtomicItemType.decimalItem)) {
+            return this.equals(AtomicItemType.integerItem) || this.equals(AtomicItemType.decimalItem);
+        }
         return this.equals(superType);
     }
 
@@ -141,7 +107,7 @@ public class ItemType implements Serializable {
      * @param other a strict subtype of atomic item type to which we are trying to cast
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
-    public boolean staticallyCastableAs(ItemType other) {
+    public boolean isStaticallyCastableAs(ItemType other) {
         // this is not atomic and therefore cannot be casted
         // TODO: consider throwing error here
         return false;
@@ -152,13 +118,13 @@ public class ItemType implements Serializable {
         return false;
     }
 
-    // returns [true] if this can be promoted to string
-    public boolean canBePromotedToString() {
+    // returns [true] if this can be promoted to itemType
+    public boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
 
     @Override
     public String toString() {
-        return this.name;
+        return this.name.toString();
     }
 }

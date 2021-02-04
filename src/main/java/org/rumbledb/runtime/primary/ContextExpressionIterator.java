@@ -24,14 +24,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
 import java.util.Map;
 import java.util.TreeMap;
 
-public class ContextExpressionIterator extends LocalRuntimeIterator {
+public class ContextExpressionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -40,17 +39,15 @@ public class ContextExpressionIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (hasNext()) {
-            this.hasNext = false;
-            return this.currentDynamicContextForLocalExecution.getVariableValues()
-                .getLocalVariableValue(
-                    Name.CONTEXT_ITEM,
-                    getMetadata()
-                )
-                .get(0);
-        }
-        throw new IteratorFlowException("Invalid next() call in Context Expression!", getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        return dynamicContext.getVariableValues()
+            .getLocalVariableValue(
+                Name.CONTEXT_ITEM,
+                getMetadata()
+            )
+            .get(0);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
