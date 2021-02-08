@@ -878,7 +878,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
             }
 
-            // Type must match exactly or be both numeric or both promotable to string or both durations
+            // Type must match exactly or be both numeric or both promotable to string or both durations or one must be null
             if (
                 !leftItemType.equals(rightItemType)
                     &&
@@ -889,6 +889,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     &&
                     !(leftItemType.canBePromotedTo(AtomicItemType.stringItem)
                         && rightItemType.canBePromotedTo(AtomicItemType.stringItem))
+                    &&
+                    !(leftItemType.equals(AtomicItemType.nullItem) || rightItemType.equals(AtomicItemType.nullItem))
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
