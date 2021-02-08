@@ -26,81 +26,92 @@ import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
 
-public class ItemType implements Serializable {
+public interface ItemType extends Serializable {
 
-    protected static final long serialVersionUID = 1L;
-    protected Name name;
+    // protected static final long serialVersionUID = 1L;
 
-    public static final ItemType item = new ItemType(Name.createVariableInDefaultTypeNamespace("item"));
+    /**
+     * Tests for itemType equality.
+     *
+     * @param other another item type.
+     * @return true it is equal to other, false otherwise.
+     */
+    public boolean equals(Object other);
 
-    public ItemType() {
-    }
-
-    protected ItemType(Name name) {
-        this.name = name;
-    }
-
-    public Name getName() {
-        return this.name;
-    }
-
-    @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return this.name.toString().equals(other.toString());
-    }
-
-    // Returns true if [this] is a function item
-    public boolean isFunctionItem() {
+    /**
+     * @return true it [this] is a subtype of an atomic item type.
+     */
+    public default boolean isSubtypeOfAtomicItem() {
         return false;
     }
 
-    // Returns the signature of a function item
-    public FunctionSignature getSignature() {
-        throw new OurBadException("called getSignature on a non-function item");
+    /**
+     * @return true it [this] is an object item type.
+     */
+    public default boolean isObjectItem() {
+        return false;
     }
 
-    // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
-    public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(item)) {
-            return true;
-        } else if (superType.equals(AtomicItemType.JSONItem)) {
-            return this.equals(AtomicItemType.objectItem)
-                || this.equals(AtomicItemType.arrayItem)
-                || this.equals(AtomicItemType.JSONItem);
-        } else if (superType.equals(AtomicItemType.atomicItem)) {
-            return this.equals(AtomicItemType.stringItem)
-                || this.equals(AtomicItemType.integerItem)
-                || this.equals(AtomicItemType.decimalItem)
-                || this.equals(AtomicItemType.doubleItem)
-                || this.equals(AtomicItemType.booleanItem)
-                || this.equals(AtomicItemType.nullItem)
-                || this.equals(AtomicItemType.anyURIItem)
-                || this.equals(AtomicItemType.hexBinaryItem)
-                || this.equals(AtomicItemType.base64BinaryItem)
-                || this.equals(AtomicItemType.dateTimeItem)
-                || this.equals(AtomicItemType.dateItem)
-                || this.equals(AtomicItemType.timeItem)
-                || this.equals(AtomicItemType.durationItem)
-                || this.equals(AtomicItemType.yearMonthDurationItem)
-                || this.equals(AtomicItemType.dayTimeDurationItem)
-                || this.equals(AtomicItemType.atomicItem);
-        } else if (superType.equals(AtomicItemType.durationItem)) {
-            return this.equals(AtomicItemType.yearMonthDurationItem)
-                || this.equals(AtomicItemType.dayTimeDurationItem)
-                || this.equals(AtomicItemType.durationItem);
-        } else if (superType.equals(AtomicItemType.decimalItem)) {
-            return this.equals(AtomicItemType.integerItem) || this.equals(AtomicItemType.decimalItem);
-        }
-        return this.equals(superType);
+    /**
+     * @return true it [this] is an array item type.
+     */
+    public default boolean isArrayItem() {
+        return false;
     }
 
-    public ItemType findCommonSuperType(ItemType other) {
-        // item is the most generic type
-        return this;
+    /**
+     * @return true it [this] is a function item type.
+     */
+    public default boolean isFunctionItem() {
+        return false;
     }
+
+    /**
+     *
+     * @return [true] if this is a numeric item type, false otherwise
+     */
+    public default boolean isNumeric() {
+        return false;
+    }
+
+    /**
+     * Tests for QName.
+     *
+     * @return true if [this] item type has a QName
+     */
+    public default boolean hasName() {
+        return false;
+    }
+
+    /**
+     *
+     * @return the itemtype QName if available
+     */
+    public default Name getName() {
+        throw new UnsupportedOperationException("getName operation is not supported for this itemType");
+    }
+
+    /**
+     *
+     * @return the signature of the function item type if available
+     */
+    public default FunctionSignature getSignature() {
+        throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
+    }
+
+    /**
+     *
+     * @param superType another item type
+     * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself
+     */
+    public boolean isSubtypeOf(ItemType superType);
+
+    /**
+     *
+     * @param other another item type
+     * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this] and [other]
+     */
+    public ItemType findCommonSuperType(ItemType other);
 
     /**
      * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
@@ -108,24 +119,18 @@ public class ItemType implements Serializable {
      * @param other a strict subtype of atomic item type to which we are trying to cast
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
-    public boolean isStaticallyCastableAs(ItemType other) {
-        // this is not atomic and therefore cannot be casted
-        // TODO: consider throwing error here
+    public default boolean isStaticallyCastableAs(ItemType other) {
+        throw new UnsupportedOperationException("isStaticallyCastableAs operation is not supported for non-atomic item types");
+    }
+
+    /**
+     *
+     * @param itemType another item type
+     * @return true if [this] can be promoted to [itemType]
+     */
+    public default boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
 
-    // return [true] if this is a numeric type (i.e. [integerItem], [decimalItem] or [doubleItem]), false otherwise
-    public boolean isNumeric() {
-        return false;
-    }
-
-    // returns [true] if this can be promoted to itemType
-    public boolean canBePromotedTo(ItemType itemType) {
-        return false;
-    }
-
-    @Override
-    public String toString() {
-        return this.name.toString();
-    }
+    public String toString();
 }

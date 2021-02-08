@@ -115,6 +115,14 @@ public class AtomicItemType extends ItemType implements Serializable {
         return false;
     }
 
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof ItemType)) {
+            return false;
+        }
+        return this.name.toString().equals(other.toString());
+    }
+
     public static ItemType getItemTypeByName(Name name) {
         for (int i = 0; i < builtInItemTypes.size(); ++i) {
             if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
