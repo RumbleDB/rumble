@@ -46,6 +46,7 @@ import org.rumbledb.runtime.typing.CastIterator;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
@@ -151,37 +152,37 @@ public class ItemParser implements Serializable {
 
     public static ItemType convertDataTypeToItemType(DataType dt) {
         if (dt instanceof StructType) {
-            return AtomicItemType.objectItem;
+            return BuiltinTypesCatalogue.objectItem;
         }
         if (dt instanceof ArrayType) {
-            return AtomicItemType.arrayItem;
+            return BuiltinTypesCatalogue.arrayItem;
         }
         if (dt.equals(DataTypes.StringType)) {
-            return AtomicItemType.stringItem;
+            return BuiltinTypesCatalogue.stringItem;
         } else if (dt.equals(DataTypes.BooleanType)) {
-            return AtomicItemType.booleanItem;
+            return BuiltinTypesCatalogue.booleanItem;
         } else if (dt.equals(DataTypes.DoubleType)) {
-            return AtomicItemType.doubleItem;
+            return BuiltinTypesCatalogue.doubleItem;
         } else if (dt.equals(DataTypes.IntegerType)) {
-            return AtomicItemType.integerItem;
+            return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
-            return AtomicItemType.floatItem;
+            return BuiltinTypesCatalogue.floatItem;
         } else if (dt.equals(decimalType)) {
-            return AtomicItemType.decimalItem;
+            return BuiltinTypesCatalogue.decimalItem;
         } else if (dt.equals(DataTypes.LongType)) {
-            return AtomicItemType.integerItem;
+            return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.NullType)) {
-            return AtomicItemType.nullItem;
+            return BuiltinTypesCatalogue.nullItem;
         } else if (dt.equals(DataTypes.ShortType)) {
-            return AtomicItemType.integerItem;
+            return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.TimestampType)) {
-            return AtomicItemType.dateTimeItem;
+            return BuiltinTypesCatalogue.dateTimeItem;
         } else if (dt.equals(DataTypes.DateType)) {
-            return AtomicItemType.dateItem;
+            return BuiltinTypesCatalogue.dateItem;
         } else if (dt.equals(DataTypes.BinaryType)) {
-            return AtomicItemType.hexBinaryItem;
+            return BuiltinTypesCatalogue.hexBinaryItem;
         } else if (dt instanceof VectorUDT) {
-            return AtomicItemType.arrayItem;
+            return BuiltinTypesCatalogue.arrayItem;
         }
         throw new OurBadException("DataFrame type unsupported: " + dt);
     }
@@ -351,37 +352,37 @@ public class ItemParser implements Serializable {
     }
 
     public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.equals(AtomicItemType.booleanItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
             return DataTypes.BooleanType;
         }
-        if (itemType.equals(AtomicItemType.integerItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
             return DataTypes.IntegerType;
         }
-        if (itemType.equals(AtomicItemType.doubleItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return DataTypes.DoubleType;
         }
-        if (itemType.equals(AtomicItemType.floatItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return DataTypes.FloatType;
         }
-        if (itemType.equals(AtomicItemType.decimalItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
             return decimalType;
         }
-        if (itemType.equals(AtomicItemType.stringItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
         }
-        if (itemType.equals(AtomicItemType.nullItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.nullItem)) {
             return DataTypes.NullType;
         }
-        if (itemType.equals(AtomicItemType.dateItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dateItem)) {
             return DataTypes.DateType;
         }
-        if (itemType.equals(AtomicItemType.dateTimeItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return DataTypes.TimestampType;
         }
-        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.equals(AtomicItemType.objectItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.objectItem)) {
             return vectorType;
         }
         throw new IllegalArgumentException(
@@ -391,37 +392,37 @@ public class ItemParser implements Serializable {
 
     public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
-            return AtomicItemType.booleanItem.getName();
+            return BuiltinTypesCatalogue.booleanItem.getName();
         }
         if (DataTypes.IntegerType.equals(dataType) || DataTypes.ShortType.equals(dataType)) {
-            return AtomicItemType.integerItem.getName();
+            return BuiltinTypesCatalogue.integerItem.getName();
         }
         if (DataTypes.DoubleType.equals(dataType)) {
-            return AtomicItemType.doubleItem.getName();
+            return BuiltinTypesCatalogue.doubleItem.getName();
         }
         if (DataTypes.FloatType.equals(dataType)) {
-            return AtomicItemType.floatItem.getName();
+            return BuiltinTypesCatalogue.floatItem.getName();
         }
         if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
-            return AtomicItemType.decimalItem.getName();
+            return BuiltinTypesCatalogue.decimalItem.getName();
         }
         if (DataTypes.StringType.equals(dataType)) {
-            return AtomicItemType.stringItem.getName();
+            return BuiltinTypesCatalogue.stringItem.getName();
         }
         if (DataTypes.NullType.equals(dataType)) {
-            return AtomicItemType.nullItem.getName();
+            return BuiltinTypesCatalogue.nullItem.getName();
         }
         if (DataTypes.DateType.equals(dataType)) {
-            return AtomicItemType.dateItem.getName();
+            return BuiltinTypesCatalogue.dateItem.getName();
         }
         if (DataTypes.TimestampType.equals(dataType)) {
-            return AtomicItemType.dateTimeItem.getName();
+            return BuiltinTypesCatalogue.dateTimeItem.getName();
         }
         if (DataTypes.BinaryType.equals(dataType)) {
-            return AtomicItemType.hexBinaryItem.getName();
+            return BuiltinTypesCatalogue.hexBinaryItem.getName();
         }
         if (vectorType.equals(dataType)) {
-            return AtomicItemType.objectItem.getName();
+            return BuiltinTypesCatalogue.objectItem.getName();
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }
@@ -493,7 +494,7 @@ public class ItemParser implements Serializable {
                 if (!item.isBoolean()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.booleanItem,
+                        BuiltinTypesCatalogue.booleanItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -509,7 +510,7 @@ public class ItemParser implements Serializable {
                 if (!item.isInt()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.intItem,
+                        BuiltinTypesCatalogue.intItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -525,7 +526,7 @@ public class ItemParser implements Serializable {
                 if (!item.isDouble()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.doubleItem,
+                        BuiltinTypesCatalogue.doubleItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -541,7 +542,7 @@ public class ItemParser implements Serializable {
                 if (!item.isFloat()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.floatItem,
+                        BuiltinTypesCatalogue.floatItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -557,7 +558,7 @@ public class ItemParser implements Serializable {
                 if (!item.isDecimal()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.decimalItem,
+                        BuiltinTypesCatalogue.decimalItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -573,7 +574,7 @@ public class ItemParser implements Serializable {
                 if (!item.isString()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.stringItem,
+                        BuiltinTypesCatalogue.stringItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -589,7 +590,7 @@ public class ItemParser implements Serializable {
                 if (!item.isNull()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.nullItem,
+                        BuiltinTypesCatalogue.nullItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -605,7 +606,7 @@ public class ItemParser implements Serializable {
                 if (!item.isDate()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.dateItem,
+                        BuiltinTypesCatalogue.dateItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
@@ -621,7 +622,7 @@ public class ItemParser implements Serializable {
                 if (!item.isDateTime()) {
                     Item i = CastIterator.castItemToType(
                         item,
-                        AtomicItemType.dateTimeItem,
+                        BuiltinTypesCatalogue.dateTimeItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {

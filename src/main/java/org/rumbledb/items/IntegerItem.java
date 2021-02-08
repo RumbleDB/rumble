@@ -29,6 +29,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -133,12 +134,12 @@ public class IntegerItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.integerItem;
+        return BuiltinTypesCatalogue.integerItem;
     }
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, this.value.toString(), AtomicItemType.integerItem);
+        return new NativeClauseContext(context, this.value.toString(), BuiltinTypesCatalogue.integerItem);
     }
 
     public boolean isNumeric() {

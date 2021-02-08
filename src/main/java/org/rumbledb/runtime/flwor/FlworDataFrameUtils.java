@@ -54,6 +54,7 @@ import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -390,14 +391,14 @@ public class FlworDataFrameUtils {
     public static ItemType mapToJsoniqType(DataType type) {
         // TODO: once type mapping is defined add string field to determine and document properly
         if (type == DataTypes.StringType) {
-            return AtomicItemType.stringItem;
+            return BuiltinTypesCatalogue.stringItem;
         } else if (type == DataTypes.IntegerType) {
-            return AtomicItemType.integerItem;
+            return BuiltinTypesCatalogue.integerItem;
         } else if (type.equals(DataTypes.createDecimalType())) {
             // TODO: test correct working
-            return AtomicItemType.integerItem;
+            return BuiltinTypesCatalogue.integerItem;
         } else if (type == DataTypes.DoubleType) {
-            return AtomicItemType.doubleItem;
+            return BuiltinTypesCatalogue.doubleItem;
         } else {
             return null;
         }

@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -140,7 +141,7 @@ public class FloatItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.floatItem;
+        return BuiltinTypesCatalogue.floatItem;
     }
 
     @Override

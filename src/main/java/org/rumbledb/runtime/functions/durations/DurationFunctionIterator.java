@@ -12,6 +12,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.util.List;
 
 public class DurationFunctionIterator extends LocalFunctionCallIterator {
@@ -34,7 +35,7 @@ public class DurationFunctionIterator extends LocalFunctionCallIterator {
             try {
                 Period period = DurationItem.getDurationFromString(
                     this.durationStringItem.getStringValue(),
-                    AtomicItemType.durationItem
+                    BuiltinTypesCatalogue.durationItem
                 );
                 return ItemFactory.getInstance().createDurationItem(period);
             } catch (UnsupportedOperationException | IllegalArgumentException e) {

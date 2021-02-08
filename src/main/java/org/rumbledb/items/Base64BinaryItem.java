@@ -10,6 +10,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
@@ -123,7 +124,7 @@ public class Base64BinaryItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.base64BinaryItem;
+        return BuiltinTypesCatalogue.base64BinaryItem;
     }
 
     @Override

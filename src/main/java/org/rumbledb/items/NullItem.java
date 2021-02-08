@@ -44,6 +44,7 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -102,7 +103,7 @@ public class NullItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.nullItem;
+        return BuiltinTypesCatalogue.nullItem;
     }
 
     @Override

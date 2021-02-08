@@ -31,6 +31,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -81,6 +82,6 @@ public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
             + " AND "
             + rightResult.getResultingQuery()
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, AtomicItemType.booleanItem);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

@@ -32,6 +32,7 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.io.File;
 import java.net.URI;
@@ -207,7 +208,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         vars.forEach(
             var -> Assert.assertTrue(
-                ((VariableReferenceExpression) var).getType().getItemType().equals(AtomicItemType.integerItem)
+                ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
@@ -219,9 +220,9 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.item)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.item)
                     ||
-                    ((VariableReferenceExpression) j).getType().getItemType().equals(AtomicItemType.stringItem)
+                    ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
             )
         );
 
@@ -233,7 +234,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         internals.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(AtomicItemType.integerItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
@@ -245,7 +246,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         arry.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(AtomicItemType.arrayItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)
             )
         );
 

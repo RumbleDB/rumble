@@ -38,6 +38,7 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -506,7 +507,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                     break;
             }
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
-            return new NativeClauseContext(nativeClauseContext, query, AtomicItemType.booleanItem);
+            return new NativeClauseContext(nativeClauseContext, query, BuiltinTypesCatalogue.booleanItem);
         } else {
             return NativeClauseContext.NoNativeQuery;
         }

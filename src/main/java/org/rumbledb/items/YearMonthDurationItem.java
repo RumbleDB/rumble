@@ -7,6 +7,7 @@ import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 
@@ -45,7 +46,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicItemType.yearMonthDurationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.yearMonthDurationItem).normalizedStandard(
             yearMonthPeriodType
         );
         this.isNegative = this.value.toString().contains("-");
@@ -53,7 +54,7 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.yearMonthDurationItem;
+        return BuiltinTypesCatalogue.yearMonthDurationItem;
     }
 
 

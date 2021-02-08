@@ -281,7 +281,7 @@ public class FunctionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return FunctionItemType.ANYFUNCTION;
+        return BuiltinTypesCatalogue.anyFunctionItem;
     }
 
     public FunctionItem deepCopy() {

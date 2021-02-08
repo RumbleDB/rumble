@@ -33,7 +33,7 @@ public class ItemItemType implements ItemType {
 
     @Override
     public Name getName() {
-        return name;
+        return this.name;
     }
 
     @Override

@@ -47,6 +47,7 @@ import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -632,7 +633,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         ) {
             ItemType itemType = sequenceType.getItemType();
 
-            if (itemType.equals(AtomicItemType.stringItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -649,7 +650,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.integerItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -666,7 +667,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.decimalItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -683,7 +684,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.doubleItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(

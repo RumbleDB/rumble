@@ -108,6 +108,7 @@ import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -1169,15 +1170,15 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
         if (itemTypeContext.NullLiteral() != null) {
-            return AtomicItemType.nullItem;
+            return BuiltinTypesCatalogue.nullItem;
         }
-        return AtomicItemType.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
+        return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
     }
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true, false);
         if (
-            AtomicItemType.typeExists(name)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
         ) {
             return new CastExpression(
@@ -1187,7 +1188,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
         if (
-            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
                 && children.size() == 1
                 && name.getNamespace() != null
                 && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)

@@ -1,118 +1,75 @@
 package org.rumbledb.types;
 
-import java.io.Serializable;
-import java.util.Arrays;
-import java.util.List;
-
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.OurBadException;
 
-public class AtomicItemType extends ItemType implements Serializable {
+public class AtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
     // TODO: extract array and object into its own types
-    public static final AtomicItemType atomicItem = new AtomicItemType(
+     static final AtomicItemType atomicItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "atomic")
     );
-    public static final AtomicItemType stringItem = new AtomicItemType(
+     static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string")
     );
-    public static final AtomicItemType integerItem = new AtomicItemType(
+     static final AtomicItemType integerItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "integer")
     );
-    public static final AtomicItemType decimalItem = new AtomicItemType(
+     static final AtomicItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal")
     );
-    public static final AtomicItemType doubleItem = new AtomicItemType(
+     static final AtomicItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double")
     );
-    public static final AtomicItemType floatItem = new AtomicItemType(
+     static final AtomicItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float")
     );
-    public static final AtomicItemType booleanItem = new AtomicItemType(
+     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean")
     );
-    public static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
-    public static final AtomicItemType durationItem = new AtomicItemType(
+     static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
+     static final AtomicItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration")
     );
-    public static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
+     static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration")
     );
-    public static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
+     static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration")
     );
-    public static final AtomicItemType dateTimeItem = new AtomicItemType(
+     static final AtomicItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime")
     );
-    public static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
-    public static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
-    public static final AtomicItemType hexBinaryItem = new AtomicItemType(
+     static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
+     static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
+     static final AtomicItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary")
     );
-    public static final AtomicItemType anyURIItem = new AtomicItemType(
+     static final AtomicItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI")
     );
-    public static final AtomicItemType base64BinaryItem = new AtomicItemType(
+     static final AtomicItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary")
     );
-    public static final AtomicItemType JSONItem = new AtomicItemType(
+     static final AtomicItemType JSONItem = new AtomicItemType(
             new Name(Name.JS_NS, "xs", "json-item")
     );
-    public static final AtomicItemType objectItem = new AtomicItemType(
+     static final AtomicItemType objectItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "object")
     );
-    public static final AtomicItemType arrayItem = new AtomicItemType(
+     static final AtomicItemType arrayItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "array")
     );
-    public static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
+     static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
 
-    private static List<ItemType> builtInItemTypes = Arrays.asList(
-        objectItem,
-        atomicItem,
-        stringItem,
-        integerItem,
-        intItem,
-        decimalItem,
-        doubleItem,
-        floatItem,
-        booleanItem,
-        arrayItem,
-        nullItem,
-        JSONItem,
-        durationItem,
-        yearMonthDurationItem,
-        dayTimeDurationItem,
-        dateTimeItem,
-        dateItem,
-        timeItem,
-        hexBinaryItem,
-        anyURIItem,
-        base64BinaryItem,
-        item
-    );
+    private Name name;
 
     public AtomicItemType() {
     }
 
     private AtomicItemType(Name name) {
-        super(name);
-    }
-
-    public static boolean typeExists(Name name) {
-        for (int i = 0; i < builtInItemTypes.size(); ++i) {
-            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
-                if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
-                    return true;
-                }
-            } else {
-                if (builtInItemTypes.get(i).getName().equals(name)) {
-                    return true;
-                }
-            }
-        }
-        return false;
+        this.name = name;
     }
 
     @Override
@@ -120,28 +77,27 @@ public class AtomicItemType extends ItemType implements Serializable {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.name.toString().equals(other.toString());
+        return this.toString().equals(other.toString());
     }
 
-    public static ItemType getItemTypeByName(Name name) {
-        for (int i = 0; i < builtInItemTypes.size(); ++i) {
-            if (name.getNamespace() != null && name.getNamespace().equals(Name.JSONIQ_DEFAULT_TYPE_NS)) {
-                if (builtInItemTypes.get(i).getName().getLocalName().equals(name.getLocalName())) {
-                    return builtInItemTypes.get(i);
-                }
-            } else {
-                if (builtInItemTypes.get(i).getName().equals(name)) {
-                    return builtInItemTypes.get(i);
-                }
-            }
-        }
-        throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
+    @Override
+    public boolean isSubtypeOfAtomicItem() {
+        return true;
     }
 
-    // Returns true if [this] is a subtype of [superType], any type is considered a subtype of itself
+    @Override
+    public boolean hasName() {
+        return true;
+    }
+
+    @Override
+    public Name getName() {
+        return this.name;
+    }
+
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(AtomicItemType.item)) {
+        if (superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         } else if (superType.equals(JSONItem)) {
             return this.equals(objectItem)
@@ -187,7 +143,7 @@ public class AtomicItemType extends ItemType implements Serializable {
         } else if (this.isSubtypeOf(JSONItem) && other.isSubtypeOf(JSONItem)) {
             return JSONItem;
         } else {
-            return AtomicItemType.item;
+            return BuiltinTypesCatalogue.item;
         }
     }
 
@@ -267,5 +223,10 @@ public class AtomicItemType extends ItemType implements Serializable {
             return this.isNumeric();
         }
         return false;
+    }
+
+    @Override
+    public String toString() {
+        return this.name.toString();
     }
 }

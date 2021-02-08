@@ -32,6 +32,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -156,7 +157,7 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
         if (item.isNull()) {
             return false;
         }
-        if (item.getDynamicType().canBePromotedTo(AtomicItemType.stringItem)) {
+        if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
             return !item.getStringValue().isEmpty();
         }
         if (item.isObject()) {
