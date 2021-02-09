@@ -82,7 +82,17 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOfAtomicItem() {
-        return true;
+        return !(this.equals(arrayItem) || this.equals(objectItem));
+    }
+
+    @Override
+    public boolean isObjectItem() {
+        return this.equals(objectItem);
+    }
+
+    @Override
+    public boolean isArrayItem() {
+        return this.equals(arrayItem);
     }
 
     @Override
