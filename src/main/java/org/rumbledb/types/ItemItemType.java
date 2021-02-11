@@ -12,11 +12,11 @@ public class ItemItemType implements ItemType {
     static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
     private Name name;
 
-    public ItemItemType(){
+    public ItemItemType() {
 
     }
 
-    private ItemItemType(Name name){
+    private ItemItemType(Name name) {
         this.name = name;
     }
 

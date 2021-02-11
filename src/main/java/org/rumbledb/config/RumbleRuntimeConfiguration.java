@@ -312,7 +312,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public boolean escapeBackticks() {
         return this.arguments.containsKey("escape-backticks")
-                && this.arguments.get("escape-backticks").equals("yes");
+            && this.arguments.get("escape-backticks").equals("yes");
     }
 
     public boolean isLocal() {

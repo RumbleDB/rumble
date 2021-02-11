@@ -27,7 +27,6 @@ import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
 import org.rumbledb.types.*;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.*;
@@ -362,7 +361,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         SequenceType expressionType = expression.getMainExpression().getInferredSequenceType();
         basicChecks(expressionType, expression.getClass().getSimpleName(), true, false);
-        if (!expressionType.isEmptySequence() && !expressionType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+        if (
+            !expressionType.isEmptySequence()
+                && !expressionType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+        ) {
             throw new UnexpectedStaticTypeException(
                     "non-atomic item types are not allowed in castable expression, found "
                         + expressionType.getItemType(),
@@ -517,7 +519,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             if (rightItemType.isNumeric()) {
                 inferredType = resolveNumericType(leftItemType, rightItemType);
             }
-        } else if (leftItemType.equals(BuiltinTypesCatalogue.dateItem) || leftItemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+        } else if (
+            leftItemType.equals(BuiltinTypesCatalogue.dateItem)
+                || leftItemType.equals(BuiltinTypesCatalogue.dateTimeItem)
+        ) {
             if (
                 rightItemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
                     || rightItemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
@@ -659,7 +664,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 inferredType = rightItemType;
             }
         } else if (
-            leftItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem) && !leftItemType.equals(BuiltinTypesCatalogue.durationItem)
+            leftItemType.isSubtypeOf(BuiltinTypesCatalogue.durationItem)
+                && !leftItemType.equals(BuiltinTypesCatalogue.durationItem)
         ) {
             if (
                 rightItemType.isNumeric()
@@ -863,7 +869,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             // Type must be a strict subtype of atomic
             if (
-                leftItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem) || rightItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                leftItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                    || rightItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare with non-atomic types",
@@ -879,7 +886,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new UnexpectedStaticTypeException("It is not possible to compare with non-atomic types");
             }
 
-            // Type must match exactly or be both numeric or both promotable to string or both durations or one must be null
+            // Type must match exactly or be both numeric or both promotable to string or both durations or one must be
+            // null
             if (
                 !leftItemType.equals(rightItemType)
                     &&
@@ -891,7 +899,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     !(leftItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem)
                         && rightItemType.canBePromotedTo(BuiltinTypesCatalogue.stringItem))
                     &&
-                    !(leftItemType.equals(BuiltinTypesCatalogue.nullItem) || rightItemType.equals(BuiltinTypesCatalogue.nullItem))
+                    !(leftItemType.equals(BuiltinTypesCatalogue.nullItem)
+                        || rightItemType.equals(BuiltinTypesCatalogue.nullItem))
             ) {
                 throw new UnexpectedStaticTypeException(
                         "It is not possible to compare these types: " + leftItemType + " and " + rightItemType
@@ -1148,7 +1157,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
-        expression.setInferredSequenceType(new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore));
+        expression.setInferredSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore)
+        );
         System.out.println("visiting Range expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }

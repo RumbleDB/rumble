@@ -1041,9 +1041,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> rows = iterator.getDataFrame(context);
 
             // escape backticks (`)
-            if(escapeBackticks) {
+            if (escapeBackticks) {
                 rows = rows.sparkSession()
-                        .createDataFrame(rows.rdd(), FlworDataFrameUtils.escapeSchema(rows.schema(), false));
+                    .createDataFrame(rows.rdd(), FlworDataFrameUtils.escapeSchema(rows.schema(), false));
             }
 
             String[] fields = rows.schema().fieldNames();

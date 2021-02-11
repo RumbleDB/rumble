@@ -46,7 +46,6 @@ import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;

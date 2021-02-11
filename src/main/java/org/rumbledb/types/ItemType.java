@@ -22,7 +22,6 @@ package org.rumbledb.types;
 
 
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
 
@@ -109,7 +108,8 @@ public interface ItemType extends Serializable {
     /**
      *
      * @param other another item type
-     * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this] and [other]
+     * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
+     *         and [other]
      */
     public ItemType findCommonSuperType(ItemType other);
 
@@ -120,7 +120,9 @@ public interface ItemType extends Serializable {
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
     public default boolean isStaticallyCastableAs(ItemType other) {
-        throw new UnsupportedOperationException("isStaticallyCastableAs operation is not supported for non-atomic item types");
+        throw new UnsupportedOperationException(
+                "isStaticallyCastableAs operation is not supported for non-atomic item types"
+        );
     }
 
     /**

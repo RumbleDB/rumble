@@ -28,7 +28,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.typing.CastIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.util.List;
 

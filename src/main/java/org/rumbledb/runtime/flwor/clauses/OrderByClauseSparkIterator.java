@@ -45,7 +45,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.jsoniq.tuple.FlworKey;

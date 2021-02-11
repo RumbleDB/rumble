@@ -274,7 +274,10 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("object+", new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.OneOrMore));
         sequenceTypes.put("object*", new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore));
 
-        sequenceTypes.put("json-item*", new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put(
+            "json-item*",
+            new SequenceType(BuiltinTypesCatalogue.JSONItem, SequenceType.Arity.ZeroOrMore)
+        );
 
         sequenceTypes.put("array?", new SequenceType(BuiltinTypesCatalogue.arrayItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("array*", new SequenceType(BuiltinTypesCatalogue.arrayItem, Arity.ZeroOrMore));
@@ -288,10 +291,19 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("string*", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("integer", new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put(
+            "integer?",
+            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.OneOrZero)
+        );
+        sequenceTypes.put(
+            "integer*",
+            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore)
+        );
 
-        sequenceTypes.put("decimal?", new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "decimal?",
+            new SequenceType(BuiltinTypesCatalogue.decimalItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("double", new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.One));
         sequenceTypes.put("double?", new SequenceType(BuiltinTypesCatalogue.doubleItem, SequenceType.Arity.OneOrZero));
@@ -300,9 +312,15 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("float?", new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "boolean?",
+            new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.OneOrZero)
+        );
 
-        sequenceTypes.put("duration?", new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "duration?",
+            new SequenceType(BuiltinTypesCatalogue.durationItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put(
             "yearMonthDuration?",
@@ -314,7 +332,10 @@ public class SequenceType implements Serializable {
             new SequenceType(BuiltinTypesCatalogue.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("dateTime?", new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "dateTime?",
+            new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("date?", new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrZero));
 
@@ -323,7 +344,10 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("anyURI", new SequenceType(BuiltinTypesCatalogue.anyURIItem));
         sequenceTypes.put("anyURI?", new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("hexBinary?", new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "hexBinary?",
+            new SequenceType(BuiltinTypesCatalogue.hexBinaryItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put(
             "base64Binary?",

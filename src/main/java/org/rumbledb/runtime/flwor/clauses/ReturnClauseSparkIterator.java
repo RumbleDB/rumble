@@ -114,7 +114,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         Dataset<Row> df = this.child.getDataFrame(context, projection);
 
         // unescape backticks (`)
-        if(this.escapeBackticks) {
+        if (this.escapeBackticks) {
             df = df.sparkSession().createDataFrame(df.rdd(), FlworDataFrameUtils.escapeSchema(df.schema(), true));
         }
 

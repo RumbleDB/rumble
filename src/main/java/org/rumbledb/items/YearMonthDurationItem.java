@@ -6,7 +6,6 @@ import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.DurationFieldType;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -46,9 +45,10 @@ public class YearMonthDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.yearMonthDurationItem).normalizedStandard(
-            yearMonthPeriodType
-        );
+        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.yearMonthDurationItem)
+            .normalizedStandard(
+                yearMonthPeriodType
+            );
         this.isNegative = this.value.toString().contains("-");
     }
 

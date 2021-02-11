@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
@@ -49,6 +48,10 @@ public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        return new NativeClauseContext(nativeClauseContext, "" + this.item.getDoubleValue(), BuiltinTypesCatalogue.doubleItem);
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getDoubleValue(),
+                BuiltinTypesCatalogue.doubleItem
+        );
     }
 }

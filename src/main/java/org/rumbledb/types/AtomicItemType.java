@@ -7,61 +7,61 @@ public class AtomicItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     // TODO: extract array and object into its own types
-     static final AtomicItemType atomicItem = new AtomicItemType(
+    static final AtomicItemType atomicItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "atomic")
     );
-     static final AtomicItemType stringItem = new AtomicItemType(
+    static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string")
     );
-     static final AtomicItemType integerItem = new AtomicItemType(
+    static final AtomicItemType integerItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "integer")
     );
-     static final AtomicItemType decimalItem = new AtomicItemType(
+    static final AtomicItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal")
     );
-     static final AtomicItemType doubleItem = new AtomicItemType(
+    static final AtomicItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double")
     );
-     static final AtomicItemType floatItem = new AtomicItemType(
+    static final AtomicItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float")
     );
-     static final AtomicItemType booleanItem = new AtomicItemType(
+    static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean")
     );
-     static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
-     static final AtomicItemType durationItem = new AtomicItemType(
+    static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
+    static final AtomicItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration")
     );
-     static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
+    static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration")
     );
-     static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
+    static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration")
     );
-     static final AtomicItemType dateTimeItem = new AtomicItemType(
+    static final AtomicItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime")
     );
-     static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
-     static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
-     static final AtomicItemType hexBinaryItem = new AtomicItemType(
+    static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
+    static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
+    static final AtomicItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary")
     );
-     static final AtomicItemType anyURIItem = new AtomicItemType(
+    static final AtomicItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI")
     );
-     static final AtomicItemType base64BinaryItem = new AtomicItemType(
+    static final AtomicItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary")
     );
-     static final AtomicItemType JSONItem = new AtomicItemType(
+    static final AtomicItemType JSONItem = new AtomicItemType(
             new Name(Name.JS_NS, "xs", "json-item")
     );
-     static final AtomicItemType objectItem = new AtomicItemType(
+    static final AtomicItemType objectItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "object")
     );
-     static final AtomicItemType arrayItem = new AtomicItemType(
+    static final AtomicItemType arrayItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "array")
     );
-     static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
+    static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
 
     private Name name;
 

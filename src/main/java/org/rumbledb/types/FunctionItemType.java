@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 public class FunctionItemType implements ItemType {
@@ -43,7 +42,9 @@ public class FunctionItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (this.equals(superType) || superType.equals(anyFunctionItem) || superType.equals(BuiltinTypesCatalogue.item)) {
+        if (
+            this.equals(superType) || superType.equals(anyFunctionItem) || superType.equals(BuiltinTypesCatalogue.item)
+        ) {
             return true;
         }
         if (superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())) {
