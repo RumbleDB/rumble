@@ -210,7 +210,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     argument
                 ),
                 expression.getReturnClause().getHighestExecutionMode(this.visitorConfig),
-                expression.getReturnClause().getMetadata()
+                expression.getReturnClause().getMetadata(),
+                this.config.escapeBackticks()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
@@ -234,7 +235,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     forClause.isAllowEmpty(),
                     assignmentIterator,
                     forClause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getMetadata()
+                    clause.getMetadata(),
+                    this.config.escapeBackticks()
             );
         } else if (clause instanceof LetClause) {
             LetClause letClause = (LetClause) clause;
@@ -245,7 +247,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     letClause.getActualSequenceType(),
                     assignmentIterator,
                     letClause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getMetadata()
+                    clause.getMetadata(),
+                    this.config.escapeBackticks()
             );
         } else if (clause instanceof GroupByClause) {
             List<GroupByClauseSparkIteratorExpression> groupingExpressions = new ArrayList<>();
@@ -304,7 +307,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     previousIterator,
                     this.visit(((WhereClause) clause).getWhereExpression(), argument),
                     clause.getHighestExecutionMode(this.visitorConfig),
-                    clause.getMetadata()
+                    clause.getMetadata(),
+                    this.config.escapeBackticks()
             );
         } else if (clause instanceof CountClause) {
             return new CountClauseSparkIterator(

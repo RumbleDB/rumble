@@ -73,6 +73,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
+    private final boolean escapeBackticks;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -80,12 +81,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             SequenceType sequenceType,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            boolean escapeBackticks
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
+        this.escapeBackticks = escapeBackticks;
     }
 
     @Override
@@ -320,7 +323,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             false,
             context,
-            sequenceDependencies
+            sequenceDependencies,
+            this.escapeBackticks
         );
 
         System.err.println("[INFO] Rumble detected an equi-join in the left clause.");

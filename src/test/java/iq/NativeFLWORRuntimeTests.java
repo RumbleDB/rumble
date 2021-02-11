@@ -20,10 +20,13 @@
 
 package iq;
 
+import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
+import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.rumbledb.api.SequenceOfItems;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -32,6 +35,10 @@ import java.util.List;
 
 @RunWith(Parameterized.class)
 public class NativeFLWORRuntimeTests extends RuntimeTests {
+
+    protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
+            new String[] { "--variable:externalUnparsedString", "unparsed string", "--escape-backticks", "yes" }
+    );
 
     public static final File nativeFlworRuntimeTestsDirectory = new File(
             System.getProperty("user.dir")
@@ -50,6 +57,12 @@ public class NativeFLWORRuntimeTests extends RuntimeTests {
         readFileList(nativeFlworRuntimeTestsDirectory);
         _testFiles.forEach(file -> result.add(new Object[] { file }));
         return result;
+    }
+
+    @Test(timeout = 1000000)
+    public void testRuntimeIterators() throws Throwable {
+        System.err.println(AnnotationsTestsBase.counter++ + " : " + this.testFile);
+        testAnnotations(this.testFile.getAbsolutePath(), NativeFLWORRuntimeTests.configuration);
     }
 
     @Override

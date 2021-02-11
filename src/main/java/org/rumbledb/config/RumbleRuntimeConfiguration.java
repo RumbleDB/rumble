@@ -310,6 +310,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             && this.arguments.get("print-inferred-types").equals("yes");
     }
 
+    public boolean escapeBackticks() {
+        return this.arguments.containsKey("escape-backticks")
+                && this.arguments.get("escape-backticks").equals("yes");
+    }
+
     public boolean isLocal() {
         String masterConfig = SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master");
         return masterConfig.contains("local");
