@@ -20,7 +20,7 @@ package org.rumbledb.parser;
 
 // MODULE HEADER ///////////////////////////////////////////////////////////////
 
-// According to https://www.w3.org/TR/xquery-31/#id-query-prolog, we only have single mainModule
+// Replace according to https://www.w3.org/TR/xquery-31/#id-query-prolog, we only have single mainModule
 module : xqDocComment? versionDecl? xqDocComment? (libraryModule | mainModule) ;
 
 xqDocComment: XQDocComment ;
@@ -43,7 +43,7 @@ moduleDecl: KW_MODULE KW_NAMESPACE ncName EQUAL uriLiteral SEMICOLON ;
 prolog: ((defaultNamespaceDecl | setter | namespaceDecl | schemaImport | moduleImport) SEMICOLON)*
         ( xqDocComment? annotatedDecl SEMICOLON)* ;
 
-// Introduced annotatedDecl as intermediate for easier handling
+// Introduced (replaced) annotatedDecl as intermediate for easier handling
 annotatedDecl: varDecl
              | functionDecl
              | contextItemDecl
@@ -94,24 +94,23 @@ moduleImport: KW_IMPORT KW_MODULE
 
 namespaceDecl: KW_DECLARE KW_NAMESPACE ncName EQUAL uriLiteral ;
 
-varDecl: KW_DECLARE (annotations|ncName) KW_VARIABLE DOLLAR varName typeDeclaration?
-         (
-            (COLON_EQ varValue)
-          | (KW_EXTERNAL (COLON_EQ varDefaultValue)?)
-          | (LBRACE varValue RBRACE)
-          | (KW_EXTERNAL(LBRACE varDefaultValue RBRACE)?)
-         ) ;
+// Replace according to https://www.w3.org/TR/xquery-31/#doc-xquery31-VarDecl:
+// varValue an varDefaultValue from expr to exprSingle; remove two options containing LBRACE and RBRACE; remove ncName
+varDecl: KW_DECLARE annotations KW_VARIABLE DOLLAR varName typeDeclaration?
+         ((COLON_EQ varValue)
+         | (KW_EXTERNAL (COLON_EQ varDefaultValue)?)) ;
 
-varValue: expr ;
+varValue: exprSingle ;
 
-varDefaultValue: expr ;
+varDefaultValue: exprSingle ;
 
 contextItemDecl: KW_DECLARE KW_CONTEXT KW_ITEM
                  (KW_AS itemType)?
                  ((COLON_EQ value=exprSingle)
                  | (KW_EXTERNAL (COLON_EQ defaultValue=exprSingle)?)) ;
 
-functionDecl: KW_DECLARE (annotations|ncName) KW_FUNCTION name=eqName LPAREN functionParams? RPAREN
+// Replace according to https://www.w3.org/TR/xquery-31/#FunctionDeclns, we do not have ncName
+functionDecl: KW_DECLARE annotations KW_FUNCTION name=eqName LPAREN functionParams? RPAREN
               functionReturn?
               ( functionBody | KW_EXTERNAL) ;
 
@@ -235,13 +234,13 @@ ifExpr: KW_IF LPAREN test_condition=expr RPAREN
         KW_THEN branch=exprSingle
         KW_ELSE else_branch=exprSingle ;
 
-tryCatchExpr: tryClause catchClause+ ;
+tryCatchExpr: tryClause catches+=catchClause+ ;
 tryClause: KW_TRY enclosedTryTargetExpression ;
 enclosedTryTargetExpression: enclosedExpression ;
 catchClause: KW_CATCH (catchErrorList | (LPAREN DOLLAR varName RPAREN)) enclosedExpression ;
 enclosedExpression: LBRACE expr? RBRACE ;
 
-catchErrorList: nameTest (VBAR nameTest)* ;
+catchErrorList: errors+=nameTest (VBAR errors+=nameTest)* ;
 
 
 existUpdateExpr: KW_UPDATE ( existReplaceExpr | existValueExpr | existInsertExpr | existDeleteExpr | existRenameExpr ) ;
@@ -278,10 +277,10 @@ castableExpr: main_expr=castExpr ( KW_CASTABLE KW_AS single=singleType)?;
 
 castExpr: main_expr=arrowExpr (KW_CAST KW_AS single=singleType)? ;
 
-// TODO
-//arrowExpr: main_expr=unaryExpr (ARROW arrowFunctionSpecifier argumentList)* ;
+// replaced arrowFunctionSpecifier argumentList with complexArrow
+arrowExpr: main_expr=unaryExpr (ARROW function_call_expr+=complexArrow)* ;
 
-arrowExpr: main_expr=unaryExpr (ARROW function_call_expr+=functionCall)*;
+complexArrow: arrowFunctionSpecifier argumentList;
 
 unaryExpr: op+=(MINUS | PLUS)* main_expr=valueExpr ;
 
@@ -347,10 +346,7 @@ wildcard: STAR            # allNames
 
 postfixExpr: main_expr=primaryExpr (predicate | argumentList | lookup)* ;
 
-// TODO check if this is okay or can I just args+=argument and then again args+=argument
-argumentList: LPAREN (args+=argument COMMA?)* RPAREN ;
-
-//argumentList: LPAREN (argument (COMMA argument)*)? RPAREN ;
+argumentList: LPAREN (args+=argument (COMMA args+=argument)*)? RPAREN ;
 
 predicateList: predicate*;
 
@@ -511,9 +507,7 @@ mapConstructorEntry: mapKey=exprSingle (COLON | COLON_EQ) mapValue=exprSingle ;
 
 arrayConstructor: squareArrayConstructor | curlyArrayConstructor ;
 
-// TODO check if this is okay
-//squareArrayConstructor: LBRACKET (exprSingle (COMMA exprSingle)*)? RBRACKET ;
-
+// exprSingle (COMMA exprSingle)* replaced with expr
 squareArrayConstructor: LBRACKET expr? RBRACKET ;
 
 curlyArrayConstructor: KW_ARRAY enclosedExpression ;

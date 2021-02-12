@@ -602,6 +602,12 @@ public interface XQueryParserVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitArrowExpr(XQueryParser.ArrowExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link XQueryParser#complexArrow}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitComplexArrow(XQueryParser.ComplexArrowContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link XQueryParser#unaryExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
