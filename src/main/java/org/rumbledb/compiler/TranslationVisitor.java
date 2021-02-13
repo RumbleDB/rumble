@@ -1171,14 +1171,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return BuiltinTypesCatalogue.nullItem;
         }
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
-        if(fnCtx != null){
+        if (fnCtx != null) {
             // we have a function item type
             JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
-            if(typedFnCtx != null){
+            if (typedFnCtx != null) {
                 SequenceType rt = processSequenceType(typedFnCtx.rt);
                 List<SequenceType> st = typedFnCtx.st.stream()
-                        .map(this::processSequenceType)
-                        .collect(Collectors.toList());
+                    .map(this::processSequenceType)
+                    .collect(Collectors.toList());
                 FunctionSignature signature = new FunctionSignature(st, rt);
                 // TODO: move item type creation to ItemFactory
                 return new FunctionItemType(signature);
