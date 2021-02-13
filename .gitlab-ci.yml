@@ -4,7 +4,7 @@ build-rumble:
   stage: build
   artifacts:
     paths:
-      - targets/
+      - target/
   script:
     - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
     - mvn clean compile assembly:single
