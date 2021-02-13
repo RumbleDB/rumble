@@ -227,7 +227,14 @@ objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
 itemType                : qname
-                        | NullLiteral;
+                        | NullLiteral
+                        | functionTest;
+
+functionTest	        : (anyFunctionTest | typedFunctionTest);
+
+anyFunctionTest         : 'function' '(' '*' ')';
+
+typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*)? ')' 'as' rt=sequenceType;
 
 singleType              : item=itemType (question +='?')?;
 

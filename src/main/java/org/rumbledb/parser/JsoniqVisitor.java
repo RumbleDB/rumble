@@ -482,6 +482,24 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitItemType(JsoniqParser.ItemTypeContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#functionTest}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitFunctionTest(JsoniqParser.FunctionTestContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#anyFunctionTest}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitAnyFunctionTest(JsoniqParser.AnyFunctionTestContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#typedFunctionTest}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitTypedFunctionTest(JsoniqParser.TypedFunctionTestContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#singleType}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
