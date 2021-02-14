@@ -163,7 +163,7 @@ public class SequenceType implements Serializable {
             return new SequenceType(this.itemType, resultingArity);
         }
 
-        ItemType itemSupertype = this.getItemType().findCommonSuperType(other.getItemType());
+        ItemType itemSupertype = this.getItemType().findLeastCommonSuperType(other.getItemType());
         Arity aritySuperType = Arity.ZeroOrMore;
         if (this.isAritySubtypeOf(other.getArity())) {
             aritySuperType = other.getArity();

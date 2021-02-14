@@ -42,7 +42,7 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperType(ItemType other) {
         return item;
     }
 

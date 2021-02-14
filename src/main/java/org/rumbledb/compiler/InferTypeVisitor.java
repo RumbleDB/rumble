@@ -126,7 +126,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = childExpressionInferredType;
                 } else {
                     ItemType resultingItemType = inferredType.getItemType()
-                        .findCommonSuperType(childExpressionInferredType.getItemType());
+                        .findLeastCommonSuperType(childExpressionInferredType.getItemType());
                     SequenceType.Arity resultingArity =
                         ((inferredType.getArity() == SequenceType.Arity.OneOrZero
                             || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
@@ -271,7 +271,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType);
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         System.out.println("Visited inline function expression");
         return argument;
     }
@@ -298,7 +298,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
 
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         System.out.println("Visited named function expression");
         return argument;
     }
@@ -331,7 +331,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (expression.isPartialApplication()) {
             FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
-            expression.setInferredSequenceType(new SequenceType(new FunctionItemType(partialSignature)));
+            expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature)));
         } else {
             SequenceType returnType = signature.getReturnType();
             if (returnType == null) {
@@ -996,7 +996,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         ItemType itemType = type.getItemType();
-        if (itemType.isFunctionItem()) {
+        if (itemType.isFunctionItemType()) {
             throw new UnexpectedStaticTypeException(
                     "function item not allowed for the expressions of switch test condition and cases",
                     ErrorCode.UnexpectedFunctionItem
@@ -1354,7 +1354,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         boolean isAnyFunction = false;
         if (!mainType.isEmptySequence()) {
             ItemType type = mainType.getItemType();
-            if (type.isFunctionItem()) {
+            if (type.isFunctionItemType()) {
                 if (type.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
                     isAnyFunction = true;
                 } else {

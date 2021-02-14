@@ -8,7 +8,7 @@ public class FunctionItemType implements ItemType {
     private FunctionSignature signature;
     static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
-    public FunctionItemType(FunctionSignature signature) {
+    FunctionItemType(FunctionSignature signature) {
         if (signature == null) {
             throw new OurBadException("a new function item type must have a signature");
         }
@@ -31,7 +31,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public boolean isFunctionItem() {
+    public boolean isFunctionItemType() {
         return true;
     }
 
@@ -47,18 +47,18 @@ public class FunctionItemType implements ItemType {
         ) {
             return true;
         }
-        if (superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())) {
+        if (superType.isFunctionItemType() && this.signature.isSubtypeOf(superType.getSignature())) {
             return true;
         }
         return false;
     }
 
     @Override
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperType(ItemType other) {
         if (this.equals(other)) {
             return this;
         }
-        if (other.isFunctionItem()) {
+        if (other.isFunctionItemType()) {
             return anyFunctionItem;
         }
         return BuiltinTypesCatalogue.item;

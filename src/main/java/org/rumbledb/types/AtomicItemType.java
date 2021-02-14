@@ -81,17 +81,17 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isSubtypeOfAtomicItem() {
+    public boolean isAtomicItemType() {
         return !(this.equals(arrayItem) || this.equals(objectItem));
     }
 
     @Override
-    public boolean isObjectItem() {
+    public boolean isObjectItemType() {
         return this.equals(objectItem);
     }
 
     @Override
-    public boolean isArrayItem() {
+    public boolean isArrayItemType() {
         return this.equals(arrayItem);
     }
 
@@ -141,7 +141,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperType(ItemType other) {
         if (other.isSubtypeOf(this)) {
             return this;
         } else if (this.isSubtypeOf(other)) {

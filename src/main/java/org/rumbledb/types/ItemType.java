@@ -40,28 +40,28 @@ public interface ItemType extends Serializable {
     /**
      * @return true it [this] is a subtype of an atomic item type.
      */
-    public default boolean isSubtypeOfAtomicItem() {
+    public default boolean isAtomicItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is an object item type.
      */
-    public default boolean isObjectItem() {
+    public default boolean isObjectItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is an array item type.
      */
-    public default boolean isArrayItem() {
+    public default boolean isArrayItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is a function item type.
      */
-    public default boolean isFunctionItem() {
+    public default boolean isFunctionItemType() {
         return false;
     }
 
@@ -111,7 +111,7 @@ public interface ItemType extends Serializable {
      * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
      *         and [other]
      */
-    public ItemType findCommonSuperType(ItemType other);
+    public ItemType findLeastCommonSuperType(ItemType other);
 
     /**
      * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
