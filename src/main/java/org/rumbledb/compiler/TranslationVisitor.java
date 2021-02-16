@@ -1186,7 +1186,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true, false);
         if (
-                AtomicItemType.typeExists(name)
+            AtomicItemType.typeExists(name)
                 && children.size() == 1
         ) {
             return new CastExpression(
@@ -1196,7 +1196,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
         if (
-                AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
                 && children.size() == 1
                 && name.getNamespace() != null
                 && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)

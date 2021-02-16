@@ -270,8 +270,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (returnType == null) {
             returnType = expression.getBody().getInferredSequenceType();
         }
-        List<SequenceType> params = new ArrayList<>(expression.getParams().values());
-        FunctionSignature signature = new FunctionSignature(params, returnType);
         expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         System.out.println("Visited inline function expression");
         return argument;
@@ -296,8 +294,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-
-        FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
 
         expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         System.out.println("Visited named function expression");
@@ -331,7 +327,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         if (expression.isPartialApplication()) {
-            FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
             expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         } else {
             SequenceType returnType = signature.getReturnType();
