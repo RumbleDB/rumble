@@ -51,9 +51,9 @@ public class VisitorHelpers {
     }
 
     private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
-        System.err.println("* Starting type inference *");
+        System.out.println("* Starting type inference *");
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        System.err.println("* Completed type inference *");
+        System.out.println("* Completed type inference *");
         if (conf.printInferredTypes()) {
             printTree(module, conf);
         }
