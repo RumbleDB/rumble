@@ -99,7 +99,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
         try {
@@ -140,7 +140,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );

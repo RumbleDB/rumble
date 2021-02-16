@@ -51,7 +51,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
-    private boolean deactivateJsoniterStreaming;
+    private boolean checkReturnTypeOfBuiltinFunctions;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -145,6 +145,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public boolean isCheckReturnTypeOfBuiltinFunctions() {
+        return this.checkReturnTypeOfBuiltinFunctions;
+    }
+
+    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
+        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
+        return this;
+    }
+
     public void init() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
@@ -188,10 +197,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
-        if (this.arguments.containsKey("deactivate-jsoniter-streaming")) {
-            this.deactivateJsoniterStreaming = this.arguments.get("deactivate-jsoniter-streaming").equals("yes");
+        if (this.arguments.containsKey("check-return-types-of-builtin-functions")) {
+            this.checkReturnTypeOfBuiltinFunctions = this.arguments.get("check-return-types-of-builtin-functions")
+                .equals("yes");
         } else {
-            this.deactivateJsoniterStreaming = false;
+            this.checkReturnTypeOfBuiltinFunctions = false;
         }
     }
 
@@ -300,12 +310,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             && this.arguments.get("print-inferred-types").equals("yes");
     }
 
-    public boolean getDeactivateJsoniterStreaming() {
-        return this.deactivateJsoniterStreaming;
-    }
-
-    public void setDeactivateJsoniterStreaming(boolean b) {
-        this.deactivateJsoniterStreaming = b;
+    public boolean escapeBackticks() {
+        return this.arguments.containsKey("escape-backticks")
+            && this.arguments.get("escape-backticks").equals("yes");
     }
 
     public boolean isLocal() {

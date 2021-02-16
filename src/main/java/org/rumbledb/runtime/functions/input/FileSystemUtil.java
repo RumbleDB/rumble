@@ -201,6 +201,7 @@ public class FileSystemUtil {
         try {
             while ((line = reader.readLine()) != null) {
                 sb.append(line);
+                sb.append("\n");
             }
             return sb.toString();
         } catch (Exception e) {

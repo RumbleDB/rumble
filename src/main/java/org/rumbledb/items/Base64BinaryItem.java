@@ -3,21 +3,19 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.net.util.Base64;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.operational.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import javax.xml.bind.DatatypeConverter;
 import java.util.Arrays;
 import java.util.regex.Pattern;
 
-public class Base64BinaryItem extends AtomicItem {
+public class Base64BinaryItem implements Item {
 
     private static final String b04char = "([AQgw])";
     private static final String b04 = "(" + b04char + "(\\s)?)";
@@ -46,8 +44,27 @@ public class Base64BinaryItem extends AtomicItem {
         this.value = parseBase64BinaryString(stringValue);
     }
 
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
+    }
+
     public byte[] getValue() {
         return this.value;
+    }
+
+    @Override
+    public boolean isBinary() {
+        return true;
     }
 
     @Override
@@ -72,11 +89,6 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.base64BinaryItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -87,95 +99,6 @@ public class Base64BinaryItem extends AtomicItem {
     }
 
     @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(AtomicItemType.base64BinaryItem)
-            ||
-            itemType.equals(AtomicItemType.hexBinaryItem)
-            ||
-            itemType.equals(AtomicItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(AtomicItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
-            return this;
-        }
-        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
-            return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(this.value));
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isBase64Binary()) {
-            return Arrays.equals(this.getValue(), otherItem.getBinaryValue());
-        }
-        return false;
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isBase64Binary()) {
-            return this.serializeValue().compareTo(Arrays.toString(other.getBinaryValue()));
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isBase64Binary() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        if (other.isNull()) {
-            return super.compareItem(other, comparisonOperator, metadata);
-        }
-        switch (comparisonOperator) {
-            case VC_EQ:
-            case GC_EQ:
-            case VC_NE:
-            case GC_NE:
-                return super.compareItem(other, comparisonOperator, metadata);
-            default:
-                throw new UnexpectedTypeException(
-                        "\""
-                            + this.getDynamicType().toString()
-                            + "\": invalid type: can not compare for equality to type \""
-                            + other.getDynamicType().toString()
-                            + "\"",
-                        metadata
-                );
-        }
-    }
-
-    @Override
     public int hashCode() {
         return Arrays.hashCode(this.getValue());
     }
@@ -183,10 +106,6 @@ public class Base64BinaryItem extends AtomicItem {
     @Override
     public String serialize() {
         return this.getStringValue();
-    }
-
-    private String serializeValue() {
-        return Arrays.toString(this.getValue());
     }
 
     @Override
@@ -204,11 +123,11 @@ public class Base64BinaryItem extends AtomicItem {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.base64BinaryItem;
+        return BuiltinTypesCatalogue.base64BinaryItem;
     }
 
     @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public boolean isAtomic() {
+        return true;
     }
 }

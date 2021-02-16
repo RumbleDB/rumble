@@ -50,9 +50,7 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
 
         DynamicContext dynamicContext = this.dataFrameContext.getContext();
 
-        this.expression.open(dynamicContext);
-        boolean result = RuntimeIterator.getEffectiveBooleanValue(this.expression);
-        this.expression.close();
+        boolean result = this.expression.getEffectiveBooleanValue(dynamicContext);
         return result;
     }
 }

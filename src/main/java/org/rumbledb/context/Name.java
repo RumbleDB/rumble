@@ -47,20 +47,25 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     private String namespace;
     private String prefix;
     private String localName;
-    public static final String RUMBLE_NS = "http://rumbledb.org/main-namespace";
+    public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
+    public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
+    public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
+    public static final String JN_NS = "http://jsoniq.org/functions";
+    public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
+    public static final String JS_NS = "http://jsoniq.org/types";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";
     public static final String DEFAULT_COLLATION_NS = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
 
-    private Name() {
+    public Name() {
         this.namespace = null;
         this.prefix = null;
         this.localName = null;
     }
 
-    private Name(String namespace, String prefix, String localName) {
+    public Name(String namespace, String prefix, String localName) {
         this.namespace = namespace;
         this.prefix = prefix;
         this.localName = localName;
@@ -81,8 +86,8 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     }
 
     /**
-     * Creates an expanded name that has the Rumble namespace. By default, in Rumble, unprefixed
-     * function names live in the Rumble namespace. This namespace is for convenience and includes
+     * Creates an expanded name that has the default JSONiq function namespace. By default, in Rumble, unprefixed
+     * function names live in this namespace. This namespace is for convenience and includes
      * all functions in XQuery's fn namespace, JSONiq's jn (JSONiq core) and jnlib (JSONiq library)
      * namespaces, as well as any
      * user-defined functions with unprefixed names.
@@ -90,8 +95,20 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
      * @param localName the name of the variable
      * @return the expanded name
      */
-    public static Name createVariableInRumbleNamespace(String localName) {
-        return new Name(RUMBLE_NS, "", localName);
+    public static Name createVariableInDefaultTypeNamespace(String localName) {
+        return new Name(JSONIQ_DEFAULT_TYPE_NS, "", localName);
+    }
+
+    /**
+     * Creates an expanded name that has the default JSONiq type namespace. By default, in Rumble, unprefixed
+     * type names live in this namespace. This namespace is for convenience and includes
+     * all builtin XQuery and JSONiq functions.
+     * 
+     * @param localName the name of the variable
+     * @return the expanded name
+     */
+    public static Name createVariableInDefaultFunctionNamespace(String localName) {
+        return new Name(JSONIQ_DEFAULT_FUNCTION_NS, "", localName);
     }
 
     /**

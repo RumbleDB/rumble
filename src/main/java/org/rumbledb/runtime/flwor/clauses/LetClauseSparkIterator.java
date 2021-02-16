@@ -39,11 +39,14 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.flwor.udfs.*;
-import org.rumbledb.runtime.operational.ComparisonOperationIterator;
+import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
+import org.rumbledb.runtime.flwor.udfs.HashUDF;
+import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
+import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.postfix.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -69,6 +72,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator assignmentIterator;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
+    private final boolean escapeBackticks;
 
     public LetClauseSparkIterator(
             RuntimeTupleIterator child,
@@ -76,12 +80,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             SequenceType sequenceType,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            boolean escapeBackticks
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
         this.sequenceType = sequenceType;
         this.assignmentIterator = assignmentIterator;
+        this.escapeBackticks = escapeBackticks;
     }
 
     @Override
@@ -236,14 +242,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // Is the predicate a comparison?
-        if (!(predicateIterator instanceof ComparisonOperationIterator)) {
+        if (!(predicateIterator instanceof ComparisonIterator)) {
             throw new JobWithinAJobException(
                     "A let clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. We did detect a predicate expression, but the criterion inside the predicate is not a comparison.",
                     getMetadata()
             );
 
         }
-        ComparisonOperationIterator comparisonIterator = (ComparisonOperationIterator) predicateIterator;
+        ComparisonIterator comparisonIterator = (ComparisonIterator) predicateIterator;
         // Is the predicate a value equality comparison?
         if (!comparisonIterator.isValueEquality()) {
             throw new JobWithinAJobException(
@@ -316,7 +322,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             false,
             context,
-            sequenceDependencies
+            sequenceDependencies,
+            this.escapeBackticks
         );
 
         System.err.println("[INFO] Rumble detected an equi-join in the left clause.");
@@ -374,8 +381,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
                     SparkSessionManager.expressionHashColumnName,
                     this.variableName,
-                    this.variableName,
-                    SparkSessionManager.expressionHashColumnName
+                    this.variableName
                 )
             );
         expressionDF.createOrReplaceTempView("groupedAndSerializedResults");
@@ -630,7 +636,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         ) {
             ItemType itemType = sequenceType.getItemType();
 
-            if (itemType.equals(AtomicItemType.stringItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -647,7 +653,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.integerItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -664,7 +670,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.decimalItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -681,7 +687,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return;
             }
 
-            if (itemType.equals(AtomicItemType.doubleItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(

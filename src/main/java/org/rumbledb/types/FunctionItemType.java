@@ -2,14 +2,14 @@ package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
-public class FunctionItemType extends ItemType {
+public class FunctionItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
     @SuppressWarnings("unused")
     private boolean isGeneric;
     private FunctionSignature signature;
-    public static FunctionItemType ANYFUNCTION = new FunctionItemType(true);
+    static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     public FunctionItemType(FunctionSignature signature) {
         if (signature == null) {
@@ -17,14 +17,20 @@ public class FunctionItemType extends ItemType {
         }
         this.isGeneric = false;
         this.signature = signature;
-        this.name = signature.toString();
     }
 
     // we have a parameter because the empty one is public and inherited
     private FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
-        this.name = "function(*)";
+    }
+
+    @Override
+    public boolean equals(Object other) {
+        if (!(other instanceof FunctionItemType)) {
+            return false;
+        }
+        return this.toString().equals(other.toString());
     }
 
     @Override
@@ -38,16 +44,10 @@ public class FunctionItemType extends ItemType {
     }
 
     @Override
-    public boolean equals(Object other) {
-        if (!(other instanceof ItemType)) {
-            return false;
-        }
-        return this.name.equals(other.toString());
-    }
-
-    @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (this.equals(superType) || superType.equals(ANYFUNCTION) || superType.equals(ItemType.item)) {
+        if (
+            this.equals(superType) || superType.equals(anyFunctionItem) || superType.equals(BuiltinTypesCatalogue.item)
+        ) {
             return true;
         }
         if (superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())) {
@@ -62,8 +62,13 @@ public class FunctionItemType extends ItemType {
             return this;
         }
         if (other.isFunctionItem()) {
-            return ANYFUNCTION;
+            return anyFunctionItem;
         }
-        return ItemType.item;
+        return BuiltinTypesCatalogue.item;
+    }
+
+    @Override
+    public String toString() {
+        return this.isGeneric ? "function(*)" : this.signature.toString();
     }
 }

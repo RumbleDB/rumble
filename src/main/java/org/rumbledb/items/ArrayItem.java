@@ -25,13 +25,12 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayItem extends JsonItem {
+public class ArrayItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -45,6 +44,25 @@ public class ArrayItem extends JsonItem {
     public ArrayItem(List<Item> arrayItems) {
         super();
         this.arrayItems = arrayItems;
+    }
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isArray()) {
+            return false;
+        }
+        if (getSize() != o.getSize()) {
+            return false;
+        }
+        for (int i = 0; i < getSize(); ++i) {
+            if (!getItemAt(i).equals(o.getItemAt(i))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     public void append(Item other) {
@@ -74,11 +92,6 @@ public class ArrayItem extends JsonItem {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(AtomicItemType.arrayItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -115,25 +128,6 @@ public class ArrayItem extends JsonItem {
         this.arrayItems = kryo.readObject(input, ArrayList.class);
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isArray()) {
-            return false;
-        }
-        if (getSize() != o.getSize()) {
-            return false;
-        }
-        for (int i = 0; i < getSize(); ++i) {
-            if (!getItemAt(i).equals(o.getItemAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public int hashCode() {
         int result = 0;
         result += getSize();
@@ -145,21 +139,11 @@ public class ArrayItem extends JsonItem {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.arrayItem;
+        return BuiltinTypesCatalogue.arrayItem;
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        throw new OurBadException(" Item '" + this.serialize() + "' is an array!");
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return false;
-    }
-
-    @Override
-    public String getSparkSqlQuery() {
-        return null;
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 }

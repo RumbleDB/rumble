@@ -23,15 +23,16 @@ package org.rumbledb.runtime.operational;
 import java.util.Arrays;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-public class AndOperationIterator extends LocalRuntimeIterator {
+public class AndOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
@@ -57,22 +58,14 @@ public class AndOperationIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.leftIterator.open(this.currentDynamicContextForLocalExecution);
-            this.rightIterator.open(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        boolean leftEffectiveBooleanValue = this.leftIterator.getEffectiveBooleanValue(dynamicContext);
+        boolean rightEffectiveBooleanValue = this.rightIterator.getEffectiveBooleanValue(dynamicContext);
 
-            boolean leftEffectiveBooleanValue = getEffectiveBooleanValue(this.leftIterator);
-            boolean rightEffectiveBooleanValue = getEffectiveBooleanValue(this.rightIterator);
-
-            this.leftIterator.close();
-            this.rightIterator.close();
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createBooleanItem((leftEffectiveBooleanValue && rightEffectiveBooleanValue));
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-
+        return ItemFactory.getInstance()
+            .createBooleanItem((leftEffectiveBooleanValue && rightEffectiveBooleanValue));
     }
 
     @Override
@@ -88,6 +81,6 @@ public class AndOperationIterator extends LocalRuntimeIterator {
             + " AND "
             + rightResult.getResultingQuery()
             + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

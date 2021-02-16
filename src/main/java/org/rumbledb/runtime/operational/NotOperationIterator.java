@@ -23,14 +23,16 @@ package org.rumbledb.runtime.operational;
 import java.util.Collections;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-public class NotOperationIterator extends LocalRuntimeIterator {
+public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
@@ -45,11 +47,8 @@ public class NotOperationIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        this.child.open(this.currentDynamicContextForLocalExecution);
-        boolean effectiveBooleanValue = getEffectiveBooleanValue(this.child);
-        this.child.close();
-        this.hasNext = false;
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        boolean effectiveBooleanValue = this.child.getEffectiveBooleanValue(dynamicContext);
         return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
     }
 
@@ -61,6 +60,6 @@ public class NotOperationIterator extends LocalRuntimeIterator {
         }
 
         String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery);
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

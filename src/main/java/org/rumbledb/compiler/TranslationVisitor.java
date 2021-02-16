@@ -99,8 +99,6 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 import org.rumbledb.expressions.typing.*;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -117,6 +115,7 @@ import java.io.IOException;
 import java.math.BigDecimal;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
@@ -145,6 +144,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
+        this.moduleContext.bindNamespace("fn", Name.FN_NS);
+        this.moduleContext.bindNamespace("xs", Name.XS_NS);
+        this.moduleContext.bindNamespace("jn", Name.JN_NS);
+        this.moduleContext.bindNamespace("js", Name.JS_NS);
         this.configuration = configuration;
         this.isMainModule = isMainModule;
     }
@@ -319,7 +322,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return prolog;
     }
 
-    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction) {
+    public Name parseName(JsoniqParser.QnameContext ctx, boolean isFunction, boolean isType) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -335,7 +338,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInRumbleNamespace(localName);
+                name = Name.createVariableInDefaultFunctionNamespace(localName);
+            } else if (isType) {
+                name = Name.createVariableInDefaultTypeNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -353,14 +358,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
-        Name name = parseName(ctx.qname(), true);
+        Name name = parseName(ctx.qname(), true, false);
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false);
+                paramName = parseName(param.qname(), false, false);
                 paramType = MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -382,7 +387,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        Expression bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
+        Expression bodyExpression = null;
+        if (ctx.fn_body != null) {
+            bodyExpression = (Expression) this.visitExpr(ctx.fn_body);
+        } else {
+            bodyExpression = new CommaExpression(createMetadataFromContext(ctx));
+        }
 
         return new InlineFunctionExpression(
                 name,
@@ -986,9 +996,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.ci != null) {
             return this.visitContextItemExpr(ctx.ci);
         }
-        if (ctx.tkw != null) {
-            return new StringLiteralExpression(ctx.tkw.getText(), createMetadataFromContext(ctx));
-        }
 
         throw new OurBadException("Unrecognized object lookup.");
     }
@@ -1109,7 +1116,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitVarRef(JsoniqParser.VarRefContext ctx) {
-        Name name = parseName(ctx.qname(), false);
+        Name name = parseName(ctx.qname(), false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1122,28 +1129,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.item == null) {
             return SequenceType.EMPTY_SEQUENCE;
         }
-        ItemType itemType;
-        JsoniqParser.FunctionTestContext fnCtx = ctx.item.functionTest();
-        if (fnCtx == null) {
-            // non-function item type
-            itemType = ItemType.getItemTypeByName(ctx.item.getText());
-        } else {
-            // function item type
-            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
-            if (typedFnCtx == null) {
-                // function(*)
-                itemType = FunctionItemType.ANYFUNCTION;
-            } else {
-                // typed function
-                SequenceType rt = processSequenceType(typedFnCtx.rt);
-                List<SequenceType> st = typedFnCtx.st.stream()
-                    .map(this::processSequenceType)
-                    .collect(Collectors.toList());
-                FunctionSignature signature = new FunctionSignature(st, rt);
-                itemType = new FunctionItemType(signature);
-            }
-        }
-
+        ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -1170,7 +1156,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return SequenceType.EMPTY_SEQUENCE;
         }
 
-        ItemType itemType = ItemType.getItemTypeByName(ctx.item.getText());
+        ItemType itemType = processItemType(ctx.item);
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -1180,8 +1166,55 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new SequenceType(itemType);
     }
 
+    public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
+        if (itemTypeContext.NullLiteral() != null) {
+            return BuiltinTypesCatalogue.nullItem;
+        }
+        JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
+        if (fnCtx != null) {
+            // we have a function item type
+            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
+            if (typedFnCtx != null) {
+                SequenceType rt = processSequenceType(typedFnCtx.rt);
+                List<SequenceType> st = typedFnCtx.st.stream()
+                    .map(this::processSequenceType)
+                    .collect(Collectors.toList());
+                FunctionSignature signature = new FunctionSignature(st, rt);
+                // TODO: move item type creation to ItemFactory
+                return new FunctionItemType(signature);
+
+            } else {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
+        }
+        return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
+    }
+
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
-        Name name = parseName(ctx.fn_name, true);
+        Name name = parseName(ctx.fn_name, true, false);
+        if (
+            BuiltinTypesCatalogue.typeExists(name)
+                && children.size() == 1
+        ) {
+            return new CastExpression(
+                    children.get(0),
+                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (
+            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+                && children.size() == 1
+                && name.getNamespace() != null
+                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
+                && !name.getLocalName().equals("boolean")
+        ) {
+            return new CastExpression(
+                    children.get(0),
+                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    createMetadataFromContext(ctx)
+            );
+        }
         return new FunctionCallExpression(
                 name,
                 children,
@@ -1230,7 +1263,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitNamedFunctionRef(JsoniqParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true);
+        Name name = parseName(ctx.fn_name, true, false);
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());
@@ -1253,11 +1286,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
-                paramName = parseName(param.qname(), false);
+                paramName = parseName(param.qname(), false, false);
                 paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
-                            Name.createVariableInRumbleNamespace("inline-function`"),
+                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
                             paramName,
                             createMetadataFromContext(param)
                     );
@@ -1275,7 +1308,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             fnReturnType = this.processSequenceType(ctx.return_type);
         }
 
-        Expression expr = (Expression) this.visitExpr(ctx.fn_body);
+        Expression expr = null;
+        if (ctx.fn_body != null) {
+            expr = (Expression) this.visitExpr(ctx.fn_body);
+        } else {
+            expr = new CommaExpression(createMetadataFromContext(ctx));
+        }
 
         return new InlineFunctionExpression(
                 null,
@@ -1362,13 +1400,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitQuantifiedExpr(JsoniqParser.QuantifiedExprContext ctx) {
-        List<QuantifiedExpressionVar> vars = new ArrayList<>();
-        QuantifiedExpression.Quantification operator;
+        Clause clause = null;
         Expression expression = (Expression) this.visitExprSingle(ctx.exprSingle());
+        boolean isUniversal = false;
         if (ctx.ev == null) {
-            operator = QuantifiedExpression.Quantification.SOME;
+            isUniversal = false;
         } else {
-            operator = QuantifiedExpression.Quantification.EVERY;
+            isUniversal = true;
         }
         for (JsoniqParser.QuantifiedExprVarContext currentVariable : ctx.vars) {
             Expression varExpression;
@@ -1381,15 +1419,48 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             }
 
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());
-            vars.add(
-                new QuantifiedExpressionVar(
-                        variableName,
-                        varExpression,
-                        sequenceType
-                )
+            Clause newClause = new ForClause(
+                    variableName,
+                    false,
+                    sequenceType,
+                    null,
+                    varExpression,
+                    createMetadataFromContext(currentVariable)
+            );
+            if (clause != null) {
+                clause.chainWith(newClause);
+            }
+            clause = newClause;
+        }
+        WhereClause whereClause = null;
+        if (!isUniversal) {
+            whereClause = new WhereClause(expression, createMetadataFromContext(ctx.exprSingle()));
+        } else {
+            whereClause = new WhereClause(
+                    new NotExpression(expression, createMetadataFromContext(ctx.exprSingle())),
+                    createMetadataFromContext(ctx.exprSingle())
             );
         }
-        return new QuantifiedExpression(operator, expression, vars, createMetadataFromContext(ctx));
+        clause.chainWith(whereClause);
+        ReturnClause returnClause = new ReturnClause(
+                new NullLiteralExpression(generateMetadata(ctx.start)),
+                generateMetadata(ctx.start)
+        );
+        whereClause.chainWith(returnClause);
+        Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
+        if (!isUniversal) {
+            return new FunctionCallExpression(
+                    Name.createVariableInDefaultFunctionNamespace("exists"),
+                    Collections.singletonList(flworExpression),
+                    createMetadataFromContext(ctx)
+            );
+        } else {
+            return new FunctionCallExpression(
+                    Name.createVariableInDefaultFunctionNamespace("empty"),
+                    Collections.singletonList(flworExpression),
+                    createMetadataFromContext(ctx)
+            );
+        }
     }
 
     @Override
@@ -1400,7 +1471,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         for (JsoniqParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.catch_expression);
             for (JsoniqParser.QnameContext qnameCtx : catchCtx.errors) {
-                Name name = parseName(qnameCtx, false);
+                Name name = parseName(qnameCtx, false, false);
                 if (!catchExpressions.containsKey(name.getLocalName())) {
                     catchExpressions.put(name.getLocalName(), catchExpression);
                 }
