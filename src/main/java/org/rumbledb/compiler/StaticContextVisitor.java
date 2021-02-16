@@ -130,12 +130,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
             );
         } else {
+            // note: sequence type can be null
             expression.setType(argument.getVariableSequenceType(variableName));
             ExecutionMode mode = argument.getVariableStorageMode(variableName);
             if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
                 mode = ExecutionMode.LOCAL;
             }
             expression.setHighestExecutionMode(mode);
+            // TODO: check staticContext available
             return argument;
         }
     }
@@ -259,7 +261,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
-            clause.getSequenceType(),
+            clause.getActualSequenceType(),
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
@@ -283,7 +285,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
-            clause.getSequenceType(),
+            clause.getActualSequenceType(),
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
@@ -300,7 +302,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 this.visit(variable.getExpression(), argument);
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
-                    variable.getSequenceType(),
+                    variable.getActualSequenceType(),
                     clause.getMetadata(),
                     ExecutionMode.LOCAL
                 );
@@ -386,7 +388,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             // first pass.
             argument.addVariable(
                 variableDeclaration.getVariableName(),
-                variableDeclaration.getSequenceType(),
+                variableDeclaration.getActualSequenceType(),
                 variableDeclaration.getMetadata(),
                 variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
             );
