@@ -79,6 +79,10 @@ public class ForClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.createSequenceType("item") : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -127,7 +131,7 @@ public class ForClause extends Clause {
             " ("
                 + (this.variableName)
                 + ", "
-                + this.sequenceType.toString()
+                + this.getSequenceType().toString()
                 + ", "
                 + (this.allowingEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName

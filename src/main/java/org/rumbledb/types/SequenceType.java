@@ -81,7 +81,109 @@ public class SequenceType implements Serializable {
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
             &&
-            this.arity == superType.arity;
+            this.isAritySubtypeOf(superType.arity);
+    }
+
+    // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
+    public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
+        if (this.isEmptySequence) {
+            return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
+        }
+        return this.isAritySubtypeOf(superType.arity)
+            && (this.itemType.isSubtypeOf(superType.getItemType())
+                ||
+                (this.itemType.canBePromotedTo(superType.itemType)));
+    }
+
+    // check if the arity of a sequence type is subtype of another arity, assume [this] is a non-empty sequence
+    // TODO: consider removing it
+    public boolean isAritySubtypeOf(Arity superArity) {
+        return this.arity.isSubtypeOf(superArity);
+    }
+
+    public boolean hasEffectiveBooleanValue() {
+        if (this.isEmptySequence) {
+            return true;
+        } else if (this.itemType.isSubtypeOf(AtomicItemType.JSONItem)) {
+            return true;
+        } else if (
+            (this.arity == Arity.One || this.arity == Arity.OneOrZero)
+                && (this.itemType.isNumeric()
+                    ||
+                    this.itemType.equals(AtomicItemType.stringItem)
+                    ||
+                    this.itemType.equals(AtomicItemType.anyURIItem)
+                    ||
+                    this.itemType.equals(AtomicItemType.nullItem)
+                    ||
+                    this.itemType.equals(AtomicItemType.booleanItem))
+        ) {
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    public boolean hasOverlapWith(SequenceType other) {
+        // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
+        if (this.isEmptySequence()) {
+            return other.isEmptySequence()
+                || other.getArity() == Arity.OneOrZero
+                || other.getArity() == Arity.ZeroOrMore;
+        }
+        if (other.isEmptySequence()) {
+            return this.getArity() == Arity.OneOrZero || this.getArity() == Arity.ZeroOrMore;
+        }
+        // All arities overlap between each other
+        return this.getItemType().isSubtypeOf(other.getItemType())
+            || other.getItemType().isSubtypeOf(this.getItemType());
+    }
+
+    public SequenceType leastCommonSupertypeWith(SequenceType other) {
+        if (this.isEmptySequence) {
+            if (other.isEmptySequence()) {
+                return this;
+            } else {
+                Arity resultingArity = other.getArity();
+                if (resultingArity == Arity.One) {
+                    resultingArity = Arity.OneOrZero;
+                } else if (resultingArity == Arity.OneOrMore) {
+                    resultingArity = Arity.ZeroOrMore;
+                }
+                return new SequenceType(other.itemType, resultingArity);
+            }
+        }
+        if (other.isEmptySequence()) {
+            Arity resultingArity = this.getArity();
+            if (resultingArity == Arity.One) {
+                resultingArity = Arity.OneOrZero;
+            } else if (resultingArity == Arity.OneOrMore) {
+                resultingArity = Arity.ZeroOrMore;
+            }
+            return new SequenceType(this.itemType, resultingArity);
+        }
+
+        ItemType itemSupertype = this.getItemType().findCommonSuperType(other.getItemType());
+        Arity aritySuperType = Arity.ZeroOrMore;
+        if (this.isAritySubtypeOf(other.getArity())) {
+            aritySuperType = other.getArity();
+        } else if (other.isAritySubtypeOf(this.getArity())) {
+            aritySuperType = this.getArity();
+        }
+        // no need additional check because the only disjointed arity are ? and +, which least common supertype is *
+        return new SequenceType(itemSupertype, aritySuperType);
+    }
+
+    // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
+    public SequenceType incrementArity() {
+        if (!this.isEmptySequence()) {
+            if (this.arity == Arity.One) {
+                return new SequenceType(this.getItemType(), Arity.OneOrMore);
+            } else if (this.arity == Arity.OneOrZero) {
+                return new SequenceType(this.getItemType(), Arity.ZeroOrMore);
+            }
+        }
+        return this;
     }
 
     @Override
@@ -126,6 +228,26 @@ public class SequenceType implements Serializable {
         };
 
         public abstract String getSymbol();
+
+        public boolean isSubtypeOf(Arity superArity) {
+            if (superArity == Arity.ZeroOrMore || superArity == this)
+                return true;
+            else
+                return this == Arity.One;
+        }
+
+        public Arity multiplyWith(Arity other) {
+            if (this == One && other == One) {
+                return One;
+            } else if (this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)) {
+                return OneOrZero;
+            } else if (this.isSubtypeOf(OneOrMore) && other.isSubtypeOf(OneOrMore)) {
+                return OneOrMore;
+            } else {
+                return ZeroOrMore;
+            }
+        }
+
     }
 
     @Override
@@ -152,7 +274,13 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("object+", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.OneOrMore));
         sequenceTypes.put("object*", new SequenceType(AtomicItemType.objectItem, SequenceType.Arity.ZeroOrMore));
 
+        sequenceTypes.put(
+            "json-item*",
+            new SequenceType(AtomicItemType.JSONItem, SequenceType.Arity.ZeroOrMore)
+        );
+
         sequenceTypes.put("array?", new SequenceType(AtomicItemType.arrayItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("array*", new SequenceType(AtomicItemType.arrayItem, Arity.ZeroOrMore));
 
         sequenceTypes.put("atomic", new SequenceType(AtomicItemType.atomicItem, SequenceType.Arity.One));
         sequenceTypes.put("atomic?", new SequenceType(AtomicItemType.atomicItem, SequenceType.Arity.OneOrZero));
@@ -163,10 +291,19 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("string*", new SequenceType(AtomicItemType.stringItem, SequenceType.Arity.ZeroOrMore));
 
         sequenceTypes.put("integer", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One));
-        sequenceTypes.put("integer?", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.OneOrZero));
-        sequenceTypes.put("integer*", new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.ZeroOrMore));
+        sequenceTypes.put(
+            "integer?",
+            new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.OneOrZero)
+        );
+        sequenceTypes.put(
+            "integer*",
+            new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.ZeroOrMore)
+        );
 
-        sequenceTypes.put("decimal?", new SequenceType(AtomicItemType.decimalItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "decimal?",
+            new SequenceType(AtomicItemType.decimalItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("double", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.One));
         sequenceTypes.put("double?", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.OneOrZero));
@@ -175,9 +312,15 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("float?", new SequenceType(AtomicItemType.floatItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("boolean", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.One));
-        sequenceTypes.put("boolean?", new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "boolean?",
+            new SequenceType(AtomicItemType.booleanItem, SequenceType.Arity.OneOrZero)
+        );
 
-        sequenceTypes.put("duration?", new SequenceType(AtomicItemType.durationItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "duration?",
+            new SequenceType(AtomicItemType.durationItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put(
             "yearMonthDuration?",
@@ -189,15 +332,22 @@ public class SequenceType implements Serializable {
             new SequenceType(AtomicItemType.dayTimeDurationItem, SequenceType.Arity.OneOrZero)
         );
 
-        sequenceTypes.put("dateTime?", new SequenceType(AtomicItemType.dateTimeItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "dateTime?",
+            new SequenceType(AtomicItemType.dateTimeItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("date?", new SequenceType(AtomicItemType.dateItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("time?", new SequenceType(AtomicItemType.timeItem, SequenceType.Arity.OneOrZero));
 
+        sequenceTypes.put("anyURI", new SequenceType(AtomicItemType.anyURIItem));
         sequenceTypes.put("anyURI?", new SequenceType(AtomicItemType.anyURIItem, SequenceType.Arity.OneOrZero));
 
-        sequenceTypes.put("hexBinary?", new SequenceType(AtomicItemType.hexBinaryItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "hexBinary?",
+            new SequenceType(AtomicItemType.hexBinaryItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put(
             "base64Binary?",
