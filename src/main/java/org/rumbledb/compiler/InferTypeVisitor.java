@@ -1365,7 +1365,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             .collect(Collectors.toList());
         if (isAnyFunction || (signature != null && checkArguments(signature.getParameterTypes(), argsType))) {
             // TODO: need to add support for partial application
-            expression.setInferredSequenceType(signature.getReturnType());
+            expression.setInferredSequenceType(SequenceType.MOST_GENERAL_SEQUENCE_TYPE);
             System.out.println(
                 "visiting DynamicFunctionCall expression, type set to: " + expression.getInferredSequenceType()
             );
