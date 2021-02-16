@@ -24,6 +24,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -56,7 +57,7 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
-            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            this.item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "Unary expression requires at most one item in its input sequence.",
@@ -76,6 +77,9 @@ public class UnaryOperationIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.item.isInteger()) {
             return ItemFactory.getInstance()
                 .createIntegerItem(BigInteger.valueOf(-1).multiply(this.item.getIntegerValue()));
+        }
+        if (this.item.isFloat()) {
+            return ItemFactory.getInstance().createFloatItem(-1 * this.item.getFloatValue());
         }
         if (this.item.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(-1 * this.item.getDoubleValue());

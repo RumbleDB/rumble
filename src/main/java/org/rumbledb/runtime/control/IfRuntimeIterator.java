@@ -25,6 +25,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -102,13 +103,16 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.selectedIterator.close();
+        if(this.selectedIterator != null && this.selectedIterator.isOpen())
+        {
+            this.selectedIterator.close();
+        }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         RuntimeIterator condition = this.children.get(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(this.currentDynamicContextForLocalExecution);
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
         if (effectiveBooleanValue) {
             return this.children.get(1).getRDD(dynamicContext);
