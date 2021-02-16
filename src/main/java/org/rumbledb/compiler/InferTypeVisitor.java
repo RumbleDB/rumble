@@ -272,7 +272,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType);
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         System.out.println("Visited inline function expression");
         return argument;
     }
@@ -299,7 +299,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
 
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         System.out.println("Visited named function expression");
         return argument;
     }
@@ -332,7 +332,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (expression.isPartialApplication()) {
             FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
-            expression.setInferredSequenceType(new SequenceType(new FunctionItemType(partialSignature)));
+            expression.setInferredSequenceType(new SequenceType(AtomicItemType.functionItem));
         } else {
             SequenceType returnType = signature.getReturnType();
             if (returnType == null) {
@@ -1288,7 +1288,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
+    public StaticContext visitPredicateExpression(PredicateExpression expression, StaticContext argument) {
         visit(expression.getMainExpression(), argument);
         SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
         basicChecks(mainType, expression.getClass().getSimpleName(), true, true);
@@ -1356,7 +1356,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         if (!mainType.isEmptySequence()) {
             ItemType type = mainType.getItemType();
             if (type.isFunctionItem()) {
-                if (type.equals(AtomicItemType.anyFunctionItem)) {
+                if (type.equals(AtomicItemType.functionItem)) {
                     isAnyFunction = true;
                 } else {
                     signature = type.getSignature();
