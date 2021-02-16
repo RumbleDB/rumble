@@ -302,7 +302,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public boolean doStaticAnalysis() {
-        return this.arguments.containsKey("static-analysis") && this.arguments.get("static-analysis").equals("yes");
+        return this.arguments.containsKey("static-typing") && this.arguments.get("static-typing").equals("yes");
     }
 
     public boolean printInferredTypes() {

@@ -26,7 +26,7 @@ import java.util.List;
 public class StaticTypeTests extends AnnotationsTestsBase {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes", "--static-analysis", "yes" }
+            new String[] { "--print-iterator-tree", "yes", "--static-typing", "yes" }
     );
 
     public static final File staticTypeTestsDirectory = new File(
