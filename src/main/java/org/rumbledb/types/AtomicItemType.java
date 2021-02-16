@@ -264,7 +264,7 @@ public class AtomicItemType extends ItemType implements Serializable {
         }
         return false;
     }
-    
+
     @Override
     public boolean isFunctionItem() {
         return this.equals(functionItem);
