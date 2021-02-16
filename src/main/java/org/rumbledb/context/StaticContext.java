@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -36,6 +37,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 public class StaticContext implements Serializable, KryoSerializable {
 
@@ -47,6 +49,11 @@ public class StaticContext implements Serializable, KryoSerializable {
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
+
+    // TODO: should these be transient?
+    private transient SequenceType contextItemStaticType;
+    private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
+
     private RumbleRuntimeConfiguration configuration;
 
     public StaticContext() {
@@ -55,6 +62,8 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = null;
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.contextItemStaticType = null;
+        this.configuration = null;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -64,12 +73,17 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
         this.emptySequenceOrderLeast = true;
+        this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
     }
 
     public StaticContext(StaticContext parent) {
         this.parent = parent;
         this.inScopeVariables = new HashMap<>();
         this.userDefinedFunctionExecutionModes = null;
+        this.contextItemStaticType = null;
+        this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.configuration = null;
     }
 
     public StaticContext getParent() {
@@ -125,6 +139,30 @@ public class StaticContext implements Serializable, KryoSerializable {
         }
     }
 
+    public FunctionSignature getFunctionSignature(FunctionIdentifier identifier) {
+        if (this.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+            return this.staticallyKnownFunctionSignatures.get(identifier);
+        } else {
+            StaticContext ancestor = this.parent;
+            while (ancestor != null) {
+                if (ancestor.staticallyKnownFunctionSignatures.containsKey(identifier)) {
+                    return ancestor.staticallyKnownFunctionSignatures.get(identifier);
+                }
+                ancestor = ancestor.parent;
+            }
+            throw new SemanticException("function " + identifier + " not in scope", null);
+        }
+    }
+
+    // replace the sequence type of an existing InScopeVariable, throws an error if the variable does not exists
+    public void replaceVariableSequenceType(Name varName, SequenceType newSequenceType) {
+        InScopeVariable variable = getInScopeVariable(varName);
+        this.inScopeVariables.replace(
+            varName,
+            new InScopeVariable(varName, newSequenceType, variable.getMetadata(), variable.getStorageMode())
+        );
+    }
+
     public SequenceType getVariableSequenceType(Name varName) {
         return getInScopeVariable(varName).getSequenceType();
     }
@@ -144,6 +182,10 @@ public class StaticContext implements Serializable, KryoSerializable {
             ExecutionMode storageMode
     ) {
         this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+    }
+
+    public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
+        this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
     protected Map<Name, InScopeVariable> getInScopeVariables() {
@@ -262,5 +304,43 @@ public class StaticContext implements Serializable, KryoSerializable {
             return this.parent.getModuleContext();
         }
         return this;
+    }
+
+    public SequenceType getContextItemStaticType() {
+        return this.contextItemStaticType;
+    }
+
+    public void setContextItemStaticType(SequenceType contextItemStaticType) {
+        this.contextItemStaticType = contextItemStaticType;
+    }
+
+    // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
+    // with same variable with sequence type arity changed from 1 to + and form ? to *
+    // used by groupBy cluse
+    public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
+        this.inScopeVariables.replaceAll(
+            (key, value) -> varToExclude.contains(key)
+                ? value
+                : new InScopeVariable(
+                        value.getName(),
+                        value.getSequenceType().incrementArity(),
+                        value.getMetadata(),
+                        value.getStorageMode()
+                )
+        );
+        StaticContext current = this.parent;
+        while (current != null && current != stopContext) {
+            for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
+                if (!this.inScopeVariables.containsKey(entry.getKey())) {
+                    this.addVariable(
+                        entry.getKey(),
+                        entry.getValue().getSequenceType().incrementArity(),
+                        entry.getValue().getMetadata(),
+                        entry.getValue().getStorageMode()
+                    );
+                }
+            }
+            current = current.parent;
+        }
     }
 }
