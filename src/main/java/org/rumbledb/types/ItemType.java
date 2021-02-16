@@ -21,9 +21,13 @@
 package org.rumbledb.types;
 
 
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 public interface ItemType extends Serializable {
 
@@ -36,6 +40,8 @@ public interface ItemType extends Serializable {
      * @return true it is equal to other, false otherwise.
      */
     public boolean equals(Object other);
+
+    // region kind
 
     /**
      * @return true it [this] is a subtype of an atomic item type.
@@ -73,6 +79,10 @@ public interface ItemType extends Serializable {
         return false;
     }
 
+    // endregion
+
+    // region concrete-specific-function
+
     /**
      * Tests for QName.
      *
@@ -97,6 +107,10 @@ public interface ItemType extends Serializable {
     public default FunctionSignature getSignature() {
         throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
     }
+
+    // endregion
+
+    // region hierarchy
 
     /**
      *
@@ -133,6 +147,130 @@ public interface ItemType extends Serializable {
     public default boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
+
+    // endregion
+
+    // region user-defined
+
+    /**
+     *
+     * @return [true] if it is a user-defined type, false otherwise
+     */
+    public default boolean isUserDefined(){
+        return false;
+    }
+
+    /**
+     *
+     * @return the base type for a user-defined type, throw an error for not user-defined types
+     */
+    public default ItemType getBaseType(){
+        throw new UnsupportedOperationException("getBaseType operation is supported only for user-defined types");
+    }
+
+    /**
+     *
+     * @return a set containing the allowed facets for restricting the type
+     */
+    public Set<FacetTypes> getAllowedFacets();
+
+    /**
+     *
+     * @return the list of possible values for [this] item type or null if the enumeration facet is not set
+     */
+    public default List<Item> getEnumerationFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the list of constraints in the implementation-defined language for [this] item type (note that this facet is cumulative) or an empty list if the constraints facet is not set
+     */
+    public default List<String> getConstraintsFacet(){
+        return Collections.emptyList();
+    }
+
+    /**
+     *
+     * @return the minimum length facet value for [this] item type or null if the restriction is not set
+     */
+    public default Integer getMinLengthFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the length facet value for [this] item type or null if the restriction is not set
+     */
+    public default Integer getLengthFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the maximum length facet value for [this] item type or null if the restriction is not set
+     */
+    public default Integer getMaxLengthFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return an item representing the minimum possible value (excluded) for [this] item type or null if the restriction is not set
+     */
+    public default Item getMinExclusiveFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return an item representing the minimum possible value (included) for [this] item type or null if the restriction is not set
+     */
+    public default Item getMinInclusiveFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return an item representing the maximum possible value (excluded) for [this] item type or null if the restriction is not set
+     */
+    public default Item getMaxExclusiveFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return an item representing the maximum possible value (included) for [this] item type or null if the restriction is not set
+     */
+    public default Item getMaxInclusiveFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the total digits facet value for [this] item type or null if the restriction is not set
+     */
+    public default Integer getTotalDigitsFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the fraction digits facet value for [this] item type or null if the restriction is not set
+     */
+    public default Integer getFractionDigitsFacet(){
+        return null;
+    }
+
+    /**
+     *
+     * @return the explicit timezone facet value for [this] item type or null if the restriction is not set
+     */
+    public default TimezoneFacet getExplicitTimezoneFacet(){
+        return null;
+    }
+
+    // endregion
 
     public String toString();
 }

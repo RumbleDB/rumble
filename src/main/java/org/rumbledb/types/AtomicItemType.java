@@ -2,74 +2,175 @@ package org.rumbledb.types;
 
 import org.rumbledb.context.Name;
 
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
+
+
 public class AtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
     // TODO: extract array and object into its own types
     static final AtomicItemType atomicItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "atomic")
+            new Name(Name.JS_NS, "js", "atomic"),
+            Collections.emptySet()
     );
     static final AtomicItemType stringItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "string")
+            new Name(Name.XS_NS, "xs", "string"),
+            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType integerItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "integer")
+            new Name(Name.XS_NS, "xs", "integer"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.TOTALDIGITS,
+                    FacetTypes.FRACTIONDIGITS
+            ))
     );
     static final AtomicItemType decimalItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "decimal")
+            new Name(Name.XS_NS, "xs", "decimal"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.TOTALDIGITS,
+                    FacetTypes.FRACTIONDIGITS
+            ))
     );
     static final AtomicItemType doubleItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "double")
+            new Name(Name.XS_NS, "xs", "double"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE
+            ))
     );
     static final AtomicItemType floatItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "float")
+            new Name(Name.XS_NS, "xs", "float"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE
+            ))
     );
     static final AtomicItemType booleanItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "boolean")
+            new Name(Name.XS_NS, "xs", "boolean"),
+            Collections.emptySet()
     );
-    static final AtomicItemType nullItem = new AtomicItemType(new Name(Name.JS_NS, "js", "null"));
+    static final AtomicItemType nullItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "null"),
+            Collections.emptySet()
+    );
     static final AtomicItemType durationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "duration")
+            new Name(Name.XS_NS, "xs", "duration"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE
+            ))
     );
     static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "yearMonthDuration")
+            new Name(Name.XS_NS, "xs", "yearMonthDuration"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE
+            ))
     );
     static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "dayTimeDuration")
+            new Name(Name.XS_NS, "xs", "dayTimeDuration"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE
+            ))
     );
     static final AtomicItemType dateTimeItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "dateTime")
+            new Name(Name.XS_NS, "xs", "dateTime"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.EXPLICITTIMEZONE
+            ))
     );
-    static final AtomicItemType dateItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "date"));
-    static final AtomicItemType timeItem = new AtomicItemType(new Name(Name.XS_NS, "xs", "time"));
+    static final AtomicItemType dateItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "date"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.EXPLICITTIMEZONE
+            ))
+    );
+    static final AtomicItemType timeItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "time"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.EXPLICITTIMEZONE
+            ))
+    );
     static final AtomicItemType hexBinaryItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "hexBinary")
+            new Name(Name.XS_NS, "xs", "hexBinary"),
+            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType anyURIItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "anyURI")
+            new Name(Name.XS_NS, "xs", "anyURI"),
+            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType base64BinaryItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "base64Binary")
+            new Name(Name.XS_NS, "xs", "base64Binary"),
+            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType JSONItem = new AtomicItemType(
-            new Name(Name.JS_NS, "xs", "json-item")
+            new Name(Name.JS_NS, "xs", "json-item"),
+            Collections.emptySet()
     );
     static final AtomicItemType objectItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "object")
+            new Name(Name.JS_NS, "js", "object"),
+            Collections.emptySet()
     );
     static final AtomicItemType arrayItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "array")
+            new Name(Name.JS_NS, "js", "array"),
+            Collections.emptySet()
     );
-    static final AtomicItemType intItem = new AtomicItemType(Name.createVariableInDefaultTypeNamespace("int"));
+    static final AtomicItemType intItem = new AtomicItemType(
+            Name.createVariableInDefaultTypeNamespace("int"),
+            new HashSet<>(Arrays.asList(
+                    FacetTypes.MININCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.MINEXCLUSIVE,
+                    FacetTypes.MAXINCLUSIVE,
+                    FacetTypes.TOTALDIGITS,
+                    FacetTypes.FRACTIONDIGITS
+            ))
+    );
 
     private Name name;
+    private Set<FacetTypes> allowedFacets;
 
     public AtomicItemType() {
     }
 
-    private AtomicItemType(Name name) {
+    private AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
         this.name = name;
+        this.allowedFacets = allowedFacets;
     }
 
     @Override
@@ -233,6 +334,11 @@ public class AtomicItemType implements ItemType {
             return this.isNumeric();
         }
         return false;
+    }
+
+    @Override
+    public Set<FacetTypes> getAllowedFacets() {
+        return this.allowedFacets;
     }
 
     @Override
