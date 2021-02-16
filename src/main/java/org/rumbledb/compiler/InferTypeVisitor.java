@@ -3,7 +3,7 @@ package org.rumbledb.compiler;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.*;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -450,7 +450,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
         SequenceType expected = expression.getSequenceType();
         if (!inferred.equals(expected)) {
-            throw new IsStaticallyUnexpectedType(
+            throw new IsStaticallyUnexpectedTypeException(
                     "expected static type is " + expected + " instead " + inferred + " was inferred"
             );
         }
