@@ -102,13 +102,15 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.selectedIterator.close();
+        if (this.selectedIterator != null && this.selectedIterator.isOpen()) {
+            this.selectedIterator.close();
+        }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         RuntimeIterator condition = this.children.get(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(this.currentDynamicContextForLocalExecution);
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
         if (effectiveBooleanValue) {
             return this.children.get(1).getRDD(dynamicContext);
