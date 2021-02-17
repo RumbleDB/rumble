@@ -242,7 +242,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (other.isSubtypeOf(this)) {
             return this;
         } else if (this.isSubtypeOf(other)) {

@@ -126,7 +126,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = childExpressionInferredType;
                 } else {
                     ItemType resultingItemType = inferredType.getItemType()
-                        .findLeastCommonSuperType(childExpressionInferredType.getItemType());
+                        .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
                     SequenceType.Arity resultingArity =
                         ((inferredType.getArity() == SequenceType.Arity.OneOrZero
                             || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)

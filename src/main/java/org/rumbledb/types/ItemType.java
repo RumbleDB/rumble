@@ -125,7 +125,7 @@ public interface ItemType extends Serializable {
      * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
      *         and [other]
      */
-    public ItemType findLeastCommonSuperType(ItemType other);
+    public ItemType findLeastCommonSuperTypeWith(ItemType other);
 
     /**
      * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type

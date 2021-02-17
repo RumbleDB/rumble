@@ -54,7 +54,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (this.equals(other)) {
             return this;
         }
