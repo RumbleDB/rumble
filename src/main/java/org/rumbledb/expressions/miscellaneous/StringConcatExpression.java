@@ -52,4 +52,26 @@ public class StringConcatExpression extends Expression {
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        leftExpression.serializeToJSONiq(sb,indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("||\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        rightExpression.serializeToJSONiq(sb,indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
 }

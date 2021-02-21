@@ -142,4 +142,19 @@ public class ForClause extends Clause {
             this.previousClause.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("for $" + variableName.toString());
+        if (sequenceType != null)
+            sb.append(" as " + sequenceType.toString());
+        if (allowingEmpty)
+            sb.append(" allowing empty ");
+        if (positionalVariableName != null)
+            sb.append(" at $" + positionalVariableName.toString());
+        sb.append(" in (");
+        expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+    }
 }

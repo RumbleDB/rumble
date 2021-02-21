@@ -84,6 +84,34 @@ public class TryCatchExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("try {\n");
+        tryExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append("}\n");
+
+        if (catchExpressions != null){
+            for (Map.Entry<String, Expression> entry : catchExpressions.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("catch " + entry.getKey() + " {\n");
+                entry.getValue().serializeToJSONiq(sb, indent + 1);
+                indentIt(sb, indent);
+                sb.append("}\n");
+            }
+        }
+
+        if (catchAllExpression != null){
+            indentIt(sb, indent);
+            sb.append("catch * {\n");
+            catchAllExpression.serializeToJSONiq(sb, indent + 1);
+            indentIt(sb, indent);
+            sb.append("}\n");
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitTryCatchExpression(this, argument);
     }

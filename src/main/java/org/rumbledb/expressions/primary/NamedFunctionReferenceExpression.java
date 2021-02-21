@@ -62,4 +62,10 @@ public class NamedFunctionReferenceExpression extends Expression {
         buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
         buffer.append("\n");
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(identifier.toString() + "\n");
+    }
 }

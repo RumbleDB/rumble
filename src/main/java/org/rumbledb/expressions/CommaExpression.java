@@ -60,6 +60,20 @@ public class CommaExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        for (int i = 0; i < expressions.size(); i++){
+            expressions.get(i).serializeToJSONiq(sb, 0);
+            if (i == expressions.size() - 1){
+                sb.append("\n");
+            }
+            else{
+                sb.append(", ");
+            }
+        }
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (this.expressions.isEmpty()) {
             this.highestExecutionMode = ExecutionMode.LOCAL;

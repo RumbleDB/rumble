@@ -94,4 +94,24 @@ public class DynamicFunctionCallExpression extends Expression {
             }
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        mainExpression.serializeToJSONiq(sb,indent + 1);
+
+        // TODO always ending with \n might be an issue here
+        sb.append("(");
+        if (arguments != null) {
+            for (int i = 0; i < arguments.size(); i++) {
+                arguments.get(i).serializeToJSONiq(sb, 0);
+                if (i == arguments.size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
+                }
+            }
+        }
+        sb.append(")\n");
+    }
 }

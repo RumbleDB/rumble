@@ -54,6 +54,52 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("typeswitch (");
+        testCondition.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+        for (TypeswitchCase c : this.cases) {
+            indentIt(sb, indent + 1);
+            sb.append("case ($");
+            sb.append(c.getVariableName().toString() + " as ");
+            for (int i = 0; i < c.getUnion().size(); i++){
+                c.getUnion().get(i).toString();
+                if (i == c.getUnion().size() - 1){
+                    sb.append(") ");
+                }
+                else{
+                    sb.append(" | ");
+                }
+            }
+            sb.append("return (");
+            c.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+
+        if (defaultCase != null) {
+            indentIt(sb, indent + 1);
+            // TODO seems somehow wrong, shouldve been Expression not the case
+            sb.append("default ($");
+            sb.append(defaultCase.getVariableName().toString() + " as ");
+            for (int i = 0; i < defaultCase.getUnion().size(); i++){
+                defaultCase.getUnion().get(i).toString();
+                if (i == defaultCase.getUnion().size() - 1){
+                    sb.append(") ");
+                }
+                else{
+                    sb.append(" | ");
+                }
+            }
+            sb.append(")\n");
+
+            sb.append("return (");
+            defaultCase.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultCase.getReturnExpression().getHighestExecutionMode(visitorConfig);
 

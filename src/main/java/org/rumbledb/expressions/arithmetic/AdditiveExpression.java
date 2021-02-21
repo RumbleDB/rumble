@@ -73,4 +73,29 @@ public class AdditiveExpression extends Expression {
         }
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        leftExpression.serializeToJSONiq(sb,indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        if (isMinus)
+            sb.append("-\n");
+        else
+            sb.append("+\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        rightExpression.serializeToJSONiq(sb,indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
+
 }

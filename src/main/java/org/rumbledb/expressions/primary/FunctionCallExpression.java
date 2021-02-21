@@ -185,4 +185,24 @@ public class FunctionCallExpression extends Expression {
             }
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.identifier.toString());
+
+        // TODO check if i need to ignore () when I have arity??
+        sb.append("(");
+        if (arguments != null) {
+            for (int i = 0; i < arguments.size(); i++) {
+                arguments.get(i).serializeToJSONiq(sb, 0);
+                if (i == arguments.size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
+                }
+            }
+        }
+        sb.append(")\n");
+    }
 }
