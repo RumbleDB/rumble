@@ -23,6 +23,7 @@ package org.rumbledb.types;
 
 import jsound.types.ArrayContentDescriptor;
 import jsound.types.FieldDescriptor;
+import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
@@ -314,4 +315,8 @@ public interface ItemType extends Serializable {
     // endregion
 
     public String toString();
+
+    default DataType toDataFrameType(){
+        throw new UnsupportedOperationException("toDataFrameType method is not supported for " + this.toString() + " item types");
+    }
 }

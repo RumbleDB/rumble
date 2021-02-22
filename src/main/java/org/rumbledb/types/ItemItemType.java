@@ -1,6 +1,10 @@
 package org.rumbledb.types;
 
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.context.Name;
+
+import java.util.Set;
 
 /**
  * Class representing the generic 'item' item type
@@ -47,7 +51,17 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
+    public Set<FacetTypes> getAllowedFacets() {
+        throw new UnsupportedOperationException("item type does not support facets");
+    }
+
+    @Override
     public String toString() {
         return this.name.toString();
+    }
+
+    @Override
+    public DataType toDataFrameType() {
+        return DataTypes.BinaryType;
     }
 }

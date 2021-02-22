@@ -1,11 +1,11 @@
 package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
-import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
@@ -19,13 +19,14 @@ public class DerivedAtomicItemType implements ItemType {
     private final List<String> constraints;
     private final List<Item> enumeration;
     private final TimezoneFacet explicitTimezone;
+    private final DataType dataFrameType;
 
-    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets){
-        this(name, baseType, primitiveType, facets, true);
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, DataType dataFrameType){
+        this(name, baseType, primitiveType, facets, true, dataFrameType);
     }
     // TODO : turn builtin derived atomic types into this class
 
-    private DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, boolean isUserDefined) {
+    private DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, boolean isUserDefined, DataType dataFrameType) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according to baseType
         this.name = name;
         this.baseType = baseType;
@@ -47,6 +48,8 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
+
+        this.dataFrameType = dataFrameType;
     }
 
     @Override
@@ -239,5 +242,10 @@ public class DerivedAtomicItemType implements ItemType {
     public String toString() {
         // TODO : Consider added facets restriction and base type
         return this.name.toString();
+    }
+
+    @Override
+    public DataType toDataFrameType() {
+        return this.dataFrameType != null ? this.dataFrameType : this.baseType.toDataFrameType();
     }
 }
