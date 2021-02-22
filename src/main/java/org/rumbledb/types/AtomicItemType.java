@@ -1,11 +1,10 @@
 package org.rumbledb.types;
 
+import org.apache.commons.collections.ListUtils;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 
 public class AtomicItemType implements ItemType {
@@ -361,6 +360,102 @@ public class AtomicItemType implements ItemType {
     @Override
     public Set<FacetTypes> getAllowedFacets() {
         return this.allowedFacets;
+    }
+
+    @Override
+    public List<Item> getEnumerationFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.ENUMERATION)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the enumeration facet");
+        }
+        return null;
+    }
+
+    @Override
+    public List<String> getConstraintsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the constraints facet");
+        }
+        return Collections.emptyList();
+    }
+
+    @Override
+    public Integer getMinLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MINLENGTH)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the minimum length facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Integer getLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.LENGTH)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the length facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Integer getMaxLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXLENGTH)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the maximum length facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Item getMinExclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the minimum exclusive facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Item getMinInclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the minimum inclusive facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Item getMaxExclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the maximum exclusive facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Item getMaxInclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the maximum inclusive facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Integer getTotalDigitsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the total digits facet");
+        }
+        return null;
+    }
+
+    @Override
+    public Integer getFractionDigitsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the fraction digits facet");
+        }
+        return null;
+    }
+
+    @Override
+    public TimezoneFacet getExplicitTimezoneFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.EXPLICITTIMEZONE)){
+            throw new UnsupportedOperationException(this.toString() + " item type does not support the explicit timezone facet");
+        }
+        return null;
     }
 
     @Override

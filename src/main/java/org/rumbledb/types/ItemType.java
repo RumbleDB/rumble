@@ -195,7 +195,7 @@ public interface ItemType extends Serializable {
      * @return the list of possible values for [this] item type or null if the enumeration facet is not set
      */
     default List<Item> getEnumerationFacet(){
-        return null;
+        throw new UnsupportedOperationException("enumeration facet is allowed only for atomic, object and array item types");
     }
 
     /**
@@ -203,7 +203,7 @@ public interface ItemType extends Serializable {
      * @return the list of constraints in the implementation-defined language for [this] item type (note that this facet is cumulative) or an empty list if the constraints facet is not set
      */
     default List<String> getConstraintsFacet(){
-        return Collections.emptyList();
+        throw new UnsupportedOperationException("constraints facet is allowed only for atomic, object and array item types");
     }
 
     /**
@@ -211,7 +211,7 @@ public interface ItemType extends Serializable {
      * @return the minimum length facet value for [this] item type or null if the restriction is not set
      */
     default Integer getMinLengthFacet(){
-        return null;
+        throw new UnsupportedOperationException("minimum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
@@ -219,7 +219,7 @@ public interface ItemType extends Serializable {
      * @return the length facet value for [this] item type or null if the restriction is not set
      */
     default Integer getLengthFacet(){
-        return null;
+        throw new UnsupportedOperationException("length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
@@ -227,7 +227,7 @@ public interface ItemType extends Serializable {
      * @return the maximum length facet value for [this] item type or null if the restriction is not set
      */
     default Integer getMaxLengthFacet(){
-        return null;
+        throw new UnsupportedOperationException("maximum length facet is not allowed for " + this.toString() + " item type");
     }
 
     /**
@@ -235,7 +235,7 @@ public interface ItemType extends Serializable {
      * @return an item representing the minimum possible value (excluded) for [this] item type or null if the restriction is not set
      */
     default Item getMinExclusiveFacet(){
-        return null;
+        throw new UnsupportedOperationException("minimum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -243,7 +243,7 @@ public interface ItemType extends Serializable {
      * @return an item representing the minimum possible value (included) for [this] item type or null if the restriction is not set
      */
     default Item getMinInclusiveFacet(){
-        return null;
+        throw new UnsupportedOperationException("minimum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -251,7 +251,7 @@ public interface ItemType extends Serializable {
      * @return an item representing the maximum possible value (excluded) for [this] item type or null if the restriction is not set
      */
     default Item getMaxExclusiveFacet(){
-        return null;
+        throw new UnsupportedOperationException("maximum exclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -259,7 +259,7 @@ public interface ItemType extends Serializable {
      * @return an item representing the maximum possible value (included) for [this] item type or null if the restriction is not set
      */
     default Item getMaxInclusiveFacet(){
-        return null;
+        throw new UnsupportedOperationException("maximum inclusive facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -267,7 +267,7 @@ public interface ItemType extends Serializable {
      * @return the total digits facet value for [this] item type or null if the restriction is not set
      */
     default Integer getTotalDigitsFacet(){
-        return null;
+        throw new UnsupportedOperationException("total digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -275,7 +275,7 @@ public interface ItemType extends Serializable {
      * @return the fraction digits facet value for [this] item type or null if the restriction is not set
      */
     default Integer getFractionDigitsFacet(){
-        return null;
+        throw new UnsupportedOperationException("fraction digits facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -283,7 +283,7 @@ public interface ItemType extends Serializable {
      * @return the explicit timezone facet value for [this] item type or null if the restriction is not set
      */
     default TimezoneFacet getExplicitTimezoneFacet(){
-        return null;
+        throw new UnsupportedOperationException("explicit timezone facet is not allowed for " + this.toString() + " item types");
     }
 
     /**
@@ -299,7 +299,7 @@ public interface ItemType extends Serializable {
      * @return closed facet value for object item types
      */
     default boolean getClosedFacet(){
-        throw new UnsupportedOperationException("closed facet is allowed only for object item types");
+        throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
     }
 
     // endregion
