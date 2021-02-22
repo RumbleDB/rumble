@@ -20,33 +20,33 @@ public class DerivedAtomicItemType implements ItemType {
     private final List<Item> enumeration;
     private final TimezoneFacet explicitTimezone;
 
-    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, HashMap<FacetTypes, Object> facets){
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets){
         this(name, baseType, primitiveType, facets, true);
     }
     // TODO : turn builtin derived atomic types into this class
 
-    private DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, HashMap<FacetTypes, Object> facets, boolean isUserDefined) {
+    private DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, boolean isUserDefined) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according to baseType
         this.name = name;
         this.baseType = baseType;
         this.primitiveType = primitiveType;
         this.isUserDefined = isUserDefined;
 
-        this.minInclusive = (Item) facets.get(FacetTypes.MININCLUSIVE);
-        this.maxInclusive = (Item) facets.get(FacetTypes.MAXINCLUSIVE);
-        this.minExclusive = (Item) facets.get(FacetTypes.MINEXCLUSIVE);
-        this.maxExclusive = (Item) facets.get(FacetTypes.MAXEXCLUSIVE);
+        this.minInclusive = facets.getMinInclusive();
+        this.maxInclusive = facets.getMaxInclusive();
+        this.minExclusive = facets.getMinExclusive();
+        this.maxExclusive = facets.getMaxExclusive();
 
-        this.minLength = (Integer) facets.get(FacetTypes.MINLENGTH);
-        this.length = (Integer) facets.get(FacetTypes.LENGTH);
-        this.maxLength = (Integer) facets.get(FacetTypes.MAXLENGTH);
-        this.totalDigits = (Integer) facets.get(FacetTypes.TOTALDIGITS);
-        this.fractionDigits = (Integer) facets.get(FacetTypes.FRACTIONDIGITS);
+        this.minLength = facets.getMinLength();
+        this.length = facets.getLength();
+        this.maxLength = facets.getMaxLength();
+        this.totalDigits = facets.getTotalDigits();
+        this.fractionDigits = facets.getFractionDigits();
 
-        this.explicitTimezone = (TimezoneFacet) facets.get(FacetTypes.EXPLICITTIMEZONE);
+        this.explicitTimezone = facets.getExplicitTimezone();
 
-        this.constraints = (List<String>) facets.getOrDefault(FacetTypes.CONSTRAINTS, Collections.emptyList());
-        this.enumeration = (List<Item>) facets.get(FacetTypes.ENUMERATION);
+        this.constraints = facets.getConstraints();
+        this.enumeration = facets.getEnumeration();
     }
 
     @Override
