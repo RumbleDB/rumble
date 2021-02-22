@@ -74,7 +74,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return this.equals(superType) || superType.equals(this.baseType) || this.baseType.isSubtypeOf(superType);
+        return this.equals(superType) || this.baseType.isSubtypeOf(superType);
     }
 
     @Override
@@ -84,7 +84,7 @@ public class DerivedAtomicItemType implements ItemType {
         } else if(other.isSubtypeOf(this)){
             return this;
         } else {
-            return this.baseType.findLeastCommonSuperTypeWith(other.isUserDefined() ? other.getBaseType() : other);
+            return this.baseType.findLeastCommonSuperTypeWith(other.isPrimitive() ? other.getBaseType() : other);
         }
     }
 

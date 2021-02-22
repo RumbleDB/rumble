@@ -21,12 +21,14 @@
 package org.rumbledb.types;
 
 
+import jsound.types.FieldDescriptor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
 import java.io.Serializable;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 public interface ItemType extends Serializable {
@@ -282,6 +284,22 @@ public interface ItemType extends Serializable {
      */
     default TimezoneFacet getExplicitTimezoneFacet(){
         return null;
+    }
+
+    /**
+     *
+     * @return content facet value for object item types (cumulative)
+     */
+    default Map<String, FieldDescriptor> getContentFacet(){
+        throw new UnsupportedOperationException("content facet is allowed only for object item types");
+    }
+
+    /**
+     *
+     * @return closed facet value for object item types
+     */
+    default boolean getClosedFacet(){
+        throw new UnsupportedOperationException("closed facet is allowed only for object item types");
     }
 
     // endregion
