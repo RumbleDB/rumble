@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import jsound.types.ArrayContentDescriptor;
 import jsound.types.FieldDescriptor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
@@ -7,13 +8,14 @@ import org.rumbledb.context.Name;
 
 import java.util.*;
 
-public class ObjectItemType implements ItemType {
+public class ArrayItemType implements ItemType {
 
-    final static ObjectItemType anyObjectItem = new ObjectItemType(
-            new Name(Name.JS_NS, "js", "object"),
+    final static ArrayItemType anyArrayItem = new ArrayItemType(
+            new Name(Name.JS_NS, "js", "array"),
             null,
-            false,
-            Collections.emptyMap(),
+            null,
+            null,
+            null,
             Collections.emptyList(),
             null
     );
@@ -22,21 +24,23 @@ public class ObjectItemType implements ItemType {
             FacetTypes.ENUMERATION,
             FacetTypes.CONSTRAINTS,
             FacetTypes.CONTENT,
-            FacetTypes.CLOSED
+            FacetTypes.MINLENGTH,
+            FacetTypes.MAXLENGTH
     ));
 
     final private Name name;
-    final private Map<String, FieldDescriptor> content;
-    final private boolean isClosed;
+    final private ArrayContentDescriptor content;
     final private List<String> constraints;
     final private List<Item> enumeration;
     final private ItemType baseType;
+    final private Integer minLength, maxLength;
 
-    ObjectItemType(Name name, ItemType baseType, boolean isClosed, Map<String, FieldDescriptor> content, List<String> constraints,List<Item> enumeration){
+    ArrayItemType(Name name, ItemType baseType, ArrayContentDescriptor content, Integer minLength, Integer maxLength, List<String> constraints, List<Item> enumeration){
         this.name = name;
-        this.isClosed = isClosed;
-        this.content = content;
         this.baseType = baseType;
+        this.content = content;
+        this.minLength = minLength;
+        this.maxLength = maxLength;
         this.constraints = constraints;
         this.enumeration = enumeration;
     }
@@ -50,7 +54,7 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isObjectItemType() {
+    public boolean isArrayItemType() {
         return true;
     }
 
@@ -67,7 +71,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return this == anyObjectItem ? superType == anyObjectItem || superType == BuiltinTypesCatalogue.JSONItem || superType == BuiltinTypesCatalogue.item :
+        return this == anyArrayItem ? superType == anyArrayItem || superType == BuiltinTypesCatalogue.JSONItem || superType == BuiltinTypesCatalogue.item :
                 this.equals(superType) || this.baseType.isSubtypeOf(superType);
     }
 
@@ -77,9 +81,9 @@ public class ObjectItemType implements ItemType {
             return other;
         } else if(other.isSubtypeOf(this)){
             return this;
-        } else if(this == anyObjectItem) {
+        } else if(this == anyArrayItem) {
             // if we reach here other not object item for sure
-            return other.isArrayItemType() ? BuiltinTypesCatalogue.JSONItem : BuiltinTypesCatalogue.item;
+            return other.isObjectItemType() ? BuiltinTypesCatalogue.JSONItem : BuiltinTypesCatalogue.item;
         } else {
             return this.getBaseType().findLeastCommonSuperTypeWith(other.isPrimitive() ? other : other.getBaseType());
         }
@@ -87,17 +91,17 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this == anyObjectItem);
+        return !(this == anyArrayItem);
     }
 
     @Override
     public boolean isPrimitive() {
-        return this == anyObjectItem;
+        return this == anyArrayItem;
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyObjectItem;
+        return anyArrayItem;
     }
 
     @Override
@@ -121,20 +125,18 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public Map<String, FieldDescriptor> getObjectContentFacet() {
-        if(this.isPrimitive()){
-            return this.content;
-        } else {
-            // recursively get content facet, overriding new descriptors
-            Map<String, FieldDescriptor> map = new HashMap<>(this.baseType.getObjectContentFacet());
-            map.putAll(this.content);
-            return map;
-        }
+    public Integer getMinLengthFacet() {
+        return this.minLength != null || this.isPrimitive() ? this.minLength : this.baseType.getMinLengthFacet();
     }
 
     @Override
-    public boolean getClosedFacet() {
-        return this.isClosed;
+    public Integer getMaxLengthFacet() {
+        return this.maxLength != null || this.isPrimitive() ? this.maxLength : this.baseType.getMaxLengthFacet();
+    }
+
+    @Override
+    public ArrayContentDescriptor getArrayContentFacet() {
+        return this.content != null || this.isPrimitive() ? this.content : this.baseType.getArrayContentFacet();
     }
 
     @Override
@@ -142,4 +144,5 @@ public class ObjectItemType implements ItemType {
         // consider add content and various stuff
         return this.name.toString();
     }
+
 }

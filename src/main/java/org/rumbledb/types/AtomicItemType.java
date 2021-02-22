@@ -161,14 +161,6 @@ public class AtomicItemType implements ItemType {
             new Name(Name.JS_NS, "xs", "json-item"),
             Collections.emptySet()
     );
-    static final AtomicItemType objectItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "object"),
-            Collections.emptySet()
-    );
-    static final AtomicItemType arrayItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "array"),
-            Collections.emptySet()
-    );
     static final AtomicItemType intItem = new AtomicItemType(
             Name.createVariableInDefaultTypeNamespace("int"),
             new HashSet<>(Arrays.asList(
@@ -204,17 +196,17 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isAtomicItemType() {
-        return !(this.equals(arrayItem) || this.equals(objectItem));
+        return !(this.equals(JSONItem));
     }
 
     @Override
     public boolean isObjectItemType() {
-        return this.equals(objectItem);
+        return false;
     }
 
     @Override
     public boolean isArrayItemType() {
-        return this.equals(arrayItem);
+        return false;
     }
 
     @Override
@@ -232,9 +224,7 @@ public class AtomicItemType implements ItemType {
         if (superType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         } else if (superType.equals(JSONItem)) {
-            return this.equals(objectItem)
-                || this.equals(arrayItem)
-                || this.equals(JSONItem);
+            return this.equals(JSONItem);
         } else if (superType.equals(atomicItem)) {
             return this.equals(stringItem)
                 || this.equals(integerItem)

@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 
+import jsound.types.ArrayContentDescriptor;
 import jsound.types.FieldDescriptor;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -288,10 +289,10 @@ public interface ItemType extends Serializable {
 
     /**
      *
-     * @return content facet value for object item types (cumulative)
+     * @return content facet value for object item types (cumulative facet)
      */
-    default Map<String, FieldDescriptor> getContentFacet(){
-        throw new UnsupportedOperationException("content facet is allowed only for object item types");
+    default Map<String, FieldDescriptor> getObjectContentFacet(){
+        throw new UnsupportedOperationException("object content facet is allowed only for object item types");
     }
 
     /**
@@ -300,6 +301,14 @@ public interface ItemType extends Serializable {
      */
     default boolean getClosedFacet(){
         throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
+    }
+
+    /**
+     *
+     * @return content facet value for array item types
+     */
+    default ArrayContentDescriptor getArrayContentFacet(){
+        throw new UnsupportedOperationException("array content facet is allowed only for array item types");
     }
 
     // endregion
