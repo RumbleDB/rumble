@@ -19,11 +19,13 @@ public class AtomicItemType implements ItemType {
     );
     static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
-            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType integerItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "integer"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -35,6 +37,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -46,6 +50,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -55,6 +61,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -63,7 +71,7 @@ public class AtomicItemType implements ItemType {
     );
     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            Collections.emptySet()
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
     );
     static final AtomicItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
@@ -72,6 +80,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -81,6 +91,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -90,6 +102,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -99,6 +113,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -109,6 +125,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -119,6 +137,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
@@ -128,15 +148,15 @@ public class AtomicItemType implements ItemType {
     );
     static final AtomicItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
-            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
-            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
-            new HashSet<>(Arrays.asList(FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH))
     );
     static final AtomicItemType JSONItem = new AtomicItemType(
             new Name(Name.JS_NS, "xs", "json-item"),
@@ -153,6 +173,8 @@ public class AtomicItemType implements ItemType {
     static final AtomicItemType intItem = new AtomicItemType(
             Name.createVariableInDefaultTypeNamespace("int"),
             new HashSet<>(Arrays.asList(
+                    FacetTypes.ENUMERATION,
+                    FacetTypes.CONSTRAINTS,
                     FacetTypes.MININCLUSIVE,
                     FacetTypes.MAXINCLUSIVE,
                     FacetTypes.MINEXCLUSIVE,
