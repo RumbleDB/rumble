@@ -31,7 +31,7 @@ import java.util.Set;
 
 public interface ItemType extends Serializable {
 
-    // protected static final long serialVersionUID = 1L;
+    long serialVersionUID = 1L;
 
     /**
      * Tests for itemType equality.
@@ -39,35 +39,35 @@ public interface ItemType extends Serializable {
      * @param other another item type.
      * @return true it is equal to other, false otherwise.
      */
-    public boolean equals(Object other);
+    boolean equals(Object other);
 
     // region kind
 
     /**
      * @return true it [this] is a subtype of an atomic item type.
      */
-    public default boolean isAtomicItemType() {
+    default boolean isAtomicItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is an object item type.
      */
-    public default boolean isObjectItemType() {
+    default boolean isObjectItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is an array item type.
      */
-    public default boolean isArrayItemType() {
+    default boolean isArrayItemType() {
         return false;
     }
 
     /**
      * @return true it [this] is a function item type.
      */
-    public default boolean isFunctionItemType() {
+    default boolean isFunctionItemType() {
         return false;
     }
 
@@ -75,7 +75,7 @@ public interface ItemType extends Serializable {
      *
      * @return [true] if this is a numeric item type, false otherwise
      */
-    public default boolean isNumeric() {
+    default boolean isNumeric() {
         return false;
     }
 
@@ -88,7 +88,7 @@ public interface ItemType extends Serializable {
      *
      * @return true if [this] item type has a QName
      */
-    public default boolean hasName() {
+    default boolean hasName() {
         return false;
     }
 
@@ -96,7 +96,7 @@ public interface ItemType extends Serializable {
      *
      * @return the itemtype QName if available
      */
-    public default Name getName() {
+    default Name getName() {
         throw new UnsupportedOperationException("getName operation is not supported for this itemType");
     }
 
@@ -104,7 +104,7 @@ public interface ItemType extends Serializable {
      *
      * @return the signature of the function item type if available
      */
-    public default FunctionSignature getSignature() {
+    default FunctionSignature getSignature() {
         throw new UnsupportedOperationException("getSignature operation is not supported for non-function item types");
     }
 
@@ -117,7 +117,7 @@ public interface ItemType extends Serializable {
      * @param superType another item type
      * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself
      */
-    public boolean isSubtypeOf(ItemType superType);
+    boolean isSubtypeOf(ItemType superType);
 
     /**
      *
@@ -125,7 +125,7 @@ public interface ItemType extends Serializable {
      * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
      *         and [other]
      */
-    public ItemType findLeastCommonSuperTypeWith(ItemType other);
+    ItemType findLeastCommonSuperTypeWith(ItemType other);
 
     /**
      * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
@@ -133,7 +133,7 @@ public interface ItemType extends Serializable {
      * @param other a strict subtype of atomic item type to which we are trying to cast
      * @return true if it is possible at static time to cast [this] to [other], false otherwise
      */
-    public default boolean isStaticallyCastableAs(ItemType other) {
+    default boolean isStaticallyCastableAs(ItemType other) {
         throw new UnsupportedOperationException(
                 "isStaticallyCastableAs operation is not supported for non-atomic item types"
         );
@@ -144,7 +144,7 @@ public interface ItemType extends Serializable {
      * @param itemType another item type
      * @return true if [this] can be promoted to [itemType]
      */
-    public default boolean canBePromotedTo(ItemType itemType) {
+    default boolean canBePromotedTo(ItemType itemType) {
         return false;
     }
 
@@ -156,15 +156,29 @@ public interface ItemType extends Serializable {
      *
      * @return [true] if it is a user-defined type, false otherwise
      */
-    public default boolean isUserDefined(){
+    default boolean isUserDefined(){
         return false;
+    }
+
+    /**
+     *
+     * @return [true] if it is a primitive type
+     */
+    default boolean isPrimitive() { return true; }
+
+    /**
+     *
+     * @return the primitive type for a derived type, throw an error for primitive types
+     */
+    default ItemType getPrimitiveType(){
+        throw new UnsupportedOperationException("getPrimitiveType operation is supported only for non-primitive types");
     }
 
     /**
      *
      * @return the base type for a user-defined type, throw an error for not user-defined types
      */
-    public default ItemType getBaseType(){
+    default ItemType getBaseType(){
         throw new UnsupportedOperationException("getBaseType operation is supported only for user-defined types");
     }
 
@@ -178,7 +192,7 @@ public interface ItemType extends Serializable {
      *
      * @return the list of possible values for [this] item type or null if the enumeration facet is not set
      */
-    public default List<Item> getEnumerationFacet(){
+    default List<Item> getEnumerationFacet(){
         return null;
     }
 
@@ -186,7 +200,7 @@ public interface ItemType extends Serializable {
      *
      * @return the list of constraints in the implementation-defined language for [this] item type (note that this facet is cumulative) or an empty list if the constraints facet is not set
      */
-    public default List<String> getConstraintsFacet(){
+    default List<String> getConstraintsFacet(){
         return Collections.emptyList();
     }
 
@@ -194,7 +208,7 @@ public interface ItemType extends Serializable {
      *
      * @return the minimum length facet value for [this] item type or null if the restriction is not set
      */
-    public default Integer getMinLengthFacet(){
+    default Integer getMinLengthFacet(){
         return null;
     }
 
@@ -202,7 +216,7 @@ public interface ItemType extends Serializable {
      *
      * @return the length facet value for [this] item type or null if the restriction is not set
      */
-    public default Integer getLengthFacet(){
+    default Integer getLengthFacet(){
         return null;
     }
 
@@ -210,7 +224,7 @@ public interface ItemType extends Serializable {
      *
      * @return the maximum length facet value for [this] item type or null if the restriction is not set
      */
-    public default Integer getMaxLengthFacet(){
+    default Integer getMaxLengthFacet(){
         return null;
     }
 
@@ -218,7 +232,7 @@ public interface ItemType extends Serializable {
      *
      * @return an item representing the minimum possible value (excluded) for [this] item type or null if the restriction is not set
      */
-    public default Item getMinExclusiveFacet(){
+    default Item getMinExclusiveFacet(){
         return null;
     }
 
@@ -226,7 +240,7 @@ public interface ItemType extends Serializable {
      *
      * @return an item representing the minimum possible value (included) for [this] item type or null if the restriction is not set
      */
-    public default Item getMinInclusiveFacet(){
+    default Item getMinInclusiveFacet(){
         return null;
     }
 
@@ -234,7 +248,7 @@ public interface ItemType extends Serializable {
      *
      * @return an item representing the maximum possible value (excluded) for [this] item type or null if the restriction is not set
      */
-    public default Item getMaxExclusiveFacet(){
+    default Item getMaxExclusiveFacet(){
         return null;
     }
 
@@ -242,7 +256,7 @@ public interface ItemType extends Serializable {
      *
      * @return an item representing the maximum possible value (included) for [this] item type or null if the restriction is not set
      */
-    public default Item getMaxInclusiveFacet(){
+    default Item getMaxInclusiveFacet(){
         return null;
     }
 
@@ -250,7 +264,7 @@ public interface ItemType extends Serializable {
      *
      * @return the total digits facet value for [this] item type or null if the restriction is not set
      */
-    public default Integer getTotalDigitsFacet(){
+    default Integer getTotalDigitsFacet(){
         return null;
     }
 
@@ -258,7 +272,7 @@ public interface ItemType extends Serializable {
      *
      * @return the fraction digits facet value for [this] item type or null if the restriction is not set
      */
-    public default Integer getFractionDigitsFacet(){
+    default Integer getFractionDigitsFacet(){
         return null;
     }
 
@@ -266,7 +280,7 @@ public interface ItemType extends Serializable {
      *
      * @return the explicit timezone facet value for [this] item type or null if the restriction is not set
      */
-    public default TimezoneFacet getExplicitTimezoneFacet(){
+    default TimezoneFacet getExplicitTimezoneFacet(){
         return null;
     }
 

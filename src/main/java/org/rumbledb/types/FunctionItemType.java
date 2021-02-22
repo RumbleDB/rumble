@@ -2,10 +2,12 @@ package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
+import java.util.Set;
+
 public class FunctionItemType implements ItemType {
 
-    private boolean isGeneric;
-    private FunctionSignature signature;
+    private final boolean isGeneric;
+    private final FunctionSignature signature;
     static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     FunctionItemType(FunctionSignature signature) {
@@ -62,6 +64,11 @@ public class FunctionItemType implements ItemType {
             return anyFunctionItem;
         }
         return BuiltinTypesCatalogue.item;
+    }
+
+    @Override
+    public Set<FacetTypes> getAllowedFacets() {
+        throw new UnsupportedOperationException("function item types does not support facets");
     }
 
     @Override

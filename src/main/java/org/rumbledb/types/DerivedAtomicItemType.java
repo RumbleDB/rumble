@@ -9,9 +9,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 
-public class UserDefinedAtomicItemType implements ItemType {
+public class DerivedAtomicItemType implements ItemType {
 
-    private final ItemType baseType;
+    private final ItemType baseType, primitiveType;
+    private final boolean isUserDefined;
     private final Name name;
     private final Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private final Integer minLength, length, maxLength, totalDigits, fractionDigits;
@@ -19,10 +20,17 @@ public class UserDefinedAtomicItemType implements ItemType {
     private final List<Item> enumeration;
     private final TimezoneFacet explicitTimezone;
 
-    UserDefinedAtomicItemType(Name name, ItemType baseType, HashMap<FacetTypes, Object> facets) {
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, HashMap<FacetTypes, Object> facets){
+        this(name, baseType, primitiveType, facets, true);
+    }
+    // TODO : turn builtin derived atomic types into this class
+
+    private DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, HashMap<FacetTypes, Object> facets, boolean isUserDefined) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according to baseType
         this.name = name;
         this.baseType = baseType;
+        this.primitiveType = primitiveType;
+        this.isUserDefined = isUserDefined;
 
         this.minInclusive = (Item) facets.get(FacetTypes.MININCLUSIVE);
         this.maxInclusive = (Item) facets.get(FacetTypes.MAXINCLUSIVE);
@@ -108,7 +116,17 @@ public class UserDefinedAtomicItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return true;
+        return isUserDefined;
+    }
+
+    @Override
+    public boolean isPrimitive() {
+        return false;
+    }
+
+    @Override
+    public ItemType getPrimitiveType() {
+        return this.primitiveType;
     }
 
     @Override
@@ -118,54 +136,90 @@ public class UserDefinedAtomicItemType implements ItemType {
 
     @Override
     public Set<FacetTypes> getAllowedFacets() {
-        throw new UnsupportedOperationException("only non-user-defined types specify allowed facets");
+        return this.primitiveType.getAllowedFacets();
     }
 
     public List<Item> getEnumerationFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.ENUMERATION)){
+            throw new UnsupportedOperationException("this item type does not support the enumeration facet");
+        }
         return this.enumeration == null ? this.baseType.getEnumerationFacet() : this.enumeration;
     }
 
     public List<String> getConstraintsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)){
+            throw new UnsupportedOperationException("this item type does not support the constraints facet");
+        }
         return ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     public Integer getMinLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MINLENGTH)){
+            throw new UnsupportedOperationException("this item type does not support the minimum length facet");
+        }
         return this.minLength == null ? this.baseType.getMinLengthFacet() : this.minLength;
     }
 
     public Integer getLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.LENGTH)){
+            throw new UnsupportedOperationException("this item type does not support the length facet");
+        }
         return this.length == null ? this.baseType.getLengthFacet() : this.length;
     }
 
     public Integer getMaxLengthFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXLENGTH)){
+            throw new UnsupportedOperationException("this item type does not support the maximum length facet");
+        }
         return this.maxLength == null ? this.baseType.getMaxLengthFacet() : this.maxLength;
     }
 
     public Item getMinExclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)){
+            throw new UnsupportedOperationException("this item type does not support the minimum exclusive facet");
+        }
         return this.minExclusive == null ? this.baseType.getMinExclusiveFacet() : this.minExclusive;
     }
 
     public Item getMinInclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)){
+            throw new UnsupportedOperationException("this item type does not support the minimum inclusive facet");
+        }
         return this.minInclusive == null ? this.baseType.getMinInclusiveFacet() : this.minInclusive;
     }
 
     public Item getMaxExclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)){
+            throw new UnsupportedOperationException("this item type does not support the maximum exclusive facet");
+        }
         return this.maxExclusive == null ? this.baseType.getMaxExclusiveFacet() : this.maxExclusive;
     }
 
     public Item getMaxInclusiveFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)){
+            throw new UnsupportedOperationException("this item type does not support the maximum inclusive facet");
+        }
         return this.maxInclusive == null ? this.baseType.getMaxInclusiveFacet() : this.maxInclusive;
     }
 
     public Integer getTotalDigitsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)){
+            throw new UnsupportedOperationException("this item type does not support the total digits facet");
+        }
         return this.totalDigits == null ? this.baseType.getTotalDigitsFacet() : this.totalDigits;
     }
 
     public Integer getFractionDigitsFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)){
+            throw new UnsupportedOperationException("this item type does not support the fraction digits facet");
+        }
         return this.fractionDigits == null ? this.baseType.getFractionDigitsFacet() : this.fractionDigits;
     }
 
     public TimezoneFacet getExplicitTimezoneFacet(){
+        if(!this.getAllowedFacets().contains(FacetTypes.EXPLICITTIMEZONE)){
+            throw new UnsupportedOperationException("this item type does not support the explicit timezone facet");
+        }
         return this.explicitTimezone == null ? this.baseType.getExplicitTimezoneFacet() : this.explicitTimezone;
     }
 
