@@ -16,13 +16,11 @@ public class ArrayItemType implements ItemType {
             null,
             null,
             null,
-            Collections.emptyList(),
             null
     );
 
     final static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
             FacetTypes.ENUMERATION,
-            FacetTypes.CONSTRAINTS,
             FacetTypes.CONTENT,
             FacetTypes.MINLENGTH,
             FacetTypes.MAXLENGTH
@@ -30,18 +28,16 @@ public class ArrayItemType implements ItemType {
 
     final private Name name;
     final private ArrayContentDescriptor content;
-    final private List<String> constraints;
     final private List<Item> enumeration;
     final private ItemType baseType;
     final private Integer minLength, maxLength;
 
-    ArrayItemType(Name name, ItemType baseType, ArrayContentDescriptor content, Integer minLength, Integer maxLength, List<String> constraints, List<Item> enumeration){
+    ArrayItemType(Name name, ItemType baseType, ArrayContentDescriptor content, Integer minLength, Integer maxLength, List<Item> enumeration){
         this.name = name;
         this.baseType = baseType;
         this.content = content;
         this.minLength = minLength;
         this.maxLength = maxLength;
-        this.constraints = constraints;
         this.enumeration = enumeration;
     }
 
@@ -117,11 +113,6 @@ public class ArrayItemType implements ItemType {
     @Override
     public List<Item> getEnumerationFacet() {
         return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
-    }
-
-    @Override
-    public List<String> getConstraintsFacet() {
-        return this.isPrimitive() ? this.constraints : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     @Override
