@@ -176,11 +176,6 @@ public class AtomicItemType implements ItemType {
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH)),
             DataTypes.BinaryType
     );
-    static final AtomicItemType JSONItem = new AtomicItemType(
-            new Name(Name.JS_NS, "xs", "json-item"),
-            Collections.emptySet(),
-            DataTypes.BinaryType // TODO : consider how to deal with it
-    );
     static final AtomicItemType intItem = new AtomicItemType(
             Name.createVariableInDefaultTypeNamespace("int"),
             new HashSet<>(Arrays.asList(
@@ -219,17 +214,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isAtomicItemType() {
-        return !(this.equals(JSONItem));
-    }
-
-    @Override
-    public boolean isObjectItemType() {
-        return false;
-    }
-
-    @Override
-    public boolean isArrayItemType() {
-        return false;
+        return true;
     }
 
     @Override
@@ -244,27 +229,8 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        if (superType.equals(BuiltinTypesCatalogue.item)) {
+        if (superType == BuiltinTypesCatalogue.item || superType == atomicItem) {
             return true;
-        } else if (superType.equals(JSONItem)) {
-            return this.equals(JSONItem);
-        } else if (superType.equals(atomicItem)) {
-            return this.equals(stringItem)
-                || this.equals(integerItem)
-                || this.equals(decimalItem)
-                || this.equals(doubleItem)
-                || this.equals(booleanItem)
-                || this.equals(nullItem)
-                || this.equals(anyURIItem)
-                || this.equals(hexBinaryItem)
-                || this.equals(base64BinaryItem)
-                || this.equals(dateTimeItem)
-                || this.equals(dateItem)
-                || this.equals(timeItem)
-                || this.equals(durationItem)
-                || this.equals(yearMonthDurationItem)
-                || this.equals(dayTimeDurationItem)
-                || this.equals(atomicItem);
         } else if (superType.equals(durationItem)) {
             return this.equals(yearMonthDurationItem)
                 || this.equals(dayTimeDurationItem)
@@ -276,19 +242,27 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        if (other.isSubtypeOf(this)) {
-            return this;
-        } else if (this.isSubtypeOf(other)) {
-            return other;
-        } else if (this.isSubtypeOf(durationItem) && other.isSubtypeOf(durationItem)) {
-            return durationItem;
-        } else if (this.isSubtypeOf(atomicItem) && other.isSubtypeOf(atomicItem)) {
-            return atomicItem;
-        } else if (this.isSubtypeOf(JSONItem) && other.isSubtypeOf(JSONItem)) {
-            return JSONItem;
+    public int getTypeTreeDepth() {
+        if(this == atomicItem){
+            return 1;
+        } else if (this == yearMonthDurationItem || this == dayTimeDurationItem || this == integerItem || this == intItem){
+            // TODO : check once you remove derived like integer and int
+            return 3;
         } else {
+            return 2;
+        }
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        if(this == atomicItem){
             return BuiltinTypesCatalogue.item;
+        } else if(this == yearMonthDurationItem || this == dayTimeDurationItem){
+            return durationItem;
+        } else if(this == integerItem || this == intItem){
+            return decimalItem;
+        } else {
+            return atomicItem;
         }
     }
 

@@ -67,6 +67,16 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
+    public int getTypeTreeDepth() {
+        return this == anyFunctionItem ? 1 : 2;
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        return this == anyFunctionItem ? BuiltinTypesCatalogue.item : anyFunctionItem;
+    }
+
+    @Override
     public Set<FacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("function item types does not support facets");
     }

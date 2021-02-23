@@ -11,7 +11,7 @@ public class ObjectItemType implements ItemType {
 
     final static ObjectItemType anyObjectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
-            null,
+            BuiltinTypesCatalogue.JSONItem,
             false,
             Collections.emptyMap(),
             Collections.emptyList(),
@@ -31,12 +31,14 @@ public class ObjectItemType implements ItemType {
     final private List<String> constraints;
     final private List<Item> enumeration;
     final private ItemType baseType;
+    final private int typeTreeDepth;
 
     ObjectItemType(Name name, ItemType baseType, boolean isClosed, Map<String, FieldDescriptor> content, List<String> constraints,List<Item> enumeration){
         this.name = name;
         this.isClosed = isClosed;
         this.content = content;
         this.baseType = baseType;
+        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.constraints = constraints;
         this.enumeration = enumeration;
     }
@@ -72,17 +74,8 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        if(this.isSubtypeOf(other)){
-            return other;
-        } else if(other.isSubtypeOf(this)){
-            return this;
-        } else if(this == anyObjectItem) {
-            // if we reach here other not object item for sure
-            return other.isArrayItemType() ? BuiltinTypesCatalogue.JSONItem : BuiltinTypesCatalogue.item;
-        } else {
-            return this.getBaseType().findLeastCommonSuperTypeWith(other.isPrimitive() ? other : other.getBaseType());
-        }
+    public int getTypeTreeDepth() {
+        return this.typeTreeDepth;
     }
 
     @Override

@@ -129,7 +129,32 @@ public interface ItemType extends Serializable {
      * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
      *         and [other]
      */
-    ItemType findLeastCommonSuperTypeWith(ItemType other);
+    default ItemType findLeastCommonSuperTypeWith(ItemType other){
+        ItemType current = this;
+        while (other.getTypeTreeDepth() > current.getTypeTreeDepth()){
+            other = other.getBaseType();
+        }
+        while (other.getTypeTreeDepth() < current.getTypeTreeDepth()){
+            current = current.getBaseType();
+        }
+        while(!current.equals(other)){
+            current = current.getBaseType();
+            other = other.getBaseType();
+        }
+        return current;
+    }
+
+    /**
+     *
+     * @return an int representing the depth of the item type in the type tree ('item' is the root with depth 0)
+     */
+    int getTypeTreeDepth();
+
+    /**
+     *
+     * @return the base type for a type, return null for the topmost item type
+     */
+    ItemType getBaseType();
 
     /**
      * Check at static time if [this] could be casted to [other] item type, requires [this] to be an atomic type
@@ -176,14 +201,6 @@ public interface ItemType extends Serializable {
      */
     default ItemType getPrimitiveType(){
         throw new UnsupportedOperationException("getPrimitiveType operation is supported only for non-primitive types");
-    }
-
-    /**
-     *
-     * @return the base type for a user-defined type, throw an error for not user-defined types
-     */
-    default ItemType getBaseType(){
-        throw new UnsupportedOperationException("getBaseType operation is supported only for user-defined types");
     }
 
     /**

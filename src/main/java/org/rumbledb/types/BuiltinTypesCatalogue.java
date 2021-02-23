@@ -25,7 +25,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType hexBinaryItem = AtomicItemType.hexBinaryItem;
     public static final ItemType anyURIItem = AtomicItemType.anyURIItem;
     public static final ItemType base64BinaryItem = AtomicItemType.base64BinaryItem;
-    public static final ItemType JSONItem = AtomicItemType.JSONItem;
+    public static final ItemType JSONItem = JsonItemType.jsonItem;
     public static final ItemType objectItem = ObjectItemType.anyObjectItem;
     public static final ItemType arrayItem = ArrayItemType.anyArrayItem;
     public static final ItemType intItem = AtomicItemType.intItem;

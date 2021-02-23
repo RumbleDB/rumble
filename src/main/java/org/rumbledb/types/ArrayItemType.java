@@ -12,7 +12,7 @@ public class ArrayItemType implements ItemType {
 
     final static ArrayItemType anyArrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
-            null,
+            BuiltinTypesCatalogue.JSONItem,
             null,
             null,
             null,
@@ -30,11 +30,13 @@ public class ArrayItemType implements ItemType {
     final private ArrayContentDescriptor content;
     final private List<Item> enumeration;
     final private ItemType baseType;
+    final private int typeTreeDepth;
     final private Integer minLength, maxLength;
 
     ArrayItemType(Name name, ItemType baseType, ArrayContentDescriptor content, Integer minLength, Integer maxLength, List<Item> enumeration){
         this.name = name;
         this.baseType = baseType;
+        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.content = content;
         this.minLength = minLength;
         this.maxLength = maxLength;
@@ -72,17 +74,8 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        if(this.isSubtypeOf(other)){
-            return other;
-        } else if(other.isSubtypeOf(this)){
-            return this;
-        } else if(this == anyArrayItem) {
-            // if we reach here other not object item for sure
-            return other.isObjectItemType() ? BuiltinTypesCatalogue.JSONItem : BuiltinTypesCatalogue.item;
-        } else {
-            return this.getBaseType().findLeastCommonSuperTypeWith(other.isPrimitive() ? other : other.getBaseType());
-        }
+    public int getTypeTreeDepth() {
+        return this.typeTreeDepth;
     }
 
     @Override

@@ -12,6 +12,7 @@ import java.util.Set;
 public class DerivedAtomicItemType implements ItemType {
 
     private final ItemType baseType, primitiveType;
+    private final int typeTreeDepth;
     private final boolean isUserDefined;
     private final Name name;
     private final Item minInclusive, maxInclusive, minExclusive, maxExclusive;
@@ -32,6 +33,7 @@ public class DerivedAtomicItemType implements ItemType {
         this.baseType = baseType;
         this.primitiveType = primitiveType;
         this.isUserDefined = isUserDefined;
+        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
 
         this.minInclusive = facets.getMinInclusive();
         this.maxInclusive = facets.getMaxInclusive();
@@ -81,14 +83,8 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        if(this.isSubtypeOf(other)){
-            return other;
-        } else if(other.isSubtypeOf(this)){
-            return this;
-        } else {
-            return this.baseType.findLeastCommonSuperTypeWith(other.isPrimitive() ? other.getBaseType() : other);
-        }
+    public int getTypeTreeDepth() {
+        return this.typeTreeDepth;
     }
 
     @Override
