@@ -68,6 +68,11 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
+    public ItemType getBaseType() {
+        return this.baseType;
+    }
+
+    @Override
     public boolean isUserDefined() {
         return true;
     }
