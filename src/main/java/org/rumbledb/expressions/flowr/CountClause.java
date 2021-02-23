@@ -67,4 +67,11 @@ public class CountClause extends Clause {
         }
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("count ");
+        countClauseVar.serializeToJSONiq(sb, 0);
+    }
+
 }

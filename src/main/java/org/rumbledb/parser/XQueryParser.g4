@@ -298,13 +298,11 @@ validationMode: KW_LAX | KW_STRICT ;
 
 extensionExpr: PRAGMA+ LBRACE expr RBRACE ;
 
-//simpleMapExpr: pathExpr (BANG pathExpr)* ;
-
-simpleMapExpr: main_expr=postfixExpr (BANG map_expr+=postfixExpr)* ;
+simpleMapExpr: main_expr=pathExpr (BANG map_expr+=pathExpr)* ;
 
 // PATHS ///////////////////////////////////////////////////////////////////////
 
-pathExpr: (SLASH relativePathExpr?) | (DSLASH relativePathExpr) | relativePathExpr ;
+pathExpr: (SLASH singleslash=relativePathExpr?) | (DSLASH doubleslash=relativePathExpr) | relative=relativePathExpr ;
 
 relativePathExpr: stepExpr (sep=(SLASH|DSLASH) stepExpr)* ;
 

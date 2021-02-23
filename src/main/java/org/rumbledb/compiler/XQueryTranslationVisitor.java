@@ -922,19 +922,45 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitSimpleMapExpr(XQueryParser.SimpleMapExprContext ctx) {
-        Expression result = (Expression) this.visitPostfixExpr(ctx.main_expr);
+        Expression result = (Expression) this.visitPathExpr(ctx.main_expr);
         if (ctx.map_expr == null || ctx.map_expr.isEmpty()) {
             return result;
         }
         for (int i = 0; i < ctx.map_expr.size(); ++i) {
-            XQueryParser.PostfixExprContext child = ctx.map_expr.get(i);
-            Expression rightExpression = (Expression) this.visitPostfixExpr(child);
+            XQueryParser.PathExprContext child = ctx.map_expr.get(i);
+            Expression rightExpression = (Expression) this.visitPathExpr(child);
             result = new SimpleMapExpression(
                     result,
                     rightExpression,
                     createMetadataFromContext(ctx)
             );
         }
+        return result;
+    }
+
+    @Override
+    public Node visitPathExpr(XQueryParser.PathExprContext ctx) {
+        if (ctx.singleslash != null || ctx.doubleslash != null)
+            throw new XMLUnsupportedException("singleslash and doubleslash  not supported", createMetadataFromContext(ctx));
+        Expression result = (Expression) this.visitRelativePathExpr(ctx.relative);
+        return result;
+    }
+
+    @Override
+    public Node visitRelativePathExpr(XQueryParser.RelativePathExprContext ctx) {
+        if (ctx.stepExpr().size() != 1) {
+            throw new XMLUnsupportedException("multiple stepExpr not supported", createMetadataFromContext(ctx));
+        }
+        Expression result = (Expression) this.visitStepExpr(ctx.stepExpr().get(0));
+        return result;
+    }
+
+    @Override
+    public Node visitStepExpr(XQueryParser.StepExprContext ctx) {
+        if (ctx.axisStep() != null) {
+            throw new XMLUnsupportedException("axisStep not supported", createMetadataFromContext(ctx));
+        }
+        Expression result = (Expression) this.visitPostfixExpr(ctx.postfixExpr());
         return result;
     }
 
