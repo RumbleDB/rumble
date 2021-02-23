@@ -150,6 +150,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         this.moduleContext = moduleContext;
         this.moduleContext.bindNamespace("local", Name.LOCAL_NS);
         this.moduleContext.bindNamespace("fn", Name.FN_NS);
+        this.moduleContext.bindNamespace("math", Name.MATH_NS);
+        this.moduleContext.bindNamespace("map", Name.MAP_NS);
+        this.moduleContext.bindNamespace("array", Name.ARRAY_NS);
         this.moduleContext.bindNamespace("xs", Name.XS_NS);
         this.moduleContext.bindNamespace("jn", Name.JN_NS);
         this.moduleContext.bindNamespace("js", Name.JS_NS);
