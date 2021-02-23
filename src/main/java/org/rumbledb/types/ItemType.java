@@ -23,6 +23,7 @@ package org.rumbledb.types;
 
 import jsound.types.ArrayContentDescriptor;
 import jsound.types.FieldDescriptor;
+import jsound.types.UnionContentDescriptor;
 import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
@@ -65,6 +66,17 @@ public interface ItemType extends Serializable {
      * @return true it [this] is an array item type.
      */
     default boolean isArrayItemType() {
+        return false;
+    }
+
+    /**
+     * @return test if [this] is a subptype of a json item type
+     */
+    default boolean isJsonItemType() {
+        return this == BuiltinTypesCatalogue.JSONItem || isObjectItemType() || isArrayItemType();
+    }
+
+    default boolean isUnionType() {
         return false;
     }
 
@@ -327,6 +339,14 @@ public interface ItemType extends Serializable {
      */
     default ArrayContentDescriptor getArrayContentFacet(){
         throw new UnsupportedOperationException("array content facet is allowed only for array item types");
+    }
+
+    /**
+     *
+     * @return content facet value for union item types
+     */
+    default UnionContentDescriptor getUnionContentFacet(){
+        throw new UnsupportedOperationException("union content facet is allowed only for union item types");
     }
 
     // endregion
