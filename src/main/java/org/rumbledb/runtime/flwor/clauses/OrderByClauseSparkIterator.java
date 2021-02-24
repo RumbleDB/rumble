@@ -32,7 +32,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoTypedValueException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
@@ -173,27 +174,23 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                                                                                                   // variables from new
                                                                                                   // tuple
 
-                boolean isFieldEmpty = true;
                 RuntimeIterator iterator = expressionWithIterator.getIterator();
-                iterator.open(tupleContext);
-                while (iterator.hasNext()) {
-                    Item resultItem = iterator.next();
-                    if (resultItem != null) {
-                        if (!resultItem.isAtomic()) {
-                            throw new NonAtomicKeyException(
-                                    "Order by keys must be atomics",
-                                    expressionWithIterator.getIterator().getMetadata()
-                            );
-                        }
+                try {
+                    Item resultItem = iterator.materializeAtMostOneItemOrNull(tupleContext);
+                    if (resultItem != null && !resultItem.isAtomic()) {
+                        throw new NoTypedValueException(
+                                "Order by keys must be atomics",
+                                expressionWithIterator.getIterator().getMetadata()
+                        );
                     }
-                    isFieldEmpty = false;
+                    // possibly null for empty sequence.
                     results.add(resultItem);
+                } catch (MoreThanOneItemException e) {
+                    throw new UnexpectedTypeException(
+                            "Order by keys must be at most one item",
+                            expressionWithIterator.getIterator().getMetadata()
+                    );
                 }
-                // if empty ordering field is found, add a Java null as placeholder
-                if (isFieldEmpty) {
-                    results.add(null);
-                }
-                iterator.close();
             }
             FlworKey key = new FlworKey(results);
             List<FlworTuple> values = keyValuePairs.get(key); // all values for a single matching key are held in a list
