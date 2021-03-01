@@ -9,11 +9,37 @@ import java.util.List;
  * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that will be passed to a DerivedAtomicType to indicate the specified facets
  */
 public class Facets {
+
+    /**
+     * @return Facets for the integer derived type
+     */
+    public static Facets getIntegerFacets() {
+        Facets facets = new Facets();
+        facets.setFractionDigits(0);
+        return facets;
+    }
+
+    public static Facets createMinMaxFacets(Item min, Item max, boolean isInclusive){
+        Facets facets = new Facets();
+        if(isInclusive){
+            facets.setMinInclusive(min);
+            facets.setMaxInclusive(max);
+        } else {
+            facets.setMinExclusive(min);
+            facets.setMaxExclusive(max);
+        }
+        return facets;
+    }
+
     private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
+
+    public Facets(){
+
+    }
 
     public Item getMinInclusive() {
         return this.minInclusive;

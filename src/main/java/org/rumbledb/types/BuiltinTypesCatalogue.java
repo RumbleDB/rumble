@@ -10,7 +10,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType item = ItemItemType.item;
     public static final ItemType atomicItem = AtomicItemType.atomicItem;
     public static final ItemType stringItem = AtomicItemType.stringItem;
-    public static final ItemType integerItem = AtomicItemType.integerItem;
+    public static final ItemType integerItem = DerivedAtomicItemType.integerItem;
     public static final ItemType decimalItem = AtomicItemType.decimalItem;
     public static final ItemType doubleItem = AtomicItemType.doubleItem;
     public static final ItemType floatItem = AtomicItemType.floatItem;
@@ -28,7 +28,9 @@ public class BuiltinTypesCatalogue {
     public static final ItemType JSONItem = JsonItemType.jsonItem;
     public static final ItemType objectItem = ObjectItemType.anyObjectItem;
     public static final ItemType arrayItem = ArrayItemType.anyArrayItem;
-    public static final ItemType intItem = AtomicItemType.intItem;
+    public static final ItemType longItem = DerivedAtomicItemType.longItem;
+    public static final ItemType intItem = DerivedAtomicItemType.intItem;
+    public static final ItemType shortItem = DerivedAtomicItemType.shortItem;
     public static final ItemType anyFunctionItem = FunctionItemType.anyFunctionItem;
 
     public static boolean typeExists(Name name) {
@@ -68,7 +70,9 @@ public class BuiltinTypesCatalogue {
         hexBinaryItem,
         anyURIItem,
         base64BinaryItem,
-        item
+        item,
+        longItem,
+        shortItem
     );
 
     public static ItemType getItemTypeByName(Name name) {

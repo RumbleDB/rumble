@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.commons.collections.ListUtils;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
@@ -8,12 +7,13 @@ import org.rumbledb.context.Name;
 
 import java.util.*;
 
-
+/**
+ * This class describes all the primitive built-in atomic types in the JSONiq data model and the derived DayTimeDuration and YearMonthDuration item types that are derived, but whose derivation cannot be expressed through JSound facets
+ */
 public class AtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    // TODO: extract array and object into its own types
     static final AtomicItemType atomicItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "atomic"),
             Collections.emptySet(),
@@ -24,20 +24,7 @@ public class AtomicItemType implements ItemType {
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH)),
             DataTypes.StringType
     );
-    static final AtomicItemType integerItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "integer"),
-            new HashSet<>(Arrays.asList(
-                    FacetTypes.ENUMERATION,
-                    FacetTypes.CONSTRAINTS,
-                    FacetTypes.MININCLUSIVE,
-                    FacetTypes.MAXINCLUSIVE,
-                    FacetTypes.MINEXCLUSIVE,
-                    FacetTypes.MAXINCLUSIVE,
-                    FacetTypes.TOTALDIGITS,
-                    FacetTypes.FRACTIONDIGITS
-            )),
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
+
     static final AtomicItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(Arrays.asList(
@@ -176,20 +163,6 @@ public class AtomicItemType implements ItemType {
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS, FacetTypes.LENGTH, FacetTypes.MINLENGTH, FacetTypes.MAXLENGTH)),
             DataTypes.BinaryType
     );
-    static final AtomicItemType intItem = new AtomicItemType(
-            Name.createVariableInDefaultTypeNamespace("int"),
-            new HashSet<>(Arrays.asList(
-                    FacetTypes.ENUMERATION,
-                    FacetTypes.CONSTRAINTS,
-                    FacetTypes.MININCLUSIVE,
-                    FacetTypes.MAXINCLUSIVE,
-                    FacetTypes.MINEXCLUSIVE,
-                    FacetTypes.MAXINCLUSIVE,
-                    FacetTypes.TOTALDIGITS,
-                    FacetTypes.FRACTIONDIGITS
-            )),
-            DataTypes.IntegerType
-    );
 
     private Name name;
     private Set<FacetTypes> allowedFacets;
@@ -231,7 +204,7 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if(this == atomicItem){
             return 1;
-        } else if (this == yearMonthDurationItem || this == dayTimeDurationItem || this == integerItem || this == intItem){
+        } else if (this == yearMonthDurationItem || this == dayTimeDurationItem){
             // TODO : check once you remove derived like integer and int
             return 3;
         } else {
@@ -245,11 +218,14 @@ public class AtomicItemType implements ItemType {
             return BuiltinTypesCatalogue.item;
         } else if(this == yearMonthDurationItem || this == dayTimeDurationItem){
             return durationItem;
-        } else if(this == integerItem || this == intItem){
-            return decimalItem;
         } else {
             return atomicItem;
         }
+    }
+
+    @Override
+    public boolean isPrimitive() {
+        return !(this == dayTimeDurationItem || this == yearMonthDurationItem);
     }
 
     @Override
@@ -312,11 +288,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(intItem)
-            || this.equals(integerItem)
-            || this.equals(decimalItem)
-            || this.equals(doubleItem)
-            || this.equals(floatItem);
+        return this == decimalItem || this == floatItem || this == doubleItem;
     }
 
     @Override

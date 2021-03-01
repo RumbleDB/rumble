@@ -5,11 +5,50 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.IntItem;
+import org.rumbledb.items.IntegerItem;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
 public class DerivedAtomicItemType implements ItemType {
+
+    static final DerivedAtomicItemType integerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "integer"),
+            BuiltinTypesCatalogue.decimalItem,
+            BuiltinTypesCatalogue.decimalItem,
+            Facets.getIntegerFacets(),
+            false,
+            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType longItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "long"),
+            integerItem,
+            BuiltinTypesCatalogue.decimalItem,
+            Facets.createMinMaxFacets(new IntegerItem(new BigInteger("-9223372036854775808")), new IntegerItem(new BigInteger("9223372036854775807")), true),
+            false,
+            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
+            Name.createVariableInDefaultTypeNamespace("int"),
+            longItem,
+            BuiltinTypesCatalogue.decimalItem,
+            Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType shortItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "short"),
+            intItem,
+            BuiltinTypesCatalogue.decimalItem,
+            Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
+            false,
+            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
+    );
 
     private final ItemType baseType, primitiveType;
     private final int typeTreeDepth;
@@ -65,6 +104,11 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public boolean isAtomicItemType() {
         return true;
+    }
+
+    @Override
+    public boolean isNumeric() {
+        return this.primitiveType.isNumeric();
     }
 
     @Override
