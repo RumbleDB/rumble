@@ -13,8 +13,7 @@ public class JsonItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    // TODO : check if wrong prefix
-    static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "xs", "json-item"));
+    static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
     private final Name name;
     private JsonItemType(Name name) {
         this.name = name;
