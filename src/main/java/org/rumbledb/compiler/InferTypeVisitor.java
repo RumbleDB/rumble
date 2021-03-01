@@ -331,7 +331,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (expression.isPartialApplication()) {
             FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
-            expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature)));
+            expression.setInferredSequenceType(
+                new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature))
+            );
         } else {
             SequenceType returnType = signature.getReturnType();
             if (returnType == null) {

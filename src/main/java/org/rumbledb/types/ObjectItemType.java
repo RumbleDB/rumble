@@ -17,12 +17,14 @@ public class ObjectItemType implements ItemType {
             null
     );
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
-            FacetTypes.ENUMERATION,
-            FacetTypes.CONSTRAINTS,
-            FacetTypes.CONTENT,
-            FacetTypes.CLOSED
-    ));
+    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+            Arrays.asList(
+                FacetTypes.ENUMERATION,
+                FacetTypes.CONSTRAINTS,
+                FacetTypes.CONTENT,
+                FacetTypes.CLOSED
+            )
+    );
 
     final private Name name;
     final private Map<String, FieldDescriptor> content;
@@ -32,7 +34,14 @@ public class ObjectItemType implements ItemType {
     final private ItemType baseType;
     final private int typeTreeDepth;
 
-    ObjectItemType(Name name, ItemType baseType, boolean isClosed, Map<String, FieldDescriptor> content, List<String> constraints,List<Item> enumeration){
+    ObjectItemType(
+            Name name,
+            ItemType baseType,
+            boolean isClosed,
+            Map<String, FieldDescriptor> content,
+            List<String> constraints,
+            List<Item> enumeration
+    ) {
         this.name = name;
         this.isClosed = isClosed;
         this.content = content;
@@ -103,12 +112,14 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public List<String> getConstraintsFacet() {
-        return this.isPrimitive() ? this.constraints : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
+        return this.isPrimitive()
+            ? this.constraints
+            : ListUtils.union(this.baseType.getConstraintsFacet(), this.constraints);
     }
 
     @Override
     public Map<String, FieldDescriptor> getObjectContentFacet() {
-        if(this.isPrimitive()){
+        if (this.isPrimitive()) {
             return this.content;
         } else {
             // recursively get content facet, overriding new descriptors

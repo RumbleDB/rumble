@@ -15,6 +15,7 @@ public class JsonItemType implements ItemType {
 
     static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
     private final Name name;
+
     private JsonItemType(Name name) {
         this.name = name;
     }
@@ -42,7 +43,7 @@ public class JsonItemType implements ItemType {
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        while (other.getTypeTreeDepth() > 1){
+        while (other.getTypeTreeDepth() > 1) {
             other = other.getBaseType();
         }
         return other == jsonItem ? jsonItem : BuiltinTypesCatalogue.item;

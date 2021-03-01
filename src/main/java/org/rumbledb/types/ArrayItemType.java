@@ -16,12 +16,14 @@ public class ArrayItemType implements ItemType {
             null
     );
 
-    final static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(
-            FacetTypes.ENUMERATION,
-            FacetTypes.CONTENT,
-            FacetTypes.MINLENGTH,
-            FacetTypes.MAXLENGTH
-    ));
+    final static Set<FacetTypes> allowedFacets = new HashSet<>(
+            Arrays.asList(
+                FacetTypes.ENUMERATION,
+                FacetTypes.CONTENT,
+                FacetTypes.MINLENGTH,
+                FacetTypes.MAXLENGTH
+            )
+    );
 
     final private Name name;
     final private ArrayContentDescriptor content;
@@ -30,7 +32,14 @@ public class ArrayItemType implements ItemType {
     final private int typeTreeDepth;
     final private Integer minLength, maxLength;
 
-    ArrayItemType(Name name, ItemType baseType, ArrayContentDescriptor content, Integer minLength, Integer maxLength, List<Item> enumeration){
+    ArrayItemType(
+            Name name,
+            ItemType baseType,
+            ArrayContentDescriptor content,
+            Integer minLength,
+            Integer maxLength,
+            List<Item> enumeration
+    ) {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;

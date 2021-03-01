@@ -17,14 +17,14 @@ public class UnionItemType implements ItemType {
     private final int typeTreeDepth;
     private final UnionContentDescriptor content;
 
-    UnionItemType(Name name, ItemType baseType, UnionContentDescriptor content){
+    UnionItemType(Name name, ItemType baseType, UnionContentDescriptor content) {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.content = content;
     }
 
-    UnionItemType(Name name, UnionContentDescriptor content){
+    UnionItemType(Name name, UnionContentDescriptor content) {
         this.name = name;
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;

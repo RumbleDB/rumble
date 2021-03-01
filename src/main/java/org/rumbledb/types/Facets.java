@@ -6,7 +6,8 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that will be passed to a DerivedAtomicType to indicate the specified facets
+ * Facets class represent a container with the ability to get and set facets and is intended to be a mutable proxy that
+ * will be passed to a DerivedAtomicType to indicate the specified facets
  */
 public class Facets {
 
@@ -19,9 +20,9 @@ public class Facets {
         return facets;
     }
 
-    public static Facets createMinMaxFacets(Item min, Item max, boolean isInclusive){
+    public static Facets createMinMaxFacets(Item min, Item max, boolean isInclusive) {
         Facets facets = new Facets();
-        if(isInclusive){
+        if (isInclusive) {
             facets.setMinInclusive(min);
             facets.setMaxInclusive(max);
         } else {
@@ -37,7 +38,7 @@ public class Facets {
     private List<Item> enumeration;
     private TimezoneFacet explicitTimezone;
 
-    public Facets(){
+    public Facets() {
 
     }
 
