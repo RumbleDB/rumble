@@ -67,12 +67,6 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isSubtypeOf(ItemType superType) {
-        return this == anyObjectItem ? superType == anyObjectItem || superType == BuiltinTypesCatalogue.JSONItem || superType == BuiltinTypesCatalogue.item :
-                this.equals(superType) || this.baseType.isSubtypeOf(superType);
-    }
-
-    @Override
     public int getTypeTreeDepth() {
         return this.typeTreeDepth;
     }

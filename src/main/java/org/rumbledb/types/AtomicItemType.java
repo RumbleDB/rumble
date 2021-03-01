@@ -228,20 +228,6 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isSubtypeOf(ItemType superType) {
-        if (superType == BuiltinTypesCatalogue.item || superType == atomicItem) {
-            return true;
-        } else if (superType.equals(durationItem)) {
-            return this.equals(yearMonthDurationItem)
-                || this.equals(dayTimeDurationItem)
-                || this.equals(durationItem);
-        } else if (superType.equals(decimalItem)) {
-            return this.equals(integerItem) || this.equals(decimalItem) || this.equals(intItem);
-        }
-        return this.equals(superType);
-    }
-
-    @Override
     public int getTypeTreeDepth() {
         if(this == atomicItem){
             return 1;

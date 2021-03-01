@@ -78,11 +78,6 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isSubtypeOf(ItemType superType) {
-        return this.equals(superType) || this.baseType.isSubtypeOf(superType);
-    }
-
-    @Override
     public int getTypeTreeDepth() {
         return this.typeTreeDepth;
     }

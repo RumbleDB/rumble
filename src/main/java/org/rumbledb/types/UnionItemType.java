@@ -26,7 +26,6 @@ public class UnionItemType implements ItemType {
 
     UnionItemType(Name name, UnionContentDescriptor content){
         this.name = name;
-        // TODO : check union always restriction on item
         this.baseType = BuiltinTypesCatalogue.item;
         this.typeTreeDepth = 1;
         this.content = content;
@@ -53,11 +52,6 @@ public class UnionItemType implements ItemType {
     @Override
     public Name getName() {
         return this.name;
-    }
-
-    @Override
-    public boolean isSubtypeOf(ItemType superType) {
-        return this.equals(superType) || this.baseType.isSubtypeOf(superType);
     }
 
     @Override

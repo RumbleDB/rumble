@@ -129,13 +129,34 @@ public interface ItemType extends Serializable {
      * @param superType another item type
      * @return true if [this] is a subtype of [superType], any type is considered a subtype of itself
      */
-    boolean isSubtypeOf(ItemType superType);
+    default boolean isSubtypeOf(ItemType superType){
+        // the default methods works fine for all non-function types
+        // we exploit the fact that the type system is a tree (except for union types, that needs special checks)
+
+        // special check for unions
+        if(superType.isUnionType()){
+            // TODO : to simplify inner classes
+            for(TypeOrReference typeOrReference : superType.getUnionContentFacet().getTypes()){
+                if(this.isSubtypeOf(typeOrReference.getType())){
+                    return true;
+                }
+            }
+        }
+
+        // get up the type tree and check for equality
+        ItemType current = this;
+        while(current.getTypeTreeDepth() > superType.getTypeTreeDepth()){
+            current = current.getBaseType();
+        }
+
+        return current.equals(superType);
+    }
 
     /**
      *
      * @param other another item type
      * @return the common supertype between [this] and [other], that would be the LCA in the item type tree of [this]
-     *         and [other]
+     *         and [other] (does not take into account union types as common ancestor, but only the type tree)
      */
     default ItemType findLeastCommonSuperTypeWith(ItemType other){
         ItemType current = this;
