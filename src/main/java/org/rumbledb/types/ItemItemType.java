@@ -14,7 +14,9 @@ public class ItemItemType implements ItemType {
     private static final long serialVersionUID = 1L;
 
     static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
-    private final Name name;
+    private Name name;
+
+    public ItemItemType(){}
 
     private ItemItemType(Name name) {
         this.name = name;

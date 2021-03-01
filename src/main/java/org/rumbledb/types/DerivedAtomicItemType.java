@@ -115,7 +115,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return isUserDefined;
+        return this.isUserDefined;
     }
 
     @Override

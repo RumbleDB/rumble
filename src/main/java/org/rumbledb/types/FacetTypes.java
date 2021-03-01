@@ -26,6 +26,6 @@ public enum FacetTypes {
     }
 
     public String getTypeName() {
-        return facetName;
+        return this.facetName;
     }
 }

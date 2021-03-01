@@ -21,15 +21,11 @@
 package org.rumbledb.types;
 
 
-import jsound.types.ArrayContentDescriptor;
-import jsound.types.FieldDescriptor;
-import jsound.types.UnionContentDescriptor;
 import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
 import java.io.Serializable;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;

@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import jsound.types.FieldDescriptor;
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;

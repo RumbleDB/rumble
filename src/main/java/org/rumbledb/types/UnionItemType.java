@@ -1,7 +1,5 @@
 package org.rumbledb.types;
 
-import jsound.types.ArrayContentDescriptor;
-import jsound.types.UnionContentDescriptor;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.context.Name;
@@ -94,7 +92,7 @@ public class UnionItemType implements ItemType {
 
     @Override
     public UnionContentDescriptor getUnionContentFacet() {
-        return content;
+        return this.content;
     }
 
     @Override
