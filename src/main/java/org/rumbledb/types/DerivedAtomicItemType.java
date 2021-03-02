@@ -141,7 +141,7 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // TODO: what about further restrictions like string without num from int?
-       return this.primitiveType.isStaticallyCastableAs(other.isPrimitive() ? other : other.getPrimitiveType());
+        return this.primitiveType.isStaticallyCastableAs(other.isPrimitive() ? other : other.getPrimitiveType());
     }
 
     @Override
