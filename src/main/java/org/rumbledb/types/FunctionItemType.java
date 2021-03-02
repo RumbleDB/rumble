@@ -68,12 +68,12 @@ public class FunctionItemType implements ItemType {
 
     @Override
     public int getTypeTreeDepth() {
-        return this == anyFunctionItem ? 1 : 2;
+        return this.equals(anyFunctionItem) ? 1 : 2;
     }
 
     @Override
     public ItemType getBaseType() {
-        return this == anyFunctionItem ? BuiltinTypesCatalogue.item : anyFunctionItem;
+        return this.equals(anyFunctionItem) ? BuiltinTypesCatalogue.item : anyFunctionItem;
     }
 
     @Override

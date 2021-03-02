@@ -25,8 +25,10 @@ public class ItemItemType implements ItemType {
 
     @Override
     public boolean equals(Object o) {
-        // no need to check the class because ItemItemType is a singleton and it is only equal to its only instance
-        return o == item;
+        if (!(o instanceof ItemType)) {
+            return false;
+        }
+        return this.toString().equals(o.toString());
     }
 
     @Override
@@ -41,7 +43,7 @@ public class ItemItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return superType == item;
+        return superType.equals(item);
     }
 
     @Override

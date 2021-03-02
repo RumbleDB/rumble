@@ -253,9 +253,9 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public int getTypeTreeDepth() {
-        if (this == atomicItem) {
+        if (this.equals(atomicItem)) {
             return 1;
-        } else if (this == yearMonthDurationItem || this == dayTimeDurationItem) {
+        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             // TODO : check once you remove derived like integer and int
             return 3;
         } else {
@@ -265,9 +265,9 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public ItemType getBaseType() {
-        if (this == atomicItem) {
+        if (this.equals(atomicItem)) {
             return BuiltinTypesCatalogue.item;
-        } else if (this == yearMonthDurationItem || this == dayTimeDurationItem) {
+        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
         } else {
             return atomicItem;
@@ -276,7 +276,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isPrimitive() {
-        return !(this == dayTimeDurationItem || this == yearMonthDurationItem);
+        return !(this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem));
     }
 
     @Override
@@ -339,7 +339,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this == decimalItem || this == floatItem || this == doubleItem;
+        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem);
     }
 
     @Override

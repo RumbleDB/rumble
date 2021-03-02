@@ -16,8 +16,8 @@ public class DerivedAtomicItemType implements ItemType {
 
     static final DerivedAtomicItemType integerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "integer"),
-            BuiltinTypesCatalogue.decimalItem,
-            BuiltinTypesCatalogue.decimalItem,
+            AtomicItemType.decimalItem,
+            AtomicItemType.decimalItem,
             Facets.getIntegerFacets(),
             false,
             DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
@@ -26,7 +26,7 @@ public class DerivedAtomicItemType implements ItemType {
     static final DerivedAtomicItemType longItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "long"),
             integerItem,
-            BuiltinTypesCatalogue.decimalItem,
+            AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(
                 new IntegerItem(new BigInteger("-9223372036854775808")),
                 new IntegerItem(new BigInteger("9223372036854775807")),
@@ -39,7 +39,7 @@ public class DerivedAtomicItemType implements ItemType {
     static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
             Name.createVariableInDefaultTypeNamespace("int"),
             longItem,
-            BuiltinTypesCatalogue.decimalItem,
+            AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
             false,
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
@@ -48,7 +48,7 @@ public class DerivedAtomicItemType implements ItemType {
     static final DerivedAtomicItemType shortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "short"),
             intItem,
-            BuiltinTypesCatalogue.decimalItem,
+            AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
             false,
             DataTypes.ShortType // TODO : how to support arbitrary-sized integer
@@ -141,15 +141,7 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // TODO: what about further restrictions like string without num from int?
-        ItemType castFrom = this.baseType;
-        while (castFrom.isUserDefined()) {
-            castFrom = castFrom.getBaseType();
-        }
-        ItemType castTo = other;
-        while (castTo.isUserDefined()) {
-            castTo = castTo.getBaseType();
-        }
-        return castFrom.isStaticallyCastableAs(castTo);
+       return this.primitiveType.isStaticallyCastableAs(other.isPrimitive() ? other : other.getPrimitiveType());
     }
 
     @Override

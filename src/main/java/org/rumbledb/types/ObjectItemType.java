@@ -82,12 +82,12 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this == anyObjectItem);
+        return !(this.equals(anyObjectItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this == anyObjectItem;
+        return this.equals(anyObjectItem);
     }
 
     @Override

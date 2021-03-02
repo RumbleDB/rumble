@@ -80,12 +80,12 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this == anyArrayItem);
+        return !(this.equals(anyArrayItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this == anyArrayItem;
+        return this.equals(anyArrayItem);
     }
 
     @Override

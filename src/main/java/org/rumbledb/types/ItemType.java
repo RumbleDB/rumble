@@ -69,7 +69,7 @@ public interface ItemType extends Serializable {
      * @return test if [this] is a subptype of a json item type
      */
     default boolean isJsonItemType() {
-        return this == BuiltinTypesCatalogue.JSONItem || isObjectItemType() || isArrayItemType();
+        return this.equals(BuiltinTypesCatalogue.JSONItem) || isObjectItemType() || isArrayItemType();
     }
 
     default boolean isUnionType() {

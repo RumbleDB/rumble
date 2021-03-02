@@ -22,8 +22,10 @@ public class JsonItemType implements ItemType {
 
     @Override
     public boolean equals(Object o) {
-        // no need to check the class because ItemItemType is a singleton and it is only equal to its only instance
-        return o == jsonItem;
+        if (!(o instanceof ItemType)) {
+            return false;
+        }
+        return this.toString().equals(o.toString());
     }
 
     @Override
@@ -38,7 +40,7 @@ public class JsonItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return superType == BuiltinTypesCatalogue.item || superType == jsonItem;
+        return superType.equals(BuiltinTypesCatalogue.item) || superType.equals(jsonItem);
     }
 
     @Override
@@ -46,7 +48,7 @@ public class JsonItemType implements ItemType {
         while (other.getTypeTreeDepth() > 1) {
             other = other.getBaseType();
         }
-        return other == jsonItem ? jsonItem : BuiltinTypesCatalogue.item;
+        return other.equals(jsonItem) ? jsonItem : BuiltinTypesCatalogue.item;
     }
 
     @Override
