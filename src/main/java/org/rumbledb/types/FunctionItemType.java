@@ -2,13 +2,15 @@ package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
+import java.util.Set;
+
 public class FunctionItemType implements ItemType {
 
-    private boolean isGeneric;
-    private FunctionSignature signature;
+    private final boolean isGeneric;
+    private final FunctionSignature signature;
     static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
-    public FunctionItemType(FunctionSignature signature) {
+    FunctionItemType(FunctionSignature signature) {
         if (signature == null) {
             throw new OurBadException("a new function item type must have a signature");
         }
@@ -31,7 +33,7 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public boolean isFunctionItem() {
+    public boolean isFunctionItemType() {
         return true;
     }
 
@@ -47,21 +49,36 @@ public class FunctionItemType implements ItemType {
         ) {
             return true;
         }
-        if (superType.isFunctionItem() && this.signature.isSubtypeOf(superType.getSignature())) {
+        if (superType.isFunctionItemType() && this.signature.isSubtypeOf(superType.getSignature())) {
             return true;
         }
         return false;
     }
 
     @Override
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (this.equals(other)) {
             return this;
         }
-        if (other.isFunctionItem()) {
+        if (other.isFunctionItemType()) {
             return anyFunctionItem;
         }
         return BuiltinTypesCatalogue.item;
+    }
+
+    @Override
+    public int getTypeTreeDepth() {
+        return this.equals(anyFunctionItem) ? 1 : 2;
+    }
+
+    @Override
+    public ItemType getBaseType() {
+        return this.equals(anyFunctionItem) ? BuiltinTypesCatalogue.item : anyFunctionItem;
+    }
+
+    @Override
+    public Set<FacetTypes> getAllowedFacets() {
+        throw new UnsupportedOperationException("function item types does not support facets");
     }
 
     @Override

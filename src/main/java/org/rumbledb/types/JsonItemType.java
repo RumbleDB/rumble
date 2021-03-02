@@ -9,17 +9,14 @@ import java.util.Set;
 /**
  * Class representing the generic 'item' item type
  */
-public class ItemItemType implements ItemType {
+public class JsonItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
-    private Name name;
+    static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
+    private final Name name;
 
-    public ItemItemType() {
-    }
-
-    private ItemItemType(Name name) {
+    private JsonItemType(Name name) {
         this.name = name;
     }
 
@@ -43,22 +40,25 @@ public class ItemItemType implements ItemType {
 
     @Override
     public boolean isSubtypeOf(ItemType superType) {
-        return superType.equals(item);
+        return superType.equals(BuiltinTypesCatalogue.item) || superType.equals(jsonItem);
     }
 
     @Override
     public ItemType findLeastCommonSuperTypeWith(ItemType other) {
-        return item;
+        while (other.getTypeTreeDepth() > 1) {
+            other = other.getBaseType();
+        }
+        return other.equals(jsonItem) ? jsonItem : BuiltinTypesCatalogue.item;
     }
 
     @Override
     public int getTypeTreeDepth() {
-        return 0;
+        return 1;
     }
 
     @Override
     public ItemType getBaseType() {
-        return null;
+        return BuiltinTypesCatalogue.item;
     }
 
     @Override

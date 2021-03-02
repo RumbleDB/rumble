@@ -1181,7 +1181,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                     .collect(Collectors.toList());
                 FunctionSignature signature = new FunctionSignature(st, rt);
                 // TODO: move item type creation to ItemFactory
-                return new FunctionItemType(signature);
+                return ItemTypeFactory.createFunctionItemType(signature);
 
             } else {
                 return BuiltinTypesCatalogue.anyFunctionItem;
