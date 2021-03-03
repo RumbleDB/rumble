@@ -316,7 +316,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      */
     private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext){
         List<Name> functionNameToAnnotate = Arrays.asList(
-                Name.createVariableInDefaultFunctionNamespace("avro-file"),
+                //Name.createVariableInDefaultFunctionNamespace("avro-file"),
                 Name.createVariableInDefaultFunctionNamespace("parquet-file")
         );
         Name functionName = expression.getFunctionName();
@@ -336,6 +336,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                         .schema();
                 ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
                 System.out.println(schemaItemType.toString());
+                // TODO : check if arity is correct
+                expression.setInferredSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+                return true;
             } catch (Exception e) {
                 if (e instanceof AnalysisException) {
                     throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
@@ -1308,7 +1311,30 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
-        expression.setInferredSequenceType(new SequenceType(BuiltinTypesCatalogue.item, inferredArity));
+
+        ItemType inferredType = BuiltinTypesCatalogue.item;
+        // if we have a specific object type and a string literal as key try perform better inference
+        if(mainType.getItemType().isObjectItemType() && (expression.getLookupExpression() instanceof StringLiteralExpression)){
+            String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
+            boolean isObjectClosed = mainType.getItemType().getClosedFacet();
+            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
+            if(objectSchema.containsKey(key)){
+                FieldDescriptor field = objectSchema.get(key);
+                inferredType = field.getType();
+                if(field.isRequired()){
+                    // if the field is required then any object will have it, so no need to include '0' arity if not present
+                    inferredArity = mainType.getArity();
+                }
+            } else if(isObjectClosed){
+                // if object is closed and key is not found then for sure we will return the empty sequence
+                throw new UnexpectedStaticTypeException(
+                        "Inferred type is empty sequence and this is not a CommaExpression",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
+                );
+            }
+        }
+
+        expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         System.out.println("visiting ObjectLookup expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
