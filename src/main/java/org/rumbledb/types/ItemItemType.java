@@ -28,7 +28,7 @@ public class ItemItemType implements ItemType {
         if (!(o instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(o.toString());
+        return this.getIdentifierString().equals(((ItemType) o).getIdentifierString());
     }
 
     @Override

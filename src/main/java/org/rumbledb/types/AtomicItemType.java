@@ -233,7 +233,7 @@ public class AtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
     }
 
     @Override

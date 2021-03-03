@@ -82,6 +82,11 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
+    public String getIdentifierString() {
+        return this.toString();
+    }
+
+    @Override
     public String toString() {
         return this.isGeneric ? "function(*)" : this.signature.toString();
     }

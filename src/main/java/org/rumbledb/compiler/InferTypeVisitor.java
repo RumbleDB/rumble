@@ -1,8 +1,11 @@
 package org.rumbledb.compiler;
 
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.*;
 import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
@@ -26,9 +29,12 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.*;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -303,6 +309,44 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
 
+    /**
+     * For specific input functions we read the schema and annotate static type precisely
+     * @param expression function call expression to be annotated
+     * @return true if we perform the annotation or false if it is not one of this specific cases
+     */
+    private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext){
+        List<Name> functionNameToAnnotate = Arrays.asList(
+                Name.createVariableInDefaultFunctionNamespace("avro-file"),
+                Name.createVariableInDefaultFunctionNamespace("parquet-file")
+        );
+        Name functionName = expression.getFunctionName();
+        List<Expression> args = expression.getArguments();
+
+        if(functionNameToAnnotate.contains(functionName) && args.size() > 0 && args.get(0) instanceof StringLiteralExpression){
+            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+            }
+            try {
+                StructType s = SparkSessionManager.getInstance()
+                        .getOrCreateSession()
+                        .read()
+                        .parquet(uri.toString())
+                        .schema();
+                ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
+                System.out.println(schemaItemType.toString());
+            } catch (Exception e) {
+                if (e instanceof AnalysisException) {
+                    throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                }
+                throw e;
+            }
+        }
+
+        return false;
+    }
+
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
@@ -314,6 +358,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
+        // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
                 SequenceType actualType = parameterExpressions.get(i).getInferredSequenceType();
@@ -335,11 +380,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature))
             );
         } else {
-            SequenceType returnType = signature.getReturnType();
-            if (returnType == null) {
-                returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            // try annotate specific functions
+            if(!tryAnnotateSpecificFunctions(expression, argument)){
+                // we did not annotate a specific function, therefore we use default return type
+                SequenceType returnType = signature.getReturnType();
+                if (returnType == null) {
+                    returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                }
+                expression.setInferredSequenceType(returnType);
             }
-            expression.setInferredSequenceType(returnType);
         }
 
         System.out.println("Visited static function call, set type to " + expression.getInferredSequenceType());

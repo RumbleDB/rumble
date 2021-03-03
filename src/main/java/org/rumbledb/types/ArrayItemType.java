@@ -54,7 +54,7 @@ public class ArrayItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
     }
 
     @Override
@@ -64,12 +64,11 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return true;
+        return this.name != null;
     }
 
     @Override
     public Name getName() {
-        // TODO : what about anonymous types
         return this.name;
     }
 
@@ -121,6 +120,33 @@ public class ArrayItemType implements ItemType {
     @Override
     public ArrayContentDescriptor getArrayContentFacet() {
         return this.content != null || this.isPrimitive() ? this.content : this.baseType.getArrayContentFacet();
+    }
+
+    @Override
+    public String getIdentifierString() {
+        if(this.hasName()){
+            return this.name.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("#anonymous-array-base{");
+        sb.append(this.baseType.getIdentifierString());
+        sb.append("}");
+        if(this.content != null){
+            sb.append("-content{");
+            sb.append(this.content.getType().getIdentifierString());
+            sb.append("}");
+        }
+        if(this.enumeration != null){
+            sb.append("-enum{");
+            String comma = "";
+            for(Item item : this.enumeration){
+                sb.append(comma);
+                sb.append(item.serialize());
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
     @Override

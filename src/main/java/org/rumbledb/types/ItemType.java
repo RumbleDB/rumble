@@ -396,7 +396,18 @@ public interface ItemType extends Serializable {
 
     // endregion
 
-    public String toString();
+    /**
+     *
+     * @return a String that uniquely identify an item type
+     */
+    default String getIdentifierString(){
+        if(this.hasName()){
+            return this.getName().toString();
+        }
+        throw new UnsupportedOperationException("default implementation of uniqueString always requires a Name");
+    }
+
+    String toString();
 
     default DataType toDataFrameType() {
         throw new UnsupportedOperationException(

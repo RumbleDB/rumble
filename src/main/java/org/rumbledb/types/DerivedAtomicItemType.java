@@ -110,7 +110,7 @@ public class DerivedAtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
     }
 
     @Override
@@ -125,7 +125,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return true;
+        return this.name != null;
     }
 
     @Override
@@ -298,6 +298,87 @@ public class DerivedAtomicItemType implements ItemType {
             );
         }
         return this.explicitTimezone == null ? this.baseType.getExplicitTimezoneFacet() : this.explicitTimezone;
+    }
+
+    @Override
+    public String getIdentifierString() {
+        if(this.hasName()){
+            return this.name.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("#anonymous-atomic-base{");
+        sb.append(this.baseType.getIdentifierString());
+        sb.append("}");
+
+        if(this.minLength != null){
+            sb.append("-ml:");
+            sb.append(this.minLength);
+        }
+        if(this.length != null){
+            sb.append("-l:");
+            sb.append(this.length);
+        }
+        if(this.maxLength != null){
+            sb.append("-Ml:");
+            sb.append(this.maxLength);
+        }
+
+        if(this.totalDigits != null){
+            sb.append("-td:");
+            sb.append(this.totalDigits);
+        }
+        if(this.fractionDigits != null){
+            sb.append("-fd:");
+            sb.append(this.fractionDigits);
+        }
+
+        if(this.minInclusive != null){
+            sb.append("-mi:");
+            sb.append(this.minInclusive.serialize());
+        }
+        if(this.minExclusive != null){
+            sb.append("-me:");
+            sb.append(this.minExclusive.serialize());
+        }
+        if(this.maxInclusive != null){
+            sb.append("-Mi:");
+            sb.append(this.maxInclusive.serialize());
+        }
+        if(this.maxExclusive != null){
+            sb.append("-Me:");
+            sb.append(this.maxExclusive.serialize());
+        }
+
+        if(this.explicitTimezone != null){
+            sb.append("-et:");
+            sb.append(this.explicitTimezone.name());
+        }
+
+
+        if(this.enumeration != null){
+            sb.append("-enum{");
+            String comma = "";
+            for(Item item : this.enumeration){
+                sb.append(comma);
+                sb.append(item.serialize());
+                comma = ",";
+            }
+            sb.append("}");
+        }
+
+        if(this.constraints.size() > 0){
+            sb.append("-const{");
+            String comma = "";
+            for(String c : this.constraints){
+                sb.append(comma);
+                sb.append("\"");
+                sb.append(c);
+                sb.append("\"");
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
     @Override

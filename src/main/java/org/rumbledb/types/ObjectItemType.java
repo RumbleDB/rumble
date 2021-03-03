@@ -44,10 +44,10 @@ public class ObjectItemType implements ItemType {
     ) {
         this.name = name;
         this.isClosed = isClosed;
-        this.content = content;
+        this.content = content == null ? Collections.emptyMap() : content;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-        this.constraints = constraints;
+        this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
     }
 
@@ -56,7 +56,7 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
     }
 
     @Override
@@ -66,12 +66,11 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean hasName() {
-        return true;
+        return this.name != null;
     }
 
     @Override
     public Name getName() {
-        // TODO : what about anonymous types
         return this.name;
     }
 
@@ -135,8 +134,90 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
+    public String getIdentifierString() {
+        if(this.hasName()){
+            return this.name.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("#anonymous-object-base{");
+        sb.append(this.baseType.getIdentifierString());
+        sb.append("}");
+        sb.append(this.isClosed ? "-c" : "-nc");
+        if(this.content != null){
+            sb.append("-content{");
+            String comma = "";
+            for(FieldDescriptor fd : this.content.values()){
+                sb.append(comma);
+                sb.append(fd.getName());
+                sb.append(fd.isRequired() ? "(r):" : "(nr):");
+                sb.append(fd.getType().getIdentifierString());
+                Item dv = fd.getDefaultValue();
+                if(dv != null){
+                    sb.append("(def:");
+                    sb.append(dv.serialize());
+                    sb.append(")");
+                } else {
+                    sb.append("(nd)");
+                }
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        if(this.enumeration != null){
+            sb.append("-enum{");
+            String comma = "";
+            for(Item item : this.enumeration){
+                sb.append(comma);
+                sb.append(item.serialize());
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        if(this.constraints.size() > 0){
+            sb.append("-const{");
+            String comma = "";
+            for(String c : this.constraints){
+                sb.append(comma);
+                sb.append("\"");
+                sb.append(c);
+                sb.append("\"");
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
+    }
+
+    @Override
     public String toString() {
-        // consider add content and various stuff
-        return this.name.toString();
+        if((new Name(Name.JS_NS, "js", "object")).equals(this.name)){
+            // generic object
+            return this.name.toString();
+        } else {
+            StringBuilder sb = new StringBuilder();
+            sb.append(this.name == null ? "#anonymous" : this.name.toString());
+            sb.append(" (object item)\n");
+
+            sb.append("base type : ");
+            sb.append(this.baseType.getIdentifierString());
+            sb.append("\n");
+
+            List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
+            if(fields.size() > 0){
+               sb.append("content facet:\n");
+                String comma = "";
+                for(FieldDescriptor field : fields){
+                    sb.append("  ");
+                    sb.append(field.getName());
+                    if(field.isRequired()){
+                        sb.append(" (required)");
+                    }
+                    sb.append(" : ");
+                    sb.append(field.getType().getIdentifierString());
+                    sb.append("\n");
+                }
+            }
+            return sb.toString();
+        }
     }
 }

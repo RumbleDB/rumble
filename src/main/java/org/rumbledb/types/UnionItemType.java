@@ -2,6 +2,7 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
 import java.util.Arrays;
@@ -36,7 +37,7 @@ public class UnionItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
     }
 
     @Override
@@ -87,6 +88,28 @@ public class UnionItemType implements ItemType {
     @Override
     public UnionContentDescriptor getUnionContentFacet() {
         return this.content;
+    }
+
+    @Override
+    public String getIdentifierString() {
+        if(this.hasName()){
+            return this.name.toString();
+        }
+        StringBuilder sb = new StringBuilder();
+        sb.append("#anonymous-union-base{");
+        sb.append(this.baseType.getIdentifierString());
+        sb.append("}");
+        if(this.content != null){
+            sb.append("-content{");
+            String comma = "";
+            for(ItemType it : this.content.getTypes()){
+                sb.append(comma);
+                sb.append(it.getIdentifierString());
+                comma = ",";
+            }
+            sb.append("}");
+        }
+        return sb.toString();
     }
 
     @Override
