@@ -5,18 +5,17 @@ import org.rumbledb.api.Item;
 
 public class FieldDescriptor {
     public String name;
-    private TypeOrReference type;
+    private ItemType type;
     private boolean required = false;
     private Item defaultValue = null;
     private boolean unique = false;
     private boolean requiredIsSet = false;
-    public boolean defaultIsChecked = false;
 
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setType(TypeOrReference type) {
+    public void setType(ItemType type) {
         this.type = type;
     }
 
@@ -37,7 +36,7 @@ public class FieldDescriptor {
         return this.name;
     }
 
-    public TypeOrReference getTypeOrReference() {
+    public ItemType getType() {
         return this.type;
     }
 
@@ -55,9 +54,5 @@ public class FieldDescriptor {
 
     public boolean requiredIsSet() {
         return this.requiredIsSet;
-    }
-
-    public void resolveTypeDescriptors(Map<String, ItemType> populatedSchema) {
-        this.type.resolve(populatedSchema);
     }
 }

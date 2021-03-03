@@ -1,19 +1,13 @@
 package org.rumbledb.types;
 
-import java.util.Map;
-
 public class ArrayContentDescriptor {
-    private final TypeOrReference type;
+    private final ItemType type;
 
-    public ArrayContentDescriptor(TypeOrReference type) {
+    public ArrayContentDescriptor(ItemType type) {
         this.type = type;
     }
 
-    public TypeOrReference getType() {
+    public ItemType getType() {
         return this.type;
-    }
-
-    public void resolveTypeDescriptors(Map<String, ItemType> populatedSchema) {
-        this.type.resolve(populatedSchema);
     }
 }

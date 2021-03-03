@@ -135,9 +135,8 @@ public interface ItemType extends Serializable {
 
         // special check for unions
         if (superType.isUnionType()) {
-            // TODO : to simplify inner classes
-            for (TypeOrReference typeOrReference : superType.getUnionContentFacet().getTypes()) {
-                if (this.isSubtypeOf(typeOrReference.getType())) {
+            for (ItemType unionItemType : superType.getUnionContentFacet().getTypes()) {
+                if (this.isSubtypeOf(unionItemType)) {
                     return true;
                 }
             }
