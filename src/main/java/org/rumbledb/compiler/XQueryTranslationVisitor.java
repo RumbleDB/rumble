@@ -941,27 +941,24 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitPathExpr(XQueryParser.PathExprContext ctx) {
         if (ctx.singleslash != null || ctx.doubleslash != null)
-            throw new XMLUnsupportedException("singleslash and doubleslash  not supported", createMetadataFromContext(ctx));
-        Expression result = (Expression) this.visitRelativePathExpr(ctx.relative);
-        return result;
+            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
+        return this.visitRelativePathExpr(ctx.relative);
     }
 
     @Override
     public Node visitRelativePathExpr(XQueryParser.RelativePathExprContext ctx) {
         if (ctx.stepExpr().size() != 1) {
-            throw new XMLUnsupportedException("multiple stepExpr not supported", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
         }
-        Expression result = (Expression) this.visitStepExpr(ctx.stepExpr().get(0));
-        return result;
+        return this.visitStepExpr(ctx.stepExpr().get(0));
     }
 
     @Override
     public Node visitStepExpr(XQueryParser.StepExprContext ctx) {
         if (ctx.axisStep() != null) {
-            throw new XMLUnsupportedException("axisStep not supported", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException("Path expressions are not supported", createMetadataFromContext(ctx));
         }
-        Expression result = (Expression) this.visitPostfixExpr(ctx.postfixExpr());
-        return result;
+        return this.visitPostfixExpr(ctx.postfixExpr());
     }
 
     @Override
