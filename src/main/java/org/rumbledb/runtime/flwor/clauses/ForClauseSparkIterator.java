@@ -728,9 +728,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     private static boolean extractEqualityComparisonsForHashing(
             RuntimeIterator predicateIterator,
-            List<RuntimeIterator> expressionSideEqualityCriteria,
-            List<RuntimeIterator> inputTupleSideEqualityCriteria,
-            Name expressionVariableName
+            List<RuntimeIterator> leftSideEqualityCriteria,
+            List<RuntimeIterator> rightSideEqualityCriteria,
+            Name rightSideVariableName
     ) {
         boolean optimizableJoin = false;
         Stack<RuntimeIterator> candidateIterators = new Stack<>();
@@ -753,18 +753,18 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     Set<Name> rightDependencies = new HashSet<>(
                             rhs.getVariableDependencies().keySet()
                     );
-                    if (leftDependencies.size() == 1 && leftDependencies.contains(expressionVariableName)) {
-                        if (!rightDependencies.contains(expressionVariableName)) {
+                    if (leftDependencies.size() == 1 && leftDependencies.contains(rightSideVariableName)) {
+                        if (!rightDependencies.contains(rightSideVariableName)) {
                             optimizableJoin = true;
-                            expressionSideEqualityCriteria.add(lhs);
-                            inputTupleSideEqualityCriteria.add(rhs);
+                            rightSideEqualityCriteria.add(lhs);
+                            leftSideEqualityCriteria.add(rhs);
                         }
                     }
-                    if (rightDependencies.size() == 1 && rightDependencies.contains(expressionVariableName)) {
-                        if (!leftDependencies.contains(expressionVariableName)) {
+                    if (rightDependencies.size() == 1 && rightDependencies.contains(rightSideVariableName)) {
+                        if (!leftDependencies.contains(rightSideVariableName)) {
                             optimizableJoin = true;
-                            expressionSideEqualityCriteria.add(rhs);
-                            inputTupleSideEqualityCriteria.add(lhs);
+                            rightSideEqualityCriteria.add(rhs);
+                            leftSideEqualityCriteria.add(lhs);
                         }
                     }
                 }
