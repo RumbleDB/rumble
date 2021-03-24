@@ -305,6 +305,9 @@ public class SequenceType implements Serializable {
             new SequenceType(AtomicItemType.decimalItem, SequenceType.Arity.OneOrZero)
         );
 
+        sequenceTypes.put("numeric", new SequenceType(AtomicItemType.numericItem, SequenceType.Arity.One));
+        sequenceTypes.put("numeric?", new SequenceType(AtomicItemType.numericItem, SequenceType.Arity.OneOrZero));
+
         sequenceTypes.put("double", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.One));
         sequenceTypes.put("double?", new SequenceType(AtomicItemType.doubleItem, SequenceType.Arity.OneOrZero));
 
