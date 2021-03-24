@@ -811,7 +811,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             JavaRDD<Row> inputTupleRDD = JavaSparkContext.fromSparkContext(
                 lateralView.sparkSession()
                     .sparkContext()
-            ).parallelize(Collections.singletonList(row));
+            ).parallelize(Collections.singletonList(row), 1);
             if (schema == null) {
                 schema = generateSchema();
             }
