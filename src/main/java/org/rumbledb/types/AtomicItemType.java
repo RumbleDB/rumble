@@ -31,7 +31,7 @@ public class AtomicItemType extends ItemType implements Serializable {
             new Name(Name.XS_NS, "xs", "float")
     );
     public static final AtomicItemType numericItem = new AtomicItemType(
-        new Name(Name.JS_NS, "js", "numeric")
+            new Name(Name.JS_NS, "js", "numeric")
     );
     public static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean")
@@ -171,7 +171,11 @@ public class AtomicItemType extends ItemType implements Serializable {
         } else if (superType.equals(decimalItem)) {
             return this.equals(integerItem) || this.equals(decimalItem) || this.equals(intItem);
         } else if (superType.equals(numericItem)) {
-            return this.equals(integerItem) || this.equals(decimalItem) || this.equals(intItem) || this.equals(doubleItem) || this.equals(floatItem);
+            return this.equals(integerItem)
+                || this.equals(decimalItem)
+                || this.equals(intItem)
+                || this.equals(doubleItem)
+                || this.equals(floatItem);
         }
         return this.equals(superType);
     }

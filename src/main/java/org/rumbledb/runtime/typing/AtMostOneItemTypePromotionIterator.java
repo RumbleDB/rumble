@@ -90,20 +90,16 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (item.isFunction()) {
             return item;
         }
-        if(item.isAnyURI() && this.itemType.equals(AtomicItemType.stringItem))
-        {
+        if (item.isAnyURI() && this.itemType.equals(AtomicItemType.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if(item.isFloat() && this.itemType.equals(AtomicItemType.doubleItem))
-        {
+        if (item.isFloat() && this.itemType.equals(AtomicItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if(item.isDecimal() && this.itemType.equals(AtomicItemType.doubleItem))
-        {
+        if (item.isDecimal() && this.itemType.equals(AtomicItemType.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if(item.isDecimal() && this.itemType.equals(AtomicItemType.floatItem))
-        {
+        if (item.isDecimal() && this.itemType.equals(AtomicItemType.floatItem)) {
             return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
         }
         throw new UnexpectedTypeException(
