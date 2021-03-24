@@ -138,6 +138,11 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(null);
             this.results.add(nextItem.getDoubleValue());
             this.results.add(null);
+        } else if (nextItem.isFloat()) {
+            this.results.add(doubleGroupIndex);
+            this.results.add(null);
+            this.results.add(nextItem.castToDoubleValue());
+            this.results.add(null);
         } else if (nextItem.isDuration()) {
             this.results.add(durationGroupIndex);
             this.results.add(null);
