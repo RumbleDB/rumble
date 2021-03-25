@@ -324,7 +324,9 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     public RuntimeIterator visitVariableReference(VariableReferenceExpression expression, RuntimeIterator argument) {
         RuntimeIterator runtimeIterator = null;
         if (
-            expression.getType().isEmptySequence() || expression.getType().getArity().equals(Arity.One) || expression.getType().getArity().equals(Arity.OneOrZero)
+            expression.getType().isEmptySequence()
+                || expression.getType().getArity().equals(Arity.One)
+                || expression.getType().getArity().equals(Arity.OneOrZero)
         ) {
             runtimeIterator = new AtMostOneItemVariableReferenceIterator(
                     expression.getVariableName(),
