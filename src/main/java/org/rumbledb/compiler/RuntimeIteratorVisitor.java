@@ -83,12 +83,14 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
+import org.rumbledb.runtime.control.AtMostOneItemIfRuntimeIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
@@ -875,13 +877,31 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region control
     @Override
     public RuntimeIterator visitConditionalExpression(ConditionalExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new IfRuntimeIterator(
-                this.visit(expression.getCondition(), argument),
-                this.visit(expression.getBranch(), argument),
-                this.visit(expression.getElseBranch(), argument),
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
+        RuntimeIterator conditionIterator = this.visit(expression.getCondition(), argument);
+        RuntimeIterator thenIterator = this.visit(expression.getBranch(), argument);
+        RuntimeIterator elseIterator = this.visit(expression.getElseBranch(), argument);
+        RuntimeIterator runtimeIterator = null;
+        if (
+            thenIterator instanceof AtMostOneItemLocalRuntimeIterator
+                &&
+                elseIterator instanceof AtMostOneItemLocalRuntimeIterator
+        ) {
+            runtimeIterator = new AtMostOneItemIfRuntimeIterator(
+                    conditionIterator,
+                    thenIterator,
+                    elseIterator,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        } else {
+            runtimeIterator = new IfRuntimeIterator(
+                    conditionIterator,
+                    thenIterator,
+                    elseIterator,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }
