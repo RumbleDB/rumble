@@ -46,6 +46,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
@@ -346,6 +347,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         );
         this.visit(clause.getCountVariable(), result);
         return result;
+    }
+
+    @Override
+    public StaticContext visitReturnClause(ReturnClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getReturnExpr(), context);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return argument;
     }
 
     // endregion
