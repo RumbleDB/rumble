@@ -1526,7 +1526,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
         Clause nextClause = expression.getParentClause(); // != null because group by cannot be last clause of FLOWR
-                                                        // expression
+                                                          // expression
         Set<Name> groupingVars = new HashSet<>();
         for (GroupByVariableDeclaration groupByVar : expression.getGroupVariables()) {
             // if we are grouping by an existing var (i.e. expr is null), then the appropriate type is already inferred

@@ -252,12 +252,12 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
         // TODO visit at...
-        this.visit(clause.getExpression(), argument);
+        this.visit(clause.getExpression(), context);
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(argument);
+        StaticContext result = new StaticContext(context);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -278,11 +278,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
-        this.visit(clause.getExpression(), argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getExpression(), context);
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(argument);
+        StaticContext result = new StaticContext(context);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -295,8 +295,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
-        StaticContext groupByClauseContext = new StaticContext(argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        StaticContext groupByClauseContext = new StaticContext(context);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
@@ -307,7 +307,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     clause.getMetadata(),
                     ExecutionMode.LOCAL
                 );
-            } else if (!argument.isInScope(variable.getVariableName())) {
+            } else if (!context.isInScope(variable.getVariableName())) {
                 throw new UndeclaredVariableException(
                         "Uninitialized variable reference: " + variable.getVariableName(),
                         clause.getMetadata()
@@ -320,24 +320,24 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
         clause.initHighestExecutionMode(this.visitorConfig);
-        return argument;
+        return context;
     }
 
     @Override
     public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
-        this.visit(clause.getWhereExpression(), argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getWhereExpression(), context);
         clause.initHighestExecutionMode(this.visitorConfig);
-        return argument;
+        return context;
     }
 
     @Override
     public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
-        this.visit(clause.getChildClause(), argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
         clause.initHighestExecutionMode(this.visitorConfig);
-        StaticContext result = new StaticContext(argument);
+        StaticContext result = new StaticContext(context);
         result.addVariable(
             clause.getCountVariable().getVariableName(),
             new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One),
