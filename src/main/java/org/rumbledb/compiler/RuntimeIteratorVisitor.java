@@ -202,7 +202,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     @Override
     public RuntimeIterator visitFlowrExpression(FlworExpression expression, RuntimeIterator argument) {
         RuntimeTupleIterator previous = this.visitFlowrClause(
-            expression.getReturnClause().getPreviousClause(),
+            expression.getReturnClause().getChildClause(),
             argument
         );
         RuntimeIterator runtimeIterator = new ReturnClauseSparkIterator(
@@ -223,8 +223,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             RuntimeIterator argument
     ) {
         RuntimeTupleIterator previousIterator = null;
-        if (clause.getPreviousClause() != null) {
-            previousIterator = this.visitFlowrClause(clause.getPreviousClause(), argument);
+        if (clause.getChildClause() != null) {
+            previousIterator = this.visitFlowrClause(clause.getChildClause(), argument);
         }
         if (clause instanceof ForClause) {
             ForClause forClause = (ForClause) clause;

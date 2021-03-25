@@ -45,6 +45,8 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -241,12 +243,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
-        StaticContext result = this.visit(clause, argument);
-        while (clause != null) {
-            result = this.visit(clause, result);
-            clause = clause.getNextClause();
-        }
+        Clause clause = expression.getReturnClause();
+        this.visit(clause, argument);
         expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
@@ -254,6 +252,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
         clause.initHighestExecutionMode(this.visitorConfig);
@@ -279,6 +278,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
         this.visit(clause.getExpression(), argument);
         clause.initHighestExecutionMode(this.visitorConfig);
 
@@ -295,6 +295,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
         StaticContext groupByClauseContext = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
@@ -318,16 +319,32 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        expression.initHighestExecutionMode(this.visitorConfig);
+    public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getWhereExpression(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
+        this.visit(clause.getChildClause(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
         StaticContext result = new StaticContext(argument);
         result.addVariable(
-            expression.getCountVariable().getVariableName(),
+            clause.getCountVariable().getVariableName(),
             new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One),
-            expression.getMetadata(),
+            clause.getMetadata(),
             ExecutionMode.LOCAL
         );
-        this.visit(expression.getCountVariable(), result);
+        this.visit(clause.getCountVariable(), result);
         return result;
     }
 
