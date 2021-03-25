@@ -254,7 +254,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
         StaticContext context = this.visit(clause.getChildClause(), argument);
-        // TODO visit at...
         this.visit(clause.getExpression(), context);
         clause.initHighestExecutionMode(this.visitorConfig);
 
@@ -295,6 +294,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getWhereExpression(), context);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return context;
+    }
+
+    @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
         StaticContext context = this.visit(clause.getChildClause(), argument);
         StaticContext groupByClauseContext = new StaticContext(context);
@@ -322,14 +329,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
         StaticContext context = this.visit(clause.getChildClause(), argument);
-        clause.initHighestExecutionMode(this.visitorConfig);
-        return context;
-    }
-
-    @Override
-    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
-        StaticContext context = this.visit(clause.getChildClause(), argument);
-        this.visit(clause.getWhereExpression(), context);
         clause.initHighestExecutionMode(this.visitorConfig);
         return context;
     }
