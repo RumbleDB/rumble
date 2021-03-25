@@ -300,7 +300,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
-                this.visit(variable.getExpression(), argument);
+                this.visit(variable.getExpression(), context);
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
