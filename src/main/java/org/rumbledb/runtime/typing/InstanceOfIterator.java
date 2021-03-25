@@ -144,6 +144,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         if (itemType.equals(AtomicItemType.floatItem)) {
             return itemToMatch.isFloat();
         }
+        if (itemType.equals(AtomicItemType.numericItem)) {
+            return itemToMatch.isNumeric();
+        }
         if (itemType.equals(AtomicItemType.booleanItem)) {
             return itemToMatch.isBoolean();
         }
