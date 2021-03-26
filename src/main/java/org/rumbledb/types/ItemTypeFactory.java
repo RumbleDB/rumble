@@ -27,7 +27,6 @@ public class ItemTypeFactory {
      * @return an object item type representing the type in Rumble
      */
     public static ObjectItemType createItemTypeFromSparkStructType(String name, StructType structType){
-        // TODO : should parquet/avro object be closed?
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
         Name objectName = name != null && !name.equals("") ? Name.createVariableInDefaultTypeNamespace(name) : null;
@@ -51,6 +50,6 @@ public class ItemTypeFactory {
             content.put(field.name(), fieldDescriptor);
         }
 
-        return new ObjectItemType(objectName, BuiltinTypesCatalogue.objectItem, false, content, null, null);
+        return new ObjectItemType(objectName, BuiltinTypesCatalogue.objectItem, true, content, null, null);
     }
 }
