@@ -167,7 +167,7 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration);
         try {
             // TODO Handle module extras
-            XQueryParser.MainModuleContext main = parser.mainModule();
+            XQueryParser.MainModuleContext main = parser.module().mainModule();
             if (main == null) {
                 throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
             }
@@ -266,7 +266,7 @@ public class VisitorHelpers {
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration);
         try {
             // TODO Handle module extras
-            XQueryParser.LibraryModuleContext main = parser.libraryModule();
+            XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.
