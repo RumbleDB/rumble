@@ -28,6 +28,8 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.items.ItemFactory;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -79,6 +81,19 @@ public class PredicateExpression extends Expression {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (this.predicateExpression instanceof IntegerLiteralExpression) {
+            String lexicalValue = ((IntegerLiteralExpression) this.predicateExpression).getLexicalValue();
+            if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
+                if (
+                    ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.staticContext
+                        .getRumbleCOnfiguration()
+                        .getResultSizeCap()
+                ) {
+                    this.highestExecutionMode = ExecutionMode.LOCAL;
+                    return;
+                }
+            }
+        }
         this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
         if (this.highestExecutionMode.equals(ExecutionMode.DATAFRAME)) {
             this.highestExecutionMode = ExecutionMode.RDD;

@@ -52,6 +52,15 @@ public class VisitorHelpers {
         new ModulePruningVisitor(conf).visit(node, null);
     }
 
+    private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
+        System.out.println("* Starting type inference *");
+        new InferTypeVisitor(conf).visit(module, module.getStaticContext());
+        System.out.println("* Completed type inference *");
+        if (conf.printInferredTypes()) {
+            printTree(module, conf);
+        }
+    }
+
     private static void printTree(Module node, RumbleRuntimeConfiguration conf) {
         System.err.println("***************");
         System.err.println("Expression tree");
@@ -113,7 +122,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
         try {
@@ -127,6 +136,9 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            if (configuration.doStaticAnalysis()) {
+                inferTypes(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -216,7 +228,7 @@ public class VisitorHelpers {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );

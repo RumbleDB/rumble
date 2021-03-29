@@ -144,21 +144,100 @@ public class BuiltinFunctionCatalogue {
         if (builtinFunctions.containsKey(identifier)) {
             return builtinFunctions.get(identifier);
         }
+        Name name = identifier.getName();
+        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+            FunctionIdentifier fn = new FunctionIdentifier(
+                    new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(fn)) {
+                return builtinFunctions.get(fn);
+            }
+            FunctionIdentifier jn = new FunctionIdentifier(
+                    new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(jn)) {
+                return builtinFunctions.get(jn);
+            }
+            FunctionIdentifier math = new FunctionIdentifier(
+                    new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(math)) {
+                return builtinFunctions.get(math);
+            }
+            FunctionIdentifier map = new FunctionIdentifier(
+                    new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(map)) {
+                return builtinFunctions.get(map);
+            }
+            FunctionIdentifier array = new FunctionIdentifier(
+                    new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(array)) {
+                return builtinFunctions.get(array);
+            }
+        }
         throw new OurBadException("Unknown builtin function: " + identifier);
     }
 
     public static boolean exists(FunctionIdentifier identifier) {
-        return builtinFunctions.containsKey(identifier);
+        if (builtinFunctions.containsKey(identifier)) {
+            return true;
+        }
+        Name name = identifier.getName();
+        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+            FunctionIdentifier fn = new FunctionIdentifier(
+                    new Name(Name.FN_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(fn)) {
+                return true;
+            }
+            FunctionIdentifier jn = new FunctionIdentifier(
+                    new Name(Name.JN_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(jn)) {
+                return true;
+            }
+            FunctionIdentifier math = new FunctionIdentifier(
+                    new Name(Name.MATH_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(math)) {
+                return true;
+            }
+            FunctionIdentifier map = new FunctionIdentifier(
+                    new Name(Name.MAP_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(map)) {
+                return true;
+            }
+            FunctionIdentifier array = new FunctionIdentifier(
+                    new Name(Name.ARRAY_NS, name.getPrefix(), name.getLocalName()),
+                    identifier.getArity()
+            );
+            if (builtinFunctions.containsKey(array)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionLocalName,
+            Name functionName,
             String returnType,
             Class<? extends RuntimeIterator> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 0),
+                new FunctionIdentifier(functionName, 0),
                 new FunctionSignature(
                         Collections.emptyList(),
                         SequenceType.createSequenceType(returnType)
@@ -169,14 +248,14 @@ public class BuiltinFunctionCatalogue {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionLocalName,
+            Name functionName,
             String param1Type,
             String returnType,
             Class<? extends RuntimeIterator> functionIteratorClass,
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 1),
+                new FunctionIdentifier(functionName, 1),
                 new FunctionSignature(
                         Collections.singletonList(SequenceType.createSequenceType(param1Type)),
                         SequenceType.createSequenceType(returnType)
@@ -187,7 +266,7 @@ public class BuiltinFunctionCatalogue {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionLocalName,
+            Name functionName,
             String param1Type,
             String param2Type,
             String returnType,
@@ -195,7 +274,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 2),
+                new FunctionIdentifier(functionName, 2),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -211,7 +290,7 @@ public class BuiltinFunctionCatalogue {
     }
 
     private static BuiltinFunction createBuiltinFunction(
-            String functionLocalName,
+            Name functionName,
             String param1Type,
             String param2Type,
             String param3Type,
@@ -220,7 +299,7 @@ public class BuiltinFunctionCatalogue {
             BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
     ) {
         return new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace(functionLocalName), 3),
+                new FunctionIdentifier(functionName, 3),
                 new FunctionSignature(
                         Collections.unmodifiableList(
                             Arrays.asList(
@@ -240,7 +319,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the context position
      */
     static final BuiltinFunction position = createBuiltinFunction(
-        "position",
+        new Name(Name.FN_NS, "fn", "position"),
         "integer?",
         PositionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -249,7 +328,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the context size
      */
     static final BuiltinFunction last = createBuiltinFunction(
-        "last",
+        new Name(Name.FN_NS, "fn", "last"),
         "integer?",
         LastFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -258,14 +337,14 @@ public class BuiltinFunctionCatalogue {
      * function that parses a JSON lines file
      */
     static final BuiltinFunction json_file1 = createBuiltinFunction(
-        "json-file",
+        new Name(Name.JN_NS, "jn", "json-file"),
         "string",
         "item*",
         JsonFileFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction json_file2 = createBuiltinFunction(
-        "json-file",
+        new Name(Name.JN_NS, "jn", "json-file"),
         "string",
         "integer?",
         "item*",
@@ -276,7 +355,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a structured JSON lines file into a DataFrame
      */
     static final BuiltinFunction structured_json_file = createBuiltinFunction(
-        "structured-json-file",
+        new Name(Name.JN_NS, "jn", "structured-json-file"),
         "string",
         "item*",
         StructuredJsonFileFunctionIterator.class,
@@ -286,7 +365,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a libSVM formatted file into a DataFrame
      */
     static final BuiltinFunction libsvm_file = createBuiltinFunction(
-        "libsvm-file",
+        new Name(Name.JN_NS, "jn", "libsvm-file"),
         "string",
         "item*",
         LibSVMFileFunctionIterator.class,
@@ -296,14 +375,14 @@ public class BuiltinFunctionCatalogue {
      * function that parses a JSON doc file
      */
     static final BuiltinFunction json_doc = createBuiltinFunction(
-        "json-doc",
+        new Name(Name.FN_NS, "fn", "json-doc"),
         "string",
         "item*",
         JsonDocFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction parse_json = createBuiltinFunction(
-        "parse-json",
+        new Name(Name.FN_NS, "fn", "parse-json"),
         "string?",
         "item?",
         ParseJsonFunctionIterator.class,
@@ -314,28 +393,28 @@ public class BuiltinFunctionCatalogue {
      * function that parses a text file
      */
     static final BuiltinFunction unparsed_text = createBuiltinFunction(
-        "unparsed-text",
+        new Name(Name.FN_NS, "fn", "unparsed-text"),
         "string?",
         "string?",
         UnparsedTextFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction unparsed_text_lines = createBuiltinFunction(
-        "unparsed-text-lines",
+        new Name(Name.FN_NS, "fn", "unparsed-text-lines"),
         "string?",
         "string*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file1 = createBuiltinFunction(
-        "text-file",
+        new Name(Name.JN_NS, "jn", "text-file"),
         "string",
         "item*",
         UnparsedTextLinesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction text_file2 = createBuiltinFunction(
-        "text-file",
+        new Name(Name.JN_NS, "jn", "text-file"),
         "string",
         "integer?",
         "item*",
@@ -346,7 +425,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a text file locally
      */
     static final BuiltinFunction local_text_file = createBuiltinFunction(
-        "local-text-file",
+        new Name(Name.JN_NS, "jn", "local-text-file"),
         "string",
         "string*",
         LocalTextFileFunctionIterator.class,
@@ -356,14 +435,14 @@ public class BuiltinFunctionCatalogue {
      * function that parallelizes item collections into a Spark RDD
      */
     static final BuiltinFunction parallelizeFunction1 = createBuiltinFunction(
-        "parallelize",
+        new Name(Name.JN_NS, "jn", "parallelize"),
         "item*",
         "item*",
         ParallelizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.RDD
     );
     static final BuiltinFunction parallelizeFunction2 = createBuiltinFunction(
-        "parallelize",
+        new Name(Name.JN_NS, "jn", "parallelize"),
         "item*",
         "integer",
         "item*",
@@ -374,7 +453,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a parquet file
      */
     static final BuiltinFunction parquet_file = createBuiltinFunction(
-        "parquet-file",
+        new Name(Name.JN_NS, "jn", "parquet-file"),
         "string",
         "item*",
         ParquetFileFunctionIterator.class,
@@ -384,7 +463,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a csv file
      */
     static final BuiltinFunction csv_file1 = createBuiltinFunction(
-        "csv-file",
+        new Name(Name.JN_NS, "jn", "csv-file"),
         "string",
         "item*",
         CSVFileFunctionIterator.class,
@@ -394,7 +473,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a csv file
      */
     static final BuiltinFunction csv_file2 = createBuiltinFunction(
-        "csv-file",
+        new Name(Name.JN_NS, "jn", "csv-file"),
         "string",
         "object",
         "item*",
@@ -405,7 +484,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses an avro file
      */
     static final BuiltinFunction avro_file1 = createBuiltinFunction(
-        "avro-file",
+        new Name(Name.JN_NS, "jn", "avro-file"),
         "string",
         "item*",
         AvroFileFunctionIterator.class,
@@ -415,7 +494,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses an avro file
      */
     static final BuiltinFunction avro_file2 = createBuiltinFunction(
-        "avro-file",
+        new Name(Name.JN_NS, "jn", "avro-file"),
         "string",
         "object",
         "item*",
@@ -427,7 +506,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a ROOT file
      */
     static final BuiltinFunction root_file1 = createBuiltinFunction(
-        "root-file",
+        new Name(Name.JN_NS, "jn", "root-file"),
         "string",
         "item*",
         RootFileFunctionIterator.class,
@@ -437,7 +516,7 @@ public class BuiltinFunctionCatalogue {
      * function that parses a ROOT file
      */
     static final BuiltinFunction root_file2 = createBuiltinFunction(
-        "root-file",
+        new Name(Name.JN_NS, "jn", "root-file"),
         "string",
         "string",
         "item*",
@@ -449,7 +528,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the length of a sequence
      */
     static final BuiltinFunction count = createBuiltinFunction(
-        "count",
+        new Name(Name.FN_NS, "fn", "count"),
         "item*",
         "integer",
         CountFunctionIterator.class,
@@ -460,7 +539,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the effective boolean value of the given parameter
      */
     static final BuiltinFunction boolean_function = createBuiltinFunction(
-        "boolean",
+        new Name(Name.FN_NS, "fn", "boolean"),
         "item*",
         "boolean",
         BooleanFunctionIterator.class,
@@ -471,7 +550,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the minimum of a sequence
      */
     static final BuiltinFunction min = createBuiltinFunction(
-        "min",
+        new Name(Name.FN_NS, "fn", "min"),
         "item*",
         "atomic?",
         MinFunctionIterator.class,
@@ -481,7 +560,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the maximum of a sequence
      */
     static final BuiltinFunction max = createBuiltinFunction(
-        "max",
+        new Name(Name.FN_NS, "fn", "max"),
         "item*",
         "atomic?",
         MaxFunctionIterator.class,
@@ -491,7 +570,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the average of a sequence
      */
     static final BuiltinFunction avg = createBuiltinFunction(
-        "avg",
+        new Name(Name.FN_NS, "fn", "avg"),
         "item*",
         "atomic?",
         AvgFunctionIterator.class,
@@ -501,16 +580,16 @@ public class BuiltinFunctionCatalogue {
      * function that returns the sum of a sequence
      */
     static final BuiltinFunction sum1 = createBuiltinFunction(
-        "sum",
+        new Name(Name.FN_NS, "fn", "sum"),
         "atomic*",
         "atomic?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction sum2 = createBuiltinFunction(
-        "sum",
-        "item*",
-        "item?",
+        new Name(Name.FN_NS, "fn", "sum"),
+        "atomic*",
+        "atomic?",
         "atomic?",
         SumFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -521,7 +600,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns true if the argument is the empty sequence
      */
     static final BuiltinFunction empty = createBuiltinFunction(
-        "empty",
+        new Name(Name.FN_NS, "fn", "empty"),
         "item*",
         "boolean",
         EmptyFunctionIterator.class,
@@ -531,7 +610,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns true if the argument is a non-empty sequence
      */
     static final BuiltinFunction exists = createBuiltinFunction(
-        "exists",
+        new Name(Name.FN_NS, "fn", "exists"),
         "item*",
         "boolean",
         ExistsFunctionIterator.class,
@@ -541,7 +620,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the first item in a sequence
      */
     static final BuiltinFunction head = createBuiltinFunction(
-        "head",
+        new Name(Name.FN_NS, "fn", "head"),
         "item*",
         "item?",
         HeadFunctionIterator.class,
@@ -551,7 +630,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns all but the first item in a sequence
      */
     static final BuiltinFunction tail = createBuiltinFunction(
-        "tail",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "tail"
+        ),
         "item*",
         "item*",
         TailFunctionIterator.class,
@@ -562,7 +645,11 @@ public class BuiltinFunctionCatalogue {
      * within an existing sequence
      */
     static final BuiltinFunction insert_before = createBuiltinFunction(
-        "insert-before",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "insert-before"
+        ),
         "item*",
         "integer",
         "item*",
@@ -575,7 +662,11 @@ public class BuiltinFunctionCatalogue {
      * $position.
      */
     static final BuiltinFunction remove = createBuiltinFunction(
-        "remove",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "remove"
+        ),
         "item*",
         "integer",
         "item*",
@@ -587,7 +678,11 @@ public class BuiltinFunctionCatalogue {
      * function that reverses the order of items in a sequence.
      */
     static final BuiltinFunction reverse = createBuiltinFunction(
-        "reverse",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "reverse"
+        ),
         "item*",
         "item*",
         ReverseFunctionIterator.class,
@@ -598,7 +693,11 @@ public class BuiltinFunctionCatalogue {
      * parameters
      */
     static final BuiltinFunction subsequence2 = createBuiltinFunction(
-        "subsequence",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "subsequence"
+        ),
         "item*",
         "double",
         "item*",
@@ -606,7 +705,11 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     static final BuiltinFunction subsequence3 = createBuiltinFunction(
-        "subsequence",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "subsequence"
+        ),
         "item*",
         "double",
         "double",
@@ -619,7 +722,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns $arg if it contains zero or one items. Otherwise, raises an error.
      */
     static final BuiltinFunction zero_or_one = createBuiltinFunction(
-        "zero-or-one",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "zero-or-one"
+        ),
         "item*",
         "item?",
         ZeroOrOneIterator.class,
@@ -629,7 +736,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns $arg if it contains one or more items. Otherwise, raises an error.
      */
     static final BuiltinFunction one_or_more = createBuiltinFunction(
-        "one-or-more",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "one-or-more"
+        ),
         "item*",
         "item+",
         OneOrMoreIterator.class,
@@ -639,7 +750,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns $arg if it contains exactly one item. Otherwise, raises an error.
      */
     static final BuiltinFunction exactly_one = createBuiltinFunction(
-        "exactly-one",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "exactly-one"
+        ),
         "item*",
         "item",
         ExactlyOneIterator.class,
@@ -650,7 +765,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the values that appear in a sequence, with duplicates eliminated
      */
     static final BuiltinFunction distinct_values = createBuiltinFunction(
-        "distinct-values",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "distinct-values"
+        ),
         "atomic*",
         "atomic*",
         DistinctValuesFunctionIterator.class,
@@ -660,7 +779,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns indices of items that are equal to the search parameter
      */
     static final BuiltinFunction index_of = createBuiltinFunction(
-        "index-of",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "index-of"
+        ),
         "atomic*",
         "atomic",
         "integer*",
@@ -671,7 +794,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns whether two sequences are deep-equal to each other
      */
     static final BuiltinFunction deep_equal = createBuiltinFunction(
-        "deep-equal",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "deep-equal"
+        ),
         "item*",
         "item*",
         "boolean",
@@ -682,7 +809,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the absolute value of the arg
      */
     static final BuiltinFunction abs = createBuiltinFunction(
-        "abs",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "abs"
+        ),
         "double?",
         "double?",
         AbsFunctionIterator.class,
@@ -692,7 +823,11 @@ public class BuiltinFunctionCatalogue {
      * function that rounds $arg upwards to a whole number
      */
     static final BuiltinFunction ceiling = createBuiltinFunction(
-        "ceiling",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "ceiling"
+        ),
         "double?",
         "double?",
         CeilingFunctionIterator.class,
@@ -702,7 +837,11 @@ public class BuiltinFunctionCatalogue {
      * function that rounds $arg downwards to a whole number
      */
     static final BuiltinFunction floor = createBuiltinFunction(
-        "floor",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "floor"
+        ),
         "double?",
         "double?",
         FloorFunctionIterator.class,
@@ -713,17 +852,25 @@ public class BuiltinFunctionCatalogue {
      * equally near
      */
     static final BuiltinFunction round1 = createBuiltinFunction(
-        "round",
-        "double?",
-        "double?",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "round"
+        ),
+        "numeric?",
+        "numeric?",
         RoundFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction round2 = createBuiltinFunction(
-        "round",
-        "double?",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "round"
+        ),
+        "numeric?",
         "integer",
-        "double?",
+        "numeric?",
         RoundFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -732,14 +879,22 @@ public class BuiltinFunctionCatalogue {
      * two such values are equally near
      */
     static final BuiltinFunction round_half_to_even1 = createBuiltinFunction(
-        "round-half-to-even",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "round-half-to-even"
+        ),
         "double?",
         "double?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction round_half_to_even2 = createBuiltinFunction(
-        "round-half-to-even",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "round-half-to-even"
+        ),
         "double?",
         "integer",
         "double?",
@@ -751,7 +906,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the approximation the mathematical constant
      */
     static final BuiltinFunction pi = createBuiltinFunction(
-        "pi",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "pi"
+        ),
         "double?",
         PiFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -760,7 +919,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the value of e^x
      */
     static final BuiltinFunction exp = createBuiltinFunction(
-        "exp",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "exp"
+        ),
         "double?",
         "double?",
         ExpFunctionIterator.class,
@@ -770,7 +933,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the value of 10^x
      */
     static final BuiltinFunction exp10 = createBuiltinFunction(
-        "exp10",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "exp10"
+        ),
         "double?",
         "double?",
         Exp10FunctionIterator.class,
@@ -780,7 +947,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the natural logarithm of the argument
      */
     static final BuiltinFunction log = createBuiltinFunction(
-        "log",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "log"
+        ),
         "double?",
         "double?",
         LogFunctionIterator.class,
@@ -790,7 +961,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the base-ten logarithm of the argument
      */
     static final BuiltinFunction log10 = createBuiltinFunction(
-        "log10",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "log10"
+        ),
         "double?",
         "double?",
         Log10FunctionIterator.class,
@@ -800,7 +975,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the result of raising the first argument to the power of the second
      */
     static final BuiltinFunction pow = createBuiltinFunction(
-        "pow",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "pow"
+        ),
         "double?",
         "double",
         "double?",
@@ -811,7 +990,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the non-negative square root of the argument
      */
     static final BuiltinFunction sqrt = createBuiltinFunction(
-        "sqrt",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "sqrt"
+        ),
         "double?",
         "double?",
         SqrtFunctionIterator.class,
@@ -821,7 +1004,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the sine of the angle given in radians
      */
     static final BuiltinFunction sin = createBuiltinFunction(
-        "sin",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "sin"
+        ),
         "double?",
         "double?",
         SinFunctionIterator.class,
@@ -831,7 +1018,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the cosine of the angle given in radians
      */
     static final BuiltinFunction cos = createBuiltinFunction(
-        "cos",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "cos"
+        ),
         "double?",
         "double?",
         CosFunctionIterator.class,
@@ -841,7 +1032,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the tangent of the angle given in radians
      */
     static final BuiltinFunction tan = createBuiltinFunction(
-        "tan",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "tan"
+        ),
         "double?",
         "double?",
         TanFunctionIterator.class,
@@ -851,7 +1046,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the arc sine of the angle given in radians
      */
     static final BuiltinFunction asin = createBuiltinFunction(
-        "asin",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "asin"
+        ),
         "double?",
         "double?",
         ASinFunctionIterator.class,
@@ -861,7 +1060,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the arc cosine of the angle given in radians
      */
     static final BuiltinFunction acos = createBuiltinFunction(
-        "acos",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "acos"
+        ),
         "double?",
         "double?",
         ACosFunctionIterator.class,
@@ -871,7 +1074,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the arc tangent of the angle given in radians
      */
     static final BuiltinFunction atan = createBuiltinFunction(
-        "atan",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "atan"
+        ),
         "double?",
         "double?",
         ATanFunctionIterator.class,
@@ -882,7 +1089,11 @@ public class BuiltinFunctionCatalogue {
      * coordinates (x, y) and the positive x-axis.
      */
     static final BuiltinFunction atan2 = createBuiltinFunction(
-        "atan2",
+        new Name(
+                Name.MATH_NS,
+                "math",
+                "atan2"
+        ),
         "double",
         "double",
         "double",
@@ -894,7 +1105,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns substrings
      */
     static final BuiltinFunction substring2 = createBuiltinFunction(
-        "substring",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring"
+        ),
         "string?",
         "double",
         "string",
@@ -902,7 +1117,11 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction substring3 = createBuiltinFunction(
-        "substring",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring"
+        ),
         "string?",
         "double",
         "double",
@@ -915,7 +1134,11 @@ public class BuiltinFunctionCatalogue {
      * variable.
      */
     static final BuiltinFunction substring_before = createBuiltinFunction(
-        "substring-before",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring-before"
+        ),
         "string?",
         "string?",
         "string",
@@ -927,7 +1150,11 @@ public class BuiltinFunctionCatalogue {
      * vairable.
      */
     static final BuiltinFunction substring_after = createBuiltinFunction(
-        "substring-after",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring-after"
+        ),
         "string?",
         "string?",
         "string",
@@ -939,7 +1166,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction concat =
         new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace("concat"), 100),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), 100),
                 new FunctionSignature(
                         Collections.nCopies(
                             100,
@@ -954,7 +1181,11 @@ public class BuiltinFunctionCatalogue {
      * function that converts codepoints to a string
      */
     static final BuiltinFunction codepoints_to_string = createBuiltinFunction(
-        "codepoints-to-string",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "codepoints-to-string"
+        ),
         "integer*",
         "string",
         CodepointsToStringFunctionIterator.class,
@@ -964,7 +1195,11 @@ public class BuiltinFunctionCatalogue {
      * function that converts a string to codepoints
      */
     static final BuiltinFunction string_to_codepoints = createBuiltinFunction(
-        "string-to-codepoints",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string-to-codepoints"
+        ),
         "string?",
         "integer*",
         StringToCodepointsFunctionIterator.class,
@@ -974,7 +1209,11 @@ public class BuiltinFunctionCatalogue {
      * function that compares Strings codepoint-by-codepoint
      */
     static final BuiltinFunction codepoint_equal = createBuiltinFunction(
-        "codepoint-equal",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "codepoint-equal"
+        ),
         "string?",
         "string?",
         "boolean?",
@@ -985,14 +1224,22 @@ public class BuiltinFunctionCatalogue {
      * function that returns substrings
      */
     static final BuiltinFunction string_join1 = createBuiltinFunction(
-        "string-join",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string-join"
+        ),
         "string*",
         "string",
         StringJoinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction string_join2 = createBuiltinFunction(
-        "string-join",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string-join"
+        ),
         "string*",
         "string",
         "string",
@@ -1003,7 +1250,11 @@ public class BuiltinFunctionCatalogue {
      * function that replaces parts of a string according to a regex expression
      */
     static final BuiltinFunction replace = createBuiltinFunction(
-        "replace",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "replace"
+        ),
         "string?",
         "string",
         "string",
@@ -1015,7 +1266,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the string length
      */
     static final BuiltinFunction string_length = createBuiltinFunction(
-        "string-length",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string-length"
+        ),
         "string?",
         "integer",
         StringLengthFunctionIterator.class,
@@ -1025,14 +1280,22 @@ public class BuiltinFunctionCatalogue {
      * function that returns tokens
      */
     static final BuiltinFunction tokenize1 = createBuiltinFunction(
-        "tokenize",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "tokenize"
+        ),
         "string?",
         "string*",
         TokenizeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction tokenize2 = createBuiltinFunction(
-        "tokenize",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "tokenize"
+        ),
         "string?",
         "string",
         "string*",
@@ -1043,7 +1306,11 @@ public class BuiltinFunctionCatalogue {
      * function that turns all upper-case characters to lower-case
      */
     static final BuiltinFunction lower_case = createBuiltinFunction(
-        "lower-case",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "lower-case"
+        ),
         "string?",
         "string",
         LowerCaseFunctionIterator.class,
@@ -1053,7 +1320,11 @@ public class BuiltinFunctionCatalogue {
      * function that turns all upper-case characters to upper-case
      */
     static final BuiltinFunction upper_case = createBuiltinFunction(
-        "upper-case",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "upper-case"
+        ),
         "string?",
         "string",
         UpperCaseFunctionIterator.class,
@@ -1063,7 +1334,11 @@ public class BuiltinFunctionCatalogue {
      * function that turns all upper-case characters to upper-case
      */
     static final BuiltinFunction translate = createBuiltinFunction(
-        "translate",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "translate"
+        ),
         "string?",
         "string",
         "string",
@@ -1075,14 +1350,22 @@ public class BuiltinFunctionCatalogue {
      * function that performs Unicode normalization
      */
     static final BuiltinFunction normalize_unicode1 = createBuiltinFunction(
-        "normalize-unicode",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "normalize-unicode"
+        ),
         "string?",
         "string",
         NormalizeUnicodeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction normalize_unicode2 = createBuiltinFunction(
-        "normalize-unicode",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "normalize-unicode"
+        ),
         "string?",
         "string",
         "string",
@@ -1093,7 +1376,11 @@ public class BuiltinFunctionCatalogue {
      * function that encodes reserved characters
      */
     static final BuiltinFunction encode_for_uri = createBuiltinFunction(
-        "encode-for-uri",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "encode-for-uri"
+        ),
         "string?",
         "string",
         EncodeForURIFunctionIterator.class,
@@ -1103,7 +1390,11 @@ public class BuiltinFunctionCatalogue {
      * function that checks whether a string ends with a substring
      */
     static final BuiltinFunction ends_with = createBuiltinFunction(
-        "ends-with",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "ends-with"
+        ),
         "string?",
         "string?",
         "boolean",
@@ -1114,7 +1405,11 @@ public class BuiltinFunctionCatalogue {
      * function that checks whether a string starts with a substring
      */
     static final BuiltinFunction starts_with = createBuiltinFunction(
-        "starts-with",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "starts-with"
+        ),
         "string?",
         "string?",
         "boolean",
@@ -1125,7 +1420,11 @@ public class BuiltinFunctionCatalogue {
      * function that checks whether a string contains a substring
      */
     static final BuiltinFunction contains = createBuiltinFunction(
-        "contains",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "contains"
+        ),
         "string?",
         "string?",
         "boolean",
@@ -1136,7 +1435,11 @@ public class BuiltinFunctionCatalogue {
      * function that checks whether a string matches a regular expression
      */
     static final BuiltinFunction matches = createBuiltinFunction(
-        "matches",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "matches"
+        ),
         "string?",
         "string",
         "boolean",
@@ -1147,7 +1450,11 @@ public class BuiltinFunctionCatalogue {
      * function that normalizes spaces in a string
      */
     static final BuiltinFunction normalize_space = createBuiltinFunction(
-        "normalize-space",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "normalize-space"
+        ),
         "string?",
         "string",
         NormalizeSpaceFunctionIterator.class,
@@ -1157,7 +1464,11 @@ public class BuiltinFunctionCatalogue {
      * function that serializes a given input sequence
      */
     static final BuiltinFunction serialize = createBuiltinFunction(
-        "serialize",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "serialize"
+        ),
         "item*",
         "string",
         SerializeFunctionIterator.class,
@@ -1168,7 +1479,11 @@ public class BuiltinFunctionCatalogue {
      * function that that returns the double representation of the input string or number
      */
     static final BuiltinFunction number = createBuiltinFunction(
-        "number",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "number"
+        ),
         "atomic?",
         "double",
         NumberFunctionIterator.class,
@@ -1179,7 +1494,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the duration item from the supplied string
      */
     static final BuiltinFunction duration = createBuiltinFunction(
-        "duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "duration"
+        ),
         "string?",
         "duration?",
         DurationFunctionIterator.class,
@@ -1189,7 +1508,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the yearMonthDuration item from the supplied string
      */
     static final BuiltinFunction yearMonthDuration = createBuiltinFunction(
-        "yearMonthDuration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "yearMonthDuration"
+        ),
         "string?",
         "yearMonthDuration?",
         YearMonthDurationFunctionIterator.class,
@@ -1199,7 +1522,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the dayTimeDuration item from the supplied string
      */
     static final BuiltinFunction dayTimeDuration = createBuiltinFunction(
-        "dayTimeDuration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "dayTimeDuration"
+        ),
         "string?",
         "dayTimeDuration?",
         DayTimeDurationFunctionIterator.class,
@@ -1211,7 +1538,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the years from a duration
      */
     static final BuiltinFunction years_from_duration = createBuiltinFunction(
-        "years-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "years-from-duration"
+        ),
         "duration?",
         "integer?",
         YearsFromDurationFunctionIterator.class,
@@ -1221,7 +1552,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the months from a duration
      */
     static final BuiltinFunction months_from_duration = createBuiltinFunction(
-        "months-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "months-from-duration"
+        ),
         "duration?",
         "integer?",
         MonthsFromDurationFunctionIterator.class,
@@ -1231,7 +1566,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the days from a duration
      */
     static final BuiltinFunction days_from_duration = createBuiltinFunction(
-        "days-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "days-from-duration"
+        ),
         "duration?",
         "integer?",
         DaysFromDurationFunctionIterator.class,
@@ -1241,7 +1580,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the hours from a duration
      */
     static final BuiltinFunction hours_from_duration = createBuiltinFunction(
-        "hours-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "hours-from-duration"
+        ),
         "duration?",
         "integer?",
         HoursFromDurationFunctionIterator.class,
@@ -1251,7 +1594,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the minutes from a duration
      */
     static final BuiltinFunction minutes_from_duration = createBuiltinFunction(
-        "minutes-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "minutes-from-duration"
+        ),
         "duration?",
         "integer?",
         MinutesFromDurationFunctionIterator.class,
@@ -1261,7 +1608,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a duration
      */
     static final BuiltinFunction seconds_from_duration = createBuiltinFunction(
-        "seconds-from-duration",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "seconds-from-duration"
+        ),
         "duration?",
         "decimal?",
         SecondsFromDurationFunctionIterator.class,
@@ -1272,7 +1623,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the current dateTime item
      */
     static final BuiltinFunction current_dateTime = createBuiltinFunction(
-        "current-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "current-dateTime"
+        ),
         "dateTime?",
         CurrentDateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1281,7 +1636,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns a string containing a dateTime value formated for display
      */
     static final BuiltinFunction format_dateTime = createBuiltinFunction(
-        "format-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-dateTime"
+        ),
         "dateTime?",
         "string",
         "string?",
@@ -1292,7 +1651,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the year from a dateTime
      */
     static final BuiltinFunction year_from_dateTime = createBuiltinFunction(
-        "year-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "year-from-dateTime"
+        ),
         "dateTime?",
         "integer?",
         YearFromDateTimeFunctionIterator.class,
@@ -1302,7 +1665,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the month from a dateTime
      */
     static final BuiltinFunction month_from_dateTime = createBuiltinFunction(
-        "month-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "month-from-dateTime"
+        ),
         "dateTime?",
         "integer?",
         MonthFromDateTimeFunctionIterator.class,
@@ -1312,7 +1679,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the day from a dateTime
      */
     static final BuiltinFunction day_from_dateTime = createBuiltinFunction(
-        "day-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "day-from-dateTime"
+        ),
         "dateTime?",
         "integer?",
         DayFromDateTimeFunctionIterator.class,
@@ -1322,7 +1693,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the hours from a dateTime
      */
     static final BuiltinFunction hours_from_dateTime = createBuiltinFunction(
-        "hours-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "hours-from-dateTime"
+        ),
         "dateTime?",
         "integer?",
         HoursFromDateTimeFunctionIterator.class,
@@ -1332,7 +1707,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the minutes from a dateTime
      */
     static final BuiltinFunction minutes_from_dateTime = createBuiltinFunction(
-        "minutes-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "minutes-from-dateTime"
+        ),
         "dateTime?",
         "integer?",
         MinutesFromDateTimeFunctionIterator.class,
@@ -1342,7 +1721,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a dateTime
      */
     static final BuiltinFunction seconds_from_dateTime = createBuiltinFunction(
-        "seconds-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "seconds-from-dateTime"
+        ),
         "dateTime?",
         "decimal?",
         SecondsFromDateTimeFunctionIterator.class,
@@ -1352,7 +1735,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a dateTime
      */
     static final BuiltinFunction timezone_from_dateTime = createBuiltinFunction(
-        "timezone-from-dateTime",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "timezone-from-dateTime"
+        ),
         "dateTime?",
         "dayTimeDuration?",
         TimezoneFromDateTimeFunctionIterator.class,
@@ -1364,14 +1751,22 @@ public class BuiltinFunctionCatalogue {
      * function that adjusts a dateTime value to a specific timezone, or to no timezone at all.
      */
     static final BuiltinFunction adjust_dateTime_to_timezone1 = createBuiltinFunction(
-        "adjust-dateTime-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-dateTime-to-timezone"
+        ),
         "dateTime?",
         "dateTime?",
         AdjustDateTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction adjust_dateTime_to_timezone2 = createBuiltinFunction(
-        "adjust-dateTime-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-dateTime-to-timezone"
+        ),
         "dateTime?",
         "dayTimeDuration?",
         "dateTime?",
@@ -1384,7 +1779,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the current date item
      */
     static final BuiltinFunction current_date = createBuiltinFunction(
-        "current-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "current-date"
+        ),
         "date?",
         CurrentDateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1393,7 +1792,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns a string containing a date value formated for display
      */
     static final BuiltinFunction format_date = createBuiltinFunction(
-        "format-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-date"
+        ),
         "date?",
         "string",
         "string?",
@@ -1404,7 +1807,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the year from a date
      */
     static final BuiltinFunction year_from_date = createBuiltinFunction(
-        "year-from-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "year-from-date"
+        ),
         "date?",
         "integer?",
         YearFromDateFunctionIterator.class,
@@ -1414,7 +1821,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the month from a date
      */
     static final BuiltinFunction month_from_date = createBuiltinFunction(
-        "month-from-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "month-from-date"
+        ),
         "date?",
         "integer?",
         MonthFromDateFunctionIterator.class,
@@ -1424,7 +1835,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the day from a date
      */
     static final BuiltinFunction day_from_date = createBuiltinFunction(
-        "day-from-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "day-from-date"
+        ),
         "date?",
         "integer?",
         DayFromDateFunctionIterator.class,
@@ -1434,7 +1849,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a date
      */
     static final BuiltinFunction timezone_from_date = createBuiltinFunction(
-        "timezone-from-date",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "timezone-from-date"
+        ),
         "date?",
         "dayTimeDuration?",
         TimezoneFromDateFunctionIterator.class,
@@ -1446,14 +1865,22 @@ public class BuiltinFunctionCatalogue {
      * function that adjusts a date value to a specific timezone, or to no timezone at all.
      */
     static final BuiltinFunction adjust_date_to_timezone1 = createBuiltinFunction(
-        "adjust-date-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-date-to-timezone"
+        ),
         "date?",
         "date?",
         AdjustDateToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction adjust_date_to_timezone2 = createBuiltinFunction(
-        "adjust-date-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-date-to-timezone"
+        ),
         "date?",
         "dayTimeDuration?",
         "date?",
@@ -1465,7 +1892,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the current time item
      */
     static final BuiltinFunction current_time = createBuiltinFunction(
-        "current-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "current-time"
+        ),
         "time?",
         CurrentTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1474,7 +1905,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns a string containing a time value formated for display
      */
     static final BuiltinFunction format_time = createBuiltinFunction(
-        "format-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "format-time"
+        ),
         "time?",
         "string",
         "string?",
@@ -1485,7 +1920,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the hours from a time
      */
     static final BuiltinFunction hours_from_time = createBuiltinFunction(
-        "hours-from-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "hours-from-time"
+        ),
         "time?",
         "integer?",
         HoursFromTimeFunctionIterator.class,
@@ -1495,7 +1934,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the minutes from a time
      */
     static final BuiltinFunction minutes_from_time = createBuiltinFunction(
-        "minutes-from-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "minutes-from-time"
+        ),
         "time?",
         "integer?",
         MinutesFromTimeFunctionIterator.class,
@@ -1505,7 +1948,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a time
      */
     static final BuiltinFunction seconds_from_time = createBuiltinFunction(
-        "seconds-from-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "seconds-from-time"
+        ),
         "time?",
         "decimal?",
         SecondsFromTimeFunctionIterator.class,
@@ -1515,7 +1962,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the seconds from a time
      */
     static final BuiltinFunction timezone_from_time = createBuiltinFunction(
-        "timezone-from-time",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "timezone-from-time"
+        ),
         "time?",
         "dayTimeDuration?",
         TimezoneFromTimeFunctionIterator.class,
@@ -1525,14 +1976,22 @@ public class BuiltinFunctionCatalogue {
      * function that adjusts a time value to a specific timezone, or to no timezone at all.
      */
     static final BuiltinFunction adjust_time_to_timezone1 = createBuiltinFunction(
-        "adjust-time-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-time-to-timezone"
+        ),
         "time?",
         "time?",
         AdjustTimeToTimezone.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     static final BuiltinFunction adjust_time_to_timezone2 = createBuiltinFunction(
-        "adjust-time-to-timezone",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "adjust-time-to-timezone"
+        ),
         "time?",
         "dayTimeDuration?",
         "time?",
@@ -1544,7 +2003,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the keys of a Json Object
      */
     static final BuiltinFunction keys = createBuiltinFunction(
-        "keys",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "keys"
+        ),
         "item*",
         "string*",
         ObjectKeysFunctionIterator.class,
@@ -1554,7 +2017,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns returns all members of all arrays of the supplied sequence
      */
     static final BuiltinFunction members = createBuiltinFunction(
-        "members",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "members"
+        ),
         "item*",
         "item*",
         ArrayMembersFunctionIterator.class,
@@ -1564,7 +2031,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the JSON null
      */
     static final BuiltinFunction null_function = createBuiltinFunction(
-        "null",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "null"
+        ),
         "null?",
         NullFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1573,7 +2044,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the length of an array
      */
     static final BuiltinFunction size = createBuiltinFunction(
-        "size",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "size"
+        ),
         "array?",
         "integer?",
         ArraySizeFunctionIterator.class,
@@ -1583,7 +2058,11 @@ public class BuiltinFunctionCatalogue {
      * function that dynamically creates an object that merges the values of key collisions into arrays
      */
     static final BuiltinFunction accumulate = createBuiltinFunction(
-        "accumulate",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "accumulate"
+        ),
         "item*",
         "object",
         ObjectAccumulateFunctionIterator.class,
@@ -1593,7 +2072,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns all arrays contained within the supplied items, regardless of depth.
      */
     static final BuiltinFunction descendant_arrays = createBuiltinFunction(
-        "descendant-arrays",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "descendant-arrays"
+        ),
         "item*",
         "item*",
         ArrayDescendantFunctionIterator.class,
@@ -1603,7 +2086,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns all objects contained within the supplied items, regardless of depth
      */
     static final BuiltinFunction descendant_objects = createBuiltinFunction(
-        "descendant-objects",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "descendant-objects"
+        ),
         "item*",
         "item*",
         ObjectDescendantFunctionIterator.class,
@@ -1613,7 +2100,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns all objects contained within the supplied items, regardless of depth
      */
     static final BuiltinFunction descendant_pairs = createBuiltinFunction(
-        "descendant-pairs",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "descendant-pairs"
+        ),
         "item*",
         "item*",
         ObjectDescendantPairsFunctionIterator.class,
@@ -1623,7 +2114,11 @@ public class BuiltinFunctionCatalogue {
      * function that recursively flattens arrays in the input sequence, leaving non-arrays intact
      */
     static final BuiltinFunction flatten = createBuiltinFunction(
-        "flatten",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "flatten"
+        ),
         "item*",
         "item*",
         ArrayFlattenFunctionIterator.class,
@@ -1634,7 +2129,11 @@ public class BuiltinFunctionCatalogue {
      * same name into an array
      */
     static final BuiltinFunction intersect = createBuiltinFunction(
-        "intersect",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "intersect"
+        ),
         "item*",
         "object+",
         ObjectIntersectFunctionIterator.class,
@@ -1644,7 +2143,11 @@ public class BuiltinFunctionCatalogue {
      * function that projects objects by filtering their pairs and leaves non-objects intact
      */
     static final BuiltinFunction project = createBuiltinFunction(
-        "project",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "project"
+        ),
         "item*",
         "string*",
         "item*",
@@ -1655,7 +2158,11 @@ public class BuiltinFunctionCatalogue {
      * function that removes the pairs with the given keys from all objects and leaves non-objects intact
      */
     static final BuiltinFunction remove_keys = createBuiltinFunction(
-        "remove-keys",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "remove-keys"
+        ),
         "item*",
         "string*",
         "item*",
@@ -1666,7 +2173,11 @@ public class BuiltinFunctionCatalogue {
      * function that returns the values of a Json Object
      */
     static final BuiltinFunction values = createBuiltinFunction(
-        "values",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "values"
+        ),
         "item*",
         "item*",
         ObjectValuesFunctionIterator.class,
@@ -1677,7 +2188,11 @@ public class BuiltinFunctionCatalogue {
      * function fetches the transformer class from SparkML API
      */
     static final BuiltinFunction get_transformer = createBuiltinFunction(
-        "get-transformer",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-transformer"
+        ),
         "string",
         "item",
         GetTransformerFunctionIterator.class,
@@ -1688,7 +2203,11 @@ public class BuiltinFunctionCatalogue {
      * function fetches the estimator class from SparkML API
      */
     static final BuiltinFunction get_estimator = createBuiltinFunction(
-        "get-estimator",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-estimator"
+        ),
         "string",
         "item",
         GetEstimatorFunctionIterator.class,
@@ -1699,7 +2218,11 @@ public class BuiltinFunctionCatalogue {
      * function converts given RDD or local data to a DataFrame using a schema
      */
     static final BuiltinFunction annotate = createBuiltinFunction(
-        "annotate",
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "annotate"
+        ),
         "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         "object",
         "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
@@ -1708,7 +2231,11 @@ public class BuiltinFunctionCatalogue {
     );
 
     static final BuiltinFunction trace = createBuiltinFunction(
-        "trace",
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "trace"
+        ),
         "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         "string",
         "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
@@ -1802,7 +2329,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(substring_after.getIdentifier(), substring_after);
         for (int i = 0; i < 100; i++) {
             builtinFunctions.put(
-                new FunctionIdentifier(Name.createVariableInRumbleNamespace("concat"), i),
+                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), i),
                 concat
             );
         }

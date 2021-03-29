@@ -15,12 +15,11 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
@@ -35,7 +34,7 @@ import java.util.NoSuchElementException;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
-public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
+public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private String estimatorShortName;
@@ -56,14 +55,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (!this.hasNext()) {
-            throw new IteratorFlowException("Invalid next() call in ApplyEstimatorRuntimeIterator", getMetadata());
-        }
-        this.hasNext = false;
-
-        this.inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
-        this.paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        this.inputDataset = getInputDataset(dynamicContext);
+        this.paramMapItem = getParamMapItem(dynamicContext);
 
         processSpecialParamsForVectorization();
 
@@ -262,7 +258,7 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
 
         return new FunctionItem(
                 new FunctionIdentifier(
-                        Name.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
+                        Name.createVariableInDefaultFunctionNamespace(fittedModel.getClass().getName()),
                         2
                 ),
                 GetTransformerFunctionIterator.transformerParameterNames,

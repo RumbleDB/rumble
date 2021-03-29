@@ -35,6 +35,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
@@ -351,44 +352,46 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static DataType getDataFrameDataTypeFromItemTypeName(String itemTypeName) {
-        if (itemTypeName.equals(AtomicItemType.booleanItem.getName())) {
+    public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
+        if (itemType.equals(AtomicItemType.booleanItem)) {
             return DataTypes.BooleanType;
         }
-        if (itemTypeName.equals(AtomicItemType.integerItem.getName())) {
+        if (itemType.equals(AtomicItemType.integerItem)) {
             return DataTypes.IntegerType;
         }
-        if (itemTypeName.equals(AtomicItemType.doubleItem.getName())) {
+        if (itemType.equals(AtomicItemType.doubleItem)) {
             return DataTypes.DoubleType;
         }
-        if (itemTypeName.equals(AtomicItemType.floatItem.getName())) {
+        if (itemType.equals(AtomicItemType.floatItem)) {
             return DataTypes.FloatType;
         }
-        if (itemTypeName.equals(AtomicItemType.decimalItem.getName())) {
+        if (itemType.equals(AtomicItemType.decimalItem)) {
             return decimalType;
         }
-        if (itemTypeName.equals(AtomicItemType.stringItem.getName())) {
+        if (itemType.equals(AtomicItemType.stringItem)) {
             return DataTypes.StringType;
         }
-        if (itemTypeName.equals(AtomicItemType.nullItem.getName())) {
+        if (itemType.equals(AtomicItemType.nullItem)) {
             return DataTypes.NullType;
         }
-        if (itemTypeName.equals(AtomicItemType.dateItem.getName())) {
+        if (itemType.equals(AtomicItemType.dateItem)) {
             return DataTypes.DateType;
         }
-        if (itemTypeName.equals(AtomicItemType.dateTimeItem.getName())) {
+        if (itemType.equals(AtomicItemType.dateTimeItem)) {
             return DataTypes.TimestampType;
         }
-        if (itemTypeName.equals(AtomicItemType.hexBinaryItem.getName())) {
+        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemTypeName.equals("object")) {
+        if (itemType.equals(AtomicItemType.objectItem)) {
             return vectorType;
         }
-        throw new IllegalArgumentException("Unexpected item type found: '" + itemTypeName + "'.");
+        throw new IllegalArgumentException(
+                "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
+        );
     }
 
-    public static String getItemTypeNameFromDataFrameDataType(DataType dataType) {
+    public static Name getItemTypeNameFromDataFrameDataType(DataType dataType) {
         if (DataTypes.BooleanType.equals(dataType)) {
             return AtomicItemType.booleanItem.getName();
         }
@@ -420,7 +423,7 @@ public class ItemParser implements Serializable {
             return AtomicItemType.hexBinaryItem.getName();
         }
         if (vectorType.equals(dataType)) {
-            return "object";
+            return AtomicItemType.objectItem.getName();
         }
         throw new OurBadException("Unexpected DataFrame data type found: '" + dataType.toString() + "'.");
     }

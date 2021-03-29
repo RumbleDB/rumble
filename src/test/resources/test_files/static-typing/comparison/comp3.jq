@@ -1,0 +1,2 @@
+(:JIQS: ShouldRun :)
+((1, 2, 3) = 2) is statically boolean, (() = 2) is statically boolean, ((1, 2, 3) <= (2, 33)) is statically boolean, ((1, 2.22) treat as decimal+ < (4, 8)) is statically boolean, ([1,2][] treat as integer+ < [3,4][] treat as integer+) is statically boolean

@@ -6,13 +6,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
@@ -24,11 +23,10 @@ import java.math.BigInteger;
 import java.util.Collections;
 
 
-public class CastIterator extends LocalRuntimeIterator {
+public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
-    private Item item;
 
     public CastIterator(
             RuntimeIterator child,
@@ -41,39 +39,12 @@ public class CastIterator extends LocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
-    @Override
-    public Item next() {
-        if (!this.hasNext) {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
-        }
-        this.hasNext = false;
-
-        if (!this.item.getDynamicType().isStaticallyCastableAs(this.sequenceType.getItemType())) {
-            String message = String.format(
-                "\"%s\": a value of type %s is not castable to type %s",
-                this.item.serialize(),
-                this.item.getDynamicType(),
-                this.sequenceType.getItemType()
-            );
-            throw new UnexpectedTypeException(message, getMetadata());
-        }
-        Item result = castItemToType(this.item, this.sequenceType.getItemType(), getMetadata());
-        if (result == null) {
-            String message = String.format(
-                "\"%s\": this literal is not castable to type %s",
-                this.item.serialize(),
-                this.sequenceType.getItemType()
-            );
-            throw new CastException(message, getMetadata());
-        }
-        return result;
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        Item item;
         try {
-            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
+            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type "
@@ -82,50 +53,41 @@ public class CastIterator extends LocalRuntimeIterator {
             );
         }
         if (
-            this.item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero
+            item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero
         ) {
             throw new UnexpectedTypeException(
                     " Empty sequence can not be cast to type with quantifier '1'",
                     getMetadata()
             );
         }
-        if (this.item != null && !this.item.isAtomic()) {
+        if (item != null && !item.isAtomic()) {
             throw new UnexpectedTypeException(
                     "Only atomics can be cast to atomic types.",
                     getMetadata()
             );
         }
-        this.hasNext = this.item != null;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-        this.item = null;
-        this.hasNext = false;
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        try {
-            this.item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
-        } catch (MoreThanOneItemException e) {
-            throw new UnexpectedTypeException(
-                    " Sequence of more than one item can not be treated as type "
-                        + this.sequenceType.toString(),
-                    getMetadata()
-            );
+        if (item == null) {
+            return null;
         }
-        if (
-            this.item == null && !this.sequenceType.isEmptySequence() && this.sequenceType.getArity() != Arity.OneOrZero
-        ) {
-            throw new UnexpectedTypeException(
-                    " Empty sequence can not be cast to type with quantifier '1'",
-                    getMetadata()
+        if (!item.getDynamicType().isStaticallyCastableAs(this.sequenceType.getItemType())) {
+            String message = String.format(
+                "\"%s\": a value of type %s is not castable to type %s",
+                item.serialize(),
+                item.getDynamicType(),
+                this.sequenceType.getItemType()
             );
+            throw new UnexpectedTypeException(message, getMetadata());
         }
-        this.hasNext = this.item != null;
+        Item result = castItemToType(item, this.sequenceType.getItemType(), getMetadata());
+        if (result == null) {
+            String message = String.format(
+                "\"%s\": this literal is not castable to type %s",
+                item.serialize(),
+                this.sequenceType.getItemType()
+            );
+            throw new CastException(message, getMetadata());
+        }
+        return result;
     }
 
     public static Item castItemToType(Item item, ItemType targetType, ExceptionMetadata metadata) {

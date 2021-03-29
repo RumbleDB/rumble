@@ -1,14 +1,14 @@
 package org.rumbledb.runtime.typing;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
@@ -18,7 +18,7 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.util.Collections;
 
 
-public class CastableIterator extends LocalRuntimeIterator {
+public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
     private final SequenceType sequenceType;
@@ -35,30 +35,27 @@ public class CastableIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item item;
-            try {
-                item = this.child.materializeAtMostOneItemOrNull(this.currentDynamicContextForLocalExecution);
-            } catch (MoreThanOneItemException e) {
-                return ItemFactory.getInstance().createBooleanItem(false);
-            }
-
-            if (item == null) {
-                return ItemFactory.getInstance()
-                    .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
-            }
-
-            checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
-
-            return ItemFactory.getInstance()
-                .createBooleanItem(
-                    CastIterator.castItemToType(item, this.sequenceType.getItemType(), getMetadata()) != null
-                );
-        } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        Item item;
+        try {
+            item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+        } catch (MoreThanOneItemException e) {
+            return ItemFactory.getInstance().createBooleanItem(false);
         }
+
+        if (item == null) {
+            return ItemFactory.getInstance()
+                .createBooleanItem(this.sequenceType.getArity().equals(Arity.OneOrZero));
+        }
+
+        checkInvalidCastable(item, getMetadata(), this.sequenceType.getItemType());
+
+        return ItemFactory.getInstance()
+            .createBooleanItem(
+                CastIterator.castItemToType(item, this.sequenceType.getItemType(), getMetadata()) != null
+            );
     }
 
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {

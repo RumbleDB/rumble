@@ -56,6 +56,14 @@ public class AdditiveExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
+    }
+
     public boolean isMinus() {
         return this.isMinus;
     }
@@ -67,6 +75,7 @@ public class AdditiveExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.isMinus ? "-" : "+") + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

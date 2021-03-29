@@ -9,9 +9,12 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -20,9 +23,9 @@ import java.util.List;
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
             JavaRDD<Item> itemRDD,
-            ObjectItem schemaItem
+            Item schemaItem
     ) {
-        ObjectItem firstDataItem = (ObjectItem) itemRDD.take(1).get(0);
+        Item firstDataItem = (Item) itemRDD.take(1).get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
         JavaRDD<Row> rowRDD = itemRDD.map(
@@ -40,7 +43,7 @@ public class DataFrameUtils {
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
             List<Item> items,
-            ObjectItem schemaItem
+            Item schemaItem
     ) {
         if (items.size() == 0) {
             return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
@@ -53,8 +56,8 @@ public class DataFrameUtils {
     }
 
     private static void validateSchemaAgainstAnItem(
-            ObjectItem schemaItem,
-            ObjectItem dataItem
+            Item schemaItem,
+            Item dataItem
     ) {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
@@ -79,7 +82,7 @@ public class DataFrameUtils {
         }
     }
 
-    private static StructType generateDataFrameSchemaFromSchemaItem(ObjectItem schemaItem) {
+    private static StructType generateDataFrameSchemaFromSchemaItem(Item schemaItem) {
         List<StructField> fields = new ArrayList<>();
         try {
             for (String columnName : schemaItem.getKeys()) {
@@ -90,9 +93,11 @@ public class DataFrameUtils {
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
-            throw new MLInvalidDataFrameSchemaException(
+            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
                     "Error while applying the schema; " + ex.getMessage()
             );
+            e.initCause(ex);
+            throw e;
         }
         return DataTypes.createStructType(fields);
     }
@@ -115,8 +120,10 @@ public class DataFrameUtils {
         }
 
         if (item.isString()) {
-            String itemTypeName = item.getStringValue();
-            return ItemParser.getDataFrameDataTypeFromItemTypeName(itemTypeName);
+            ItemType itemType = AtomicItemType.getItemTypeByName(
+                Name.createVariableInDefaultTypeNamespace(item.getStringValue())
+            );
+            return ItemParser.getDataFrameDataTypeFromItemType(itemType);
         }
 
         throw new MLInvalidDataFrameSchemaException(
@@ -141,7 +148,7 @@ public class DataFrameUtils {
     }
 
     public static void validateSchemaItemAgainstDataFrame(
-            ObjectItem schemaItem,
+            Item schemaItem,
             StructType dataFrameSchema
     ) {
         StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);

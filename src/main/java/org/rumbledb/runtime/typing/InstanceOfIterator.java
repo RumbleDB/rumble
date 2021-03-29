@@ -22,12 +22,12 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
 import org.rumbledb.types.AtomicItemType;
@@ -39,7 +39,7 @@ import java.util.Collections;
 import java.util.List;
 
 
-public class InstanceOfIterator extends LocalRuntimeIterator {
+public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
@@ -56,48 +56,43 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
         this.sequenceType = sequenceType;
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            if (!this.child.isRDDOrDataFrame()) {
-                List<Item> items = new ArrayList<>();
-                this.child.open(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        if (!this.child.isRDDOrDataFrame()) {
+            List<Item> items = new ArrayList<>();
+            this.child.open(dynamicContext);
 
-                while (this.child.hasNext()) {
-                    items.add(this.child.next());
-                }
-                this.child.close();
-                this.hasNext = false;
-
-                if (this.sequenceType.isEmptySequence()) {
-                    return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
-                }
-
-                if (isInvalidArity(items.size())) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-
-                ItemType itemType = this.sequenceType.getItemType();
-                for (Item item : items) {
-                    if (!doesItemTypeMatchItem(itemType, item)) {
-                        return ItemFactory.getInstance().createBooleanItem(false);
-                    }
-                }
-
-                return ItemFactory.getInstance().createBooleanItem(true);
-            } else {
-                JavaRDD<Item> childRDD = this.child.getRDD(this.currentDynamicContextForLocalExecution);
-                this.hasNext = false;
-
-                if (isInvalidArity(childRDD.take(2).size())) {
-                    return ItemFactory.getInstance().createBooleanItem(false);
-                }
-
-                JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
-                return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
+            while (this.child.hasNext()) {
+                items.add(this.child.next());
             }
+            this.child.close();
+
+            if (this.sequenceType.isEmptySequence()) {
+                return ItemFactory.getInstance().createBooleanItem(items.size() == 0);
+            }
+
+            if (isInvalidArity(items.size())) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+
+            ItemType itemType = this.sequenceType.getItemType();
+            for (Item item : items) {
+                if (!doesItemTypeMatchItem(itemType, item)) {
+                    return ItemFactory.getInstance().createBooleanItem(false);
+                }
+            }
+
+            return ItemFactory.getInstance().createBooleanItem(true);
         } else {
-            throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE, getMetadata());
+            JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
+
+            if (isInvalidArity(childRDD.take(2).size())) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+
+            JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+            return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
         }
     }
 
@@ -148,6 +143,9 @@ public class InstanceOfIterator extends LocalRuntimeIterator {
         }
         if (itemType.equals(AtomicItemType.floatItem)) {
             return itemToMatch.isFloat();
+        }
+        if (itemType.equals(AtomicItemType.numericItem)) {
+            return itemToMatch.isNumeric();
         }
         if (itemType.equals(AtomicItemType.booleanItem)) {
             return itemToMatch.isBoolean();

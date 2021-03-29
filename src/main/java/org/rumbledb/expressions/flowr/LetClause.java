@@ -63,6 +63,10 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -110,7 +114,7 @@ public class LetClause extends Clause {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
+        buffer.append(" (" + (this.variableName) + ", " + this.getSequenceType().toString() + ") ");
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");

@@ -51,7 +51,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
-    private boolean deactivateJsoniterStreaming;
+    private boolean checkReturnTypeOfBuiltinFunctions;
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -145,6 +145,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this;
     }
 
+    public boolean isCheckReturnTypeOfBuiltinFunctions() {
+        return this.checkReturnTypeOfBuiltinFunctions;
+    }
+
+    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
+        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
+        return this;
+    }
+
     public void init() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
@@ -188,10 +197,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
-        if (this.arguments.containsKey("deactivate-jsoniter-streaming")) {
-            this.deactivateJsoniterStreaming = this.arguments.get("deactivate-jsoniter-streaming").equals("yes");
+        if (this.arguments.containsKey("check-return-types-of-builtin-functions")) {
+            this.checkReturnTypeOfBuiltinFunctions = this.arguments.get("check-return-types-of-builtin-functions")
+                .equals("yes");
         } else {
-            this.deactivateJsoniterStreaming = false;
+            this.checkReturnTypeOfBuiltinFunctions = false;
         }
     }
 
@@ -241,7 +251,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
      * Sets the number of Items that should be collected in case of a forced materialization. This applies in particular
      * to a local use of the ItemIterator.
      *
-     * @param cap the maximum number of Items to collect.
+     * @param i the maximum number of Items to collect.
      */
     public RumbleRuntimeConfiguration setResultSizeCap(int i) {
         this.resultsSizeCap = i;
@@ -291,12 +301,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
     }
 
-    public boolean getDeactivateJsoniterStreaming() {
-        return this.deactivateJsoniterStreaming;
+    public boolean doStaticAnalysis() {
+        return this.arguments.containsKey("static-typing") && this.arguments.get("static-typing").equals("yes");
     }
 
-    public void setDeactivateJsoniterStreaming(boolean b) {
-        this.deactivateJsoniterStreaming = b;
+    public boolean printInferredTypes() {
+        return this.arguments.containsKey("print-inferred-types")
+            && this.arguments.get("print-inferred-types").equals("yes");
+    }
+
+    public boolean escapeBackticks() {
+        return this.arguments.containsKey("escape-backticks")
+            && this.arguments.get("escape-backticks").equals("yes");
     }
 
     public boolean isLocal() {
