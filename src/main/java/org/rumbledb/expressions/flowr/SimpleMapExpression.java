@@ -77,7 +77,7 @@ public class SimpleMapExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        leftExpression.serializeToJSONiq(sb,indent + 1);
+        leftExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");
@@ -88,7 +88,7 @@ public class SimpleMapExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        rightExpression.serializeToJSONiq(sb,indent + 1);
+        rightExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");

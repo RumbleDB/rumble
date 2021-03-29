@@ -81,12 +81,11 @@ public class SwitchExpression extends Expression {
         for (SwitchCase c : this.cases) {
             indentIt(sb, indent + 1);
             sb.append("case (");
-            for (int i = 0; i < c.getAllExpressions().size(); i++){
+            for (int i = 0; i < c.getAllExpressions().size(); i++) {
                 c.getAllExpressions().get(i).serializeToJSONiq(sb, 0);
-                if (i == c.getAllExpressions().size() - 1){
+                if (i == c.getAllExpressions().size() - 1) {
                     sb.append(") ");
-                }
-                else{
+                } else {
                     sb.append(", ");
                 }
             }

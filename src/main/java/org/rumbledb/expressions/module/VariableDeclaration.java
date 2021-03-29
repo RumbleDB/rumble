@@ -133,7 +133,7 @@ public class VariableDeclaration extends Node {
             sb.append(" as " + sequenceType.toString());
         if (external)
             sb.append(" external\n");
-        else{
+        else {
             sb.append(" ");
             expression.serializeToJSONiq(sb, 0);
             sb.append("\n");

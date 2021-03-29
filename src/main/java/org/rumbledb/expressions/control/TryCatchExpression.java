@@ -92,7 +92,7 @@ public class TryCatchExpression extends Expression {
         indentIt(sb, indent);
         sb.append("}\n");
 
-        if (catchExpressions != null){
+        if (catchExpressions != null) {
             for (Map.Entry<String, Expression> entry : catchExpressions.entrySet()) {
                 indentIt(sb, indent);
                 sb.append("catch " + entry.getKey() + " {\n");
@@ -102,7 +102,7 @@ public class TryCatchExpression extends Expression {
             }
         }
 
-        if (catchAllExpression != null){
+        if (catchAllExpression != null) {
             indentIt(sb, indent);
             sb.append("catch * {\n");
             catchAllExpression.serializeToJSONiq(sb, indent + 1);

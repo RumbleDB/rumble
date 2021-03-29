@@ -44,7 +44,7 @@ import java.util.*;
 
 import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
 
-public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node>{
+public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node> {
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
@@ -66,7 +66,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitModule(XQueryParser.ModuleContext ctx) {
         XQueryParser.VersionDeclContext ver = ctx.versionDecl();
-        if (!(ver == null) && !ver.version.isEmpty()){
+        if (!(ver == null) && !ver.version.isEmpty()) {
             String version = ver.version.getText().trim();
             if (!(version.equals("3.1") || version.equals("3.0") || version.equals("1.0"))) {
                 throw new JsoniqVersionException(createMetadataFromContext(ctx));
@@ -80,8 +80,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                     "Main module expected, but library module found.",
                     createMetadataFromContext(ctx)
             );
-        }
-        else {
+        } else {
             if (ctx.libraryModule() != null) {
                 return this.visitLibraryModule(ctx.libraryModule());
             }
@@ -123,14 +122,14 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             throw new EmptyModuleURIException("Module URI is empty.", createMetadataFromContext(ctx));
         }
         URI resolvedURI = FileSystemUtil.resolveURI(
-                this.moduleContext.getStaticBaseURI(),
-                namespace,
-                generateMetadata(ctx.getStop())
+            this.moduleContext.getStaticBaseURI(),
+            namespace,
+            generateMetadata(ctx.getStop())
         );
         bindNamespace(
-                prefix,
-                resolvedURI.toString(),
-                generateMetadata(ctx.getStop())
+            prefix,
+            resolvedURI.toString(),
+            generateMetadata(ctx.getStop())
         );
 
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
@@ -141,8 +140,8 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     public void bindNamespace(String prefix, String namespace, ExceptionMetadata metadata) {
         boolean success = this.moduleContext.bindNamespace(
-                prefix,
-                namespace
+            prefix,
+            namespace
         );
         if (!success) {
             throw new NamespacePrefixBoundTwiceException(
@@ -161,7 +160,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         for (XQueryParser.DefaultNamespaceDeclContext defaultNamespaceDeclContext : ctx.defaultNamespaceDecl()) {
             // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("defaultNamespaceDeclContext not supported YET", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException(
+                    "defaultNamespaceDeclContext not supported YET",
+                    createMetadataFromContext(ctx)
+            );
         }
         for (XQueryParser.SchemaImportContext schemaImportContext : ctx.schemaImport()) {
             throw new XMLUnsupportedException("schemaImport not supported", createMetadataFromContext(ctx));
@@ -192,20 +194,23 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 defaultCollationSet = true;
                 continue;
             }
-            if (setterContext.copyNamespacesDecl() != null){
+            if (setterContext.copyNamespacesDecl() != null) {
                 throw new XMLUnsupportedException("copyNamespacesDecl not supported", createMetadataFromContext(ctx));
             }
-            if (setterContext.constructionDecl() != null){
+            if (setterContext.constructionDecl() != null) {
                 throw new XMLUnsupportedException("constructionDecl not supported", createMetadataFromContext(ctx));
             }
-            if (setterContext.boundarySpaceDecl() != null){
+            if (setterContext.boundarySpaceDecl() != null) {
                 throw new XMLUnsupportedException("boundarySpaceDecl not supported", createMetadataFromContext(ctx));
             }
-            if (setterContext.decimalFormatDecl() != null){
+            if (setterContext.decimalFormatDecl() != null) {
                 // TODO outside of the scope for thesis
-                throw new XMLUnsupportedException("decimalFormatDecl not supported YET", createMetadataFromContext(ctx));
+                throw new XMLUnsupportedException(
+                        "decimalFormatDecl not supported YET",
+                        createMetadataFromContext(ctx)
+                );
             }
-            if (setterContext.baseURIDecl() != null){
+            if (setterContext.baseURIDecl() != null) {
                 // TODO outside of the scope for thesis
                 throw new XMLUnsupportedException("baseURIDecl not supported YET", createMetadataFromContext(ctx));
             }
@@ -234,7 +239,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         for (XQueryParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
             if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
-                        annotatedDeclaration.varDecl()
+                    annotatedDeclaration.varDecl()
                 );
                 if (!this.isMainModule) {
                     String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
@@ -242,11 +247,11 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                     if (variableNamespace == null || !variableNamespace.equals(moduleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Variable "
-                                        + variableDeclaration.getVariableName().getLocalName()
-                                        + ": namespace "
-                                        + variableNamespace
-                                        + " must match module namespace "
-                                        + moduleNamespace,
+                                    + variableDeclaration.getVariableName().getLocalName()
+                                    + ": namespace "
+                                    + variableNamespace
+                                    + " must match module namespace "
+                                    + moduleNamespace,
                                 generateMetadata(annotatedDeclaration.getStop())
                         );
                     }
@@ -254,7 +259,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 globalVariables.add(variableDeclaration);
             } else if (annotatedDeclaration.functionDecl() != null) {
                 InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
-                        annotatedDeclaration.functionDecl()
+                    annotatedDeclaration.functionDecl()
                 );
                 if (!this.isMainModule) {
                     String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
@@ -262,22 +267,22 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                     if (functionNamespace == null || !functionNamespace.equals(moduleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
                                 "Function "
-                                        + inlineFunctionExpression.getName().getLocalName()
-                                        + ": namespace "
-                                        + functionNamespace
-                                        + " must match module namespace "
-                                        + moduleNamespace,
+                                    + inlineFunctionExpression.getName().getLocalName()
+                                    + ": namespace "
+                                    + functionNamespace
+                                    + " must match module namespace "
+                                    + moduleNamespace,
                                 generateMetadata(annotatedDeclaration.getStop())
                         );
                     }
                 }
                 functionDeclarations.add(
-                        new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
+                    new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
                 );
-            } else if (annotatedDeclaration.contextItemDecl() != null){
+            } else if (annotatedDeclaration.contextItemDecl() != null) {
                 // TODO outside of the scope for thesis
                 throw new XMLUnsupportedException("contextItemDecl not supported YET", createMetadataFromContext(ctx));
-            } else if (annotatedDeclaration.optionDecl() != null){
+            } else if (annotatedDeclaration.optionDecl() != null) {
                 throw new XMLUnsupportedException("optionDecl not supported", createMetadataFromContext(ctx));
             }
         }
@@ -298,7 +303,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         SequenceType seq;
         boolean external = false;
 
-        if (ctx.annotations() != null){
+        if (ctx.annotations() != null) {
             processAnnotations(ctx.annotations());
         }
 
@@ -320,7 +325,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.varValue() != null) {
             exprSingle = ctx.varValue().exprSingle();
         }
-        if (exprSingle != null){
+        if (exprSingle != null) {
             expr = (Expression) this.visitExprSingle(exprSingle);
             if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
@@ -331,27 +336,29 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     }
 
     private void processAnnotations(XQueryParser.AnnotationsContext annotations) {
-        if (annotations.annotation().size() > 1){
+        if (annotations.annotation().size() > 1) {
             // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("multipleAnnotations not supported YET", createMetadataFromContext(annotations));
+            throw new XMLUnsupportedException(
+                    "multipleAnnotations not supported YET",
+                    createMetadataFromContext(annotations)
+            );
         }
 
         XQueryParser.AnnotationContext annotationContext = annotations.annotation().get(0);
         XQueryParser.QNameContext newCtx = annotationContext.qName();
 
         String localName;
-        if (newCtx.ncName() != null){
+        if (newCtx.ncName() != null) {
             if (newCtx.ncName().local_name != null) {
                 localName = newCtx.ncName().local_name.getText();
             } else {
                 localName = newCtx.ncName().local_namekw.getText();
             }
-            if (!localName.equals("public")){
+            if (!localName.equals("public")) {
                 // TODO outside of the scope for thesis
                 throw new XMLUnsupportedException("private not supported YET", createMetadataFromContext(annotations));
             }
-        }
-        else {
+        } else {
             // TODO outside of the scope for thesis
             throw new XMLUnsupportedException("prefix not supported YET", createMetadataFromContext(annotations));
         }
@@ -365,7 +372,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         Name paramName;
         SequenceType paramType;
 
-        if (ctx.annotations() != null){
+        if (ctx.annotations() != null) {
             processAnnotations(ctx.annotations());
         }
 
@@ -413,9 +420,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     public void processNamespaceDecl(XQueryParser.NamespaceDeclContext ctx) {
         bindNamespace(
-                ctx.ncName().getText(),
-                processURILiteral(ctx.uriLiteral()),
-                generateMetadata(ctx.getStop())
+            ctx.ncName().getText(),
+            processURILiteral(ctx.uriLiteral()),
+            generateMetadata(ctx.getStop())
         );
     }
 
@@ -441,24 +448,24 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     public LibraryModule processModuleImport(XQueryParser.ModuleImportContext ctx) {
         String namespace = processURILiteral(ctx.nsURI);
         URI resolvedURI = FileSystemUtil.resolveURI(
-                this.moduleContext.getStaticBaseURI(),
-                namespace,
-                generateMetadata(ctx.getStop())
+            this.moduleContext.getStaticBaseURI(),
+            namespace,
+            generateMetadata(ctx.getStop())
         );
         LibraryModule libraryModule = null;
         try {
             libraryModule = VisitorHelpers.parseLibraryModuleFromLocation(
-                    resolvedURI,
-                    this.configuration,
-                    this.moduleContext,
-                    generateMetadata(ctx.getStop())
+                resolvedURI,
+                this.configuration,
+                this.moduleContext,
+                generateMetadata(ctx.getStop())
             );
             if (!resolvedURI.toString().equals(libraryModule.getNamespace())) {
                 throw new ModuleNotFoundException(
                         "A module with namespace "
-                                + resolvedURI.toString()
-                                + " was not found. The namespace of the module at this location was: "
-                                + libraryModule.getNamespace(),
+                            + resolvedURI.toString()
+                            + " was not found. The namespace of the module at this location was: "
+                            + libraryModule.getNamespace(),
                         generateMetadata(ctx.getStop())
                 );
             }
@@ -479,9 +486,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (ctx.ncName() != null) {
             bindNamespace(
-                    ctx.ncName().getText(),
-                    resolvedURI.toString(),
-                    generateMetadata(ctx.getStop())
+                ctx.ncName().getText(),
+                resolvedURI.toString(),
+                generateMetadata(ctx.getStop())
             );
         }
         return libraryModule;
@@ -529,7 +536,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (content instanceof XQueryParser.ExistUpdateExprContext) {
             // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("ExistUpdateExprContext not supported YET", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException(
+                    "ExistUpdateExprContext not supported YET",
+                    createMetadataFromContext(ctx)
+            );
         }
         throw new OurBadException("Unrecognized ExprSingle.");
     }
@@ -715,36 +725,30 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         return new SequenceType(itemType);
     }
 
-    private ItemType processItemType(XQueryParser.ItemTypeContext ctx){
+    private ItemType processItemType(XQueryParser.ItemTypeContext ctx) {
         ParseTree child = ctx.children.get(0);
         if (child instanceof XQueryParser.KindTestContext) {
             throw new XMLUnsupportedException("KindTestContext not supported", createMetadataFromContext(ctx));
-        }
-        else if (child instanceof XQueryParser.FunctionTestContext) {
+        } else if (child instanceof XQueryParser.FunctionTestContext) {
             // TODO outside of the scope for thesis
             throw new XMLUnsupportedException("FunctionTestContext not supported YET", createMetadataFromContext(ctx));
-        }
-        else if (child instanceof XQueryParser.MapTestContext) {
+        } else if (child instanceof XQueryParser.MapTestContext) {
             XQueryParser.MapTestContext mapTestContext = (XQueryParser.MapTestContext) child;
             if (mapTestContext.typedMapTest() != null)
                 throw new XMLUnsupportedException("typedMapTest not supported", createMetadataFromContext(ctx));
             else
                 return AtomicItemType.objectItem;
-        }
-        else if (child instanceof XQueryParser.ArrayTestContext) {
+        } else if (child instanceof XQueryParser.ArrayTestContext) {
             XQueryParser.ArrayTestContext arrayTestContext = (XQueryParser.ArrayTestContext) child;
             if (arrayTestContext.typedArrayTest() != null)
                 throw new XMLUnsupportedException("typedArrayTest not supported", createMetadataFromContext(ctx));
             else
                 return AtomicItemType.arrayItem;
-        }
-        else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
+        } else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
             return AtomicItemType.getItemTypeByName(ctx.getText());
-        }
-        else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
+        } else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
             return processItemType(((XQueryParser.ParenthesizedItemTestContext) child).itemType());
-        }
-        else {
+        } else {
             // It has to be (KW_ITEM LPAREN RPAREN)
             return AtomicItemType.item;
         }
@@ -809,7 +813,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
         for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
             XQueryParser.ComplexArrowContext functionCallContext = ctx.function_call_expr.get(i);
-            if (functionCallContext.arrowFunctionSpecifier().parenthesizedExpr() != null){
+            if (functionCallContext.arrowFunctionSpecifier().parenthesizedExpr() != null) {
                 throw new XMLUnsupportedException("parenthesizedExpr not supported", createMetadataFromContext(ctx));
             }
             List<Expression> children = new ArrayList<Expression>();
@@ -839,10 +843,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     private Expression processFunctionCall(Name name, ParserRuleContext ctx, List<Expression> children) {
         if (
-                AtomicItemType.typeExists(name)
-                        && children.size() == 1
-                        && name.getNamespace().equals(Name.RUMBLE_NS)
-                        && !name.getLocalName().equals("boolean")
+            AtomicItemType.typeExists(name)
+                && children.size() == 1
+                && name.getNamespace().equals(Name.RUMBLE_NS)
+                && !name.getLocalName().equals("boolean")
         ) {
             return new CastExpression(
                     children.get(0),
@@ -868,14 +872,13 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         String localName = null;
         String prefix = null;
         Name name = null;
-        if (newCtx.ncName() != null){
+        if (newCtx.ncName() != null) {
             if (newCtx.ncName().local_name != null) {
                 localName = newCtx.ncName().local_name.getText();
             } else {
                 localName = newCtx.ncName().local_namekw.getText();
             }
-        }
-        else {
+        } else {
             // We know that it will have single : as parser would throw an error earlier
             String fullText = newCtx.FullQName().getText();
             prefix = fullText.split(":")[0];
@@ -902,7 +905,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitUnaryExpr(XQueryParser.UnaryExprContext ctx) {
         if (ctx.main_expr.simpleMapExpr() == null)
-            throw new XMLUnsupportedException("validateExpr and extensionExpr not supported", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException(
+                    "validateExpr and extensionExpr not supported",
+                    createMetadataFromContext(ctx)
+            );
         Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr.simpleMapExpr());
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
@@ -974,39 +980,45 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 );
             } else if (child instanceof XQueryParser.ArgumentListContext) {
                 List<Expression> arguments = getArgumentsFromArgumentListContext(
-                        (XQueryParser.ArgumentListContext) child
+                    (XQueryParser.ArgumentListContext) child
                 );
                 mainExpression = new DynamicFunctionCallExpression(
                         mainExpression,
                         arguments,
                         createMetadataFromContext(ctx)
                 );
-            } else if (child instanceof XQueryParser.LookupContext){
+            } else if (child instanceof XQueryParser.LookupContext) {
                 // Treat it as objectLookup in JSONiq
 
                 XQueryParser.KeySpecifierContext key = ((XQueryParser.LookupContext) child).keySpecifier();
-                if (key.ncName() != null){
-                    Expression expr = new StringLiteralExpression(key.ncName().getText(), createMetadataFromContext(ctx));
+                if (key.ncName() != null) {
+                    Expression expr = new StringLiteralExpression(
+                            key.ncName().getText(),
+                            createMetadataFromContext(ctx)
+                    );
                     mainExpression = new ObjectLookupExpression(
                             mainExpression,
                             expr,
                             createMetadataFromContext(ctx)
                     );
-                }
-                else if (key.IntegerLiteral() != null){
-                    Expression expr = new IntegerLiteralExpression(key.IntegerLiteral().getText(), createMetadataFromContext(ctx));
+                } else if (key.IntegerLiteral() != null) {
+                    Expression expr = new IntegerLiteralExpression(
+                            key.IntegerLiteral().getText(),
+                            createMetadataFromContext(ctx)
+                    );
                     mainExpression = new ArrayLookupExpression(
                             mainExpression,
                             expr,
                             createMetadataFromContext(ctx)
                     );
-                }
-                else{
+                } else {
                     // TODO not in scope of thesis
-                    throw new XMLUnsupportedException("ParenthesizedExpr and STAR object lookup not supported yet", createMetadataFromContext(ctx));
+                    throw new XMLUnsupportedException(
+                            "ParenthesizedExpr and STAR object lookup not supported yet",
+                            createMetadataFromContext(ctx)
+                    );
                 }
-            }
-            else {
+            } else {
                 throw new OurBadException("Unrecognized postfix expression found.");
             }
         }
@@ -1017,7 +1029,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     public Node visitPrimaryExpr(XQueryParser.PrimaryExprContext ctx) {
         ParseTree child = ctx.children.get(0);
         // In JSONiq we had stringLiteral separated from LITERAL that could then be NumericLiteral | BooleanLiteral
-        if (child instanceof XQueryParser.LiteralContext){
+        if (child instanceof XQueryParser.LiteralContext) {
             if (((XQueryParser.LiteralContext) child).numericLiteral() != null)
                 return getLiteralExpressionFromToken(child.getText(), createMetadataFromContext(ctx));
             else {
@@ -1062,7 +1074,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (child instanceof XQueryParser.StringConstructorContext) {
             // TODO outside of the scope for thesis
-            throw new XMLUnsupportedException("StringConstructorContext not supported YET", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException(
+                    "StringConstructorContext not supported YET",
+                    createMetadataFromContext(ctx)
+            );
         }
         if (child instanceof XQueryParser.UnaryLookupContext) {
             return this.visitUnaryLookup((XQueryParser.UnaryLookupContext) child);
@@ -1095,7 +1110,12 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         for (XQueryParser.MapConstructorEntryContext currentPair : ctx.mapConstructorEntry()) {
             keys.add((Expression) this.visitExprSingle(currentPair.mapKey));
             // Wrapping value inside array
-            values.add(new ArrayConstructorExpression((Expression) this.visitExprSingle(currentPair.mapValue), createMetadataFromContext(ctx)));
+            values.add(
+                new ArrayConstructorExpression(
+                        (Expression) this.visitExprSingle(currentPair.mapValue),
+                        createMetadataFromContext(ctx)
+                )
+            );
         }
         return new ObjectConstructorExpression(keys, values, createMetadataFromContext(ctx));
     }
@@ -1113,50 +1133,61 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             }
 
             List<Expression> arrayConstructorExpressions = new ArrayList<>();
-            for (Expression expression : expressions){
-                arrayConstructorExpressions.add(new ArrayConstructorExpression(expression, createMetadataFromContext(ctx)));
+            for (Expression expression : expressions) {
+                arrayConstructorExpressions.add(
+                    new ArrayConstructorExpression(expression, createMetadataFromContext(ctx))
+                );
             }
 
             Expression content = new CommaExpression(arrayConstructorExpressions, createMetadataFromContext(ctx));
             return new ArrayConstructorExpression(content, createMetadataFromContext(ctx));
-        }
-        else {
+        } else {
             if (ctx.curlyArrayConstructor().enclosedExpression().expr() == null) {
                 return new ArrayConstructorExpression(createMetadataFromContext(ctx));
             }
             Expression content = (Expression) this.visitExpr(ctx.curlyArrayConstructor().enclosedExpression().expr());
             Expression rightExpression = new ArrayConstructorExpression(
-                    new ContextItemExpression(createMetadataFromContext(ctx)), createMetadataFromContext(ctx));
+                    new ContextItemExpression(createMetadataFromContext(ctx)),
+                    createMetadataFromContext(ctx)
+            );
 
-            Expression secondContent = new SimpleMapExpression(content, rightExpression, createMetadataFromContext(ctx));
+            Expression secondContent = new SimpleMapExpression(
+                    content,
+                    rightExpression,
+                    createMetadataFromContext(ctx)
+            );
             return new ArrayConstructorExpression(secondContent, createMetadataFromContext(ctx));
         }
     }
 
     @Override
-    public Node visitUnaryLookup(XQueryParser.UnaryLookupContext ctx){
+    public Node visitUnaryLookup(XQueryParser.UnaryLookupContext ctx) {
         // TODO maybe wrap as method, redundant from LookupContext in prefix
         Expression mainExpression = null;
         XQueryParser.KeySpecifierContext key = ctx.keySpecifier();
-        if (key.ncName() != null){
+        if (key.ncName() != null) {
             Expression expr = new StringLiteralExpression(key.ncName().getText(), createMetadataFromContext(ctx));
             mainExpression = new ObjectLookupExpression(
                     new ContextItemExpression(createMetadataFromContext(ctx)),
                     expr,
                     createMetadataFromContext(ctx)
             );
-        }
-        else if (key.IntegerLiteral() != null){
-            Expression expr = new IntegerLiteralExpression(key.IntegerLiteral().getText(), createMetadataFromContext(ctx));
+        } else if (key.IntegerLiteral() != null) {
+            Expression expr = new IntegerLiteralExpression(
+                    key.IntegerLiteral().getText(),
+                    createMetadataFromContext(ctx)
+            );
             mainExpression = new ArrayLookupExpression(
                     new ContextItemExpression(createMetadataFromContext(ctx)),
                     expr,
                     createMetadataFromContext(ctx)
             );
-        }
-        else{
+        } else {
             // TODO not in scope of thesis
-            throw new XMLUnsupportedException("ParenthesizedExpr and STAR object lookup not supported yet", createMetadataFromContext(ctx));
+            throw new XMLUnsupportedException(
+                    "ParenthesizedExpr and STAR object lookup not supported yet",
+                    createMetadataFromContext(ctx)
+            );
         }
         return mainExpression;
     }
@@ -1284,10 +1315,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         XQueryParser.InitialClauseContext initialClause = ctx.initialClause();
         if (initialClause.letClause() != null) {
             clause = (Clause) this.visitLetClause(initialClause.letClause());
-        } else if (initialClause.forClause() != null){
+        } else if (initialClause.forClause() != null) {
             clause = (Clause) this.visitForClause(initialClause.forClause());
-        }
-        else{
+        } else {
             // TODO outside of the scope for thesis
             throw new XMLUnsupportedException("windowClause not supported YET", createMetadataFromContext(ctx));
         }
@@ -1414,6 +1444,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
         return new LetClause(var, seq, expr, createMetadataFromContext(ctx));
     }
+
     @Override
     public Node visitWhereClause(XQueryParser.WhereClauseContext ctx) {
         Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
@@ -1557,7 +1588,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             Expression varExpression;
             SequenceType sequenceType = null;
             Name variableName = ((VariableReferenceExpression) this.visitVarName(
-                    currentVariable.varName()
+                currentVariable.varName()
             )).getVariableName();
             if (currentVariable.typeDeclaration() != null) {
                 sequenceType = this.processSequenceType(currentVariable.typeDeclaration().sequenceType());
@@ -1643,7 +1674,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             Name variableName = null;
             if (expr.var_ref != null) {
                 variableName = ((VariableReferenceExpression) this.visitVarName(
-                        expr.var_ref
+                    expr.var_ref
                 )).getVariableName();
             }
             if (expr.union != null && !expr.union.isEmpty()) {
@@ -1653,17 +1684,17 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             }
             Expression expression = (Expression) this.visitExprSingle(expr.ret);
             cases.add(
-                    new TypeswitchCase(
-                            variableName,
-                            union,
-                            expression
-                    )
+                new TypeswitchCase(
+                        variableName,
+                        union,
+                        expression
+                )
             );
         }
         Name defaultVariableName = null;
         if (ctx.var_ref != null) {
             defaultVariableName = ((VariableReferenceExpression) this.visitVarName(
-                    ctx.var_ref
+                ctx.var_ref
             )).getVariableName();
         }
         Expression defaultCase = (Expression) this.visitExprSingle(ctx.def);
@@ -1680,18 +1711,21 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitTryCatchExpr(XQueryParser.TryCatchExprContext ctx) {
-        Expression tryExpression = (Expression) this.visitExpr(ctx.tryClause()
-                .enclosedTryTargetExpression().enclosedExpression().expr());
+        Expression tryExpression = (Expression) this.visitExpr(
+            ctx.tryClause()
+                .enclosedTryTargetExpression()
+                .enclosedExpression()
+                .expr()
+        );
         Map<String, Expression> catchExpressions = new HashMap<>();
         Expression catchAllExpression = null;
         for (XQueryParser.CatchClauseContext catchCtx : ctx.catches) {
             Expression catchExpression = (Expression) this.visitExpr(catchCtx.enclosedExpression().expr());
             boolean doesCatchAll = false;
             for (XQueryParser.NameTestContext qnameCtx : catchCtx.catchErrorList().errors) {
-                if (qnameCtx.wildcard() != null){
+                if (qnameCtx.wildcard() != null) {
                     doesCatchAll = true;
-                }
-                else {
+                } else {
                     Name name = parseName(qnameCtx.eqName(), false);
                     if (!catchExpressions.containsKey(name.getLocalName())) {
                         catchExpressions.put(name.getLocalName(), catchExpression);

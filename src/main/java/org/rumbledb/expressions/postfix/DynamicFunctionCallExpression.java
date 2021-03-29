@@ -98,7 +98,7 @@ public class DynamicFunctionCallExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        mainExpression.serializeToJSONiq(sb,indent + 1);
+        mainExpression.serializeToJSONiq(sb, indent + 1);
 
         // TODO always ending with \n might be an issue here
         sb.append("(");

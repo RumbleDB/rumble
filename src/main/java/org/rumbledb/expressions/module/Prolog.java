@@ -85,7 +85,7 @@ public class Prolog extends Node {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
-        for (int i = 0; i < declarations.size(); i++){
+        for (int i = 0; i < declarations.size(); i++) {
             declarations.get(i).serializeToJSONiq(sb, indent);
             importedModules.get(i).serializeToJSONiq(sb, indent);
         }

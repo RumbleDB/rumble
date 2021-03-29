@@ -63,12 +63,11 @@ public class TypeSwitchExpression extends Expression {
             indentIt(sb, indent + 1);
             sb.append("case ($");
             sb.append(c.getVariableName().toString() + " as ");
-            for (int i = 0; i < c.getUnion().size(); i++){
+            for (int i = 0; i < c.getUnion().size(); i++) {
                 c.getUnion().get(i).toString();
-                if (i == c.getUnion().size() - 1){
+                if (i == c.getUnion().size() - 1) {
                     sb.append(") ");
-                }
-                else{
+                } else {
                     sb.append(" | ");
                 }
             }
@@ -82,12 +81,11 @@ public class TypeSwitchExpression extends Expression {
             // TODO seems somehow wrong, shouldve been Expression not the case
             sb.append("default ($");
             sb.append(defaultCase.getVariableName().toString() + " as ");
-            for (int i = 0; i < defaultCase.getUnion().size(); i++){
+            for (int i = 0; i < defaultCase.getUnion().size(); i++) {
                 defaultCase.getUnion().get(i).toString();
-                if (i == defaultCase.getUnion().size() - 1){
+                if (i == defaultCase.getUnion().size() - 1) {
                     sb.append(") ");
-                }
-                else{
+                } else {
                     sb.append(" | ");
                 }
             }

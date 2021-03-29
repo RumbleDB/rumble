@@ -81,13 +81,13 @@ public class ConditionalExpression extends Expression {
         indentIt(sb, indent + 1);
         sb.append("then (");
 
-        thenExpression.serializeToJSONiq(sb,0);
+        thenExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
 
         indentIt(sb, indent + 1);
         sb.append("else (");
 
-        elseExpression.serializeToJSONiq(sb,indent + 1);
+        elseExpression.serializeToJSONiq(sb, indent + 1);
         sb.append(")\n");
     }
 

@@ -81,8 +81,8 @@ public class Rumble {
      */
     public String serializeToJSONiq(String query) {
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
-                query,
-                this.configuration
+            query,
+            this.configuration
         );
         StringBuffer stringBuffer = new StringBuffer();
         mainModule.serializeToJSONiq(stringBuffer, 0);

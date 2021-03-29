@@ -87,7 +87,7 @@ public class UnaryExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        mainExpression.serializeToJSONiq(sb,indent + 1);
+        mainExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");

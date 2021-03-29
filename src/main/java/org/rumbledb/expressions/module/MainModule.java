@@ -74,8 +74,8 @@ public class MainModule extends Module {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
-        this.prolog.serializeToJSONiq(sb,indent);
-        this.expression.serializeToJSONiq(sb,indent);
+        this.prolog.serializeToJSONiq(sb, indent);
+        this.expression.serializeToJSONiq(sb, indent);
     }
 
     @Override

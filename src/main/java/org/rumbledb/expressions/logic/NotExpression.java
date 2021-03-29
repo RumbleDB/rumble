@@ -60,7 +60,7 @@ public class NotExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("not (");
-        mainExpression.serializeToJSONiq(sb,0);
+        mainExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
     }
 
