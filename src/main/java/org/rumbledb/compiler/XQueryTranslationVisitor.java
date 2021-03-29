@@ -378,7 +378,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
         if (ctx.functionParams() != null) {
             for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
-                paramName = parseName(param.qName(), false);
+                paramName = parseName(param.qName(), false, false);
                 paramType = MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
@@ -745,7 +745,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             else
                 return AtomicItemType.arrayItem;
         } else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
-            return AtomicItemType.getItemTypeByName(ctx.getText());
+            return AtomicItemType.getItemTypeByName(parseName(ctx.atomicOrUnionType().eqName().qName(), false, true));
         } else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
             return processItemType(((XQueryParser.ParenthesizedItemTestContext) child).itemType());
         } else {
@@ -786,7 +786,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             return SequenceType.EMPTY_SEQUENCE;
         }
 
-        ItemType itemType = AtomicItemType.getItemTypeByName(ctx.item.getText());
+        ItemType itemType = AtomicItemType.getItemTypeByName(
+            parseName(ctx.item.typeName().eqName().qName(), false, true)
+        );
         if (ctx.question.size() > 0) {
             return new SequenceType(
                     itemType,
@@ -845,7 +847,18 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (
             AtomicItemType.typeExists(name)
                 && children.size() == 1
-                && name.getNamespace().equals(Name.RUMBLE_NS)
+        ) {
+            return new CastExpression(
+                    children.get(0),
+                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (
+            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+                && children.size() == 1
+                && name.getNamespace() != null
+                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
                 && !name.getLocalName().equals("boolean")
         ) {
             return new CastExpression(
@@ -865,10 +878,10 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.qName() == null)
             throw new XMLUnsupportedException("URIQualifiedName not supported", createMetadataFromContext(ctx));
         XQueryParser.QNameContext newCtx = ctx.qName();
-        return parseName(newCtx, isFunction);
+        return parseName(newCtx, isFunction, false);
     }
 
-    public Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction) {
+    public Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction, boolean isType) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -886,7 +899,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInRumbleNamespace(localName);
+                name = Name.createVariableInDefaultFunctionNamespace(localName);
+            } else if (isType) {
+                name = Name.createVariableInDefaultTypeNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -1263,11 +1278,11 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.functionParams() != null) {
             for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
                 // TODO here we have qname instead eqName
-                paramName = parseName(param.name, false);
+                paramName = parseName(param.name, false, false);
                 paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
-                            Name.createVariableInRumbleNamespace("inline-function`"),
+                            Name.createVariableInDefaultFunctionNamespace("inline-function`"),
                             paramName,
                             createMetadataFromContext(param)
                     );
@@ -1628,13 +1643,13 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         Expression flworExpression = new FlworExpression(returnClause, createMetadataFromContext(ctx));
         if (!isUniversal) {
             return new FunctionCallExpression(
-                    Name.createVariableInRumbleNamespace("exists"),
+                    Name.createVariableInDefaultFunctionNamespace("exists"),
                     Collections.singletonList(flworExpression),
                     createMetadataFromContext(ctx)
             );
         } else {
             return new FunctionCallExpression(
-                    Name.createVariableInRumbleNamespace("empty"),
+                    Name.createVariableInDefaultFunctionNamespace("empty"),
                     Collections.singletonList(flworExpression),
                     createMetadataFromContext(ctx)
             );

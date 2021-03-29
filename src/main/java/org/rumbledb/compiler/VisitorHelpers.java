@@ -159,18 +159,10 @@ public class VisitorHelpers {
             URI uri,
             RumbleRuntimeConfiguration configuration
     ) {
-        StringBuffer sb = new StringBuffer();
-        sb.append((char) stream.LA(1));
-        sb.append((char) stream.LA(2));
-        sb.append((char) stream.LA(3));
-        sb.append((char) stream.LA(4));
-        sb.append((char) stream.LA(5));
-        sb.append((char) stream.LA(6));
-        // TODO PEEK!, do not read it, the first char of stream and then decide whether to instantiate XQUery or JSONiq
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration);
         try {
@@ -183,6 +175,9 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
+            if (configuration.doStaticAnalysis()) {
+                inferTypes(mainModule, configuration);
+            }
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -264,7 +259,7 @@ public class VisitorHelpers {
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri);
+        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
