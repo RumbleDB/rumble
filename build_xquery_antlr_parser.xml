@@ -14,7 +14,7 @@
   ~ See the License for the specific language governing permissions and
   ~ limitations under the License.
   ~
-  ~ Authors: Stefan Irimescu, Can Berker Cikis
+  ~ Authors: Stevan Mihajlovic
   ~
   -->
 
@@ -22,14 +22,16 @@
          basedir="."> <!-- "." here is evaluated to full path and set to basedir-->
 
     <!-- Set project properties. -->
-    <property name="antlr.jar" value="../../../../../../lib/antlr-4.7-complete.jar"/>
+    <property name="src.dir" value="./src/main/java/org/rumbledb"/>
+    <property name="parser.dir" value="${src.dir}/parser"/>
+    <property name="antlr.jar" value="/lib/antlr-4.7-complete.jar"/>
 
     <target name="clean-xquery-parser">
-        <delete file="./XQueryParser.tokens"/>
-        <delete file="./XQueryLexer.java"/>
-        <delete file="./XQueryParser.java"/>
-        <delete file="./XQueryParserBaseVisitor.java"/>
-        <delete file="./XQueryParserVisitor.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParser.tokens"/>
+        <delete file="/org/rumbledb/parser/XQueryLexer.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParser.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserVisitor.java"/>
 <!--        Never delete below file because we need it in original when executing generate-xquery-parser-->
 <!--        <delete file="/org/rumbledb/parser/XQueryLexer.tokens"/>-->
     </target>
@@ -38,7 +40,9 @@
         <echo message="ANTLR4 XQueryParser.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="./XQueryParser.g4"/>
+            <arg value="${parser.dir}/XQueryParser.g4"/>
+            <arg value="-lib"/>
+            <arg value="${parser.dir}"/>
             <arg value="-o"/>
             <arg value="."/>   <!-- put results in *.g4's directory -->
             <arg value="-no-listener"/>
@@ -50,7 +54,7 @@
         <echo message="ANTLR4 XQueryLexer.g4" level="info"/>
         <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
         <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
-            <arg value="./XQueryLexer.g4"/>
+            <arg value="${parser.dir}/XQueryLexer.g4"/>
             <arg value="-o"/>
             <!--             <arg value="${parser.dir}" />-->
             <arg value="."/>   <!-- put results in *.g4's directory -->
