@@ -158,13 +158,13 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             this.processNamespaceDecl(namespace);
         }
-        if(!ctx.defaultNamespaceDecl().isEmpty()) {
+        if (!ctx.defaultNamespaceDecl().isEmpty()) {
             throw new XMLUnsupportedException(
                     "defaultNamespaceDeclContext not supported YET",
                     createMetadataFromContext(ctx)
             );
         }
-        if(!ctx.schemaImport().isEmpty()) {
+        if (!ctx.schemaImport().isEmpty()) {
             throw new XMLUnsupportedException("schemaImport not supported", createMetadataFromContext(ctx));
         }
         List<XQueryParser.SetterContext> setters = ctx.setter();
@@ -1015,6 +1015,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                             expr,
                             createMetadataFromContext(ctx)
                     );
+                    mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
                 } else if (key.IntegerLiteral() != null) {
                     Expression expr = new IntegerLiteralExpression(
                             key.IntegerLiteral().getText(),
@@ -1025,6 +1026,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                             expr,
                             createMetadataFromContext(ctx)
                     );
+                    mainExpression = new ArrayUnboxingExpression(mainExpression, createMetadataFromContext(ctx));
                 } else {
                     // TODO not in scope of thesis
                     throw new XMLUnsupportedException(
