@@ -158,14 +158,13 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         for (XQueryParser.NamespaceDeclContext namespace : ctx.namespaceDecl()) {
             this.processNamespaceDecl(namespace);
         }
-        for (XQueryParser.DefaultNamespaceDeclContext defaultNamespaceDeclContext : ctx.defaultNamespaceDecl()) {
-            // TODO outside of the scope for thesis
+        if(!ctx.defaultNamespaceDecl().isEmpty()) {
             throw new XMLUnsupportedException(
                     "defaultNamespaceDeclContext not supported YET",
                     createMetadataFromContext(ctx)
             );
         }
-        for (XQueryParser.SchemaImportContext schemaImportContext : ctx.schemaImport()) {
+        if(!ctx.schemaImport().isEmpty()) {
             throw new XMLUnsupportedException("schemaImport not supported", createMetadataFromContext(ctx));
         }
         List<XQueryParser.SetterContext> setters = ctx.setter();
