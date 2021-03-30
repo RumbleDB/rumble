@@ -135,7 +135,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public String getIdentifierString() {
-        if(this.hasName()){
+        if (this.hasName()) {
             return this.name.toString();
         }
         StringBuilder sb = new StringBuilder();
@@ -143,16 +143,16 @@ public class ObjectItemType implements ItemType {
         sb.append(this.baseType.getIdentifierString());
         sb.append("}");
         sb.append(this.isClosed ? "-c" : "-nc");
-        if(this.content != null){
+        if (this.content != null) {
             sb.append("-content{");
             String comma = "";
-            for(FieldDescriptor fd : this.content.values()){
+            for (FieldDescriptor fd : this.content.values()) {
                 sb.append(comma);
                 sb.append(fd.getName());
                 sb.append(fd.isRequired() ? "(r):" : "(nr):");
                 sb.append(fd.getType().getIdentifierString());
                 Item dv = fd.getDefaultValue();
-                if(dv != null){
+                if (dv != null) {
                     sb.append("(def:");
                     sb.append(dv.serialize());
                     sb.append(")");
@@ -163,20 +163,20 @@ public class ObjectItemType implements ItemType {
             }
             sb.append("}");
         }
-        if(this.enumeration != null){
+        if (this.enumeration != null) {
             sb.append("-enum{");
             String comma = "";
-            for(Item item : this.enumeration){
+            for (Item item : this.enumeration) {
                 sb.append(comma);
                 sb.append(item.serialize());
                 comma = ",";
             }
             sb.append("}");
         }
-        if(this.constraints.size() > 0){
+        if (this.constraints.size() > 0) {
             sb.append("-const{");
             String comma = "";
-            for(String c : this.constraints){
+            for (String c : this.constraints) {
                 sb.append(comma);
                 sb.append("\"");
                 sb.append(c);
@@ -190,7 +190,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public String toString() {
-        if((new Name(Name.JS_NS, "js", "object")).equals(this.name)){
+        if ((new Name(Name.JS_NS, "js", "object")).equals(this.name)) {
             // generic object
             return this.name.toString();
         } else {
@@ -203,13 +203,13 @@ public class ObjectItemType implements ItemType {
             sb.append("\n");
 
             List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
-            if(fields.size() > 0){
-               sb.append("content facet:\n");
+            if (fields.size() > 0) {
+                sb.append("content facet:\n");
                 String comma = "";
-                for(FieldDescriptor field : fields){
+                for (FieldDescriptor field : fields) {
                     sb.append("  ");
                     sb.append(field.getName());
-                    if(field.isRequired()){
+                    if (field.isRequired()) {
                         sb.append(" (required)");
                     }
                     sb.append(" : ");

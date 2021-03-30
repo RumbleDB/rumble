@@ -302,7 +302,7 @@ public class DerivedAtomicItemType implements ItemType {
 
     @Override
     public String getIdentifierString() {
-        if(this.hasName()){
+        if (this.hasName()) {
             return this.name.toString();
         }
         StringBuilder sb = new StringBuilder();
@@ -310,55 +310,55 @@ public class DerivedAtomicItemType implements ItemType {
         sb.append(this.baseType.getIdentifierString());
         sb.append("}");
 
-        if(this.minLength != null){
+        if (this.minLength != null) {
             sb.append("-ml:");
             sb.append(this.minLength);
         }
-        if(this.length != null){
+        if (this.length != null) {
             sb.append("-l:");
             sb.append(this.length);
         }
-        if(this.maxLength != null){
+        if (this.maxLength != null) {
             sb.append("-Ml:");
             sb.append(this.maxLength);
         }
 
-        if(this.totalDigits != null){
+        if (this.totalDigits != null) {
             sb.append("-td:");
             sb.append(this.totalDigits);
         }
-        if(this.fractionDigits != null){
+        if (this.fractionDigits != null) {
             sb.append("-fd:");
             sb.append(this.fractionDigits);
         }
 
-        if(this.minInclusive != null){
+        if (this.minInclusive != null) {
             sb.append("-mi:");
             sb.append(this.minInclusive.serialize());
         }
-        if(this.minExclusive != null){
+        if (this.minExclusive != null) {
             sb.append("-me:");
             sb.append(this.minExclusive.serialize());
         }
-        if(this.maxInclusive != null){
+        if (this.maxInclusive != null) {
             sb.append("-Mi:");
             sb.append(this.maxInclusive.serialize());
         }
-        if(this.maxExclusive != null){
+        if (this.maxExclusive != null) {
             sb.append("-Me:");
             sb.append(this.maxExclusive.serialize());
         }
 
-        if(this.explicitTimezone != null){
+        if (this.explicitTimezone != null) {
             sb.append("-et:");
             sb.append(this.explicitTimezone.name());
         }
 
 
-        if(this.enumeration != null){
+        if (this.enumeration != null) {
             sb.append("-enum{");
             String comma = "";
-            for(Item item : this.enumeration){
+            for (Item item : this.enumeration) {
                 sb.append(comma);
                 sb.append(item.serialize());
                 comma = ",";
@@ -366,10 +366,10 @@ public class DerivedAtomicItemType implements ItemType {
             sb.append("}");
         }
 
-        if(this.constraints.size() > 0){
+        if (this.constraints.size() > 0) {
             sb.append("-const{");
             String comma = "";
-            for(String c : this.constraints){
+            for (String c : this.constraints) {
                 sb.append(comma);
                 sb.append("\"");
                 sb.append(c);

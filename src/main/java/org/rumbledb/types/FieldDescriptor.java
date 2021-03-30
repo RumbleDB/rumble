@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import java.util.Map;
 import org.rumbledb.api.Item;
 
 public class FieldDescriptor {

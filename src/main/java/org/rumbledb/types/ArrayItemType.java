@@ -124,22 +124,22 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public String getIdentifierString() {
-        if(this.hasName()){
+        if (this.hasName()) {
             return this.name.toString();
         }
         StringBuilder sb = new StringBuilder();
         sb.append("#anonymous-array-base{");
         sb.append(this.baseType.getIdentifierString());
         sb.append("}");
-        if(this.content != null){
+        if (this.content != null) {
             sb.append("-content{");
             sb.append(this.content.getType().getIdentifierString());
             sb.append("}");
         }
-        if(this.enumeration != null){
+        if (this.enumeration != null) {
             sb.append("-enum{");
             String comma = "";
-            for(Item item : this.enumeration){
+            for (Item item : this.enumeration) {
                 sb.append(comma);
                 sb.append(item.serialize());
                 comma = ",";

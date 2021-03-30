@@ -7,7 +7,6 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.parsing.ItemParser;
 
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -22,16 +21,17 @@ public class ItemTypeFactory {
 
     /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
+     * 
      * @param name of the new type (if null it is an anonymous type)
      * @param structType descriptor of the object
      * @return an object item type representing the type in Rumble
      */
-    public static ObjectItemType createItemTypeFromSparkStructType(String name, StructType structType){
+    public static ObjectItemType createItemTypeFromSparkStructType(String name, StructType structType) {
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
         Name objectName = name != null && !name.equals("") ? Name.createVariableInDefaultTypeNamespace(name) : null;
         Map<String, FieldDescriptor> content = new HashMap<>();
-        for (StructField field : structType.fields()){
+        for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
             ItemType mappedItemType;
             if (filedType instanceof StructType) {

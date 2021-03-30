@@ -311,18 +311,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     /**
      * For specific input functions we read the schema and annotate static type precisely
+     * 
      * @param expression function call expression to be annotated
      * @return true if we perform the annotation or false if it is not one of this specific cases
      */
-    private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext){
+    private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext) {
         List<Name> functionNameToAnnotate = Arrays.asList(
-                //Name.createVariableInDefaultFunctionNamespace("avro-file"),
-                Name.createVariableInDefaultFunctionNamespace("parquet-file")
+            // Name.createVariableInDefaultFunctionNamespace("avro-file"),
+            Name.createVariableInDefaultFunctionNamespace("parquet-file")
         );
         Name functionName = expression.getFunctionName();
         List<Expression> args = expression.getArguments();
 
-        if(functionNameToAnnotate.contains(functionName) && args.size() > 0 && args.get(0) instanceof StringLiteralExpression){
+        if (
+            functionNameToAnnotate.contains(functionName)
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
             String path = ((StringLiteralExpression) args.get(0)).getValue();
             URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
             if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
@@ -330,10 +335,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             try {
                 StructType s = SparkSessionManager.getInstance()
-                        .getOrCreateSession()
-                        .read()
-                        .parquet(uri.toString())
-                        .schema();
+                    .getOrCreateSession()
+                    .read()
+                    .parquet(uri.toString())
+                    .schema();
                 ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
                 System.out.println(schemaItemType.toString());
                 // TODO : check if arity is correct
@@ -384,7 +389,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         } else {
             // try annotate specific functions
-            if(!tryAnnotateSpecificFunctions(expression, argument)){
+            if (!tryAnnotateSpecificFunctions(expression, argument)) {
                 // we did not annotate a specific function, therefore we use default return type
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
@@ -1314,18 +1319,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         ItemType inferredType = BuiltinTypesCatalogue.item;
         // if we have a specific object type and a string literal as key try perform better inference
-        if(mainType.getItemType().isObjectItemType() && (expression.getLookupExpression() instanceof StringLiteralExpression)){
+        if (
+            mainType.getItemType().isObjectItemType()
+                && (expression.getLookupExpression() instanceof StringLiteralExpression)
+        ) {
             String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
             boolean isObjectClosed = mainType.getItemType().getClosedFacet();
             Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
-            if(objectSchema.containsKey(key)){
+            if (objectSchema.containsKey(key)) {
                 FieldDescriptor field = objectSchema.get(key);
                 inferredType = field.getType();
-                if(field.isRequired()){
-                    // if the field is required then any object will have it, so no need to include '0' arity if not present
+                if (field.isRequired()) {
+                    // if the field is required then any object will have it, so no need to include '0' arity if not
+                    // present
                     inferredArity = mainType.getArity();
                 }
-            } else if(isObjectClosed){
+            } else if (isObjectClosed) {
                 // if object is closed and key is not found then for sure we will return the empty sequence
                 throw new UnexpectedStaticTypeException(
                         "Inferred type is empty sequence and this is not a CommaExpression",

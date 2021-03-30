@@ -400,8 +400,8 @@ public interface ItemType extends Serializable {
      *
      * @return a String that uniquely identify an item type
      */
-    default String getIdentifierString(){
-        if(this.hasName()){
+    default String getIdentifierString() {
+        if (this.hasName()) {
             return this.getName().toString();
         }
         throw new UnsupportedOperationException("default implementation of uniqueString always requires a Name");
