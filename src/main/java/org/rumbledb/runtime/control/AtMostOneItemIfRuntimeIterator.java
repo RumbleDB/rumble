@@ -18,48 +18,43 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.control;
 
-import java.util.Collections;
+import java.util.Arrays;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
-public class NotOperationIterator extends AtMostOneItemLocalRuntimeIterator {
+public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
+
 
     private static final long serialVersionUID = 1L;
-    private final RuntimeIterator child;
 
-    public NotOperationIterator(
-            RuntimeIterator child,
+    public AtMostOneItemIfRuntimeIterator(
+            RuntimeIterator condition,
+            RuntimeIterator branch,
+            RuntimeIterator elseBranch,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(Collections.singletonList(child), executionMode, iteratorMetadata);
-        this.child = child;
+        super(Arrays.asList(condition, branch, elseBranch), executionMode, iteratorMetadata);
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        boolean effectiveBooleanValue = this.child.getEffectiveBooleanValue(dynamicContext);
-        return ItemFactory.getInstance().createBooleanItem(!(effectiveBooleanValue));
-    }
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        RuntimeIterator condition = this.children.get(0);
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
 
-    @Override
-    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
-        NativeClauseContext childResult = this.child.generateNativeQuery(nativeClauseContext);
-        if (childResult == NativeClauseContext.NoNativeQuery) {
-            return NativeClauseContext.NoNativeQuery;
+        if (effectiveBooleanValue) {
+            return this.children.get(1).materializeFirstItemOrNull(dynamicContext);
+        } else {
+            return this.children.get(2).materializeFirstItemOrNull(dynamicContext);
         }
-
-        String resultingQuery = "( NOT " + childResult.getResultingQuery() + " )";
-        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

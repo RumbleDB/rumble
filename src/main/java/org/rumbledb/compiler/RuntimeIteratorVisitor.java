@@ -83,9 +83,14 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
+import org.rumbledb.runtime.arithmetics.UnaryOperationIterator;
+import org.rumbledb.runtime.control.AtMostOneItemIfRuntimeIterator;
 import org.rumbledb.runtime.control.IfRuntimeIterator;
 import org.rumbledb.runtime.control.SwitchRuntimeIterator;
 import org.rumbledb.runtime.control.TypeswitchRuntimeIterator;
@@ -105,24 +110,21 @@ import org.rumbledb.runtime.functions.DynamicFunctionCallIterator;
 import org.rumbledb.runtime.functions.FunctionRuntimeIterator;
 import org.rumbledb.runtime.functions.NamedFunctionRefRuntimeIterator;
 import org.rumbledb.runtime.functions.StaticUserDefinedFunctionCallIterator;
-import org.rumbledb.runtime.operational.AdditiveOperationIterator;
-import org.rumbledb.runtime.operational.AndOperationIterator;
+import org.rumbledb.runtime.logics.AndOperationIterator;
+import org.rumbledb.runtime.logics.NotOperationIterator;
+import org.rumbledb.runtime.logics.OrOperationIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
+import org.rumbledb.runtime.misc.StringConcatIterator;
+import org.rumbledb.runtime.navigation.ArrayLookupIterator;
+import org.rumbledb.runtime.navigation.ArrayUnboxingIterator;
+import org.rumbledb.runtime.navigation.ObjectLookupIterator;
+import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.runtime.navigation.SequenceLookupIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.CastableIterator;
-import org.rumbledb.runtime.operational.ComparisonIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.runtime.operational.MultiplicativeOperationIterator;
-import org.rumbledb.runtime.operational.NotOperationIterator;
-import org.rumbledb.runtime.operational.OrOperationIterator;
-import org.rumbledb.runtime.operational.RangeOperationIterator;
-import org.rumbledb.runtime.operational.StringConcatIterator;
 import org.rumbledb.runtime.typing.TreatIterator;
-import org.rumbledb.runtime.operational.UnaryOperationIterator;
-import org.rumbledb.runtime.postfix.ArrayLookupIterator;
-import org.rumbledb.runtime.postfix.ArrayUnboxingIterator;
-import org.rumbledb.runtime.postfix.ObjectLookupIterator;
-import org.rumbledb.runtime.postfix.PredicateIterator;
-import org.rumbledb.runtime.postfix.SequenceLookupIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
@@ -880,13 +882,31 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
     // region control
     @Override
     public RuntimeIterator visitConditionalExpression(ConditionalExpression expression, RuntimeIterator argument) {
-        RuntimeIterator runtimeIterator = new IfRuntimeIterator(
-                this.visit(expression.getCondition(), argument),
-                this.visit(expression.getBranch(), argument),
-                this.visit(expression.getElseBranch(), argument),
-                expression.getHighestExecutionMode(this.visitorConfig),
-                expression.getMetadata()
-        );
+        RuntimeIterator conditionIterator = this.visit(expression.getCondition(), argument);
+        RuntimeIterator thenIterator = this.visit(expression.getBranch(), argument);
+        RuntimeIterator elseIterator = this.visit(expression.getElseBranch(), argument);
+        RuntimeIterator runtimeIterator = null;
+        if (
+            thenIterator instanceof AtMostOneItemLocalRuntimeIterator
+                &&
+                elseIterator instanceof AtMostOneItemLocalRuntimeIterator
+        ) {
+            runtimeIterator = new AtMostOneItemIfRuntimeIterator(
+                    conditionIterator,
+                    thenIterator,
+                    elseIterator,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        } else {
+            runtimeIterator = new IfRuntimeIterator(
+                    conditionIterator,
+                    thenIterator,
+                    elseIterator,
+                    expression.getHighestExecutionMode(this.visitorConfig),
+                    expression.getMetadata()
+            );
+        }
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
     }

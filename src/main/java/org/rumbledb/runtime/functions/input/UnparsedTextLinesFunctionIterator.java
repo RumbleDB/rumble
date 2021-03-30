@@ -32,7 +32,12 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.util.ArrayList;
 import java.util.List;
 
 public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
@@ -50,7 +55,6 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        JavaRDD<String> strings;
         RuntimeIterator urlIterator = this.children.get(0);
         Item url = urlIterator.materializeFirstItemOrNull(context);
         if (url == null) {
@@ -59,24 +63,60 @@ public class UnparsedTextLinesFunctionIterator extends RDDRuntimeIterator {
                 .emptyRDD();
         }
         URI uri = FileSystemUtil.resolveURI(this.staticURI, url.getStringValue(), getMetadata());
-        if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
-            throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+        int partitions = -1;
+        if (this.children.size() > 1) {
+            partitions = this.children.get(1).materializeFirstItemOrNull(context).getIntValue();
         }
 
-        if (this.children.size() == 1) {
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(uri.toString(), MIN_PARTITIONS);
+        JavaRDD<String> strings;
+        if (uri.getScheme().equals("http") || uri.getScheme().equals("https")) {
+            InputStream is = FileSystemUtil.getDataInputStream(
+                uri,
+                context.getRumbleRuntimeConfiguration(),
+                getMetadata()
+            );
+            BufferedReader br = new BufferedReader(new InputStreamReader(is));
+            List<String> lines = new ArrayList<>();
+            String line = null;
+            try {
+                while ((line = br.readLine()) != null) {
+                    lines.add(line);
+                }
+            } catch (IOException e) {
+                throw new CannotRetrieveResourceException("Cannot read " + uri, getMetadata());
+            }
+            if (partitions == -1) {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .parallelize(lines);
+            } else {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .parallelize(
+                        lines,
+                        partitions
+                    );
+            }
         } else {
-            RuntimeIterator partitionsIterator = this.children.get(1);
-            partitionsIterator.open(this.currentDynamicContextForLocalExecution);
-            strings = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .textFile(
-                    uri.toString(),
-                    partitionsIterator.next().getIntValue()
-                );
-            partitionsIterator.close();
+            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+            }
+
+            if (this.children.size() == 1) {
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(uri.toString(), MIN_PARTITIONS);
+            } else {
+                RuntimeIterator partitionsIterator = this.children.get(1);
+                partitionsIterator.open(this.currentDynamicContextForLocalExecution);
+                strings = SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .textFile(
+                        uri.toString(),
+                        partitionsIterator.next().getIntValue()
+                    );
+                partitionsIterator.close();
+            }
         }
         return strings.mapPartitions(new StringToStringItemMapper());
     }

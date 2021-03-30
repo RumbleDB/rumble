@@ -1,7 +1,7 @@
 package iq;
 
-import iq.base.AnnotationsTestsBase;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import iq.base.AnnotationsTestsBase;
 import scala.util.Properties;
 
 import org.apache.spark.SparkConf;
@@ -25,7 +25,7 @@ import java.util.List;
 public class StaticTypeTests extends AnnotationsTestsBase {
 
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes", "--static-analysis", "yes" }
+            new String[] { "--print-iterator-tree", "yes", "--static-typing", "yes" }
     );
 
     public static final File staticTypeTestsDirectory = new File(
@@ -91,7 +91,7 @@ public class StaticTypeTests extends AnnotationsTestsBase {
             String expectedOutput,
             SequenceOfItems sequence
     ) {
-        // TODO: Should i get actual output even if i do not need it?
+        @SuppressWarnings("unused")
         String actualOutput;
         if (!sequence.availableAsRDD()) {
             actualOutput = runIterators(sequence);

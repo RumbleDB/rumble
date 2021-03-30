@@ -6,7 +6,10 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.*;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
-import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.*;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -35,6 +38,8 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
+import org.rumbledb.types.*;
+import org.rumbledb.types.AtomicItemType;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -43,6 +48,7 @@ import java.util.stream.Collectors;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
+    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
@@ -508,7 +514,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
         SequenceType expected = expression.getSequenceType();
         if (!inferred.equals(expected)) {
-            throw new IsStaticallyUnexpectedType(
+            throw new IsStaticallyUnexpectedTypeException(
                     "expected static type is " + expected + " instead " + inferred + " was inferred"
             );
         }

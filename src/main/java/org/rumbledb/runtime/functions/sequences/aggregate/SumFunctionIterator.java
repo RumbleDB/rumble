@@ -34,8 +34,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.runtime.operational.AdditiveOperationIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.spark.SparkSessionManager;

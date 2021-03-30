@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.operational;
+package org.rumbledb.runtime.misc;
 
 import java.util.Arrays;
 

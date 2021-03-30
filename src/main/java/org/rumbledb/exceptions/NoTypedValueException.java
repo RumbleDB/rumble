@@ -18,39 +18,16 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
 
-import org.apache.spark.api.java.function.FlatMapFunction;
-import org.rumbledb.api.Item;
+package org.rumbledb.exceptions;
 
-import java.util.ArrayList;
-import java.util.Iterator;
-import java.util.List;
+import org.rumbledb.errorcodes.ErrorCode;
 
-public class ArrayLookupClosure implements FlatMapFunction<Item, Item> {
+public class NoTypedValueException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
-    private final Integer lookup;
 
-    public ArrayLookupClosure(Integer lookup) {
-        this.lookup = lookup;
+    public NoTypedValueException(String message, ExceptionMetadata expressionMetadata) {
+        super(message, ErrorCode.NoTypedValueErrorCode, expressionMetadata);
     }
-
-    public Iterator<Item> call(Item arg0) throws Exception {
-        List<Item> results = new ArrayList<Item>();
-
-        if (!(arg0.isArray())) {
-            return results.iterator();
-        }
-
-        if (this.lookup <= 0 || this.lookup > arg0.getSize()) {
-            return results.iterator();
-        }
-
-        Item item = arg0.getItemAt(this.lookup - 1);
-        if (item != null) {
-            results.add(item);
-        }
-        return results.iterator();
-    }
-};
+}

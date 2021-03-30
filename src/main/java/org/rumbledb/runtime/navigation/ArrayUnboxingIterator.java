@@ -18,7 +18,7 @@
  *
  */
 
-package org.rumbledb.runtime.postfix;
+package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
@@ -30,9 +30,10 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.*;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -41,40 +42,48 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
-import java.util.Map;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Queue;
 
-public class ArrayLookupIterator extends HybridRuntimeIterator {
-
+public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private int lookup;
-    private Item nextResult;
+    private Queue<Item> nextResults; // queue that holds the results created by the current item in inspection
 
-    public ArrayLookupIterator(
-            RuntimeIterator array,
-            RuntimeIterator iterator,
+    public ArrayUnboxingIterator(
+            RuntimeIterator arrayIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(Arrays.asList(array, iterator), executionMode, iteratorMetadata);
-        this.iterator = array;
+        super(Arrays.asList(arrayIterator), executionMode, iteratorMetadata);
+        this.iterator = arrayIterator;
+    }
+
+    @Override
+    public void openLocal() {
+        this.iterator.open(this.currentDynamicContextForLocalExecution);
+        this.nextResults = new LinkedList<>();
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
     }
 
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            Item result = this.nextResult; // save the result to be returned
-            setNextResult(); // calculate and store the next result
+            Item result = this.nextResults.remove(); // save the result to be returned
+            if (this.nextResults.isEmpty()) {
+                // if there are no more results left in the queue, trigger calculation for the next result
+                setNextResult();
+            }
             return result;
         }
-        throw new IteratorFlowException("Invalid next call in Array Lookup", getMetadata());
-    }
-
-
-    @Override
-    protected boolean hasNextLocal() {
-        return this.hasNext;
+        throw new IteratorFlowException("Invalid next call in Array Unboxing", getMetadata());
     }
 
     @Override
@@ -88,55 +97,19 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         this.iterator.close();
     }
 
-    private void initLookupPosition(DynamicContext context) {
-        RuntimeIterator lookupIterator = this.children.get(1);
-
-        try {
-            Item lookupExpression = lookupIterator.materializeExactlyOneItem(context);
-            if (!lookupExpression.isNumeric()) {
-                throw new UnexpectedTypeException(
-                        "Type error; Non numeric array lookup for : "
-                            + lookupExpression.serialize(),
-                        getMetadata()
-                );
-            }
-            this.lookup = lookupExpression.castToIntValue();
-        } catch (NoItemException e) {
-            throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with no key.",
-                    getMetadata()
-            );
-        } catch (MoreThanOneItemException e) {
-            throw new InvalidSelectorException(
-                    "Invalid Lookup Key; Array lookup can't be performed with multiple keys.",
-                    getMetadata()
-            );
-        }
-    }
-
-    @Override
-    public void openLocal() {
-        initLookupPosition(this.currentDynamicContextForLocalExecution);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        setNextResult();
-    }
-
-    public void setNextResult() {
-        this.nextResult = null;
-
+    private void setNextResult() {
         while (this.iterator.hasNext()) {
             Item item = this.iterator.next();
             if (item.isArray()) {
-                if (this.lookup > 0 && this.lookup <= item.getSize()) {
-                    // -1 for Jsoniq convention, arrays start from 1
-                    Item result = item.getItemAt(this.lookup - 1);
-                    this.nextResult = result;
+                // if array is not empty, set the first item as the result
+                if (0 < item.getSize()) {
+                    this.nextResults.addAll(item.getItems());
                     break;
                 }
             }
         }
 
-        if (this.nextResult == null) {
+        if (this.nextResults.isEmpty()) {
             this.hasNext = false;
             this.iterator.close();
         } else {
@@ -147,9 +120,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
         JavaRDD<Item> childRDD = this.children.get(0).getRDD(dynamicContext);
-        initLookupPosition(dynamicContext);
-        FlatMapFunction<Item, Item> transformation = new ArrayLookupClosure(this.lookup);
-
+        FlatMapFunction<Item, Item> transformation = new ArrayUnboxingClosure();
         JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
         return resultRDD;
     }
@@ -161,46 +132,43 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR) {
+            // unboxing only available for the FOR clause
+            return NativeClauseContext.NoNativeQuery;
+        }
         NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
         if (newContext != NativeClauseContext.NoNativeQuery) {
-            // check if the key has variable dependencies inside the FLWOR expression
-            // in that case we switch over to UDF
-            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
-                .getVariableDependencies();
-            // we use nativeClauseContext that contains the top level schema
-            DataType schema = nativeClauseContext.getSchema();
-            StructType structSchema;
-            if (schema instanceof StructType) {
-                structSchema = (StructType) schema;
-                if (
-                    Arrays.stream(structSchema.fieldNames())
-                        .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
-                ) {
-                    return NativeClauseContext.NoNativeQuery;
-                }
-            }
-
-            initLookupPosition(newContext.getContext());
-
-            schema = newContext.getSchema();
+            DataType schema = newContext.getSchema();
             if (!(schema instanceof ArrayType)) {
+                // let control to UDF when what we are unboxing is not an array
                 return NativeClauseContext.NoNativeQuery;
             }
             ArrayType arraySchema = (ArrayType) schema;
             newContext.setSchema(arraySchema.elementType());
             newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(arraySchema.elementType()));
-            newContext.setResultingQuery(newContext.getResultingQuery() + "[" + (this.lookup - 1) + "]");
+            List<String> lateralViewPart = newContext.getLateralViewPart();
+            if (lateralViewPart.size() == 0) {
+                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+            } else {
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+                // previous
+                lateralViewPart.add(
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+                );
+            }
+            newContext.setResultingQuery(""); // dealt by for clause
         }
         return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        initLookupPosition(context);
         childDataFrame.createOrReplaceTempView("array");
         StructType schema = childDataFrame.schema();
         String[] fieldNames = schema.fieldNames();
-        if (Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (
+            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
+        ) {
             int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
             StructField field = schema.fields()[i];
             DataType type = field.dataType();
@@ -211,25 +179,19 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
                     return childDataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
+                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
                                 SparkSessionManager.atomicJSONiqItemColumnName,
                                 SparkSessionManager.atomicJSONiqItemColumnName,
-                                Integer.toString(this.lookup - 1),
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                Integer.toString(this.lookup)
+                                SparkSessionManager.atomicJSONiqItemColumnName
                             )
                         );
                 }
                 return childDataFrame.sparkSession()
                     .sql(
                         String.format(
-                            "SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s",
+                            "SELECT explode(`%s`) AS `%s` FROM array",
                             SparkSessionManager.atomicJSONiqItemColumnName,
-                            Integer.toString(this.lookup - 1),
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            Integer.toString(this.lookup)
+                            SparkSessionManager.atomicJSONiqItemColumnName
                         )
                     );
             }
