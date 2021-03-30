@@ -282,11 +282,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        StaticContext context = this.visit(clause.getChildClause(), argument);
+        StaticContext context = argument;
+        if (clause.getChildClause() != null) {
+            context = this.visit(clause.getChildClause(), argument);
+        }
         this.visit(clause.getExpression(), context);
+        StaticContext result = new StaticContext(context);
+
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(context);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
