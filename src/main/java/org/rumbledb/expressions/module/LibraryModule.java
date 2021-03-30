@@ -86,8 +86,8 @@ public class LibraryModule extends Module {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("module namespace " + namespace + ";\n");
-        prolog.serializeToJSONiq(sb, indent);
+        sb.append("module namespace " + this.namespace + ";\n");
+        this.prolog.serializeToJSONiq(sb, indent);
     }
 }
 

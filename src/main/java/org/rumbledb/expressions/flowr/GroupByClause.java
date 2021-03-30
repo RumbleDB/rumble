@@ -93,7 +93,7 @@ public class GroupByClause extends Clause {
         indentIt(sb, indent);
         sb.append("group by ");
         int i = 0;
-        for (GroupByVariableDeclaration groupby : variables) {
+        for (GroupByVariableDeclaration groupby : this.variables) {
             sb.append("$" + groupby.variableName.toString());
             if (groupby.sequenceType != null)
                 sb.append(" as " + groupby.sequenceType.toString());
@@ -102,7 +102,7 @@ public class GroupByClause extends Clause {
                 groupby.expression.serializeToJSONiq(sb, 0);
                 sb.append(")");
             }
-            if (i == variables.size() - 1) {
+            if (i == this.variables.size() - 1) {
                 sb.append("\n");
             } else {
                 sb.append(", ");

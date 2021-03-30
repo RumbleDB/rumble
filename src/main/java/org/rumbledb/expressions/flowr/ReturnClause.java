@@ -74,7 +74,7 @@ public class ReturnClause extends Clause {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("return ");
-        returnExpr.serializeToJSONiq(sb, 0);
+        this.returnExpr.serializeToJSONiq(sb, 0);
     }
 
     @Override

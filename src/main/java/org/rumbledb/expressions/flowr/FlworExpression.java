@@ -67,7 +67,7 @@ public class FlworExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        returnClause.serializeToJSONiq(sb, 0);
+        this.returnClause.serializeToJSONiq(sb, 0);
         sb.append("\n");
     }
 

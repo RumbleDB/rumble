@@ -80,7 +80,7 @@ public class UnaryExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        if (negated)
+        if (this.negated)
             sb.append("-");
         else
             sb.append("+");
@@ -88,7 +88,7 @@ public class UnaryExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        mainExpression.serializeToJSONiq(sb, indent + 1);
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");

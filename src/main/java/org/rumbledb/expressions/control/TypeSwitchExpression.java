@@ -57,7 +57,7 @@ public class TypeSwitchExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("typeswitch (");
-        testCondition.serializeToJSONiq(sb, 0);
+        this.testCondition.serializeToJSONiq(sb, 0);
         sb.append(")\n");
         for (TypeswitchCase c : this.cases) {
             indentIt(sb, indent + 1);
@@ -76,14 +76,14 @@ public class TypeSwitchExpression extends Expression {
             sb.append(")\n");
         }
 
-        if (defaultCase != null) {
+        if (this.defaultCase != null) {
             indentIt(sb, indent + 1);
             // TODO seems somehow wrong, shouldve been Expression not the case
             sb.append("default ($");
-            sb.append(defaultCase.getVariableName().toString() + " as ");
-            for (int i = 0; i < defaultCase.getUnion().size(); i++) {
-                defaultCase.getUnion().get(i).toString();
-                if (i == defaultCase.getUnion().size() - 1) {
+            sb.append(this.defaultCase.getVariableName().toString() + " as ");
+            for (int i = 0; i < this.defaultCase.getUnion().size(); i++) {
+                this.defaultCase.getUnion().get(i).toString();
+                if (i == this.defaultCase.getUnion().size() - 1) {
                     sb.append(") ");
                 } else {
                     sb.append(" | ");
@@ -92,7 +92,7 @@ public class TypeSwitchExpression extends Expression {
             sb.append(")\n");
 
             sb.append("return (");
-            defaultCase.getReturnExpression().serializeToJSONiq(sb, 0);
+            this.defaultCase.getReturnExpression().serializeToJSONiq(sb, 0);
             sb.append(")\n");
         }
     }

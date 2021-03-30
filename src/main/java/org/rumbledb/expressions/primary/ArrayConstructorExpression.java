@@ -60,7 +60,7 @@ public class ArrayConstructorExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("[");
-        expression.serializeToJSONiq(sb, 0);
+        this.expression.serializeToJSONiq(sb, 0);
         sb.append("]\n");
     }
 

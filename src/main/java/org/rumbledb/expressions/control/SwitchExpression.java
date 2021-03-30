@@ -76,7 +76,7 @@ public class SwitchExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("switch (");
-        testCondition.serializeToJSONiq(sb, 0);
+        this.testCondition.serializeToJSONiq(sb, 0);
         sb.append(")\n");
         for (SwitchCase c : this.cases) {
             indentIt(sb, indent + 1);
@@ -94,10 +94,10 @@ public class SwitchExpression extends Expression {
             sb.append(")\n");
         }
 
-        if (defaultExpression != null) {
+        if (this.defaultExpression != null) {
             indentIt(sb, indent + 1);
             sb.append("default return (");
-            defaultExpression.serializeToJSONiq(sb, 0);
+            this.defaultExpression.serializeToJSONiq(sb, 0);
             sb.append(")\n");
         }
     }

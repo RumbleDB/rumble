@@ -70,6 +70,6 @@ public class StringLiteralExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("\"" + value + "\"\n");
+        sb.append("\"" + this.value + "\"\n");
     }
 }

@@ -87,13 +87,13 @@ public class TryCatchExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("try {\n");
-        tryExpression.serializeToJSONiq(sb, indent + 1);
+        this.tryExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append("}\n");
 
-        if (catchExpressions != null) {
-            for (Map.Entry<String, Expression> entry : catchExpressions.entrySet()) {
+        if (this.catchExpressions != null) {
+            for (Map.Entry<String, Expression> entry : this.catchExpressions.entrySet()) {
                 indentIt(sb, indent);
                 sb.append("catch " + entry.getKey() + " {\n");
                 entry.getValue().serializeToJSONiq(sb, indent + 1);
@@ -102,10 +102,10 @@ public class TryCatchExpression extends Expression {
             }
         }
 
-        if (catchAllExpression != null) {
+        if (this.catchAllExpression != null) {
             indentIt(sb, indent);
             sb.append("catch * {\n");
-            catchAllExpression.serializeToJSONiq(sb, indent + 1);
+            this.catchAllExpression.serializeToJSONiq(sb, indent + 1);
             indentIt(sb, indent);
             sb.append("}\n");
         }

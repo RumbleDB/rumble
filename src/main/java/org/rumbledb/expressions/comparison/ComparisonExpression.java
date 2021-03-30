@@ -163,18 +163,18 @@ public class ComparisonExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        leftExpression.serializeToJSONiq(sb, indent + 1);
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");
 
         indentIt(sb, indent);
-        sb.append(comparisonOperator.toString() + "\n");
+        sb.append(this.comparisonOperator.toString() + "\n");
 
         indentIt(sb, indent);
         sb.append("(\n");
 
-        rightExpression.serializeToJSONiq(sb, indent + 1);
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");

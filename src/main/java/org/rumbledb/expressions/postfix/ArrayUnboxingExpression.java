@@ -59,7 +59,7 @@ public class ArrayUnboxingExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("(");
-        mainExpression.serializeToJSONiq(sb, 0);
+        this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
     }
 

@@ -60,7 +60,7 @@ public class WhereClause extends Clause {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("where (");
-        whereExpression.serializeToJSONiq(sb, 0);
+        this.whereExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
 
     }

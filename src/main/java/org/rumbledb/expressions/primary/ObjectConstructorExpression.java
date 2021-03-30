@@ -78,21 +78,21 @@ public class ObjectConstructorExpression extends Expression {
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
-        if (isMergedConstructor) {
+        if (this.isMergedConstructor) {
             indentIt(sb, indent);
             sb.append("{| ");
-            childExpression.serializeToJSONiq(sb, 0);
+            this.childExpression.serializeToJSONiq(sb, 0);
             sb.append(" |}\n");
         } else {
             indentIt(sb, indent);
             sb.append("{\n");
-            if (keys != null) {
-                for (int i = 0; i < keys.size(); i++) {
+            if (this.keys != null) {
+                for (int i = 0; i < this.keys.size(); i++) {
                     // TODO ending always with \n might cause issues here
-                    keys.get(i).serializeToJSONiq(sb, indent + 1);
+                    this.keys.get(i).serializeToJSONiq(sb, indent + 1);
                     sb.append(" : ");
-                    values.get(i).serializeToJSONiq(sb, 0);
-                    if (i == keys.size() - 1) {
+                    this.values.get(i).serializeToJSONiq(sb, 0);
+                    if (i == this.keys.size() - 1) {
                         sb.append("\n");
                     } else {
                         sb.append(",\n");

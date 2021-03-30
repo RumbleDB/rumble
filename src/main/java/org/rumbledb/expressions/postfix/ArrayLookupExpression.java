@@ -56,9 +56,9 @@ public class ArrayLookupExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        mainExpression.serializeToJSONiq(sb, 0);
+        this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append("[[");
-        lookupExpression.serializeToJSONiq(sb, 0);
+        this.lookupExpression.serializeToJSONiq(sb, 0);
         sb.append("]]\n");
     }
 

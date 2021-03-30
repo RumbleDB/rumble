@@ -150,15 +150,15 @@ public class ForClause extends Clause {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("for $" + variableName.toString());
-        if (sequenceType != null)
-            sb.append(" as " + sequenceType.toString());
-        if (allowingEmpty)
+        sb.append("for $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.allowingEmpty)
             sb.append(" allowing empty ");
-        if (positionalVariableName != null)
-            sb.append(" at $" + positionalVariableName.toString());
+        if (this.positionalVariableName != null)
+            sb.append(" at $" + this.positionalVariableName.toString());
         sb.append(" in (");
-        expression.serializeToJSONiq(sb, 0);
+        this.expression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
     }
 }

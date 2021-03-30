@@ -88,7 +88,7 @@ public class FunctionDeclaration extends Node {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        functionExpression.serializeToJSONiq(sb, 0);
+        this.functionExpression.serializeToJSONiq(sb, 0);
     }
 }
 

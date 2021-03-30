@@ -194,10 +194,10 @@ public class FunctionCallExpression extends Expression {
 
         // TODO check if i need to ignore () when I have arity??
         sb.append("(");
-        if (arguments != null) {
-            for (int i = 0; i < arguments.size(); i++) {
-                arguments.get(i).serializeToJSONiq(sb, 0);
-                if (i == arguments.size() - 1) {
+        if (this.arguments != null) {
+            for (int i = 0; i < this.arguments.size(); i++) {
+                this.arguments.get(i).serializeToJSONiq(sb, 0);
+                if (i == this.arguments.size() - 1) {
                     sb.append(") ");
                 } else {
                     sb.append(", ");

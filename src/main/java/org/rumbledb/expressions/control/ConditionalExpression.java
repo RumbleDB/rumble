@@ -75,19 +75,19 @@ public class ConditionalExpression extends Expression {
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
         sb.append("if (");
-        conditionExpression.serializeToJSONiq(sb, 0);
+        this.conditionExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
 
         indentIt(sb, indent + 1);
         sb.append("then (");
 
-        thenExpression.serializeToJSONiq(sb, 0);
+        this.thenExpression.serializeToJSONiq(sb, 0);
         sb.append(")\n");
 
         indentIt(sb, indent + 1);
         sb.append("else (");
 
-        elseExpression.serializeToJSONiq(sb, indent + 1);
+        this.elseExpression.serializeToJSONiq(sb, indent + 1);
         sb.append(")\n");
     }
 

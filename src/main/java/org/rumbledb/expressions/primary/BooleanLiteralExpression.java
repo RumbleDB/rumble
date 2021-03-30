@@ -69,7 +69,7 @@ public class BooleanLiteralExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        if (value)
+        if (this.value)
             sb.append("true\n");
         else
             sb.append("false\n");

@@ -134,14 +134,14 @@ public class VariableDeclaration extends Node {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("declare variable $" + variableName);
-        if (sequenceType != null)
-            sb.append(" as " + sequenceType.toString());
-        if (external)
+        sb.append("declare variable $" + this.variableName);
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.external)
             sb.append(" external\n");
         else {
             sb.append(" ");
-            expression.serializeToJSONiq(sb, 0);
+            this.expression.serializeToJSONiq(sb, 0);
             sb.append("\n");
         }
     }

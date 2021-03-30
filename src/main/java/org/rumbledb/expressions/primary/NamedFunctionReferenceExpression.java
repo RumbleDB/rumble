@@ -67,6 +67,6 @@ public class NamedFunctionReferenceExpression extends Expression {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append(identifier.toString() + "\n");
+        sb.append(this.identifier.toString() + "\n");
     }
 }

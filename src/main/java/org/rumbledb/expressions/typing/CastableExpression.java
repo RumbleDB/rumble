@@ -67,7 +67,7 @@ public class CastableExpression extends Expression {
         indentIt(sb, indent);
         sb.append("(\n");
 
-        mainExpression.serializeToJSONiq(sb, indent + 1);
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
 
         indentIt(sb, indent);
         sb.append(")\n");
@@ -79,7 +79,7 @@ public class CastableExpression extends Expression {
         sb.append("(\n");
 
         indentIt(sb, indent);
-        sequenceType.toString();
+        this.sequenceType.toString();
         sb.append("\n");
 
         indentIt(sb, indent);
