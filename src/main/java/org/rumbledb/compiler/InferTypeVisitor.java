@@ -39,7 +39,6 @@ import sparksoniq.spark.SparkSessionManager;
 
 import java.net.URI;
 import org.rumbledb.types.*;
-import org.rumbledb.types.AtomicItemType;
 import java.util.*;
 import java.util.stream.Collectors;
 
