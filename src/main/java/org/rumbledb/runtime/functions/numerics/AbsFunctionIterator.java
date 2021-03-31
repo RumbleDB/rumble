@@ -46,32 +46,25 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item value = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        if(value == null)
-        {
+        if (value == null) {
             return null;
         }
-        if(value.isDouble())
-        {
+        if (value.isDouble()) {
             return ItemFactory.getInstance().createDoubleItem(Math.abs(value.getDoubleValue()));
         }
-        if(value.isFloat())
-        {
+        if (value.isFloat()) {
             return ItemFactory.getInstance().createFloatItem(Math.abs(value.getFloatValue()));
         }
-        if(value.isInt())
-        {
-            if(value.getIntValue() >= 0)
-            {
+        if (value.isInt()) {
+            if (value.getIntValue() >= 0) {
                 return value;
             }
             return ItemFactory.getInstance().createIntItem(-value.getIntValue());
         }
-        if(value.isInteger())
-        {
+        if (value.isInteger()) {
             return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue().abs());
         }
-        if(value.isDecimal())
-        {
+        if (value.isDecimal()) {
             return ItemFactory.getInstance().createDecimalItem(value.getDecimalValue().abs());
         }
         throw new OurBadException("Numeric value expected in abs()");
