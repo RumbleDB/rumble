@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "id" : 1, "name" : "a", "isAlien" : null, "isAlive" : true }, { "id" : 2, "name" : "a", "isAlien" : null, "isAlive" : true }, { "id" : 3, "name" : "a", "isAlien" : null, "isAlive" : true })" :)
+(:JIQS: ShouldRun; Output="({ "id" : 1, "name" : "a", "isAlive" : true }, { "id" : 2, "name" : "a", "isAlive" : true }, { "id" : 3, "name" : "a", "isAlive" : true })" :)
 annotate(
     (
         {"id": 1, "name": "a", "isAlien": null, "isAlive": true},
