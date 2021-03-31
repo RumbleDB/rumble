@@ -135,7 +135,10 @@ public class ItemParser implements Serializable {
             String fieldName = field.name();
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
             // NULL values in DataFrames are mapped to absent in JSONiq.
-            if (!newItem.isNull() || fieldType.equals(DataTypes.NullType)) {
+            if (
+                !fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                    && (!newItem.isNull() || fieldType.equals(DataTypes.NullType))
+            ) {
                 keys.add(fieldName);
                 values.add(newItem);
             }
