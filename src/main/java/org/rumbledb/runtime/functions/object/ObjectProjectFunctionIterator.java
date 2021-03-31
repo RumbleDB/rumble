@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -36,10 +35,10 @@ import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
@@ -163,15 +162,14 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
-        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         childDataFrame.createOrReplaceTempView("object");
-        StructType schema = childDataFrame.schema();
-        List<String> fieldNames = Arrays.asList(schema.fieldNames());
-        System.out.println(fieldNames.get(0));
-        if (fieldNames.size() == 1 && fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+        if (!DataFrameUtils.isSequenceOfObjects(childDataFrame)) {
             return childDataFrame;
         }
+        List<String> fieldNames = DataFrameUtils.getFields(childDataFrame);
+
         List<String> keys = new ArrayList<>();
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
         for (Item keyItem : this.projectionKeys) {
             String key = keyItem.getStringValue();
             if (fieldNames.contains(key)) {
