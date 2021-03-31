@@ -159,7 +159,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     public boolean implementsDataFrames() {
         return true;
     }
-    
+
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
@@ -168,37 +168,33 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         StructType schema = childDataFrame.schema();
         List<String> fieldNames = Arrays.asList(schema.fieldNames());
         System.out.println(fieldNames.get(0));
-        if(fieldNames.size() == 1 && fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName))
-        {
+        if (fieldNames.size() == 1 && fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return childDataFrame;
         }
         List<String> keys = new ArrayList<>();
-        for(Item keyItem : this.projectionKeys)
-        {
+        for (Item keyItem : this.projectionKeys) {
             String key = keyItem.getStringValue();
-            if(fieldNames.contains(key))
-            {
+            if (fieldNames.contains(key)) {
                 keys.add(key);
             }
         }
-        if(keys.isEmpty())
-        {
+        if (keys.isEmpty()) {
             return childDataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT NULL as `%s` FROM object",
-                            SparkSessionManager.emptyObjectJSONiqItemColumnName
-                        )
-                    );
+                .sql(
+                    String.format(
+                        "SELECT NULL as `%s` FROM object",
+                        SparkSessionManager.emptyObjectJSONiqItemColumnName
+                    )
+                );
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
         Dataset<Row> result = childDataFrame.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT %s FROM object",
-                        projectionVariables
-                    )
-                );
+            .sql(
+                String.format(
+                    "SELECT %s FROM object",
+                    projectionVariables
+                )
+            );
         return result;
     }
 }
