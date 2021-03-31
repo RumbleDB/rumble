@@ -365,7 +365,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
-        Name name = parseName(ctx.eqName(), true);
+        Name name = parseName(ctx.eqName(), true, false);
         Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
         Name paramName;
@@ -822,9 +822,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
             Name name;
             if (functionCallContext.arrowFunctionSpecifier().eqName() != null)
-                name = parseName(functionCallContext.arrowFunctionSpecifier().eqName(), true);
+                name = parseName(functionCallContext.arrowFunctionSpecifier().eqName(), true, false);
             else
-                name = parseName(functionCallContext.arrowFunctionSpecifier().varRef().eqName(), true);
+                name = parseName(functionCallContext.arrowFunctionSpecifier().varRef().eqName(), true, false);
             mainExpression = processFunctionCall(name, functionCallContext, children);
         }
         return mainExpression;
@@ -873,14 +873,14 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         );
     }
 
-    public Name parseName(XQueryParser.EqNameContext ctx, boolean isFunction) {
+    private Name parseName(XQueryParser.EqNameContext ctx, boolean isFunction, boolean isType) {
         if (ctx.qName() == null)
             throw new XMLUnsupportedException("URIQualifiedName not supported", createMetadataFromContext(ctx));
         XQueryParser.QNameContext newCtx = ctx.qName();
-        return parseName(newCtx, isFunction, false);
+        return parseName(newCtx, isFunction, isType);
     }
 
-    public Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction, boolean isType) {
+    private Name parseName(XQueryParser.QNameContext newCtx, boolean isFunction, boolean isType) {
         String localName = null;
         String prefix = null;
         Name name = null;
@@ -898,9 +898,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (prefix == null) {
             if (isFunction) {
-                name = Name.createVariableInDefaultFunctionNamespace(localName);
+                name = Name.createVariableInDefaultXQueryFunctionNamespace(localName);
             } else if (isType) {
-                name = Name.createVariableInDefaultTypeNamespace(localName);
+                name = Name.createVariableInDefaultXQueryTypeNamespace(localName);
             } else {
                 name = Name.createVariableInNoNamespace(localName);
             }
@@ -1109,13 +1109,13 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitVarRef(XQueryParser.VarRefContext ctx) {
-        Name name = parseName(ctx.eqName(), false);
+        Name name = parseName(ctx.eqName(), false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
     @Override
     public Node visitVarName(XQueryParser.VarNameContext ctx) {
-        Name name = parseName(ctx.eqName(), false);
+        Name name = parseName(ctx.eqName(), false, false);
         return new VariableReferenceExpression(name, createMetadataFromContext(ctx));
     }
 
@@ -1234,7 +1234,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitFunctionCall(XQueryParser.FunctionCallContext ctx) {
-        Name name = parseName(ctx.fn_name, true);
+        Name name = parseName(ctx.fn_name, true, false);
         return processFunctionCall(name, ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
     }
 
@@ -1255,7 +1255,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitNamedFunctionRef(XQueryParser.NamedFunctionRefContext ctx) {
-        Name name = parseName(ctx.fn_name, true);
+        Name name = parseName(ctx.fn_name, true, false);
         int arity = 0;
         try {
             arity = Integer.parseInt(ctx.arity.getText());
@@ -1742,7 +1742,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 if (qnameCtx.wildcard() != null) {
                     doesCatchAll = true;
                 } else {
-                    Name name = parseName(qnameCtx.eqName(), false);
+                    Name name = parseName(qnameCtx.eqName(), false, false);
                     if (!catchExpressions.containsKey(name.getLocalName())) {
                         catchExpressions.put(name.getLocalName(), catchExpression);
                     }
