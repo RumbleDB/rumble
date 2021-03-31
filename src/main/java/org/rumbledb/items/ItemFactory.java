@@ -19,6 +19,8 @@ public class ItemFactory {
     private Item zeroItem;
     private Item positiveInfinityDoubleItem;
     private Item negativeInfinityDoubleItem;
+    private Item positiveZeroDoubleItem;
+    private Item negativeZeroDoubleItem;
     private Item NaNDoubleItem;
 
     public static ItemFactory getInstance() {
@@ -30,6 +32,8 @@ public class ItemFactory {
             instance.zeroItem = new IntItem(0);
             instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
             instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
+            instance.positiveZeroDoubleItem = new DoubleItem(0.0);
+            instance.negativeZeroDoubleItem = new DoubleItem(-0.0);
             instance.NaNDoubleItem = new DoubleItem(Double.NaN);
         }
         return instance;
@@ -85,6 +89,12 @@ public class ItemFactory {
         }
         if (d == Double.NEGATIVE_INFINITY) {
             return this.negativeInfinityDoubleItem;
+        }
+        if (d == 0.0) {
+            return this.positiveZeroDoubleItem;
+        }
+        if (d == 0.0) {
+            return this.negativeZeroDoubleItem;
         }
         if (d == Double.NaN) {
             return this.NaNDoubleItem;
