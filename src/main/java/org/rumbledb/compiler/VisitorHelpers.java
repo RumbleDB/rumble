@@ -105,7 +105,6 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(4));
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
-        System.out.println(sb.toString());
         if (sb.toString().equals("xquery")) {
             return parseXQueryMainModule(stream, uri, configuration);
         } else {
