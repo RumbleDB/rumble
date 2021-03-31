@@ -130,5 +130,37 @@ public class InlineFunctionExpression extends Expression {
         buffer.append("Body:\n");
         this.body.print(buffer, indent + 2);
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        if (this.name != null) {
+            sb.append("declare function " + this.name.toString() + "(");
+        } else {
+            sb.append("function (");
+        }
+        if (this.params != null) {
+            int i = 0;
+            for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("$" + entry.getKey() + " as " + entry.getValue().toString());
+                if (i == this.params.size() - 1) {
+                    sb.append(")");
+                } else {
+                    sb.append(", ");
+                }
+                i++;
+            }
+            if (this.returnType != null)
+                sb.append(" as " + this.returnType.toString());
+            else
+                sb.append("\n");
+            indentIt(sb, indent);
+            sb.append("{\n");
+            this.body.serializeToJSONiq(sb, indent + 1);
+            indentIt(sb, indent);
+            sb.append("}\n");
+        }
+    }
 }
 

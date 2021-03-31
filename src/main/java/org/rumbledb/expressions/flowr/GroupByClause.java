@@ -87,4 +87,27 @@ public class GroupByClause extends Clause {
             this.previousClause.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("group by ");
+        int i = 0;
+        for (GroupByVariableDeclaration groupby : this.variables) {
+            sb.append("$" + groupby.variableName.toString());
+            if (groupby.sequenceType != null)
+                sb.append(" as " + groupby.sequenceType.toString());
+            if (groupby.expression != null) {
+                sb.append(" := (");
+                groupby.expression.serializeToJSONiq(sb, 0);
+                sb.append(")");
+            }
+            if (i == this.variables.size() - 1) {
+                sb.append("\n");
+            } else {
+                sb.append(", ");
+            }
+            i++;
+        }
+    }
 }

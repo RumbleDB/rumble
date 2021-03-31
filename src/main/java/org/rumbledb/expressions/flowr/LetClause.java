@@ -125,4 +125,15 @@ public class LetClause extends Clause {
             this.previousClause.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("let $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        sb.append(" := (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+    }
 }
