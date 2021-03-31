@@ -80,12 +80,12 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     double dvalue = value.getDoubleValue();
                     long result = Math.round(dvalue);
                     if (result != 0) {
-                        ItemFactory.getInstance().createDoubleItem((double) result);
+                        return ItemFactory.getInstance().createDoubleItem((double) result);
                     } else {
                         if (Math.signum(dvalue) == 1) {
-                            ItemFactory.getInstance().createDoubleItem(0.0);
+                            return ItemFactory.getInstance().createDoubleItem(0.0);
                         } else {
-                            ItemFactory.getInstance().createDoubleItem(-0.0);
+                            return ItemFactory.getInstance().createDoubleItem(-0.0);
                         }
                     }
                 }
@@ -101,9 +101,9 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         ItemFactory.getInstance().createDoubleItem((double) result);
                     } else {
                         if (Math.signum(fvalue) == 1) {
-                            ItemFactory.getInstance().createDoubleItem(0.0);
+                            return ItemFactory.getInstance().createDoubleItem(0.0);
                         } else {
-                            ItemFactory.getInstance().createDoubleItem(-0.0);
+                            return ItemFactory.getInstance().createDoubleItem(-0.0);
                         }
                     }
                 }
