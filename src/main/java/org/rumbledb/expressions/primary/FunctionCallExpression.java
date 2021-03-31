@@ -138,6 +138,7 @@ public class FunctionCallExpression extends Expression {
         if (functionExecutionMode == BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT) {
             ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (firstArgumentExecutionMode.isDataFrame()) {
+                System.out.println("Dataframe");
                 return ExecutionMode.DATAFRAME;
             }
             if (firstArgumentExecutionMode.isRDDOrDataFrame()) {

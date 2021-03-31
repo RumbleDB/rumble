@@ -132,7 +132,12 @@ public class ItemParser implements Serializable {
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
-            keys.add(field.name());
+            String fieldName = field.name();
+            if(fieldName.equals((SparkSessionManager.emptyObjectJSONiqItemColumnName)))
+            {
+                continue;
+            }
+            keys.add(fieldName);
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
             values.add(newItem);
         }
