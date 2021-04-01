@@ -44,6 +44,7 @@ import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.DurationItem;
+import org.rumbledb.items.FloatItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
@@ -93,6 +94,7 @@ public class FlworDataFrameUtils {
         kryo.register(StringItem.class);
         kryo.register(IntItem.class);
         kryo.register(IntegerItem.class);
+        kryo.register(FloatItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);

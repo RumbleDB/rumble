@@ -51,6 +51,9 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
     public static final String JN_NS = "http://jsoniq.org/functions";
+    public static final String MATH_NS = "http://www.w3.org/2005/xpath-functions/math";
+    public static final String MAP_NS = "http://www.w3.org/2005/xpath-functions/map";
+    public static final String ARRAY_NS = "http://www.w3.org/2005/xpath-functions/array";
     public static final String XS_NS = "http://www.w3.org/2001/XMLSchema";
     public static final String JS_NS = "http://jsoniq.org/types";
     public static final String LOCAL_NS = "http://www.w3.org/2005/xquery-local-functions";

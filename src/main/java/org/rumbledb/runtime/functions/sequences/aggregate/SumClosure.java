@@ -4,7 +4,7 @@ import org.apache.spark.api.java.function.Function2;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.runtime.operational.AdditiveOperationIterator;
+import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 
 public class SumClosure implements Function2<Item, Item, Item> {
 

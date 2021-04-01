@@ -54,6 +54,20 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient SequenceType contextItemStaticType;
     private transient Map<FunctionIdentifier, FunctionSignature> staticallyKnownFunctionSignatures;
 
+    private static final Map<String, String> defaultBindings;
+
+    static {
+        defaultBindings = new HashMap<>();
+        defaultBindings.put("local", Name.LOCAL_NS);
+        defaultBindings.put("fn", Name.FN_NS);
+        defaultBindings.put("math", Name.MATH_NS);
+        defaultBindings.put("map", Name.MAP_NS);
+        defaultBindings.put("array", Name.ARRAY_NS);
+        defaultBindings.put("xs", Name.XS_NS);
+        defaultBindings.put("jn", Name.JN_NS);
+        defaultBindings.put("js", Name.JS_NS);
+    }
+
     private RumbleRuntimeConfiguration configuration;
 
     public StaticContext() {
@@ -226,6 +240,12 @@ public class StaticContext implements Serializable, KryoSerializable {
             this.staticallyKnownNamespaces.put(prefix, namespace);
             return true;
         }
+        if (defaultBindings.containsKey(prefix)) {
+            if (this.staticallyKnownNamespaces.get(prefix).equals(defaultBindings.get(prefix))) {
+                this.staticallyKnownNamespaces.put(prefix, namespace);
+                return true;
+            }
+        }
         return false;
     }
 
@@ -341,6 +361,12 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
             }
             current = current.parent;
+        }
+    }
+
+    public void bindDefaultNamespaces() {
+        for (String prefix : defaultBindings.keySet()) {
+            bindNamespace(prefix, defaultBindings.get(prefix));
         }
     }
 }

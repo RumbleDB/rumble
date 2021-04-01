@@ -1,9 +1,15 @@
 package org.rumbledb.compiler;
 
+import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.*;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.IsStaticallyUnexpectedType;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.*;
+import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -26,9 +32,13 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.*;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import sparksoniq.spark.SparkSessionManager;
 
+import java.net.URI;
+import org.rumbledb.types.*;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -127,7 +137,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = childExpressionInferredType;
                 } else {
                     ItemType resultingItemType = inferredType.getItemType()
-                        .findCommonSuperType(childExpressionInferredType.getItemType());
+                        .findLeastCommonSuperTypeWith(childExpressionInferredType.getItemType());
                     SequenceType.Arity resultingArity =
                         ((inferredType.getArity() == SequenceType.Arity.OneOrZero
                             || inferredType.getArity() == SequenceType.Arity.ZeroOrMore)
@@ -272,7 +282,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType);
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         System.out.println("Visited inline function expression");
         return argument;
     }
@@ -299,9 +309,55 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
 
-        expression.setInferredSequenceType(new SequenceType(new FunctionItemType(signature)));
+        expression.setInferredSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
         System.out.println("Visited named function expression");
         return argument;
+    }
+
+    /**
+     * For specific input functions we read the schema and annotate static type precisely
+     * 
+     * @param expression function call expression to be annotated
+     * @return true if we perform the annotation or false if it is not one of this specific cases
+     */
+    private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext) {
+        List<Name> functionNameToAnnotate = Arrays.asList(
+            // Name.createVariableInDefaultFunctionNamespace("avro-file"),
+            Name.createVariableInDefaultFunctionNamespace("parquet-file")
+        );
+        Name functionName = expression.getFunctionName();
+        List<Expression> args = expression.getArguments();
+
+        if (
+            functionNameToAnnotate.contains(functionName)
+                && args.size() > 0
+                && args.get(0) instanceof StringLiteralExpression
+        ) {
+            String path = ((StringLiteralExpression) args.get(0)).getValue();
+            URI uri = FileSystemUtil.resolveURI(staticContext.getStaticBaseURI(), path, expression.getMetadata());
+            if (!FileSystemUtil.exists(uri, this.rumbleRuntimeConfiguration, expression.getMetadata())) {
+                throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+            }
+            try {
+                StructType s = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .read()
+                    .parquet(uri.toString())
+                    .schema();
+                ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
+                System.out.println(schemaItemType.toString());
+                // TODO : check if arity is correct
+                expression.setInferredSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
+                return true;
+            } catch (Exception e) {
+                if (e instanceof AnalysisException) {
+                    throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
+                }
+                throw e;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -315,6 +371,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> partialParams = new ArrayList<>();
         int paramsLength = parameterExpressions.size();
 
+        // check arguments are of correct type
         for (int i = 0; i < paramsLength; ++i) {
             if (parameterExpressions.get(i) != null) {
                 SequenceType actualType = parameterExpressions.get(i).getInferredSequenceType();
@@ -332,13 +389,19 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (expression.isPartialApplication()) {
             FunctionSignature partialSignature = new FunctionSignature(partialParams, signature.getReturnType());
-            expression.setInferredSequenceType(new SequenceType(new FunctionItemType(partialSignature)));
+            expression.setInferredSequenceType(
+                new SequenceType(ItemTypeFactory.createFunctionItemType(partialSignature))
+            );
         } else {
-            SequenceType returnType = signature.getReturnType();
-            if (returnType == null) {
-                returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            // try annotate specific functions
+            if (!tryAnnotateSpecificFunctions(expression, argument)) {
+                // we did not annotate a specific function, therefore we use default return type
+                SequenceType returnType = signature.getReturnType();
+                if (returnType == null) {
+                    returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                }
+                expression.setInferredSequenceType(returnType);
             }
-            expression.setInferredSequenceType(returnType);
         }
 
         System.out.println("Visited static function call, set type to " + expression.getInferredSequenceType());
@@ -450,7 +513,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferred = expression.getMainExpression().getInferredSequenceType();
         SequenceType expected = expression.getSequenceType();
         if (!inferred.equals(expected)) {
-            throw new IsStaticallyUnexpectedType(
+            throw new IsStaticallyUnexpectedTypeException(
                     "expected static type is " + expected + " instead " + inferred + " was inferred"
             );
         }
@@ -997,7 +1060,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         ItemType itemType = type.getItemType();
-        if (itemType.isFunctionItem()) {
+        if (itemType.isFunctionItemType()) {
             throw new UnexpectedStaticTypeException(
                     "function item not allowed for the expressions of switch test condition and cases",
                     ErrorCode.UnexpectedFunctionItem
@@ -1258,7 +1321,34 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType.Arity inferredArity = mainType.isAritySubtypeOf(SequenceType.Arity.OneOrZero)
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
-        expression.setInferredSequenceType(new SequenceType(BuiltinTypesCatalogue.item, inferredArity));
+
+        ItemType inferredType = BuiltinTypesCatalogue.item;
+        // if we have a specific object type and a string literal as key try perform better inference
+        if (
+            mainType.getItemType().isObjectItemType()
+                && (expression.getLookupExpression() instanceof StringLiteralExpression)
+        ) {
+            String key = ((StringLiteralExpression) expression.getLookupExpression()).getValue();
+            boolean isObjectClosed = mainType.getItemType().getClosedFacet();
+            Map<String, FieldDescriptor> objectSchema = mainType.getItemType().getObjectContentFacet();
+            if (objectSchema.containsKey(key)) {
+                FieldDescriptor field = objectSchema.get(key);
+                inferredType = field.getType();
+                if (field.isRequired()) {
+                    // if the field is required then any object will have it, so no need to include '0' arity if not
+                    // present
+                    inferredArity = mainType.getArity();
+                }
+            } else if (isObjectClosed) {
+                // if object is closed and key is not found then for sure we will return the empty sequence
+                throw new UnexpectedStaticTypeException(
+                        "Inferred type is empty sequence and this is not a CommaExpression",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression
+                );
+            }
+        }
+
+        expression.setInferredSequenceType(new SequenceType(inferredType, inferredArity));
         System.out.println("visiting ObjectLookup expression, type set to: " + expression.getInferredSequenceType());
         return argument;
     }
@@ -1355,7 +1445,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         boolean isAnyFunction = false;
         if (!mainType.isEmptySequence()) {
             ItemType type = mainType.getItemType();
-            if (type.isFunctionItem()) {
+            if (type.isFunctionItemType()) {
                 if (type.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
                     isAnyFunction = true;
                 } else {

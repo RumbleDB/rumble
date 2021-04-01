@@ -126,6 +126,8 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
                     this.results.add(nextItem.castToIntValue());
                 } else if (typeName.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
                     this.results.add(nextItem.castToDoubleValue());
+                } else if (typeName.equals(BuiltinTypesCatalogue.floatItem.getName())) {
+                    this.results.add(nextItem.castToFloatValue());
                 } else if (typeName.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                     this.results.add(nextItem.castToDecimalValue());
                 } else if (
