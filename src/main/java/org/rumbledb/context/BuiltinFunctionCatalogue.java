@@ -814,8 +814,8 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "abs"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         AbsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );

@@ -114,6 +114,14 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         return new Name(JSONIQ_DEFAULT_FUNCTION_NS, "", localName);
     }
 
+    public static Name createVariableInDefaultXQueryTypeNamespace(String localName) {
+        return new Name(FN_NS, "", localName);
+    }
+
+    public static Name createVariableInDefaultXQueryFunctionNamespace(String localName) {
+        return new Name(XS_NS, "", localName);
+    }
+
     /**
      * Creates an expanded name resolving the prefix from namespace bindings.
      * 

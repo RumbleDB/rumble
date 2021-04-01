@@ -56,4 +56,12 @@ public class NotExpression extends Expression {
         return Collections.singletonList(this.mainExpression);
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("not (");
+        this.mainExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+    }
+
 }

@@ -130,9 +130,17 @@ public class ItemParser implements Serializable {
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
-            keys.add(field.name());
+            String fieldName = field.name();
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
-            values.add(newItem);
+            // NULL values in DataFrames are mapped to absent in JSONiq.
+            if (
+                !newItem.isNull()
+                    || (!fieldName.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                        && fieldType.equals(DataTypes.NullType))
+            ) {
+                keys.add(fieldName);
+                values.add(newItem);
+            }
         }
 
         if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {

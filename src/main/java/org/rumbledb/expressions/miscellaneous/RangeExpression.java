@@ -49,4 +49,27 @@ public class RangeExpression extends Expression {
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        // TODO Check if it makes sense
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("to\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
 }

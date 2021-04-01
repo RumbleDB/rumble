@@ -52,5 +52,27 @@ public class AndExpression extends Expression {
         return Arrays.asList(this.leftExpression, this.rightExpression);
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("and\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
+
 
 }

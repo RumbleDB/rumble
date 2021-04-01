@@ -53,6 +53,15 @@ public class ObjectLookupExpression extends Expression {
         return result;
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.mainExpression.serializeToJSONiq(sb, 0);
+        sb.append(".");
+        this.lookupExpression.serializeToJSONiq(sb, 0);
+        sb.append("\n");
+    }
+
     public Expression getLookupExpression() {
         return this.lookupExpression;
     }

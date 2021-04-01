@@ -141,7 +141,7 @@ public class FunctionItem implements Item {
         return this.signature;
     }
 
-    public DynamicContext getDynamicModuleContext() {
+    public DynamicContext getModuleDynamicContext() {
         return this.dynamicModuleContext;
     }
 

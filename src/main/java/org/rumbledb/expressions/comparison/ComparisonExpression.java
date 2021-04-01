@@ -157,4 +157,26 @@ public class ComparisonExpression extends Expression {
             iterator.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append(this.comparisonOperator.toString() + "\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
 }
