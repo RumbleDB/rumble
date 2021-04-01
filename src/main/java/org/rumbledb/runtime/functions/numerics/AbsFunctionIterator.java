@@ -45,7 +45,7 @@ public class AbsFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
         if (value == null) {
             return null;
         }
