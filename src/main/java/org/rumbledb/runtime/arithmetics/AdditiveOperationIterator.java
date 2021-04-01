@@ -86,21 +86,21 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if (this.left == null || this.right == null) {
             return null;
         }
-        if (!left.isAtomic()) {
+        if (!this.left.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                left.getDynamicType().toString()
+                this.left.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
-        if (!right.isAtomic()) {
+        if (!this.right.isAtomic()) {
             String message = String.format(
                 "Can not atomize an %1$s item: an %1$s has probably been passed where "
                     +
                     "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
-                right.getDynamicType().toString()
+                this.right.getDynamicType().toString()
             );
             throw new NonAtomicKeyException(message, getMetadata());
         }
