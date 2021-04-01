@@ -1283,7 +1283,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitPredicateExpression(PredicateExpression expression, StaticContext argument) {
+    public StaticContext visitFilterExpression(FilterExpression expression, StaticContext argument) {
         visit(expression.getMainExpression(), argument);
         SequenceType mainType = expression.getMainExpression().getInferredSequenceType();
         basicChecks(mainType, expression.getClass().getSimpleName(), true, true);
