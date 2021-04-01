@@ -81,6 +81,9 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         this.functionArguments = functionArguments;
         this.functionBodyIterator = null;
 
+        this.validateNumberOfArguments();
+        this.wrapArgumentIteratorsWithTypeCheckingIterators();
+
         // Prepopulation of the dynamic context (without the parameters)
         Map<Name, List<Item>> localArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getLocalVariablesInClosure()
@@ -98,25 +101,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 RDDArgumentValues,
                 DFArgumentValues
         );
-    }
-
-    @Override
-    public void openLocal() {
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
-
-        if (this.isPartialApplication) {
-            this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
-        } else {
-            if (this.functionBodyIterator == null) {
-                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
-            }
-            this.populateDynamicContextWithArguments(
-                this.currentDynamicContextForLocalExecution
-            );
-        }
-        this.functionBodyIterator.open(this.dynamicContextForCalls);
-        setNextResult();
     }
 
     private void validateNumberOfArguments() {
@@ -178,6 +162,22 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                 }
             }
         }
+    }
+
+    @Override
+    public void openLocal() {
+        if (this.isPartialApplication) {
+            this.functionBodyIterator = generatePartiallyAppliedFunction(this.currentDynamicContextForLocalExecution);
+        } else {
+            if (this.functionBodyIterator == null) {
+                this.functionBodyIterator = this.functionItem.getBodyIterator().deepCopy();
+            }
+            this.populateDynamicContextWithArguments(
+                this.currentDynamicContextForLocalExecution
+            );
+        }
+        this.functionBodyIterator.open(this.dynamicContextForCalls);
+        setNextResult();
     }
 
     /**
@@ -318,8 +318,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."
             );
         }
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
         this.populateDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
@@ -338,8 +336,6 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."
             );
         }
-        this.validateNumberOfArguments();
-        this.wrapArgumentIteratorsWithTypeCheckingIterators();
 
         populateDynamicContextWithArguments(dynamicContext);
         this.functionBodyIterator = this.functionItem.getBodyIterator();
