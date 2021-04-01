@@ -987,7 +987,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         for (ParseTree child : ctx.children.subList(1, ctx.children.size())) {
             if (child instanceof XQueryParser.PredicateContext) {
                 Expression expr = (Expression) this.visitPredicate((XQueryParser.PredicateContext) child);
-                mainExpression = new PredicateExpression(
+                mainExpression = new FilterExpression(
                         mainExpression,
                         expr,
                         createMetadataFromContext(ctx)
