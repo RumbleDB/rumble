@@ -45,12 +45,12 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (this.children.get(0).isRDDOrDataFrame()) {
-            List<Item> i = this.children.get(0).getRDD(this.currentDynamicContextForLocalExecution).take(1);
+            List<Item> i = this.children.get(0).getRDD(dynamicContext).take(1);
             if (i.isEmpty()) {
                 return null;
             }
             return i.get(0);
         }
-        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        return this.children.get(0).materializeFirstItemOrNull(dynamicContext);
     }
 }
