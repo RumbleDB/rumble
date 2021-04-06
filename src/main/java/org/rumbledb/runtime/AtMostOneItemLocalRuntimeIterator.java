@@ -37,7 +37,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
 
-public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIterator {
+public abstract class AtMostOneItemLocalRuntimeIterator extends RuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item result;
@@ -48,6 +48,9 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
             ExceptionMetadata iteratorMetadata
     ) {
         super(children, executionMode, iteratorMetadata);
+        if (executionMode != ExecutionMode.LOCAL) {
+            throw new OurBadException("At-most-one-item runtime iterators support only the local execution mode");
+        }
     }
 
     public abstract Item materializeFirstItemOrNull(
