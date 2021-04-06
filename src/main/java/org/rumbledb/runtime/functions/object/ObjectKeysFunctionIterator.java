@@ -146,7 +146,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.iterator.close();
+        if (!this.iterator.isDataFrame()) {
+            this.iterator.close();
+        }
     }
 
     @Override
