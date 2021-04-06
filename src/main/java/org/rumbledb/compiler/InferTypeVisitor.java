@@ -1431,7 +1431,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     forArities = SequenceType.Arity.ZeroOrMore;
                 }
             }
-            clause = clause.getNextClause();
+            clause = clause.getParentClause();
         }
 
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getInferredSequenceType();
@@ -1476,7 +1476,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkVariableType(
             declaredType,
             inferredType,
-            expression.getNextClause().getStaticContext(),
+            expression.getParentClause().getStaticContext(),
             expression.getClass().getSimpleName(),
             expression.getVariableName()
         );
@@ -1495,7 +1495,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         checkVariableType(
             declaredType,
             inferredType,
-            expression.getNextClause().getStaticContext(),
+            expression.getParentClause().getStaticContext(),
             expression.getClass().getSimpleName(),
             expression.getVariableName()
         );
@@ -1525,8 +1525,8 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause expression, StaticContext argument) {
-        Clause nextClause = expression.getNextClause(); // != null because group by cannot be last clause of FLOWR
-                                                        // expression
+        Clause nextClause = expression.getParentClause(); // != null because group by cannot be last clause of FLOWR
+                                                          // expression
         Set<Name> groupingVars = new HashSet<>();
         for (GroupByVariableDeclaration groupByVar : expression.getGroupVariables()) {
             // if we are grouping by an existing var (i.e. expr is null), then the appropriate type is already inferred

@@ -45,6 +45,10 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -241,12 +245,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
-        Clause clause = expression.getReturnClause().getFirstClause();
-        StaticContext result = this.visit(clause, argument);
-        while (clause != null) {
-            result = this.visit(clause, result);
-            clause = clause.getNextClause();
-        }
+        Clause clause = expression.getReturnClause();
+        this.visit(clause, argument);
         expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
@@ -254,11 +254,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
-        // TODO visit at...
-        this.visit(clause.getExpression(), argument);
+        StaticContext context = argument;
+        if (clause.getChildClause() != null) {
+            context = this.visit(clause.getChildClause(), argument);
+        }
+        this.visit(clause.getExpression(), context);
+        StaticContext result = new StaticContext(context);
+
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -279,10 +283,15 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        this.visit(clause.getExpression(), argument);
+        StaticContext context = argument;
+        if (clause.getChildClause() != null) {
+            context = this.visit(clause.getChildClause(), argument);
+        }
+        this.visit(clause.getExpression(), context);
+        StaticContext result = new StaticContext(context);
+
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
@@ -294,19 +303,28 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
+    public StaticContext visitWhereClause(WhereClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getWhereExpression(), context);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return context;
+    }
+
+    @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
-        StaticContext groupByClauseContext = new StaticContext(argument);
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        StaticContext groupByClauseContext = new StaticContext(context);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             if (variable.getExpression() != null) {
                 // if a variable declaration takes place
-                this.visit(variable.getExpression(), argument);
+                this.visit(variable.getExpression(), context);
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
                     clause.getMetadata(),
                     ExecutionMode.LOCAL
                 );
-            } else if (!argument.isInScope(variable.getVariableName())) {
+            } else if (!context.isInScope(variable.getVariableName())) {
                 throw new UndeclaredVariableException(
                         "Uninitialized variable reference: " + variable.getVariableName(),
                         clause.getMetadata()
@@ -318,17 +336,36 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     }
 
     @Override
-    public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        expression.initHighestExecutionMode(this.visitorConfig);
-        StaticContext result = new StaticContext(argument);
+    public StaticContext visitOrderByClause(OrderByClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        for (OrderByClauseSortingKey key : clause.getSortingKeys()) {
+            this.visit(key.getExpression(), context);
+        }
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return context;
+    }
+
+    @Override
+    public StaticContext visitCountClause(CountClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        StaticContext result = new StaticContext(context);
         result.addVariable(
-            expression.getCountVariable().getVariableName(),
+            clause.getCountVariable().getVariableName(),
             new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One),
-            expression.getMetadata(),
+            clause.getMetadata(),
             ExecutionMode.LOCAL
         );
-        this.visit(expression.getCountVariable(), result);
+        this.visit(clause.getCountVariable(), result);
         return result;
+    }
+
+    @Override
+    public StaticContext visitReturnClause(ReturnClause clause, StaticContext argument) {
+        StaticContext context = this.visit(clause.getChildClause(), argument);
+        this.visit(clause.getReturnExpr(), context);
+        clause.initHighestExecutionMode(this.visitorConfig);
+        return argument;
     }
 
     // endregion
