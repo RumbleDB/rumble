@@ -74,7 +74,6 @@ public class ReverseFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.sequenceIterator.close();
     }
 
     @Override

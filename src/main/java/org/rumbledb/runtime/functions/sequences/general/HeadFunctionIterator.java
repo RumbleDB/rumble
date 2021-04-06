@@ -33,7 +33,6 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public HeadFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -45,20 +44,13 @@ public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        if (this.iterator.isRDDOrDataFrame()) {
-            List<Item> i = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
+        if (this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> i = this.children.get(0).getRDD(this.currentDynamicContextForLocalExecution).take(1);
             if (i.isEmpty()) {
-                this.hasNext = false;
                 return null;
             }
             return i.get(0);
-        } else {
-            this.iterator.open(this.currentDynamicContextForLocalExecution);
-            if (this.iterator.hasNext()) {
-                return this.iterator.next();
-            } else {
-                return null;
-            }
         }
+        return this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
     }
 }
