@@ -101,7 +101,6 @@ public class TailFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }

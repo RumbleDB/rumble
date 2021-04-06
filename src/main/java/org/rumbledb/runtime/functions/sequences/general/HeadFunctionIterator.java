@@ -23,19 +23,17 @@ package org.rumbledb.runtime.functions.sequences.general;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class HeadFunctionIterator extends LocalFunctionCallIterator {
+public class HeadFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item result;
 
     public HeadFunctionIterator(
             List<RuntimeIterator> parameters,
@@ -43,48 +41,24 @@ public class HeadFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(parameters, executionMode, iteratorMetadata);
-        this.iterator = this.children.get(0);
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext()) {
-            this.hasNext = false;
-            return this.result;
-        }
-        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "head function", getMetadata());
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setResult();
-    }
-
-    @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
-        setResult();
-    }
-
-    public void setResult() {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         if (this.iterator.isRDDOrDataFrame()) {
             List<Item> i = this.iterator.getRDD(this.currentDynamicContextForLocalExecution).take(1);
             if (i.isEmpty()) {
                 this.hasNext = false;
-                return;
+                return null;
             }
-            this.hasNext = true;
-            this.result = i.get(0);
+            return i.get(0);
         } else {
             this.iterator.open(this.currentDynamicContextForLocalExecution);
             if (this.iterator.hasNext()) {
-                this.hasNext = true;
-                this.result = this.iterator.next();
+                return this.iterator.next();
             } else {
-                this.hasNext = false;
+                return null;
             }
-            this.iterator.close();
         }
     }
 }
