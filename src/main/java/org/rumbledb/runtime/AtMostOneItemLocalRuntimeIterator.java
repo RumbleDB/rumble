@@ -108,7 +108,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
         if (item != null) {
             result.add(item);
         }
-        this.close();
     }
 
     public void materializeNFirstItems(DynamicContext dynamicContext, List<Item> result, int n) {
@@ -120,7 +119,6 @@ public abstract class AtMostOneItemLocalRuntimeIterator extends LocalRuntimeIter
         if (item != null) {
             result.add(item);
         }
-        this.close();
     }
 
     @Override
