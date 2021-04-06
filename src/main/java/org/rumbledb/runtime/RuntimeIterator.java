@@ -197,7 +197,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void close() {
         this.isOpen = false;
-        this.children.forEach(c -> c.close());
     }
 
     public void reset(DynamicContext context) {
