@@ -196,7 +196,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public void close() {
-        if (this.isOpen) {
+        if (!this.isOpen) {
             throw new IteratorFlowException("Runtime iterator cannot be closed if it was not open.", getMetadata());
         }
         this.isOpen = false;
