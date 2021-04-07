@@ -98,7 +98,6 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.functionCallIterator.close();
         } else {
             this.hasNext = true;
         }

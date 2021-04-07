@@ -59,6 +59,12 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
+    public void close() {
+        super.close();
+        this.iterator.close();
+    }
+
+    @Override
     public Item next() {
         if (this.hasNext) {
             Item result = this.nextResults.remove(); // save the result to be returned
@@ -84,7 +90,6 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
