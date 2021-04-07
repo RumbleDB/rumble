@@ -202,7 +202,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
         // execution reaches here when there are no more results
-        this.child.close();
         this.hasNext = false;
     }
 
@@ -225,13 +224,17 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     @Override
     protected void closeLocal() {
         this.child.close();
-        this.expression.close();
+        if (this.expression.isOpen()) {
+            this.expression.close();
+        }
     }
 
     @Override
     protected void resetLocal() {
         this.child.reset(this.currentDynamicContextForLocalExecution);
-        this.expression.close();
+        if (this.expression.isOpen()) {
+            this.expression.close();
+        }
         this.tupleContext = new DynamicContext(this.currentDynamicContextForLocalExecution); // assign current context
         setNextResult();
     }
