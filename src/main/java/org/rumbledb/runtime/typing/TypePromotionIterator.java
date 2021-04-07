@@ -100,7 +100,6 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             this.nextResult = this.iterator.next();
             this.childIndex++;
         } else {
-            this.iterator.close();
             checkEmptySequence(this.childIndex);
         }
 
