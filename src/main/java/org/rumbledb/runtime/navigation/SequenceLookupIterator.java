@@ -23,19 +23,17 @@ package org.rumbledb.runtime.navigation;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-public class SequenceLookupIterator extends LocalRuntimeIterator {
+public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item nextResult;
     private int position;
 
     public SequenceLookupIterator(
@@ -49,43 +47,8 @@ public class SequenceLookupIterator extends LocalRuntimeIterator {
         this.position = position;
     }
 
-    public RuntimeIterator sequenceIterator() {
-        return this.iterator;
-    }
-
     @Override
-    public Item next() {
-        if (this.hasNext == true) {
-            this.hasNext = false;
-            Item result = this.nextResult; // save the result to be returned
-            return result;
-        }
-        throw new IteratorFlowException("Invalid next() call in Predicate!", getMetadata());
-    }
-
-    @Override
-    public boolean hasNext() {
-        return this.hasNext;
-    }
-
-    @Override
-    public void reset(DynamicContext dynamicContext) {
-        super.reset(dynamicContext);
-        init();
-    }
-
-    @Override
-    public void close() {
-        super.close();
-    }
-
-    @Override
-    public void open(DynamicContext dynamicContext) {
-        super.open(dynamicContext);
-        init();
-    }
-
-    private void init() {
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         List<Item> materializedItems = new ArrayList<>();
         this.iterator.materializeNFirstItems(
             this.currentDynamicContextForLocalExecution,
@@ -93,10 +56,9 @@ public class SequenceLookupIterator extends LocalRuntimeIterator {
             this.position
         );
         if (materializedItems.size() >= this.position) {
-            this.nextResult = materializedItems.get(this.position - 1);
-            this.hasNext = true;
+            return materializedItems.get(this.position - 1);
         } else {
-            this.hasNext = false;
+            return null;
         }
     }
 
