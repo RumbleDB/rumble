@@ -24,7 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 public class BooleanItem implements Item {
@@ -93,7 +93,7 @@ public class BooleanItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.booleanItem;
+        return BuiltinTypesCatalogue.booleanItem;
     }
 
     @Override
