@@ -12,8 +12,8 @@ import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
@@ -65,7 +65,7 @@ public class DateTimeItem implements Item {
     }
 
     DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, AtomicItemType.dateTimeItem);
+        this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -149,10 +149,10 @@ public class DateTimeItem implements Item {
     }
 
     private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (dateTimeType.equals(AtomicItemType.dateTimeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
-        if (dateTimeType.equals(AtomicItemType.dateItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
             DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                 ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
             ).toParser();
@@ -161,20 +161,20 @@ public class DateTimeItem implements Item {
                 .toFormatter()
                 .withOffsetParsed();
         }
-        if (dateTimeType.equals(AtomicItemType.timeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
             return ISODateTimeFormat.timeParser().withOffsetParsed();
         }
         throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
-        if (dateTimeType.equals(AtomicItemType.dateTimeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(AtomicItemType.dateItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
             return datePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(AtomicItemType.timeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
             return timePattern.matcher(dateTime).matches();
         }
         return false;
@@ -222,7 +222,7 @@ public class DateTimeItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.dateTimeItem;
+        return BuiltinTypesCatalogue.dateTimeItem;
     }
 
     @Override

@@ -27,8 +27,9 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -140,7 +141,12 @@ public class StringItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.stringItem;
+        return BuiltinTypesCatalogue.stringItem;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, '"' + this.value + '"', BuiltinTypesCatalogue.stringItem);
     }
 
     @Override

@@ -27,6 +27,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType base64BinaryItem = AtomicItemType.base64BinaryItem;
     public static final ItemType intItem = AtomicItemType.intItem;
     public static final ItemType arrayItem = AtomicItemType.arrayItem;
+    public static final ItemType objectItem = AtomicItemType.objectItem;
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
