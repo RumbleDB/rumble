@@ -130,15 +130,15 @@ public class ItemType implements Serializable {
     public String toString() {
         return this.name.toString();
     }
-    
+
     public boolean isObjectItemType() {
         return this.equals(AtomicItemType.objectItem);
     }
-    
+
     public boolean getClosedFacet() {
         return false;
     }
-    
+
     public Map<String, FieldDescriptor> getObjectContentFacet() {
         return Collections.emptyMap();
     }

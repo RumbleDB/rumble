@@ -35,10 +35,7 @@ import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.AtomicItemType;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.*;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -284,7 +281,7 @@ public class FunctionItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.functionItem;
+        return BuiltinTypesCatalogue.anyFunctionItem;
     }
 
     public FunctionItem deepCopy() {

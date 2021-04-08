@@ -31,17 +31,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -136,7 +131,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.getDynamicType().canBePromotedTo(AtomicItemType.stringItem)) {
+            } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
                 this.close();
@@ -400,5 +395,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             rumbleException.initCause(e);
             throw rumbleException;
         }
+    }
+
+    /**
+     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     *
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
+     *         it is not possible
+     * @param nativeClauseContext context information to generate the native query
+     */
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }
