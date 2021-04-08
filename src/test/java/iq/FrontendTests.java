@@ -21,7 +21,6 @@
 package iq;
 
 
-import iq.base.AnnotationsTestsBase;
 import org.junit.Assert;
 import org.junit.Test;
 import org.rumbledb.compiler.VisitorHelpers;
@@ -32,6 +31,9 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+
+import iq.base.AnnotationsTestsBase;
+
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;

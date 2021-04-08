@@ -28,6 +28,8 @@ public class BuiltinTypesCatalogue {
     public static final ItemType intItem = AtomicItemType.intItem;
     public static final ItemType arrayItem = AtomicItemType.arrayItem;
     public static final ItemType objectItem = AtomicItemType.objectItem;
+    public static final ItemType anyFunctionItem = AtomicItemType.functionItem;
+    public static final ItemType JSONItem = AtomicItemType.JSONItem;
 
     public static boolean typeExists(Name name) {
         for (ItemType builtInItemType : builtInItemTypes) {
