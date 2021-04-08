@@ -25,6 +25,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
+import java.util.Collections;
+import java.util.Map;
 
 public class ItemType implements Serializable {
 
@@ -127,5 +129,17 @@ public class ItemType implements Serializable {
     @Override
     public String toString() {
         return this.name.toString();
+    }
+    
+    public boolean isObjectItemType() {
+        return this.equals(AtomicItemType.objectItem);
+    }
+    
+    public boolean getClosedFacet() {
+        return false;
+    }
+    
+    public Map<String, FieldDescriptor> getObjectContentFacet() {
+        return Collections.emptyMap();
     }
 }
