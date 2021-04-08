@@ -1,6 +1,7 @@
 package iq;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+
 import iq.base.AnnotationsTestsBase;
 import scala.util.Properties;
 
