@@ -43,15 +43,11 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
-<<<<<<< HEAD
-import org.apache.spark.sql.types.*;
-=======
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
->>>>>>> dea920b2842c10684ade1a2e6ebc1232916dd5b1
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
