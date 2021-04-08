@@ -88,7 +88,6 @@ import org.rumbledb.types.SequenceType;
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
