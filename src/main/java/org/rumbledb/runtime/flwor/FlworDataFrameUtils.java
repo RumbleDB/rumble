@@ -20,15 +20,34 @@
 
 package org.rumbledb.runtime.flwor;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.monotonically_increasing_id;
+import static org.apache.spark.sql.functions.spark_partition_id;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.udf;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
-import org.apache.spark.sql.types.*;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
@@ -58,25 +77,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import scala.collection.mutable.WrappedArray;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.count;
-import static org.apache.spark.sql.functions.first;
-import static org.apache.spark.sql.functions.lit;
-import static org.apache.spark.sql.functions.monotonically_increasing_id;
-import static org.apache.spark.sql.functions.spark_partition_id;
-import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.udf;
 
 public class FlworDataFrameUtils {
 
