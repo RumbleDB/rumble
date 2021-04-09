@@ -194,6 +194,7 @@ public class DerivedAtomicItemType implements ItemType {
         return this.enumeration == null ? this.baseType.getEnumerationFacet() : this.enumeration;
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
         if (!this.getAllowedFacets().contains(FacetTypes.CONSTRAINTS)) {

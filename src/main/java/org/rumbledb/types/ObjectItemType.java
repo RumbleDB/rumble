@@ -111,6 +111,7 @@ public class ObjectItemType implements ItemType {
         return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
         return this.isPrimitive()
