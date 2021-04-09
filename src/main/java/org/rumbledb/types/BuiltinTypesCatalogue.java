@@ -14,6 +14,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType decimalItem = AtomicItemType.decimalItem;
     public static final ItemType doubleItem = AtomicItemType.doubleItem;
     public static final ItemType floatItem = AtomicItemType.floatItem;
+    public static final ItemType numericItem = AtomicItemType.numericItem;
     public static final ItemType booleanItem = AtomicItemType.booleanItem;
     public static final ItemType nullItem = AtomicItemType.nullItem;
     public static final ItemType durationItem = AtomicItemType.durationItem;
@@ -57,6 +58,7 @@ public class BuiltinTypesCatalogue {
         decimalItem,
         doubleItem,
         floatItem,
+        numericItem,
         booleanItem,
         arrayItem,
         nullItem,
