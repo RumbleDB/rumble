@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -98,8 +99,8 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -125,8 +126,10 @@ import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
 
@@ -1169,20 +1172,32 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     public ItemType processItemType(JsoniqParser.ItemTypeContext itemTypeContext) {
         if (itemTypeContext.NullLiteral() != null) {
-            return AtomicItemType.nullItem;
+            return BuiltinTypesCatalogue.nullItem;
         }
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
         if (fnCtx != null) {
             // we have a function item type
-            return AtomicItemType.functionItem;
+            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
+            if (typedFnCtx != null) {
+                SequenceType rt = processSequenceType(typedFnCtx.rt);
+                List<SequenceType> st = typedFnCtx.st.stream()
+                    .map(this::processSequenceType)
+                    .collect(Collectors.toList());
+                FunctionSignature signature = new FunctionSignature(st, rt);
+                // TODO: move item type creation to ItemFactory
+                return ItemTypeFactory.createFunctionItemType(signature);
+
+            } else {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
         }
-        return AtomicItemType.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
+        return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
     }
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true, false);
         if (
-            AtomicItemType.typeExists(name)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
         ) {
             return new CastExpression(
@@ -1192,7 +1207,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
         if (
-            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
                 && children.size() == 1
                 && name.getNamespace() != null
                 && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
