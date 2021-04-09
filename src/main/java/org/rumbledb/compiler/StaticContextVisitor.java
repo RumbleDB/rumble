@@ -52,7 +52,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -269,7 +269,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
                 clause.getPositionalVariableName(),
-                new SequenceType(AtomicItemType.integerItem),
+                new SequenceType(BuiltinTypesCatalogue.integerItem),
                 clause.getMetadata(),
                 ExecutionMode.LOCAL
             );
@@ -323,7 +323,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
-            new SequenceType(AtomicItemType.integerItem, SequenceType.Arity.One),
+            new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One),
             expression.getMetadata(),
             ExecutionMode.LOCAL
         );
