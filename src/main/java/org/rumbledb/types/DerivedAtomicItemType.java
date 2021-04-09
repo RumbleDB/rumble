@@ -14,6 +14,8 @@ import java.util.Set;
 
 public class DerivedAtomicItemType implements ItemType {
 
+    private static final long serialVersionUID = 1L;
+
     static final DerivedAtomicItemType integerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "integer"),
             AtomicItemType.decimalItem,
