@@ -27,6 +27,8 @@ import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Module;
 import org.rumbledb.parser.JsoniqLexer;
 import org.rumbledb.parser.JsoniqParser;
+import org.rumbledb.parser.XQueryLexer;
+import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -96,6 +98,26 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
+        StringBuffer sb = new StringBuffer();
+        sb.append((char) stream.LA(1));
+        sb.append((char) stream.LA(2));
+        sb.append((char) stream.LA(3));
+        sb.append((char) stream.LA(4));
+        sb.append((char) stream.LA(5));
+        sb.append((char) stream.LA(6));
+        if (sb.toString().equals("xquery")) {
+            return parseXQueryMainModule(stream, uri, configuration);
+        } else {
+            return parseJSONiqMainModule(stream, uri, configuration);
+        }
+
+    }
+
+    public static MainModule parseJSONiqMainModule(
+            CharStream stream,
+            URI uri,
+            RumbleRuntimeConfiguration configuration
+    ) {
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
@@ -131,7 +153,67 @@ public class VisitorHelpers {
         }
     }
 
+    public static MainModule parseXQueryMainModule(
+            CharStream stream,
+            URI uri,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        XQueryLexer lexer = new XQueryLexer(stream);
+        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+        StaticContext moduleContext = new StaticContext(uri, configuration);
+        moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration);
+        try {
+            // TODO Handle module extras
+            XQueryParser.MainModuleContext main = parser.module().mainModule();
+            if (main == null) {
+                throw new ParsingException("A library module is not executable.", ExceptionMetadata.EMPTY_METADATA);
+            }
+            MainModule mainModule = (MainModule) visitor.visit(main);
+            pruneModules(mainModule, configuration);
+            resolveDependencies(mainModule, configuration);
+            populateStaticContext(mainModule, configuration);
+            if (configuration.doStaticAnalysis()) {
+                inferTypes(mainModule, configuration);
+            }
+            return mainModule;
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExceptionMetadata(
+                            uri.toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
     public static LibraryModule parseLibraryModule(
+            CharStream stream,
+            URI uri,
+            StaticContext importingModuleContext,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        StringBuffer sb = new StringBuffer();
+        sb.append((char) stream.LA(1));
+        sb.append((char) stream.LA(2));
+        sb.append((char) stream.LA(3));
+        sb.append((char) stream.LA(4));
+        sb.append((char) stream.LA(5));
+        sb.append((char) stream.LA(6));
+        if (sb.toString().equals("xquery")) {
+            return parseXQueryLibraryModule(stream, uri, importingModuleContext, configuration);
+        } else {
+            return parseJSONiqLibraryModule(stream, uri, importingModuleContext, configuration);
+        }
+
+    }
+
+    public static LibraryModule parseJSONiqLibraryModule(
             CharStream stream,
             URI uri,
             StaticContext importingModuleContext,
@@ -149,6 +231,41 @@ public class VisitorHelpers {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
             JsoniqParser.LibraryModuleContext main = module.module().libraryModule();
+            LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
+            resolveDependencies(libraryModule, configuration);
+            // no static context population, as this is done in a single shot via the importing main module.
+            return libraryModule;
+        } catch (ParseCancellationException ex) {
+            ParsingException e = new ParsingException(
+                    lexer.getText(),
+                    new ExceptionMetadata(
+                            uri.toString(),
+                            lexer.getLine(),
+                            lexer.getCharPositionInLine()
+                    )
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    public static LibraryModule parseXQueryLibraryModule(
+            CharStream stream,
+            URI uri,
+            StaticContext importingModuleContext,
+            RumbleRuntimeConfiguration configuration
+    ) {
+        XQueryLexer lexer = new XQueryLexer(stream);
+        XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
+        parser.setErrorHandler(new BailErrorStrategy());
+        StaticContext moduleContext = new StaticContext(uri, configuration);
+        moduleContext.setUserDefinedFunctionsExecutionModes(
+            importingModuleContext.getUserDefinedFunctionsExecutionModes()
+        );
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration);
+        try {
+            // TODO Handle module extras
+            XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
             LibraryModule libraryModule = (LibraryModule) visitor.visit(main);
             resolveDependencies(libraryModule, configuration);
             // no static context population, as this is done in a single shot via the importing main module.

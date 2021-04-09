@@ -81,7 +81,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         BufferedReader br = new BufferedReader(r);
         this.stream = br.lines().iterator();
         this.hasNext = this.stream.hasNext();
-        this.iterator.close();
     }
 
     @Override
@@ -116,7 +115,6 @@ public class LocalTextFileFunctionIterator extends LocalFunctionCallIterator {
         BufferedReader br = new BufferedReader(r);
         this.stream = br.lines().iterator();
         this.hasNext = this.stream.hasNext();
-        this.iterator.close();
     }
 
     @Override

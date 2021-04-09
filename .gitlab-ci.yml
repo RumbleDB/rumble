@@ -1,0 +1,46 @@
+image: marioarduini/rumble-source:2020-11-23
+
+build-rumble:
+  stage: build
+  artifacts:
+    paths:
+      - target/
+  script:
+    - ant -buildfile build_antlr_parser.xml generate-parser -Dantlr.jar=lib/antlr-4.7-complete.jar
+    - mvn clean compile assembly:single
+
+javaapi-test:
+  stage: test
+  script:
+    - mvn -Dtest=JavaAPITest test
+
+frontend-test:
+  stage: test
+  script:
+    - mvn -Dtest=FrontendTests test
+    
+runtime-test:
+  stage: test
+  script:
+    - mvn -Dtest=RuntimeTests test
+
+sparkruntime-test:
+  stage: test
+  script:
+    - mvn -Dtest=SparkRuntimeTests test
+
+nativeflworruntime-test:
+  stage: test
+  script:
+    - mvn -Dtest=NativeFLWORRuntimeTests test
+
+statictyping-test:
+  stage: test
+  script:
+    - mvn -Dtest=StaticTypeTests test
+
+spotless-test:
+  stage: test
+  script:
+    - mvn spotless:check
+

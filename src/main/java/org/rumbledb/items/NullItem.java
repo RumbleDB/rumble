@@ -42,8 +42,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -102,7 +102,7 @@ public class NullItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.nullItem;
+        return BuiltinTypesCatalogue.nullItem;
     }
 
     @Override
@@ -346,7 +346,7 @@ public class NullItem implements Item {
     }
 
     @Override
-    public DynamicContext getDynamicModuleContext() {
+    public DynamicContext getModuleDynamicContext() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a null!");
     }
 

@@ -13,8 +13,8 @@ import org.joda.time.format.PeriodFormatterBuilder;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
@@ -133,17 +133,17 @@ public class DurationItem implements Item {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicItemType.durationItem).normalizedStandard(
+        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.durationItem).normalizedStandard(
             PeriodType.yearMonthDayTime()
         );
         this.isNegative = this.value.toString().contains("-");
     }
 
     private static PeriodFormatter getPeriodFormatter(ItemType durationType) {
-        if (durationType.equals(AtomicItemType.durationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
             return ISOPeriodFormat.standard();
         }
-        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
             return new PeriodFormatterBuilder().appendLiteral("P")
                 .appendYears()
                 .appendSuffix("Y")
@@ -152,7 +152,7 @@ public class DurationItem implements Item {
                 .toFormatter();
         }
 
-        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
             return new PeriodFormatterBuilder().appendLiteral("P")
                 .appendDays()
                 .appendSuffix("D")
@@ -169,28 +169,28 @@ public class DurationItem implements Item {
     }
 
     private static PeriodType getPeriodType(ItemType durationType) {
-        if (durationType.equals(AtomicItemType.durationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
             return PeriodType.yearMonthDayTime();
         }
-        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
             return PeriodType.forFields(
                 new DurationFieldType[] { DurationFieldType.years(), DurationFieldType.months() }
             );
         }
-        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
             return PeriodType.dayTime();
         }
         throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDurationFormat(String duration, ItemType durationType) {
-        if (durationType.equals(AtomicItemType.durationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.durationItem)) {
             return durationPattern.matcher(duration).matches();
         }
-        if (durationType.equals(AtomicItemType.yearMonthDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
             return yearMonthDurationPattern.matcher(duration).matches();
         }
-        if (durationType.equals(AtomicItemType.dayTimeDurationItem)) {
+        if (durationType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
             return dayTimeDurationPattern.matcher(duration).matches();
         }
         return false;
@@ -215,6 +215,6 @@ public class DurationItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.durationItem;
+        return BuiltinTypesCatalogue.durationItem;
     }
 }

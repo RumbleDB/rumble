@@ -43,4 +43,10 @@ public class ContextItemExpression extends Expression {
     public List<Node> getChildren() {
         return new ArrayList<>();
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("$$");
+    }
 }

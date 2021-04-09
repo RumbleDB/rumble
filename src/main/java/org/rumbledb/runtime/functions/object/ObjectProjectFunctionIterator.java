@@ -22,6 +22,8 @@ package org.rumbledb.runtime.functions.object;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,6 +33,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
+import sparksoniq.spark.DataFrameUtils;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -92,7 +98,6 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -146,5 +151,47 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
                 getMetadata()
         );
         return childRDD.flatMap(transformation);
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+        childDataFrame.createOrReplaceTempView("object");
+        if (!DataFrameUtils.isSequenceOfObjects(childDataFrame)) {
+            return childDataFrame;
+        }
+        List<String> fieldNames = DataFrameUtils.getFields(childDataFrame);
+
+        List<String> keys = new ArrayList<>();
+        this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        for (Item keyItem : this.projectionKeys) {
+            String key = keyItem.getStringValue();
+            if (fieldNames.contains(key)) {
+                keys.add(key);
+            }
+        }
+        if (keys.isEmpty()) {
+            return childDataFrame.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT NULL as `%s` FROM object",
+                        SparkSessionManager.emptyObjectJSONiqItemColumnName
+                    )
+                );
+        }
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
+        Dataset<Row> result = childDataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "SELECT %s FROM object",
+                    projectionVariables
+                )
+            );
+        return result;
     }
 }

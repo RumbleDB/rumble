@@ -176,4 +176,11 @@ public abstract class Node {
         return sb.toString();
     }
 
+    public abstract void serializeToJSONiq(StringBuffer sb, int indent);
+
+    protected void indentIt(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+    }
 }

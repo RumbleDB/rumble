@@ -102,7 +102,6 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
                 path = path.replaceAll("%20", " ");
             }
 
-            System.out.println(path);
             if (partitions == -1) {
                 strings = SparkSessionManager.getInstance()
                     .getJavaSparkContext()

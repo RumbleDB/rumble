@@ -33,6 +33,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import sparksoniq.spark.SparkSessionManager;
+
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -71,7 +73,12 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
         Dataset<Row> childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
         String[] keys = childDF.schema().fieldNames();
         for (String key : keys) {
-            this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
+            if (
+                !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
+                    && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)
+            ) {
+                this.nextResults.add(ItemFactory.getInstance().createStringItem(key));
+            }
         }
     }
 
@@ -95,7 +102,6 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -140,7 +146,9 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        this.iterator.close();
+        if (!this.iterator.isDataFrame()) {
+            this.iterator.close();
+        }
     }
 
     @Override

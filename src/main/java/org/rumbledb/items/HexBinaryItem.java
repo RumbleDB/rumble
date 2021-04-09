@@ -8,8 +8,8 @@ import org.apache.commons.codec.binary.Hex;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.util.Arrays;
 import java.util.regex.Pattern;
@@ -117,7 +117,7 @@ public class HexBinaryItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.hexBinaryItem;
+        return BuiltinTypesCatalogue.hexBinaryItem;
     }
 
     @Override

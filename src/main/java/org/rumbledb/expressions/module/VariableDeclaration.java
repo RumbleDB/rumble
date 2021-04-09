@@ -130,5 +130,20 @@ public class VariableDeclaration extends Node {
             iterator.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("declare variable $" + this.variableName);
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.external)
+            sb.append(" external\n");
+        else {
+            sb.append(" ");
+            this.expression.serializeToJSONiq(sb, 0);
+            sb.append("\n");
+        }
+    }
 }
 

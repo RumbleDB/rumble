@@ -283,15 +283,22 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                         } else if (
                             (currentColumnType.equals(AtomicItemType.integerItem.getName())
                                 || currentColumnType.equals(AtomicItemType.doubleItem.getName())
+                                || currentColumnType.equals(AtomicItemType.floatItem.getName())
                                 || currentColumnType.equals(AtomicItemType.decimalItem.getName()))
                                 && (columnType.equals(AtomicItemType.integerItem.getName())
                                     || columnType.equals(AtomicItemType.doubleItem.getName())
+                                    || columnType.equals(AtomicItemType.floatItem.getName())
                                     || columnType.equals(AtomicItemType.decimalItem.getName()))
                         ) {
                             // the numeric type calculation is identical to Item::getNumericResultType()
                             if (
                                 currentColumnType.equals(AtomicItemType.doubleItem.getName())
                                     || columnType.equals(AtomicItemType.doubleItem.getName())
+                            ) {
+                                typesForAllColumns.put(columnIndex, AtomicItemType.floatItem.getName());
+                            } else if (
+                                currentColumnType.equals(AtomicItemType.floatItem.getName())
+                                    || columnType.equals(AtomicItemType.floatItem.getName())
                             ) {
                                 typesForAllColumns.put(columnIndex, AtomicItemType.doubleItem.getName());
                             } else if (
@@ -347,6 +354,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(AtomicItemType.doubleItem.getName())) {
                 columnType = DataTypes.DoubleType;
+            } else if (columnTypeString.equals(AtomicItemType.floatItem.getName())) {
+                columnType = DataTypes.FloatType;
             } else if (columnTypeString.equals(AtomicItemType.decimalItem.getName())) {
                 columnType = decimalType;
                 // columnType = DataTypes.createDecimalType();

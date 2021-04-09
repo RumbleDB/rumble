@@ -25,9 +25,9 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.LocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -98,7 +98,6 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.functionCallIterator.close();
         } else {
             this.hasNext = true;
         }
@@ -106,20 +105,18 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
 
     private void setFunctionItemAndIteratorWithCurrentContext() {
         try {
-            this.functionItemIterator.open(this.currentDynamicContextForLocalExecution);
-            if (this.functionItemIterator.hasNext()) {
-                this.functionItem = (FunctionItem) this.functionItemIterator.next();
-            }
-            if (this.functionItemIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "Dynamic function call can not be performed on a sequence.",
-                        getMetadata()
-                );
-            }
-            this.functionItemIterator.close();
-        } catch (ClassCastException e) {
+            this.functionItem = this.functionItemIterator.materializeAtMostOneItemOrNull(
+                this.currentDynamicContextForLocalExecution
+            );
+        } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
-                    "Dynamic function call can only be performed on functions.",
+                    "A dynamic function call can not be performed on a sequence of more than one item.",
+                    getMetadata()
+            );
+        }
+        if (this.functionItem == null && !this.functionItem.isFunction()) {
+            throw new UnexpectedTypeException(
+                    "Dynamic function calls can only be performed on functions.",
                     getMetadata()
             );
         }

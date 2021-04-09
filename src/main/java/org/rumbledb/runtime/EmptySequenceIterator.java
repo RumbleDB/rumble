@@ -21,11 +21,11 @@
 package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 
-public class EmptySequenceIterator extends LocalRuntimeIterator {
+public class EmptySequenceIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -35,12 +35,7 @@ public class EmptySequenceIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public boolean hasNext() {
-        return false;
-    }
-
-    @Override
-    public Item next() {
-        throw new IteratorFlowException("Invalid next() call on Empty Sequence", getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        return null;
     }
 }

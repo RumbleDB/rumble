@@ -15,6 +15,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -471,7 +472,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public DynamicContext getDynamicModuleContext() {
+    default public DynamicContext getModuleDynamicContext() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -589,4 +590,14 @@ public interface Item extends Serializable, KryoSerializable {
     int hashCode();
 
     String serialize();
+
+    /**
+     * Get sparkSql string for the item
+     * 
+     * @param context input context
+     * @return String representing the item in a sparksql query or null if it is not supported for the item
+     */
+    default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return NativeClauseContext.NoNativeQuery;
+    }
 }

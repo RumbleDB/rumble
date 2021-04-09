@@ -1,0 +1,66 @@
+<!--
+  ~ Licensed to the Apache Software Foundation (ASF) under one or more
+  ~ contributor license agreements.  See the NOTICE file distributed with
+  ~ this work for additional information regarding copyright ownership.
+  ~ The ASF licenses this file to You under the Apache License, Version 2.0
+  ~ (the "License"); you may not use this file except in compliance with
+  ~ the License.  You may obtain a copy of the License at
+  ~
+  ~     http://www.apache.org/licenses/LICENSE-2.0
+  ~
+  ~ Unless required by applicable law or agreed to in writing, software
+  ~ distributed under the License is distributed on an "AS IS" BASIS,
+  ~ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  ~ See the License for the specific language governing permissions and
+  ~ limitations under the License.
+  ~
+  ~ Authors: Stevan Mihajlovic
+  ~
+  -->
+
+<project name="antlr-parser" default="generate-xquery-parser"
+         basedir="."> <!-- "." here is evaluated to full path and set to basedir-->
+
+    <!-- Set project properties. -->
+    <property name="src.dir" value="./src/main/java/org/rumbledb"/>
+    <property name="parser.dir" value="${src.dir}/parser"/>
+    <property name="antlr.jar" value="/lib/antlr-4.7-complete.jar"/>
+
+    <target name="clean-xquery-parser">
+        <delete file="/org/rumbledb/parser/XQueryParser.tokens"/>
+        <delete file="/org/rumbledb/parser/XQueryLexer.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParser.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserBaseVisitor.java"/>
+        <delete file="/org/rumbledb/parser/XQueryParserVisitor.java"/>
+<!--        Never delete below file because we need it in original when executing generate-xquery-parser-->
+<!--        <delete file="/org/rumbledb/parser/XQueryLexer.tokens"/>-->
+    </target>
+
+    <target name="generate-xquery-parser">
+        <echo message="ANTLR4 XQueryParser.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/XQueryParser.g4"/>
+            <arg value="-lib"/>
+            <arg value="${parser.dir}"/>
+            <arg value="-o"/>
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
+            <arg value="-visitor"/>
+        </java>
+    </target>
+
+    <target name="generate-xquery-lexer">
+        <echo message="ANTLR4 XQueryLexer.g4" level="info"/>
+        <!-- <echo>${basedir}</echo> prints fullpath to basedir -->
+        <java classname="org.antlr.v4.Tool" failonerror="true" classpath="${antlr.jar}">
+            <arg value="${parser.dir}/XQueryLexer.g4"/>
+            <arg value="-o"/>
+            <!--             <arg value="${parser.dir}" />-->
+            <arg value="."/>   <!-- put results in *.g4's directory -->
+            <arg value="-no-listener"/>
+            <arg value="-visitor"/>
+        </java>
+    </target>
+
+</project>
