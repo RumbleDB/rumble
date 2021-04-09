@@ -181,7 +181,7 @@ public class AtomicItemType extends ItemType implements Serializable {
     }
 
     @Override
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         if (other.isSubtypeOf(this)) {
             return this;
         } else if (this.isSubtypeOf(other)) {

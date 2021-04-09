@@ -99,7 +99,7 @@ public class ItemType implements Serializable {
         return this.equals(superType);
     }
 
-    public ItemType findCommonSuperType(ItemType other) {
+    public ItemType findLeastCommonSuperTypeWith(ItemType other) {
         // item is the most generic type
         return this;
     }
@@ -141,5 +141,21 @@ public class ItemType implements Serializable {
 
     public Map<String, FieldDescriptor> getObjectContentFacet() {
         return Collections.emptyMap();
+    }
+
+    public boolean isFunctionItemType() {
+        return false;
+    }
+
+    public int getTypeTreeDepth() {
+        throw new UnsupportedOperationException("getTypeTreeDepth not implemented.");
+    }
+
+    public ItemType getBaseType() {
+        throw new UnsupportedOperationException("getBaseType not implemented.");
+    }
+
+    public String getIdentifierString() {
+        throw new UnsupportedOperationException("getIdentifierString not implemented.");
     }
 }
