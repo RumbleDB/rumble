@@ -33,6 +33,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
@@ -125,9 +126,7 @@ import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
-import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.*;
 
 
 /**
@@ -1174,7 +1173,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         JsoniqParser.FunctionTestContext fnCtx = itemTypeContext.functionTest();
         if (fnCtx != null) {
             // we have a function item type
-            return BuiltinTypesCatalogue.anyFunctionItem;
+            JsoniqParser.TypedFunctionTestContext typedFnCtx = fnCtx.typedFunctionTest();
+            if (typedFnCtx != null) {
+                SequenceType rt = processSequenceType(typedFnCtx.rt);
+                List<SequenceType> st = typedFnCtx.st.stream()
+                    .map(this::processSequenceType)
+                    .collect(Collectors.toList());
+                FunctionSignature signature = new FunctionSignature(st, rt);
+                // TODO: move item type creation to ItemFactory
+                return ItemTypeFactory.createFunctionItemType(signature);
+
+            } else {
+                return BuiltinTypesCatalogue.anyFunctionItem;
+            }
         }
         return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
     }
