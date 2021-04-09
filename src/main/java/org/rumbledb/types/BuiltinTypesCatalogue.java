@@ -58,6 +58,7 @@ public class BuiltinTypesCatalogue {
         decimalItem,
         doubleItem,
         floatItem,
+        numericItem,
         booleanItem,
         arrayItem,
         nullItem,
