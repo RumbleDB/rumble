@@ -353,7 +353,10 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem) || this.equals(numericItem);
+        return this.equals(decimalItem)
+            || this.equals(floatItem)
+            || this.equals(doubleItem)
+            || this.equals(numericItem);
     }
 
     @Override

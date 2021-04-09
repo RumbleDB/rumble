@@ -207,7 +207,7 @@ public class ObjectItemType implements ItemType {
             List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
             if (fields.size() > 0) {
                 sb.append("content facet:\n");
-                //String comma = "";
+                // String comma = "";
                 for (FieldDescriptor field : fields) {
                     sb.append("  ");
                     sb.append(field.getName());
