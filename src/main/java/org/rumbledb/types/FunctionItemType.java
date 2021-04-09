@@ -2,7 +2,9 @@ package org.rumbledb.types;
 
 import org.rumbledb.exceptions.OurBadException;
 
-public class FunctionItemType extends ItemType {
+import java.util.Set;
+
+public class FunctionItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
@@ -75,6 +77,11 @@ public class FunctionItemType extends ItemType {
     @Override
     public ItemType getBaseType() {
         return this.equals(anyFunctionItem) ? BuiltinTypesCatalogue.item : anyFunctionItem;
+    }
+
+    @Override
+    public Set<FacetTypes> getAllowedFacets() {
+        throw new UnsupportedOperationException("function item types does not support facets");
     }
 
     @Override
