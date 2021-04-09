@@ -10,7 +10,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -90,16 +90,16 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
         if (item.isFunction()) {
             return item;
         }
-        if (item.isAnyURI() && this.itemType.equals(AtomicItemType.stringItem)) {
+        if (item.isAnyURI() && this.itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return ItemFactory.getInstance().createStringItem(item.getStringValue());
         }
-        if (item.isFloat() && this.itemType.equals(AtomicItemType.doubleItem)) {
+        if (item.isFloat() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(AtomicItemType.doubleItem)) {
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
         }
-        if (item.isDecimal() && this.itemType.equals(AtomicItemType.floatItem)) {
+        if (item.isDecimal() && this.itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
         }
         throw new UnexpectedTypeException(

@@ -21,7 +21,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -242,17 +242,17 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
                 new SequenceType(
-                        AtomicItemType.item, // TODO: revert back to ObjectItem
+                        BuiltinTypesCatalogue.item, // TODO: revert back to ObjectItem
                         SequenceType.Arity.ZeroOrMore
                 ),
                 new SequenceType(
-                        AtomicItemType.objectItem,
+                        BuiltinTypesCatalogue.objectItem,
                         SequenceType.Arity.One
                 )
             )
         );
         SequenceType returnType = new SequenceType(
-                AtomicItemType.objectItem,
+                BuiltinTypesCatalogue.objectItem,
                 SequenceType.Arity.ZeroOrMore
         );
 

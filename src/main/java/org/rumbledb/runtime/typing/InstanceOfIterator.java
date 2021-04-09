@@ -30,7 +30,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -120,73 +120,73 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
      * @return true if itemToMatch matches itemType.
      */
     public static boolean doesItemTypeMatchItem(ItemType itemType, Item itemToMatch) {
-        if (itemType.equals(AtomicItemType.item)) {
+        if (itemType.equals(BuiltinTypesCatalogue.item)) {
             return true;
         }
-        if (itemType.equals(AtomicItemType.objectItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.objectItem)) {
             return itemToMatch.isObject();
         }
-        if (itemType.equals(AtomicItemType.atomicItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
             return itemToMatch.isAtomic();
         }
-        if (itemType.equals(AtomicItemType.stringItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
             return itemToMatch.isString();
         }
-        if (itemType.equals(AtomicItemType.integerItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
             return itemToMatch.isInteger();
         }
-        if (itemType.equals(AtomicItemType.decimalItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
             return itemToMatch.isDecimal();
         }
-        if (itemType.equals(AtomicItemType.doubleItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return itemToMatch.isDouble();
         }
-        if (itemType.equals(AtomicItemType.floatItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return itemToMatch.isFloat();
         }
-        if (itemType.equals(AtomicItemType.numericItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.numericItem)) {
             return itemToMatch.isNumeric();
         }
-        if (itemType.equals(AtomicItemType.booleanItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
             return itemToMatch.isBoolean();
         }
-        if (itemType.equals(AtomicItemType.nullItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.nullItem)) {
             return itemToMatch.isNull();
         }
-        if (itemType.equals(AtomicItemType.arrayItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
             return itemToMatch.isArray();
         }
-        if (itemType.equals(AtomicItemType.JSONItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.JSONItem)) {
             return itemToMatch.isObject() || itemToMatch.isArray();
         }
-        if (itemType.equals(AtomicItemType.durationItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.durationItem)) {
             return itemToMatch.isDuration();
         }
-        if (itemType.equals(AtomicItemType.yearMonthDurationItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
             return itemToMatch.isYearMonthDuration();
         }
-        if (itemType.equals(AtomicItemType.dayTimeDurationItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
             return itemToMatch.isDayTimeDuration();
         }
-        if (itemType.equals(AtomicItemType.dateTimeItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return itemToMatch.isDateTime();
         }
-        if (itemType.equals(AtomicItemType.dateItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dateItem)) {
             return itemToMatch.isDate();
         }
-        if (itemType.equals(AtomicItemType.timeItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.timeItem)) {
             return itemToMatch.isTime();
         }
-        if (itemType.equals(AtomicItemType.anyURIItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.anyURIItem)) {
             return itemToMatch.isAnyURI();
         }
-        if (itemType.equals(AtomicItemType.hexBinaryItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
             return itemToMatch.isHexBinary();
         }
-        if (itemType.equals(AtomicItemType.base64BinaryItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
             return itemToMatch.isBase64Binary();
         }
-        if (itemType.equals(AtomicItemType.functionItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
             return itemToMatch.isFunction();
         }
         throw new OurBadException("Type unrecognized: " + itemType);
