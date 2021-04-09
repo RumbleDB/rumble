@@ -78,13 +78,7 @@ public class AtomicItemType implements ItemType {
             ),
             DataTypes.FloatType
     );
-    static final AtomicItemType numericItem = new AtomicItemType(
-            new Name(Name.XS_NS, "js", "numeric"),
-            new HashSet<>(
-                    Arrays.asList()
-            ),
-            DataTypes.FloatType
-    );
+
     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
@@ -265,6 +259,8 @@ public class AtomicItemType implements ItemType {
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             // TODO : check once you remove derived like integer and int
             return 3;
+        } else if (this.isNumeric()) {
+            return 3;
         } else {
             return 2;
         }
@@ -276,6 +272,8 @@ public class AtomicItemType implements ItemType {
             return BuiltinTypesCatalogue.item;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
+        } else if (this.isNumeric()) {
+            return BuiltinTypesCatalogue.numericItem;
         } else {
             return atomicItem;
         }
