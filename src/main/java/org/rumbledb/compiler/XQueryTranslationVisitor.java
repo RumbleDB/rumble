@@ -845,7 +845,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     private Expression processFunctionCall(Name name, ParserRuleContext ctx, List<Expression> children) {
         if (
-                BuiltinTypesCatalogue.typeExists(name)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
         ) {
             return new CastExpression(
@@ -855,7 +855,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             );
         }
         if (
-                BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
                 && children.size() == 1
                 && name.getNamespace() != null
                 && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
