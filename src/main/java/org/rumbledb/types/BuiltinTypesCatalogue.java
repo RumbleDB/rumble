@@ -65,6 +65,8 @@ public class BuiltinTypesCatalogue {
         hexBinaryItem,
         anyURIItem,
         base64BinaryItem,
+        arrayItem,
+        objectItem,
         item
     );
 
