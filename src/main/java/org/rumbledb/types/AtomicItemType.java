@@ -79,7 +79,7 @@ public class AtomicItemType implements ItemType {
             DataTypes.FloatType
     );
     static final AtomicItemType numericItem = new AtomicItemType(
-            new Name(Name.XS_NS, "xs", "numeric"),
+            new Name(Name.XS_NS, "js", "numeric"),
             new HashSet<>(
                     Arrays.asList()
             ),
