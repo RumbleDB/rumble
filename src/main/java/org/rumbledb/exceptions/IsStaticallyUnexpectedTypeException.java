@@ -8,4 +8,8 @@ public class IsStaticallyUnexpectedTypeException extends RumbleException {
     public IsStaticallyUnexpectedTypeException(String message) {
         super(message, ErrorCode.UnexpectedStaticType);
     }
+
+    public IsStaticallyUnexpectedTypeException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.UnexpectedStaticType, metadata);
+    }
 }
