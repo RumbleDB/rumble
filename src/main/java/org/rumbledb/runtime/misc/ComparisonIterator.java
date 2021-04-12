@@ -489,22 +489,22 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
             String operator = " = ";
             switch (this.comparisonOperator.name()) {
-                case "eq":
+                case "VC_EQ":
                     operator = " = ";
                     break;
-                case "ne":
+                case "VC_NE":
                     operator = " <> ";
                     break;
-                case "le":
+                case "VC_LE":
                     operator = " <= ";
                     break;
-                case "lt":
+                case "VC_LT":
                     operator = " < ";
                     break;
-                case "ge":
+                case "VC_GE":
                     operator = " >= ";
                     break;
-                case "gt":
+                case "VC_GT":
                     operator = " > ";
                     break;
                 default:

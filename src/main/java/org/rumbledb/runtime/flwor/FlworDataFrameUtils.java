@@ -403,6 +403,8 @@ public class FlworDataFrameUtils {
         } else if (type.equals(DataTypes.createDecimalType())) {
             // TODO: test correct working
             return BuiltinTypesCatalogue.integerItem;
+        } else if (type == DataTypes.LongType) {
+            return BuiltinTypesCatalogue.longItem;
         } else if (type == DataTypes.DoubleType) {
             return BuiltinTypesCatalogue.doubleItem;
         } else if (type == DataTypes.FloatType) {
