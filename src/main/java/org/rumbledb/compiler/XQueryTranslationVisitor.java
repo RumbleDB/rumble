@@ -33,7 +33,6 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -745,7 +744,9 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             else
                 return BuiltinTypesCatalogue.arrayItem;
         } else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
-            return BuiltinTypesCatalogue.getItemTypeByName(parseName(ctx.atomicOrUnionType().eqName().qName(), false, true));
+            return BuiltinTypesCatalogue.getItemTypeByName(
+                parseName(ctx.atomicOrUnionType().eqName().qName(), false, true)
+            );
         } else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
             return processItemType(((XQueryParser.ParenthesizedItemTestContext) child).itemType());
         } else {
