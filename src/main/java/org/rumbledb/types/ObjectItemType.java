@@ -8,6 +8,8 @@ import java.util.*;
 
 public class ObjectItemType implements ItemType {
 
+    private static final long serialVersionUID = 1L;
+
     final static ObjectItemType anyObjectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,
@@ -109,6 +111,7 @@ public class ObjectItemType implements ItemType {
         return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public List<String> getConstraintsFacet() {
         return this.isPrimitive()
@@ -205,7 +208,7 @@ public class ObjectItemType implements ItemType {
             List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
             if (fields.size() > 0) {
                 sb.append("content facet:\n");
-                String comma = "";
+                // String comma = "";
                 for (FieldDescriptor field : fields) {
                     sb.append("  ");
                     sb.append(field.getName());
