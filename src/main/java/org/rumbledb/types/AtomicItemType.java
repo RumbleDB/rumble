@@ -34,6 +34,14 @@ public class AtomicItemType implements ItemType {
             DataTypes.StringType
     );
 
+    // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
+    // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
+    static final AtomicItemType numericItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "numeric"),
+            Collections.emptySet(),
+            DataTypes.BinaryType // TODO: consider if specific type is needed
+    );
+
     static final AtomicItemType decimalItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "decimal"),
             new HashSet<>(
@@ -255,8 +263,8 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if (this.equals(atomicItem)) {
             return 1;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
-            // TODO : check once you remove derived like integer and int
+        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)
+                || this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)) {
             return 3;
         } else {
             return 2;
@@ -269,6 +277,8 @@ public class AtomicItemType implements ItemType {
             return BuiltinTypesCatalogue.item;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
+        } else if (this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)){
+            return numericItem;
         } else {
             return atomicItem;
         }
@@ -339,7 +349,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem);
+        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem) || this.equals(numericItem);
     }
 
     @Override
