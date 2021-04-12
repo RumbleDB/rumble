@@ -405,6 +405,8 @@ public class FlworDataFrameUtils {
             return BuiltinTypesCatalogue.integerItem;
         } else if (type == DataTypes.DoubleType) {
             return BuiltinTypesCatalogue.doubleItem;
+        } else if (type == DataTypes.FloatType) {
+            return BuiltinTypesCatalogue.floatItem;
         } else {
             return null;
         }
