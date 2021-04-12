@@ -415,20 +415,4 @@ public interface ItemType extends Serializable {
                 "toDataFrameType method is not supported for " + this.toString() + " item types"
         );
     }
-
-    public boolean isFunctionItemType() {
-        return false;
-    }
-
-    public int getTypeTreeDepth() {
-        throw new UnsupportedOperationException("getTypeTreeDepth not implemented.");
-    }
-
-    public ItemType getBaseType() {
-        throw new UnsupportedOperationException("getBaseType not implemented.");
-    }
-
-    public String getIdentifierString() {
-        throw new UnsupportedOperationException("getIdentifierString not implemented.");
-    }
 }
