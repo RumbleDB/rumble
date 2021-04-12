@@ -34,6 +34,8 @@ jobs:
       run: mvn -Dtest=SparkRuntimeTests test
     - name: StaticTypeTests
       run: mvn -Dtest=StaticTypeTests test
+    - name: StaticTypeTests
+      run: mvn -Dtest=NativeFLWORRuntimeTests test
     - name: JavaAPITest
       run: mvn -Dtest=JavaAPITest test
     - name: Spotless check
