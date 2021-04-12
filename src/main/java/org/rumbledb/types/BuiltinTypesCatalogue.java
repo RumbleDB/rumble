@@ -11,6 +11,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType atomicItem = AtomicItemType.atomicItem;
     public static final ItemType stringItem = AtomicItemType.stringItem;
     public static final ItemType integerItem = DerivedAtomicItemType.integerItem;
+    public static final ItemType numericItem = AtomicItemType.numericItem;
     public static final ItemType decimalItem = AtomicItemType.decimalItem;
     public static final ItemType doubleItem = AtomicItemType.doubleItem;
     public static final ItemType floatItem = AtomicItemType.floatItem;

@@ -857,8 +857,8 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "round"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         RoundFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
