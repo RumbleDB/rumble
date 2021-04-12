@@ -52,6 +52,27 @@ public class FunctionSignature implements Serializable {
             && this.getReturnType() == ((FunctionSignature) instance).getReturnType();
     }
 
+    public boolean isSubtypeOf(FunctionSignature other) {
+        // a signature is a subtype of another signature if it always respect its contract typewise (i.e. no static type
+        // errors)
+        // this return type must be a subtype of other return type
+        if (!this.returnType.isSubtypeOf(other.returnType)) {
+            return false;
+        }
+        int paramsLength = this.parameterTypes.size();
+        // must have same number of parameters
+        if (paramsLength != other.parameterTypes.size()) {
+            return false;
+        }
+        for (int i = 0; i < paramsLength; ++i) {
+            // any parameter type of other must be a subtype of the corresponding parameter of this
+            if (!other.parameterTypes.get(i).isSubtypeOf(this.parameterTypes.get(i))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
     @Override
     public int hashCode() {
         return this.getParameterTypes().hashCode() + this.getReturnType().hashCode();

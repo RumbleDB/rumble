@@ -33,7 +33,7 @@ import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.parser.XQueryParser;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
@@ -736,20 +736,22 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             if (mapTestContext.typedMapTest() != null)
                 throw new XMLUnsupportedException("typedMapTest not supported", createMetadataFromContext(ctx));
             else
-                return AtomicItemType.objectItem;
+                return BuiltinTypesCatalogue.objectItem;
         } else if (child instanceof XQueryParser.ArrayTestContext) {
             XQueryParser.ArrayTestContext arrayTestContext = (XQueryParser.ArrayTestContext) child;
             if (arrayTestContext.typedArrayTest() != null)
                 throw new XMLUnsupportedException("typedArrayTest not supported", createMetadataFromContext(ctx));
             else
-                return AtomicItemType.arrayItem;
+                return BuiltinTypesCatalogue.arrayItem;
         } else if (child instanceof XQueryParser.AtomicOrUnionTypeContext) {
-            return AtomicItemType.getItemTypeByName(parseName(ctx.atomicOrUnionType().eqName().qName(), false, true));
+            return BuiltinTypesCatalogue.getItemTypeByName(
+                parseName(ctx.atomicOrUnionType().eqName().qName(), false, true)
+            );
         } else if (child instanceof XQueryParser.ParenthesizedItemTestContext) {
             return processItemType(((XQueryParser.ParenthesizedItemTestContext) child).itemType());
         } else {
             // It has to be (KW_ITEM LPAREN RPAREN)
-            return AtomicItemType.item;
+            return BuiltinTypesCatalogue.item;
         }
     }
 
@@ -785,7 +787,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             return SequenceType.EMPTY_SEQUENCE;
         }
 
-        ItemType itemType = AtomicItemType.getItemTypeByName(
+        ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(
             parseName(ctx.item.typeName().eqName().qName(), false, true)
         );
         if (ctx.question.size() > 0) {
@@ -844,7 +846,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     private Expression processFunctionCall(Name name, ParserRuleContext ctx, List<Expression> children) {
         if (
-            AtomicItemType.typeExists(name)
+            BuiltinTypesCatalogue.typeExists(name)
                 && children.size() == 1
         ) {
             return new CastExpression(
@@ -854,7 +856,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             );
         }
         if (
-            AtomicItemType.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
                 && children.size() == 1
                 && name.getNamespace() != null
                 && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
