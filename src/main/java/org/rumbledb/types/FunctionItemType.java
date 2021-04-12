@@ -81,14 +81,11 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-<<<<<<< HEAD
     public Set<FacetTypes> getAllowedFacets() {
         throw new UnsupportedOperationException("function item types does not support facets");
     }
 
     @Override
-=======
->>>>>>> ad48168f27446dca37ad4a33ebb3cb1a7cb5df7e
     public String getIdentifierString() {
         return this.toString();
     }
