@@ -20,6 +20,11 @@ public class AtomicItemType implements ItemType {
             Collections.emptySet(),
             DataTypes.BinaryType
     );
+    static final AtomicItemType numericItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "numeric"),
+            Collections.emptySet(),
+            DataTypes.BinaryType
+    );
     static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
@@ -78,6 +83,7 @@ public class AtomicItemType implements ItemType {
             ),
             DataTypes.FloatType
     );
+
     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
@@ -255,6 +261,10 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if (this.equals(atomicItem)) {
             return 1;
+        } else if (this.equals(numericItem)) {
+            return 2;
+        } else if (this.isNumeric()) {
+            return 3;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             // TODO : check once you remove derived like integer and int
             return 3;
@@ -267,6 +277,10 @@ public class AtomicItemType implements ItemType {
     public ItemType getBaseType() {
         if (this.equals(atomicItem)) {
             return BuiltinTypesCatalogue.item;
+        } else if (this.equals(numericItem)) {
+            return atomicItem;
+        } else if (this.isNumeric()) {
+            return numericItem;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
         } else {
@@ -339,7 +353,10 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem);
+        return this.equals(decimalItem)
+            || this.equals(floatItem)
+            || this.equals(doubleItem)
+            || this.equals(numericItem);
     }
 
     @Override
