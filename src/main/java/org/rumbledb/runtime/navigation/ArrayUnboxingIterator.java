@@ -33,13 +33,17 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Queue;
 
 public class ArrayUnboxingIterator extends HybridRuntimeIterator {
@@ -123,6 +127,37 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     @Override
     public boolean implementsDataFrames() {
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (nativeClauseContext.getClauseType() != FLWOR_CLAUSES.FOR) {
+            // unboxing only available for the FOR clause
+            return NativeClauseContext.NoNativeQuery;
+        }
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (newContext != NativeClauseContext.NoNativeQuery) {
+            DataType schema = newContext.getSchema();
+            if (!(schema instanceof ArrayType)) {
+                // let control to UDF when what we are unboxing is not an array
+                return NativeClauseContext.NoNativeQuery;
+            }
+            ArrayType arraySchema = (ArrayType) schema;
+            newContext.setSchema(arraySchema.elementType());
+            newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(arraySchema.elementType()));
+            List<String> lateralViewPart = newContext.getLateralViewPart();
+            if (lateralViewPart.size() == 0) {
+                lateralViewPart.add("explode(" + newContext.getResultingQuery() + ")");
+            } else {
+                // if we have multiple array unboxing we stack multiple lateral views and each one takes from the
+                // previous
+                lateralViewPart.add(
+                    "explode( arr" + lateralViewPart.size() + ".col" + newContext.getResultingQuery() + ")"
+                );
+            }
+            newContext.setResultingQuery(""); // dealt by for clause
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
