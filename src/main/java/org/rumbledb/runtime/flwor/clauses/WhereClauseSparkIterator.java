@@ -54,19 +54,16 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator expression;
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private FlworTuple nextLocalTupleResult;
-    private final boolean escapeBackticks;
 
     public WhereClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator whereExpression,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata,
-            boolean escapeBackticks
+            ExceptionMetadata iteratorMetadata
     ) {
         super(child, executionMode, iteratorMetadata);
         this.expression = whereExpression;
         this.expression.getVariableDependencies();
-        this.escapeBackticks = escapeBackticks;
     }
 
     @Override
@@ -194,8 +191,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             forVariable,
                             null,
                             forVariable,
-                            getMetadata(),
-                            this.escapeBackticks
+                            getMetadata()
                         );
                     }
                 }
