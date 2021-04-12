@@ -504,6 +504,8 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 case "gt":
                     operator = " > ";
                     break;
+                default:
+                    return NativeClauseContext.NoNativeQuery;
             }
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(nativeClauseContext, query, BuiltinTypesCatalogue.booleanItem);
