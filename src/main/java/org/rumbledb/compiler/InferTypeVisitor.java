@@ -321,15 +321,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
      * @return true if we perform the annotation or false if it is not one of this specific cases
      */
     private boolean tryAnnotateSpecificFunctions(FunctionCallExpression expression, StaticContext staticContext) {
-        List<Name> functionNameToAnnotate = Arrays.asList(
-            // Name.createVariableInDefaultFunctionNamespace("avro-file"),
-            Name.createVariableInDefaultFunctionNamespace("parquet-file")
-        );
         Name functionName = expression.getFunctionName();
         List<Expression> args = expression.getArguments();
 
+        // handle 'parquet-file' function
         if (
-            functionNameToAnnotate.contains(functionName)
+            functionName.equals(Name.createVariableInDefaultFunctionNamespace("parquet-file"))
                 && args.size() > 0
                 && args.get(0) instanceof StringLiteralExpression
         ) {
@@ -355,6 +352,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 throw e;
             }
+        }
+
+        // handle 'round' function
+        if (functionName.equals(Name.createVariableInDefaultFunctionNamespace("round"))) {
+            // set output type to the same of the first argument (special handling of numeric)
+            expression.setInferredSequenceType(args.get(0).getInferredSequenceType());
+            return true;
         }
 
         return false;
