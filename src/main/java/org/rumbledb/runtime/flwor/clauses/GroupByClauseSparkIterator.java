@@ -280,6 +280,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 df = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     df,
                     expression.getVariableName(),
+                    null,
                     expression.getExpression(),
                     context,
                     new ArrayList<Name>(this.child.getOutputTupleVariableNames()),

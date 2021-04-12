@@ -10,6 +10,8 @@ import java.util.Set;
 
 public class UnionItemType implements ItemType {
 
+    private static final long serialVersionUID = 1L;
+
     private static Set<FacetTypes> allowedFacets = new HashSet<>(Arrays.asList(FacetTypes.CONTENT));
 
     private final Name name;
