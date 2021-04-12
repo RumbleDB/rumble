@@ -8,7 +8,6 @@ public class FunctionItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    @SuppressWarnings("unused")
     private final boolean isGeneric;
     private final FunctionSignature signature;
 
