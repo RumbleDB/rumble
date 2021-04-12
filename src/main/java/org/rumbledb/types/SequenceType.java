@@ -311,6 +311,12 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("float", new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.One));
         sequenceTypes.put("float?", new SequenceType(BuiltinTypesCatalogue.floatItem, SequenceType.Arity.OneOrZero));
 
+        sequenceTypes.put("numeric", new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.One));
+        sequenceTypes.put(
+            "numeric?",
+            new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero)
+        );
+
         sequenceTypes.put("boolean", new SequenceType(BuiltinTypesCatalogue.booleanItem, SequenceType.Arity.One));
         sequenceTypes.put(
             "boolean?",
