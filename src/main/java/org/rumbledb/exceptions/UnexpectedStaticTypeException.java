@@ -10,7 +10,7 @@ public class UnexpectedStaticTypeException extends RumbleException {
         super(message, ErrorCode.UnexpectedTypeErrorCode);
     }
 
-    public UnexpectedStaticTypeException(String message, ExceptionMetadata metadata){
+    public UnexpectedStaticTypeException(String message, ExceptionMetadata metadata) {
         super(message, ErrorCode.UnexpectedTypeErrorCode, metadata);
     }
 

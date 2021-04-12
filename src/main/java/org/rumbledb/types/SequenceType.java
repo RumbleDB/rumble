@@ -301,20 +301,20 @@ public class SequenceType implements Serializable {
         );
 
         sequenceTypes.put(
-                "numeric?",
-                new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero)
+            "numeric?",
+            new SequenceType(BuiltinTypesCatalogue.numericItem, SequenceType.Arity.OneOrZero)
         );
         sequenceTypes.put(
-                "numeric",
-                new SequenceType(BuiltinTypesCatalogue.numericItem)
+            "numeric",
+            new SequenceType(BuiltinTypesCatalogue.numericItem)
         );
         sequenceTypes.put(
-                "numeric+",
-                new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.OneOrMore)
+            "numeric+",
+            new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.OneOrMore)
         );
         sequenceTypes.put(
-                "numeric*",
-                new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.ZeroOrMore)
+            "numeric*",
+            new SequenceType(BuiltinTypesCatalogue.numericItem, Arity.ZeroOrMore)
         );
 
         sequenceTypes.put(

@@ -263,8 +263,13 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if (this.equals(atomicItem)) {
             return 1;
-        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)
-                || this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)) {
+        } else if (
+            this.equals(yearMonthDurationItem)
+                || this.equals(dayTimeDurationItem)
+                || this.equals(decimalItem)
+                || this.equals(doubleItem)
+                || this.equals(floatItem)
+        ) {
             return 3;
         } else {
             return 2;
@@ -277,7 +282,7 @@ public class AtomicItemType implements ItemType {
             return BuiltinTypesCatalogue.item;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
-        } else if (this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)){
+        } else if (this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)) {
             return numericItem;
         } else {
             return atomicItem;
@@ -349,7 +354,10 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public boolean isNumeric() {
-        return this.equals(decimalItem) || this.equals(floatItem) || this.equals(doubleItem) || this.equals(numericItem);
+        return this.equals(decimalItem)
+            || this.equals(floatItem)
+            || this.equals(doubleItem)
+            || this.equals(numericItem);
     }
 
     @Override
