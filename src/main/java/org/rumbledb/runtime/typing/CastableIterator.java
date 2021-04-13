@@ -58,7 +58,6 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
             );
     }
 
-
     static void checkInvalidCastable(Item item, ExceptionMetadata metadata, ItemType type) {
         if (type.equals(BuiltinTypesCatalogue.atomicItem)) {
             throw new CastableException("\"atomic\": invalid type for \"cast\" or \"castable\" expression", metadata);
