@@ -56,6 +56,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -1031,17 +1032,28 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
 
-            String[] fields = rows.schema().fieldNames();
             rows.createOrReplaceTempView("assignment");
-            String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
-            df = rows.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT struct(%s) AS `%s` FROM assignment",
-                        columnNames,
-                        variableName
-                    )
-                );
+            if (DataFrameUtils.isSequenceOfObjects(rows)) {
+                String[] fields = rows.schema().fieldNames();
+                String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
+                df = rows.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT struct(%s) AS `%s` FROM assignment",
+                            columnNames,
+                            variableName
+                        )
+                    );
+            } else {
+                df = rows.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s` AS `%s` FROM assignment",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            variableName
+                        )
+                    );
+            }
         } else {
             // create initial RDD from expression
             JavaRDD<Item> expressionRDD = iterator.getRDD(context);
