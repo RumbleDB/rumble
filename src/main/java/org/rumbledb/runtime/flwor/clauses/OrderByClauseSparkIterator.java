@@ -564,7 +564,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        System.out.println("[INFO] Rumble was able to optimize a order-by clause to a native SQL query: " + orderSql);
+        System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query: " + orderSql);
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()
