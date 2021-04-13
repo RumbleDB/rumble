@@ -458,10 +458,9 @@ public class FlworDataFrameUtils {
             } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
                 // rows that end up in the same group have the same value for the grouping column
                 // return a single instance of this value in the grouping column
-                queryColumnString.append(serializerUdfName);
-                queryColumnString.append("(array(first(`");
+                queryColumnString.append("first(`");
                 queryColumnString.append(columnName);
-                queryColumnString.append("`)))");
+                queryColumnString.append("`)");
             } else {
                 // aggregate the column values for each row in the group
                 queryColumnString.append(serializerUdfName);
