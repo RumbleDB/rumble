@@ -38,9 +38,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.OrderClauseDetermineTypeUDF;
@@ -233,6 +236,20 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
+
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+            df,
+            this.expressionsWithIterator,
+            allColumns,
+            inputSchema,
+            context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+
+        // was not possible, we use order udf
+        System.out.println("using UDF");
 
         df.sparkSession()
             .udf()
@@ -488,5 +505,75 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the order by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param expressionsWithIterator list of ordering iterators
+     * @param allColumns other columns required in following clauses
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the order by clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
+            List<String> allColumns,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        NativeClauseContext orderContext = new NativeClauseContext(FLWOR_CLAUSES.ORDER_BY, inputSchema, context);
+        StringBuilder orderSql = new StringBuilder();
+        String orderSeparator = "";
+        NativeClauseContext nativeQuery;
+        for (OrderByClauseAnnotatedChildIterator orderIterator : expressionsWithIterator) {
+            nativeQuery = orderIterator.getIterator().generateNativeQuery(orderContext);
+            if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+                return null;
+            }
+            orderSql.append(orderSeparator);
+            orderSeparator = ", ";
+            // special check to avoid ordering by an integer constant in an ordering clause
+            // second check to assure it is a literal
+            // because of meaning mismatch between sparksql (where it is supposed to order by the i-th col)
+            // and jsoniq (order by a costant, so no actual ordering is performed)
+            if (
+                (nativeQuery.getResultingType() == BuiltinTypesCatalogue.integerItem
+                    || nativeQuery.getResultingType() == BuiltinTypesCatalogue.intItem)
+                    && nativeQuery.getResultingQuery().matches("\\s*-?\\s*\\d+\\s*")
+            ) {
+                orderSql.append('"');
+                orderSql.append(nativeQuery.getResultingQuery());
+                orderSql.append('"');
+            } else {
+                orderSql.append(nativeQuery.getResultingQuery());
+            }
+            if (!orderIterator.isAscending()) {
+                orderSql.append(" desc");
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls first");
+                }
+            } else {
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls last");
+                }
+            }
+        }
+
+        System.out.println("[INFO] Rumble was able to optimize a order-by clause to a native SQL query: " + orderSql);
+        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
+        dataFrame.createOrReplaceTempView("input");
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input order by %s",
+                    selectSQL,
+                    orderSql
+                )
+            );
     }
 }
