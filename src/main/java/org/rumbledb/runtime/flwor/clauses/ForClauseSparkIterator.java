@@ -1234,8 +1234,15 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
+<<<<<<< HEAD
         System.out.println("native query returned " + nativeQuery.getResultingQuery());
         System.out.println("lateral view part is " + nativeQuery.getLateralViewPart());
+=======
+        System.out.println(
+            "[INFO] Rumble was able to optimize a for clause to a native SQL query: " + nativeQuery.getResultingQuery()
+        );
+        System.out.println("[INFO] (the lateral view part is " + nativeQuery.getLateralViewPart() + ")");
+>>>>>>> 96333dd468abad903856f85c915c8c6e4e94942d
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         dataFrame.createOrReplaceTempView("input");
 
