@@ -39,6 +39,7 @@ import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -553,10 +554,17 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
             if (!orderIterator.isAscending()) {
                 orderSql.append(" desc");
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls first");
+                }
+            } else {
+                if (orderIterator.getEmptyOrder() == EMPTY_ORDER.GREATEST) {
+                    orderSql.append(" nulls last");
+                }
             }
         }
 
-        System.out.println("native query returned: " + orderSql);
+        System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query: " + orderSql);
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()
