@@ -248,9 +248,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
-        // was not possible, we use order udf
-        System.out.println("using UDF");
-
         df.sparkSession()
             .udf()
             .register(

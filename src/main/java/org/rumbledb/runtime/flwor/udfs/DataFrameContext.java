@@ -107,6 +107,14 @@ public class DataFrameContext implements Serializable {
         // Create dynamic context with deserialized data but only with dependencies
         for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
+            if (columnName.endsWith(".sequence")) {
+                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                this.context.getVariableValues()
+                    .addVariableValue(
+                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        i
+                    );
+            }
             if (!columnName.endsWith(".count")) {
                 List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
                 this.context.getVariableValues()
@@ -201,6 +209,19 @@ public class DataFrameContext implements Serializable {
                     byte[] bytes = (byte[]) object;
                     this.input.setBuffer(bytes);
                     Item item = (Item) this.kryo.readClassAndObject(this.input);
+                    items.add(item);
+                }
+                return items;
+            }
+            if (row.schema().fields()[columnIndex].name().endsWith(".sequence")) {
+                List<Object> objects = row.getList(columnIndex);
+                List<Item> items = new ArrayList<>();
+                for (Object object : objects) {
+                    Item item = ItemParser.convertValueToItem(
+                        object,
+                        ((ArrayType) dt).elementType(),
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
                     items.add(item);
                 }
                 return items;
