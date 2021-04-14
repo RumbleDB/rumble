@@ -5,5 +5,4 @@ for $i in annotate(
 )
 let $l := $i.foo.bar[[1]]
 group by $k := $i.key
-group by $k
 return { "k": $k, "c" : [ $l ] }

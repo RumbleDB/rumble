@@ -318,9 +318,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
-        // was not possible, we use let udf
-        System.out.println("using UDF");
-
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         // Determine the return type for grouping UDF
@@ -515,9 +512,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
-            System.out.println(entry.getKey().toString());
             if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
-                System.out.println("Was a count");
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
@@ -526,8 +521,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
+            } else if (FlworDataFrameUtils.isVariableNativeSequence(inputSchema, entry.getKey())) {
+                // we are summing over a previous count
+                String columnName = entry.getKey().toString();
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
+                selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
-                System.out.println("is a new count");
                 // we need a count
                 selectString.append("count(`");
                 selectString.append(entry.getKey().toString());
@@ -548,7 +550,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(columnName);
                 selectString.append("`) as `");
                 selectString.append(columnName);
-                selectString.append("`");
+                selectString.append(".sequence`");
             }
         }
         System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
