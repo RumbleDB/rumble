@@ -274,6 +274,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             columnNamesArray = inputSchema.fieldNames();
             columnNames = Arrays.asList(columnNamesArray);
 
+            // TODO: consider add sequence type to group clause variable
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
@@ -303,9 +304,24 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         inputSchema = df.schema();
-        Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         df.createOrReplaceTempView("input");
+
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+            df,
+            variableAccessNames,
+            parentProjection,
+            inputSchema,
+            context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+
+        // was not possible, we use let udf
+        System.out.println("using UDF");
+
+        Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         // Determine the return type for grouping UDF
         List<StructField> typedFields = new ArrayList<>();
@@ -460,5 +476,85 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the group by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null (expect `input` table to be already available)
+     *
+     * @param dataFrame input dataframe for the query
+     * @param groupingVariables group by variables
+     * @param dependencies dependencies to forward to the next clause (select variables)
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the group by clause if successful, null otherwise
+     */
+    private Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            List<Name> groupingVariables,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        StringBuilder groupByString = new StringBuilder();
+        String sep = " ";
+        for (Name groupingVar : groupingVariables) {
+            StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
+            if (field.dataType().equals(DataTypes.BinaryType)) {
+                // we got a non-native type for grouping, switch to udf version
+                return null;
+            }
+
+            groupByString.append(sep);
+            sep = ", ";
+            groupByString.append(groupingVar.toString());
+        }
+        StringBuilder selectString = new StringBuilder();
+        sep = " ";
+        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
+            selectString.append(sep);
+            sep = ", ";
+            if (entry.getKey().toString().endsWith(".count")) {
+                // we are summing over a previous count
+                selectString.append("sum(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`");
+            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                // we need a count
+                selectString.append("count(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count`");
+            } else if (groupingVariables.contains(entry.getKey())) {
+                // we are considering one of the grouping variables
+                selectString.append(entry.getKey().toString());
+            } else {
+                // we collect all the values, if it is a binary object we just switch over to udf
+                String columnName = entry.getKey().toString();
+                StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
+                if (field.dataType().equals(DataTypes.BinaryType)) {
+                    return null;
+                }
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
+                selectString.append("`");
+            }
+        }
+        System.out.println("select part got returned: " + selectString);
+        System.out.println("groupby part got returned: " + groupByString);
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input group by %s",
+                    selectString,
+                    groupByString
+                )
+            );
     }
 }
