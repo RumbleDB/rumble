@@ -1,6 +1,7 @@
 package org.rumbledb.compiler;
 
 import org.apache.spark.sql.AnalysisException;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.CannotRetrieveResourceException;
@@ -84,6 +85,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 
+import sparksoniq.spark.SparkSessionManager;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
@@ -381,14 +383,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
             }
             try {
-                /*
-                 * StructType s = SparkSessionManager.getInstance()
-                 * .getOrCreateSession()
-                 * .read()
-                 * .parquet(uri.toString())
-                 * .schema();
-                 */
-                ItemType schemaItemType = BuiltinTypesCatalogue.objectItem;
+                StructType s = SparkSessionManager.getInstance()
+                    .getOrCreateSession()
+                    .read()
+                    .parquet(uri.toString())
+                    .schema();
+                ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
                 System.out.println(schemaItemType.toString());
                 // TODO : check if arity is correct
                 expression.setInferredSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
