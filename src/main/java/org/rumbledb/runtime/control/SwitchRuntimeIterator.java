@@ -77,7 +77,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
                 getMetadata()
         );
     }
-    
+
     @Override
     public void closeLocal() {
         this.matchingIterator.close();
