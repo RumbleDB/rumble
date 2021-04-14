@@ -115,7 +115,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
         }
 
         for (RuntimeIterator caseKey : this.cases.keySet()) {
-            Item caseValue = caseKey.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            Item caseValue = caseKey.materializeFirstItemOrNull(dynamicContext);
 
             if (caseValue != null) {
                 if (caseValue.isArray()) {
