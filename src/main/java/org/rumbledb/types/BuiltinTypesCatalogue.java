@@ -11,10 +11,10 @@ public class BuiltinTypesCatalogue {
     public static final ItemType atomicItem = AtomicItemType.atomicItem;
     public static final ItemType stringItem = AtomicItemType.stringItem;
     public static final ItemType integerItem = DerivedAtomicItemType.integerItem;
-    public static final ItemType numericItem = AtomicItemType.numericItem;
     public static final ItemType decimalItem = AtomicItemType.decimalItem;
     public static final ItemType doubleItem = AtomicItemType.doubleItem;
     public static final ItemType floatItem = AtomicItemType.floatItem;
+    public static final ItemType numericItem = AtomicItemType.numericItem;
     public static final ItemType booleanItem = AtomicItemType.booleanItem;
     public static final ItemType nullItem = AtomicItemType.nullItem;
     public static final ItemType durationItem = AtomicItemType.durationItem;
