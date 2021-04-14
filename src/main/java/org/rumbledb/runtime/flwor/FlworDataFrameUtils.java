@@ -181,26 +181,24 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Name variable
     ) {
-        for (String columnName : inputSchema.fieldNames())
-        {
+        for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
-                if(variable.getLocalName().equals(columnName))
-                {
+                if (variable.getLocalName().equals(columnName)) {
                     return false;
                 }
             } else {
-                if (variable.getLocalName().equals(columnName.substring(0, pos)))
-                {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
                     return columnName.substring(pos).equals("count");
-                };
+                } ;
             }
         }
         throw new OurBadException("Variable " + variable + "not found.");
     }
 
     /**
-     * Checks if the specified variable should be interpreted as a native sequence of items in a DataFrame with the supplied schema.
+     * Checks if the specified variable should be interpreted as a native sequence of items in a DataFrame with the
+     * supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
@@ -210,19 +208,16 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             Name variable
     ) {
-        for (String columnName : inputSchema.fieldNames())
-        {
+        for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
-                if(variable.getLocalName().equals(columnName))
-                {
+                if (variable.getLocalName().equals(columnName)) {
                     return false;
                 }
             } else {
-                if (variable.getLocalName().equals(columnName.substring(0, pos)))
-                {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
                     return columnName.substring(pos).equals("sequence");
-                };
+                } ;
             }
         }
         throw new OurBadException("Variable " + variable + "not found.");
@@ -288,8 +283,8 @@ public class FlworDataFrameUtils {
                         result.add(variableName.toString());
                         break;
                     }
-                    if (columnNames.contains(variableName.toString()+".sequence")) {
-                        result.add(variableName.toString()+".sequence");
+                    if (columnNames.contains(variableName.toString() + ".sequence")) {
+                        result.add(variableName.toString() + ".sequence");
                         break;
                     }
                     throw new OurBadException(

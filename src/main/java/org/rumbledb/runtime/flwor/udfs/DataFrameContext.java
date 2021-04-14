@@ -107,8 +107,7 @@ public class DataFrameContext implements Serializable {
         // Create dynamic context with deserialized data but only with dependencies
         for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
-            if (columnName.endsWith(".sequence"))
-            {
+            if (columnName.endsWith(".sequence")) {
                 List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
@@ -214,12 +213,15 @@ public class DataFrameContext implements Serializable {
                 }
                 return items;
             }
-            if (row.schema().fields()[columnIndex].name().endsWith(".sequence"))
-            {
+            if (row.schema().fields()[columnIndex].name().endsWith(".sequence")) {
                 List<Object> objects = row.getList(columnIndex);
                 List<Item> items = new ArrayList<>();
                 for (Object object : objects) {
-                    Item item = ItemParser.convertValueToItem(object, ((ArrayType) dt).elementType(), ExceptionMetadata.EMPTY_METADATA);
+                    Item item = ItemParser.convertValueToItem(
+                        object,
+                        ((ArrayType) dt).elementType(),
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
                     items.add(item);
                 }
                 return items;
