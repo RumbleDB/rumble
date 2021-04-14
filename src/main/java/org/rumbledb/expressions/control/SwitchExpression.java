@@ -112,7 +112,7 @@ public class SwitchExpression extends Expression {
                 this.highestExecutionMode = mode;
                 break;
             }
-            if (this.highestExecutionMode == ExecutionMode.RDD && !mode.isRDDOrDataFrame()) {
+            if (this.highestExecutionMode == ExecutionMode.RDD && mode.isLocal()) {
                 this.highestExecutionMode = ExecutionMode.LOCAL;
                 break;
             }
