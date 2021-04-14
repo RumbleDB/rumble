@@ -105,16 +105,14 @@ public class SwitchExpression extends Expression {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultExpression.getHighestExecutionMode(visitorConfig);
-        
-        if(this.highestExecutionMode == ExecutionMode.UNSET)
-        {
+
+        if (this.highestExecutionMode == ExecutionMode.UNSET) {
             return;
         }
 
         for (SwitchCase c : this.cases) {
             ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
-            if(mode == ExecutionMode.UNSET)
-            {
+            if (mode == ExecutionMode.UNSET) {
                 this.highestExecutionMode = ExecutionMode.UNSET;
                 return;
             }
