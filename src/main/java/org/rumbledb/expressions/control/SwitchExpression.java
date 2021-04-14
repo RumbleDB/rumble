@@ -106,12 +106,15 @@ public class SwitchExpression extends Expression {
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultExpression.getHighestExecutionMode(visitorConfig);
 
-        if (this.highestExecutionMode == ExecutionMode.RDD) {
-            for (SwitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
-                    this.highestExecutionMode = ExecutionMode.LOCAL;
-                    break;
-                }
+        for (SwitchCase c : this.cases) {
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            if (this.highestExecutionMode == ExecutionMode.DATAFRAME && !mode.isDataFrame()) {
+                this.highestExecutionMode = mode;
+                break;
+            }
+            if (this.highestExecutionMode == ExecutionMode.RDD && !mode.isRDDOrDataFrame()) {
+                this.highestExecutionMode = ExecutionMode.LOCAL;
+                break;
             }
         }
     }
