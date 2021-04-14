@@ -65,6 +65,8 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
     }
 
     @Override
@@ -89,6 +91,8 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     public void resetLocal() {
         this.matchingIterator.close();
         this.matchingIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.matchingIterator.hasNext();
     }
 
     private RuntimeIterator selectApplicableIterator(
@@ -130,7 +134,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             // both are empty sequences
             if (testValue == null) {
                 if (caseValue == null) {
-                    return cases.get(caseKey);
+                    return this.cases.get(caseKey);
                 } else {
                     break;
                 }
@@ -146,7 +150,7 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             }
         }
 
-        return defaultReturn;
+        return this.defaultReturn;
     }
 
     @Override
