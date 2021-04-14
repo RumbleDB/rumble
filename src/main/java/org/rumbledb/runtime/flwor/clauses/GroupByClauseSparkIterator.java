@@ -521,8 +521,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
+                selectString.append(".count");
                 selectString.append("`) as `");
                 selectString.append(entry.getKey().toString());
+                selectString.append(".count");
                 selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
                 System.out.println("is a new count");
