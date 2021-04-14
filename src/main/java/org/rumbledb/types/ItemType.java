@@ -104,6 +104,7 @@ public interface ItemType extends Serializable {
         return false;
     }
 
+
     /**
      *
      * @return the itemtype QName if available
