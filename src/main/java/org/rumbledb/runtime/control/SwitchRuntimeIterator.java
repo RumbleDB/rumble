@@ -68,10 +68,8 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
     @Override
     public Item nextLocal() {
         if (this.hasNext) {
-            this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
             Item nextItem = this.matchingIterator.next();
-            this.matchingIterator.close();
-            this.hasNext = false;
+            this.hasNext = this.matchingIterator.hasNext();
             return nextItem;
         }
         throw new IteratorFlowException(
@@ -79,10 +77,15 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
                 getMetadata()
         );
     }
+    
+    @Override
+    public void closeLocal() {
+        this.matchingIterator.close();
+    }
 
     @Override
     public void resetLocal() {
-        this.matchingIterator = null;
+        this.matchingIterator.close();
         initializeIterator(this.testField, this.cases, this.defaultReturn);
     }
 
@@ -91,17 +94,19 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             Map<RuntimeIterator, RuntimeIterator> cases,
             RuntimeIterator defaultReturn
     ) {
+        this.matchingIterator = null;
+
         Item testValue = test.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
 
         if (testValue != null) {
             if (testValue.isArray()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition can't be an array type",
+                        "Invalid args. Switch condition cannot be an array type",
                         getMetadata()
                 );
             } else if (testValue.isObject()) {
                 throw new NonAtomicKeyException(
-                        "Invalid args. Switch condition  can't be an object type",
+                        "Invalid args. Switch condition cannot be an object type",
                         getMetadata()
                 );
             }
@@ -113,12 +118,12 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
             if (caseValue != null) {
                 if (caseValue.isArray()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case can't be an array type",
+                            "Invalid args. Switch case cannot be an array type",
                             getMetadata()
                     );
                 } else if (caseValue.isObject()) {
                     throw new NonAtomicKeyException(
-                            "Invalid args. Switch case  can't be an object type",
+                            "Invalid args. Switch case  cannot be an object type",
                             getMetadata()
                     );
                 }
@@ -152,16 +157,11 @@ public class SwitchRuntimeIterator extends HybridRuntimeIterator {
 
         this.matchingIterator.open(this.currentDynamicContextForLocalExecution);
         this.hasNext = this.matchingIterator.hasNext();
-        this.matchingIterator.close();
     }
 
     @Override
     protected boolean hasNextLocal() {
         return this.hasNext;
-    }
-
-    @Override
-    protected void closeLocal() {
     }
 
     @Override
