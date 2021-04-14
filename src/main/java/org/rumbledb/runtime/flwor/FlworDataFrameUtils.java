@@ -189,7 +189,7 @@ public class FlworDataFrameUtils {
                 }
             } else {
                 if (variable.getLocalName().equals(columnName.substring(0, pos))) {
-                    return columnName.substring(pos).equals("count");
+                    return columnName.substring(pos).equals(".count");
                 } ;
             }
         }
