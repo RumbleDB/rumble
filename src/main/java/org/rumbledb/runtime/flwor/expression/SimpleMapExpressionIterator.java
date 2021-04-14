@@ -127,7 +127,6 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             this.hasNext = true;
         } else {
             this.hasNext = false;
-            this.leftIterator.close();
         }
     }
 

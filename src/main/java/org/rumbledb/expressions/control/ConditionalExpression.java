@@ -72,6 +72,26 @@ public class ConditionalExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("if (");
+        this.conditionExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("then (");
+
+        this.thenExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("else (");
+
+        this.elseExpression.serializeToJSONiq(sb, indent + 1);
+        sb.append(")\n");
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (
             this.thenExpression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()

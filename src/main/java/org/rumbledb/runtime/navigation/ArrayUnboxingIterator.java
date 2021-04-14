@@ -111,7 +111,6 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
         if (this.nextResults.isEmpty()) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }

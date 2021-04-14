@@ -20,10 +20,19 @@
 
 package org.rumbledb.runtime;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -37,18 +46,11 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
@@ -183,7 +185,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void open(DynamicContext context) {
         if (this.isOpen) {
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", getMetadata());
         }
         this.isOpen = true;
         this.hasNext = true;
@@ -192,7 +194,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void close() {
         this.isOpen = false;
-        this.children.forEach(c -> c.close());
     }
 
     public void reset(DynamicContext context) {

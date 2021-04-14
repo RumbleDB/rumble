@@ -63,4 +63,10 @@ public class NamedFunctionReferenceExpression extends Expression {
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.identifier.toString() + "\n");
+    }
 }

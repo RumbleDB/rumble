@@ -1,14 +1,28 @@
 package org.rumbledb.compiler;
 
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.*;
+import org.rumbledb.context.BuiltinFunction;
+import org.rumbledb.context.BuiltinFunctionCatalogue;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.errorcodes.ErrorCode;
-import org.rumbledb.exceptions.*;
-import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.*;
-import org.rumbledb.errorcodes.ErrorCode;
+import org.rumbledb.exceptions.CannotRetrieveResourceException;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnexpectedStaticTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -17,8 +31,23 @@ import org.rumbledb.expressions.arithmetic.AdditiveExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.UnaryExpression;
 import org.rumbledb.expressions.comparison.ComparisonExpression;
-import org.rumbledb.expressions.control.*;
-import org.rumbledb.expressions.flowr.*;
+import org.rumbledb.expressions.control.ConditionalExpression;
+import org.rumbledb.expressions.control.SwitchCase;
+import org.rumbledb.expressions.control.SwitchExpression;
+import org.rumbledb.expressions.control.TryCatchExpression;
+import org.rumbledb.expressions.control.TypeSwitchExpression;
+import org.rumbledb.expressions.control.TypeswitchCase;
+import org.rumbledb.expressions.flowr.Clause;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.expressions.flowr.FlworExpression;
+import org.rumbledb.expressions.flowr.ForClause;
+import org.rumbledb.expressions.flowr.GroupByClause;
+import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
+import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.OrderByClause;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
+import org.rumbledb.expressions.flowr.SimpleMapExpression;
+import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.logic.AndExpression;
 import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
@@ -26,25 +55,45 @@ import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.postfix.*;
-import org.rumbledb.expressions.primary.*;
-import org.rumbledb.expressions.typing.*;
+import org.rumbledb.expressions.postfix.ArrayLookupExpression;
+import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
+import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
+import org.rumbledb.expressions.postfix.ObjectLookupExpression;
+import org.rumbledb.expressions.primary.ArrayConstructorExpression;
+import org.rumbledb.expressions.primary.BooleanLiteralExpression;
+import org.rumbledb.expressions.primary.ContextItemExpression;
+import org.rumbledb.expressions.primary.DecimalLiteralExpression;
+import org.rumbledb.expressions.primary.DoubleLiteralExpression;
+import org.rumbledb.expressions.primary.FunctionCallExpression;
+import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
+import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
+import org.rumbledb.expressions.primary.NullLiteralExpression;
+import org.rumbledb.expressions.primary.ObjectConstructorExpression;
+import org.rumbledb.expressions.primary.StringLiteralExpression;
+import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.IsStaticallyExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.*;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.spark.SparkSessionManager;
 
-import java.net.URI;
-import org.rumbledb.types.*;
-import java.util.*;
-import java.util.stream.Collectors;
 
 /**
  * This visitor infers a static SequenceType for each expression in the query
  */
 public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**

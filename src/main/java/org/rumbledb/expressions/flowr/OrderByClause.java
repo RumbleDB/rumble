@@ -56,6 +56,37 @@ public class OrderByClause extends Clause {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        if (this.isStable)
+            sb.append("stable ");
+        sb.append("order by ");
+        int i = 0;
+        for (OrderByClauseSortingKey orderby : this.sortingKeys) {
+            orderby.getExpression().serializeToJSONiq(sb, 0);
+            if (orderby.isAscending())
+                sb.append(" ascending");
+            else
+                sb.append(" descending");
+            if (orderby.getEmptyOrder() != OrderByClauseSortingKey.EMPTY_ORDER.NONE) {
+                if (orderby.getEmptyOrder() == OrderByClauseSortingKey.EMPTY_ORDER.LEAST)
+                    sb.append(" empty least");
+                else
+                    sb.append(" empty greatest");
+            }
+            if (orderby.getUri() != null && !orderby.getUri().equals("")) {
+                sb.append(" collation \"" + orderby.getUri() + "\"");
+            }
+            if (i == this.sortingKeys.size() - 1) {
+                sb.append("\n");
+            } else {
+                sb.append(", ");
+            }
+            i++;
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitOrderByClause(this, argument);
     }

@@ -73,4 +73,26 @@ public class SimpleMapExpression extends Expression {
         }
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("!\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
+
 }

@@ -346,7 +346,7 @@ public class NullItem implements Item {
     }
 
     @Override
-    public DynamicContext getDynamicModuleContext() {
+    public DynamicContext getModuleDynamicContext() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a null!");
     }
 

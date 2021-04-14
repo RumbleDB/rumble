@@ -6,8 +6,11 @@ import java.util.Set;
 
 public class FunctionItemType implements ItemType {
 
+    private static final long serialVersionUID = 1L;
+
     private final boolean isGeneric;
     private final FunctionSignature signature;
+
     static FunctionItemType anyFunctionItem = new FunctionItemType(true);
 
     FunctionItemType(FunctionSignature signature) {

@@ -318,9 +318,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
-        // was not possible, we use let udf
-        System.out.println("using UDF");
-
         Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         // Determine the return type for grouping UDF
@@ -515,12 +512,22 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
-            if (entry.getKey().toString().endsWith(".count")) {
+            if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
+                selectString.append(".count");
                 selectString.append("`) as `");
                 selectString.append(entry.getKey().toString());
+                selectString.append(".count");
+                selectString.append("`");
+            } else if (FlworDataFrameUtils.isVariableNativeSequence(inputSchema, entry.getKey())) {
+                // we are summing over a previous count
+                String columnName = entry.getKey().toString();
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
                 selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
                 // we need a count
@@ -543,11 +550,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(columnName);
                 selectString.append("`) as `");
                 selectString.append(columnName);
-                selectString.append("`");
+                selectString.append(".sequence`");
             }
         }
-        System.out.println("select part got returned: " + selectString);
-        System.out.println("groupby part got returned: " + groupByString);
+        System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
+        System.out.println("[INFO] group-by part: " + groupByString);
         return dataFrame.sparkSession()
             .sql(
                 String.format(

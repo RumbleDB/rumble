@@ -89,6 +89,7 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
             } else {
                 this.currentChild.close();
                 if (++this.childIndex == this.children.size()) {
+                    this.currentChild = null;
                     break;
                 }
                 this.currentChild = this.children.get(this.childIndex);
@@ -111,8 +112,9 @@ public class CommaExpressionIterator extends HybridRuntimeIterator {
 
     @Override
     protected void closeLocal() {
-        for (int i = 0; i < this.children.size(); i++)
-            this.children.get(i).close();
+        if (this.currentChild != null) {
+            this.currentChild.close();
+        }
     }
 
     @Override

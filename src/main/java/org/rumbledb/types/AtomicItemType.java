@@ -86,6 +86,7 @@ public class AtomicItemType implements ItemType {
             ),
             DataTypes.FloatType
     );
+
     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
             new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
@@ -263,13 +264,12 @@ public class AtomicItemType implements ItemType {
     public int getTypeTreeDepth() {
         if (this.equals(atomicItem)) {
             return 1;
-        } else if (
-            this.equals(yearMonthDurationItem)
-                || this.equals(dayTimeDurationItem)
-                || this.equals(decimalItem)
-                || this.equals(doubleItem)
-                || this.equals(floatItem)
-        ) {
+        } else if (this.equals(numericItem)) {
+            return 2;
+        } else if (this.isNumeric()) {
+            return 3;
+        } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
+            // TODO : check once you remove derived like integer and int
             return 3;
         } else {
             return 2;
@@ -280,10 +280,12 @@ public class AtomicItemType implements ItemType {
     public ItemType getBaseType() {
         if (this.equals(atomicItem)) {
             return BuiltinTypesCatalogue.item;
+        } else if (this.equals(numericItem)) {
+            return atomicItem;
+        } else if (this.isNumeric()) {
+            return numericItem;
         } else if (this.equals(yearMonthDurationItem) || this.equals(dayTimeDurationItem)) {
             return durationItem;
-        } else if (this.equals(decimalItem) || this.equals(doubleItem) || this.equals(floatItem)) {
-            return numericItem;
         } else {
             return atomicItem;
         }
@@ -455,6 +457,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
+
     public Item getMaxInclusiveFacet() {
         if (!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(

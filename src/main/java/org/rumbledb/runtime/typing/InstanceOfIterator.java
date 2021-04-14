@@ -144,6 +144,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         if (itemType.equals(BuiltinTypesCatalogue.floatItem)) {
             return itemToMatch.isFloat();
         }
+        if (itemType.equals(BuiltinTypesCatalogue.numericItem)) {
+            return itemToMatch.isNumeric();
+        }
         if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
             return itemToMatch.isBoolean();
         }
@@ -182,9 +185,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (itemType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
             return itemToMatch.isBase64Binary();
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.numericItem)) {
-            return itemToMatch.isNumeric();
         }
         if (itemType.isFunctionItemType()) {
             return itemToMatch.isFunction();

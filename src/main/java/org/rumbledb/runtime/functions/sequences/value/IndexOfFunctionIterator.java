@@ -129,7 +129,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

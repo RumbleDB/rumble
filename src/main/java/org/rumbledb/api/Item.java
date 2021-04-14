@@ -472,7 +472,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public DynamicContext getDynamicModuleContext() {
+    default public DynamicContext getModuleDynamicContext() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

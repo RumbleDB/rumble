@@ -46,6 +46,8 @@ public class JavaAPITest {
         sparkConfiguration.set("spark.submit.deployMode", "client");
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
+        sparkConfiguration.set("spark.driver.host", "127.0.0.1");
+        sparkConfiguration.set("spark.driver.bindAddress", "127.0.0.1");
         SparkSessionManager.getInstance().initializeConfigurationAndSession(sparkConfiguration, true);
 
     }

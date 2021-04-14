@@ -58,4 +58,28 @@ public class IsStaticallyExpression extends Expression {
             iterator.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("is statically\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        indentIt(sb, indent);
+        this.sequenceType.toString();
+        sb.append("\n");
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
 }

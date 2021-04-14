@@ -478,7 +478,10 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
             // TODO: once done type system do proper comparison
             if (
-                !(leftResult.getResultingType().isNumeric() && rightResult.getResultingType().isNumeric()
+                !(leftResult.getResultingType() != null
+                    && rightResult.getResultingType() != null
+                    && leftResult.getResultingType().isNumeric()
+                    && rightResult.getResultingType().isNumeric()
                     || leftResult.getResultingType() == rightResult.getResultingType())
             ) {
                 return NativeClauseContext.NoNativeQuery;
@@ -486,24 +489,26 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
 
             String operator = " = ";
             switch (this.comparisonOperator.name()) {
-                case "eq":
+                case "VC_EQ":
                     operator = " = ";
                     break;
-                case "ne":
+                case "VC_NE":
                     operator = " <> ";
                     break;
-                case "le":
+                case "VC_LE":
                     operator = " <= ";
                     break;
-                case "lt":
+                case "VC_LT":
                     operator = " < ";
                     break;
-                case "ge":
+                case "VC_GE":
                     operator = " >= ";
                     break;
-                case "gt":
+                case "VC_GT":
                     operator = " > ";
                     break;
+                default:
+                    return NativeClauseContext.NoNativeQuery;
             }
             String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
             return new NativeClauseContext(nativeClauseContext, query, BuiltinTypesCatalogue.booleanItem);

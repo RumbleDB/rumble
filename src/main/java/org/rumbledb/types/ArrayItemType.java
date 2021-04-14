@@ -7,6 +7,8 @@ import java.util.*;
 
 public class ArrayItemType implements ItemType {
 
+    private static final long serialVersionUID = 1L;
+
     final static ArrayItemType anyArrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
             BuiltinTypesCatalogue.JSONItem,

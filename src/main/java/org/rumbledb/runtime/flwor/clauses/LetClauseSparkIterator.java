@@ -568,8 +568,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
-        System.out.println("using UDF");
-
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             newVariableExpression.getVariableDependencies(),
@@ -740,7 +738,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println("native query returned " + nativeQuery.getResultingQuery());
+        System.out.println(
+            "[INFO] Rumble was able to optimize a let clause to a native SQL query: " + nativeQuery.getResultingQuery()
+        );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()

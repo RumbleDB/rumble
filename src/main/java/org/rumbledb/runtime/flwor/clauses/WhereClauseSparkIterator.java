@@ -216,8 +216,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // was not possible, we use let udf
-        System.out.println("using UDF");
-
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             this.expression.getVariableDependencies(),
@@ -312,7 +310,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println("native query returned " + nativeQuery.getResultingQuery());
+        System.out.println(
+            "[INFO] Rumble was able to optimize a where clause to a native SQL query: "
+                + nativeQuery.getResultingQuery()
+        );
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()
             .sql(

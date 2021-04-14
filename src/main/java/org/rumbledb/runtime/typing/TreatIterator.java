@@ -122,7 +122,6 @@ public class TreatIterator extends HybridRuntimeIterator {
                 this.resultCount++;
             }
         } else {
-            this.iterator.close();
             checkEmptySequence(this.resultCount);
         }
 

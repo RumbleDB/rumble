@@ -65,6 +65,13 @@ public class FlworExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.returnClause.serializeToJSONiq(sb, 0);
+        sb.append("\n");
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitFlowrExpression(this, argument);
     }

@@ -56,6 +56,14 @@ public class ArrayConstructorExpression extends Expression {
         return result;
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("[");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append("]\n");
+    }
+
 
     @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {

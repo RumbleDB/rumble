@@ -76,4 +76,21 @@ public class UnaryExpression extends Expression {
             iterator.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        if (this.negated)
+            sb.append("-");
+        else
+            sb.append("+");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
 }

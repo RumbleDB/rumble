@@ -56,6 +56,7 @@ import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.ArrayRuntimeIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
+import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -198,7 +199,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // execution reaches here when there are no more results
         this.hasNext = false;
-        this.child.close();
     }
 
     /**
@@ -231,10 +231,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return true;
         }
 
-        this.assignmentIterator.close();
-
         // If an item was already output by this expression and there is no more, we are done.
         if (!this.isFirstItem || !this.allowingEmpty) {
+            this.assignmentIterator.close();
             this.hasNext = false;
             return false;
         }
@@ -265,7 +264,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child != null) {
             this.child.close();
         }
-        this.assignmentIterator.close();
+        if (this.assignmentIterator.isOpen()) {
+            this.assignmentIterator.close();
+        }
     }
 
     @Override
@@ -1048,15 +1049,26 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
             String[] fields = rows.schema().fieldNames();
             rows.createOrReplaceTempView("assignment");
-            String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
-            df = rows.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT struct(%s) AS `%s` FROM assignment",
-                        columnNames,
-                        variableName
-                    )
-                );
+            if (DataFrameUtils.isSequenceOfObjects(rows)) {
+                String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
+                df = rows.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT struct(%s) AS `%s` FROM assignment",
+                            columnNames,
+                            variableName
+                        )
+                    );
+            } else {
+                df = rows.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT `%s` AS `%s` FROM assignment",
+                            SparkSessionManager.atomicJSONiqItemColumnName,
+                            variableName
+                        )
+                    );
+            }
         } else {
             // create initial RDD from expression
             JavaRDD<Item> expressionRDD = iterator.getRDD(context);
@@ -1234,8 +1246,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println("native query returned " + nativeQuery.getResultingQuery());
-        System.out.println("lateral view part is " + nativeQuery.getLateralViewPart());
+        System.out.println(
+            "[INFO] Rumble was able to optimize a for clause to a native SQL query: " + nativeQuery.getResultingQuery()
+        );
+        System.out.println("[INFO] (the lateral view part is " + nativeQuery.getLateralViewPart() + ")");
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         dataFrame.createOrReplaceTempView("input");
 
