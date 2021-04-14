@@ -171,6 +171,35 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it only has a count, false otherwise.
+     */
+    public static boolean isVariableCountOnly(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames())
+        {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if(variable.getLocalName().equals(columnName))
+                {
+                    return false;
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos)))
+                {
+                    return true;
+                };
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
      * Lists the names of the columns of the schema that needed by the dependencies.
      * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
      * 

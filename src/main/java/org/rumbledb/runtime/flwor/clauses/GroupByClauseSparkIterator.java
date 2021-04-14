@@ -515,7 +515,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
-            if (entry.getKey().toString().endsWith(".count")) {
+            System.out.println(entry.getKey().toString());
+            if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
+                System.out.println("Was a count");
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
@@ -523,6 +525,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                System.out.println("is a new count");
                 // we need a count
                 selectString.append("count(`");
                 selectString.append(entry.getKey().toString());
@@ -546,8 +549,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append("`");
             }
         }
-        System.out.println("select part got returned: " + selectString);
-        System.out.println("groupby part got returned: " + groupByString);
+        System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
+        System.out.println("[INFO] group-by part: " + groupByString);
         return dataFrame.sparkSession()
             .sql(
                 String.format(
