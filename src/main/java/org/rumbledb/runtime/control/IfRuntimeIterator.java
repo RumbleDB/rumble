@@ -73,7 +73,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public Item nextLocal() {
-        if (this.nextResult == null) {
+        if (!this.hasNext) {
             throw new IteratorFlowException("No next item.");
         }
         Item result = this.selectedIterator.next();
@@ -83,7 +83,7 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public boolean hasNextLocal() {
-        return this.nextResult != null;
+        return this.hasNext;
     }
 
     public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
