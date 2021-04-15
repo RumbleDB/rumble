@@ -21,6 +21,8 @@
 package org.rumbledb.runtime.control;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -51,14 +53,22 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal() {
-        this.selectedIterator = null;
-        setNextResult();
+        this.selectedIterator.close();
+        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.selectedIterator.hasNext();
     }
 
     @Override
     public void openLocal() {
-        this.selectedIterator = null;
-        setNextResult();
+        this.selectedIterator = selectApplicableIterator(this.currentDynamicContextForLocalExecution);
+        this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
+        this.hasNext = this.selectedIterator.hasNext();
+    }
+
+    @Override
+    public void closeLocal() {
+        this.selectedIterator.close();
     }
 
     @Override
@@ -66,8 +76,8 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         if (this.nextResult == null) {
             throw new IteratorFlowException("No next item.");
         }
-        Item result = this.nextResult;
-        setNextResult();
+        Item result = this.selectedIterator.next();
+        this.hasNext = this.selectedIterator.hasNext();
         return result;
     }
 
@@ -76,46 +86,31 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
         return this.nextResult != null;
     }
 
-    public void setNextResult() {
-        if (this.selectedIterator != null && this.nextResult == null) {
-            throw new IteratorFlowException("Branch iterator has been fully consumed already.");
-        }
-        if (this.selectedIterator == null) {
-            RuntimeIterator condition = this.children.get(0);
-            boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(
-                this.currentDynamicContextForLocalExecution
-            );
-            if (effectiveBooleanValue) {
-                this.selectedIterator = this.children.get(1);
-            } else {
-                this.selectedIterator = this.children.get(2);
-            }
-            this.selectedIterator.open(this.currentDynamicContextForLocalExecution);
-        }
-        if (this.selectedIterator.hasNext()) {
-            this.nextResult = this.selectedIterator.next();
+    public RuntimeIterator selectApplicableIterator(DynamicContext dynamicContext) {
+        RuntimeIterator condition = this.children.get(0);
+        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+        if (effectiveBooleanValue) {
+            return this.children.get(1);
         } else {
-            this.nextResult = null;
-            this.selectedIterator.close();
-        }
-    }
-
-    @Override
-    protected void closeLocal() {
-        if (this.selectedIterator != null && this.selectedIterator.isOpen()) {
-            this.selectedIterator.close();
+            return this.children.get(2);
         }
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
-        RuntimeIterator condition = this.children.get(0);
-        boolean effectiveBooleanValue = condition.getEffectiveBooleanValue(dynamicContext);
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+        return iterator.getRDD(dynamicContext);
+    }
 
-        if (effectiveBooleanValue) {
-            return this.children.get(1).getRDD(dynamicContext);
-        } else {
-            return this.children.get(2).getRDD(dynamicContext);
-        }
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        RuntimeIterator iterator = selectApplicableIterator(dynamicContext);
+
+        return iterator.getDataFrame(dynamicContext);
     }
 }
