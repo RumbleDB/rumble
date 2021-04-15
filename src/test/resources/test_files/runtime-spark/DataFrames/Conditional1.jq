@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(foo, foo, foo)" :)
+(:JIQS: ShouldRun; Output="(foo, foo, foo, foo, foo, foo)" :)
 let $df := annotate(
   ({"foo":"foo", "bar":"bar"}, {"foo":"foo", "bar":"bar"}),
   {"foo":"string", "bar":"string"}
