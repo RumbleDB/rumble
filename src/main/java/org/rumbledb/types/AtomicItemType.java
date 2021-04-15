@@ -20,11 +20,6 @@ public class AtomicItemType implements ItemType {
             Collections.emptySet(),
             DataTypes.BinaryType
     );
-    static final AtomicItemType numericItem = new AtomicItemType(
-            new Name(Name.JS_NS, "js", "numeric"),
-            Collections.emptySet(),
-            DataTypes.BinaryType
-    );
     static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
             new HashSet<>(
@@ -37,6 +32,14 @@ public class AtomicItemType implements ItemType {
                     )
             ),
             DataTypes.StringType
+    );
+
+    // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
+    // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
+    static final AtomicItemType numericItem = new AtomicItemType(
+            new Name(Name.JS_NS, "js", "numeric"),
+            Collections.emptySet(),
+            DataTypes.BinaryType // TODO: consider if specific type is needed
     );
 
     static final AtomicItemType decimalItem = new AtomicItemType(
@@ -454,6 +457,7 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
+
     public Item getMaxInclusiveFacet() {
         if (!this.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
             throw new UnsupportedOperationException(
