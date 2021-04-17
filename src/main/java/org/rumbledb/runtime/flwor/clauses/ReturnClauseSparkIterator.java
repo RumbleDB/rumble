@@ -57,16 +57,19 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private RuntimeIterator expression;
     private Item nextResult;
+    private final boolean escapeBackticks;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            boolean escapeBackticks
     ) {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         this.child = child;
         this.expression = expression;
+        this.escapeBackticks = escapeBackticks;
     }
 
     @Override
@@ -109,6 +112,12 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
         }
         Dataset<Row> df = this.child.getDataFrame(context, projection);
+
+        // unescape backticks (`)
+        if (this.escapeBackticks) {
+            df = df.sparkSession().createDataFrame(df.rdd(), FlworDataFrameUtils.escapeSchema(df.schema(), true));
+        }
+
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
