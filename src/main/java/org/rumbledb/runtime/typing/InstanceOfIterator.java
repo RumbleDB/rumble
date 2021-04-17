@@ -186,7 +186,7 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         if (itemType.equals(BuiltinTypesCatalogue.base64BinaryItem)) {
             return itemToMatch.isBase64Binary();
         }
-        if (itemType.isFunctionItemType()) {
+        if (itemType.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
             return itemToMatch.isFunction();
         }
         throw new OurBadException("Type unrecognized: " + itemType);

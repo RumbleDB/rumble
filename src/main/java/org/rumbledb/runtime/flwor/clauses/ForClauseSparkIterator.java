@@ -82,6 +82,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     private RuntimeIterator assignmentIterator;
     private boolean allowingEmpty;
     private DataFrameContext dataFrameContext;
+    private final boolean escapeBackticks;
 
     // Computation state
     private transient DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
@@ -97,7 +98,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             boolean allowingEmpty,
             RuntimeIterator assignmentIterator,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            boolean escapeBackticks
     ) {
         super(child, executionMode, iteratorMetadata);
         this.variableName = variableName;
@@ -106,6 +108,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         this.allowingEmpty = allowingEmpty;
         this.assignmentIterator.getVariableDependencies();
         this.dataFrameContext = new DataFrameContext();
+        this.escapeBackticks = escapeBackticks;
     }
 
     public Name getVariableName() {
@@ -412,7 +415,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.variableName,
             this.positionalVariableName,
             Name.CONTEXT_ITEM,
-            getMetadata()
+            getMetadata(),
+            this.escapeBackticks
         );
     }
 
@@ -427,7 +431,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Name forVariableName,
             Name positionalVariableName,
             Name sequenceVariableName,
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            boolean escapeBackticks
     ) {
         String inputDFTableName = "inputTuples";
         String expressionDFTableName = "sequenceExpression";
@@ -472,7 +477,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 Name.CONTEXT_POSITION,
                 false,
                 context,
-                startingClauseDependencies
+                startingClauseDependencies,
+                escapeBackticks
             );
             variablesInExpressionSideTuple.add(sequenceVariableName);
             variablesInExpressionSideTuple.add(Name.CONTEXT_POSITION);
@@ -485,7 +491,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 false,
                 context,
-                startingClauseDependencies
+                startingClauseDependencies,
+                escapeBackticks
             );
             variablesInExpressionSideTuple.add(sequenceVariableName);
         }
@@ -1004,7 +1011,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.positionalVariableName,
             this.allowingEmpty,
             context,
-            parentProjection
+            parentProjection,
+            this.escapeBackticks
         );
     }
 
@@ -1026,11 +1034,18 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Name positionalVariableName,
             boolean allowingEmpty,
             DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> outputDependencies
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
+            boolean escapeBackticks
     ) {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
             Dataset<Row> rows = iterator.getDataFrame(context);
+
+            // escape backticks (`)
+            if (escapeBackticks) {
+                rows = rows.sparkSession()
+                    .createDataFrame(rows.rdd(), FlworDataFrameUtils.escapeSchema(rows.schema(), false));
+            }
 
             rows.createOrReplaceTempView("assignment");
             if (DataFrameUtils.isSequenceOfObjects(rows)) {
