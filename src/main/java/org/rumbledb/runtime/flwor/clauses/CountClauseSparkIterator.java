@@ -129,7 +129,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
         if (!parentProjection.containsKey(this.variableName)) {
             return df;
         }
@@ -202,7 +202,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         buffer.append("\n");
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.

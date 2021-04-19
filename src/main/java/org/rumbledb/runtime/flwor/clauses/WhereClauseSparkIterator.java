@@ -182,7 +182,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
                             forChild.getChildIterator()
-                                .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
+                                .getDataFrame(
+                                    context,
+                                    forChild.getInputTupleVariableDependencies(
+                                        getInputTupleVariableDependencies(parentProjection)
+                                    )
+                                ),
                             parentProjection,
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                             sequenceIterator,
@@ -198,7 +203,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
         StructType inputSchema = df.schema();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
@@ -260,7 +265,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         this.expression.print(buffer, indent + 1);
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // copy over the projection needed by the parent clause.

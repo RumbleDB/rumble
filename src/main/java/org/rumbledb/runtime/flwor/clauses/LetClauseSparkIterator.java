@@ -182,7 +182,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child != null) {
-            Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+            Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
 
             if (!parentProjection.containsKey(this.variableName)) {
                 return df;
@@ -291,7 +291,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> inputDF = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -477,7 +477,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         this.assignmentIterator.print(buffer, indent + 1);
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
