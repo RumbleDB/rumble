@@ -209,7 +209,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             forChild.getChildIterator()
                                 .getDataFrame(
                                     context,
-                                    forChild.getProjection(getInputTupleVariableDependencies(parentProjection))
+                                    forChild.getInputTupleVariableDependencies(getInputTupleVariableDependencies(parentProjection))
                                 ),
                             expressionDF,
                             parentProjection,
