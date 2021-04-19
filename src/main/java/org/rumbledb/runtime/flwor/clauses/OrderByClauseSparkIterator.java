@@ -452,7 +452,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             );
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
@@ -460,7 +460,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 

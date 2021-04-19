@@ -42,6 +42,9 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,11 +70,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         this.child = child;
         this.expression = expression;
+        setInputAndOutputTupleVariableDependencies();
     }
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
-        setInputAndOutputTupleVariableDependencies();
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
@@ -126,7 +129,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        setInputAndOutputTupleVariableDependencies();
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
@@ -251,7 +253,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -272,4 +274,14 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         this.child.print(buffer, indent + 1);
         this.expression.print(buffer, indent + 1);
     }
+
+    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
+        i.defaultReadObject();
+        setInputAndOutputTupleVariableDependencies();
+    }
+
+    private void writeObject(ObjectOutputStream i) throws IOException {
+        i.defaultWriteObject();
+    }
+
 }

@@ -45,13 +45,14 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final ExceptionMetadata metadata;
-    protected boolean hasNext;
-    protected boolean isOpen;
     protected RuntimeTupleIterator child;
-    protected DynamicContext currentDynamicContext;
     protected ExecutionMode highestExecutionMode;
-    protected Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
-    protected Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
+
+    protected transient DynamicContext currentDynamicContext;
+    protected transient boolean hasNext;
+    protected transient boolean isOpen;
+    protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
+    protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -195,10 +196,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -231,20 +232,48 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" | ");
+        buffer.append("\n");
 
-        buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Dynamic context variable dependencies: ");
+        Map<Name, DynamicContext.VariableDependency> dependencies = getDynamicContextVariableDependencies();
         for (Name v : dependencies.keySet()) {
             buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
-        buffer.append(" | ");
+        buffer.append("\n");
+        
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Input variable dependencies: ");
+        for (Name v : this.inputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.inputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
 
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Output variable dependencies: ");
+        for (Name v : this.outputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.outputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Variables bound in current FLWOR: ");
         for (Name v : getOutputTupleVariableNames()) {
             buffer.append(v + " ");
         }
-        buffer.append(" | ");
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Height: " + this.getHeight());
         buffer.append("\n");
 

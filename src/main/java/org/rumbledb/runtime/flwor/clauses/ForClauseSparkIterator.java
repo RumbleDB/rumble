@@ -1115,14 +1115,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
             }
-            result.putAll(this.child.getVariableDependencies());
+            result.putAll(this.child.getDynamicContextVariableDependencies());
         }
         return result;
     }
@@ -1161,7 +1161,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
-            return null;
+            return Collections.emptyMap();
         }
 
         // start with an empty projection.
