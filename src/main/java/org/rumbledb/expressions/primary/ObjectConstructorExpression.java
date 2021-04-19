@@ -77,6 +77,32 @@ public class ObjectConstructorExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        if (this.isMergedConstructor) {
+            indentIt(sb, indent);
+            sb.append("{| ");
+            this.childExpression.serializeToJSONiq(sb, 0);
+            sb.append(" |}\n");
+        } else {
+            indentIt(sb, indent);
+            sb.append("{\n");
+            if (this.keys != null) {
+                for (int i = 0; i < this.keys.size(); i++) {
+                    // TODO ending always with \n might cause issues here
+                    this.keys.get(i).serializeToJSONiq(sb, indent + 1);
+                    sb.append(" : ");
+                    this.values.get(i).serializeToJSONiq(sb, 0);
+                    if (i == this.keys.size() - 1) {
+                        sb.append("\n");
+                    } else {
+                        sb.append(",\n");
+                    }
+                }
+            }
+        }
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitObjectConstructor(this, argument);
     }

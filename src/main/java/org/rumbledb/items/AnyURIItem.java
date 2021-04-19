@@ -27,8 +27,8 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 import java.net.URI;
@@ -114,7 +114,7 @@ public class AnyURIItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.anyURIItem;
+        return BuiltinTypesCatalogue.anyURIItem;
     }
 
     @Override

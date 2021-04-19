@@ -33,6 +33,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.DivisionByZeroException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -42,7 +43,6 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonUtil;
 
 
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -91,13 +91,24 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
         // if left or right equals empty sequence, return empty sequence
         if (this.left == null || this.right == null) {
             return null;
-        } else {
-            ComparisonUtil.checkBinaryOperation(
-                this.left,
-                this.right,
-                this.multiplicativeOperator.toString(),
-                getMetadata()
+        }
+        if (!this.left.isAtomic()) {
+            String message = String.format(
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                    +
+                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                this.left.getDynamicType().toString()
             );
+            throw new NonAtomicKeyException(message, getMetadata());
+        }
+        if (!this.right.isAtomic()) {
+            String message = String.format(
+                "Can not atomize an %1$s item: an %1$s has probably been passed where "
+                    +
+                    "an atomic value is expected (e.g., as a key, or to a function expecting an atomic item)",
+                this.right.getDynamicType().toString()
+            );
+            throw new NonAtomicKeyException(message, getMetadata());
         }
         return processItem(this.left, this.right, this.multiplicativeOperator, getMetadata());
     }

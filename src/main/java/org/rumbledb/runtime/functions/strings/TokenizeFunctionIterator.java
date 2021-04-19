@@ -70,37 +70,14 @@ public class TokenizeFunctionIterator extends LocalFunctionCallIterator {
         if (this.results == null) {
             // Getting first parameter
             RuntimeIterator stringIterator = this.children.get(0);
-            stringIterator.open(this.currentDynamicContextForLocalExecution);
-            if (!stringIterator.hasNext()) {
-                this.hasNext = false;
-                stringIterator.close();
-                return;
-            }
             String input = null;
             String separator = null;
-            Item stringItem = stringIterator.next();
-            if (stringIterator.hasNext()) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
+            Item stringItem = stringIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            if (stringItem == null) {
+                this.hasNext = false;
+                return;
             }
-            stringIterator.close();
-            if (!stringItem.isString()) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            }
-            try {
-                input = stringItem.getStringValue();
-                stringIterator.close();
-            } catch (Exception e) {
-                throw new UnexpectedTypeException(
-                        "First parameter of tokenize must be a string or the empty sequence.",
-                        getMetadata()
-                );
-            }
+            input = stringItem.getStringValue();
 
             // Getting second parameter
             if (this.children.size() == 1) {

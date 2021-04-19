@@ -11,9 +11,10 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
@@ -39,6 +40,21 @@ public class DataFrameUtils {
             }
         );
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+    }
+
+    public static boolean isSequenceOfObjects(Dataset<Row> dataFrame) {
+        StructType schema = dataFrame.schema();
+        List<String> fieldNames = Arrays.asList(schema.fieldNames());
+        return fieldNames.size() != 1 || !fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName);
+    }
+
+    public static List<String> getFields(Dataset<Row> dataFrame) {
+        if (!isSequenceOfObjects(dataFrame)) {
+            throw new OurBadException("Cannot get fields if the sequence is not a sequence of objects.");
+        }
+        StructType schema = dataFrame.schema();
+        List<String> fieldNames = Arrays.asList(schema.fieldNames());
+        return fieldNames;
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
@@ -120,7 +136,7 @@ public class DataFrameUtils {
         }
 
         if (item.isString()) {
-            ItemType itemType = AtomicItemType.getItemTypeByName(
+            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(
                 Name.createVariableInDefaultTypeNamespace(item.getStringValue())
             );
             return ItemParser.getDataFrameDataTypeFromItemType(itemType);

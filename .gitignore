@@ -2,3 +2,6 @@
 target/
 *.iml
 /bin/
+
+# for now ignore jsound package
+src/main/java/jsound/

@@ -4,7 +4,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 public class DayTimeDurationItem extends DurationItem {
@@ -43,14 +43,15 @@ public class DayTimeDurationItem extends DurationItem {
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.value = getDurationFromString(input.readString(), AtomicItemType.dayTimeDurationItem).normalizedStandard(
-            PeriodType.dayTime()
-        );
+        this.value = getDurationFromString(input.readString(), BuiltinTypesCatalogue.dayTimeDurationItem)
+            .normalizedStandard(
+                PeriodType.dayTime()
+            );
         this.isNegative = this.value.toString().contains("-");
     }
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.dayTimeDurationItem;
+        return BuiltinTypesCatalogue.dayTimeDurationItem;
     }
 }

@@ -73,6 +73,12 @@ public class MainModule extends Module {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        this.prolog.serializeToJSONiq(sb, indent);
+        this.expression.serializeToJSONiq(sb, indent);
+    }
+
+    @Override
     public <T> T accept(AbstractNodeVisitor<T> visitor, T argument) {
         return visitor.visitMainModule(this, argument);
     }

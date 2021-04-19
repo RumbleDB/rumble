@@ -45,8 +45,8 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -187,7 +187,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             Item item = null;
             if (
                 !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
-                    && sequenceType.getItemType().equals(AtomicItemType.anyURIItem)
+                    && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
             ) {
                 URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     value,

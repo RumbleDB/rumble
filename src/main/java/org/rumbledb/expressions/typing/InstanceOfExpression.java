@@ -81,4 +81,28 @@ public class InstanceOfExpression extends Expression {
         }
     }
 
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("instance of\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        indentIt(sb, indent);
+        this.sequenceType.toString();
+        sb.append("\n");
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+    }
+
 }

@@ -190,7 +190,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         // if startPosition overshoots, return empty sequence
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }
@@ -229,7 +228,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

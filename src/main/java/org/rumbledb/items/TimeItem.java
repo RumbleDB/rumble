@@ -8,8 +8,8 @@ import org.joda.time.DateTimeZone;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 
 
@@ -30,7 +30,7 @@ public class TimeItem implements Item {
     }
 
     TimeItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, AtomicItemType.timeItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.timeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
@@ -112,7 +112,7 @@ public class TimeItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.timeItem;
+        return BuiltinTypesCatalogue.timeItem;
     }
 
     @Override

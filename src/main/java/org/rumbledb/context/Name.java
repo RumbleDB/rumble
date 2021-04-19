@@ -22,6 +22,7 @@ package org.rumbledb.context;
 
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import org.rumbledb.exceptions.OurBadException;
 import com.esotericsoftware.kryo.Kryo;
@@ -47,6 +48,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     private String namespace;
     private String prefix;
     private String localName;
+    private transient int hashCode;
     public static final String JSONIQ_DEFAULT_TYPE_NS = "http://jsoniq.org/default-type-namespace";
     public static final String JSONIQ_DEFAULT_FUNCTION_NS = "http://jsoniq.org/default-function-namespace";
     public static final String FN_NS = "http://www.w3.org/2005/xpath-functions";
@@ -66,6 +68,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         this.namespace = null;
         this.prefix = null;
         this.localName = null;
+        this.hashCode = 0;
     }
 
     public Name(String namespace, String prefix, String localName) {
@@ -75,6 +78,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         if (this.prefix != null && this.namespace == null) {
             throw new OurBadException("Namespace is null, but prefix is present");
         }
+        precomputeHashCode();
     }
 
     /**
@@ -112,6 +116,14 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
      */
     public static Name createVariableInDefaultFunctionNamespace(String localName) {
         return new Name(JSONIQ_DEFAULT_FUNCTION_NS, "", localName);
+    }
+
+    public static Name createVariableInDefaultXQueryTypeNamespace(String localName) {
+        return new Name(FN_NS, "", localName);
+    }
+
+    public static Name createVariableInDefaultXQueryFunctionNamespace(String localName) {
+        return new Name(XS_NS, "", localName);
     }
 
     /**
@@ -217,10 +229,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
 
     @Override
     public int hashCode() {
-        if (this.namespace == null) {
-            return this.localName.hashCode();
-        }
-        return this.localName.hashCode() + this.namespace.hashCode();
+        return this.hashCode;
     }
 
     @Override
@@ -235,9 +244,27 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
         this.namespace = input.readString();
         this.prefix = input.readString();
         this.localName = input.readString();
+        precomputeHashCode();
     }
 
-    public void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
+    public void precomputeHashCode() {
+        if (this.localName == null) {
+            this.hashCode = 0;
+            return;
+        }
+        if (this.namespace == null) {
+            this.hashCode = this.localName.hashCode();
+            return;
+        }
+        this.hashCode = this.localName.hashCode() + this.namespace.hashCode();
+    }
+
+    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
         i.defaultReadObject();
+        precomputeHashCode();
+    }
+
+    private void writeObject(ObjectOutputStream i) throws IOException {
+        i.defaultWriteObject();
     }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Elwin Stephan
  *
  */
 
@@ -63,10 +63,52 @@ public class FlworKey implements KryoSerializable {
     @Override
     public boolean equals(Object otherKey) {
         if (otherKey instanceof FlworKey) {
-            return this.compareWithFlworKey((FlworKey) otherKey, null) == 0;
+            return this.equalFlworKey((FlworKey) otherKey);
         } else {
             return false;
         }
+    }
+
+    /**
+     * Invariant - two Flworkeys have the same length
+     *
+     * @param flworKey "other" FlworKey to be compared against
+     * @return true if both items are equal, false otherwise (also when types are different)
+     */
+
+    public boolean equalFlworKey(FlworKey flworKey) {
+        if (this.keyItems.size() != flworKey.keyItems.size()) {
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.");
+        }
+
+        // iterate over every ordering expression of this flworkey
+        int index = 0;
+        while (index < this.keyItems.size()) {
+            Item item1 = this.keyItems.get(index);
+            Item item2 = flworKey.keyItems.get(index);
+
+            // check for incorrect ordering inputs
+            if (
+                (item1 != null && !item1.isAtomic())
+                    ||
+                    (item2 != null && !item2.isAtomic())
+            ) {
+                throw new RumbleException("Non atomic key not allowed");
+            }
+
+            long comparison = ComparisonIterator.compareItems(
+                item1,
+                item2,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            if (comparison != 0) {
+                return false;
+            }
+
+            index++;
+        }
+        return true;
     }
 
     /**

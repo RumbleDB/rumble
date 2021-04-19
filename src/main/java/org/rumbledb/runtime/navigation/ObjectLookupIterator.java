@@ -30,16 +30,13 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidSelectorException;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -47,6 +44,7 @@ import sparksoniq.spark.SparkSessionManager;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Map;
 
 public class ObjectLookupIterator extends HybridRuntimeIterator {
 
@@ -183,7 +181,6 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.iterator.close();
         } else {
             this.hasNext = true;
         }
@@ -214,6 +211,48 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
     @Override
     public boolean implementsDataFrames() {
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext newContext = this.iterator.generateNativeQuery(nativeClauseContext);
+        if (newContext != NativeClauseContext.NoNativeQuery) {
+            // check if the key has variable dependencies inside the FLWOR expression
+            // in that case we switch over to UDF
+            Map<Name, DynamicContext.VariableDependency> keyDependencies = this.children.get(1)
+                .getVariableDependencies();
+            // we use nativeClauseContext that contains the top level schema
+            DataType schema = nativeClauseContext.getSchema();
+            StructType structSchema;
+            if (schema instanceof StructType) {
+                structSchema = (StructType) schema;
+                if (
+                    Arrays.stream(structSchema.fieldNames())
+                        .anyMatch(field -> keyDependencies.containsKey(Name.createVariableInNoNamespace(field)))
+                ) {
+                    return NativeClauseContext.NoNativeQuery;
+                }
+            }
+
+            initLookupKey(newContext.getContext());
+
+            // get key (escape backtick)
+            String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
+            schema = newContext.getSchema();
+            if (!(schema instanceof StructType)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            structSchema = (StructType) schema;
+            if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
+                newContext.setResultingQuery(newContext.getResultingQuery() + ".`" + key + "`");
+                StructField field = structSchema.fields()[structSchema.fieldIndex(key)];
+                newContext.setSchema(field.dataType());
+                newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(field.dataType()));
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
+        return newContext;
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {

@@ -25,9 +25,10 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
-import org.rumbledb.types.AtomicItemType;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -125,10 +126,14 @@ public class DecimalItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.decimalItem;
+        return BuiltinTypesCatalogue.decimalItem;
     }
 
     @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        return new NativeClauseContext(context, this.value.toString(), BuiltinTypesCatalogue.stringItem);
+    }
+
     public boolean isNumeric() {
         return true;
     }

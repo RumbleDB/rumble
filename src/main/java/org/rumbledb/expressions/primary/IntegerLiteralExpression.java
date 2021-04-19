@@ -65,4 +65,10 @@ public class IntegerLiteralExpression extends Expression {
             iterator.print(buffer, indent + 1);
         }
     }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.lexicalValue + "\n");
+    }
 }

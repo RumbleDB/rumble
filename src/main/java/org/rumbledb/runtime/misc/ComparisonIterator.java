@@ -36,6 +36,8 @@ import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperat
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -462,5 +464,56 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
         throw new IteratorFlowException("Unrecognized operator found: " + comparisonOperator, metadata);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        if (this.comparisonOperator.isValueComparison()) {
+            NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+            NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+
+            if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+
+            // TODO: once done type system do proper comparison
+            if (
+                !(leftResult.getResultingType() != null
+                    && rightResult.getResultingType() != null
+                    && leftResult.getResultingType().isNumeric()
+                    && rightResult.getResultingType().isNumeric()
+                    || leftResult.getResultingType() == rightResult.getResultingType())
+            ) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+
+            String operator = " = ";
+            switch (this.comparisonOperator.name()) {
+                case "VC_EQ":
+                    operator = " = ";
+                    break;
+                case "VC_NE":
+                    operator = " <> ";
+                    break;
+                case "VC_LE":
+                    operator = " <= ";
+                    break;
+                case "VC_LT":
+                    operator = " < ";
+                    break;
+                case "VC_GE":
+                    operator = " >= ";
+                    break;
+                case "VC_GT":
+                    operator = " > ";
+                    break;
+                default:
+                    return NativeClauseContext.NoNativeQuery;
+            }
+            String query = "( " + leftResult.getResultingQuery() + operator + rightResult.getResultingQuery() + " )";
+            return new NativeClauseContext(nativeClauseContext, query, BuiltinTypesCatalogue.booleanItem);
+        } else {
+            return NativeClauseContext.NoNativeQuery;
+        }
     }
 }

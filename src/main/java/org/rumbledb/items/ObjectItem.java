@@ -27,7 +27,7 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -209,7 +209,7 @@ public class ObjectItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return AtomicItemType.objectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override

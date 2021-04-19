@@ -72,4 +72,20 @@ public class Rumble {
         );
         return new SequenceOfItems(iterator, dynamicContext, this.configuration);
     }
+
+    /**
+     * Creates JSONiq Expression Tree from a query and returns serialization of the Tree.
+     *
+     * @param query the content of the JSONiq or XQuery main module.
+     * @return serialization of the JSONiq Expression Tree.
+     */
+    public String serializeToJSONiq(String query) {
+        MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
+            query,
+            this.configuration
+        );
+        StringBuffer stringBuffer = new StringBuffer();
+        mainModule.serializeToJSONiq(stringBuffer, 0);
+        return stringBuffer.toString();
+    }
 }

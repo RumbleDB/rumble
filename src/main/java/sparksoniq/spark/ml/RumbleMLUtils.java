@@ -12,7 +12,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.types.AtomicItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.typing.CastIterator;
 
@@ -168,7 +168,7 @@ public class RumbleMLUtils {
             case "boolean":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    AtomicItemType.booleanItem,
+                    BuiltinTypesCatalogue.booleanItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
@@ -178,7 +178,7 @@ public class RumbleMLUtils {
             case "String":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    AtomicItemType.stringItem,
+                    BuiltinTypesCatalogue.stringItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
@@ -188,7 +188,7 @@ public class RumbleMLUtils {
             case "int":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    AtomicItemType.integerItem,
+                    BuiltinTypesCatalogue.integerItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
@@ -198,7 +198,7 @@ public class RumbleMLUtils {
             case "double":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    AtomicItemType.doubleItem,
+                    BuiltinTypesCatalogue.doubleItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
@@ -208,7 +208,7 @@ public class RumbleMLUtils {
             case "long":
                 castItem = CastIterator.castItemToType(
                     atomicItem,
-                    AtomicItemType.decimalItem,
+                    BuiltinTypesCatalogue.decimalItem,
                     ExceptionMetadata.EMPTY_METADATA
                 );
                 if (castItem == null) {
