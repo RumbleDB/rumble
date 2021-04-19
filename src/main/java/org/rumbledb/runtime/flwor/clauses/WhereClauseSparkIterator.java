@@ -144,8 +144,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
@@ -206,11 +205,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
-                            forChild.getChildIterator()
-                                .getDataFrame(
-                                    context,
-                                    forChild.getInputTupleVariableDependencies(getInputTupleVariableDependencies(parentProjection))
-                                ),
+                            forChild.getChildIterator().getDataFrame(context),
                             expressionDF,
                             parentProjection,
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -225,7 +220,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
@@ -267,14 +262,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         return df;
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
                 this.expression.getVariableDependencies()
         );
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 

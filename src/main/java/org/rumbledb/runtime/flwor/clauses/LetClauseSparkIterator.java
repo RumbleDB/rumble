@@ -178,18 +178,17 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child != null) {
-            Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+            Dataset<Row> df = this.child.getDataFrame(context);
 
-            if (!parentProjection.containsKey(this.variableName)) {
+            if (!this.outputTupleProjection.containsKey(this.variableName)) {
                 return df;
             }
 
             if (this.assignmentIterator.isRDDOrDataFrame()) {
-                return getDataFrameAsJoin(context, parentProjection, df);
+                return getDataFrameAsJoin(context, this.outputTupleProjection, df);
             }
 
             df = bindLetVariableInDataFrame(
@@ -201,7 +200,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 (this.child == null)
                     ? Collections.emptyList()
                     : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-                parentProjection,
+                this.outputTupleProjection,
                 false
             );
 
@@ -291,7 +290,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         // Now we know we can execute the query as an equi-join.
         // First, we evaluate all input tuples.
-        Dataset<Row> inputDF = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+        Dataset<Row> inputDF = this.child.getDataFrame(context);
 
         // We resolve the dependencies of the predicate expression.
         // If the predicate depends on position() or last(), we are not able yet to support this.
@@ -447,14 +446,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return intersection.isEmpty();
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
         if (this.child != null) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
             }
-            result.putAll(this.child.getVariableDependencies());
+            result.putAll(this.child.getDynamicContextVariableDependencies());
         }
         return result;
     }
@@ -481,7 +480,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {
-            return null;
+            return Collections.emptyMap();
         }
 
         // start with an empty projection.
