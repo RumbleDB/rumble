@@ -325,7 +325,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         expressionDF = getDataFrameStartingClause(context, startingClauseDependencies);
 
-        Dataset<Row> inputDF = this.child.getDataFrame(context, getProjection(outputTupleVariableDependencies));
+        Dataset<Row> inputDF = this.child.getDataFrame(
+            context,
+            getInputTupleVariableDependencies(outputTupleVariableDependencies)
+        );
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
         String inputDFTableName = "input";
@@ -401,7 +404,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         return joinInputTupleWithSequenceOnPredicate(
             context,
-            this.child.getDataFrame(context, getProjection(parentProjection)),
+            this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection)),
             parentProjection,
             (this.child == null)
                 ? Collections.emptyList()
@@ -854,7 +857,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
 
         // the expression is locally evaluated
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(outputTuplesVariableDependencies));
+        Dataset<Row> df = this.child.getDataFrame(
+            context,
+            getInputTupleVariableDependencies(outputTuplesVariableDependencies)
+        );
         StructType inputSchema = df.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
@@ -1160,7 +1166,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         if (this.child == null) {

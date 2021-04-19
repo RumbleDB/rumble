@@ -263,7 +263,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -436,7 +436,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // copy over the projection needed by the parent clause.

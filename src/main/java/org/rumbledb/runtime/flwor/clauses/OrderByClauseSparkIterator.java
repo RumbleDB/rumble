@@ -226,7 +226,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
@@ -476,7 +476,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.

@@ -154,7 +154,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<Name, DynamicContext.VariableDependency> getProjection(
+    public abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     );
 
@@ -191,6 +191,19 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return new HashSet<Name>();
     }
 
+    /**
+     * Returns the height of the clause within the current FLWOR expression, i.e.,
+     * the number of descendant clauses.
+     * 
+     * @return The number of descendant clauses. 0 if it is a starting clause.
+     */
+    public int getHeight() {
+        if (this.child == null) {
+            return 0;
+        }
+        return 1 + this.child.getHeight();
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -209,6 +222,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         for (Name v : getOutputTupleVariableNames()) {
             buffer.append(v + " ");
         }
+        buffer.append(" | ");
+        buffer.append("Height: " + this.getHeight());
         buffer.append("\n");
 
         if (this.child != null) {
