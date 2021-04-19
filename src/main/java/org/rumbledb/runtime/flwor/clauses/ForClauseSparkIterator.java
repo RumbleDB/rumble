@@ -511,8 +511,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (isLeftOuterJoin) {
             optimizableJoin = false;
         }
-        for(RuntimeIterator r : expressionSideEqualityCriteria)
-        {
+        for (RuntimeIterator r : expressionSideEqualityCriteria) {
             StringBuffer sb = new StringBuffer();
             r.print(sb, 2);
             System.out.println(sb.toString());
@@ -528,8 +527,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         System.out.println("Old right side variable name : " + oldRightSideVariableName);
         System.out.println("New right side variable name: " + newRightSideVariableName);
-        for (Name n : predicateDependencies.keySet())
-        {
+        for (Name n : predicateDependencies.keySet()) {
             System.out.println(n.toString() + " -> " + predicateDependencies.get(n));
         }
         List<Name> variablesInExpressionSideTuple = new ArrayList<>();
@@ -551,9 +549,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         ) {
             variablesInExpressionSideTuple.add(Name.CONTEXT_COUNT);
         }
-        
-        for (Name n : variablesInExpressionSideTuple)
-        {
+
+        for (Name n : variablesInExpressionSideTuple) {
             System.out.println(n.toString() + " in expression side tuple.");
         }
 
