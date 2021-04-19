@@ -241,7 +241,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
         buffer.append("\n");
-        
+
         for (int i = 0; i < indent + 6; ++i) {
             buffer.append("  ");
         }
