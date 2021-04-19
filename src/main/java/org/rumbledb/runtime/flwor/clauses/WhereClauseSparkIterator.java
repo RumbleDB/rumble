@@ -143,8 +143,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
@@ -182,13 +181,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
                             forChild.getChildIterator()
-                                .getDataFrame(
-                                    context,
-                                    forChild.getInputTupleVariableDependencies(
-                                        getInputTupleVariableDependencies(parentProjection)
-                                    )
-                                ),
-                            parentProjection,
+                                .getDataFrame(context),
+                            this.outputTupleProjection,
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                             sequenceIterator,
                             this.expression,
@@ -203,7 +197,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(

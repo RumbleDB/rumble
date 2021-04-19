@@ -208,8 +208,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid orderby clause.");
@@ -226,7 +225,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);

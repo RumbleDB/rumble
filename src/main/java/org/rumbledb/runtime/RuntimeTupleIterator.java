@@ -50,6 +50,8 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected RuntimeTupleIterator child;
     protected DynamicContext currentDynamicContext;
     protected ExecutionMode highestExecutionMode;
+    protected Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
+    protected Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -140,23 +142,43 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return the DataFrame with the tuples returned by the child clause.
      */
     public abstract Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
-     * Invariant: all keys in getProjection(...) MUST be input tuple variables,
+     * Invariant: all keys in getInputTupleVariableDependencies(...) MUST be output tuple variables,
      * i.e., appear in this.child.getOutputTupleVariableNames()
      *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
+    protected abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     );
+
+    /**
+     * Computes and stores the DataFrame projection that this clause needs to receive from its child clause.
+     * Also stores that of its parent for future purposes.
+     * The intent is that the result of this method is used in getDataFrame() so it can
+     * optimize some values away.
+     * Invariant: all keys MUST be output tuple variables,
+     * i.e., appear in this.child.getOutputTupleVariableNames()
+     *
+     * @param parentProjection the projection needed by the parent clause.
+     * @return the projection needed by this clause.
+     */
+    public void setInputAndOutputTupleVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
+    ) {
+        this.outputTupleProjection = parentProjection;
+        this.inputTupleProjection = this.getInputTupleVariableDependencies(parentProjection);
+        if (this.child != null) {
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
+        }
+    }
 
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context

@@ -108,7 +108,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 projection.put(n, dependencies.get(n));
             }
         }
-        Dataset<Row> df = this.child.getDataFrame(context, projection);
+        this.child.setInputAndOutputTupleVariableDependencies(projection);
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,

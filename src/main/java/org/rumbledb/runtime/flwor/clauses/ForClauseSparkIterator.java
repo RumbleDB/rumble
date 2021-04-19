@@ -268,25 +268,24 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         // if it's a starting clause
         if (this.child == null) {
-            return getDataFrameStartingClause(context, parentProjection);
+            return getDataFrameStartingClause(context, this.outputTupleProjection);
         }
 
         if (this.child.isDataFrame()) {
             if (this.assignmentIterator.isRDDOrDataFrame()) {
-                return getDataFrameFromCartesianProduct(context, parentProjection);
+                return getDataFrameFromCartesianProduct(context);
             }
 
-            return getDataFrameInParallel(context, parentProjection);
+            return getDataFrameInParallel(context);
         }
 
         // if child is locally evaluated
         // assignmentIterator is definitely an RDD if execution flows here
-        return getDataFrameFromUnion(context, parentProjection);
+        return getDataFrameFromUnion(context);
     }
 
     /**
@@ -299,35 +298,33 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromCartesianProduct(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies
+            DynamicContext context
     ) {
         // If the expression depends on this input tuple, we might still recognize an join.
         if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(this.assignmentIterator, this.child)) {
-            return getDataFrameFromJoin(context, outputTupleVariableDependencies);
+            return getDataFrameFromJoin(context);
         }
 
         // Since no variable dependency to the current FLWOR expression exists for the expression
         // evaluate the DataFrame with the parent context and calculate the cartesian product
         Dataset<Row> expressionDF;
         Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-        if (outputTupleVariableDependencies.containsKey(this.variableName)) {
-            startingClauseDependencies.put(this.variableName, outputTupleVariableDependencies.get(this.variableName));
+        if (this.outputTupleProjection.containsKey(this.variableName)) {
+            startingClauseDependencies.put(this.variableName, this.outputTupleProjection.get(this.variableName));
         }
         if (
             this.positionalVariableName != null
-                && outputTupleVariableDependencies.containsKey(this.positionalVariableName)
+                && this.outputTupleProjection.containsKey(this.positionalVariableName)
         ) {
             startingClauseDependencies.put(
                 this.positionalVariableName,
-                outputTupleVariableDependencies.get(this.positionalVariableName)
+                this.outputTupleProjection.get(this.positionalVariableName)
             );
         }
         expressionDF = getDataFrameStartingClause(context, startingClauseDependencies);
 
         Dataset<Row> inputDF = this.child.getDataFrame(
-            context,
-            getInputTupleVariableDependencies(outputTupleVariableDependencies)
+            context
         );
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
@@ -346,7 +343,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            outputTupleVariableDependencies,
+            this.outputTupleProjection,
             null,
             overridenVariables
         );
@@ -380,8 +377,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromJoin(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (!(this.assignmentIterator instanceof PredicateIterator)) {
             throw new JobWithinAJobException(
@@ -404,8 +400,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         return joinInputTupleWithSequenceOnPredicate(
             context,
-            this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection)),
-            parentProjection,
+            this.child.getDataFrame(context),
+            this.outputTupleProjection,
             (this.child == null)
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -770,8 +766,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromUnion(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         Dataset<Row> df = null;
         this.child.open(context);
@@ -787,16 +782,16 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                                                                                                         // from new
 
             Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-            if (parentProjection.containsKey(this.variableName)) {
-                startingClauseDependencies.put(this.variableName, parentProjection.get(this.variableName));
+            if (this.outputTupleProjection.containsKey(this.variableName)) {
+                startingClauseDependencies.put(this.variableName, this.outputTupleProjection.get(this.variableName));
             }
             if (
                 this.positionalVariableName != null
-                    && parentProjection.containsKey(this.positionalVariableName)
+                    && this.outputTupleProjection.containsKey(this.positionalVariableName)
             ) {
                 startingClauseDependencies.put(
                     this.positionalVariableName,
-                    parentProjection.get(this.positionalVariableName)
+                    this.outputTupleProjection.get(this.positionalVariableName)
                 );
             }
             Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, startingClauseDependencies);
@@ -852,15 +847,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameInParallel(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> outputTuplesVariableDependencies
+            DynamicContext context
     ) {
 
         // the expression is locally evaluated
-        Dataset<Row> df = this.child.getDataFrame(
-            context,
-            getInputTupleVariableDependencies(outputTuplesVariableDependencies)
-        );
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(this.variableName);
@@ -869,7 +860,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            outputTuplesVariableDependencies,
+            this.outputTupleProjection,
             null,
             variableNamesToExclude
         );
@@ -1002,7 +993,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      */
     private Dataset<Row> getDataFrameStartingClause(
             DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            Map<Name, DynamicContext.VariableDependency> outputDependencies
     ) {
         return getDataFrameStartingClause(
             this.assignmentIterator,
@@ -1010,7 +1001,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.positionalVariableName,
             this.allowingEmpty,
             context,
-            parentProjection
+            outputDependencies
         );
     }
 

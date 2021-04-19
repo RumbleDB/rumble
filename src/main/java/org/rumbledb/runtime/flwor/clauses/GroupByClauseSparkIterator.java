@@ -247,8 +247,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid groupby clause.");
@@ -263,7 +262,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -310,7 +309,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
             variableAccessNames,
-            parentProjection,
+            this.outputTupleProjection,
             inputSchema,
             context
         );
@@ -382,7 +381,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             false,
             serializerUDFName,
             variableAccessNames,
-            parentProjection,
+            this.outputTupleProjection,
             UDFcolumns
         );
 
