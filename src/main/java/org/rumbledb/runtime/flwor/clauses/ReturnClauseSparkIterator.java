@@ -71,6 +71,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        setInputAndOutputTupleVariableDependencies();
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
@@ -100,15 +101,6 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-        Map<Name, VariableDependency> dependencies = expression.getVariableDependencies();
-        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
-        Map<Name, VariableDependency> projection = new HashMap<>();
-        for (Name n : dependencies.keySet()) {
-            if (allTupleNames.contains(n)) {
-                projection.put(n, dependencies.get(n));
-            }
-        }
-        this.child.setInputAndOutputTupleVariableDependencies(projection);
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
@@ -120,8 +112,21 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
     }
 
+    private void setInputAndOutputTupleVariableDependencies() {
+        Map<Name, VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
+        Map<Name, VariableDependency> projection = new HashMap<>();
+        for (Name n : dependencies.keySet()) {
+            if (allTupleNames.contains(n)) {
+                projection.put(n, dependencies.get(n));
+            }
+        }
+        this.child.setInputAndOutputTupleVariableDependencies(projection);
+    }
+
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
+        setInputAndOutputTupleVariableDependencies();
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
