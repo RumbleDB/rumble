@@ -36,7 +36,6 @@ public class IfRuntimeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator selectedIterator = null;
-    private Item nextResult = null;
 
     public IfRuntimeIterator(
             RuntimeIterator condition,

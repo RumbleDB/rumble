@@ -123,18 +123,17 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this.child.getDataFrame(context, getInputTupleVariableDependencies(parentProjection));
-        if (!parentProjection.containsKey(this.variableName)) {
+        Dataset<Row> df = this.child.getDataFrame(context);
+        if (!this.outputTupleProjection.containsKey(this.variableName)) {
             return df;
         }
 
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, parentProjection, this.variableName);
+        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
         return dfWithIndex;
     }
 
@@ -179,10 +178,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
