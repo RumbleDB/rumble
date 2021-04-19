@@ -169,7 +169,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * i.e., appear in this.child.getOutputTupleVariableNames()
      *
      * @param parentProjection the projection needed by the parent clause.
-     * @return the projection needed by this clause.
      */
     public void setInputAndOutputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
