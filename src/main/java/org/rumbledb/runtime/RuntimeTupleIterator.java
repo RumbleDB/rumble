@@ -139,7 +139,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * or that only a count is needed for a specific variable, which allows projecting away the actual items.
      *
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @param parentProjection information on the projection needed by the caller.
      * @return the DataFrame with the tuples returned by the child clause.
      */
     public abstract Dataset<Row> getDataFrame(
