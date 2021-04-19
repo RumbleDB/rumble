@@ -373,7 +373,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * expression is a predicate whose lhs does not depend on the input tuple.
      * 
      * @param context the dynamic context.
-     * @param parentProjection the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromJoin(
@@ -470,7 +469,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             context,
             this.child.getDataFrame(context),
             expressionDF,
-            parentProjection,
+            this.outputTupleProjection,
             (this.child == null)
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -783,7 +782,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * Non-starting clause, the child clause (above in the syntax) is local but the expression is parallelizable.
      * 
      * @param context the dynamic context.
-     * @param parentProjection the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromUnion(
@@ -1009,7 +1007,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * Starting clause and the expression is parallelizable.
      * 
      * @param context the dynamic context.
-     * @param parentProjection the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameStartingClause(
