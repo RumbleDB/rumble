@@ -398,7 +398,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         // We don't support positional variables yet for large joins.
-        if (positionalVariableName != null) {
+        if (this.positionalVariableName != null) {
             throw new UnsupportedFeatureException(
                     "Rumble detected a large-scale join, but we do not support positional variables yet for these joins.",
                     getMetadata()
@@ -503,13 +503,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         List<RuntimeIterator> inputTupleSideEqualityCriteria = new ArrayList<>();
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
-            expressionSideEqualityCriteria,
             inputTupleSideEqualityCriteria,
+            expressionSideEqualityCriteria,
             oldRightSideVariableName
         );
 
         if (isLeftOuterJoin) {
             optimizableJoin = false;
+        }
+        for(RuntimeIterator r : expressionSideEqualityCriteria)
+        {
+            StringBuffer sb = new StringBuffer();
+            r.print(sb, 2);
+            System.out.println(sb.toString());
         }
 
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
@@ -520,6 +526,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateDependencies.put(Name.CONTEXT_ITEM, outputTupleVariableDependencies.get(newRightSideVariableName));
         }
 
+        System.out.println("Old right side variable name : " + oldRightSideVariableName);
+        System.out.println("New right side variable name: " + newRightSideVariableName);
+        for (Name n : predicateDependencies.keySet())
+        {
+            System.out.println(n.toString() + " -> " + predicateDependencies.get(n));
+        }
         List<Name> variablesInExpressionSideTuple = new ArrayList<>();
         if (
             oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
@@ -538,6 +550,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             oldRightSideVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
         ) {
             variablesInExpressionSideTuple.add(Name.CONTEXT_COUNT);
+        }
+        
+        for (Name n : variablesInExpressionSideTuple)
+        {
+            System.out.println(n.toString() + " in expression side tuple.");
         }
 
         if (optimizableJoin) {
@@ -578,6 +595,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
+        leftInputTuple.show();
+        rightInputTuple.show();
 
         // And we extend the expression and input tuple views with the hashes.
         if (optimizableJoin) {
@@ -591,6 +610,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
+            rightInputTuple.show();
             leftInputTuple = LetClauseSparkIterator.bindLetVariableInDataFrame(
                 leftInputTuple,
                 Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
@@ -601,6 +621,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 null,
                 true
             );
+            leftInputTuple.show();
         }
 
 
@@ -757,6 +778,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     Set<Name> rightDependencies = new HashSet<>(
                             rhs.getVariableDependencies().keySet()
                     );
+                    System.out.println("rightSideVariableName: " + rightSideVariableName);
                     if (leftDependencies.size() == 1 && leftDependencies.contains(rightSideVariableName)) {
                         if (!rightDependencies.contains(rightSideVariableName)) {
                             optimizableJoin = true;

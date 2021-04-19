@@ -538,6 +538,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             boolean hash
     ) {
         StructType inputSchema = dataFrame.schema();
+        inputSchema.printTreeString();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -545,6 +546,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             Collections.singletonList(newVariableName)
         );
+        for(String c : allColumns) {
+            System.out.println(c);
+        }
 
         // if we can (depending on the expression) use let natively without UDF
 
@@ -562,6 +566,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
+        for (Name n : newVariableExpression.getVariableDependencies().keySet())
+        {
+            System.out.println(n.toString() + " -> " + newVariableExpression.getVariableDependencies().get(n));
+        }
+        
+        for (Name n : variablesInInputTuple)
+        {
+            System.out.println(n.toString() + " in input");
+        }
+        
         // was not possible, we use let udf
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -569,6 +583,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             variablesInInputTuple,
             null
         );
+        for(String c : UDFcolumns) {
+            System.out.println("UDF " + c);
+        }
 
         if (!hash) {
             registerLetClauseUDF(dataFrame, newVariableExpression, context, inputSchema, UDFcolumns, sequenceType);
@@ -600,6 +617,12 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         } else {
+            System.out.println(String.format(
+                "select %s hashUDF(%s) as `%s` from input",
+                selectSQL,
+                UDFParameters,
+                newVariableName
+            ));
             dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
