@@ -476,7 +476,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateIterator,
             this.allowingEmpty,
             this.variableName,
-            Name.CONTEXT_ITEM,
+            true,
             getMetadata()
         );
     }
@@ -490,7 +490,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeIterator predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
-            Name oldRightSideVariableName, // really needed?
+            boolean isLeftHandSideContextItem, // really needed?
             ExceptionMetadata metadata
     ) {
         String leftInputDFTableName = "leftInputTuples";
@@ -505,7 +505,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateIterator,
             inputTupleSideEqualityCriteria,
             expressionSideEqualityCriteria,
-            oldRightSideVariableName
+            isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName
         );
 
         if (isLeftOuterJoin) {
@@ -519,34 +519,37 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
+            isLeftHandSideContextItem
                 && outputTupleVariableDependencies.containsKey(newRightSideVariableName)
         ) {
             predicateDependencies.put(Name.CONTEXT_ITEM, outputTupleVariableDependencies.get(newRightSideVariableName));
         }
 
-        System.out.println("Old right side variable name : " + oldRightSideVariableName);
+        System.out.println(
+            "Old right side variable name : "
+                + (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName)
+        );
         System.out.println("New right side variable name: " + newRightSideVariableName);
         for (Name n : predicateDependencies.keySet()) {
             System.out.println(n.toString() + " -> " + predicateDependencies.get(n));
         }
         List<Name> variablesInExpressionSideTuple = new ArrayList<>();
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
+            isLeftHandSideContextItem
                 && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
             optimizableJoin = false;
-            variablesInExpressionSideTuple.add(oldRightSideVariableName);
+            variablesInExpressionSideTuple.add(Name.CONTEXT_ITEM);
             variablesInExpressionSideTuple.add(Name.CONTEXT_POSITION);
         } else {
-            variablesInExpressionSideTuple.add(oldRightSideVariableName);
+            variablesInExpressionSideTuple.add(
+                isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName
+            );
         }
 
         // If the join criterion uses the context count, then we need to add it to the expression side (it is a
         // constant).
-        if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
-        ) {
+        if (isLeftHandSideContextItem && predicateDependencies.containsKey(Name.CONTEXT_COUNT)) {
             variablesInExpressionSideTuple.add(Name.CONTEXT_COUNT);
         }
 
@@ -648,14 +651,23 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         for (StructField f : inputSchema.fields()) {
             fieldList.add(f);
         }
-        if (predicateDependencies.containsKey(oldRightSideVariableName)) {
-            variablesInJointTuple.add(oldRightSideVariableName);
+        if (
+            predicateDependencies.containsKey(
+                (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName)
+            )
+        ) {
+            variablesInJointTuple.add((isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName));
             fieldList.add(
-                new StructField(oldRightSideVariableName.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
+                new StructField(
+                        (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName).getLocalName(),
+                        DataTypes.BinaryType,
+                        true,
+                        Metadata.empty()
+                )
             );
         }
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
+            isLeftHandSideContextItem
                 && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
             variablesInJointTuple.add(Name.CONTEXT_POSITION);
@@ -664,7 +676,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
+            isLeftHandSideContextItem && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
         ) {
             variablesInJointTuple.add(Name.CONTEXT_COUNT);
             fieldList.add(
@@ -702,7 +714,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         "SELECT %s `%s`.`%s` AS `%s` FROM %s LEFT OUTER JOIN %s ON joinUDF(%s) = 'true'",
                         projectionVariables,
                         rightInputDFTableName,
-                        oldRightSideVariableName.getLocalName(),
+                        (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName).getLocalName(),
                         newRightSideVariableName,
                         leftInputDFTableName,
                         rightInputDFTableName,
@@ -720,7 +732,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         "SELECT %s `%s`.`%s` AS `%s` FROM %s JOIN %s ON `%s` = `%s` WHERE joinUDF(%s) = 'true'",
                         projectionVariables,
                         rightInputDFTableName,
-                        oldRightSideVariableName.getLocalName(),
+                        (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName).getLocalName(),
                         newRightSideVariableName,
                         leftInputDFTableName,
                         rightInputDFTableName,
@@ -738,7 +750,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     "SELECT %s `%s`.`%s` AS `%s` FROM %s JOIN %s ON joinUDF(%s) = 'true'",
                     projectionVariables,
                     rightInputDFTableName,
-                    oldRightSideVariableName.getLocalName(),
+                    (isLeftHandSideContextItem ? (Name.CONTEXT_ITEM) : newRightSideVariableName).getLocalName(),
                     newRightSideVariableName,
                     leftInputDFTableName,
                     rightInputDFTableName,

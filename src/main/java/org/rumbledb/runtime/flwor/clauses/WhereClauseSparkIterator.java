@@ -183,6 +183,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         if (
                             !LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
                         ) {
+                            // TODO cannot happen ever.
                             throw new JobWithinAJobException(
                                     "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
                                     getMetadata()
@@ -190,13 +191,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         }
 
                         // Next we prepare the data frame on the expression side.
-                        Dataset<Row> expressionDF;
-
                         Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-                        startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
-                        expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
+
+                        Dataset<Row> leftHandSideDF = forChild.getChildIterator().getDataFrame(context);
+
+                        Dataset<Row> rightHandSideDF = ForClauseSparkIterator.getDataFrameStartingClause(
                             sequenceIterator,
-                            Name.CONTEXT_ITEM,
+                            forVariable,
                             null,
                             false,
                             context,
@@ -205,14 +207,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
-                            forChild.getChildIterator().getDataFrame(context),
-                            expressionDF,
+                            leftHandSideDF,
+                            rightHandSideDF,
                             this.outputTupleProjection,
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                             this.expression,
                             false,
                             forVariable,
-                            forVariable,
+                            false,
                             getMetadata()
                         );
                     }
