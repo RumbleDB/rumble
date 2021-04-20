@@ -62,8 +62,8 @@ public class SparkSessionManager {
     public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
     public static String emptyObjectJSONiqItemColumnName = "a84bc646-05af-4383-8853-2e9f31a710f2";
     public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
-    public static String expressionHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
-    public static String inputTupleHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
 
     private SparkSessionManager() {
     }

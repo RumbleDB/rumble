@@ -326,7 +326,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+            Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
             this.sequenceType,
             contextItemValueExpression,
             context,
@@ -337,7 +337,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+            Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
             this.sequenceType,
             inputTupleValueExpression,
             context,
@@ -354,10 +354,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .sql(
                 String.format(
                     "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                    SparkSessionManager.expressionHashColumnName,
+                    SparkSessionManager.rightHandSideHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
                     this.variableName,
-                    SparkSessionManager.expressionHashColumnName
+                    SparkSessionManager.rightHandSideHashColumnName
                 )
             );
 
@@ -374,7 +374,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .sql(
                 String.format(
                     "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
-                    SparkSessionManager.expressionHashColumnName,
+                    SparkSessionManager.rightHandSideHashColumnName,
                     this.variableName,
                     this.variableName
                 )
@@ -403,8 +403,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     projectionVariables,
                     this.variableName,
                     this.variableName,
-                    SparkSessionManager.expressionHashColumnName,
-                    SparkSessionManager.inputTupleHashColumnName
+                    SparkSessionManager.rightHandSideHashColumnName,
+                    SparkSessionManager.leftHandSideHashColumnName
                 )
             );
 
@@ -538,6 +538,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             boolean hash
     ) {
         StructType inputSchema = dataFrame.schema();
+        // inputSchema.printTreeString();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -545,6 +546,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             null,
             Collections.singletonList(newVariableName)
         );
+        // for (String c : allColumns) {
+        // System.out.println(c);
+        // }
 
         // if we can (depending on the expression) use let natively without UDF
 
@@ -562,6 +566,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
+        // for (Name n : newVariableExpression.getVariableDependencies().keySet()) {
+        // System.out.println(n.toString() + " -> " + newVariableExpression.getVariableDependencies().get(n));
+        // }
+        //
+        // for (Name n : variablesInInputTuple) {
+        // System.out.println(n.toString() + " in input");
+        // }
+
         // was not possible, we use let udf
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -569,6 +581,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             variablesInInputTuple,
             null
         );
+        // for (String c : UDFcolumns) {
+        // System.out.println("UDF " + c);
+        // }
 
         if (!hash) {
             registerLetClauseUDF(dataFrame, newVariableExpression, context, inputSchema, UDFcolumns, sequenceType);
@@ -600,6 +615,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
         } else {
+            // System.out.println(
+            // String.format(
+            // "select %s hashUDF(%s) as `%s` from input",
+            // selectSQL,
+            // UDFParameters,
+            // newVariableName
+            // )
+            // );
             dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
