@@ -196,7 +196,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
                         expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
                             sequenceIterator,
-                            Name.CONTEXT_ITEM,
+                            forVariable,
                             null,
                             false,
                             context,
