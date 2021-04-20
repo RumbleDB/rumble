@@ -592,8 +592,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        leftInputTuple.show();
-        rightInputTuple.show();
+        // leftInputTuple.show();
+        // rightInputTuple.show();
 
         // And we extend the expression and input tuple views with the hashes.
         if (optimizableJoin) {

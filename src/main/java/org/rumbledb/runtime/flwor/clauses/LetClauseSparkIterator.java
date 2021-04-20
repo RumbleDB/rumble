@@ -538,7 +538,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             boolean hash
     ) {
         StructType inputSchema = dataFrame.schema();
-        inputSchema.printTreeString();
+        // inputSchema.printTreeString();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
