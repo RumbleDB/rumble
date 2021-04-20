@@ -326,7 +326,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // We compute the hashes for both sides of the equality predicate.
         expressionDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             expressionDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.expressionHashColumnName),
+            Name.createVariableInNoNamespace(SparkSessionManager.rightHandSideHashColumnName),
             this.sequenceType,
             contextItemValueExpression,
             context,
@@ -337,7 +337,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         inputDF = LetClauseSparkIterator.bindLetVariableInDataFrame(
             inputDF,
-            Name.createVariableInNoNamespace(SparkSessionManager.inputTupleHashColumnName),
+            Name.createVariableInNoNamespace(SparkSessionManager.leftHandSideHashColumnName),
             this.sequenceType,
             inputTupleValueExpression,
             context,
@@ -354,10 +354,10 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .sql(
                 String.format(
                     "SELECT `%s`, collect_list(`%s`) AS `%s` FROM hashedExpressionResults GROUP BY `%s`",
-                    SparkSessionManager.expressionHashColumnName,
+                    SparkSessionManager.rightHandSideHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
                     this.variableName,
-                    SparkSessionManager.expressionHashColumnName
+                    SparkSessionManager.rightHandSideHashColumnName
                 )
             );
 
@@ -374,7 +374,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .sql(
                 String.format(
                     "SELECT `%s`, serializeArray(`%s`) AS `%s` FROM groupedResults",
-                    SparkSessionManager.expressionHashColumnName,
+                    SparkSessionManager.rightHandSideHashColumnName,
                     this.variableName,
                     this.variableName
                 )
@@ -403,8 +403,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     projectionVariables,
                     this.variableName,
                     this.variableName,
-                    SparkSessionManager.expressionHashColumnName,
-                    SparkSessionManager.inputTupleHashColumnName
+                    SparkSessionManager.rightHandSideHashColumnName,
+                    SparkSessionManager.leftHandSideHashColumnName
                 )
             );
 
