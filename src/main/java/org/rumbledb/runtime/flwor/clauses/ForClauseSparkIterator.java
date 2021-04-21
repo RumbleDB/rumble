@@ -475,7 +475,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
-        return joinInputTupleWithSequenceOnPredicate(
+        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
             context,
             this.child.getDataFrame(context),
             expressionDF,
@@ -513,7 +513,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // Is this a join that we can optimize as an actual Spark join?
         List<RuntimeIterator> leftHandSideEqualityCriteria = new ArrayList<>();
         List<RuntimeIterator> rightHandSideEqualityCriteria = new ArrayList<>();
-        
+
         // TODO pass the variables from left and right to support general joins.
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
