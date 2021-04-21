@@ -204,7 +204,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             startingClauseDependencies
                         );
 
-                        return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
                             forChild.getChildIterator().getDataFrame(context),
                             expressionDF,
