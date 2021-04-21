@@ -138,9 +138,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         if (isLeftOuterJoin) {
             optimizableJoin = false;
         }
-        if (variablesInRightInputTuple.contains(Name.CONTEXT_POSITION)) {
-            optimizableJoin = false;
-        }
 
         // for (RuntimeIterator r : rightHandSideEqualityCriteria) {
         // StringBuffer sb = new StringBuffer();
