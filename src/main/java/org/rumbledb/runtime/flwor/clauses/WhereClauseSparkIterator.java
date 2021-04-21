@@ -203,7 +203,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             context,
                             startingClauseDependencies
                         );
-                        
+
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
                             forChild.getChildIterator().getDataFrame(context),
