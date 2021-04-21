@@ -32,6 +32,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -224,20 +226,70 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     }
 
     /**
-     * Returns the height of the clause within the current FLWOR expression, i.e.,
-     * the number of descendant clauses.
+     * Sets the limit on how deep the evaluation occurs.
+     * 0 to stop here.
      * 
-     * @return The number of descendant clauses. 0 if it is a starting clause.
+     * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public void setEvaluationDepthLimit(int limit) {
         this.evaluationDepthLimit = limit;
-        if (this.child != null) {
-            if (limit == -1)
-            {
-                this.child.setEvaluationDepthLimit(-1);;
-            } else {
-                this.child.setEvaluationDepthLimit(limit - 1);;
+        if (limit == 0) {
+            if (!(this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator)) {
+                throw new OurBadException(
+                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
+                );
             }
+        }
+        if (limit == -1) {
+            this.child.setEvaluationDepthLimit(-1);;
+        }
+        if (this.child == null) {
+            if (limit > 0) {
+                throw new OurBadException(
+                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree."
+                );
+            }
+        }
+        this.child.setEvaluationDepthLimit(limit - 1);;
+    }
+
+    /**
+     * Tells whether it is possible to set the limit on how deep the evaluation occurs.
+     * 0 to stop here.
+     * 
+     * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
+     */
+    public boolean canSetEvaluationDepthLimit(int limit) {
+        this.evaluationDepthLimit = limit;
+        if (limit == 0) {
+            return this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator;
+        }
+        if (limit == -1) {
+            return true;
+        }
+        if (this.child == null) {
+            return limit <= 0;
+        }
+        return this.child.canSetEvaluationDepthLimit(limit - 1);
+    }
+
+    /**
+     * Returns the clause subtree at the specified offset.
+     * The parameter is compatible with setEvaluationDepthLimit, i.e., it returns the subtree right
+     * below where the evaluation stops with the same limit.
+     * 
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public RuntimeTupleIterator getSubtreeBeyondLimit(int limit) {
+        if (this.child == null) {
+            throw new OurBadException(
+                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."
+            );
+        }
+        if (limit == 0) {
+            return this.child;
+        } else {
+            return this.child.getSubtreeBeyondLimit(limit);
         }
     }
 

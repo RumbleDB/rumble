@@ -499,13 +499,19 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
                     if (
-                        this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)
+                        this.child != null
+                            && this.evaluationDepthLimit != 0
+                            && this.child.getOutputTupleVariableNames().contains(variable)
                     ) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 }
             } else {
-                if (this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)) {
+                if (
+                    this.child != null
+                        && this.evaluationDepthLimit != 0
+                        && this.child.getOutputTupleVariableNames().contains(variable)
+                ) {
                     projection.put(variable, exprDependency.get(variable));
                 }
             }

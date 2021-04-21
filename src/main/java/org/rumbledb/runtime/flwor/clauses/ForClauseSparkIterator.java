@@ -158,7 +158,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
             // calculate and store the next result
-            if (this.child == null || this.evaluationDepthLimit == 0) { // if it's the initial for clause, call the correct function
+            if (this.child == null || this.evaluationDepthLimit == 0) { // if it's the initial for clause, call the
+                                                                        // correct function
                 setResultFromExpression();
             } else {
                 setNextLocalTupleResult();
@@ -911,13 +912,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     // If the projection already needed a different kind of dependency, we fall back to the full
                     // sequence of items.
                     if (
-                        this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)
+                        this.child != null
+                            && this.evaluationDepthLimit != 0
+                            && this.child.getOutputTupleVariableNames().contains(variable)
                     ) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 }
             } else {
-                if (this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)) {
+                if (
+                    this.child != null
+                        && this.evaluationDepthLimit != 0
+                        && this.child.getOutputTupleVariableNames().contains(variable)
+                ) {
                     projection.put(variable, exprDependency.get(variable));
                 }
             }
