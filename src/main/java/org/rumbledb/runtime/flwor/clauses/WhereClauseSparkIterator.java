@@ -239,16 +239,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             "[INFO] Rumble detected a join predicate in the where clause."
                         );
 
-                        // If the left hand side depends on the input tuple, we do not how to handle it.
-                        if (
-                            !LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
-                        ) {
-                            throw new JobWithinAJobException(
-                                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
-                                    getMetadata()
-                            );
-                        }
-
                         // Next we prepare the data frame on the expression side.
                         Dataset<Row> expressionDF;
 
