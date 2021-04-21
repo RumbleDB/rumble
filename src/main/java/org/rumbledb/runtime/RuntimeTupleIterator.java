@@ -66,6 +66,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.isOpen = false;
         this.highestExecutionMode = executionMode;
         this.child = child;
+        this.evaluationDepthLimit = -1;
     }
 
     public RuntimeTupleIterator getChildIterator() {
