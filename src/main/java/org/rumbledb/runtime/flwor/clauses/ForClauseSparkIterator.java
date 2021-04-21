@@ -475,7 +475,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
-        return joinInputTupleWithSequenceOnPredicate(
+        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
             context,
             this.child.getDataFrame(context),
             expressionDF,
@@ -513,6 +513,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // Is this a join that we can optimize as an actual Spark join?
         List<RuntimeIterator> leftHandSideEqualityCriteria = new ArrayList<>();
         List<RuntimeIterator> rightHandSideEqualityCriteria = new ArrayList<>();
+
+        // TODO pass the variables from left and right to support general joins.
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
             leftHandSideEqualityCriteria,
@@ -630,37 +632,25 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         leftInputTuple.createOrReplaceTempView(leftInputDFTableName);
         rightInputTuple.createOrReplaceTempView(rightInputDFTableName);
 
-        // We gather the columns to select from the previous clause.
-        // We need to project away the clause's variables from the previous clause.
         StructType leftSchema = leftInputTuple.schema();
         StructType rightSchema = rightInputTuple.schema();
-        List<Name> variableNamesToExclude = new ArrayList<>();
-        variableNamesToExclude.add(newRightSideVariableName);
+        StructType jointSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
+
+        // We gather the columns to select from the previous clause.
+        // We need to project away the clause's variables from the previous clause.
+        // One variable gets renamed. We need to remove it from the projection.
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             leftSchema,
             outputTupleVariableDependencies,
             null,
-            variableNamesToExclude
+            Collections.singletonList(newRightSideVariableName)
         );
-
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
-        // We need to prepare the parameters fed into the predicate.
+        // We need to prepare the parameters fed into the predicate UDF.
         List<Name> variablesInJointTuple = new ArrayList<>();
         variablesInJointTuple.addAll(variablesInLeftInputTuple);
         variablesInJointTuple.addAll(variablesInRightInputTuple);
-        List<StructField> fieldList = new ArrayList<StructField>();
-        for (StructField f : leftSchema.fields()) {
-            fieldList.add(f);
-        }
-        for (StructField f : rightSchema.fields()) {
-            fieldList.add(f);
-        }
-
-        StructField[] fields = new StructField[fieldList.size()];
-        fieldList.toArray(fields);
-        StructType jointSchema = new StructType(fields);
-
         List<String> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumnNames(
             jointSchema,
             predicateDependencies,
