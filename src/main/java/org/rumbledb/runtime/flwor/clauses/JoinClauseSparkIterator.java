@@ -85,6 +85,26 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         this.dataFrameContext = new DataFrameContext();
     }
 
+    /**
+     * Joins two input tuples.
+     * 
+     * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
+     * 
+     * @param context the dynamic context for the evaluation of the predicate expression.
+     * @param leftInputTuple the left tuple.
+     * @param rightInputTuple the right tuple.
+     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
+     *        should contain.
+     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
+     * @param variablesInRightInputTuple a list of the variables in the right tuple.
+     * @param predicateIterator the predicate iterator.
+     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
+     * @param newRightSideVariableName the new name of the variable to rename in the output.
+     * @param oldRightSideVariableName the old name of the variable to rename in the output (typically
+     *        Name.CONTEXT_ITEM, or same as newRightSideVariableName to avoid a renaming).
+     * @param metadata the metadata.
+     * @return the joined tuple.
+     */
     public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
@@ -104,15 +124,15 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<RuntimeIterator> leftHandSideEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> rightHandSideEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> leftTupleSideEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> rightTupleSideEqualityCriteria = new ArrayList<>();
 
-        // TODO pass the variables from left and right to support general joins.
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
-            leftHandSideEqualityCriteria,
-            rightHandSideEqualityCriteria,
-            oldRightSideVariableName
+            leftTupleSideEqualityCriteria,
+            rightTupleSideEqualityCriteria,
+            variablesInLeftInputTuple,
+            variablesInRightInputTuple
         );
 
         if (isLeftOuterJoin) {
@@ -164,12 +184,12 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator rightHandSideEqualityCriterion;
         RuntimeIterator leftHandSideEqualityCriterion;
 
-        if (rightHandSideEqualityCriteria.size() == 1) {
-            rightHandSideEqualityCriterion = rightHandSideEqualityCriteria.get(0);
+        if (rightTupleSideEqualityCriteria.size() == 1) {
+            rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
         } else {
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
-                            rightHandSideEqualityCriteria,
+                            rightTupleSideEqualityCriteria,
                             ExecutionMode.LOCAL,
                             metadata
                     ),
@@ -177,12 +197,12 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        if (leftHandSideEqualityCriteria.size() == 1) {
-            leftHandSideEqualityCriterion = leftHandSideEqualityCriteria.get(0);
+        if (leftTupleSideEqualityCriteria.size() == 1) {
+            leftHandSideEqualityCriterion = leftTupleSideEqualityCriteria.get(0);
         } else {
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
-                            leftHandSideEqualityCriteria,
+                            leftTupleSideEqualityCriteria,
                             ExecutionMode.LOCAL,
                             metadata
                     ),
@@ -318,9 +338,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
     private static boolean extractEqualityComparisonsForHashing(
             RuntimeIterator predicateIterator,
-            List<RuntimeIterator> leftSideEqualityCriteria,
-            List<RuntimeIterator> rightSideEqualityCriteria,
-            Name rightSideVariableName
+            List<RuntimeIterator> leftTupleSideEqualityCriteria,
+            List<RuntimeIterator> rightTupleSideEqualityCriteria,
+            List<Name> leftTupleSideVariableNames,
+            List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
         Stack<RuntimeIterator> candidateIterators = new Stack<>();
@@ -337,26 +358,29 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     RuntimeIterator lhs = comparisonIterator.getLeftIterator();
                     RuntimeIterator rhs = comparisonIterator.getRightIterator();
 
-                    Set<Name> leftDependencies = new HashSet<>(
+                    Set<Name> leftComparisonDependencies = new HashSet<>(
                             lhs.getVariableDependencies().keySet()
                     );
-                    Set<Name> rightDependencies = new HashSet<>(
+                    Set<Name> rightComparisonDependencies = new HashSet<>(
                             rhs.getVariableDependencies().keySet()
                     );
-                    // System.out.println("rightSideVariableName: " + rightSideVariableName);
-                    if (leftDependencies.size() == 1 && leftDependencies.contains(rightSideVariableName)) {
-                        if (!rightDependencies.contains(rightSideVariableName)) {
-                            optimizableJoin = true;
-                            rightSideEqualityCriteria.add(lhs);
-                            leftSideEqualityCriteria.add(rhs);
-                        }
+                    // TODO it would be nice to be more generic and also allow dependencies on the
+                    // dynamic context on any side.
+                    if (
+                        leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)
+                    ) {
+                        optimizableJoin = true;
+                        leftTupleSideEqualityCriteria.add(lhs);
+                        rightTupleSideEqualityCriteria.add(rhs);
                     }
-                    if (rightDependencies.size() == 1 && rightDependencies.contains(rightSideVariableName)) {
-                        if (!leftDependencies.contains(rightSideVariableName)) {
-                            optimizableJoin = true;
-                            rightSideEqualityCriteria.add(rhs);
-                            leftSideEqualityCriteria.add(lhs);
-                        }
+                    if (
+                        leftTupleSideVariableNames.containsAll(rightComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                    ) {
+                        optimizableJoin = true;
+                        leftTupleSideEqualityCriteria.add(rhs);
+                        rightTupleSideEqualityCriteria.add(lhs);
                     }
                 }
             }
