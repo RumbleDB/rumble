@@ -263,7 +263,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<String> joinCriterionUDFcolumns = FlworDataFrameUtils.getColumnNames(
             jointSchema,
-            predicateDependencies,
+            predicateIterator.getVariableDependencies(),
             variablesInJointTuple,
             null
         );
