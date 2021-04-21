@@ -121,7 +121,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     public void open(DynamicContext context) {
         super.open(context);
 
-        if (this.child != null) { // if it's not a start clause
+        if (this.child != null && this.evaluationDepthLimit != 0) { // if it's not a start clause
             this.child.open(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             this.position = 1;
@@ -139,7 +139,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     public void reset(DynamicContext context) {
         super.reset(context);
 
-        if (this.child != null) { // if it's not a start clause
+        if (this.child != null && this.evaluationDepthLimit != 0) { // if it's not a start clause
             this.child.reset(this.currentDynamicContext);
             this.tupleContext = new DynamicContext(this.currentDynamicContext); // assign current context as parent
             this.position = 1;
@@ -158,7 +158,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.hasNext) {
             FlworTuple result = this.nextLocalTupleResult; // save the result to be returned
             // calculate and store the next result
-            if (this.child == null) { // if it's the initial for clause, call the correct function
+            if (this.child == null || this.evaluationDepthLimit == 0) { // if it's the initial for clause, call the correct function
                 setResultFromExpression();
             } else {
                 setNextLocalTupleResult();
@@ -200,7 +200,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.assignmentIterator.hasNext()) { // if expression returns a value, set it as next
 
             // Set the for item
-            if (this.child == null) { // if initial for clause
+            if (this.child == null || this.evaluationDepthLimit == 0) { // if initial for clause
                 this.nextLocalTupleResult = new FlworTuple();
             } else {
                 this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
@@ -230,7 +230,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // If nothing was output yet by this expression but we allow empty, we need to bind
         // the empty sequence.
-        if (this.child == null) { // if initial for clause
+        if (this.child == null || this.evaluationDepthLimit == 0) { // if initial for clause
             this.nextLocalTupleResult = new FlworTuple();
         } else {
             this.nextLocalTupleResult = new FlworTuple(this.inputTuple);
@@ -251,7 +251,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void close() {
         this.isOpen = false;
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             this.child.close();
         }
         if (this.assignmentIterator.isOpen()) {
@@ -264,7 +264,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             DynamicContext context
     ) {
         // if it's a starting clause
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             return getDataFrameStartingClause(context, this.outputTupleProjection);
         }
 
@@ -474,7 +474,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             this.child.getDataFrame(context),
             expressionDF,
             this.outputTupleProjection,
-            (this.child == null)
+            (this.child == null || this.evaluationDepthLimit == 0)
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             variablesInRightInputTuple,
@@ -608,7 +608,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         List<String> UDFcolumns;
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             UDFcolumns = FlworDataFrameUtils.getColumnNames(
                 inputSchema,
                 this.assignmentIterator.getVariableDependencies(),
@@ -844,7 +844,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
             }
@@ -856,7 +856,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             result.addAll(this.child.getOutputTupleVariableNames());
         }
         result.add(this.variableName);
@@ -886,7 +886,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             return Collections.emptyMap();
         }
 
@@ -911,13 +911,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     // If the projection already needed a different kind of dependency, we fall back to the full
                     // sequence of items.
                     if (
-                        this.child != null && this.child.getOutputTupleVariableNames().contains(variable)
+                        this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)
                     ) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 }
             } else {
-                if (this.child != null && this.child.getOutputTupleVariableNames().contains(variable)) {
+                if (this.child != null && this.evaluationDepthLimit != 0 && this.child.getOutputTupleVariableNames().contains(variable)) {
                     projection.put(variable, exprDependency.get(variable));
                 }
             }

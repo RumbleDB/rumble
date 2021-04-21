@@ -53,6 +53,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
+    protected transient int evaluationDepthLimit;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -210,6 +211,34 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      */
     public Set<Name> getOutputTupleVariableNames() {
         return new HashSet<Name>();
+    }
+
+    /**
+     * Returns the limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     * 
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public int getEvaluationDepthLimit() {
+        return this.evaluationDepthLimit;
+    }
+
+    /**
+     * Returns the height of the clause within the current FLWOR expression, i.e.,
+     * the number of descendant clauses.
+     * 
+     * @return The number of descendant clauses. 0 if it is a starting clause.
+     */
+    public void setEvaluationDepthLimit(int limit) {
+        this.evaluationDepthLimit = limit;
+        if (this.child != null) {
+            if (limit == -1)
+            {
+                this.child.setEvaluationDepthLimit(-1);;
+            } else {
+                this.child.setEvaluationDepthLimit(limit - 1);;
+            }
+        }
     }
 
     /**
