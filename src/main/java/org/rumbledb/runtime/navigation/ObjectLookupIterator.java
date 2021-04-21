@@ -241,7 +241,15 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
             schema = newContext.getSchema();
             if (!(schema instanceof StructType)) {
-                return NativeClauseContext.NoNativeQuery;
+                throw new UnexpectedStaticTypeException(
+                        "You are trying to look up the value associated with the field "
+                            + key
+                            + ". However, the left-hand-side is not a sequence of objects! "
+                            + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                            + "Please check your query and try again.",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        getMetadata()
+                );
             }
             structSchema = (StructType) schema;
             if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(key))) {
