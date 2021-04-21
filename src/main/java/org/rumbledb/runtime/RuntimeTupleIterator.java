@@ -242,7 +242,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             }
         }
         if (limit == -1) {
-            this.child.setEvaluationDepthLimit(-1);;
+            if(this.child != null)
+            {
+                this.child.setEvaluationDepthLimit(-1);
+            }
         }
         if (this.child == null) {
             if (limit > 0) {
@@ -251,7 +254,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
                 );
             }
         }
-        this.child.setEvaluationDepthLimit(limit - 1);;
+        if(this.child != null)
+        {
+            this.child.setEvaluationDepthLimit(limit - 1);
+        }
     }
 
     /**
