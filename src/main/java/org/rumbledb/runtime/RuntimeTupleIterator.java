@@ -289,7 +289,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         if (limit == 0) {
             return this.child;
         } else {
-            return this.child.getSubtreeBeyondLimit(limit);
+            return this.child.getSubtreeBeyondLimit(limit - 1);
         }
     }
 

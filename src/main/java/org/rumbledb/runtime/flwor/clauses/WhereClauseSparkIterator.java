@@ -158,6 +158,68 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
+        Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
+        if(dataFrameIfJoinPossible != null)
+        {
+            return dataFrameIfJoinPossible;
+        }
+
+        Dataset<Row> df = this.child.getDataFrame(context);
+        StructType inputSchema = df.schema();
+
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+            df,
+            this.expression,
+            inputSchema,
+            context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+
+        // was not possible, we use let udf
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+            inputSchema,
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
+        );
+
+        df.sparkSession()
+            .udf()
+            .register(
+                "whereClauseUDF",
+                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumns),
+                DataTypes.BooleanType
+            );
+
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+
+        df.createOrReplaceTempView("input");
+        df = df.sparkSession()
+            .sql(
+                String.format(
+                    "select * from input where whereClauseUDF(%s) = 'true'",
+                    UDFParameters
+                )
+            );
+        return df;
+    }
+
+    private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
+        int height = this.getHeight();
+        // System.out.println("[DEBUG] Height of the where clause: " + height);
+        for(int i = 1; i < height; ++i)
+        {
+            if(this.canSetEvaluationDepthLimit(i))
+            {
+                // System.out.println("[DEBUG] Depth " + i + " possible.");
+                RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
+                // System.out.println(otherChild.toString());
+            } else {
+                // System.out.println("[DEBUG] Depth " + i + " impossible.");
+            }
+        }
         if (
             this.child instanceof ForClauseSparkIterator
         ) {
@@ -221,47 +283,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-
-        Dataset<Row> df = this.child.getDataFrame(context);
-        StructType inputSchema = df.schema();
-
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
-            df,
-            this.expression,
-            inputSchema,
-            context
-        );
-        if (nativeQueryResult != null) {
-            return nativeQueryResult;
-        }
-
-        // was not possible, we use let udf
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
-            this.expression.getVariableDependencies(),
-            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-            null
-        );
-
-        df.sparkSession()
-            .udf()
-            .register(
-                "whereClauseUDF",
-                new WhereClauseUDF(this.expression, context, inputSchema, UDFcolumns),
-                DataTypes.BooleanType
-            );
-
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-
-        df.createOrReplaceTempView("input");
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "select * from input where whereClauseUDF(%s) = 'true'",
-                    UDFParameters
-                )
-            );
-        return df;
+        return null;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
