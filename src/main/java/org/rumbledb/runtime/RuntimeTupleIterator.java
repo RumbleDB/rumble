@@ -49,13 +49,13 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private final ExceptionMetadata metadata;
     protected RuntimeTupleIterator child;
     protected ExecutionMode highestExecutionMode;
+    protected int evaluationDepthLimit;
 
     protected transient DynamicContext currentDynamicContext;
     protected transient boolean hasNext;
     protected transient boolean isOpen;
     protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
     protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
-    protected transient int evaluationDepthLimit;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -261,7 +261,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
      */
     public boolean canSetEvaluationDepthLimit(int limit) {
-        this.evaluationDepthLimit = limit;
         if (limit == 0) {
             return this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator;
         }
