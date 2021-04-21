@@ -244,7 +244,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 throw new UnexpectedStaticTypeException(
                         "You are trying to look up the value associated with the field "
                             + key
-                            + ". However, the left-hand-side is not a sequence of objects! "
+                            + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
                             + "Fortunately Rumble was able to catch this. This is probably an overlook? "
                             + "Please check your query and try again.",
                         ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
@@ -261,7 +261,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 throw new UnexpectedStaticTypeException(
                         "There is no field with the name "
                             + key
-                            + ". Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            + " so that the lookup will always result in the empty sequence no matter what. "
+                            + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
                         ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
                         getMetadata()
                 );
