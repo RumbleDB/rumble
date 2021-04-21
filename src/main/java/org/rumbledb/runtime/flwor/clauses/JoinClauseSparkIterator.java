@@ -233,7 +233,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // We need to project away the clause's variables from the previous clause.
         // One variable gets renamed. We need to remove it from the projection.
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
-            leftSchema,
+            jointSchema,
             outputTupleVariableDependencies,
             null,
             Collections.singletonList(newRightSideVariableName)
