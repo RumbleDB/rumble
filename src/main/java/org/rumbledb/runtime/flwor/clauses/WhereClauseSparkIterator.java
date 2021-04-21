@@ -158,58 +158,9 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        if (
-            this.child instanceof ForClauseSparkIterator
-        ) {
-            ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-            if (forChild.getChildIterator() != null) {
-                if (
-                    (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
-                        &&
-                        forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
-                ) {
-                    RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
-                    Name forVariable = forChild.getVariableName();
-
-                    if (
-                        LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
-                            && forChild.getPositionalVariableName() == null
-                            && !forChild.isAllowingEmpty()
-                    ) {
-                        System.err.println(
-                            "[INFO] Rumble detected a join predicate in the where clause."
-                        );
-
-                        // Next we prepare the data frame on the expression side.
-                        Dataset<Row> expressionDF;
-
-                        Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
-                        expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
-                            sequenceIterator,
-                            forVariable,
-                            null,
-                            false,
-                            context,
-                            startingClauseDependencies
-                        );
-
-                        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-                            context,
-                            forChild.getChildIterator().getDataFrame(context),
-                            expressionDF,
-                            this.outputTupleProjection,
-                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-                            Collections.singletonList(forVariable),
-                            this.expression,
-                            false,
-                            forVariable,
-                            forVariable,
-                            getMetadata()
-                        );
-                    }
-                }
-            }
+        Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
+        if (dataFrameIfJoinPossible != null) {
+            return dataFrameIfJoinPossible;
         }
 
         Dataset<Row> df = this.child.getDataFrame(context);
@@ -252,6 +203,74 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
         return df;
+    }
+
+    private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
+        int height = this.getHeight();
+        // System.out.println("[DEBUG] Height of the where clause: " + height);
+        for (int i = 1; i < height; ++i) {
+            if (this.canSetEvaluationDepthLimit(i)) {
+                // System.out.println("[DEBUG] Depth " + i + " possible.");
+                RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
+                // System.out.println(otherChild.toString());
+            } else {
+                // System.out.println("[DEBUG] Depth " + i + " impossible.");
+            }
+        }
+        if (
+            this.child instanceof ForClauseSparkIterator
+        ) {
+            ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
+            if (forChild.getChildIterator() != null) {
+                if (
+                    (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
+                        &&
+                        forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+                ) {
+                    RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
+                    Name forVariable = forChild.getVariableName();
+
+                    if (
+                        LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
+                            && forChild.getPositionalVariableName() == null
+                            && !forChild.isAllowingEmpty()
+                    ) {
+                        System.err.println(
+                            "[INFO] Rumble detected a join predicate in the where clause."
+                        );
+
+                        // Next we prepare the data frame on the expression side.
+                        Dataset<Row> expressionDF;
+
+                        Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
+                        expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
+                            sequenceIterator,
+                            forVariable,
+                            null,
+                            false,
+                            context,
+                            startingClauseDependencies
+                        );
+
+                        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                            context,
+                            forChild.getChildIterator().getDataFrame(context),
+                            expressionDF,
+                            this.outputTupleProjection,
+                            new ArrayList<Name>(forChild.getChildIterator().getOutputTupleVariableNames()),
+                            Collections.singletonList(forVariable),
+                            this.expression,
+                            false,
+                            forVariable,
+                            forVariable,
+                            getMetadata()
+                        );
+                    }
+                }
+            }
+        }
+        return null;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {

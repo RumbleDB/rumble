@@ -90,7 +90,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
         } else {
             this.child.open(this.currentDynamicContext);
@@ -102,7 +102,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             this.nextLocalTupleResult = generateTupleFromExpressionWithContext(null, this.currentDynamicContext);
         } else {
             this.child.reset(this.currentDynamicContext);
@@ -113,7 +113,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     private void setNextLocalTupleResult() {
         // if starting clause: result is a single tuple -> no more tuples after the first next call
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             this.hasNext = false;
             return;
         }
@@ -171,7 +171,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     @Override
     public void close() {
         this.isOpen = false;
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             this.child.close();
         }
     }
@@ -180,7 +180,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public Dataset<Row> getDataFrame(
             DynamicContext context
     ) {
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             Dataset<Row> df = this.child.getDataFrame(context);
 
             if (!this.outputTupleProjection.containsKey(this.variableName)) {
@@ -197,7 +197,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 this.sequenceType,
                 this.assignmentIterator,
                 context,
-                (this.child == null)
+                (this.child == null || this.evaluationDepthLimit == 0)
                     ? Collections.emptyList()
                     : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                 this.outputTupleProjection,
@@ -341,7 +341,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             this.sequenceType,
             inputTupleValueExpression,
             context,
-            (this.child == null)
+            (this.child == null || this.evaluationDepthLimit == 0)
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null,
@@ -449,7 +449,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>(this.assignmentIterator.getVariableDependencies());
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             for (Name var : this.child.getOutputTupleVariableNames()) {
                 result.remove(var);
             }
@@ -460,7 +460,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
     public Set<Name> getOutputTupleVariableNames() {
         Set<Name> result = new HashSet<>();
-        if (this.child != null) {
+        if (this.child != null && this.evaluationDepthLimit != 0) {
             result.addAll(this.child.getOutputTupleVariableNames());
         }
         result.add(this.variableName);
@@ -479,7 +479,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
     public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
-        if (this.child == null) {
+        if (this.child == null || this.evaluationDepthLimit == 0) {
             return Collections.emptyMap();
         }
 
@@ -499,13 +499,19 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
                     if (
-                        this.child != null && this.child.getOutputTupleVariableNames().contains(variable)
+                        this.child != null
+                            && this.evaluationDepthLimit != 0
+                            && this.child.getOutputTupleVariableNames().contains(variable)
                     ) {
                         projection.put(variable, DynamicContext.VariableDependency.FULL);
                     }
                 }
             } else {
-                if (this.child != null && this.child.getOutputTupleVariableNames().contains(variable)) {
+                if (
+                    this.child != null
+                        && this.evaluationDepthLimit != 0
+                        && this.child.getOutputTupleVariableNames().contains(variable)
+                ) {
                     projection.put(variable, exprDependency.get(variable));
                 }
             }
