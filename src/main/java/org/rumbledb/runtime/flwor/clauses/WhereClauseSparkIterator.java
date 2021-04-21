@@ -159,8 +159,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
-        if(dataFrameIfJoinPossible != null)
-        {
+        if (dataFrameIfJoinPossible != null) {
             return dataFrameIfJoinPossible;
         }
 
@@ -209,10 +208,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
         int height = this.getHeight();
         // System.out.println("[DEBUG] Height of the where clause: " + height);
-        for(int i = 1; i < height; ++i)
-        {
-            if(this.canSetEvaluationDepthLimit(i))
-            {
+        for (int i = 1; i < height; ++i) {
+            if (this.canSetEvaluationDepthLimit(i)) {
                 // System.out.println("[DEBUG] Depth " + i + " possible.");
                 RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
                 // System.out.println(otherChild.toString());
