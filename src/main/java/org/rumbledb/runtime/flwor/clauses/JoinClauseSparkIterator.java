@@ -87,16 +87,21 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
     /**
      * Joins two input tuples.
+     * 
+     * Warning: if the two tuples collide in their columns, unexpected things may happen for now.
+     * 
      * @param context the dynamic context for the evaluation of the predicate expression.
      * @param leftInputTuple the left tuple.
      * @param rightInputTuple the right tuple.
-     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple should contain.
+     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple
+     *        should contain.
      * @param variablesInLeftInputTuple a list of the variables in the left tuple.
      * @param variablesInRightInputTuple a list of the variables in the right tuple.
      * @param predicateIterator the predicate iterator.
      * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
      * @param newRightSideVariableName the new name of the variable to rename in the output.
-     * @param oldRightSideVariableName the old name of the variable to rename in the output (typically Name.CONTEXT_ITEM, or same as newRightSideVariableName to avoid a renaming).
+     * @param oldRightSideVariableName the old name of the variable to rename in the output (typically
+     *        Name.CONTEXT_ITEM, or same as newRightSideVariableName to avoid a renaming).
      * @param metadata the metadata.
      * @return the joined tuple.
      */
