@@ -640,10 +640,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We need to project away the clause's variables from the previous clause.
         // One variable gets renamed. We need to remove it from the projection.
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
-            jointSchema,
+            leftSchema,
             outputTupleVariableDependencies,
             null,
-            Collections.singletonList(oldRightSideVariableName)
+            Collections.singletonList(newRightSideVariableName)
         );
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, true);
 
