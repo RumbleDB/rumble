@@ -194,7 +194,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                         Dataset<Row> expressionDF;
 
                         Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-                        startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
+                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
                         expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
                             sequenceIterator,
                             forVariable,
