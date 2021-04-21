@@ -124,13 +124,13 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // TODO project away from the left all variables from the right
 
         // Is this a join that we can optimize as an actual Spark join?
-        List<RuntimeIterator> leftHandSideEqualityCriteria = new ArrayList<>();
-        List<RuntimeIterator> rightHandSideEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> leftTupleSideEqualityCriteria = new ArrayList<>();
+        List<RuntimeIterator> rightTupleSideEqualityCriteria = new ArrayList<>();
 
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
-            leftHandSideEqualityCriteria,
-            rightHandSideEqualityCriteria,
+            leftTupleSideEqualityCriteria,
+            rightTupleSideEqualityCriteria,
             variablesInLeftInputTuple,
             variablesInRightInputTuple
         );
@@ -184,12 +184,12 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator rightHandSideEqualityCriterion;
         RuntimeIterator leftHandSideEqualityCriterion;
 
-        if (rightHandSideEqualityCriteria.size() == 1) {
-            rightHandSideEqualityCriterion = rightHandSideEqualityCriteria.get(0);
+        if (rightTupleSideEqualityCriteria.size() == 1) {
+            rightHandSideEqualityCriterion = rightTupleSideEqualityCriteria.get(0);
         } else {
             rightHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
-                            rightHandSideEqualityCriteria,
+                            rightTupleSideEqualityCriteria,
                             ExecutionMode.LOCAL,
                             metadata
                     ),
@@ -197,12 +197,12 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     metadata
             );
         }
-        if (leftHandSideEqualityCriteria.size() == 1) {
-            leftHandSideEqualityCriterion = leftHandSideEqualityCriteria.get(0);
+        if (leftTupleSideEqualityCriteria.size() == 1) {
+            leftHandSideEqualityCriterion = leftTupleSideEqualityCriteria.get(0);
         } else {
             leftHandSideEqualityCriterion = new ArrayRuntimeIterator(
                     new CommaExpressionIterator(
-                            leftHandSideEqualityCriteria,
+                            leftTupleSideEqualityCriteria,
                             ExecutionMode.LOCAL,
                             metadata
                     ),
@@ -338,8 +338,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
     private static boolean extractEqualityComparisonsForHashing(
             RuntimeIterator predicateIterator,
-            List<RuntimeIterator> leftComparisonSideEqualityCriteria,
-            List<RuntimeIterator> rightComparisonSideEqualityCriteria,
+            List<RuntimeIterator> leftTupleSideEqualityCriteria,
+            List<RuntimeIterator> rightTupleSideEqualityCriteria,
             List<Name> leftTupleSideVariableNames,
             List<Name> rightTupleSideVariableNames
     ) {
@@ -369,16 +369,16 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                             && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)
                     ) {
                         optimizableJoin = true;
-                        rightComparisonSideEqualityCriteria.add(lhs);
-                        leftComparisonSideEqualityCriteria.add(rhs);
+                        leftTupleSideEqualityCriteria.add(lhs);
+                        rightTupleSideEqualityCriteria.add(rhs);
                     }
                     if (
                         leftTupleSideVariableNames.containsAll(rightComparisonDependencies)
                             && rightTupleSideVariableNames.containsAll(leftComparisonDependencies)
                     ) {
                         optimizableJoin = true;
-                        rightComparisonSideEqualityCriteria.add(rhs);
-                        leftComparisonSideEqualityCriteria.add(lhs);
+                        leftTupleSideEqualityCriteria.add(rhs);
+                        rightTupleSideEqualityCriteria.add(lhs);
                     }
                 }
             }
