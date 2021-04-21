@@ -208,8 +208,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid orderby clause.");
@@ -226,7 +225,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
@@ -453,7 +452,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             );
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {
             result.putAll(expressionWithIterator.getIterator().getVariableDependencies());
@@ -461,7 +460,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -476,7 +475,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.

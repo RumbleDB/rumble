@@ -41,6 +41,8 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -143,8 +145,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid where clause.");
@@ -179,17 +180,40 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             "[INFO] Rumble detected a join predicate in the where clause."
                         );
 
-                        return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-                            context,
-                            forChild.getChildIterator()
-                                .getDataFrame(context, forChild.getProjection(getProjection(parentProjection))),
-                            parentProjection,
-                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                        // If the left hand side depends on the input tuple, we do not how to handle it.
+                        if (
+                            !LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
+                        ) {
+                            throw new JobWithinAJobException(
+                                    "A for clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion. In our efforts to detect a join, we did recognize a predicate expression in the for clause, but the left-hand-side of the predicate expression depends on the previous variables of this FLWOR expression. You can fix this by making sure it does not.",
+                                    getMetadata()
+                            );
+                        }
+
+                        // Next we prepare the data frame on the expression side.
+                        Dataset<Row> expressionDF;
+
+                        Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
+                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
+                        expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
                             sequenceIterator,
+                            forVariable,
+                            null,
+                            false,
+                            context,
+                            startingClauseDependencies
+                        );
+
+                        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                            context,
+                            forChild.getChildIterator().getDataFrame(context),
+                            expressionDF,
+                            this.outputTupleProjection,
+                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                            Collections.singletonList(forVariable),
                             this.expression,
                             false,
                             forVariable,
-                            null,
                             forVariable,
                             getMetadata()
                         );
@@ -198,7 +222,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
@@ -240,14 +264,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         return df;
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>(
                 this.expression.getVariableDependencies()
         );
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -260,7 +284,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         this.expression.print(buffer, indent + 1);
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // copy over the projection needed by the parent clause.

@@ -45,11 +45,14 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final ExceptionMetadata metadata;
-    protected boolean hasNext;
-    protected boolean isOpen;
     protected RuntimeTupleIterator child;
-    protected DynamicContext currentDynamicContext;
     protected ExecutionMode highestExecutionMode;
+
+    protected transient DynamicContext currentDynamicContext;
+    protected transient boolean hasNext;
+    protected transient boolean isOpen;
+    protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
+    protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -136,27 +139,45 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * or that only a count is needed for a specific variable, which allows projecting away the actual items.
      *
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @param parentProjection information on the projection needed by the caller.
      * @return the DataFrame with the tuples returned by the child clause.
      */
     public abstract Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
-     * Invariant: all keys in getProjection(...) MUST be input tuple variables,
+     * Invariant: all keys in getInputTupleVariableDependencies(...) MUST be output tuple variables,
      * i.e., appear in this.child.getOutputTupleVariableNames()
      *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<Name, DynamicContext.VariableDependency> getProjection(
+    protected abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     );
+
+    /**
+     * Computes and stores the DataFrame projection that this clause needs to receive from its child clause.
+     * Also stores that of its parent for future purposes.
+     * The intent is that the result of this method is used in getDataFrame() so it can
+     * optimize some values away.
+     * Invariant: all keys MUST be output tuple variables,
+     * i.e., appear in this.child.getOutputTupleVariableNames()
+     *
+     * @param parentProjection the projection needed by the parent clause.
+     */
+    public void setInputAndOutputTupleVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
+    ) {
+        this.outputTupleProjection = parentProjection;
+        this.inputTupleProjection = this.getInputTupleVariableDependencies(parentProjection);
+        if (this.child != null) {
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
+        }
+    }
 
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
@@ -173,10 +194,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -191,24 +212,67 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return new HashSet<Name>();
     }
 
+    /**
+     * Returns the height of the clause within the current FLWOR expression, i.e.,
+     * the number of descendant clauses.
+     * 
+     * @return The number of descendant clauses. 0 if it is a starting clause.
+     */
+    public int getHeight() {
+        if (this.child == null) {
+            return 0;
+        }
+        return 1 + this.child.getHeight();
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" | ");
+        buffer.append("\n");
 
-        buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Dynamic context variable dependencies: ");
+        Map<Name, DynamicContext.VariableDependency> dependencies = getDynamicContextVariableDependencies();
         for (Name v : dependencies.keySet()) {
             buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
-        buffer.append(" | ");
+        buffer.append("\n");
 
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Input variable dependencies: ");
+        for (Name v : this.inputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.inputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Output variable dependencies: ");
+        for (Name v : this.outputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.outputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Variables bound in current FLWOR: ");
         for (Name v : getOutputTupleVariableNames()) {
             buffer.append(v + " ");
         }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Height: " + this.getHeight());
         buffer.append("\n");
 
         if (this.child != null) {

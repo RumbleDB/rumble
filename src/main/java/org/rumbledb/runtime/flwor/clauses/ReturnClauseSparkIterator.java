@@ -42,6 +42,9 @@ import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -67,6 +70,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         this.child = child;
         this.expression = expression;
+        setInputAndOutputTupleVariableDependencies();
     }
 
     @Override
@@ -100,15 +104,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-        Map<Name, VariableDependency> dependencies = expression.getVariableDependencies();
-        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
-        Map<Name, VariableDependency> projection = new HashMap<>();
-        for (Name n : dependencies.keySet()) {
-            if (allTupleNames.contains(n)) {
-                projection.put(n, dependencies.get(n));
-            }
-        }
-        Dataset<Row> df = this.child.getDataFrame(context, projection);
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
@@ -117,6 +113,18 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             null
         );
         return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
+    }
+
+    private void setInputAndOutputTupleVariableDependencies() {
+        Map<Name, VariableDependency> dependencies = this.expression.getVariableDependencies();
+        Set<Name> allTupleNames = this.child.getOutputTupleVariableNames();
+        Map<Name, VariableDependency> projection = new HashMap<>();
+        for (Name n : dependencies.keySet()) {
+            if (allTupleNames.contains(n)) {
+                projection.put(n, dependencies.get(n));
+            }
+        }
+        this.child.setInputAndOutputTupleVariableDependencies(projection);
     }
 
     @Override
@@ -245,7 +253,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         for (Name variable : this.child.getOutputTupleVariableNames()) {
             result.remove(variable);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -266,4 +274,14 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         this.child.print(buffer, indent + 1);
         this.expression.print(buffer, indent + 1);
     }
+
+    private void readObject(ObjectInputStream i) throws ClassNotFoundException, IOException {
+        i.defaultReadObject();
+        setInputAndOutputTupleVariableDependencies();
+    }
+
+    private void writeObject(ObjectOutputStream i) throws IOException {
+        i.defaultWriteObject();
+    }
+
 }

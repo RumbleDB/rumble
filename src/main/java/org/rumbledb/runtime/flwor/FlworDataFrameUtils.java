@@ -671,4 +671,18 @@ public class FlworDataFrameUtils {
             .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
             .drop("partition_id", "partition_offset", "inc_id");
     }
+
+    public static StructType schemaUnion(StructType leftSchema, StructType rightSchema) {
+        List<StructField> fieldList = new ArrayList<StructField>();
+        for (StructField f : leftSchema.fields()) {
+            fieldList.add(f);
+        }
+        for (StructField f : rightSchema.fields()) {
+            fieldList.add(f);
+        }
+
+        StructField[] fields = new StructField[fieldList.size()];
+        fieldList.toArray(fields);
+        return new StructType(fields);
+    }
 }
