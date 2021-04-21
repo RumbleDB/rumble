@@ -112,7 +112,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             predicateIterator,
             leftHandSideEqualityCriteria,
             rightHandSideEqualityCriteria,
-            oldRightSideVariableName
+            variablesInLeftInputTuple,
+            variablesInRightInputTuple
         );
 
         if (isLeftOuterJoin) {
@@ -318,9 +319,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
     private static boolean extractEqualityComparisonsForHashing(
             RuntimeIterator predicateIterator,
-            List<RuntimeIterator> leftSideEqualityCriteria,
-            List<RuntimeIterator> rightSideEqualityCriteria,
-            Name rightSideVariableName
+            List<RuntimeIterator> leftComparisonSideEqualityCriteria,
+            List<RuntimeIterator> rightComparisonSideEqualityCriteria,
+            List<Name> leftTupleSideVariableNames,
+            List<Name> rightTupleSideVariableNames
     ) {
         boolean optimizableJoin = false;
         Stack<RuntimeIterator> candidateIterators = new Stack<>();
@@ -337,26 +339,27 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     RuntimeIterator lhs = comparisonIterator.getLeftIterator();
                     RuntimeIterator rhs = comparisonIterator.getRightIterator();
 
-                    Set<Name> leftDependencies = new HashSet<>(
+                    Set<Name> leftComparisonDependencies = new HashSet<>(
                             lhs.getVariableDependencies().keySet()
                     );
-                    Set<Name> rightDependencies = new HashSet<>(
+                    Set<Name> rightComparisonDependencies = new HashSet<>(
                             rhs.getVariableDependencies().keySet()
                     );
-                    // System.out.println("rightSideVariableName: " + rightSideVariableName);
-                    if (leftDependencies.size() == 1 && leftDependencies.contains(rightSideVariableName)) {
-                        if (!rightDependencies.contains(rightSideVariableName)) {
-                            optimizableJoin = true;
-                            rightSideEqualityCriteria.add(lhs);
-                            leftSideEqualityCriteria.add(rhs);
-                        }
+                    if (
+                        leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)
+                    ) {
+                        optimizableJoin = true;
+                        rightComparisonSideEqualityCriteria.add(lhs);
+                        leftComparisonSideEqualityCriteria.add(rhs);
                     }
-                    if (rightDependencies.size() == 1 && rightDependencies.contains(rightSideVariableName)) {
-                        if (!leftDependencies.contains(rightSideVariableName)) {
-                            optimizableJoin = true;
-                            rightSideEqualityCriteria.add(rhs);
-                            leftSideEqualityCriteria.add(lhs);
-                        }
+                    if (
+                        leftTupleSideVariableNames.containsAll(rightComparisonDependencies)
+                            && rightTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                    ) {
+                        optimizableJoin = true;
+                        rightComparisonSideEqualityCriteria.add(rhs);
+                        leftComparisonSideEqualityCriteria.add(lhs);
                     }
                 }
             }
