@@ -41,6 +41,7 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -202,13 +203,14 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             context,
                             startingClauseDependencies
                         );
-
+                        
                         return ForClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
                             forChild.getChildIterator().getDataFrame(context),
                             expressionDF,
                             this.outputTupleProjection,
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                            Collections.singletonList(forVariable),
                             this.expression,
                             false,
                             forVariable,
