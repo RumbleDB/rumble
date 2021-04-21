@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -249,7 +250,13 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 newContext.setSchema(field.dataType());
                 newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(field.dataType()));
             } else {
-                return NativeClauseContext.NoNativeQuery;
+                throw new UnexpectedStaticTypeException(
+                        "There is no field with the name "
+                            + key
+                            + ". Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                        ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                        getMetadata()
+                );
             }
         }
         return newContext;
