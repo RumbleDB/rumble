@@ -235,31 +235,18 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             && forChild.getPositionalVariableName() == null
                             && !forChild.isAllowingEmpty()
                     ) {
+                        this.setEvaluationDepthLimit(1);
                         System.err.println(
                             "[INFO] Rumble detected a join predicate in the where clause."
                         );
 
-                        // Next we prepare the data frame on the expression side.
-                        Dataset<Row> expressionDF;
-
-                        Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
-                        startingClauseDependencies.put(forVariable, DynamicContext.VariableDependency.FULL);
-                        expressionDF = ForClauseSparkIterator.getDataFrameStartingClause(
-                            sequenceIterator,
-                            forVariable,
-                            null,
-                            false,
-                            context,
-                            startingClauseDependencies
-                        );
-
                         return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
-                            forChild.getChildIterator().getDataFrame(context),
-                            expressionDF,
+                            getSubtreeBeyondLimit(1).getDataFrame(context),
+                            this.child.getDataFrame(context),
                             this.outputTupleProjection,
-                            new ArrayList<Name>(forChild.getChildIterator().getOutputTupleVariableNames()),
-                            Collections.singletonList(forVariable),
+                            new ArrayList<Name>(getSubtreeBeyondLimit(1).getOutputTupleVariableNames()),
+                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                             this.expression,
                             false,
                             forVariable,
