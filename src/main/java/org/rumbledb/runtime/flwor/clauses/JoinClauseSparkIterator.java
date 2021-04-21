@@ -145,14 +145,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         // System.out.println(sb.toString());
         // }
 
-        Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
-        if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
-                && outputTupleVariableDependencies.containsKey(newRightSideVariableName)
-        ) {
-            predicateDependencies.put(Name.CONTEXT_ITEM, outputTupleVariableDependencies.get(newRightSideVariableName));
-        }
-
         // System.out.println("Old right side variable name : " + oldRightSideVariableName);
         // System.out.println("New right side variable name: " + newRightSideVariableName);
         // for (Name n : predicateDependencies.keySet()) {
