@@ -242,8 +242,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             }
         }
         if (limit == -1) {
-            if(this.child != null)
-            {
+            if (this.child != null) {
                 this.child.setEvaluationDepthLimit(-1);
             }
         }
@@ -254,8 +253,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
                 );
             }
         }
-        if(this.child != null)
-        {
+        if (this.child != null) {
             this.child.setEvaluationDepthLimit(limit - 1);
         }
     }
