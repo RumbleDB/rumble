@@ -414,7 +414,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         Map<Name, VariableDependency> predicateDependencies = predicateIterator.getVariableDependencies();
 
-        List<Name> variablesInExpressionSideTuple = new ArrayList<>();
         if (predicateDependencies.containsKey(Name.CONTEXT_POSITION)) {
             Map<Name, DynamicContext.VariableDependency> startingClauseDependencies = new HashMap<>();
             startingClauseDependencies.put(Name.CONTEXT_ITEM, DynamicContext.VariableDependency.FULL);
@@ -462,7 +461,19 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         expressionDFTableName
                     )
                 );
-            variablesInExpressionSideTuple.add(Name.CONTEXT_COUNT);
+        }
+
+        List<Name> variablesInRightInputTuple = new ArrayList<>();
+        variablesInRightInputTuple.add(Name.CONTEXT_ITEM);
+        if (
+            predicateDependencies.containsKey(Name.CONTEXT_POSITION)
+        ) {
+            variablesInRightInputTuple.add(Name.CONTEXT_POSITION);
+        }
+        if (
+            predicateDependencies.containsKey(Name.CONTEXT_COUNT)
+        ) {
+            variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
         }
 
         return joinInputTupleWithSequenceOnPredicate(
@@ -473,6 +484,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             (this.child == null)
                 ? Collections.emptyList()
                 : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            variablesInRightInputTuple,
             predicateIterator,
             this.allowingEmpty,
             this.variableName,
@@ -487,6 +499,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
+            List<Name> variablesInRightInputTuple, // really needed?
             RuntimeIterator predicateIterator,
             boolean isLeftOuterJoin,
             Name newRightSideVariableName, // really needed?
@@ -511,6 +524,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (isLeftOuterJoin) {
             optimizableJoin = false;
         }
+        if (variablesInRightInputTuple.contains(Name.CONTEXT_POSITION)) {
+            optimizableJoin = false;
+        }
+
         // for (RuntimeIterator r : rightHandSideEqualityCriteria) {
         // StringBuffer sb = new StringBuffer();
         // r.print(sb, 2);
@@ -530,25 +547,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // for (Name n : predicateDependencies.keySet()) {
         // System.out.println(n.toString() + " -> " + predicateDependencies.get(n));
         // }
-        List<Name> variablesInRightInputTuple = new ArrayList<>();
-        if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
-                && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
-        ) {
-            optimizableJoin = false;
-            variablesInRightInputTuple.add(oldRightSideVariableName);
-            variablesInRightInputTuple.add(Name.CONTEXT_POSITION);
-        } else {
-            variablesInRightInputTuple.add(oldRightSideVariableName);
-        }
+
+
 
         // If the join criterion uses the context count, then we need to add it to the expression side (it is a
         // constant).
-        if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
-        ) {
-            variablesInRightInputTuple.add(Name.CONTEXT_COUNT);
-        }
+
 
         // for (Name n : variablesInRightInputTuple) {
         // System.out.println(n.toString() + " in expression side tuple.");
@@ -655,7 +659,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM)
+            variablesInRightInputTuple.contains(Name.CONTEXT_ITEM)
                 && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
         ) {
             variablesInJointTuple.add(Name.CONTEXT_POSITION);
@@ -664,7 +668,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
         if (
-            oldRightSideVariableName.equals(Name.CONTEXT_ITEM) && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
+            variablesInRightInputTuple.contains(Name.CONTEXT_ITEM)
+                && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
         ) {
             variablesInJointTuple.add(Name.CONTEXT_COUNT);
             fieldList.add(
