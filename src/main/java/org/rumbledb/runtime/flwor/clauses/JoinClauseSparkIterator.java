@@ -85,6 +85,21 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         this.dataFrameContext = new DataFrameContext();
     }
 
+    /**
+     * Joins two input tuples.
+     * @param context the dynamic context for the evaluation of the predicate expression.
+     * @param leftInputTuple the left tuple.
+     * @param rightInputTuple the right tuple.
+     * @param outputTupleVariableDependencies the necessary and sufficient variable dependencies that the output tuple should contain.
+     * @param variablesInLeftInputTuple a list of the variables in the left tuple.
+     * @param variablesInRightInputTuple a list of the variables in the right tuple.
+     * @param predicateIterator the predicate iterator.
+     * @param isLeftOuterJoin true if it is a left outer join, false otherwise.
+     * @param newRightSideVariableName the new name of the variable to rename in the output.
+     * @param oldRightSideVariableName the old name of the variable to rename in the output (typically Name.CONTEXT_ITEM, or same as newRightSideVariableName to avoid a renaming).
+     * @param metadata the metadata.
+     * @return the joined tuple.
+     */
     public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
             Dataset<Row> leftInputTuple,
@@ -107,7 +122,6 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         List<RuntimeIterator> leftHandSideEqualityCriteria = new ArrayList<>();
         List<RuntimeIterator> rightHandSideEqualityCriteria = new ArrayList<>();
 
-        // TODO pass the variables from left and right to support general joins.
         boolean optimizableJoin = extractEqualityComparisonsForHashing(
             predicateIterator,
             leftHandSideEqualityCriteria,
