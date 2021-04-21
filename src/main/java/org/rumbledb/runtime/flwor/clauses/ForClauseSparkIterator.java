@@ -26,7 +26,6 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.Metadata;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -633,11 +632,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
         // We gather the columns to select from the previous clause.
         // We need to project away the clause's variables from the previous clause.
-        StructType inputSchema = leftInputTuple.schema();
+        StructType leftSchema = leftInputTuple.schema();
+        StructType rightSchema = rightInputTuple.schema();
         List<Name> variableNamesToExclude = new ArrayList<>();
         variableNamesToExclude.add(newRightSideVariableName);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
+            leftSchema,
             outputTupleVariableDependencies,
             null,
             variableNamesToExclude
@@ -648,33 +648,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         // We need to prepare the parameters fed into the predicate.
         List<Name> variablesInJointTuple = new ArrayList<>();
         variablesInJointTuple.addAll(variablesInLeftInputTuple);
+        variablesInJointTuple.addAll(variablesInRightInputTuple);
         List<StructField> fieldList = new ArrayList<StructField>();
-        for (StructField f : inputSchema.fields()) {
+        for (StructField f : leftSchema.fields()) {
             fieldList.add(f);
         }
-        if (predicateDependencies.containsKey(oldRightSideVariableName)) {
-            variablesInJointTuple.add(oldRightSideVariableName);
-            fieldList.add(
-                new StructField(oldRightSideVariableName.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
-            );
-        }
-        if (
-            variablesInRightInputTuple.contains(Name.CONTEXT_ITEM)
-                && predicateDependencies.containsKey(Name.CONTEXT_POSITION)
-        ) {
-            variablesInJointTuple.add(Name.CONTEXT_POSITION);
-            fieldList.add(
-                new StructField(Name.CONTEXT_POSITION.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
-            );
-        }
-        if (
-            variablesInRightInputTuple.contains(Name.CONTEXT_ITEM)
-                && predicateDependencies.containsKey(Name.CONTEXT_COUNT)
-        ) {
-            variablesInJointTuple.add(Name.CONTEXT_COUNT);
-            fieldList.add(
-                new StructField(Name.CONTEXT_COUNT.getLocalName(), DataTypes.BinaryType, true, Metadata.empty())
-            );
+        for (StructField f : rightSchema.fields()) {
+            fieldList.add(f);
         }
 
         StructField[] fields = new StructField[fieldList.size()];
