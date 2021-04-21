@@ -30,6 +30,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -38,6 +39,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
+import org.rumbledb.runtime.primary.StringRuntimeIterator;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -240,6 +242,17 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             String key = this.lookupKey.getStringValue().replace("`", FlworDataFrameUtils.backtickEscape);
             schema = newContext.getSchema();
             if (!(schema instanceof StructType)) {
+                if (this.children.get(1) instanceof StringRuntimeIterator) {
+                    throw new UnexpectedStaticTypeException(
+                            "You are trying to look up the value associated with the field "
+                                + key
+                                + ". However, the left-hand-side cannot contain any objects and it will always return the empty sequence! "
+                                + "Fortunately Rumble was able to catch this. This is probably an overlook? "
+                                + "Please check your query and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
                 return NativeClauseContext.NoNativeQuery;
             }
             structSchema = (StructType) schema;
@@ -249,6 +262,16 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
                 newContext.setSchema(field.dataType());
                 newContext.setResultingType(FlworDataFrameUtils.mapToJsoniqType(field.dataType()));
             } else {
+                if (this.children.get(1) instanceof StringRuntimeIterator) {
+                    throw new UnexpectedStaticTypeException(
+                            "There is no field with the name "
+                                + key
+                                + " so that the lookup will always result in the empty sequence no matter what. "
+                                + "Fortunately Rumble was able to catch this. This is probably a typo? Please check the spelling and try again.",
+                            ErrorCode.StaticallyInferredEmptySequenceNotFromCommaExpression,
+                            getMetadata()
+                    );
+                }
                 return NativeClauseContext.NoNativeQuery;
             }
         }
