@@ -42,7 +42,6 @@ import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -208,26 +207,26 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
         int height = this.getHeight();
         int limit = -1;
-        System.out.println("[DEBUG] Height of the where clause: " + height);
+        // System.out.println("[DEBUG] Height of the where clause: " + height);
         for (int i = 1; i < height; ++i) {
             if (!this.canSetEvaluationDepthLimit(i)) {
-                System.out.println("[DEBUG] Depth " + i + " impossible (not a starting let or for clause).");
+                // System.out.println("[DEBUG] Depth " + i + " impossible (not a starting let or for clause).");
                 continue;
             }
             this.setEvaluationDepthLimit(i);
             if (this.containsClause(FLWOR_CLAUSES.GROUP_BY)) {
-                System.out.println("[DEBUG] Depth " + i + " does not work (because of a group by clause).");
+                // System.out.println("[DEBUG] Depth " + i + " does not work (because of a group by clause).");
                 continue;
             }
             if (this.containsClause(FLWOR_CLAUSES.COUNT)) {
-                System.out.println("[DEBUG] Depth " + i + " does not work (because of a count clause).");
+                // System.out.println("[DEBUG] Depth " + i + " does not work (because of a count clause).");
                 continue;
             }
             RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
             if (!otherChild.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
-                System.out.println(
-                    "[DEBUG] Depth " + i + " does not work (because the left does not have a DataFrame execution)."
-                );
+                // System.out.println(
+                // "[DEBUG] Depth " + i + " does not work (because the left does not have a DataFrame execution)."
+                // );
                 continue;
             }
             Set<Name> leftNames = otherChild.getOutputTupleVariableNames();
@@ -235,15 +234,15 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             Set<Name> rightNames = rightDependencies.keySet();
             rightNames.retainAll(leftNames);
             if (!rightNames.isEmpty()) {
-                System.out.println(
-                    "[DEBUG] Depth "
-                        + i
-                        + " does not work (because of variable dependencies: "
-                        + Arrays.toString(rightNames.toArray())
-                );
+                // System.out.println(
+                // "[DEBUG] Depth "
+                // + i
+                // + " does not work (because of variable dependencies: "
+                // + Arrays.toString(rightNames.toArray())
+                // );
                 continue;
             }
-            System.out.println("[DEBUG] Depth " + i + " possible.");
+            // System.out.println("[DEBUG] Depth " + i + " possible.");
             // System.out.println(otherChild.toString());
             limit = i;
         }
