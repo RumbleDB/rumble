@@ -572,4 +572,14 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
     }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.ORDER_BY) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
+    }
 }

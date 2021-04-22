@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
@@ -309,6 +310,15 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         }
         return 1 + this.child.getHeight();
     }
+
+    /**
+     * Says whether or not the clause and its descendants include a clause
+     * of the specified kind.
+     * 
+     * @param kind the kind of clause to test for.
+     * @return true if there is one. False otherwise.
+     */
+    public abstract boolean containsClause(FLWOR_CLAUSES kind);
 
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
