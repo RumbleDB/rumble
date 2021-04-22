@@ -25,6 +25,7 @@ import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -205,42 +206,66 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
         int height = this.getHeight();
+        int limit = -1;
         // System.out.println("[DEBUG] Height of the where clause: " + height);
         for (int i = 1; i < height; ++i) {
-            if (this.canSetEvaluationDepthLimit(i)) {
-                // System.out.println("[DEBUG] Depth " + i + " possible.");
-                RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
-                // System.out.println(otherChild.toString());
-            } else {
-                // System.out.println("[DEBUG] Depth " + i + " impossible.");
+            if (!this.canSetEvaluationDepthLimit(i)) {
+                // System.out.println("[DEBUG] Depth " + i + " impossible (not a starting let or for clause).");
+                continue;
             }
+            this.setEvaluationDepthLimit(i);
+            if (this.containsClause(FLWOR_CLAUSES.GROUP_BY)) {
+                // System.out.println("[DEBUG] Depth " + i + " does not work (because of a group by clause).");
+                continue;
+            }
+            if (this.containsClause(FLWOR_CLAUSES.COUNT)) {
+                // System.out.println("[DEBUG] Depth " + i + " does not work (because of a count clause).");
+                continue;
+            }
+            RuntimeTupleIterator otherChild = this.getSubtreeBeyondLimit(i);
+            if (!otherChild.getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
+                // System.out.println(
+                // "[DEBUG] Depth " + i + " does not work (because the left does not have a DataFrame execution)."
+                // );
+                continue;
+            }
+            Set<Name> leftNames = otherChild.getOutputTupleVariableNames();
+            Map<Name, VariableDependency> rightDependencies = this.child.getDynamicContextVariableDependencies();
+            Set<Name> rightNames = rightDependencies.keySet();
+            rightNames.retainAll(leftNames);
+            if (!rightNames.isEmpty()) {
+                // System.out.println(
+                // "[DEBUG] Depth "
+                // + i
+                // + " does not work (because of variable dependencies: "
+                // + Arrays.toString(rightNames.toArray())
+                // );
+                continue;
+            }
+            // System.out.println("[DEBUG] Depth " + i + " possible.");
+            // System.out.println(otherChild.toString());
+            limit = i;
         }
+        this.setEvaluationDepthLimit(-1);
+        if (limit == -1) {
+            return null;
+        }
+
         if (!(this.child instanceof ForClauseSparkIterator)) {
             return null;
         }
         ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-        if (forChild.getChildIterator() == null) {
-            return null;
-        }
-        if (forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL)) {
-            return null;
-        }
-        if (!forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)) {
-            return null;
-        }
-        RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
         Name forVariable = forChild.getVariableName();
 
-        if (!LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)) {
-            return null;
-        }
         if (forChild.getPositionalVariableName() != null) {
             return null;
         }
         if (forChild.isAllowingEmpty()) {
             return null;
         }
-        int limit = 1;
+        if (limit != 1) {
+            return null;
+        } ;
         System.err.println(
             "[INFO] Rumble detected a join predicate in the where clause."
         );
@@ -350,5 +375,15 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     nativeQuery.getResultingQuery()
                 )
             );
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.WHERE) {
+            return true;
+        }
+        if (this.child == null) {
+            return false;
+        }
+        return this.child.containsClause(kind);
     }
 }

@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -214,5 +215,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         // remove the variable that this clause binds.
         projection.remove(this.variableName);
         return projection;
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.COUNT) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
     }
 }

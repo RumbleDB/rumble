@@ -29,6 +29,7 @@ import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -364,7 +365,9 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.
                     if (
-                        leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                        leftComparisonDependencies.isEmpty()
+                            &&
+                            leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
                             && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)
                     ) {
                         optimizableJoin = true;
@@ -403,5 +406,9 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // TODO Auto-generated method stub
         return null;
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        return false;
     }
 }

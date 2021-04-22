@@ -1170,4 +1170,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
     }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.FOR) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
+    }
 }
