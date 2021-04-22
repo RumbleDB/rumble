@@ -266,30 +266,41 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             "[INFO] Rumble detected a join predicate in the where clause (limit=" + limit + ")."
         );
 
-        Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
-        Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
-        this.setEvaluationDepthLimit(limit);
-        Dataset<Row> rightTuples = this.child.getDataFrame(context);
-        Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
-        this.setEvaluationDepthLimit(-1);
+        try {
+            Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+            Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
+            this.setEvaluationDepthLimit(limit);
+            Dataset<Row> rightTuples = this.child.getDataFrame(context);
 
-        // leftTuples.show();
-        // rightTuples.show();
+            Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
+            this.setEvaluationDepthLimit(-1);
 
-        Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-            context,
-            leftTuples,
-            rightTuples,
-            this.outputTupleProjection,
-            new ArrayList<Name>(leftVariables),
-            new ArrayList<Name>(rightVariables),
-            this.expression,
-            false,
-            null,
-            getMetadata()
-        );
-        // result.show();
-        return result;
+            // leftTuples.show();
+            // rightTuples.show();
+
+            Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                context,
+                leftTuples,
+                rightTuples,
+                this.outputTupleProjection,
+                new ArrayList<Name>(leftVariables),
+                new ArrayList<Name>(rightVariables),
+                this.expression,
+                false,
+                null,
+                getMetadata()
+            );
+            // result.show();
+            return result;
+        } catch (Exception e) {
+            System.err.println(
+                "[INFO] Join failed. Falling back to regular execution."
+            );
+
+            this.setEvaluationDepthLimit(-1);
+            return null;
+        }
+
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
