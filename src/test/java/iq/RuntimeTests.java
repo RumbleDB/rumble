@@ -81,6 +81,7 @@ public class RuntimeTests extends AnnotationsTestsBase {
         sparkConfiguration.set("spark.executor.extraClassPath", "lib/");
         sparkConfiguration.set("spark.driver.extraClassPath", "lib/");
         sparkConfiguration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        sparkConfiguration.set("spark.sql.shuffle.partitions", "10"); // enables cartesian product
 
         // prevents spark from failing to start on MacOS when disconnected from the internet
         sparkConfiguration.set("spark.driver.host", "127.0.0.1");
