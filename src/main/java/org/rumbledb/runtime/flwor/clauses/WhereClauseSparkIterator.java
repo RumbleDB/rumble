@@ -215,53 +215,54 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 // System.out.println("[DEBUG] Depth " + i + " impossible.");
             }
         }
-        if (
-            this.child instanceof ForClauseSparkIterator
-        ) {
-            ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-            if (forChild.getChildIterator() != null) {
+        if (!(this.child instanceof ForClauseSparkIterator)) {
+            return null;
+        }
+        ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
+        if (forChild.getChildIterator() != null) {
+            if (
+                (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
+                    &&
+                    forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+            ) {
+                RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
+                Name forVariable = forChild.getVariableName();
+
                 if (
-                    (!forChild.getAssignmentIterator().getHighestExecutionMode().equals(ExecutionMode.LOCAL))
-                        &&
-                        forChild.getChildIterator().getHighestExecutionMode().equals(ExecutionMode.DATAFRAME)
+                    LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
+                        && forChild.getPositionalVariableName() == null
+                        && !forChild.isAllowingEmpty()
                 ) {
-                    RuntimeIterator sequenceIterator = forChild.getAssignmentIterator();
-                    Name forVariable = forChild.getVariableName();
+                    int limit = 1;
+                    System.err.println(
+                        "[INFO] Rumble detected a join predicate in the where clause."
+                    );
 
-                    if (
-                        LetClauseSparkIterator.isExpressionIndependentFromInputTuple(sequenceIterator, this.child)
-                            && forChild.getPositionalVariableName() == null
-                            && !forChild.isAllowingEmpty()
-                    ) {
-                        int limit = 1;
-                        System.err.println(
-                            "[INFO] Rumble detected a join predicate in the where clause."
-                        );
+                    Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+                    Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
+                    this.setEvaluationDepthLimit(limit);
+                    Dataset<Row> rightTuples = this.child.getDataFrame(context);
+                    Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
+                    this.setEvaluationDepthLimit(-1);
 
-                        Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
-                        this.setEvaluationDepthLimit(limit);
-                        Dataset<Row> rightTuples = this.child.getDataFrame(context);
-                        this.setEvaluationDepthLimit(-1);
+                    leftTuples.show();
+                    rightTuples.show();
 
-                        leftTuples.show();
-                        rightTuples.show();
-
-                        Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-                            context,
-                            leftTuples,
-                            rightTuples,
-                            this.outputTupleProjection,
-                            new ArrayList<Name>(getSubtreeBeyondLimit(1).getOutputTupleVariableNames()),
-                            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-                            this.expression,
-                            false,
-                            forVariable,
-                            forVariable,
-                            getMetadata()
-                        );
-                        result.show();
-                        return result;
-                    }
+                    Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                        context,
+                        leftTuples,
+                        rightTuples,
+                        this.outputTupleProjection,
+                        new ArrayList<Name>(leftVariables),
+                        new ArrayList<Name>(rightVariables),
+                        this.expression,
+                        false,
+                        forVariable,
+                        forVariable,
+                        getMetadata()
+                    );
+                    result.show();
+                    return result;
                 }
             }
         }
