@@ -252,8 +252,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
         this.setEvaluationDepthLimit(-1);
 
-        leftTuples.show();
-        rightTuples.show();
+        // leftTuples.show();
+        // rightTuples.show();
 
         Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
             context,
@@ -268,7 +268,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             forVariable,
             getMetadata()
         );
-        result.show();
+        // result.show();
         return result;
     }
 
