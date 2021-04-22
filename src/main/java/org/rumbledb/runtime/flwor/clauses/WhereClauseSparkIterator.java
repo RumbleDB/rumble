@@ -252,7 +252,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         System.err.println(
-            "[INFO] Rumble detected a join predicate in the where clause (limit="+limit+")."
+            "[INFO] Rumble detected a join predicate in the where clause (limit=" + limit + ")."
         );
 
         Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
