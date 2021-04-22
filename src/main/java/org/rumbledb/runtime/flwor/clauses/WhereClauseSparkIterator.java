@@ -242,6 +242,17 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 // );
                 continue;
             }
+            rightNames = this.child.getOutputTupleVariableNames();
+            rightNames.retainAll(leftNames);
+            if (!rightNames.isEmpty()) {
+                // System.out.println(
+                // "[DEBUG] Depth "
+                // + i
+                // + " does not work (because of variable collisions: "
+                // + Arrays.toString(rightNames.toArray())
+                // );
+                continue;
+            }
             // System.out.println("[DEBUG] Depth " + i + " possible.");
             // System.out.println(otherChild.toString());
             limit = i;
@@ -251,48 +262,45 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
 
-        if (!(this.child instanceof ForClauseSparkIterator)) {
-            return null;
-        }
-        ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-
-        if (forChild.getPositionalVariableName() != null) {
-            return null;
-        }
-        if (forChild.isAllowingEmpty()) {
-            return null;
-        }
-        if (limit != 1) {
-            return null;
-        } ;
         System.err.println(
-            "[INFO] Rumble detected a join predicate in the where clause."
+            "[INFO] Rumble detected a join predicate in the where clause (limit=" + limit + ")."
         );
 
-        Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
-        Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
-        this.setEvaluationDepthLimit(limit);
-        Dataset<Row> rightTuples = this.child.getDataFrame(context);
-        Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
-        this.setEvaluationDepthLimit(-1);
+        try {
+            Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+            Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
+            this.setEvaluationDepthLimit(limit);
+            Dataset<Row> rightTuples = this.child.getDataFrame(context);
 
-        // leftTuples.show();
-        // rightTuples.show();
+            Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
+            this.setEvaluationDepthLimit(-1);
 
-        Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
-            context,
-            leftTuples,
-            rightTuples,
-            this.outputTupleProjection,
-            new ArrayList<Name>(leftVariables),
-            new ArrayList<Name>(rightVariables),
-            this.expression,
-            false,
-            null,
-            getMetadata()
-        );
-        // result.show();
-        return result;
+            // leftTuples.show();
+            // rightTuples.show();
+
+            Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                context,
+                leftTuples,
+                rightTuples,
+                this.outputTupleProjection,
+                new ArrayList<Name>(leftVariables),
+                new ArrayList<Name>(rightVariables),
+                this.expression,
+                false,
+                null,
+                getMetadata()
+            );
+            // result.show();
+            return result;
+        } catch (Exception e) {
+            System.err.println(
+                "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
+            );
+
+            this.setEvaluationDepthLimit(-1);
+            return null;
+        }
+
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
