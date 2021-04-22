@@ -252,22 +252,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
 
-        if (!(this.child instanceof ForClauseSparkIterator)) {
-            return null;
-        }
-        ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-
-        if (forChild.getPositionalVariableName() != null) {
-            return null;
-        }
-        if (forChild.isAllowingEmpty()) {
-            return null;
-        }
-        if (limit != 1) {
-            return null;
-        } ;
         System.err.println(
-            "[INFO] Rumble detected a join predicate in the where clause."
+            "[INFO] Rumble detected a join predicate in the where clause (limit="+limit+")."
         );
 
         Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
