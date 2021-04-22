@@ -242,17 +242,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 // );
                 continue;
             }
-            Map<Name, VariableDependency> predicateDependencies = this.expression.getVariableDependencies();
-            Set<Name> predicateNames = predicateDependencies.keySet();
-            predicateNames.retainAll(leftNames);
-            if (predicateNames.isEmpty()) {
-                // System.out.println(
-                // "[DEBUG] Depth "
-                // + i
-                // + " does not work (because of no predicate dependencies to the left)"
-                // );
-                continue;
-            }
             // System.out.println("[DEBUG] Depth " + i + " possible.");
             // System.out.println(otherChild.toString());
             limit = i;
