@@ -233,15 +233,23 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             && forChild.getPositionalVariableName() == null
                             && !forChild.isAllowingEmpty()
                     ) {
-                        this.setEvaluationDepthLimit(1);
+                        int limit = 1;
                         System.err.println(
                             "[INFO] Rumble detected a join predicate in the where clause."
                         );
 
-                        return JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+                        Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+                        this.setEvaluationDepthLimit(limit);
+                        Dataset<Row> rightTuples = this.child.getDataFrame(context);
+                        this.setEvaluationDepthLimit(-1);
+
+                        leftTuples.show();
+                        rightTuples.show();
+
+                        Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                             context,
-                            getSubtreeBeyondLimit(1).getDataFrame(context),
-                            this.child.getDataFrame(context),
+                            leftTuples,
+                            rightTuples,
                             this.outputTupleProjection,
                             new ArrayList<Name>(getSubtreeBeyondLimit(1).getOutputTupleVariableNames()),
                             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -251,6 +259,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                             forVariable,
                             getMetadata()
                         );
+                        result.show();
+                        return result;
                     }
                 }
             }
