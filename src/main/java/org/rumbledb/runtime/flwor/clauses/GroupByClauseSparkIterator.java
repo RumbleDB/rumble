@@ -36,6 +36,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -562,5 +563,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     groupByString
                 )
             );
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.GROUP_BY) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
     }
 }
