@@ -242,6 +242,17 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 // );
                 continue;
             }
+            rightNames = this.child.getOutputTupleVariableNames();
+            rightNames.retainAll(leftNames);
+            if (!rightNames.isEmpty()) {
+                // System.out.println(
+                // "[DEBUG] Depth "
+                // + i
+                // + " does not work (because of variable collisions: "
+                // + Arrays.toString(rightNames.toArray())
+                // );
+                continue;
+            }
             // System.out.println("[DEBUG] Depth " + i + " possible.");
             // System.out.println(otherChild.toString());
             limit = i;
