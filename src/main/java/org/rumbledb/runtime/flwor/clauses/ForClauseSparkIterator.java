@@ -482,7 +482,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             predicateIterator,
             this.allowingEmpty,
             this.variableName,
-            Name.CONTEXT_ITEM,
             getMetadata()
         );
     }
