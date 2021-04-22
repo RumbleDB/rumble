@@ -294,7 +294,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return result;
         } catch (Exception e) {
             System.err.println(
-                "[INFO] Join failed. Falling back to regular execution."
+                "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
             );
 
             this.setEvaluationDepthLimit(-1);
