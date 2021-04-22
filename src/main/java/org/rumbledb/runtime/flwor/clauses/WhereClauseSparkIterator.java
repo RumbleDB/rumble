@@ -255,7 +255,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         ForClauseSparkIterator forChild = (ForClauseSparkIterator) this.child;
-        Name forVariable = forChild.getVariableName();
 
         if (forChild.getPositionalVariableName() != null) {
             return null;
@@ -289,8 +288,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             new ArrayList<Name>(rightVariables),
             this.expression,
             false,
-            forVariable,
-            forVariable,
+            null,
             getMetadata()
         );
         // result.show();
