@@ -140,7 +140,7 @@ public class FunctionCallExpression extends Expression {
             if (firstArgumentExecutionMode.isDataFrame()) {
                 return ExecutionMode.DATAFRAME;
             }
-            if (firstArgumentExecutionMode.isRDD()) {
+            if (firstArgumentExecutionMode.isRDDOrDataFrame()) {
                 return ExecutionMode.RDD;
             }
             return ExecutionMode.LOCAL;
@@ -150,7 +150,7 @@ public class FunctionCallExpression extends Expression {
         ) {
             ExecutionMode firstArgumentExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
             if (
-                firstArgumentExecutionMode.isRDD()
+                firstArgumentExecutionMode.isRDDOrDataFrame()
                     && !firstArgumentExecutionMode.isDataFrame()
             ) {
                 return ExecutionMode.RDD;
@@ -173,6 +173,7 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {
@@ -184,5 +185,25 @@ public class FunctionCallExpression extends Expression {
                 arg.print(buffer, indent + 1);
             }
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.identifier.toString());
+
+        // TODO check if i need to ignore () when I have arity??
+        sb.append("(");
+        if (this.arguments != null) {
+            for (int i = 0; i < this.arguments.size(); i++) {
+                this.arguments.get(i).serializeToJSONiq(sb, 0);
+                if (i == this.arguments.size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
+                }
+            }
+        }
+        sb.append(")\n");
     }
 }

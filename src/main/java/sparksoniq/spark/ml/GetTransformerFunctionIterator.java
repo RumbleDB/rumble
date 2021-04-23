@@ -33,8 +33,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -47,10 +47,10 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     public static final List<Name> transformerParameterNames = new ArrayList<>(
             Arrays.asList(
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "transformer-input-9470aa1b-13cb-405b-b598-910cb2d18224"
                 ),
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "transformer-paramobject-e05c895c-be12-4df1-8a86-8b90f10a7129"
                 )
             )
@@ -116,23 +116,23 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
                     Arrays.asList(
                         new SequenceType(
-                                ItemType.item, // TODO: revert back to ObjectItem
+                                BuiltinTypesCatalogue.item, // TODO: revert back to ObjectItem
                                 SequenceType.Arity.ZeroOrMore
                         ),
                         new SequenceType(
-                                ItemType.objectItem,
+                                BuiltinTypesCatalogue.objectItem,
                                 SequenceType.Arity.One
                         )
                     )
                 );
                 SequenceType returnType = new SequenceType(
-                        ItemType.objectItem,
+                        BuiltinTypesCatalogue.objectItem,
                         SequenceType.Arity.ZeroOrMore
                 );
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                Name.createVariableInRumbleNamespace(
+                                Name.createVariableInDefaultFunctionNamespace(
                                     this.transformerSparkMLClass.getName()
                                 ),
                                 2

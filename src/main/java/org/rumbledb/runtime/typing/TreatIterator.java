@@ -2,6 +2,11 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -11,11 +16,15 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 
@@ -46,6 +55,16 @@ public class TreatIterator extends HybridRuntimeIterator {
         this.errorCode = errorCode;
         if (!this.sequenceType.isEmptySequence()) {
             this.itemType = this.sequenceType.getItemType();
+        }
+        if (
+            !executionMode.equals(ExecutionMode.LOCAL)
+                && (sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero))
+        ) {
+            throw new OurBadException(
+                    "A treat as iterator should never be executed in parallel if the sequence type arity is 0, 1 or ?."
+            );
         }
     }
 
@@ -87,7 +106,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     private void setNextResult() {
         this.nextResult = null;
         if (this.iterator.hasNext()) {
-            if (this.iterator.isRDD()) {
+            if (this.iterator.isRDDOrDataFrame()) {
                 if (this.currentResult == null) {
                     JavaRDD<Item> childRDD = this.iterator.getRDD(this.currentDynamicContextForLocalExecution);
                     int size = childRDD.take(2).size();
@@ -103,7 +122,6 @@ public class TreatIterator extends HybridRuntimeIterator {
                 this.resultCount++;
             }
         } else {
-            this.iterator.close();
             checkEmptySequence(this.resultCount);
         }
 
@@ -114,27 +132,29 @@ public class TreatIterator extends HybridRuntimeIterator {
 
         checkTreatAsEmptySequence(this.resultCount);
         checkMoreThanOneItemSequence(this.resultCount);
-        if (!this.nextResult.isTypeOf(this.itemType)) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            this.nextResult.getDynamicType().toString()
-                                + " cannot be treated as type "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            this.nextResult.getDynamicType().toString()
-                                + " is not expected here. The expected type is "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
-            }
+        if (!InstanceOfIterator.doesItemTypeMatchItem(this.itemType, this.nextResult)) {
+            throw errorToThrow(this.nextResult.getDynamicType().toString());
+        }
+    }
+
+    private RuntimeException errorToThrow(String type) {
+        switch (this.errorCode) {
+            case DynamicTypeTreatErrorCode:
+                return new TreatException(
+                        type
+                            + " cannot be treated as type "
+                            + this.sequenceType,
+                        this.getMetadata()
+                );
+            case UnexpectedTypeErrorCode:
+                return new UnexpectedTypeException(
+                        type
+                            + " is not expected here. The expected type is "
+                            + this.sequenceType,
+                        this.getMetadata()
+                );
+            default:
+                return new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
         }
     }
 
@@ -154,6 +174,36 @@ public class TreatIterator extends HybridRuntimeIterator {
         return childRDD.filter(transformation);
     }
 
+    @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    public static ItemType getItemType(Dataset<Row> df) {
+        StructType type = df.schema();
+        DataType dataType = type;
+        StructField[] fields = type.fields();
+        if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            dataType = fields[0].dataType();
+        }
+        return ItemParser.convertDataTypeToItemType(dataType);
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
+        int count = df.takeAsList(1).size();
+        checkEmptySequence(count);
+        if (count == 0) {
+            return df;
+        }
+        ItemType dataItemType = getItemType(df);
+        if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
+            return df;
+        }
+        throw errorToThrow("" + dataItemType);
+    }
+
     private void checkEmptySequence(int size) {
         if (
             size == 0
@@ -162,45 +212,13 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrMore)
         ) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            "Empty sequence cannot be treated as type "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            "An empty sequence is not expected here. The expected type is "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
-            }
+            throw errorToThrow("Empty sequence");
         }
     }
 
     private void checkTreatAsEmptySequence(int size) {
         if (size > 0 && this.sequenceType.isEmptySequence()) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            this.nextResult.getDynamicType().toString()
-                                + " cannot be treated as type empty-sequence()",
-                            this.getMetadata()
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            this.nextResult.getDynamicType().toString()
-                                + " is not expected here. The expected type is empty-sequence().",
-                            this.getMetadata()
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
-            }
+            throw errorToThrow(this.nextResult.getDynamicType().toString());
         }
     }
 
@@ -211,24 +229,7 @@ public class TreatIterator extends HybridRuntimeIterator {
                     ||
                     this.sequenceType.getArity() == SequenceType.Arity.OneOrZero)
         ) {
-            switch (this.errorCode) {
-                case DynamicTypeTreatErrorCode:
-                    throw new TreatException(
-                            "A sequence of more than one item cannot be treated as type "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                case UnexpectedTypeErrorCode:
-                    throw new UnexpectedTypeException(
-                            "A sequence of more than one item is not expected here. Expected type: "
-                                + this.sequenceType.getItemType().toString()
-                                + this.sequenceType.getArity().getSymbol(),
-                            this.getMetadata()
-                    );
-                default:
-                    throw new OurBadException("Unexpected error code in treat as iterator.", this.getMetadata());
-            }
+            throw errorToThrow("A sequence of more than one item");
         }
     }
 }

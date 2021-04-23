@@ -32,6 +32,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
+import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -45,11 +48,15 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     private static final long serialVersionUID = 1L;
     protected static final String FLOW_EXCEPTION_MESSAGE = "Invalid next() call; ";
     private final ExceptionMetadata metadata;
-    protected boolean hasNext;
-    protected boolean isOpen;
     protected RuntimeTupleIterator child;
-    protected DynamicContext currentDynamicContext;
     protected ExecutionMode highestExecutionMode;
+    protected int evaluationDepthLimit;
+
+    protected transient DynamicContext currentDynamicContext;
+    protected transient boolean hasNext;
+    protected transient boolean isOpen;
+    protected transient Map<Name, DynamicContext.VariableDependency> inputTupleProjection;
+    protected transient Map<Name, DynamicContext.VariableDependency> outputTupleProjection;
 
     protected RuntimeTupleIterator(
             RuntimeTupleIterator child,
@@ -60,6 +67,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         this.isOpen = false;
         this.highestExecutionMode = executionMode;
         this.child = child;
+        this.evaluationDepthLimit = -1;
     }
 
     public RuntimeTupleIterator getChildIterator() {
@@ -136,27 +144,45 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * or that only a count is needed for a specific variable, which allows projecting away the actual items.
      *
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
-     * @param parentProjection information on the projection needed by the caller.
      * @return the DataFrame with the tuples returned by the child clause.
      */
     public abstract Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     );
 
     /**
      * Builds the DataFrame projection that this clause needs to receive from its child clause.
      * The intent is that the result of this method is forwarded to the child clause in getDataFrame() so it can
      * optimize some values away.
-     * Invariant: all keys in getProjection(...) MUST be input tuple variables,
+     * Invariant: all keys in getInputTupleVariableDependencies(...) MUST be output tuple variables,
      * i.e., appear in this.child.getOutputTupleVariableNames()
      *
      * @param parentProjection the projection needed by the parent clause.
      * @return the projection needed by this clause.
      */
-    public abstract Map<Name, DynamicContext.VariableDependency> getProjection(
+    protected abstract Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     );
+
+    /**
+     * Computes and stores the DataFrame projection that this clause needs to receive from its child clause.
+     * Also stores that of its parent for future purposes.
+     * The intent is that the result of this method is used in getDataFrame() so it can
+     * optimize some values away.
+     * Invariant: all keys MUST be output tuple variables,
+     * i.e., appear in this.child.getOutputTupleVariableNames()
+     *
+     * @param parentProjection the projection needed by the parent clause.
+     */
+    public void setInputAndOutputTupleVariableDependencies(
+            Map<Name, DynamicContext.VariableDependency> parentProjection
+    ) {
+        this.outputTupleProjection = parentProjection;
+        this.inputTupleProjection = this.getInputTupleVariableDependencies(parentProjection);
+        if (this.child != null) {
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
+        }
+    }
 
     /**
      * Variable dependencies are variables that MUST be provided by the parent clause in the dynamic context
@@ -173,10 +199,10 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @return a map of variable names to dependencies (FULL, COUNT, ...) that this clause needs to obtain from the
      *         dynamic context.
      */
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -191,24 +217,170 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         return new HashSet<Name>();
     }
 
+    /**
+     * Returns the limit on how deep the evaluation occurs.
+     * If it is 0, the clause ignores its child (this is for join purposes).
+     * 
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public int getEvaluationDepthLimit() {
+        return this.evaluationDepthLimit;
+    }
+
+    /**
+     * Sets the limit on how deep the evaluation occurs.
+     * 0 to stop here.
+     * 
+     * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
+     */
+    public void setEvaluationDepthLimit(int limit) {
+        this.evaluationDepthLimit = limit;
+        if (limit == 0) {
+            if (!(this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator)) {
+                throw new OurBadException(
+                        "We cannot stop the evaluation of FLWOR clauses at any other place than a let or a for clause."
+                );
+            }
+        }
+        if (limit == -1) {
+            if (this.child != null) {
+                this.child.setEvaluationDepthLimit(-1);
+                return;
+            }
+        }
+        if (this.child == null) {
+            if (limit > 0) {
+                throw new OurBadException(
+                        "We cannot stop the evaluation of FLWOR clauses beyond the height of the tree."
+                );
+            }
+        }
+        if (this.child != null) {
+            this.child.setEvaluationDepthLimit(limit - 1);
+            return;
+        }
+    }
+
+    /**
+     * Tells whether it is possible to set the limit on how deep the evaluation occurs.
+     * 0 to stop here.
+     * 
+     * @param limit the limit to set. Must be between 0 and getHeight(), inclusive.
+     */
+    public boolean canSetEvaluationDepthLimit(int limit) {
+        if (limit == 0) {
+            return this instanceof ForClauseSparkIterator || this instanceof LetClauseSparkIterator;
+        }
+        if (limit == -1) {
+            return true;
+        }
+        if (this.child == null) {
+            return limit <= 0;
+        }
+        return this.child.canSetEvaluationDepthLimit(limit - 1);
+    }
+
+    /**
+     * Returns the clause subtree at the specified offset.
+     * The parameter is compatible with setEvaluationDepthLimit, i.e., it returns the subtree right
+     * below where the evaluation stops with the same limit.
+     * 
+     * @return The evaluation depth limit. -1 if none.
+     */
+    public RuntimeTupleIterator getSubtreeBeyondLimit(int limit) {
+        if (this.child == null) {
+            throw new OurBadException(
+                    "Trying to get FLWOR clause subtree at depth " + limit + " but there are not further descendants."
+            );
+        }
+        if (limit == 0) {
+            return this.child;
+        } else {
+            return this.child.getSubtreeBeyondLimit(limit - 1);
+        }
+    }
+
+    /**
+     * Returns the height of the clause within the current FLWOR expression, i.e.,
+     * the number of descendant clauses.
+     * 
+     * @return The number of descendant clauses. 0 if it is a starting clause.
+     */
+    public int getHeight() {
+        if (this.child == null) {
+            return 0;
+        }
+        return 1 + this.child.getHeight();
+    }
+
+    /**
+     * Says whether or not the clause and its descendants include a clause
+     * of the specified kind.
+     * 
+     * @param kind the kind of clause to test for.
+     * @return true if there is one. False otherwise.
+     */
+    public abstract boolean containsClause(FLWOR_CLAUSES kind);
+
+    public String toString() {
+        StringBuffer stringBuffer = new StringBuffer();
+        print(stringBuffer, 0);
+        return stringBuffer.toString();
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" | ");
+        buffer.append("\n");
 
-        buffer.append("Variable dependencies: ");
-        Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Dynamic context variable dependencies: ");
+        Map<Name, DynamicContext.VariableDependency> dependencies = getDynamicContextVariableDependencies();
         for (Name v : dependencies.keySet()) {
             buffer.append(v + "(" + dependencies.get(v) + ")" + " ");
         }
-        buffer.append(" | ");
+        buffer.append("\n");
 
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Input variable dependencies: ");
+        for (Name v : this.inputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.inputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Output variable dependencies: ");
+        for (Name v : this.outputTupleProjection.keySet()) {
+            buffer.append(v + "(" + this.outputTupleProjection.get(v) + ")" + " ");
+        }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
         buffer.append("Variables bound in current FLWOR: ");
         for (Name v : getOutputTupleVariableNames()) {
             buffer.append(v + " ");
         }
+        buffer.append("\n");
+
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Height: " + this.getHeight());
+        buffer.append("\n");
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Limit: " + this.evaluationDepthLimit);
         buffer.append("\n");
 
         if (this.child != null) {

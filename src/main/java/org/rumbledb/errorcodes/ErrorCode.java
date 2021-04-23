@@ -41,6 +41,8 @@ public enum ErrorCode {
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
 
+    NoTypedValueErrorCode("FOTY0012"),
+
 
 
     DuplicatePairNameErrorCode("JNDY0003"),
@@ -67,6 +69,8 @@ public enum ErrorCode {
     JobWithinAJobErrorCode("RBST0003"),
     OurBadErrorCode("RBST0004"),
 
+    UnexpectedStaticType("RBTY0001"),
+
 
     FunctionsNonSerializable("SENR0001"),
 
@@ -77,6 +81,7 @@ public enum ErrorCode {
 
 
     ParsingErrorCode("XPST0003"),
+    StaticallyInferredEmptySequenceNotFromCommaExpression("XPST0005"),
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
     CastableErrorCode("XPST0080"),
@@ -103,7 +108,12 @@ public enum ErrorCode {
     PositionalVariableNameSameAsForVariable("XQST0089"),
     InvalidGroupVariableErrorCode("XQST0094"),
 
+    AtomizationError("FOTY0012"),
+    UnexpectedFunctionItem("FOTY0015"),
+
     InvalidTimezoneValue("FODT0003");
+
+
 
     private String code;
 

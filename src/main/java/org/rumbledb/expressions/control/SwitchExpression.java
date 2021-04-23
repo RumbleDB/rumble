@@ -73,15 +73,56 @@ public class SwitchExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("switch (");
+        this.testCondition.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+        for (SwitchCase c : this.cases) {
+            indentIt(sb, indent + 1);
+            sb.append("case (");
+            for (int i = 0; i < c.getAllExpressions().size(); i++) {
+                c.getAllExpressions().get(i).serializeToJSONiq(sb, 0);
+                if (i == c.getAllExpressions().size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
+                }
+            }
+            sb.append("return (");
+            c.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+
+        if (this.defaultExpression != null) {
+            indentIt(sb, indent + 1);
+            sb.append("default return (");
+            this.defaultExpression.serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultExpression.getHighestExecutionMode(visitorConfig);
 
-        if (this.highestExecutionMode == ExecutionMode.RDD) {
-            for (SwitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDD()) {
-                    this.highestExecutionMode = ExecutionMode.LOCAL;
-                    break;
-                }
+        if (this.highestExecutionMode.isUnset()) {
+            return;
+        }
+
+        for (SwitchCase c : this.cases) {
+            ExecutionMode mode = c.getReturnExpression().getHighestExecutionMode(visitorConfig);
+            if (mode.isUnset()) {
+                this.highestExecutionMode = ExecutionMode.UNSET;
+                return;
+            }
+            if (this.highestExecutionMode.isDataFrame() && !mode.isDataFrame()) {
+                this.highestExecutionMode = mode;
+                break;
+            }
+            if (this.highestExecutionMode.isRDD() && mode.isLocal()) {
+                this.highestExecutionMode = ExecutionMode.LOCAL;
+                break;
             }
         }
     }

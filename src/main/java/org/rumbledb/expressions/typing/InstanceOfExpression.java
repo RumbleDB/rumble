@@ -74,10 +74,35 @@ public class InstanceOfExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.sequenceType.toString()) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append("instance of\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        indentIt(sb, indent);
+        this.sequenceType.toString();
+        sb.append("\n");
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 
 }

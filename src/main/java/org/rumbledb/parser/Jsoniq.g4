@@ -40,6 +40,9 @@ decimalFormatDecl       : 'declare'
 qname                   : ((ns=NCName | nskw=keyWords)':')?
                           (local_name=nCNameOrKeyWord | local_namekw = keyWords);
 
+nCNameOrKeyWord         : NCName
+                        | NullLiteral;
+
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
                         | 'infinity'
@@ -57,7 +60,7 @@ varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':='
 
 functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
-                          ('{' fn_body=expr '}' | 'external');
+                          ('{' (fn_body=expr)? '}' | 'external');
 
 paramList               : param (',' param)*;
 
@@ -150,7 +153,9 @@ additiveExpr            : main_expr=multiplicativeExpr ( op+=('+' | '-') rhs+=mu
 
 multiplicativeExpr      : main_expr=instanceOfExpr ( op+=('*' | 'div' | 'idiv' | 'mod') rhs+=instanceOfExpr )*;
 
-instanceOfExpr          : main_expr=treatExpr ( Kinstance Kof seq=sequenceType)?;
+instanceOfExpr          : main_expr=isStaticallyExpr ( Kinstance Kof seq=sequenceType)?;
+
+isStaticallyExpr        : main_expr=treatExpr ( Kis Kstatically seq=sequenceType)?;
 
 treatExpr               : main_expr=castableExpr ( Ktreat Kas seq=sequenceType )?;
 
@@ -172,7 +177,7 @@ arrayUnboxing           : '[' ']';
 
 predicate               : '[' expr ']';
 
-objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr | tkw=typesKeywords);
+objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
                         | Literal
@@ -211,7 +216,7 @@ namedFunctionRef        : fn_name=qname '#' arity=Literal;
 
 inlineFunctionExpr      : 'function' '(' paramList? ')'
                            (Kas return_type=sequenceType)?
-                           ('{' fn_body=expr '}');
+                           ('{' (fn_body=expr)? '}');
 
 ///////////////////////// Types
 
@@ -221,65 +226,17 @@ sequenceType            : '(' ')'
 objectConstructor       : '{' ( pairConstructor (',' pairConstructor)* )? '}'
                         | merge_operator+='{|' expr '|}';
 
-itemType                : 'item'
-                        | jSONItemTest
-                        | atomicType;
+itemType                : qname
+                        | NullLiteral
+                        | functionTest;
 
-jSONItemTest            : 'object'
-                        | 'array'
-                        | Kjson;
+functionTest	        : (anyFunctionTest | typedFunctionTest);
 
-keyWordString           : 'string';
+anyFunctionTest         : 'function' '(' '*' ')';
 
-keyWordInteger          : 'integer';
+typedFunctionTest	    : 'function' '(' (st+=sequenceType (',' st+=sequenceType)*)? ')' 'as' rt=sequenceType;
 
-keyWordDecimal          : 'decimal';
-
-keyWordDouble           : 'double';
-
-keyWordBoolean          : 'boolean';
-
-keyWordDuration         : 'duration';
-
-keyWordYearMonthDuration: 'yearMonthDuration';
-
-keyWordDayTimeDuration  : 'dayTimeDuration';
-
-keyWordHexBinary        : 'hexBinary';
-
-keyWordBase64Binary     : 'base64Binary';
-
-keyWordDateTime         : 'dateTime';
-
-keyWordDate             : 'date';
-
-keyWordTime             : 'time';
-
-keyWordAnyURI           : 'anyURI';
-
-typesKeywords           : keyWordString
-                        | keyWordInteger
-                        | keyWordDecimal
-                        | keyWordDouble
-                        | keyWordBoolean
-                        | keyWordDuration
-                        | keyWordYearMonthDuration
-                        | keyWordDayTimeDuration
-                        | keyWordDateTime
-                        | keyWordDate
-                        | keyWordTime
-                        | keyWordHexBinary
-                        | keyWordBase64Binary
-                        | keyWordAnyURI;
-
-singleType              : item=atomicType (question +='?')?;
-
-atomicType              : 'atomic'
-                        | typesKeywords
-                        | NullLiteral;
-
-nCNameOrKeyWord         : NCName
-                        | typesKeywords;
+singleType              : item=itemType (question +='?')?;
 
 pairConstructor         :  ( lhs=exprSingle | name=NCName ) (':' | '?') rhs=exprSingle;
 
@@ -290,24 +247,26 @@ uriLiteral              : stringLiteral;
 stringLiteral           : STRING;
 
 keyWords                : Kjsoniq
-                        | Kjson
-                        | Kversion
-                        | Ktypeswitch
-                        | Kor
                         | Kand
-                        | Knot
-                        | Kto
-                        | Kinstance
-                        | Kof
-                        | Ktreat
                         | Kcast
                         | Kcastable
-                        | Kdefault
-                        | Kthen
-                        | Kelse
                         | Kcollation
+                        | Kdefault
+                        | Kelse
                         | Kgreatest
+                        | Kinstance
+                        | Kstatically
+                        | Kis
                         | Kleast
+                        | Knot
+                        | NullLiteral
+                        | Kof
+                        | Kor
+                        | Kthen
+                        | Kto
+                        | Ktreat
+                        | Ktypeswitch
+                        | Kversion
                         | Kswitch
                         | Kcase
                         | Ktry
@@ -410,6 +369,10 @@ Kinstance               : 'instance' ;
 
 Kof                     : 'of' ;
 
+Kstatically             : 'statically' ;
+
+Kis                     : 'is' ;
+
 Ktreat                  : 'treat';
 
 Kcast                   : 'cast';
@@ -419,8 +382,6 @@ Kcastable               : 'castable';
 Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
-
-Kjson                   : 'json-item';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 

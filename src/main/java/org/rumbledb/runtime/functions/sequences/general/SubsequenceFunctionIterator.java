@@ -100,13 +100,15 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
 
         df.createOrReplaceTempView("input");
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT * FROM input LIMIT %s",
-                    Integer.toString(this.startPosition + this.length - 1)
-                )
-            );
+        if (this.length != -1) {
+            df = df.sparkSession()
+                .sql(
+                    String.format(
+                        "SELECT * FROM input LIMIT %s",
+                        Integer.toString(this.startPosition + this.length - 1)
+                    )
+                );
+        }
 
         df = FlworDataFrameUtils.zipWithIndex(df, 1L, SparkSessionManager.temporaryColumnName);
 
@@ -188,7 +190,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         // if startPosition overshoots, return empty sequence
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }
@@ -227,7 +228,6 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

@@ -5,24 +5,22 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.Period;
-import org.joda.time.PeriodType;
 import org.joda.time.format.DateTimeFormatter;
 import org.joda.time.format.DateTimeFormatterBuilder;
 import org.joda.time.format.DateTimeParser;
 import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
 import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
-public class DateTimeItem extends AtomicItem {
+public class DateTimeItem implements Item {
 
     private static final String yearFrag = "((-)?(([1-9]\\d\\d(\\d)+)|(0\\d\\d\\d)))";
     private static final String monthFrag = "((0[1-9])|(1[0-2]))";
@@ -67,11 +65,25 @@ public class DateTimeItem extends AtomicItem {
     }
 
     DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, ItemType.dateTimeItem);
+        this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
         if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
             this.hasTimeZone = false;
             this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
         }
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     public DateTime getValue() {
@@ -81,11 +93,6 @@ public class DateTimeItem extends AtomicItem {
     @Override
     public DateTime getDateTimeValue() {
         return this.getValue();
-    }
-
-    @Override
-    public boolean isAtomic() {
-        return true;
     }
 
     @Override
@@ -104,55 +111,13 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.serialize());
-        }
-        if (itemType.equals(ItemType.dateTimeItem)) {
-            return this;
-        }
-        if (itemType.equals(ItemType.dateItem)) {
-            return ItemFactory.getInstance().createDateItem(this.getDateTimeValue(), this.hasTimeZone);
-        }
-        if (itemType.equals(ItemType.timeItem)) {
-            return ItemFactory.getInstance().createTimeItem(this.getDateTimeValue(), this.hasTimeZone);
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return itemType.equals(ItemType.dateTimeItem)
-            || itemType.equals(ItemType.dateItem)
-            || itemType.equals(ItemType.timeItem)
-            || itemType.equals(ItemType.stringItem);
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
-        return false;
-    }
-
-    @Override
-    public boolean equals(Object otherObject) {
-        if (!(otherObject instanceof Item)) {
-            return false;
-        }
-        Item otherItem = (Item) otherObject;
-        if (otherItem.isDateTime()) {
-            return this.getValue().isEqual(otherItem.getDateTimeValue());
-        }
         return false;
     }
 
     @Override
     public int hashCode() {
         return this.getValue().hashCode();
-    }
-
-    @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.dateTimeItem) || super.isTypeOf(type);
     }
 
     @Override
@@ -184,10 +149,10 @@ public class DateTimeItem extends AtomicItem {
     }
 
     private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
-        if (dateTimeType.equals(ItemType.dateItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
             DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                 ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
             ).toParser();
@@ -196,20 +161,20 @@ public class DateTimeItem extends AtomicItem {
                 .toFormatter()
                 .withOffsetParsed();
         }
-        if (dateTimeType.equals(ItemType.timeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
             return ISODateTimeFormat.timeParser().withOffsetParsed();
         }
         throw new IllegalArgumentException();
     }
 
     private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
-        if (dateTimeType.equals(ItemType.dateTimeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(ItemType.dateItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
             return datePattern.matcher(dateTime).matches();
         }
-        if (dateTimeType.equals(ItemType.timeItem)) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
             return timePattern.matcher(dateTime).matches();
         }
         return false;
@@ -256,67 +221,12 @@ public class DateTimeItem extends AtomicItem {
     }
 
     @Override
-    public Item add(Item other) {
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().plus(other.getDurationValue()), this.hasTimeZone);
-        } else {
-            throw new ClassCastException();
-        }
-    }
-
-    @Override
-    public Item subtract(Item other) {
-        if (other.isDateTime()) {
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(new Period(other.getDateTimeValue(), this.getValue(), PeriodType.dayTime()));
-        }
-        if (other.isYearMonthDuration() || other.isDayTimeDuration()) {
-            return ItemFactory.getInstance()
-                .createDateTimeItem(this.getValue().minus(other.getDurationValue()), this.hasTimeZone);
-        } else {
-            throw new ClassCastException();
-        }
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        if (other.isNull()) {
-            return 1;
-        }
-        if (other.isDateTime()) {
-            return this.getValue().compareTo(other.getDateTimeValue());
-        }
-        throw new IteratorFlowException(
-                "Cannot compare item of type "
-                    + this.getDynamicType().toString()
-                    +
-                    " with item of type "
-                    + other.getDynamicType().toString()
-        );
-    }
-
-    @Override
-    public Item compareItem(
-            Item other,
-            ComparisonExpression.ComparisonOperator comparisonOperator,
-            ExceptionMetadata metadata
-    ) {
-        if (!other.isDateTime() && !other.isNull()) {
-            throw new UnexpectedTypeException(
-                    "\""
-                        + this.getDynamicType().toString()
-                        + "\": invalid type: can not compare for equality to type \""
-                        + other.getDynamicType().toString()
-                        + "\"",
-                    metadata
-            );
-        }
-        return super.compareItem(other, comparisonOperator, metadata);
-    }
-
-    @Override
     public ItemType getDynamicType() {
-        return ItemType.dateTimeItem;
+        return BuiltinTypesCatalogue.dateTimeItem;
+    }
+
+    @Override
+    public boolean isAtomic() {
+        return true;
     }
 }

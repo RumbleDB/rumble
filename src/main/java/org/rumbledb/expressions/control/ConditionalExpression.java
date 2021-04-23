@@ -72,15 +72,53 @@ public class ConditionalExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("if (");
+        this.conditionExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("then (");
+
+        this.thenExpression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+
+        indentIt(sb, indent + 1);
+        sb.append("else (");
+
+        this.elseExpression.serializeToJSONiq(sb, indent + 1);
+        sb.append(")\n");
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (
-            this.thenExpression.getHighestExecutionMode(visitorConfig).isRDD()
-                && this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()
-        ) {
+        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isLocal()) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isLocal()) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isUnset()) {
+            this.highestExecutionMode = ExecutionMode.UNSET;
+            return;
+        }
+        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isUnset()) {
+            this.highestExecutionMode = ExecutionMode.UNSET;
+            return;
+        }
+        if (this.thenExpression.getHighestExecutionMode(visitorConfig).isRDD()) {
             this.highestExecutionMode = ExecutionMode.RDD;
             return;
         }
-        this.highestExecutionMode = ExecutionMode.LOCAL;
+        if (this.elseExpression.getHighestExecutionMode(visitorConfig).isRDD()) {
+            this.highestExecutionMode = ExecutionMode.RDD;
+            return;
+        }
+        this.highestExecutionMode = ExecutionMode.DATAFRAME;
+        return;
     }
 
     @Override

@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -123,18 +124,17 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid count clause.");
         }
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
-        if (!parentProjection.containsKey(this.variableName)) {
+        Dataset<Row> df = this.child.getDataFrame(context);
+        if (!this.outputTupleProjection.containsKey(this.variableName)) {
             return df;
         }
 
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, parentProjection, this.variableName);
+        Dataset<Row> dfWithIndex = addSerializedCountColumn(df, this.outputTupleProjection, this.variableName);
         return dfWithIndex;
     }
 
@@ -142,14 +142,14 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     // positional variables).
     public static Dataset<Row> addSerializedCountColumn(
             Dataset<Row> df,
-            Map<Name, DynamicContext.VariableDependency> parentProjection,
+            Map<Name, DynamicContext.VariableDependency> outputDependencies,
             Name variableName
     ) {
         StructType inputSchema = df.schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
-            null,
+            outputDependencies,
             null,
             Collections.singletonList(variableName)
         );
@@ -179,10 +179,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         return dfWithIndex;
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<Name, DynamicContext.VariableDependency>();
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -202,7 +202,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         buffer.append("\n");
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // start with an empty projection.
@@ -215,5 +215,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         // remove the variable that this clause binds.
         projection.remove(this.variableName);
         return projection;
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.COUNT) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
     }
 }

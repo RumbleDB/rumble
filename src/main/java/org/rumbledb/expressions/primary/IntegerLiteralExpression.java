@@ -59,9 +59,16 @@ public class IntegerLiteralExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.lexicalValue) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.lexicalValue + "\n");
     }
 }

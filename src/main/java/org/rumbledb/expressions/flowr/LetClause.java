@@ -63,6 +63,10 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -110,7 +114,7 @@ public class LetClause extends Clause {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.variableName) + ", " + this.sequenceType.toString() + ") ");
+        buffer.append(" (" + (this.variableName) + ", " + this.getSequenceType().toString() + ") ");
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
@@ -120,5 +124,16 @@ public class LetClause extends Clause {
         if (this.previousClause != null) {
             this.previousClause.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("let $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        sb.append(" := (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
     }
 }

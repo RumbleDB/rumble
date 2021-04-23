@@ -4,22 +4,26 @@
 
 ### Install Spark
 
-Rumble requires a Spark installation on Linux, Mac or Windows. The easiest of all solutions is to install the all-encompassing and popular Anaconda Data Science software, which contains Python, Jupyter notebooks, Spark and so on. Users who love the command line can also install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu), etc, or for the most adventurous, then can even directly download it, unpack it, and add the Spark bin directory to the PATH variable.
+Rumble requires a Spark installation on Linux, Mac or Windows.
 
-We recommend installing either Spark 2.4.6, or Spark 3.0.0.
+Users who love the command line can install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu).
+
+However, it is also straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it, and add the subdirectory "bin" within the unpacked directory to the PATH variable, as well as the location of the unpacked directory to SPARK_HOME.
+
+We recommend installing either Spark 2.4.7, or Spark 3.0.2 (we provide a Rumble jar for each one of these, the default is Spark 3).
 
 You can test that Spark was correctly installed with:
 
     spark-submit --version
     
-Another important comment: if you use Spark 2.4.x, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8. Spark 3.0.0 is documented to work with both Java 8 and Java 11, even though we have not tried Java 11 yet. If there is an issue with the Java version, Rumble will inform you with an appropriate error message. You can check the version that is configured with:
+Another important comment: if you use Spark 2.4.x, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8. Spark 3.0.2 is documented to work with both Java 8 and Java 11, even though we have not tried Java 11 yet. If there is an issue with the Java version, Rumble will inform you with an appropriate error message. You can check the version that is configured with:
 
     java -version
 
 
 ### Download Rumble
 
-Rumble is just a download with no installation. In order to run Rumble, you need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases) and put it in a directory of your choice. If you use Spark 3.0.0, make sure to use the corresponding jar and to replace the jar name accordingly in all our instructions.
+Rumble is just a download with no installation. In order to run Rumble, you simply need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3.0.2, you can use the default jar. If you use Spark 2.4.x, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
 
 ### Create some data set
 
@@ -39,14 +43,14 @@ Create, in the same directory as Rumble to keep it simple, a file data.json and 
 
 In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit spark-rumble-1.8.1.jar --shell yes
+    spark-submit spark-rumble-1.11.0.jar --shell yes
                  
 The Rumble shell appears:
 
         ____                  __    __   
        / __ \__  ______ ___  / /_  / /__ 
       / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.8.1 "Scots pine" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/  1.11.0 "Banyan Tree" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
     
     
@@ -74,12 +78,12 @@ The above queries do not actually use Spark. Spark is used when the I/O workload
      
      json-file("data.json")
      
-json-file reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You can specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files).
+json-file() reads its input in parallel, and thus will also work on your machine with MB or GB files (for TB files, a cluster will be preferable). You should specify a minimum number of partitions, here 10 (note that this is a bit ridiculous for our tiny example, but it is very relevant for larger files), as locally no parallelization will happen if you do not specify this number.
 
     for $i in json-file("data.json", 10)
     return $i
 
-The above creates a very simple Spark job and executes it. More complex queries will create several Spark jobs. But you will not see anything of it: this is all done behind the scenes.
+The above creates a very simple Spark job and executes it. More complex queries will create several Spark jobs. But you will not see anything of it: this is all done behind the scenes. If you are curious, you can go to [localhost:4040](http://localhost:4040) in your browser while your query is running (it will not be available once the job is complete) and look at what is going on behind the scenes.
 
 Data can be filtered with the where clause. Again, below the hood, a Spark transformation will be used:
 
@@ -130,9 +134,9 @@ Mind the double parenthesis, as parallelize is a unary function to which we pass
 
 Further steps could involve:
 
-- Learning JSONiq. More details can be found in the JSONiq section of this documentation and in the JSONiq specification and tutorials.
+- Learning JSONiq. More details can be found in the JSONiq section of this documentation and in the [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html) and [tutorials](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb).
 - Storing some data on S3, creating a Spark cluster on Amazon EMR (or Azure blob storage and Azure, etc), and querying the data with Rumble. More details are found in the cluster section of this documentation.
-- Using Rumble with Jupyter notebooks. For this, you can run Rumble as a server with a simple command, and get started by downloading the main JSONiq tutorial as a Jupyter notebook and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation.
-- Write JSONiq code, and share it on the Web for others to import from within their queries (no package publication or installation required)!
+- Using Rumble with Jupyter notebooks. For this, you can run Rumble as a server with a simple command, and get started by downloading the main JSONiq tutorial as a Jupyter notebook and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation. Jupyter notebooks work both locally and on a cluster.
+- Write JSONiq code, and share it on the Web, as others can import it from HTTP in just one line from within their queries (no package publication or installation required) or specify an HTTP URL as an input query to Rumble!
 
 

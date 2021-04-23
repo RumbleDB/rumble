@@ -45,8 +45,10 @@ import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 /**
@@ -102,62 +104,137 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitVariableDeclaration(VariableDeclaration variableDeclaration, DynamicContext argument) {
         Name name = variableDeclaration.getVariableName();
-        if (variableDeclaration.external()) {
-            String value = this.configuration.getExternalVariableValue(name);
-            List<Item> values = new ArrayList<>();
-            if (value != null) {
-                SequenceType sequenceType = variableDeclaration.getSequenceType();
-                Item item = null;
-                if (
-                    !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
-                        && sequenceType.getItemType().equals(ItemType.anyURIItem)
-                ) {
-                    URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
-                        value,
-                        this.configuration,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
-                } else {
-                    item = ItemFactory.getInstance().createStringItem(value);
-                }
-                values.add(item);
+
+        // Variable is not external: we use the expression.
+        if (!variableDeclaration.external()) {
+            Expression expression = variableDeclaration.getExpression();
+            RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            return argument;
+        }
+
+        // Variable is external. Do we have supplied items?
+        List<Item> items = this.configuration.getExternalVariableValue(name);
+        if (items != null) {
+            if (variableDeclaration.getSequenceType().isEmptySequence() && items.size() > 0) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence type ().",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.One
+                    && items.size() != 1
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity 1.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.OneOrZero
+                    && items.size() > 1
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity ?.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            if (
+                !variableDeclaration.getSequenceType().isEmptySequence()
+                    && variableDeclaration.getSequenceType().getArity() == Arity.OneOrMore
+                    && items.size() == 0
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable values does not match sequence arity +.",
+                        variableDeclaration.getMetadata()
+                );
+            }
+            for (Item item : items) {
                 if (
                     variableDeclaration.getSequenceType().isEmptySequence()
-                        || !item.isTypeOf(variableDeclaration.getSequenceType().getItemType())
+                        || !InstanceOfIterator.doesItemTypeMatchItem(
+                            variableDeclaration.getSequenceType().getItemType(),
+                            item
+                        )
                 ) {
                     throw new UnexpectedTypeException(
                             "External variable value ("
-                                + value
+                                + item
                                 + ") does not match the expected type ("
                                 + variableDeclaration.getSequenceType()
                                 + ").",
                             variableDeclaration.getMetadata()
                     );
                 }
+            }
+
+            argument.getVariableValues()
+                .addVariableValue(
+                    name,
+                    items
+                );
+            return argument;
+        }
+
+        // Variable is external. Do we have supplied unparsed items?
+        String value = this.configuration.getUnparsedExternalVariableValue(name);
+        items = new ArrayList<>();
+        if (value != null) {
+            SequenceType sequenceType = variableDeclaration.getSequenceType();
+            Item item = null;
+            if (
+                !sequenceType.equals(SequenceType.EMPTY_SEQUENCE)
+                    && sequenceType.getItemType().equals(BuiltinTypesCatalogue.anyURIItem)
+            ) {
+                URI resolvedURI = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                    value,
+                    this.configuration,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
-                Expression expression = variableDeclaration.getExpression();
-                if (expression != null) {
-                    RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-                    iterator.bindToVariableInDynamicContext(argument, name, argument);
-                    return argument;
-                }
-                throw new AbsentPartOfDynamicContextException(
-                        "External variable value is not provided!",
+                item = ItemFactory.getInstance().createStringItem(value);
+            }
+            items.add(item);
+            if (
+                variableDeclaration.getSequenceType().isEmptySequence()
+                    || !InstanceOfIterator.doesItemTypeMatchItem(
+                        variableDeclaration.getSequenceType().getItemType(),
+                        item
+                    )
+            ) {
+                throw new UnexpectedTypeException(
+                        "External variable value ("
+                            + value
+                            + ") does not match the expected type ("
+                            + variableDeclaration.getSequenceType()
+                            + ").",
                         variableDeclaration.getMetadata()
                 );
             }
             argument.getVariableValues()
                 .addVariableValue(
                     name,
-                    values
+                    items
                 );
             return argument;
         }
+
+        // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
-        RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
-        iterator.bindToVariableInDynamicContext(argument, name, argument);
-        return argument;
+        if (expression != null) {
+            RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
+            iterator.bindToVariableInDynamicContext(argument, name, argument);
+            return argument;
+        }
+
+        throw new AbsentPartOfDynamicContextException(
+                "External variable value is not provided!",
+                variableDeclaration.getMetadata()
+        );
     }
 
     @Override

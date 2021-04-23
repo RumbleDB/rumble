@@ -64,7 +64,7 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
             RuntimeIterator sequenceIterator1 = this.children.get(0);
             RuntimeIterator sequenceIterator2 = this.children.get(1);
 
-            if (sequenceIterator1.isRDD() && sequenceIterator2.isRDD()) {
+            if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(this.currentDynamicContextForLocalExecution);
                 JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(this.currentDynamicContextForLocalExecution);
                 if (rdd1.partitions().size() == rdd2.partitions().size()) {

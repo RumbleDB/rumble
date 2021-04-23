@@ -21,17 +21,17 @@
 package org.rumbledb.runtime.primary;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class ArrayRuntimeIterator extends LocalRuntimeIterator {
+public class ArrayRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -46,18 +46,14 @@ public class ArrayRuntimeIterator extends LocalRuntimeIterator {
         }
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            List<Item> result = new ArrayList<>();
-            if (!this.children.isEmpty()) {
-                result.addAll(this.children.get(0).materialize(this.currentDynamicContextForLocalExecution));
-            }
-            Item item = ItemFactory.getInstance().createArrayItem(result);
-            this.hasNext = false;
-            return item;
-        } else {
-            throw new IteratorFlowException("Invalid next() call on array iterator", getMetadata());
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        List<Item> result = new ArrayList<>();
+        if (!this.children.isEmpty()) {
+            result.addAll(this.children.get(0).materialize(dynamicContext));
         }
+        Item item = ItemFactory.getInstance().createArrayItem(result);
+        return item;
     }
 }

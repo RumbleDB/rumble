@@ -64,32 +64,80 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
                 return this.currentDynamicContextForLocalExecution.getVariableValues()
                     .getVariableCount(expr.getVariableName());
             }
-
-            if (!iterator.isRDD()) {
-                List<Item> results = iterator.materialize(this.currentDynamicContextForLocalExecution);
-                this.hasNext = false;
-                return ItemFactory.getInstance().createIntItem(results.size());
-            }
-
-            long count;
-            if (iterator.isDataFrame()) {
-                count = iterator.getDataFrame(this.currentDynamicContextForLocalExecution).count();
-            } else {
-                count = iterator.getRDD(this.currentDynamicContextForLocalExecution).count();
-            }
             this.hasNext = false;
-            if (count > (long) Integer.MAX_VALUE) {
-                // TODO: handle too big x values
-                throw new OurBadException("The count value is too big to convert to integer type.");
-            } else {
-                return ItemFactory.getInstance().createIntItem((int) count);
-            }
+            return computeCount(
+                this.children.get(0),
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
+            );
         } else {
             throw new IteratorFlowException(
                     FLOW_EXCEPTION_MESSAGE + " count function",
                     getMetadata()
             );
         }
+    }
+
+    public static Item computeCount(
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        if (iterator.isDataFrame()) {
+            return computeDataFrame(
+                iterator,
+                context,
+                metadata
+            );
+        } else if (iterator.isRDDOrDataFrame()) {
+            return computeRDD(
+                iterator,
+                context,
+                metadata
+            );
+        } else {
+            return computeLocally(
+                iterator,
+                context,
+                metadata
+            );
+        }
+    }
+
+    private static Item computeLocally(
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        List<Item> results = iterator.materialize(context);
+        return ItemFactory.getInstance().createLongItem(results.size());
+    }
+
+    private static Item computeRDD(
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        long count = iterator.getRDD(context).count();
+        if (count > (long) Integer.MAX_VALUE) {
+            throw new OurBadException("The count value is too big to convert to integer type.");
+        } else {
+            return ItemFactory.getInstance().createLongItem(count);
+        }
+    }
+
+    private static Item computeDataFrame(
+            RuntimeIterator iterator,
+            DynamicContext context,
+            ExceptionMetadata metadata
+    ) {
+        long count = iterator.getDataFrame(context).count();
+        if (count > (long) Integer.MAX_VALUE) {
+            throw new OurBadException("The count value is too big to convert to integer type.");
+        } else {
+            return ItemFactory.getInstance().createLongItem(count);
+        }
+
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

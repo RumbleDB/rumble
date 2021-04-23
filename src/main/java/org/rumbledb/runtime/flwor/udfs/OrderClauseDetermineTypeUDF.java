@@ -97,6 +97,6 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
                     expressionWithIterator.getIterator().getMetadata()
             );
         }
-        this.result.add(this.nextItem.getDynamicType().getName());
+        this.result.add(this.nextItem.getDynamicType().getName().getLocalName());
     }
 }

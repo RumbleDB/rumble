@@ -51,7 +51,7 @@ import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.ObjectLookupExpression;
-import org.rumbledb.expressions.postfix.PredicateExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ArrayConstructorExpression;
 import org.rumbledb.expressions.primary.BooleanLiteralExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
@@ -65,11 +65,7 @@ import org.rumbledb.expressions.primary.NullLiteralExpression;
 import org.rumbledb.expressions.primary.ObjectConstructorExpression;
 import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.typing.CastExpression;
-import org.rumbledb.expressions.typing.CastableExpression;
-import org.rumbledb.expressions.typing.InstanceOfExpression;
-import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.*;
 
 public abstract class AbstractNodeVisitor<T> {
 
@@ -159,7 +155,7 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
-    public T visitPredicateExpression(PredicateExpression expression, T argument) {
+    public T visitFilterExpression(FilterExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
 
@@ -265,6 +261,10 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitIsStaticallyExpr(IsStaticallyExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
     public T visitTreatExpression(TreatExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
@@ -274,12 +274,6 @@ public abstract class AbstractNodeVisitor<T> {
     }
 
     public T visitCastExpression(CastExpression expression, T argument) {
-        return defaultAction(expression, argument);
-    }
-    // endregion
-
-    // region quantifiers
-    public T visitQuantifiedExpression(QuantifiedExpression expression, T argument) {
         return defaultAction(expression, argument);
     }
     // endregion

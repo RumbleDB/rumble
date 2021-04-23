@@ -8,7 +8,7 @@ The following software is required:
 
 - [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 (and Scala 11 as of Spark 2.4.5).
 - [Spark](https://spark.apache.org/), version 2.4.5 (for example)
-- [Ant](http://www.ant.org/), version 1.10.1
+- [Ant](http://www.ant.org/), version 1.11.1
 - [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
 - [Maven](https://maven.apache.org/) 3.6.0
 
@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit target/spark-rumble-1.8.1.jar --shell yes
+    $ spark-submit target/spark-rumble-1.11.0.jar --shell yes
 
 The Rumble shell should start:
 
@@ -73,7 +73,7 @@ The Rumble shell should start:
         ____                  __    __   
        / __ \__  ______ ___  / /_  / /__ 
       / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.8.1 "Scots pine" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/  1.11.0 "Banyan Tree" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
 
     Master: local[2]

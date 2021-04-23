@@ -20,10 +20,19 @@
 
 package org.rumbledb.runtime;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.KryoSerializable;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
+
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -39,20 +48,15 @@ import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.KryoSerializable;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
 
 public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoSerializable {
 
@@ -97,13 +101,14 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * If the sequence is a single numeric item and a non-null position is supplied, then instead
      * it is checked whether the numeric item is equal to the position.
      *
-     * @param iterator has to be opened before calling this function
+     * @param dynamicContext the dynamic context
      * @param position the context position, or null if none
      * @return the effective boolean value.
      */
-    public static boolean getEffectiveBooleanValueOrCheckPosition(RuntimeIterator iterator, Item position) {
-        if (iterator.hasNext()) {
-            Item item = iterator.next();
+    public boolean getEffectiveBooleanValueOrCheckPosition(DynamicContext dynamicContext, Item position) {
+        open(dynamicContext);
+        if (hasNext()) {
+            Item item = this.next();
             boolean result;
             if (item.isBoolean()) {
                 result = item.getBooleanValue();
@@ -115,6 +120,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                         result = !item.getIntegerValue().equals(BigInteger.ZERO);
                     } else if (item.isDouble()) {
                         result = item.getDoubleValue() != 0;
+                    } else if (item.isFloat()) {
+                        result = item.getFloatValue() != 0;
                     } else if (item.isDecimal()) {
                         result = !item.getDecimalValue().equals(BigDecimal.ZERO);
                     } else {
@@ -123,37 +130,46 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
                         );
                     }
                 } else {
-                    result = item.equals(position);
+                    result = ComparisonIterator.compareItems(
+                        item,
+                        position,
+                        ComparisonOperator.VC_EQ,
+                        getMetadata()
+                    ) == 0;
                 }
             } else if (item.isNull()) {
                 result = false;
-            } else if (item.canBePromotedTo(ItemType.stringItem)) {
+            } else if (item.getDynamicType().canBePromotedTo(BuiltinTypesCatalogue.stringItem)) {
                 result = !item.getStringValue().isEmpty();
             } else if (item.isObject()) {
+                this.close();
                 return true;
             } else if (item.isArray()) {
+                this.close();
                 return true;
             } else {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for items of type "
                             +
                             item.getDynamicType().toString(),
-                        iterator.getMetadata()
+                        getMetadata()
                 );
             }
 
-            if (iterator.hasNext()) {
+            if (hasNext()) {
                 throw new InvalidArgumentTypeException(
                         "Effective boolean value not defined for sequences of more than one atomic item. "
                             + "Sequence containing: "
                             + item.serialize()
                             + " must be a singleton.",
-                        iterator.getMetadata()
+                        getMetadata()
                 );
             }
 
+            this.close();
             return result;
         } else {
+            this.close();
             return false;
         }
 
@@ -166,16 +182,16 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
      * Singleton atomic values are evaluated to their effective boolean value.
      * Multiple atomic values throw an exception.
      *
-     * @param iterator has to be opened before calling this function
+     * @param dynamicContext the dynamic context
      * @return the effective boolean value.
      */
-    public static boolean getEffectiveBooleanValue(RuntimeIterator iterator) {
-        return getEffectiveBooleanValueOrCheckPosition(iterator, null);
+    public boolean getEffectiveBooleanValue(DynamicContext dynamicContext) {
+        return this.getEffectiveBooleanValueOrCheckPosition(dynamicContext, null);
     }
 
     public void open(DynamicContext context) {
         if (this.isOpen) {
-            throw new IteratorFlowException("Runtime iterator cannot be opened twice", getMetadata());
+            throw new IteratorFlowException("Runtime iterator cannot be opened twice.", getMetadata());
         }
         this.isOpen = true;
         this.hasNext = true;
@@ -184,7 +200,6 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
 
     public void close() {
         this.isOpen = false;
-        this.children.forEach(c -> c.close());
     }
 
     public void reset(DynamicContext context) {
@@ -225,15 +240,18 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return this.highestExecutionMode;
     }
 
-    public boolean isRDD() {
+    public boolean isRDDOrDataFrame() {
         if (this.highestExecutionMode == ExecutionMode.UNSET) {
             throw new OurBadException("isRDD field in iterator without execution mode being set.");
         }
-        return this.highestExecutionMode.isRDD();
+        return this.highestExecutionMode.isRDDOrDataFrame();
     }
 
     public JavaRDD<Item> getRDD(DynamicContext context) {
-        throw new OurBadException("RDDs are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "RDDs are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
     }
 
     public boolean isDataFrame() {
@@ -244,7 +262,10 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     }
 
     public Dataset<Row> getDataFrame(DynamicContext context) {
-        throw new OurBadException("DataFrames are not implemented for the iterator", getMetadata());
+        throw new OurBadException(
+                "DataFrames are not implemented for the iterator " + getClass().getCanonicalName(),
+                getMetadata()
+        );
     }
 
     public abstract Item next();
@@ -264,6 +285,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         this.open(context);
         while (this.hasNext()) {
             result.add(this.next());
+        }
+        this.close();
+    }
+
+    public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
+        result.clear();
+        this.open(context);
+        int i = 0;
+        while (this.hasNext() && i < n) {
+            result.add(this.next());
+            ++i;
         }
         this.close();
     }
@@ -326,6 +358,8 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | ");
+        buffer.append(this.highestExecutionMode);
+        buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
         Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
@@ -345,7 +379,7 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
     ) {
         if (this.isDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getDataFrame(executionContext));
-        } else if (this.isRDD()) {
+        } else if (this.isRDDOrDataFrame()) {
             targetContext.getVariableValues().addVariableValue(variable, this.getRDD(executionContext));
         } else {
             targetContext.getVariableValues().addVariableValue(variable, this.materialize(executionContext));
@@ -369,5 +403,17 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
             rumbleException.initCause(e);
             throw rumbleException;
         }
+    }
+
+    /**
+     * This function generate (if possible) a native spark-sql query that maps the inner working of the iterator
+     *
+     * @return a native clause context with the spark-sql native query to get an equivalent result of the iterator, or
+     *         [NativeClauseContext.NoNativeQuery] if
+     *         it is not possible
+     * @param nativeClauseContext context information to generate the native query
+     */
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return NativeClauseContext.NoNativeQuery;
     }
 }

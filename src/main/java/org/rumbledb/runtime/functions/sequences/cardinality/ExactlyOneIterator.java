@@ -63,7 +63,7 @@ public class ExactlyOneIterator extends CardinalityFunctionIterator {
 
         RuntimeIterator sequenceIterator = this.children.get(0);
 
-        if (!sequenceIterator.isRDD()) {
+        if (!sequenceIterator.isRDDOrDataFrame()) {
             sequenceIterator.open(context);
             if (!sequenceIterator.hasNext()) {
                 throw new SequenceExceptionExactlyOne(

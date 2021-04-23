@@ -12,10 +12,9 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.items.ArrayItem;
-import org.rumbledb.items.AtomicItem;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.typing.CastIterator;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -105,7 +104,7 @@ public class RumbleMLUtils {
             ExceptionMetadata metadata
     ) {
         if (paramJavaTypeName.endsWith("[]")) {
-            if (!(param instanceof ArrayItem)) {
+            if (!(param.isArray())) {
                 throw new InvalidArgumentTypeException(paramName + " is expected to be an array type", metadata);
             }
             List<Object> paramAsListInJava = new ArrayList<>();
@@ -122,7 +121,7 @@ public class RumbleMLUtils {
             });
             return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
-            return convertRumbleAtomicToJava((AtomicItem) param, paramJavaTypeName);
+            return convertRumbleAtomicToJava(param, paramJavaTypeName);
         } else {
             // complex SparkML parameters such as Estimator, Transformer, Classifier etc. are not implemented yet
             throw new OurBadException("Not Implemented");
@@ -163,18 +162,60 @@ public class RumbleMLUtils {
             || javaTypeName.equals("long"));
     }
 
-    private static Object convertRumbleAtomicToJava(AtomicItem atomicItem, String javaTypeName) {
+    private static Object convertRumbleAtomicToJava(Item atomicItem, String javaTypeName) {
+        Item castItem;
         switch (javaTypeName) {
             case "boolean":
-                return atomicItem.castAs(ItemType.booleanItem).getBooleanValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    BuiltinTypesCatalogue.booleanItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getBooleanValue();
             case "String":
-                return atomicItem.castAs(ItemType.stringItem).getStringValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    BuiltinTypesCatalogue.stringItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getStringValue();
             case "int":
-                return atomicItem.castAs(ItemType.integerItem).getIntValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    BuiltinTypesCatalogue.integerItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getIntValue();
             case "double":
-                return atomicItem.castAs(ItemType.doubleItem).getDoubleValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    BuiltinTypesCatalogue.doubleItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getDoubleValue();
             case "long":
-                return atomicItem.castAs(ItemType.decimalItem).getDecimalValue().longValue();
+                castItem = CastIterator.castItemToType(
+                    atomicItem,
+                    BuiltinTypesCatalogue.decimalItem,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+                if (castItem == null) {
+                    throw new OurBadException("We were not able to cast " + atomicItem + " to " + javaTypeName);
+                }
+                return castItem.getDecimalValue()
+                    .longValue();
             default:
                 throw new OurBadException(
                         "Unrecognized Java type name found \""

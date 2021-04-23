@@ -21,11 +21,11 @@
 package org.rumbledb.runtime;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 
-public class ConstantRuntimeIterator extends LocalRuntimeIterator {
+public class ConstantRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item item;
@@ -40,12 +40,7 @@ public class ConstantRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.item;
-        }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.item;
     }
 }

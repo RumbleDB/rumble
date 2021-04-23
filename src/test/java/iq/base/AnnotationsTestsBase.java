@@ -21,12 +21,15 @@
 package iq.base;
 
 import org.junit.Assert;
+import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
 import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -39,6 +42,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
@@ -47,8 +52,23 @@ public class AnnotationsTestsBase {
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes" }
-    );
+            new String[] { "--print-iterator-tree", "yes", "--variable:externalUnparsedString", "unparsed string" }
+    ).setExternalVariableValue(
+        Name.createVariableInNoNamespace("externalStringItem"),
+        Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))
+    )
+        .setExternalVariableValue(
+            Name.createVariableInNoNamespace("externalIntegerItems"),
+            Arrays.asList(
+                new Item[] {
+                    ItemFactory.getInstance().createIntItem(1),
+                    ItemFactory.getInstance().createIntItem(2),
+                    ItemFactory.getInstance().createIntItem(3),
+                    ItemFactory.getInstance().createIntItem(4),
+                    ItemFactory.getInstance().createIntItem(5),
+                }
+            )
+        );
 
 
     public void initializeTests(File dir) {
@@ -59,7 +79,7 @@ public class AnnotationsTestsBase {
     /**
      * Tests annotations
      */
-    protected void testAnnotations(String path)
+    protected void testAnnotations(String path, RumbleRuntimeConfiguration configuration)
             throws IOException {
         try {
             this.currentAnnotation = AnnotationProcessor.readAnnotation(new FileReader(path));
@@ -71,10 +91,10 @@ public class AnnotationsTestsBase {
         try {
             URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                 path,
-                AnnotationsTestsBase.configuration,
+                configuration,
                 ExceptionMetadata.EMPTY_METADATA
             );
-            Rumble rumble = new Rumble(AnnotationsTestsBase.configuration);
+            Rumble rumble = new Rumble(configuration);
             sequence = rumble.runQuery(uri);
         } catch (ParsingException exception) {
             String errorOutput = exception.getMessage();

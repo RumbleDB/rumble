@@ -121,7 +121,7 @@ The type system is not quite complete yet, although a lot of progress was made. 
 | decimal | supported |
 | double | supported |
 | duration | supported |
-| float | not supported |
+| float | supported |
 | gDay | not supported |
 | gMonth | not supported |
 | gYear | not supported |

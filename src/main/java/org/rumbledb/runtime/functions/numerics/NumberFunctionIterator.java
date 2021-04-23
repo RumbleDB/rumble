@@ -24,12 +24,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.AtomicItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.ItemType;
-
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.util.List;
 
 public class NumberFunctionIterator extends LocalFunctionCallIterator {
@@ -53,13 +52,9 @@ public class NumberFunctionIterator extends LocalFunctionCallIterator {
                 return ItemFactory.getInstance().createDoubleItem(Double.NaN);
             }
 
-            AtomicItem atomicItem = (AtomicItem) anyItem;
-            if (atomicItem.isCastableAs(ItemType.doubleItem)) {
-                try {
-                    return atomicItem.castAs(ItemType.doubleItem);
-                } catch (ClassCastException e) {
-                    return ItemFactory.getInstance().createDoubleItem(Double.NaN);
-                }
+            Item result = CastIterator.castItemToType(anyItem, BuiltinTypesCatalogue.doubleItem, getMetadata());
+            if (result != null) {
+                return result;
             }
             return ItemFactory.getInstance().createDoubleItem(Double.NaN);
         } else

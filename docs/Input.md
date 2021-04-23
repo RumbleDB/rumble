@@ -118,6 +118,29 @@ count(
 )
 ```
 
+Rumble supports also the W3C-standard functions unparsed-text and unparsed-text-lines. The output of the latter is automatically parallelized as a potentially large sequence of strings.
+
+
+```
+count(
+  for $my-string in unparsed-text-lines("file:///home/me/file.txt")
+  for $token in tokenize($my-string, ";")
+  where $token eq "some value"
+  return $token
+)
+```
+
+
+```
+count(
+  let $text := unparsed-text("file:///home/me/file.txt")
+  for $my-string in tokenize($text, "\n")
+  for $token in tokenize($my-string, ";")
+  where $token eq "some value"
+  return $token
+)
+```
+
 ### Parquet
 
 Parquet files can be opened with the function parquet-file().

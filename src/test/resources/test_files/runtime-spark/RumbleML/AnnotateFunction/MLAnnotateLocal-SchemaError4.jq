@@ -5,7 +5,7 @@ annotate(
         {"id": 2, "age":  35, "weight": 72.4},
         {"id": 3, "age":  50, "weight": 76.3}
     ),
-    {"id": "integer", "age": "string", "weight": "decimal"}
+    {"id": "integer", "age": "date", "weight": "decimal"}
 )
 
 (: schema has incorrect type :)

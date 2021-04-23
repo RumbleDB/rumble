@@ -7,9 +7,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.ObjectItem;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -33,61 +31,33 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.children.get(0);
         RuntimeIterator schemaIterator = this.children.get(1);
-        ObjectItem schemaItem;
+        Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
 
-        // materialize singleton pattern
-        schemaIterator.open(context);
-        if (!schemaIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Schema provided to annotate function can not be an empty sequence.",
-                    getMetadata()
-            );
-        }
-        schemaItem = (ObjectItem) schemaIterator.next();
-        if (schemaIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Schema provided to annotate function must be a singleton object.",
-                    getMetadata()
-            );
-        }
-        schemaIterator.close();
+        try {
 
-        if (inputDataIterator.isDataFrame()) {
-            Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-            try {
+            if (inputDataIterator.isDataFrame()) {
+                Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
                     inputDataAsDataFrame.schema()
                 );
-            } catch (MLInvalidDataFrameSchemaException ex) {
-                throw new MLInvalidDataFrameSchemaException(
-                        "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
-                        getMetadata()
-                );
+                return inputDataAsDataFrame;
             }
-            return inputDataAsDataFrame;
-        }
 
-        if (inputDataIterator.isRDD()) {
-            JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-            try {
+            if (inputDataIterator.isRDDOrDataFrame()) {
+                JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
                 return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);
-            } catch (MLInvalidDataFrameSchemaException ex) {
-                throw new MLInvalidDataFrameSchemaException(
-                        "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
-                        getMetadata()
-                );
             }
-        }
 
-        List<Item> items = inputDataIterator.materialize(context);
-        try {
+            List<Item> items = inputDataIterator.materialize(context);
             return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
         } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException(
+            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                     getMetadata()
             );
+            e.initCause(ex);
+            throw e;
         }
     }
 

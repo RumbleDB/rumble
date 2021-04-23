@@ -29,8 +29,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.FunctionItemCallIterator;
-import org.rumbledb.runtime.operational.TypePromotionIterator;
+import org.rumbledb.runtime.typing.AtMostOneItemTypePromotionIterator;
+import org.rumbledb.runtime.typing.TypePromotionIterator;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
@@ -81,7 +83,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
     }
 
     public static RuntimeIterator buildUserDefinedFunctionCallIterator(
-            FunctionItem functionItem,
+            Item functionItem,
             ExecutionMode executionMode,
             ExceptionMetadata metadata,
             List<RuntimeIterator> arguments
@@ -92,7 +94,27 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 executionMode,
                 metadata
         );
-        if (!functionItem.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        SequenceType sequenceType = functionItem.getSignature().getReturnType();
+        if (sequenceType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            return functionCallIterator;
+        }
+        if (
+            sequenceType.isEmptySequence()
+                || sequenceType.getArity().equals(Arity.One)
+                || sequenceType.getArity().equals(Arity.OneOrZero)
+        ) {
+            return new AtMostOneItemTypePromotionIterator(
+                    functionCallIterator,
+                    functionItem.getSignature().getReturnType(),
+                    "Invalid return type for "
+                        + ((functionItem.getIdentifier().getName() == null)
+                            ? ""
+                            : (functionItem.getIdentifier().getName()) + " ")
+                        + "function. ",
+                    executionMode,
+                    metadata
+            );
+        } else {
             return new TypePromotionIterator(
                     functionCallIterator,
                     functionItem.getSignature().getReturnType(),
@@ -105,7 +127,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     metadata
             );
         }
-        return functionCallIterator;
+
     }
 
     public void addUserDefinedFunction(Item function, ExceptionMetadata meta) {
@@ -136,10 +158,10 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             List<RuntimeIterator> arguments,
             StaticContext staticContext,
             ExecutionMode executionMode,
+            boolean checkReturnTypesOfBuiltinFunctions,
             ExceptionMetadata metadata
     ) {
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
-
         for (int i = 0; i < arguments.size(); i++) {
             if (
                 !builtinFunction.getSignature()
@@ -147,15 +169,32 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                     .get(i)
                     .equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)
             ) {
-                TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
-                        arguments.get(i),
-                        builtinFunction.getSignature().getParameterTypes().get(i),
-                        "Invalid argument for function " + identifier.getName() + ". ",
-                        arguments.get(i).getHighestExecutionMode(),
-                        arguments.get(i).getMetadata()
-                );
+                SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
+                if (
+                    sequenceType.isEmptySequence()
+                        || sequenceType.getArity().equals(Arity.One)
+                        || sequenceType.getArity().equals(Arity.OneOrZero)
+                ) {
+                    RuntimeIterator typePromotionIterator = new AtMostOneItemTypePromotionIterator(
+                            arguments.get(i),
+                            sequenceType,
+                            "Invalid argument for function " + identifier.getName() + ". ",
+                            arguments.get(i).getHighestExecutionMode(),
+                            arguments.get(i).getMetadata()
+                    );
 
-                arguments.set(i, typePromotionIterator);
+                    arguments.set(i, typePromotionIterator);
+                } else {
+                    TypePromotionIterator typePromotionIterator = new TypePromotionIterator(
+                            arguments.get(i),
+                            sequenceType,
+                            "Invalid argument for function " + identifier.getName() + ". ",
+                            arguments.get(i).getHighestExecutionMode(),
+                            arguments.get(i).getMetadata()
+                    );
+
+                    arguments.set(i, typePromotionIterator);
+                }
             }
         }
 
@@ -177,14 +216,32 @@ public class NamedFunctions implements Serializable, KryoSerializable {
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (!checkReturnTypesOfBuiltinFunctions) {
+                return functionCallIterator;
+            }
             functionCallIterator.setStaticContext(staticContext);
-            return new TypePromotionIterator(
-                    functionCallIterator,
-                    builtinFunction.getSignature().getReturnType(),
-                    "Invalid return type for function " + identifier.getName() + ". ",
-                    functionCallIterator.getHighestExecutionMode(),
-                    functionCallIterator.getMetadata()
-            );
+            SequenceType sequenceType = builtinFunction.getSignature().getReturnType();
+            if (
+                sequenceType.isEmptySequence()
+                    || sequenceType.getArity().equals(Arity.One)
+                    || sequenceType.getArity().equals(Arity.OneOrZero)
+            ) {
+                return new AtMostOneItemTypePromotionIterator(
+                        functionCallIterator,
+                        sequenceType,
+                        "Invalid return type for function " + identifier.getName() + ". ",
+                        functionCallIterator.getHighestExecutionMode(),
+                        functionCallIterator.getMetadata()
+                );
+            } else {
+                return new TypePromotionIterator(
+                        functionCallIterator,
+                        sequenceType,
+                        "Invalid return type for function " + identifier.getName() + ". ",
+                        functionCallIterator.getHighestExecutionMode(),
+                        functionCallIterator.getMetadata()
+                );
+            }
         }
         return functionCallIterator;
     }

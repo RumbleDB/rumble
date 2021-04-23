@@ -20,15 +20,33 @@
 
 package org.rumbledb.runtime.flwor;
 
-import com.esotericsoftware.kryo.Kryo;
-import com.esotericsoftware.kryo.io.Input;
-import com.esotericsoftware.kryo.io.Output;
+import static org.apache.spark.sql.functions.col;
+import static org.apache.spark.sql.functions.count;
+import static org.apache.spark.sql.functions.first;
+import static org.apache.spark.sql.functions.lit;
+import static org.apache.spark.sql.functions.monotonically_increasing_id;
+import static org.apache.spark.sql.functions.spark_partition_id;
+import static org.apache.spark.sql.functions.sum;
+import static org.apache.spark.sql.functions.udf;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.expressions.UserDefinedFunction;
 import org.apache.spark.sql.expressions.Window;
+import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -45,6 +63,7 @@ import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.DurationItem;
+import org.rumbledb.items.FloatItem;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
@@ -54,30 +73,20 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
+import com.esotericsoftware.kryo.Kryo;
+import com.esotericsoftware.kryo.io.Input;
+import com.esotericsoftware.kryo.io.Output;
+
 import scala.collection.mutable.WrappedArray;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
-import static org.apache.spark.sql.functions.col;
-import static org.apache.spark.sql.functions.count;
-import static org.apache.spark.sql.functions.first;
-import static org.apache.spark.sql.functions.lit;
-import static org.apache.spark.sql.functions.monotonically_increasing_id;
-import static org.apache.spark.sql.functions.spark_partition_id;
-import static org.apache.spark.sql.functions.sum;
-import static org.apache.spark.sql.functions.udf;
-
 public class FlworDataFrameUtils {
+
+    // we use UUID to escape backtick within DataFrame columns
+    public static String backtickEscape = "d32a3242-b15d-46b8-b689-d2288f7f492f";
 
     private static ThreadLocal<byte[]> lastBytesCache = ThreadLocal.withInitial(() -> null);
 
@@ -90,6 +99,7 @@ public class FlworDataFrameUtils {
         kryo.register(StringItem.class);
         kryo.register(IntItem.class);
         kryo.register(IntegerItem.class);
+        kryo.register(FloatItem.class);
         kryo.register(DoubleItem.class);
         kryo.register(DecimalItem.class);
         kryo.register(NullItem.class);
@@ -161,6 +171,59 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it only has a count, false otherwise.
+     */
+    public static boolean isVariableCountOnly(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    return false;
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    return columnName.substring(pos).equals(".count");
+                } ;
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * Checks if the specified variable should be interpreted as a native sequence of items in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is a native sequence of items, false otherwise.
+     */
+    public static boolean isVariableNativeSequence(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    return false;
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    return columnName.substring(pos).equals("sequence");
+                } ;
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
      * Lists the names of the columns of the schema that needed by the dependencies.
      * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
      * 
@@ -220,6 +283,10 @@ public class FlworDataFrameUtils {
                         result.add(variableName.toString());
                         break;
                     }
+                    if (columnNames.contains(variableName.toString() + ".sequence")) {
+                        result.add(variableName.toString() + ".sequence");
+                        break;
+                    }
                     throw new OurBadException(
                             "Expecting full variable dependency on "
                                 + variableName
@@ -251,7 +318,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting sum variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
@@ -266,7 +333,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting min variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
@@ -281,7 +348,7 @@ public class FlworDataFrameUtils {
                         break;
                     }
                     throw new OurBadException(
-                            "Expecting count variable dependency on "
+                            "Expecting max variable dependency on "
                                 + variableName
                                 + "but no appropriate column was found in the data frame."
                     );
@@ -338,6 +405,72 @@ public class FlworDataFrameUtils {
         return queryColumnString.toString();
     }
 
+    public static StructField[] recursiveRename(StructType schema, boolean inverse) {
+        return Arrays.stream(schema.fields()).map(field -> {
+            String newName = inverse
+                ? field.name().replace(FlworDataFrameUtils.backtickEscape, "`")
+                : field.name().replace("`", FlworDataFrameUtils.backtickEscape);
+            if (field.dataType() instanceof StructType) {
+                StructType castedField = (StructType) field.dataType();
+                return new StructField(
+                        newName,
+                        new StructType(recursiveRename(castedField, inverse)),
+                        field.nullable(),
+                        field.metadata()
+                );
+            } else if (field.dataType() instanceof ArrayType) {
+                ArrayType castedField = (ArrayType) field.dataType();
+                if (castedField.elementType() instanceof StructType) {
+                    StructType castedElementType = (StructType) castedField.elementType();
+                    return new StructField(
+                            newName,
+                            new ArrayType(
+                                    new StructType(recursiveRename(castedElementType, inverse)),
+                                    castedField.containsNull()
+                            ),
+                            field.nullable(),
+                            field.metadata()
+                    );
+                } else {
+                    return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+                }
+            } else {
+                return new StructField(newName, field.dataType(), field.nullable(), field.metadata());
+            }
+        }).toArray(StructField[]::new);
+    }
+
+    /**
+     * recursevely escape/de-escape backticks from all fields in a sparkSql schema
+     *
+     * @param schema schema to escape
+     * @param inverse if true, perform de-escaping, otherwise escape
+     * @return the new schema appropriately escaped/de-escaped
+     */
+    public static StructType escapeSchema(StructType schema, boolean inverse) {
+        return new StructType(recursiveRename(schema, inverse));
+    }
+
+    public static ItemType mapToJsoniqType(DataType type) {
+        // TODO: once type mapping is defined add string field to determine and document properly
+        if (type == DataTypes.StringType) {
+            return BuiltinTypesCatalogue.stringItem;
+        } else if (type == DataTypes.IntegerType) {
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (type.equals(DataTypes.createDecimalType())) {
+            // TODO: test correct working
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (type == DataTypes.LongType) {
+            return BuiltinTypesCatalogue.longItem;
+        } else if (type == DataTypes.DoubleType) {
+            return BuiltinTypesCatalogue.doubleItem;
+        } else if (type == DataTypes.FloatType) {
+            return BuiltinTypesCatalogue.floatItem;
+        } else {
+            return null;
+        }
+    }
+
     /**
      * Prepares a SQL projection for use in a GROUP BY query.
      * 
@@ -382,10 +515,9 @@ public class FlworDataFrameUtils {
             } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
                 // rows that end up in the same group have the same value for the grouping column
                 // return a single instance of this value in the grouping column
-                queryColumnString.append(serializerUdfName);
-                queryColumnString.append("(array(first(`");
+                queryColumnString.append("first(`");
                 queryColumnString.append(columnName);
-                queryColumnString.append("`)))");
+                queryColumnString.append("`)");
             } else {
                 // aggregate the column values for each row in the group
                 queryColumnString.append(serializerUdfName);
@@ -398,6 +530,9 @@ public class FlworDataFrameUtils {
             queryColumnString.append(columnName);
             queryColumnString.append("`");
 
+        }
+        if (comma.equals("")) {
+            queryColumnString.append("TRUE");
         }
         if (trailingComma) {
             queryColumnString.append(",");
@@ -535,5 +670,19 @@ public class FlworDataFrameUtils {
             .withColumn("partition_offset", getPartitionOffset.apply(col("partition_id")))
             .withColumn(indexName, col("partition_offset").plus(col("inc_id")))
             .drop("partition_id", "partition_offset", "inc_id");
+    }
+
+    public static StructType schemaUnion(StructType leftSchema, StructType rightSchema) {
+        List<StructField> fieldList = new ArrayList<StructField>();
+        for (StructField f : leftSchema.fields()) {
+            fieldList.add(f);
+        }
+        for (StructField f : rightSchema.fields()) {
+            fieldList.add(f);
+        }
+
+        StructField[] fields = new StructField[fieldList.size()];
+        fieldList.toArray(fields);
+        return new StructType(fields);
     }
 }

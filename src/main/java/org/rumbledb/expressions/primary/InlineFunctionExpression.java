@@ -70,6 +70,10 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public SequenceType getReturnType() {
+        return this.returnType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.returnType;
+    }
+
+    public SequenceType getActualReturnType() {
         return this.returnType;
     }
 
@@ -115,15 +119,48 @@ public class InlineFunctionExpression extends Expression {
             buffer.append(entry.getValue().toString());
             buffer.append(", ");
         }
-        buffer.append(this.returnType.toString());
+        buffer.append(this.returnType == null ? "not set" : this.returnType.toString());
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (int i = 0; i < indent + 2; ++i) {
             buffer.append("  ");
         }
         buffer.append("Body:\n");
         this.body.print(buffer, indent + 2);
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        if (this.name != null) {
+            sb.append("declare function " + this.name.toString() + "(");
+        } else {
+            sb.append("function (");
+        }
+        if (this.params != null) {
+            int i = 0;
+            for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
+                indentIt(sb, indent);
+                sb.append("$" + entry.getKey() + " as " + entry.getValue().toString());
+                if (i == this.params.size() - 1) {
+                    sb.append(")");
+                } else {
+                    sb.append(", ");
+                }
+                i++;
+            }
+            if (this.returnType != null)
+                sb.append(" as " + this.returnType.toString());
+            else
+                sb.append("\n");
+            indentIt(sb, indent);
+            sb.append("{\n");
+            this.body.serializeToJSONiq(sb, indent + 1);
+            indentIt(sb, indent);
+            sb.append("}\n");
+        }
     }
 }
 

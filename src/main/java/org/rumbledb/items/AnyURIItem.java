@@ -23,13 +23,18 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
 import java.net.URI;
 import java.net.URISyntaxException;
 
-public class AnyURIItem extends AtomicItem {
+public class AnyURIItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -42,6 +47,20 @@ public class AnyURIItem extends AtomicItem {
     public AnyURIItem(String value) {
         super();
         this.value = parseAnyURIString(value);
+    }
+
+    @Override
+    public boolean equals(Object otherItem) {
+        if (otherItem instanceof Item) {
+            long c = ComparisonIterator.compareItems(
+                this,
+                (Item) otherItem,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            return c == 0;
+        }
+        return false;
     }
 
     static URI parseAnyURIString(String anyURIString) throws IllegalArgumentException {
@@ -65,50 +84,12 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isAnyURI()) {
-            return false;
-        }
-        return (getStringValue().equals(o.getStringValue()));
-    }
-
-    @Override
-    public int compareTo(Item other) {
-        return other.isNull() ? 1 : this.getStringValue().compareTo(other.getStringValue());
-    }
-
-    @Override
     public int hashCode() {
         return this.getValue().hashCode();
     }
 
     public URI getValue() {
         return this.value;
-    }
-
-    @Override
-    public boolean canBePromotedTo(ItemType type) {
-        return type.equals(ItemType.stringItem);
-    }
-
-    @Override
-    public Item castAs(ItemType itemType) {
-        if (itemType.equals(ItemType.stringItem)) {
-            return ItemFactory.getInstance().createStringItem(this.getStringValue());
-        }
-        if (itemType.equals(ItemType.anyURIItem)) {
-            return this;
-        }
-        throw new ClassCastException();
-    }
-
-    @Override
-    public boolean isCastableAs(ItemType itemType) {
-        return (itemType.equals(ItemType.anyURIItem) || itemType.equals(ItemType.stringItem));
     }
 
     @Override
@@ -132,12 +113,12 @@ public class AnyURIItem extends AtomicItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.anyURIItem) || super.isTypeOf(type);
+    public ItemType getDynamicType() {
+        return BuiltinTypesCatalogue.anyURIItem;
     }
 
     @Override
-    public ItemType getDynamicType() {
-        return ItemType.anyURIItem;
+    public boolean isAtomic() {
+        return true;
     }
 }

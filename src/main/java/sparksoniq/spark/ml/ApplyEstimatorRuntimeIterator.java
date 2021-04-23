@@ -15,15 +15,14 @@ import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import java.lang.reflect.InvocationTargetException;
@@ -35,7 +34,7 @@ import java.util.NoSuchElementException;
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
 
-public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
+public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private String estimatorShortName;
@@ -56,14 +55,11 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (!this.hasNext()) {
-            throw new IteratorFlowException("Invalid next() call in ApplyEstimatorRuntimeIterator", getMetadata());
-        }
-        this.hasNext = false;
-
-        this.inputDataset = getInputDataset(this.currentDynamicContextForLocalExecution);
-        this.paramMapItem = getParamMapItem(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        this.inputDataset = getInputDataset(dynamicContext);
+        this.paramMapItem = getParamMapItem(dynamicContext);
 
         processSpecialParamsForVectorization();
 
@@ -246,23 +242,23 @@ public class ApplyEstimatorRuntimeIterator extends LocalRuntimeIterator {
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
                 new SequenceType(
-                        ItemType.item, // TODO: revert back to ObjectItem
+                        BuiltinTypesCatalogue.item, // TODO: revert back to ObjectItem
                         SequenceType.Arity.ZeroOrMore
                 ),
                 new SequenceType(
-                        ItemType.objectItem,
+                        BuiltinTypesCatalogue.objectItem,
                         SequenceType.Arity.One
                 )
             )
         );
         SequenceType returnType = new SequenceType(
-                ItemType.objectItem,
+                BuiltinTypesCatalogue.objectItem,
                 SequenceType.Arity.ZeroOrMore
         );
 
         return new FunctionItem(
                 new FunctionIdentifier(
-                        Name.createVariableInRumbleNamespace(fittedModel.getClass().getName()),
+                        Name.createVariableInDefaultFunctionNamespace(fittedModel.getClass().getName()),
                         2
                 ),
                 GetTransformerFunctionIterator.transformerParameterNames,

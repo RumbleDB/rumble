@@ -24,20 +24,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class RoundFunctionIterator extends LocalFunctionCallIterator {
-
+public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public RoundFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,37 +46,49 @@ public class RoundFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item value = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item precision;
-            if (this.children.size() > 1) {
-                precision = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            }
-            // if second param is not given precision is set as 0 (rounds to a whole number)
-            else {
-                precision = ItemFactory.getInstance().createIntItem(0);
-            }
-            try {
-                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-                bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_UP);
-                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round function", getMetadata());
+        if (value.isDouble() && Double.isNaN(value.getDoubleValue())) {
+            return value;
+        }
+        if (value.isDouble() && Double.isInfinite(value.getDoubleValue())) {
+            return value;
+        }
+        if (value.isDouble() && value.getDoubleValue() == 0d) {
+            return value;
+        }
+        int precision;
+        if (this.children.size() > 1) {
+            precision = this.children.get(1)
+                .materializeFirstItemOrNull(dynamicContext)
+                .getIntValue();
+        }
+        // if second param is not given precision is set as 0 (rounds to a whole number)
+        else {
+            precision = 0;
+        }
+        try {
+            if (value.isDecimal()) {
+                BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createDecimalItem(bd);
+            }
+            if (value.isDouble()) {
+                BigDecimal bd = new BigDecimal(value.getDoubleValue());
+                bd = bd.setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
+            }
+            if (value.isFloat()) {
+                BigDecimal bd = new BigDecimal(value.getFloatValue());
+                bd = bd.setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+            }
+            throw new UnexpectedTypeException("Unexpected value in round(): " + value.getDynamicType(), getMetadata());
+
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
     }
 }

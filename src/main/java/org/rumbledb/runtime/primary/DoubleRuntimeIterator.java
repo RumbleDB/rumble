@@ -23,14 +23,13 @@ package org.rumbledb.runtime.primary;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 
-public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
+public class DoubleRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -43,17 +42,16 @@ public class DoubleRuntimeIterator extends AtomicRuntimeIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.item;
-        }
-
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + this.item, getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        return this.item;
     }
 
     @Override
-    public Item materializeExactlyOneItem(DynamicContext context) throws NoItemException, MoreThanOneItemException {
-        return this.item;
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        return new NativeClauseContext(
+                nativeClauseContext,
+                "" + this.item.getDoubleValue(),
+                BuiltinTypesCatalogue.doubleItem
+        );
     }
 }

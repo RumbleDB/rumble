@@ -31,7 +31,7 @@ import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.io.File;
 import java.net.URI;
 import java.util.Arrays;
@@ -68,7 +68,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
             // FileReader reader = getReaderForFile(testFile.getAbsolutePath());
-            testAnnotations(testFile.getAbsolutePath());
+            testAnnotations(testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
         }
 
     }
@@ -103,7 +103,7 @@ public class FrontendTests extends AnnotationsTestsBase {
         initializeTests(semanticTestsDirectory);
         for (File testFile : this.testFiles) {
             System.err.println(counter++ + " : " + testFile);
-            testAnnotations(testFile.getAbsolutePath());
+            testAnnotations(testFile.getAbsolutePath(), AnnotationsTestsBase.configuration);
             if (Arrays.asList(manualSemanticChecksFiles).contains(testFile.getName())) {
                 URI uri = FileSystemUtil.resolveURIAgainstWorkingDirectory(
                     testFile.getAbsolutePath(),
@@ -206,7 +206,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         vars.forEach(
             var -> Assert.assertTrue(
-                ((VariableReferenceExpression) var).getType().getItemType().equals(ItemType.integerItem)
+                ((VariableReferenceExpression) var).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
@@ -218,9 +218,9 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         js.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.item)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.item)
                     ||
-                    ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.stringItem)
+                    ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.stringItem)
             )
         );
 
@@ -232,7 +232,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         internals.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.integerItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.integerItem)
             )
         );
 
@@ -244,7 +244,7 @@ public class FrontendTests extends AnnotationsTestsBase {
             );
         arry.forEach(
             j -> Assert.assertTrue(
-                ((VariableReferenceExpression) j).getType().getItemType().equals(ItemType.arrayItem)
+                ((VariableReferenceExpression) j).getType().getItemType().equals(BuiltinTypesCatalogue.arrayItem)
             )
         );
 

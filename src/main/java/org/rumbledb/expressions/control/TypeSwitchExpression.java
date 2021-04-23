@@ -54,12 +54,56 @@ public class TypeSwitchExpression extends Expression {
     }
 
     @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("typeswitch (");
+        this.testCondition.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
+        for (TypeswitchCase c : this.cases) {
+            indentIt(sb, indent + 1);
+            sb.append("case ($");
+            sb.append(c.getVariableName().toString() + " as ");
+            for (int i = 0; i < c.getUnion().size(); i++) {
+                c.getUnion().get(i).toString();
+                if (i == c.getUnion().size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(" | ");
+                }
+            }
+            sb.append("return (");
+            c.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+
+        if (this.defaultCase != null) {
+            indentIt(sb, indent + 1);
+            // TODO seems somehow wrong, shouldve been Expression not the case
+            sb.append("default ($");
+            sb.append(this.defaultCase.getVariableName().toString() + " as ");
+            for (int i = 0; i < this.defaultCase.getUnion().size(); i++) {
+                this.defaultCase.getUnion().get(i).toString();
+                if (i == this.defaultCase.getUnion().size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(" | ");
+                }
+            }
+            sb.append(")\n");
+
+            sb.append("return (");
+            this.defaultCase.getReturnExpression().serializeToJSONiq(sb, 0);
+            sb.append(")\n");
+        }
+    }
+
+    @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.defaultCase.getReturnExpression().getHighestExecutionMode(visitorConfig);
 
         if (this.highestExecutionMode == ExecutionMode.RDD) {
             for (TypeswitchCase c : this.cases) {
-                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDD()) {
+                if (!c.getReturnExpression().getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()) {
                     this.highestExecutionMode = ExecutionMode.LOCAL;
                     break;
                 }

@@ -4,7 +4,6 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -18,6 +17,9 @@ public class ItemFactory {
     private Item trueBooleanItem;
     private Item falseBooleanItem;
     private Item zeroItem;
+    private Item positiveInfinityDoubleItem;
+    private Item negativeInfinityDoubleItem;
+    private Item NaNDoubleItem;
 
     public static ItemFactory getInstance() {
         if (instance == null) {
@@ -26,6 +28,9 @@ public class ItemFactory {
             instance.trueBooleanItem = new BooleanItem(true);
             instance.falseBooleanItem = new BooleanItem(false);
             instance.zeroItem = new IntItem(0);
+            instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
+            instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
+            instance.NaNDoubleItem = new DoubleItem(Double.NaN);
         }
         return instance;
     }
@@ -71,17 +76,24 @@ public class ItemFactory {
         if (lexicalValue.length() >= 10) {
             return new IntegerItem(new BigInteger(lexicalValue));
         }
-        try {
-            return new IntItem(Integer.parseInt(lexicalValue));
-        } catch (NumberFormatException e) {
-            OurBadException obe = new OurBadException("Issue with parsing integer " + lexicalValue);
-            obe.initCause(e);
-            throw obe;
-        }
+        return new IntItem(Integer.parseInt(lexicalValue));
     }
 
     public Item createDoubleItem(double d) {
+        if (d == Double.POSITIVE_INFINITY) {
+            return this.positiveInfinityDoubleItem;
+        }
+        if (d == Double.NEGATIVE_INFINITY) {
+            return this.negativeInfinityDoubleItem;
+        }
+        if (d == Double.NaN) {
+            return this.NaNDoubleItem;
+        }
         return new DoubleItem(d);
+    }
+
+    public Item createFloatItem(float d) {
+        return new FloatItem(d);
     }
 
     public Item createDurationItem(Period p) {

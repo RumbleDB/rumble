@@ -79,6 +79,10 @@ public class ForClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.createSequenceType("item") : this.sequenceType;
+    }
+
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -89,7 +93,7 @@ public class ForClause extends Clause {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode =
-            (this.expression.getHighestExecutionMode(visitorConfig).isRDD()
+            (this.expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
                 || (this.previousClause != null
                     && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()))
                         ? ExecutionMode.DATAFRAME
@@ -127,7 +131,7 @@ public class ForClause extends Clause {
             " ("
                 + (this.variableName)
                 + ", "
-                + this.sequenceType.toString()
+                + this.getSequenceType().toString()
                 + ", "
                 + (this.allowingEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName
@@ -141,5 +145,20 @@ public class ForClause extends Clause {
         if (this.previousClause != null) {
             this.previousClause.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("for $" + this.variableName.toString());
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.allowingEmpty)
+            sb.append(" allowing empty ");
+        if (this.positionalVariableName != null)
+            sb.append(" at $" + this.positionalVariableName.toString());
+        sb.append(" in (");
+        this.expression.serializeToJSONiq(sb, 0);
+        sb.append(")\n");
     }
 }

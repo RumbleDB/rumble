@@ -151,9 +151,32 @@ public class ComparisonExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.comparisonOperator) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.leftExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
+
+        indentIt(sb, indent);
+        sb.append(this.comparisonOperator.toString() + "\n");
+
+        indentIt(sb, indent);
+        sb.append("(\n");
+
+        this.rightExpression.serializeToJSONiq(sb, indent + 1);
+
+        indentIt(sb, indent);
+        sb.append(")\n");
     }
 }

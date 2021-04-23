@@ -2,6 +2,7 @@ package org.rumbledb.runtime.functions.sequences.general;
 
 import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
+import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.ItemType;
 
 public class InstanceOfClosure implements Function<Item, Boolean> {
@@ -14,6 +15,6 @@ public class InstanceOfClosure implements Function<Item, Boolean> {
 
     @Override
     public Boolean call(Item input) throws Exception {
-        return !input.isTypeOf(this.itemType);
+        return !InstanceOfIterator.doesItemTypeMatchItem(this.itemType, input);
     }
 }

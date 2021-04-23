@@ -36,6 +36,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -47,7 +48,6 @@ import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -248,15 +248,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
     @Override
     public Dataset<Row> getDataFrame(
-            DynamicContext context,
-            Map<Name, DynamicContext.VariableDependency> parentProjection
+            DynamicContext context
     ) {
         if (this.child == null) {
             throw new OurBadException("Invalid groupby clause.");
         }
 
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
-            if (expression.getExpression() != null && expression.getExpression().isRDD()) {
+            if (expression.getExpression() != null && expression.getExpression().isRDDOrDataFrame()) {
                 throw new JobWithinAJobException(
                         "A group by clause expression cannot produce a big sequence of items for a big number of tuples, as this would lead to a data flow explosion.",
                         getMetadata()
@@ -264,7 +263,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context, getProjection(parentProjection));
+        Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -275,17 +274,17 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             columnNamesArray = inputSchema.fieldNames();
             columnNames = Arrays.asList(columnNamesArray);
 
+            // TODO: consider add sequence type to group clause variable
             if (expression.getExpression() != null) {
                 // if a variable is defined in-place with groupby, execute a let on the variable
                 variableAccessNames.add(expression.getVariableName());
                 df = LetClauseSparkIterator.bindLetVariableInDataFrame(
                     df,
                     expression.getVariableName(),
+                    null,
                     expression.getExpression(),
                     context,
-                    (this.child == null)
-                        ? Collections.emptyList()
-                        : new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+                    new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
                     null,
                     false
                 );
@@ -305,9 +304,21 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         inputSchema = df.schema();
-        Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         df.createOrReplaceTempView("input");
+
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+            df,
+            variableAccessNames,
+            this.outputTupleProjection,
+            inputSchema,
+            context
+        );
+        if (nativeQueryResult != null) {
+            return nativeQueryResult;
+        }
+
+        Map<Name, DynamicContext.VariableDependency> groupingVariables = new TreeMap<>();
 
         // Determine the return type for grouping UDF
         List<StructField> typedFields = new ArrayList<>();
@@ -371,7 +382,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             false,
             serializerUDFName,
             variableAccessNames,
-            parentProjection,
+            this.outputTupleProjection,
             UDFcolumns
         );
 
@@ -387,7 +398,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         return result;
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
+    public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result = new TreeMap<>();
         for (GroupByClauseSparkIteratorExpression iterator : this.groupingExpressions) {
             if (iterator.getExpression() != null) {
@@ -399,7 +410,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Name var : this.child.getOutputTupleVariableNames()) {
             result.remove(var);
         }
-        result.putAll(this.child.getVariableDependencies());
+        result.putAll(this.child.getDynamicContextVariableDependencies());
         return result;
     }
 
@@ -425,7 +436,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
     }
 
-    public Map<Name, DynamicContext.VariableDependency> getProjection(
+    public Map<Name, DynamicContext.VariableDependency> getInputTupleVariableDependencies(
             Map<Name, DynamicContext.VariableDependency> parentProjection
     ) {
         // copy over the projection needed by the parent clause.
@@ -462,5 +473,105 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
         return projection;
+    }
+
+    /**
+     * Try to generate the native query for the group by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null (expect `input` table to be already available)
+     *
+     * @param dataFrame input dataframe for the query
+     * @param groupingVariables group by variables
+     * @param dependencies dependencies to forward to the next clause (select variables)
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the group by clause if successful, null otherwise
+     */
+    private Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            List<Name> groupingVariables,
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        StringBuilder groupByString = new StringBuilder();
+        String sep = " ";
+        for (Name groupingVar : groupingVariables) {
+            StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
+            if (field.dataType().equals(DataTypes.BinaryType)) {
+                // we got a non-native type for grouping, switch to udf version
+                return null;
+            }
+
+            groupByString.append(sep);
+            sep = ", ";
+            groupByString.append(groupingVar.toString());
+        }
+        StringBuilder selectString = new StringBuilder();
+        sep = " ";
+        for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
+            selectString.append(sep);
+            sep = ", ";
+            if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
+                // we are summing over a previous count
+                selectString.append("sum(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count");
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count");
+                selectString.append("`");
+            } else if (FlworDataFrameUtils.isVariableNativeSequence(inputSchema, entry.getKey())) {
+                // we are summing over a previous count
+                String columnName = entry.getKey().toString();
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
+                selectString.append("`");
+            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                // we need a count
+                selectString.append("count(`");
+                selectString.append(entry.getKey().toString());
+                selectString.append("`) as `");
+                selectString.append(entry.getKey().toString());
+                selectString.append(".count`");
+            } else if (groupingVariables.contains(entry.getKey())) {
+                // we are considering one of the grouping variables
+                selectString.append(entry.getKey().toString());
+            } else {
+                // we collect all the values, if it is a binary object we just switch over to udf
+                String columnName = entry.getKey().toString();
+                StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
+                if (field.dataType().equals(DataTypes.BinaryType)) {
+                    return null;
+                }
+                selectString.append("collect_list(`");
+                selectString.append(columnName);
+                selectString.append("`) as `");
+                selectString.append(columnName);
+                selectString.append(".sequence`");
+            }
+        }
+        System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
+        System.out.println("[INFO] group-by part: " + groupByString);
+        return dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s from input group by %s",
+                    selectString,
+                    groupByString
+                )
+            );
+    }
+
+    public boolean containsClause(FLWOR_CLAUSES kind) {
+        if (kind == FLWOR_CLAUSES.GROUP_BY) {
+            return true;
+        }
+        if (this.child == null || this.evaluationDepthLimit == 0) {
+            return false;
+        }
+        return this.child.containsClause(kind);
     }
 }

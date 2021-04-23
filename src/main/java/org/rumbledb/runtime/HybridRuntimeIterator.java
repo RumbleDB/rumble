@@ -27,6 +27,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
 
@@ -62,7 +64,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             openLocal();
         }
     }
@@ -70,7 +72,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             resetLocal();
             return;
         }
@@ -80,7 +82,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public void close() {
         super.close();
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             closeLocal();
             return;
         }
@@ -89,7 +91,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public boolean hasNext() {
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             return hasNextLocal();
         }
         if (this.result == null) {
@@ -103,7 +105,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     @Override
     public Item next() {
-        if (!isRDD()) {
+        if (!isRDDOrDataFrame()) {
             return nextLocal();
         }
         if (!this.isOpen) {
@@ -130,14 +132,91 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if (isDataFrame()) {
             Dataset<Row> df = this.getDataFrame(context);
-            JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(getMetadata()));
-        } else if (isRDD()) {
+            return dataFrameToRDDOfItems(df, getMetadata());
+        } else if (isRDDOrDataFrame()) {
             return getRDDAux(context);
         } else {
             List<Item> contents = this.materialize(context);
             return SparkSessionManager.getInstance().getJavaSparkContext().parallelize(contents);
         }
+    }
+
+    public static JavaRDD<Item> dataFrameToRDDOfItems(Dataset<Row> df, ExceptionMetadata metadata) {
+        JavaRDD<Row> rowRDD = df.javaRDD();
+        return rowRDD.map(new RowToItemMapper(metadata));
+    }
+
+    public void materialize(DynamicContext context, List<Item> result) {
+        if (!isRDDOrDataFrame()) {
+            super.materialize(context, result);
+            return;
+        }
+        JavaRDD<Item> items = this.getRDD(context);
+        List<Item> collectedItems = SparkSessionManager.collectRDDwithLimit(items, this.getMetadata());
+        result.clear();
+        result.addAll(collectedItems);
+    }
+
+    public void materializeNFirstItems(DynamicContext context, List<Item> result, int n) {
+        if (!isRDDOrDataFrame()) {
+            super.materializeNFirstItems(context, result, n);
+            return;
+        }
+        JavaRDD<Item> items = this.getRDD(context);
+        result.clear();
+        result.addAll(items.take(n));
+    }
+
+    public Item materializeFirstItemOrNull(
+            DynamicContext context
+    ) {
+        if (!isRDDOrDataFrame()) {
+            return super.materializeFirstItemOrNull(context);
+        }
+        JavaRDD<Item> items = this.getRDD(context);
+        List<Item> collectedItems = items.take(1);
+        if (collectedItems.size() == 1) {
+            return collectedItems.get(0);
+        } else {
+            return null;
+        }
+    }
+
+    public Item materializeExactlyOneItem(
+            DynamicContext context
+    )
+            throws NoItemException,
+                MoreThanOneItemException {
+        if (!isRDDOrDataFrame()) {
+            return super.materializeExactlyOneItem(context);
+        }
+        JavaRDD<Item> items = this.getRDD(context);
+        List<Item> collectedItems = items.take(2);
+        if (collectedItems.size() == 1) {
+            return collectedItems.get(0);
+        }
+        if (collectedItems.size() == 0) {
+            throw new NoItemException();
+        }
+        throw new MoreThanOneItemException();
+    }
+
+    public Item materializeAtMostOneItemOrNull(
+            DynamicContext context
+    )
+            throws MoreThanOneItemException {
+        if (!isRDDOrDataFrame()) {
+            return super.materializeAtMostOneItemOrNull(context);
+        }
+        JavaRDD<Item> items = this.getRDD(context);
+        List<Item> collectedItems = items.take(2);
+        if (collectedItems.size() == 1) {
+            return collectedItems.get(0);
+        }
+        if (collectedItems.size() == 0) {
+            return null;
+        }
+        throw new MoreThanOneItemException();
     }
 
     protected abstract JavaRDD<Item> getRDDAux(DynamicContext context);

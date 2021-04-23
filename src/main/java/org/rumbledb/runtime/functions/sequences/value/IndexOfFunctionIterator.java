@@ -28,9 +28,11 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.List;
 
@@ -111,7 +113,14 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
                         getMetadata()
                 );
             } else {
-                if (item.compareTo(this.search) == 0) {
+                long c = ComparisonIterator.compareItems(
+                    item,
+                    this.search,
+                    ComparisonOperator.VC_EQ,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+
+                if (c == 0) {
                     this.nextResult = ItemFactory.getInstance().createIntItem(this.currentIndex);
                     break;
                 }
@@ -120,7 +129,6 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
 
         if (this.nextResult == null) {
             this.hasNext = false;
-            this.sequenceIterator.close();
         } else {
             this.hasNext = true;
         }

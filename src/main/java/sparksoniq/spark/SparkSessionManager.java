@@ -35,6 +35,7 @@ import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
+import org.rumbledb.items.FloatItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
@@ -59,9 +60,10 @@ public class SparkSessionManager {
     private JavaSparkContext javaSparkContext;
 
     public static String atomicJSONiqItemColumnName = "0d08af5d-10bb-4a73-af84-c6aac917a830";
+    public static String emptyObjectJSONiqItemColumnName = "a84bc646-05af-4383-8853-2e9f31a710f2";
     public static String temporaryColumnName = "0f7b4040-b404-4239-99dd-9b4cf2900594";
-    public static String expressionHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
-    public static String inputTupleHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
+    public static String rightHandSideHashColumnName = "db273b7d-d927-4c0d-b9c1-665af71faa2b ";
+    public static String leftHandSideHashColumnName = "171bdb70-7400-48ed-a105-d132f4e38a2d";
 
     private SparkSessionManager() {
     }
@@ -78,22 +80,31 @@ public class SparkSessionManager {
     }
 
     public SparkSession getOrCreateSession() {
+        if (this.configuration == null) {
+            setDefaultConfiguration();
+        }
         if (this.session == null) {
-            if (this.configuration == null) {
-                setDefaultConfiguration();
-            }
-            initialize();
+            initializeSession();
         }
         return this.session;
     }
 
     private void setDefaultConfiguration() {
-        this.configuration = new SparkConf()
-            .setAppName(APP_NAME)
-            .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+        try {
+            this.configuration = new SparkConf()
+                .setAppName(APP_NAME)
+                .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            if (!this.configuration.contains("spark.master")) {
+                this.configuration.set("spark.master", "local[*]");
+            }
+        } catch (NoClassDefFoundError e) {
+            throw new RuntimeException(
+                    "It seems your query needs Spark, but it is not available. You need to use spark-submit in an environment in which Spark is configured."
+            );
+        }
     }
 
-    private void initialize() {
+    private void initializeSession() {
         if (this.session == null) {
             initializeKryoSerialization();
             Logger.getLogger("org").setLevel(LOG_LEVEL);
@@ -115,6 +126,7 @@ public class SparkSessionManager {
                 StringItem.class,
                 IntItem.class,
                 IntegerItem.class,
+                FloatItem.class,
                 DoubleItem.class,
                 DecimalItem.class,
                 NullItem.class,
@@ -130,21 +142,21 @@ public class SparkSessionManager {
     }
 
 
-    public void initializeConfigurationAndSession() {
-        setDefaultConfiguration();
-        initialize();
-    }
-
     public void initializeConfigurationAndSession(SparkConf conf, boolean setAppName) {
         if (setAppName) {
             conf.setAppName(APP_NAME);
         }
         this.configuration = conf;
-        initializeKryoSerialization();
-        initialize();
+        initializeSession();
     }
 
     public JavaSparkContext getJavaSparkContext() {
+        if (this.configuration == null) {
+            setDefaultConfiguration();
+        }
+        if (this.session == null) {
+            initializeSession();
+        }
         if (this.javaSparkContext == null) {
             this.javaSparkContext = JavaSparkContext.fromSparkContext(this.getOrCreateSession().sparkContext());
         }

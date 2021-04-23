@@ -60,6 +60,13 @@ public class NamedFunctionReferenceExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + this.identifier.getName() + "#" + this.identifier.getArity() + ") ");
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append(this.identifier.toString() + "\n");
     }
 }

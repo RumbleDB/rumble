@@ -2,5 +2,5 @@
 null cast as null,
 null cast as null?,
 "null" cast as null,
-"null" cast as null?,
+" null " cast as null?,
 null cast as string

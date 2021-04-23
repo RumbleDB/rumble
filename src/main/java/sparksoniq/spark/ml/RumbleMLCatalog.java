@@ -66,7 +66,7 @@ public class RumbleMLCatalog {
             "org.apache.spark.ml.classification.MultilayerPerceptronClassifier"
         );
         estimatorFullClassNames.put("NaiveBayes", "org.apache.spark.ml.classification.NaiveBayes");
-        estimatorFullClassNames.put("OneHotEncoderEstimator", "org.apache.spark.ml.feature.OneHotEncoderEstimator");
+        estimatorFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         estimatorFullClassNames.put("OneVsRest", "org.apache.spark.ml.classification.OneVsRest");
         estimatorFullClassNames.put("PCA", "org.apache.spark.ml.feature.PCA");
         estimatorFullClassNames.put("Pipeline", "org.apache.spark.ml.Pipeline");
@@ -150,7 +150,6 @@ public class RumbleMLCatalog {
         transformerFullClassNames.put("NGram", "org.apache.spark.ml.feature.NGram");
         transformerFullClassNames.put("NaiveBayesModel", "org.apache.spark.ml.classification.NaiveBayesModel");
         transformerFullClassNames.put("Normalizer", "org.apache.spark.ml.feature.Normalizer");
-        transformerFullClassNames.put("OneHotEncoder", "org.apache.spark.ml.feature.OneHotEncoder");
         transformerFullClassNames.put("OneHotEncoderModel", "org.apache.spark.ml.feature.OneHotEncoderModel");
         transformerFullClassNames.put("OneVsRestModel", "org.apache.spark.ml.classification.OneVsRestModel");
         transformerFullClassNames.put("PCAModel", "org.apache.spark.ml.feature.PCAModel");
@@ -718,7 +717,7 @@ public class RumbleMLCatalog {
             )
         );
         estimatorParams.put(
-            "OneHotEncoderEstimator",
+            "OneHotEncoder",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols"))
         );
         estimatorParams.put(
@@ -1089,7 +1088,6 @@ public class RumbleMLCatalog {
             )
         );
         transformerParams.put("Normalizer", new ArrayList<>(Arrays.asList("inputCol", "outputCol", "p")));
-        transformerParams.put("OneHotEncoder", new ArrayList<>(Arrays.asList("dropLast", "inputCol", "outputCol")));
         transformerParams.put(
             "OneHotEncoderModel",
             new ArrayList<>(Arrays.asList("dropLast", "handleInvalid", "inputCols", "outputCols", "parent"))

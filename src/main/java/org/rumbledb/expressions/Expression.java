@@ -22,6 +22,7 @@ package org.rumbledb.expressions;
 
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.SequenceType;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
@@ -37,15 +38,61 @@ public abstract class Expression extends Node {
 
     protected StaticContext staticContext;
 
+    protected SequenceType inferredSequenceType;
+
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
     }
 
+    /**
+     * Retrieves the static context attached to this expression.
+     * 
+     * @return the static context.
+     */
     public StaticContext getStaticContext() {
         return this.staticContext;
     }
 
+    /**
+     * Sets the static context of the expression.
+     * 
+     * @param staticContext the static context to set.
+     */
     public void setStaticContext(StaticContext staticContext) {
         this.staticContext = staticContext;
+    }
+
+    /**
+     * Provides the inferred static type, only if static analysis
+     * is activated.
+     * 
+     * @return the statically inferred sequence type.
+     */
+    public SequenceType getInferredSequenceType() {
+        return this.inferredSequenceType;
+    }
+
+    /**
+     * Sets the inferred static type, for used by the static
+     * analysis visitor.
+     * 
+     * @param inferredSequenceType the statically inferred sequence type to set.
+     */
+    public void setInferredSequenceType(SequenceType inferredSequenceType) {
+        this.inferredSequenceType = inferredSequenceType;
+    }
+
+    @Override
+    public void print(StringBuffer buffer, int indent) {
+        for (int i = 0; i < indent; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append(getClass().getSimpleName());
+        buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append("\n");
+        for (Node iterator : getChildren()) {
+            iterator.print(buffer, indent + 1);
+        }
     }
 }

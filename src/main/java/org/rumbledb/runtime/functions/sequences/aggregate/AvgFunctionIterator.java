@@ -24,17 +24,16 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
-import java.math.BigDecimal;
-import java.math.RoundingMode;
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -43,7 +42,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
+    private Item item;
 
     public AvgFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -56,62 +55,45 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     @Override
     public void open(DynamicContext context) {
         super.open(context);
-
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+        Item count = CountFunctionIterator.computeCount(
+            this.children.get(0),
+            this.currentDynamicContextForLocalExecution,
+            getMetadata()
+        );
+        if (count.isInt() && count.getIntValue() == 0) {
+            this.hasNext = false;
+            return;
+        }
+        if (count.isInteger() && count.getIntegerValue().equals(BigInteger.ZERO)) {
+            this.hasNext = false;
+            return;
+        }
+        Item sum = SumFunctionIterator.computeSum(
+            ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
+            this.children.get(0),
+            this.currentDynamicContextForLocalExecution,
+            getMetadata()
+        );
+        this.item = MultiplicativeOperationIterator.processItem(
+            sum,
+            count,
+            MultiplicativeExpression.MultiplicativeOperator.DIV,
+            getMetadata()
+        );
+        this.hasNext = true;
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            List<Item> results = this.iterator.materialize(this.currentDynamicContextForLocalExecution);
             this.hasNext = false;
-            results.forEach(r -> {
-                if (!r.isNumeric()) {
-                    throw new InvalidArgumentTypeException(
-                            "Average expression has non numeric args "
-                                +
-                                r.serialize(),
-                            getMetadata()
-                    );
-                }
-            });
-            try {
-                // TODO check numeric types conversions
-                BigDecimal sum = new BigDecimal(0);
-                double sumAsDouble = 0;
-                boolean asDouble = false;
-                for (Item r : results) {
-                    if (!r.isNumeric()) {
-                        throw new UnsupportedFeatureException(
-                                "Rumble cannot yet average durations or dates and times. Please let us know if you need this.",
-                                getMetadata()
-                        );
-                    }
-                    if (r.isDouble()) {
-                        asDouble = true;
-                    }
-                    if (!asDouble) {
-                        sum = sum.add(r.castToDecimalValue());
-                    }
-                    sumAsDouble += r.castToDoubleValue();
-                }
-
-                if (asDouble) {
-                    return ItemFactory.getInstance().createDoubleItem(sumAsDouble / ((double) results.size()));
-                }
-                return ItemFactory.getInstance()
-                    .createDecimalItem(sum.divide(new BigDecimal(results.size()), 15, RoundingMode.HALF_UP));
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+            return this.item;
+        } else {
+            throw new IteratorFlowException(
+                    FLOW_EXCEPTION_MESSAGE + "SUM function",
+                    getMetadata()
+            );
         }
-        throw new IteratorFlowException(
-                FLOW_EXCEPTION_MESSAGE + "AVG function",
-                getMetadata()
-        );
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

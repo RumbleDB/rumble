@@ -27,13 +27,14 @@ import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class ObjectItem extends JsonItem {
+public class ObjectItem implements Item {
 
 
     private static final long serialVersionUID = 1L;
@@ -51,6 +52,35 @@ public class ObjectItem extends JsonItem {
         checkForDuplicateKeys(keys, itemMetadata);
         this.keys = keys;
         this.values = values;
+    }
+
+    public boolean equals(Object otherItem) {
+        if (!(otherItem instanceof Item)) {
+            return false;
+        }
+        Item o = (Item) otherItem;
+        if (!o.isObject()) {
+            return false;
+        }
+        for (String s : getKeys()) {
+            Item v = o.getItemByKey(s);
+            if (v == null) {
+                return false;
+            }
+            if (!getItemByKey(s).equals(v)) {
+                return false;
+            }
+        }
+        for (String s : o.getKeys()) {
+            Item v = getItemByKey(s);
+            if (v == null) {
+                return false;
+            }
+            if (!o.getItemByKey(s).equals(v)) {
+                return false;
+            }
+        }
+        return true;
     }
 
     /**
@@ -129,11 +159,6 @@ public class ObjectItem extends JsonItem {
     }
 
     @Override
-    public boolean isTypeOf(ItemType type) {
-        return type.equals(ItemType.objectItem) || super.isTypeOf(type);
-    }
-
-    @Override
     public String serialize() {
         StringBuilder sb = new StringBuilder();
         sb.append("{ ");
@@ -173,35 +198,6 @@ public class ObjectItem extends JsonItem {
         this.values = kryo.readObject(input, ArrayList.class);
     }
 
-    public boolean equals(Object otherItem) {
-        if (!(otherItem instanceof Item)) {
-            return false;
-        }
-        Item o = (Item) otherItem;
-        if (!o.isObject()) {
-            return false;
-        }
-        for (String s : getKeys()) {
-            Item v = o.getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        for (String s : o.getKeys()) {
-            Item v = getItemByKey(s);
-            if (v == null) {
-                return false;
-            }
-            if (!o.getItemByKey(s).equals(v)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
     public int hashCode() {
         int result = 0;
         result += getKeys().size();
@@ -213,7 +209,12 @@ public class ObjectItem extends JsonItem {
 
     @Override
     public ItemType getDynamicType() {
-        return ItemType.objectItem;
+        return BuiltinTypesCatalogue.objectItem;
+    }
+
+    @Override
+    public boolean getEffectiveBooleanValue() {
+        return true;
     }
 
 }

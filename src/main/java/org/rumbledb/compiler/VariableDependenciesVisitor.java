@@ -58,14 +58,12 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
-import org.rumbledb.expressions.postfix.PredicateExpression;
+import org.rumbledb.expressions.postfix.FilterExpression;
 import org.rumbledb.expressions.primary.ContextItemExpression;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.NamedFunctionReferenceExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpression;
-import org.rumbledb.expressions.quantifiers.QuantifiedExpressionVar;
 
 
 /**
@@ -332,7 +330,7 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         return null;
     }
 
-    public Void visitPredicateExpression(PredicateExpression expression, Void argument) {
+    public Void visitFilterExpression(FilterExpression expression, Void argument) {
         visit(expression.getMainExpression(), null);
         visit(expression.getPredicateExpression(), null);
 
@@ -363,23 +361,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitSimpleMapExpr(SimpleMapExpression expression, Void argument) {
         // TODO;
         return defaultAction(expression, argument);
-    }
-
-    @Override
-    public Void visitQuantifiedExpression(QuantifiedExpression expression, Void argument) {
-        List<QuantifiedExpressionVar> var = expression.getVariables();
-        addInputVariableDependencies(
-            expression,
-            getInputVariableDependencies(expression.getEvaluationExpression())
-        );
-        for (QuantifiedExpressionVar v : var) {
-            visit(v.getExpression(), null);
-            removeInputVariableDependency(expression, v.getVariableName());
-        }
-        for (QuantifiedExpressionVar v : var) {
-            addInputVariableDependencies(expression, getInputVariableDependencies(v.getExpression()));
-        }
-        return null;
     }
 
     @Override
@@ -443,8 +424,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             visit(variableDeclaration, null);
             nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
             if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.out.print(variableDeclaration.getVariableName());
-                System.out.println(
+                System.err.print(variableDeclaration.getVariableName());
+                System.err.println(
                     String.join(
                         ", ",
                         getInputVariableDependencies(variableDeclaration).stream()
@@ -458,8 +439,8 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             visit(functionDeclaration, null);
             nameToNodeMap.put(functionDeclaration.getFunctionIdentifier().getNameWithArity(), functionDeclaration);
             if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.out.print(functionDeclaration.getFunctionIdentifier().toString());
-                System.out.println(
+                System.err.print(functionDeclaration.getFunctionIdentifier().toString());
+                System.err.println(
                     String.join(
                         ", ",
                         getInputVariableDependencies(functionDeclaration).stream()

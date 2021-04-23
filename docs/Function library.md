@@ -111,7 +111,13 @@ let $x := (1, 2, 3, 4)
 return sum($x)
 ```
 
-returns 10
+returns 10.
+
+Sum calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+sum(json-file("file.json").foo)
+```
 
 ### count
 
@@ -144,7 +150,13 @@ let $x := (1, 2, 3, 4)
 return min($x)
 ```
 
-returns 1
+returns 1.
+
+Min calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+min(json-file("file.json").foo)
+```
 
 ### max
 
@@ -153,7 +165,13 @@ let $x := (1, 2, 3, 4)
 return max($x)
 ```
 
-returns 4
+returns 4.
+
+Max calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+max(json-file("file.json").foo)
+```
 
 ### avg
 
@@ -162,7 +180,13 @@ let $x := (1, 2, 3, 4)
 return avg($x)
 ```
 
-returns 2.5
+returns 2.5.
+
+Avg calls are pushed down to Spark, so this works on billions of items as well:
+
+```
+avg(json-file("file.json").foo)
+```
 
 ## Object functions
 

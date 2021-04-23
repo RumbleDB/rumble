@@ -75,6 +75,7 @@ public class DataFrameContext implements Serializable {
      * Builds a new data frame context.
      * 
      * @param context the parent dynamic context, which contains all variable values except those in input tuples.
+     * @param schema the schema.
      * @param columnNames the names of the DataFrame column names applicable to the calling clause, organized by
      *        types (currently Long for non-materialized counts, or byte[] for serialized sequences).
      */
@@ -106,6 +107,14 @@ public class DataFrameContext implements Serializable {
         // Create dynamic context with deserialized data but only with dependencies
         for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
+            if (columnName.endsWith(".sequence")) {
+                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                this.context.getVariableValues()
+                    .addVariableValue(
+                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        i
+                    );
+            }
             if (!columnName.endsWith(".count")) {
                 List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
                 this.context.getVariableValues()
@@ -200,6 +209,19 @@ public class DataFrameContext implements Serializable {
                     byte[] bytes = (byte[]) object;
                     this.input.setBuffer(bytes);
                     Item item = (Item) this.kryo.readClassAndObject(this.input);
+                    items.add(item);
+                }
+                return items;
+            }
+            if (row.schema().fields()[columnIndex].name().endsWith(".sequence")) {
+                List<Object> objects = row.getList(columnIndex);
+                List<Item> items = new ArrayList<>();
+                for (Object object : objects) {
+                    Item item = ItemParser.convertValueToItem(
+                        object,
+                        ((ArrayType) dt).elementType(),
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
                     items.add(item);
                 }
                 return items;

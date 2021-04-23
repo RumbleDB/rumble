@@ -68,7 +68,13 @@ public class VariableDeclaration extends Node {
         return this.external;
     }
 
+    // return item* if sequenceType is [null]
     public SequenceType getSequenceType() {
+        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+    }
+
+    // as above but does NOT default to item*
+    public SequenceType getActualSequenceType() {
         return this.sequenceType;
     }
 
@@ -115,13 +121,28 @@ public class VariableDeclaration extends Node {
                 + (this.variableName)
                 + ", "
                 + (this.external ? "external, " : "")
-                + this.sequenceType.toString()
+                + this.getSequenceType().toString()
                 + ") "
         );
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
+        }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        sb.append("declare variable $" + this.variableName);
+        if (this.sequenceType != null)
+            sb.append(" as " + this.sequenceType.toString());
+        if (this.external)
+            sb.append(" external\n");
+        else {
+            sb.append(" ");
+            this.expression.serializeToJSONiq(sb, 0);
+            sb.append("\n");
         }
     }
 }

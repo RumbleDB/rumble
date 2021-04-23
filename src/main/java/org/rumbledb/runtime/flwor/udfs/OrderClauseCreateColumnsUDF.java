@@ -27,12 +27,14 @@ import org.apache.spark.sql.types.StructType;
 import org.joda.time.Instant;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -43,7 +45,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
     private DataFrameContext dataFrameContext;
     private List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator;
 
-    private Map<Integer, String> sortingKeyTypes;
+    private Map<Integer, Name> sortingKeyTypes;
 
     private List<Object> results;
 
@@ -60,7 +62,7 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
             DynamicContext context,
             StructType schema,
-            Map<Integer, String> sortingKeyTypes,
+            Map<Integer, Name> sortingKeyTypes,
             List<String> columnNames
     ) {
         this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
@@ -115,30 +117,32 @@ public class OrderClauseCreateColumnsUDF implements UDF1<Row, Row> {
             this.results.add(valueOrderIndex);
 
             // extract type information for the sorting column
-            String typeName = this.sortingKeyTypes.get(expressionIndex);
+            Name typeName = this.sortingKeyTypes.get(expressionIndex);
             try {
-                if (typeName.equals(ItemType.booleanItem.getName())) {
+                if (typeName.equals(BuiltinTypesCatalogue.booleanItem.getName())) {
                     this.results.add(nextItem.getBooleanValue());
-                } else if (typeName.equals(ItemType.stringItem.getName())) {
+                } else if (typeName.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                     this.results.add(nextItem.getStringValue());
-                } else if (typeName.equals(ItemType.integerItem.getName())) {
+                } else if (typeName.equals(BuiltinTypesCatalogue.integerItem.getName())) {
                     this.results.add(nextItem.castToIntValue());
-                } else if (typeName.equals(ItemType.doubleItem.getName())) {
+                } else if (typeName.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
                     this.results.add(nextItem.castToDoubleValue());
-                } else if (typeName.equals(ItemType.decimalItem.getName())) {
+                } else if (typeName.equals(BuiltinTypesCatalogue.floatItem.getName())) {
+                    this.results.add(nextItem.castToFloatValue());
+                } else if (typeName.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                     this.results.add(nextItem.castToDecimalValue());
                 } else if (
-                    typeName.equals(ItemType.durationItem.getName())
-                        || typeName.equals(ItemType.yearMonthDurationItem.getName())
-                        || typeName.equals(ItemType.dayTimeDurationItem.getName())
+                    typeName.equals(BuiltinTypesCatalogue.durationItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.dayTimeDurationItem.getName())
                 ) {
                     this.results.add(
                         nextItem.getDurationValue().toDurationFrom(Instant.now()).getMillis()
                     );
                 } else if (
-                    typeName.equals(ItemType.dateTimeItem.getName())
-                        || typeName.equals(ItemType.dateItem.getName())
-                        || typeName.equals(ItemType.timeItem.getName())
+                    typeName.equals(BuiltinTypesCatalogue.dateTimeItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.dateItem.getName())
+                        || typeName.equals(BuiltinTypesCatalogue.timeItem.getName())
                 ) {
                     this.results.add(nextItem.getDateTimeValue().getMillis());
                 } else {

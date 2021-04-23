@@ -82,6 +82,7 @@ public class DynamicFunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
+        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {
@@ -93,5 +94,25 @@ public class DynamicFunctionCallExpression extends Expression {
                 arg.print(buffer, indent + 1);
             }
         }
+    }
+
+    @Override
+    public void serializeToJSONiq(StringBuffer sb, int indent) {
+        indentIt(sb, indent);
+        this.mainExpression.serializeToJSONiq(sb, indent + 1);
+
+        // TODO always ending with \n might be an issue here
+        sb.append("(");
+        if (this.arguments != null) {
+            for (int i = 0; i < this.arguments.size(); i++) {
+                this.arguments.get(i).serializeToJSONiq(sb, 0);
+                if (i == this.arguments.size() - 1) {
+                    sb.append(") ");
+                } else {
+                    sb.append(", ");
+                }
+            }
+        }
+        sb.append(")\n");
     }
 }

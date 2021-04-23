@@ -21,6 +21,8 @@
 package org.rumbledb.runtime.functions;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -58,6 +60,10 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
         this.functionIdentifier = functionIdentifier;
         this.functionArguments = functionArguments;
         this.userDefinedFunctionCallIterator = null;
+    }
+
+    protected boolean implementsDataFrames() {
+        return true;
     }
 
     @Override
@@ -103,7 +109,7 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
     protected void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
-        if (this.isOpen()) {
+        if (this.userDefinedFunctionCallIterator != null && this.userDefinedFunctionCallIterator.isOpen()) {
             this.userDefinedFunctionCallIterator.close();
         }
     }
@@ -132,6 +138,18 @@ public class StaticUserDefinedFunctionCallIterator extends HybridRuntimeIterator
                 this.functionArguments
             );
         return this.userDefinedFunctionCallIterator.getRDD(dynamicContext);
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+        this.userDefinedFunctionCallIterator = dynamicContext.getNamedFunctions()
+            .getUserDefinedFunctionCallIterator(
+                this.functionIdentifier,
+                this.getHighestExecutionMode(),
+                getMetadata(),
+                this.functionArguments
+            );
+        return this.userDefinedFunctionCallIterator.getDataFrame(dynamicContext);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

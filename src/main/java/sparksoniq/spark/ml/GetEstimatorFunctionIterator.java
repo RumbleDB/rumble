@@ -33,8 +33,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -47,10 +47,10 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
     private static final long serialVersionUID = 1L;
     public static final List<Name> estimatorFunctionParameterNames = new ArrayList<>(
             Arrays.asList(
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "estimator-input-f6c87df3-fcba-47c7-a5ff-a1a7553b1cab"
                 ),
-                Name.createVariableInRumbleNamespace(
+                Name.createVariableInDefaultFunctionNamespace(
                     "estimator-paramobject-ded8adb9-df6f-42b2-b493-863a421a2754"
                 )
             )
@@ -116,23 +116,23 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
                     Arrays.asList(
                         new SequenceType(
-                                ItemType.item, // TODO: revert back to ObjectItem
+                                BuiltinTypesCatalogue.item, // TODO: revert back to ObjectItem
                                 SequenceType.Arity.ZeroOrMore
                         ),
                         new SequenceType(
-                                ItemType.objectItem,
+                                BuiltinTypesCatalogue.objectItem,
                                 SequenceType.Arity.One
                         )
                     )
                 );
                 SequenceType returnType = new SequenceType(
-                        ItemType.functionItem,
+                        BuiltinTypesCatalogue.anyFunctionItem,
                         SequenceType.Arity.One
                 );
 
                 return new FunctionItem(
                         new FunctionIdentifier(
-                                Name.createVariableInRumbleNamespace(
+                                Name.createVariableInDefaultFunctionNamespace(
                                     this.estimatorSparkMLClass.getName()
                                 ),
                                 2

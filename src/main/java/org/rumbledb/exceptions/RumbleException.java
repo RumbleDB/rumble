@@ -113,7 +113,9 @@ public class RumbleException extends RuntimeException {
         } else if (ex instanceof RumbleException) {
             return (RumbleException) ex;
         } else {
-            return null;
+            RumbleException e2 = new OurBadException("Unanticipated exception!");
+            e2.initCause(ex);
+            return e2;
         }
     }
 }

@@ -14,7 +14,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  *
- * Authors: Stefan Irimescu, Can Berker Cikis
+ * Authors: Stefan Irimescu, Can Berker Cikis, Elwin Stephan
  *
  */
 
@@ -25,8 +25,15 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
+import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -56,7 +63,7 @@ public class FlworKey implements KryoSerializable {
     @Override
     public boolean equals(Object otherKey) {
         if (otherKey instanceof FlworKey) {
-            return this.compareWithFlworKey((FlworKey) otherKey) == 0;
+            return this.equalFlworKey((FlworKey) otherKey);
         } else {
             return false;
         }
@@ -66,9 +73,51 @@ public class FlworKey implements KryoSerializable {
      * Invariant - two Flworkeys have the same length
      *
      * @param flworKey "other" FlworKey to be compared against
+     * @return true if both items are equal, false otherwise (also when types are different)
+     */
+
+    public boolean equalFlworKey(FlworKey flworKey) {
+        if (this.keyItems.size() != flworKey.keyItems.size()) {
+            throw new OurBadException("Invalid sort key: Key sizes can't be different.");
+        }
+
+        // iterate over every ordering expression of this flworkey
+        int index = 0;
+        while (index < this.keyItems.size()) {
+            Item item1 = this.keyItems.get(index);
+            Item item2 = flworKey.keyItems.get(index);
+
+            // check for incorrect ordering inputs
+            if (
+                (item1 != null && !item1.isAtomic())
+                    ||
+                    (item2 != null && !item2.isAtomic())
+            ) {
+                throw new RumbleException("Non atomic key not allowed");
+            }
+
+            long comparison = ComparisonIterator.compareItems(
+                item1,
+                item2,
+                ComparisonOperator.VC_EQ,
+                ExceptionMetadata.EMPTY_METADATA
+            );
+            if (comparison != 0) {
+                return false;
+            }
+
+            index++;
+        }
+        return true;
+    }
+
+    /**
+     * Invariant - two Flworkeys have the same length
+     *
+     * @param flworKey "other" FlworKey to be compared against
      * @return comparison value (-1=smaller, 0=equal, 1=larger) * index (of the expression that determines ordering)
      */
-    public int compareWithFlworKey(FlworKey flworKey) {
+    public int compareWithFlworKey(FlworKey flworKey, List<OrderByClauseAnnotatedChildIterator> expressions) {
         if (this.keyItems.size() != flworKey.keyItems.size()) {
             throw new OurBadException("Invalid sort key: Key sizes can't be different.");
         }
@@ -77,43 +126,130 @@ public class FlworKey implements KryoSerializable {
 
         // iterate over every ordering expression of this flworkey
         int index = 0;
+        long comparison = 0;
         while (index < this.keyItems.size()) {
-            Item currentItem = this.keyItems.get(index);
-            Item comparisonItem = flworKey.keyItems.get(index);
+            Item item1 = this.keyItems.get(index);
+            Item item2 = flworKey.keyItems.get(index);
 
             // check for incorrect ordering inputs
             if (
-                (currentItem != null && currentItem.isArray())
-                    || (currentItem != null && currentItem.isObject())
+                (item1 != null && !item1.isAtomic())
                     ||
-                    (comparisonItem != null && comparisonItem.isArray())
-                    || (comparisonItem != null && comparisonItem.isObject())
+                    (item2 != null && !item2.isAtomic())
             ) {
                 throw new RumbleException("Non atomic key not allowed");
             }
 
-            // handle the Java null placeholder used in orderByClauseSparkIterator
-            if (currentItem == null || comparisonItem == null) {
-                // null equals null
-                if (currentItem == null && comparisonItem == null) {
-                    result = 0;
-                } else if (currentItem == null) {
-                    result = -1;
-                } else {
-                    result = 1;
-                }
-            } else {
-                try {
-                    result = currentItem.compareTo(comparisonItem);
-                } catch (RuntimeException e) {
-                    throw new RumbleException(
-                            "Invalid sort key: cannot compare item of type "
-                                + comparisonItem.getDynamicType().toString()
-                                + " with item of type "
-                                + currentItem.getDynamicType().toString()
-                                + "."
+            EMPTY_ORDER emptyOrder = EMPTY_ORDER.LEAST;
+            if (expressions != null) {
+                emptyOrder = expressions.get(index).getEmptyOrder();
+            }
+            switch (emptyOrder) {
+                case LEAST:
+                    if (item1 == null && item2 == null) {
+                        result = 0;
+                        break;
+                    }
+                    if (item1 == null) {
+                        result = -1;
+                        break;
+                    }
+                    if (item2 == null) {
+                        result = 1;
+                        break;
+                    }
+                    if (
+                        (item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
+                            && item2.isDouble()
+                            && Double.isNaN(item2.getDoubleValue())
+                    ) {
+                        result = 0;
+                        break;
+                    }
+                    if (item1.isDouble() && Double.isNaN(item1.getDoubleValue())) {
+                        result = -1;
+                        break;
+                    }
+                    if (item2.isDouble() && Double.isNaN(item2.getDoubleValue())) {
+                        result = 1;
+                        break;
+                    }
+
+                    comparison = ComparisonIterator.compareItems(
+                        item1,
+                        item2,
+                        ComparisonOperator.VC_EQ,
+                        ExceptionMetadata.EMPTY_METADATA
                     );
-                }
+                    if (comparison == Long.MIN_VALUE) {
+                        throw new UnexpectedTypeException(
+                                " \""
+                                    + ComparisonOperator.VC_EQ
+                                    + "\": operation not possible with parameters of type \""
+                                    + item1.getDynamicType().toString()
+                                    + "\" and \""
+                                    + item2.getDynamicType().toString()
+                                    + "\"",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    result = (int) comparison;
+                    break;
+                case GREATEST:
+                    if (item1 == null && item2 == null) {
+                        result = 0;
+                        break;
+                    }
+                    if (item1 == null) {
+                        result = 1;
+                        break;
+                    }
+                    if (item2 == null) {
+                        result = -1;
+                        break;
+                    }
+                    if (
+                        (item1.isDouble() && Double.isNaN(item1.getDoubleValue()))
+                            && item2.isDouble()
+                            && Double.isNaN(item2.getDoubleValue())
+                    ) {
+                        result = 0;
+                        break;
+                    }
+                    if (item1.isDouble() && Double.isNaN(item1.getDoubleValue())) {
+                        result = 1;
+                        break;
+                    }
+                    if (item2.isDouble() && Double.isNaN(item2.getDoubleValue())) {
+                        result = -1;
+                        break;
+                    }
+
+                    comparison = ComparisonIterator.compareItems(
+                        item1,
+                        item2,
+                        ComparisonOperator.VC_EQ,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (comparison == Long.MIN_VALUE) {
+                        throw new UnexpectedTypeException(
+                                " \""
+                                    + ComparisonOperator.VC_EQ
+                                    + "\": operation not possible with parameters of type \""
+                                    + item1.getDynamicType().toString()
+                                    + "\" and \""
+                                    + item2.getDynamicType().toString()
+                                    + "\"",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    result = (int) comparison;
+                    break;
+                case NONE:
+                    throw new OurBadException(
+                            "Behavior of empty sequence ordering was not resolved",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
             }
 
             // Simplify comparison result to -1/0/1
