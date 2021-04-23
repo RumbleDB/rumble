@@ -245,6 +245,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         if (limit == -1) {
             if (this.child != null) {
                 this.child.setEvaluationDepthLimit(-1);
+                return;
             }
         }
         if (this.child == null) {
@@ -256,6 +257,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
         }
         if (this.child != null) {
             this.child.setEvaluationDepthLimit(limit - 1);
+            return;
         }
     }
 
@@ -320,6 +322,12 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      */
     public abstract boolean containsClause(FLWOR_CLAUSES kind);
 
+    public String toString() {
+        StringBuffer stringBuffer = new StringBuffer();
+        print(stringBuffer, 0);
+        return stringBuffer.toString();
+    }
+
     public void print(StringBuffer buffer, int indent) {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
@@ -368,6 +376,11 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
             buffer.append("  ");
         }
         buffer.append("Height: " + this.getHeight());
+        buffer.append("\n");
+        for (int i = 0; i < indent + 6; ++i) {
+            buffer.append("  ");
+        }
+        buffer.append("Limit: " + this.evaluationDepthLimit);
         buffer.append("\n");
 
         if (this.child != null) {
