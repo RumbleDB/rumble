@@ -158,13 +158,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        System.err.println("[DEBUG] Detecting join (evaluation limit: " + this.evaluationDepthLimit + ")");
         Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
         if (dataFrameIfJoinPossible != null) {
-            System.err.println("[DEBUG] Successful.");
             return dataFrameIfJoinPossible;
         }
-        System.err.println("[DEBUG] Unsuccessful.");
 
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
@@ -210,9 +207,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
         if (this.evaluationDepthLimit >= 0) {
-            System.err.println(
-                "[DEBUG] We do not attempt join detection within the right side of another detected join."
-            );
             return null;
         }
 
@@ -310,16 +304,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // result.show();
             return result;
         } catch (Exception e) {
-            throw e;
-            /*
-             * e.printStackTrace();
-             * System.err.println(
-             * "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
-             * );
-             * 
-             * this.setEvaluationDepthLimit(-1);
-             * return null;
-             */
+            System.err.println(
+                "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
+            );
+
+            this.setEvaluationDepthLimit(-1);
+            return null;
         }
 
     }
