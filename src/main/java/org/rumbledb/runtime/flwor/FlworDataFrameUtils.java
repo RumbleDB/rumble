@@ -297,10 +297,10 @@ public class FlworDataFrameUtils {
      * overriden).
      * 
      * @param inputSchema schema specifies the type information for all input columns (included those not needed).
-     * @param dependencies restriction of the results to within a specified set
+     * @param dependency the one variable dependency to look for
      * @param variablesToRestrictTo variables whose columns must refer to.
      * @param variablesToExclude variables whose columns should be projected away.
-     * @return list of SQL column names in the schema
+     * @param result the list for outputting SQL column names in the schema
      */
     public static void getColumnNames(
             StructType inputSchema,
@@ -321,11 +321,11 @@ public class FlworDataFrameUtils {
             case FULL: {
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
-                    break;
+                    return;
                 }
                 if (columnNames.contains(variableName.toString() + ".sequence")) {
                     result.add(variableName.toString() + ".sequence");
-                    break;
+                    return;
                 }
                 throw new OurBadException(
                         "Expecting full variable dependency on "
@@ -336,11 +336,11 @@ public class FlworDataFrameUtils {
             case COUNT: {
                 if (columnNames.contains(variableName.toString() + ".count")) {
                     result.add(variableName.toString() + ".count");
-                    break;
+                    return;
                 }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
-                    break;
+                    return;
                 }
                 throw new OurBadException(
                         "Expecting count variable dependency on "
@@ -349,13 +349,13 @@ public class FlworDataFrameUtils {
                 );
             }
             case SUM: {
-                if (columnNames.contains(variableName.toString() + ".count")) {
+                if (columnNames.contains(variableName.toString() + ".sum")) {
                     result.add(variableName.toString() + ".sum");
-                    break;
+                    return;
                 }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
-                    break;
+                    return;
                 }
                 throw new OurBadException(
                         "Expecting sum variable dependency on "
@@ -364,13 +364,13 @@ public class FlworDataFrameUtils {
                 );
             }
             case MIN: {
-                if (columnNames.contains(variableName.toString() + ".count")) {
+                if (columnNames.contains(variableName.toString() + ".min")) {
                     result.add(variableName.toString() + ".min");
-                    break;
+                    return;
                 }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
-                    break;
+                    return;
                 }
                 throw new OurBadException(
                         "Expecting min variable dependency on "
@@ -379,13 +379,13 @@ public class FlworDataFrameUtils {
                 );
             }
             case MAX: {
-                if (columnNames.contains(variableName.toString() + ".count")) {
+                if (columnNames.contains(variableName.toString() + ".max")) {
                     result.add(variableName.toString() + ".max");
-                    break;
+                    return;
                 }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
-                    break;
+                    return;
                 }
                 throw new OurBadException(
                         "Expecting max variable dependency on "
