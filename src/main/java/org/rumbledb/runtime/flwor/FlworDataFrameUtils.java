@@ -51,7 +51,6 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
@@ -536,14 +535,13 @@ public class FlworDataFrameUtils {
         for (Map.Entry<Name, DynamicContext.VariableDependency> dependency : dependencies.entrySet()) {
             queryColumnString.append(comma);
             comma = ",";
-            for(String columnName : getColumnNames(inputSchema, dependency))
-            {
+            for (String columnName : getColumnNames(inputSchema, dependency)) {
                 int columnIndex = inputSchema.fieldIndex(columnName);
                 if (columnIndex == duplicateVariableIndex) {
                     continue;
                 }
                 DataType dt = inputSchema.fields()[columnIndex].dataType();
-    
+
                 if (isCountPreComputed(inputSchema, columnName)) {
                     queryColumnString.append("sum(`");
                     queryColumnString.append(columnName);
@@ -561,7 +559,7 @@ public class FlworDataFrameUtils {
                     queryColumnString.append("`)");
                 } else if (isNativeSequence(inputSchema, columnName)) {
                     // aggregate the column values for each row in the group
-                    queryColumnString.append("arraymerge"+Math.abs(dt.hashCode()));
+                    queryColumnString.append("arraymerge" + Math.abs(dt.hashCode()));
                     queryColumnString.append("(collect_list(`");
                     queryColumnString.append(columnName);
                     queryColumnString.append("`))");
@@ -578,11 +576,11 @@ public class FlworDataFrameUtils {
                     queryColumnString.append("`)");
                     columnName += ".sequence";
                 }
-    
+
                 queryColumnString.append(" as `");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`");
-    
+
             }
             if (comma.equals("")) {
                 queryColumnString.append("TRUE");
