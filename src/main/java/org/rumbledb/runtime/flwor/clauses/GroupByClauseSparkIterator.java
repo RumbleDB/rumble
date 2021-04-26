@@ -377,9 +377,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
-        df.show();
         StructType schemaType = df.schema();
-        schemaType.printTreeString();
         for (StructField sf : schemaType.fields()) {
             DataType dataType = sf.dataType();
             String name = sf.name();
