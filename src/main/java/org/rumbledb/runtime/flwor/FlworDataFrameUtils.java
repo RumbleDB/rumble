@@ -487,7 +487,6 @@ public class FlworDataFrameUtils {
             StructType inputSchema,
             int duplicateVariableIndex,
             boolean trailingComma,
-            String arrayUnionUdfName,
             String serializerUdfName,
             List<Name> groupbyVariableNames,
             Map<Name, DynamicContext.VariableDependency> dependencies,
@@ -502,6 +501,7 @@ public class FlworDataFrameUtils {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
+            DataType dt = inputSchema.fields()[columnIndex].dataType();
 
             String columnName = field.getLocalName();
             if (isCountPreComputed(inputSchema, columnName)) {
@@ -521,16 +521,22 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("`)");
             } else if (isNativeSequence(inputSchema, columnName)) {
                 // aggregate the column values for each row in the group
-                queryColumnString.append(arrayUnionUdfName);
-                queryColumnString.append(")collect_list(`");
+                queryColumnString.append("arraymerge"+dt.hashCode());
+                queryColumnString.append("(collect_list(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`))");
-            } else {
+            } else if (dt.equals(DataTypes.BinaryType)) {
                 // aggregate the column values for each row in the group
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(collect_list(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`))");
+            } else {
+                // aggregate the column values for each row in the group
+                queryColumnString.append("collect_list(`");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`)");
+                columnName += ".sequence";
             }
 
             queryColumnString.append(" as `");
