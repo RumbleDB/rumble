@@ -41,6 +41,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -375,6 +376,22 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             UDFParameters,
             appendedGroupingColumnsName
         );
+
+        StructType schemaType = df.schema();
+        for (StructField sf : schemaType.fields()) {
+            DataType dataType = sf.dataType();
+            String name = sf.name();
+            if (name.endsWith(".sequence")) {
+                int i = dataType.hashCode();
+                df.sparkSession()
+                    .udf()
+                    .register(
+                        "arraymerge" + i,
+                        new GroupClauseArrayMergeAggregateResultsUDF(),
+                        dataType
+                    );
+            }
+        }
 
         String projectSQL = FlworDataFrameUtils.getGroupBySQLProjection(
             inputSchema,

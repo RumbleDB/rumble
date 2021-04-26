@@ -501,6 +501,7 @@ public class FlworDataFrameUtils {
             if (columnIndex == duplicateVariableIndex) {
                 continue;
             }
+            DataType dt = inputSchema.fields()[columnIndex].dataType();
 
             String columnName = field.getLocalName();
             if (isCountPreComputed(inputSchema, columnName)) {
@@ -518,12 +519,24 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("first(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`)");
-            } else {
+            } else if (isNativeSequence(inputSchema, columnName)) {
+                // aggregate the column values for each row in the group
+                queryColumnString.append("arraymerge" + dt.hashCode());
+                queryColumnString.append("(collect_list(`");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`))");
+            } else if (dt.equals(DataTypes.BinaryType)) {
                 // aggregate the column values for each row in the group
                 queryColumnString.append(serializerUdfName);
                 queryColumnString.append("(collect_list(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`))");
+            } else {
+                // aggregate the column values for each row in the group
+                queryColumnString.append("collect_list(`");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`)");
+                columnName += ".sequence";
             }
 
             queryColumnString.append(" as `");
@@ -546,6 +559,16 @@ public class FlworDataFrameUtils {
         for (String field : fields) {
             if (field.equals(columnName)) {
                 return columnName.endsWith(".count");
+            }
+        }
+        throw new OurBadException("Column does not exist: " + columnName);
+    }
+
+    public static boolean isNativeSequence(StructType schema, String columnName) {
+        String[] fields = schema.fieldNames();
+        for (String field : fields) {
+            if (field.equals(columnName)) {
+                return columnName.endsWith(".sequence");
             }
         }
         throw new OurBadException("Column does not exist: " + columnName);
@@ -589,11 +612,11 @@ public class FlworDataFrameUtils {
         for (Object serializedParam : serializedParams) {
             if (serializedParam == null) {
                 deserializedParams.add(Collections.emptyList());
-            } else {
-                @SuppressWarnings("unchecked")
-                List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
-                deserializedParams.add(deserializedParam);
+                continue;
             }
+            @SuppressWarnings("unchecked")
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            deserializedParams.add(deserializedParam);
         }
     }
 
