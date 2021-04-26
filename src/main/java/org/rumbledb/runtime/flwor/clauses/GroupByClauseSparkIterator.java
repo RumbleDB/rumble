@@ -378,18 +378,21 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         StructType schemaType = df.schema();
-        df.printSchema();
         for(StructField sf : schemaType.fields())
         {
             DataType dataType = sf.dataType();
-            int i = dataType.hashCode();
-            df.sparkSession()
-            .udf()
-            .register(
-                "arraymerge" + i,
-                new GroupClauseArrayMergeAggregateResultsUDF(),
-                DataTypes.createArrayType(dataType)
-            );
+            String name = sf.name();
+            if(name.endsWith(".sequence"))
+            {
+                int i = dataType.hashCode();
+                df.sparkSession()
+                .udf()
+                .register(
+                    "arraymerge" + i,
+                    new GroupClauseArrayMergeAggregateResultsUDF(),
+                    dataType
+                );
+            }
         }
 
         String projectSQL = FlworDataFrameUtils.getGroupBySQLProjection(
