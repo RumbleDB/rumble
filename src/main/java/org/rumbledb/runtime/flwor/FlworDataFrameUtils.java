@@ -521,7 +521,7 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("`)");
             } else if (isNativeSequence(inputSchema, columnName)) {
                 // aggregate the column values for each row in the group
-                queryColumnString.append("arraymerge"+dt.hashCode());
+                queryColumnString.append("arraymerge" + dt.hashCode());
                 queryColumnString.append("(collect_list(`");
                 queryColumnString.append(columnName);
                 queryColumnString.append("`))");

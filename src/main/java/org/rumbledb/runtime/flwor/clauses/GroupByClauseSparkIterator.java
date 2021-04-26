@@ -351,7 +351,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 new GroupClauseSerializeAggregateResultsUDF(),
                 DataTypes.BinaryType
             );
-        
+
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -378,20 +378,18 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         StructType schemaType = df.schema();
-        for(StructField sf : schemaType.fields())
-        {
+        for (StructField sf : schemaType.fields()) {
             DataType dataType = sf.dataType();
             String name = sf.name();
-            if(name.endsWith(".sequence"))
-            {
+            if (name.endsWith(".sequence")) {
                 int i = dataType.hashCode();
                 df.sparkSession()
-                .udf()
-                .register(
-                    "arraymerge" + i,
-                    new GroupClauseArrayMergeAggregateResultsUDF(),
-                    dataType
-                );
+                    .udf()
+                    .register(
+                        "arraymerge" + i,
+                        new GroupClauseArrayMergeAggregateResultsUDF(),
+                        dataType
+                    );
             }
         }
 
