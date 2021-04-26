@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -40,7 +39,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -104,26 +102,16 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
-        if (FlworDataFrameUtils.isVariableNativeSequence(structSchema, this.variableName)) {
+        if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if (FlworDataFrameUtils.isVariableCountOnly(structSchema, this.variableName)) {
-            return NativeClauseContext.NoNativeQuery;
-        }
-        // we need to escape the backtick
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
-        if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(escapedName))) {
-            StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
-            DataType fieldType = field.dataType();
-            if (fieldType == DataTypes.BinaryType) {
-                return NativeClauseContext.NoNativeQuery;
-            }
-            ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
-            NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, escapedName, variableType);
-            newContext.setSchema(fieldType);
-            return newContext;
-        }
-        return NativeClauseContext.NoNativeQuery;
+        StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
+        DataType fieldType = field.dataType();
+        ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
+        NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, escapedName, variableType);
+        newContext.setSchema(fieldType);
+        return newContext;
     }
 
     @Override

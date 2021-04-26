@@ -529,7 +529,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
-            if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
+            if (FlworDataFrameUtils.isVariableAvailableAsCountOnly(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
@@ -538,7 +538,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
-            } else if (FlworDataFrameUtils.isVariableNativeSequence(inputSchema, entry.getKey())) {
+            } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 String columnName = entry.getKey().toString();
                 selectString.append("collect_list(`");
