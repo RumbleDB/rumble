@@ -94,6 +94,22 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         }
         // check if name is in the schema
         StructType structSchema = (StructType) schema;
+        if (!FlworDataFrameUtils.hasColumnForVariable(structSchema, this.variableName)) {
+            List<Item> items = nativeClauseContext.getContext()
+                .getVariableValues()
+                .getLocalVariableValue(this.variableName, getMetadata());
+            if (items.size() != 1) {
+                // only possible to turn into native, sequence of length 1
+                return NativeClauseContext.NoNativeQuery;
+            }
+            return items.get(0).generateNativeQuery(nativeClauseContext);
+        }
+        if (FlworDataFrameUtils.isVariableNativeSequence(structSchema, this.variableName)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (FlworDataFrameUtils.isVariableCountOnly(structSchema, this.variableName)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
         // we need to escape the backtick
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
         if (Arrays.stream(structSchema.fieldNames()).anyMatch(field -> field.equals(escapedName))) {
@@ -106,16 +122,8 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, escapedName, variableType);
             newContext.setSchema(fieldType);
             return newContext;
-        } else {
-            List<Item> items = nativeClauseContext.getContext()
-                .getVariableValues()
-                .getLocalVariableValue(this.variableName, getMetadata());
-            if (items.size() != 1) {
-                // only possible to turn into native, sequence of length 1
-                return NativeClauseContext.NoNativeQuery;
-            }
-            return items.get(0).generateNativeQuery(nativeClauseContext);
         }
+        return NativeClauseContext.NoNativeQuery;
     }
 
     @Override

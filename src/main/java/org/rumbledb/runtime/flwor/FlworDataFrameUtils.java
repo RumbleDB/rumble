@@ -171,6 +171,31 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param variable the Name fo a variable
+     * @return true if the schema contains values for this variable.
+     */
+    public static boolean hasColumnForVariable(
+            StructType inputSchema,
+            Name variable
+    ) {
+        String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (escapedName.equals(columnName)) {
+                    return true;
+                }
+            } else {
+                if (escapedName.equals(columnName.substring(0, pos))) {
+                    return true;
+                } ;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
