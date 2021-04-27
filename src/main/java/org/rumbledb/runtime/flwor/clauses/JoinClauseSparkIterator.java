@@ -367,9 +367,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     // TODO it would be nice to be more generic and also allow dependencies on the
                     // dynamic context on any side.
                     if (
-                        leftComparisonDependencies.isEmpty()
-                            &&
-                            leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
+                        leftTupleSideVariableNames.containsAll(leftComparisonDependencies)
                             && rightTupleSideVariableNames.containsAll(rightComparisonDependencies)
                     ) {
                         optimizableJoin = true;

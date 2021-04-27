@@ -685,12 +685,12 @@ public class FlworDataFrameUtils {
                 queryColumnString.append("`");
 
             }
-            if (comma.equals("")) {
-                queryColumnString.append("TRUE");
-            }
-            if (trailingComma) {
-                queryColumnString.append(",");
-            }
+        }
+        if (comma.equals("")) {
+            queryColumnString.append("TRUE");
+        }
+        if (trailingComma) {
+            queryColumnString.append(",");
         }
 
         return queryColumnString.toString();
