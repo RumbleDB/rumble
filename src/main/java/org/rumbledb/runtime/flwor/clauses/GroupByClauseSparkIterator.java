@@ -377,12 +377,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
+        df.show();
         StructType schemaType = df.schema();
+        schemaType.printTreeString();
         for (StructField sf : schemaType.fields()) {
             DataType dataType = sf.dataType();
             String name = sf.name();
             if (name.endsWith(".sequence")) {
-                int i = dataType.hashCode();
+                int i = Math.abs(dataType.hashCode());
                 df.sparkSession()
                     .udf()
                     .register(
