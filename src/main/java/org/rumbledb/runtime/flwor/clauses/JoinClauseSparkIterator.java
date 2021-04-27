@@ -481,7 +481,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         return leftInputTuple.sparkSession()
             .sql(
                 String.format(
-                    "SELCT %s FROM left JOIN right ON %s",
+                    "SELECT %s FROM left JOIN right ON %s",
                     projectionVariables,
                     nativeQuery.getResultingQuery()
                 )
