@@ -34,6 +34,7 @@ import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
@@ -117,6 +118,19 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
     ) {
+        Dataset<Row> result = tryNativeQueryStatically(
+            context,
+            leftInputTuple,
+            rightInputTuple,
+            outputTupleVariableDependencies,
+            predicateIterator,
+            isLeftOuterJoin,
+            newRightSideVariableName,
+            metadata
+        );
+        if (result != null) {
+            return result;
+        }
         String leftInputDFTableName = "leftInputTuples";
         String rightInputDFTableName = "rightInputTuples";
 
@@ -411,4 +425,67 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     public boolean containsClause(FLWOR_CLAUSES kind) {
         return false;
     }
+
+    /**
+     * Try to generate the native query for the group by clause and run it, if successful return the resulting
+     * dataframe,
+     * otherwise it returns null (expect `input` table to be already available)
+     *
+     * @param dataFrame input dataframe for the query
+     * @param groupingVariables group by variables
+     * @param dependencies dependencies to forward to the next clause (select variables)
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the group by clause if successful, null otherwise
+     */
+    private static Dataset<Row> tryNativeQueryStatically(
+            DynamicContext context,
+            Dataset<Row> leftInputTuple,
+            Dataset<Row> rightInputTuple,
+            Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
+            RuntimeIterator predicateIterator,
+            boolean isLeftOuterJoin,
+            Name newRightSideVariableName, // really needed?
+            ExceptionMetadata metadata
+    ) {
+        if (isLeftOuterJoin) {
+            return null;
+        }
+        if (newRightSideVariableName != null) {
+            return null;
+        }
+        StructType leftSchema = leftInputTuple.schema();
+        StructType rightSchema = rightInputTuple.schema();
+        StructType unionSchema = FlworDataFrameUtils.schemaUnion(leftSchema, rightSchema);
+        NativeClauseContext nativeContext = new NativeClauseContext(FLWOR_CLAUSES.WHERE, unionSchema, context);
+        NativeClauseContext nativeQuery = predicateIterator.generateNativeQuery(nativeContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            return null;
+        }
+        System.err.println(
+            "[INFO] Rumble was able to optimize a join to a native SQL query: "
+                + nativeQuery.getResultingQuery()
+        );
+        leftInputTuple.createOrReplaceTempView("left");
+        rightInputTuple.createOrReplaceTempView("right");
+        List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+            unionSchema,
+            outputTupleVariableDependencies,
+            null,
+            Collections.emptyList()
+        );
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(
+            columnsToSelect,
+            newRightSideVariableName != null
+        );
+        return leftInputTuple.sparkSession()
+            .sql(
+                String.format(
+                    "SELCT %s FROM left JOIN right ON %s",
+                    projectionVariables,
+                    nativeQuery.getResultingQuery()
+                )
+            );
+    }
+
 }
