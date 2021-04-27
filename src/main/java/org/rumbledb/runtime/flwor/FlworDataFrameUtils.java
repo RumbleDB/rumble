@@ -171,13 +171,38 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param variable the Name fo a variable
+     * @return true if the schema contains values for this variable.
+     */
+    public static boolean hasColumnForVariable(
+            StructType inputSchema,
+            Name variable
+    ) {
+        String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (escapedName.equals(columnName)) {
+                    return true;
+                }
+            } else {
+                if (escapedName.equals(columnName.substring(0, pos))) {
+                    return true;
+                } ;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it only has a count, false otherwise.
      */
-    public static boolean isVariableCountOnly(
+    public static boolean isVariableAvailableAsCountOnly(
             StructType inputSchema,
             Name variable
     ) {
@@ -197,14 +222,14 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Checks if the specified variable should be interpreted as a native sequence of items in a DataFrame with the
+     * Checks if the specified variable is available as a native sequence of items in a DataFrame with the
      * supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
-     * @return true if it is a native sequence of items, false otherwise.
+     * @return true if it is available as a native sequence of items, false otherwise.
      */
-    public static boolean isVariableNativeSequence(
+    public static boolean isVariableAvailableAsNativeSequence(
             StructType inputSchema,
             Name variable
     ) {
@@ -219,6 +244,84 @@ public class FlworDataFrameUtils {
                     return columnName.substring(pos).equals("sequence");
                 } ;
             }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * Checks if the specified variable is available as a serialized sequence of items in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is available as a serialized sequence of items, false otherwise.
+     */
+    public static boolean isVariableAvailableAsSerializedSequence(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * If the variable is available as a single native item, returns its native SQL data type.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return the native SQL data type of the variable.
+     */
+    public static DataType nativeTypeOfVariable(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    return inputSchema.fields()[index].dataType();
+                }
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * Checks if the specified variable is available as a single native item in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is available as a single native item, false otherwise.
+     */
+    public static boolean isVariableAvailableAsNativeItem(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            return false;
         }
         throw new OurBadException("Variable " + variable + "not found.");
     }
