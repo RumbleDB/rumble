@@ -24,7 +24,6 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
-import org.apache.spark.sql.types.DataTypes;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -432,33 +431,30 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
             System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
+        if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
             System.err.println("Additive: failed because left is not float.");
             System.err.println(this.leftIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
+        if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
             System.err.println("Additive: failed because right is not float but " + rightResult.getResultingType());
             System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(this.isMinus)
-        {
+        if (this.isMinus) {
             String resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " - "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+                + leftResult.getResultingQuery()
+                + " - "
+                + rightResult.getResultingQuery()
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         } else {
             String resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " + "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+                + leftResult.getResultingQuery()
+                + " + "
+                + rightResult.getResultingQuery()
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         }
     }
 }

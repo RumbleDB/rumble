@@ -769,12 +769,14 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         dataFrame.createOrReplaceTempView("input");
-        System.err.println(String.format(
-                    "select %s %s as `%s` from input",
-                    selectSQL,
-                    nativeQuery.getResultingQuery(),
-                    newVariableName
-                ));
+        System.err.println(
+            String.format(
+                "select %s %s as `%s` from input",
+                selectSQL,
+                nativeQuery.getResultingQuery(),
+                newVariableName
+            )
+        );
         return dataFrame.sparkSession()
             .sql(
                 String.format(

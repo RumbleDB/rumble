@@ -25,7 +25,6 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
-import org.apache.spark.sql.types.DataTypes;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -546,30 +545,29 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
+        if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
             System.err.println("Multiplicative: failed because left is not float but " + leftResult.getResultingType());
             System.err.println(this.leftIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
-            System.err.println("Multiplicative: failed because right is not float but " + rightResult.getResultingType());
+        if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            System.err.println(
+                "Multiplicative: failed because right is not float but " + rightResult.getResultingType()
+            );
             System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = null;
-        switch(this.multiplicativeOperator)
-        {
+        switch (this.multiplicativeOperator) {
             case MUL:
-            resultingQuery = "( "
+                resultingQuery = "( "
                     + leftResult.getResultingQuery()
                     + " * "
                     + rightResult.getResultingQuery()
                     + " )";
                 return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
             case DIV:
-            resultingQuery = "( "
+                resultingQuery = "( "
                     + leftResult.getResultingQuery()
                     + " / "
                     + rightResult.getResultingQuery()

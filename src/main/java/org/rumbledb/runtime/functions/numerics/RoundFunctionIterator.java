@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -104,16 +103,15 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             System.err.println(this.children.get(0).toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
+        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
             System.err.println("Multiplicative: failed because value is not float.");
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("
-                + "ROUND( "
-                + value.getResultingQuery()
-                + " ) AS FLOAT)"
-                + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+            + "ROUND( "
+            + value.getResultingQuery()
+            + " ) AS FLOAT)"
+            + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 }

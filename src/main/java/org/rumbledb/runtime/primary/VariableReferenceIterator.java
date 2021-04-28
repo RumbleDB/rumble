@@ -99,7 +99,9 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
                 .getLocalVariableValue(this.variableName, getMetadata());
             if (items.size() != 1) {
                 // only possible to turn into native, sequence of length 1
-                System.err.println("Variable " + name + ": failed because value in dynamic context is not exactly one item");
+                System.err.println(
+                    "Variable " + name + ": failed because value in dynamic context is not exactly one item"
+                );
                 return NativeClauseContext.NoNativeQuery;
             }
             System.err.println("Variable " + name + ": " + items.get(0).toString());
@@ -115,7 +117,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         DataType fieldType = field.dataType();
         ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
         System.err.println("Variable " + name + ": type " + variableType);
-        NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, "`"+escapedName+"`", variableType);
+        NativeClauseContext newContext = new NativeClauseContext(
+                nativeClauseContext,
+                "`" + escapedName + "`",
+                variableType
+        );
         newContext.setSchema(fieldType);
         return newContext;
     }
