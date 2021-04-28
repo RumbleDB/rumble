@@ -29,6 +29,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -90,5 +93,22 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (value == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( CAST ("
+            + "ROUND( "
+            + value.getResultingQuery()
+            + " ) AS FLOAT)"
+            + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 }

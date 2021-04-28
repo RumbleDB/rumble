@@ -109,7 +109,11 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         StructField field = structSchema.fields()[structSchema.fieldIndex(escapedName)];
         DataType fieldType = field.dataType();
         ItemType variableType = FlworDataFrameUtils.mapToJsoniqType(fieldType);
-        NativeClauseContext newContext = new NativeClauseContext(nativeClauseContext, escapedName, variableType);
+        NativeClauseContext newContext = new NativeClauseContext(
+                nativeClauseContext,
+                "`" + escapedName + "`",
+                variableType
+        );
         newContext.setSchema(fieldType);
         return newContext;
     }

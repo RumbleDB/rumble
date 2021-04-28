@@ -43,6 +43,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -530,6 +532,62 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                             + "\": operation not possible with parameters of types yearMonthDuration and double",
                         metadata
                 );
+        }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String leftQuery = leftResult.getResultingQuery();
+        String rightQuery = rightResult.getResultingQuery();
+        if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            if (leftResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (
+                leftResult.getResultingType().isNumeric()
+                    && rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
+            ) {
+                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
+        if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            if (rightResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (
+                rightResult.getResultingType().isNumeric()
+                    && leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
+            ) {
+                rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
+        }
+        String resultingQuery = null;
+        switch (this.multiplicativeOperator) {
+            case MUL:
+                resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " * "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+            case DIV:
+                resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " / "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
+            default:
+                return NativeClauseContext.NoNativeQuery;
         }
     }
 

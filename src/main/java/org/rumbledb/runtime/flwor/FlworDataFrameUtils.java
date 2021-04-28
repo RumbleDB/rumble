@@ -321,7 +321,6 @@ public class FlworDataFrameUtils {
                     return true;
                 }
             }
-            return false;
         }
         throw new OurBadException("Variable " + variable + "not found.");
     }

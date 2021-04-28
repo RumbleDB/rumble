@@ -51,10 +51,10 @@ public class GroupClauseArrayMergeAggregateResultsUDF implements UDF1<WrappedArr
         for (Object o : insideArrays) {
             if (o instanceof Row) {
                 Row row = (Row) o;
-                System.err.println(row.prettyJson());
                 result.add(row);
             }
             if (o instanceof WrappedArray) {
+                @SuppressWarnings("rawtypes")
                 WrappedArray wrappedArray = (WrappedArray) o;
                 Object[] insideArrays2 = (Object[]) wrappedArray.array();
                 for (Object p : insideArrays2)
