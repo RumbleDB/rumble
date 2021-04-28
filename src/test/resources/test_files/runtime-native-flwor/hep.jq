@@ -2,21 +2,23 @@
 module namespace hep = "hep.jq";
 
 declare function hep:histogram($values, $lo, $hi, $num-bins) {
-  let $width := float(($hi - $lo) div $num-bins)
-  let $half-width := float($width div 2)
+  let $flo := float($lo)
+  let $fhi := float($hi)
+  let $width := ($fhi - $flo) div float($num-bins)
+  let $half-width := $width div 2
+  let $offset := $flo mod $half-width
 
-  let $underflow := float(round(($lo - $half-width) div $width))
-  let $overflow := float(round(($hi - $half-width) div $width))
   return
-  for $v in $values
-  let $bucket-idx :=
-    if ($v lt $lo) then exactly-one($underflow)
-    else
-      if ($v gt $hi) then exactly-one($overflow)
-      else round(($v - $half-width) div $width)
-  let $center := $bucket-idx * $width + $half-width
+    for $value in $values
+    let $truncated-value :=
+      if ($value lt $flo) then $flo - $half-width
+      else
+        if ($value gt $fhi) then $fhi + $half-width
+        else $value - $offset
+    let $bucket-idx := floor($truncated-value div $width)
+    let $center := $bucket-idx * $width + $half-width + $offset
 
-  group by $center
-  order by $center
-  return {"x": $center, "y": count($v)}
+    group by $center
+    order by $center
+    return {"x": $center, "y": count($value)}
 };

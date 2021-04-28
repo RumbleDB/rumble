@@ -27,7 +27,9 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.List;
 
@@ -67,6 +69,23 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
                 );
         }
         throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " floor function", getMetadata());
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (value == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( CAST ("
+            + "FLOOR( "
+            + value.getResultingQuery()
+            + " ) AS FLOAT)"
+            + " )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 
 
