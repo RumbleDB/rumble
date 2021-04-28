@@ -156,6 +156,14 @@ public class FloatItem implements Item {
 
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
-        return new NativeClauseContext(context, "" + this.value, BuiltinTypesCatalogue.floatItem);
+        if(Float.isInfinite(this.value))
+        {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(Float.isNaN(this.value))
+        {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(context, "CAST ("+this.value+"D AS FLOAT)", BuiltinTypesCatalogue.floatItem);
     }
 }

@@ -70,28 +70,29 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
             System.err.println("Conditional: failed because operand not available natively.");
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!conditionResult.getSchema().equals(DataTypes.BooleanType))
+        if(!conditionResult.getResultingType().equals(BuiltinTypesCatalogue.booleanItem))
         {
             System.err.println("Conditional: failed because condition not a boolean.");
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!thenResult.getSchema().equals(DataTypes.FloatType))
+        if(!thenResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
-            System.err.println("Conditional: failed because then not a boolean.");
+            System.err.println("Conditional: failed because then not a float.");
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!elseResult.getSchema().equals(DataTypes.FloatType))
+        if(!elseResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
-            System.err.println("Conditional: failed because else not a boolean.");
+            System.err.println("Conditional: failed because else not a float but " + elseResult.getResultingType());
+            System.err.println(this.children.get(2).toString());
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
-                + "IF(" + conditionResult.getResultingQuery()
-                + " ) THEN ( "
+                + "IF( " + conditionResult.getResultingQuery()
+                + ", "
                 + thenResult.getResultingQuery()
-                + " ) ELSE ( "
+                + ", "
                 + elseResult.getResultingQuery()
-                + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+                + " ) )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 }

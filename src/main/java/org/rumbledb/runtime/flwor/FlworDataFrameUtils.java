@@ -313,15 +313,17 @@ public class FlworDataFrameUtils {
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");
             if (pos == -1) {
+                System.err.println("No dot.");
                 if (variable.getLocalName().equals(columnName)) {
+                    System.err.println("Match");
                     int index = inputSchema.fieldIndex(columnName);
                     if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                        System.err.println("Binary");
                         return false;
                     }
                     return true;
                 }
             }
-            return false;
         }
         throw new OurBadException("Variable " + variable + "not found.");
     }

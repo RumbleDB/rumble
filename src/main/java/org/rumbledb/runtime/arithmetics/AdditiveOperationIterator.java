@@ -435,11 +435,13 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         if(!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
             System.err.println("Additive: failed because left is not float.");
+            System.err.println(this.leftIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
         if(!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
-            System.err.println("Additive: failed because right is not float.");
+            System.err.println("Additive: failed because right is not float but " + rightResult.getResultingType());
+            System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
         if(this.isMinus)
@@ -449,14 +451,14 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
                     + " - "
                     + rightResult.getResultingQuery()
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         } else {
             String resultingQuery = "( "
                     + leftResult.getResultingQuery()
                     + " + "
                     + rightResult.getResultingQuery()
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         }
     }
 }

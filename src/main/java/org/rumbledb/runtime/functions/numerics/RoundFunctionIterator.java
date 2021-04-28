@@ -109,11 +109,11 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             System.err.println("Multiplicative: failed because value is not float.");
             return NativeClauseContext.NoNativeQuery;
         }
-        String resultingQuery = "( "
+        String resultingQuery = "( CAST ("
                 + "ROUND( "
                 + value.getResultingQuery()
-                + " )"
+                + " ) AS FLOAT)"
                 + " )";
-            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 }

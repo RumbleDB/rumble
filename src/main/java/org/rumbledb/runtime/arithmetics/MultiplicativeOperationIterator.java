@@ -546,14 +546,16 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!leftResult.getSchema().equals(DataTypes.FloatType))
+        if(!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
-            System.err.println("Multiplicative: failed because left is not float.");
+            System.err.println("Multiplicative: failed because left is not float but " + leftResult.getResultingType());
+            System.err.println(this.leftIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!rightResult.getSchema().equals(DataTypes.FloatType))
+        if(!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
         {
-            System.err.println("Multiplicative: failed because right is not float.");
+            System.err.println("Multiplicative: failed because right is not float but " + rightResult.getResultingType());
+            System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = null;
@@ -565,28 +567,14 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                     + " * "
                     + rightResult.getResultingQuery()
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
             case DIV:
             resultingQuery = "( "
                     + leftResult.getResultingQuery()
                     + " / "
                     + rightResult.getResultingQuery()
                     + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
-            case IDIV:
-            resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " / "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
-            case MOD:
-            resultingQuery = "( "
-                    + leftResult.getResultingQuery()
-                    + " mod "
-                    + rightResult.getResultingQuery()
-                    + " )";
-                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         }
         return NativeClauseContext.NoNativeQuery;
     }
