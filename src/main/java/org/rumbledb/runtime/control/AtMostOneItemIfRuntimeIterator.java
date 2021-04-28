@@ -70,20 +70,15 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
                 || thenResult == NativeClauseContext.NoNativeQuery
                 || elseResult == NativeClauseContext.NoNativeQuery
         ) {
-            System.err.println("Conditional: failed because operand not available natively.");
             return NativeClauseContext.NoNativeQuery;
         }
         if (!conditionResult.getResultingType().equals(BuiltinTypesCatalogue.booleanItem)) {
-            System.err.println("Conditional: failed because condition not a boolean.");
             return NativeClauseContext.NoNativeQuery;
         }
         if (!thenResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            System.err.println("Conditional: failed because then not a float.");
             return NativeClauseContext.NoNativeQuery;
         }
         if (!elseResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            System.err.println("Conditional: failed because else not a float but " + elseResult.getResultingType());
-            System.err.println(this.children.get(2).toString());
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( "
