@@ -103,7 +103,6 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
-            structSchema.printTreeString();
             return NativeClauseContext.NoNativeQuery;
         }
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);
