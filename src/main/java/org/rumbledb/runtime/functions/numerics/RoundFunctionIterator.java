@@ -99,12 +99,9 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
         if (value == NativeClauseContext.NoNativeQuery) {
-            System.err.println("Round: failed because operands are not native.");
-            System.err.println(this.children.get(0).toString());
             return NativeClauseContext.NoNativeQuery;
         }
         if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            System.err.println("Multiplicative: failed because value is not float.");
             return NativeClauseContext.NoNativeQuery;
         }
         String resultingQuery = "( CAST ("

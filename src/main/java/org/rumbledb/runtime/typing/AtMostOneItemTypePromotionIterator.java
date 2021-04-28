@@ -116,12 +116,10 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
-        if(value.equals(NativeClauseContext.NoNativeQuery))
-        {
+        if (value.equals(NativeClauseContext.NoNativeQuery)) {
             return NativeClauseContext.NoNativeQuery;
         }
-        if(!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
-        {
+        if (!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
             return NativeClauseContext.NoNativeQuery;
         }
         // @TODO

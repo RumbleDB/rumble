@@ -20,18 +20,15 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionExactlyOne;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.List;
 
@@ -52,21 +49,19 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         try {
             Item value = this.children.get(0).materializeAtMostOneItemOrNull(dynamicContext);
-            if(value == null)
-            {
+            if (value == null) {
                 throw new SequenceExceptionExactlyOne(
-                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                    getMetadata()
-            );
+                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
+                        getMetadata()
+                );
 
             }
             return value;
-        } catch (MoreThanOneItemException e)
-        {
+        } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionExactlyOne(
-                "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
-                getMetadata()
-                    );
+                    "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
+                    getMetadata()
+            );
         }
     }
 

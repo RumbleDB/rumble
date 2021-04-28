@@ -426,33 +426,48 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
         NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
         if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
-            System.err.println("Additive: failed because operands are not native.");
-            System.err.println(this.leftIterator.toString());
-            System.err.println(this.rightIterator.toString());
             return NativeClauseContext.NoNativeQuery;
         }
+        String leftQuery = leftResult.getResultingQuery();
+        String rightQuery = rightResult.getResultingQuery();
         if (!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            System.err.println("Additive: failed because left is not float.");
-            System.err.println(this.leftIterator.toString());
-            return NativeClauseContext.NoNativeQuery;
+            if (leftResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (
+                leftResult.getResultingType().isNumeric()
+                    && rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
+            ) {
+                leftQuery = "(CAST (" + leftQuery + " AS FLOAT))";
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
         }
         if (!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
-            System.err.println("Additive: failed because right is not float but " + rightResult.getResultingType());
-            System.err.println(this.rightIterator.toString());
-            return NativeClauseContext.NoNativeQuery;
+            if (rightResult.getResultingType().equals(BuiltinTypesCatalogue.doubleItem)) {
+                return NativeClauseContext.NoNativeQuery;
+            }
+            if (
+                rightResult.getResultingType().isNumeric()
+                    && leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)
+            ) {
+                rightQuery = "(CAST (" + rightQuery + " AS FLOAT))";
+            } else {
+                return NativeClauseContext.NoNativeQuery;
+            }
         }
         if (this.isMinus) {
             String resultingQuery = "( "
-                + leftResult.getResultingQuery()
+                + leftQuery
                 + " - "
-                + rightResult.getResultingQuery()
+                + rightQuery
                 + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         } else {
             String resultingQuery = "( "
-                + leftResult.getResultingQuery()
+                + leftQuery
                 + " + "
-                + rightResult.getResultingQuery()
+                + rightQuery
                 + " )";
             return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
         }
