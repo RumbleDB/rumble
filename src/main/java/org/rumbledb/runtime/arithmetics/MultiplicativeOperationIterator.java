@@ -25,6 +25,7 @@ import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Arrays;
 
+import org.apache.spark.sql.types.DataTypes;
 import org.joda.time.Instant;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -43,6 +44,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 
 public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -531,6 +534,61 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
                         metadata
                 );
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+            System.err.println("Multiplicative: failed because operands are not native.");
+            System.err.println(this.leftIterator.toString());
+            System.err.println(this.rightIterator.toString());
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!leftResult.getSchema().equals(DataTypes.FloatType))
+        {
+            System.err.println("Multiplicative: failed because left is not float.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!rightResult.getSchema().equals(DataTypes.FloatType))
+        {
+            System.err.println("Multiplicative: failed because right is not float.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = null;
+        switch(this.multiplicativeOperator)
+        {
+            case MUL:
+            resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " * "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+            case DIV:
+            resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " / "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+            case IDIV:
+            resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " / "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+            case MOD:
+            resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " mod "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+        }
+        return NativeClauseContext.NoNativeQuery;
     }
 
 }

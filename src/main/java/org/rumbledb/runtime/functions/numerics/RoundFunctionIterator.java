@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions.numerics;
 
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -29,6 +30,9 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
@@ -90,5 +94,26 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext value = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        if (value == NativeClauseContext.NoNativeQuery) {
+            System.err.println("Round: failed because operands are not native.");
+            System.err.println(this.children.get(0).toString());
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!value.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
+        {
+            System.err.println("Multiplicative: failed because value is not float.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( "
+                + "ROUND( "
+                + value.getResultingQuery()
+                + " )"
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

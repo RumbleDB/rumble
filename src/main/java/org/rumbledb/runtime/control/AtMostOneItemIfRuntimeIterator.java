@@ -22,12 +22,15 @@ package org.rumbledb.runtime.control;
 
 import java.util.Arrays;
 
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -56,5 +59,39 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         } else {
             return this.children.get(2).materializeFirstItemOrNull(dynamicContext);
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext conditionResult = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext thenResult = this.children.get(1).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext elseResult = this.children.get(2).generateNativeQuery(nativeClauseContext);
+        if (conditionResult == NativeClauseContext.NoNativeQuery || thenResult == NativeClauseContext.NoNativeQuery || elseResult == NativeClauseContext.NoNativeQuery) {
+            System.err.println("Conditional: failed because operand not available natively.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!conditionResult.getSchema().equals(DataTypes.BooleanType))
+        {
+            System.err.println("Conditional: failed because condition not a boolean.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!thenResult.getSchema().equals(DataTypes.FloatType))
+        {
+            System.err.println("Conditional: failed because then not a boolean.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!elseResult.getSchema().equals(DataTypes.FloatType))
+        {
+            System.err.println("Conditional: failed because else not a boolean.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( "
+                + "IF(" + conditionResult.getResultingQuery()
+                + " ) THEN ( "
+                + thenResult.getResultingQuery()
+                + " ) ELSE ( "
+                + elseResult.getResultingQuery()
+                + " )";
+            return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
     }
 }

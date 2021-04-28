@@ -757,6 +757,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             StructType inputSchema,
             DynamicContext context
     ) {
+        System.err.println("Trying to optimize let clause.");
+        System.err.println(iterator.toString());
         NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.LET, inputSchema, context);
         NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {

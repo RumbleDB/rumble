@@ -88,6 +88,7 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
         String name = this.variableName.toString();
         DataType schema = nativeClauseContext.getSchema();
         if (!(schema instanceof StructType)) {
+            System.err.println("Variable " + name + ": failed because schema is not a struct.");
             return NativeClauseContext.NoNativeQuery;
         }
         // check if name is in the schema
@@ -98,11 +99,14 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
                 .getLocalVariableValue(this.variableName, getMetadata());
             if (items.size() != 1) {
                 // only possible to turn into native, sequence of length 1
+                System.err.println("Variable " + name + ": failed because value in dynamic context is not exactly one item");
                 return NativeClauseContext.NoNativeQuery;
             }
             return items.get(0).generateNativeQuery(nativeClauseContext);
         }
         if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(structSchema, this.variableName)) {
+            structSchema.printTreeString();
+            System.err.println("Variable " + name + ": failed because value in input tuple is not available natively");
             return NativeClauseContext.NoNativeQuery;
         }
         String escapedName = name.replace("`", FlworDataFrameUtils.backtickEscape);

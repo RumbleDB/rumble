@@ -24,6 +24,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Arrays;
 
+import org.apache.spark.sql.types.DataTypes;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.joda.time.PeriodType;
@@ -37,6 +38,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 
 public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -416,6 +419,44 @@ public class AdditiveOperationIterator extends AtMostOneItemLocalRuntimeIterator
         } else {
             return ItemFactory.getInstance()
                 .createDateTimeItem(l.plus(r), timeZone);
+        }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext leftResult = this.leftIterator.generateNativeQuery(nativeClauseContext);
+        NativeClauseContext rightResult = this.rightIterator.generateNativeQuery(nativeClauseContext);
+        if (leftResult == NativeClauseContext.NoNativeQuery || rightResult == NativeClauseContext.NoNativeQuery) {
+            System.err.println("Additive: failed because operands are not native.");
+            System.err.println(this.leftIterator.toString());
+            System.err.println(this.rightIterator.toString());
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!leftResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
+        {
+            System.err.println("Additive: failed because left is not float.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(!rightResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem))
+        {
+            System.err.println("Additive: failed because right is not float.");
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if(this.isMinus)
+        {
+            String resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " - "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
+        } else {
+            String resultingQuery = "( "
+                    + leftResult.getResultingQuery()
+                    + " + "
+                    + rightResult.getResultingQuery()
+                    + " )";
+                return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.booleanItem);
         }
     }
 }
