@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the Rumble shell locally, like so:
 
-    $ spark-submit target/spark-rumble-1.11.0.jar --shell yes
+    $ spark-submit target/spark-rumble-1.12.0.jar --shell yes
 
 The Rumble shell should start:
 
@@ -73,7 +73,7 @@ The Rumble shell should start:
         ____                  __    __   
        / __ \__  ______ ___  / /_  / /__ 
       / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.11.0 "Banyan Tree" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/  1.12.0 "Ashoka Tree" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
 
     Master: local[2]

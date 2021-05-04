@@ -29,6 +29,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
@@ -151,5 +152,16 @@ public class FloatItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        if (Float.isInfinite(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (Float.isNaN(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", BuiltinTypesCatalogue.floatItem);
     }
 }

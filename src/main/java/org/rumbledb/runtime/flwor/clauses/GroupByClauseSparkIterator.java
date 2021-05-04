@@ -41,6 +41,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
+import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseCreateColumnsUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import sparksoniq.jsoniq.tuple.FlworKey;
@@ -376,6 +377,22 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             appendedGroupingColumnsName
         );
 
+        StructType schemaType = df.schema();
+        for (StructField sf : schemaType.fields()) {
+            DataType dataType = sf.dataType();
+            String name = sf.name();
+            if (name.endsWith(".sequence")) {
+                int i = Math.abs(dataType.hashCode());
+                df.sparkSession()
+                    .udf()
+                    .register(
+                        "arraymerge" + i,
+                        new GroupClauseArrayMergeAggregateResultsUDF(),
+                        dataType
+                    );
+            }
+        }
+
         String projectSQL = FlworDataFrameUtils.getGroupBySQLProjection(
             inputSchema,
             -1,
@@ -512,7 +529,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (Map.Entry<Name, DynamicContext.VariableDependency> entry : dependencies.entrySet()) {
             selectString.append(sep);
             sep = ", ";
-            if (FlworDataFrameUtils.isVariableCountOnly(inputSchema, entry.getKey())) {
+            if (FlworDataFrameUtils.isVariableAvailableAsCountOnly(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 selectString.append("sum(`");
                 selectString.append(entry.getKey().toString());
@@ -521,7 +538,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
-            } else if (FlworDataFrameUtils.isVariableNativeSequence(inputSchema, entry.getKey())) {
+            } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 String columnName = entry.getKey().toString();
                 selectString.append("collect_list(`");

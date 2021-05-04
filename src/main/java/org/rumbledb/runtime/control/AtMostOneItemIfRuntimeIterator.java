@@ -28,6 +28,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
@@ -56,5 +58,37 @@ public class AtMostOneItemIfRuntimeIterator extends AtMostOneItemLocalRuntimeIte
         } else {
             return this.children.get(2).materializeFirstItemOrNull(dynamicContext);
         }
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
+        NativeClauseContext conditionResult = this.children.get(0).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext thenResult = this.children.get(1).generateNativeQuery(nativeClauseContext);
+        NativeClauseContext elseResult = this.children.get(2).generateNativeQuery(nativeClauseContext);
+        if (
+            conditionResult == NativeClauseContext.NoNativeQuery
+                || thenResult == NativeClauseContext.NoNativeQuery
+                || elseResult == NativeClauseContext.NoNativeQuery
+        ) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!conditionResult.getResultingType().equals(BuiltinTypesCatalogue.booleanItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!thenResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (!elseResult.getResultingType().equals(BuiltinTypesCatalogue.floatItem)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        String resultingQuery = "( "
+            + "IF( "
+            + conditionResult.getResultingQuery()
+            + ", "
+            + thenResult.getResultingQuery()
+            + ", "
+            + elseResult.getResultingQuery()
+            + " ) )";
+        return new NativeClauseContext(nativeClauseContext, resultingQuery, BuiltinTypesCatalogue.floatItem);
     }
 }
