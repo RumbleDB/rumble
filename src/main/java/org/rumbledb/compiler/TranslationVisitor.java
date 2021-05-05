@@ -443,9 +443,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Item definitionItem = null;
         try {
             definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx));
-        } catch (ParsingException e)
-        {
-            ParsingException pe = new ParsingException("A type definition must be a JSON literal: no dynamic evaluation is allowed.", createMetadataFromContext(ctx));
+        } catch (ParsingException e) {
+            ParsingException pe = new ParsingException(
+                    "A type definition must be a JSON literal: no dynamic evaluation is allowed.",
+                    createMetadataFromContext(ctx)
+            );
             pe.initCause(e);
             throw pe;
         }
