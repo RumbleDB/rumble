@@ -25,7 +25,8 @@ setter                  : defaultCollationDecl
 namespaceDecl           : 'declare' 'namespace' NCName '=' uriLiteral;
                         
 annotatedDecl           : functionDecl
-                        | varDecl;
+                        | varDecl
+                        | typeDecl;
 
 defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
 
@@ -61,6 +62,8 @@ varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':='
 functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
+
+typeDecl                : 'declare' 'type' type_name=qname 'as' type_definition=exprSingle;
 
 paramList               : param (',' param)*;
 
