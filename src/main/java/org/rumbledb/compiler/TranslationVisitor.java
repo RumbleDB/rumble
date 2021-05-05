@@ -39,6 +39,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -95,6 +96,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -119,6 +121,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
@@ -270,6 +273,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // parse variables and function
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
+        List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
             if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
@@ -313,13 +317,39 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 functionDeclarations.add(
                     new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
                 );
+            } else if (annotatedDeclaration.typeDecl() != null) {
+                TypeDeclaration typeDeclaration = (TypeDeclaration) this.visitTypeDecl(
+                    annotatedDeclaration.typeDecl()
+                );
+
+                if (!this.isMainModule) {
+                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
+                    String typeNamespace = typeDeclaration.getName().getNamespace();
+                    if (typeNamespace == null || !typeNamespace.equals(moduleNamespace)) {
+                        throw new NamespaceDoesNotMatchModuleException(
+                                "Function "
+                                    + typeDeclaration.getName().getLocalName()
+                                    + ": namespace "
+                                    + typeNamespace
+                                    + " must match module namespace "
+                                    + moduleNamespace,
+                                generateMetadata(annotatedDeclaration.getStop())
+                        );
+                    }
+                }
+                typeDeclarations.add(typeDeclaration);
             }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
         }
 
-        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        Prolog prolog = new Prolog(
+                globalVariables,
+                functionDeclarations,
+                typeDeclarations,
+                createMetadataFromContext(ctx)
+        );
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
@@ -403,6 +433,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 fnParams,
                 fnReturnType,
                 bodyExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
+        String definitionString = ctx.type_definition.getText();
+        Item definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx));
+        Name name = parseName(ctx.qname(), true, false);
+        return new TypeDeclaration(
+                name,
+                definitionItem,
                 createMetadataFromContext(ctx)
         );
     }

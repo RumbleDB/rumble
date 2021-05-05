@@ -290,7 +290,12 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             this.visitModuleImport(module);
         }
 
-        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        Prolog prolog = new Prolog(
+                globalVariables,
+                functionDeclarations,
+                Collections.emptyList(),
+                createMetadataFromContext(ctx)
+        );
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
