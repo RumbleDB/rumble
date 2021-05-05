@@ -83,7 +83,7 @@ public class TypeDeclaration extends Node {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("declare type " + this.name + " as " + definitionItem + ";\n");
+        sb.append("declare type " + this.name + " as " + this.definitionItem + ";\n");
     }
 
     @Override
