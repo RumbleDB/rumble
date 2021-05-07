@@ -51,6 +51,7 @@ import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
+import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
 import java.sql.Date;
@@ -65,6 +66,11 @@ public class ItemParser implements Serializable {
     private static final long serialVersionUID = 1L;
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
+
+    public static Item getItemFromString(String string, ExceptionMetadata metadata) {
+        JsonReader object = new JsonReader(new StringReader(string));
+        return ItemParser.getItemFromObject(object, metadata);
+    }
 
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         try {

@@ -37,11 +37,13 @@ public class Prolog extends Node {
     public Prolog(
             List<VariableDeclaration> variableDeclarations,
             List<FunctionDeclaration> functionDeclarations,
+            List<TypeDeclaration> typeDeclarations,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         this.declarations = new ArrayList<Node>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
+        this.declarations.addAll(typeDeclarations);
         this.importedModules = new ArrayList<>();
     }
 
@@ -64,6 +66,13 @@ public class Prolog extends Node {
         return this.declarations.stream()
             .filter(x -> x instanceof VariableDeclaration)
             .map(x -> (VariableDeclaration) x)
+            .collect(Collectors.toList());
+    }
+
+    public List<TypeDeclaration> getTypeDeclarations() {
+        return this.declarations.stream()
+            .filter(x -> x instanceof TypeDeclaration)
+            .map(x -> (TypeDeclaration) x)
             .collect(Collectors.toList());
     }
 
