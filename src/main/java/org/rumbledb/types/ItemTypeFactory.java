@@ -8,7 +8,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
-import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.parsing.ItemParser;
 
 import java.util.Collections;
@@ -23,18 +22,18 @@ public class ItemTypeFactory {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
-                throw new ParsingException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
             }
             Name typeName = Name.createVariableInDefaultTypeNamespace(typeString);
             if (!BuiltinTypesCatalogue.typeExists(typeName)) {
-                throw new ParsingException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
             }
             BuiltinTypesCatalogue.getItemTypeByName(typeName);
         }
         if (item.isArray()) {
             List<Item> members = item.getItems();
             if (members.size() != 1) {
-                throw new ParsingException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
             }
             ItemType memberType = createItemTypeFromJSoundCompactItem(members.get(0));
             return new ArrayItemType(
@@ -49,6 +48,7 @@ public class ItemTypeFactory {
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new TreeMap<>();
             for (String key : item.getKeys()) {
+                Item value = item.getItemByKey(key);
                 boolean required = false;
                 if (key.startsWith("!")) {
                     key = key.substring(1);
@@ -60,7 +60,6 @@ public class ItemTypeFactory {
                 if (key.startsWith("@")) {
                     throw new InvalidSchemaException("@ not supported yet", ExceptionMetadata.EMPTY_METADATA);
                 }
-                Item value = item.getItemByKey(key);
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
                 fieldDescriptor.setName(key);
                 fieldDescriptor.setRequired(required);
