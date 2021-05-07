@@ -21,13 +21,13 @@
 package org.rumbledb.expressions.module;
 
 
-import org.rumbledb.api.Item;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.ItemType;
 
 import java.util.Collections;
 import java.util.List;
@@ -35,20 +35,20 @@ import java.util.List;
 public class TypeDeclaration extends Node {
 
     private final Name name;
-    private final Item definitionItem;
+    private final ItemType typeDefinition;
 
     public TypeDeclaration(
             Name name,
-            Item definitionItem,
+            ItemType typeDefinition,
             ExceptionMetadata metadata
     ) {
         super(metadata);
-        this.definitionItem = definitionItem;
+        this.typeDefinition = typeDefinition;
         this.name = name;
     }
 
-    public Item getDefinition() {
-        return this.definitionItem;
+    public ItemType getDefinition() {
+        return this.typeDefinition;
     }
 
     public Name getName() {
@@ -76,14 +76,14 @@ public class TypeDeclaration extends Node {
             buffer.append("  ");
         }
         buffer.append("TypeDeclaration " + this.getName());
-        buffer.append(" as " + this.definitionItem.toString());
+        buffer.append(" as " + this.typeDefinition.toString());
         buffer.append("\n");
     }
 
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("declare type " + this.name + " as " + this.definitionItem + ";\n");
+        sb.append("declare type " + this.name + " as " + this.typeDefinition + ";\n");
     }
 
     @Override

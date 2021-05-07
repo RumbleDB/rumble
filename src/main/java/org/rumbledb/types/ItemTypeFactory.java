@@ -7,6 +7,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.parsing.ItemParser;
 
@@ -48,16 +49,21 @@ public class ItemTypeFactory {
         if (item.isObject()) {
             Map<String, FieldDescriptor> fields = new TreeMap<>();
             for (String key : item.getKeys()) {
+                boolean required = false;
                 if (key.startsWith("!")) {
-                    throw new ParsingException("! not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                    key = key.substring(1);
+                    required = true;
                 }
                 if (key.endsWith("?")) {
-                    throw new ParsingException("? not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                    throw new InvalidSchemaException("? not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                }
+                if (key.startsWith("@")) {
+                    throw new InvalidSchemaException("@ not supported yet", ExceptionMetadata.EMPTY_METADATA);
                 }
                 Item value = item.getItemByKey(key);
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
                 fieldDescriptor.setName(key);
-                fieldDescriptor.setRequired(false);
+                fieldDescriptor.setRequired(required);
                 fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(value));
                 fieldDescriptor.setUnique(false);
                 fieldDescriptor.setDefaultValue(null);
