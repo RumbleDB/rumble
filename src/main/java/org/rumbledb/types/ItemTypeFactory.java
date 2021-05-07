@@ -4,13 +4,77 @@ import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.items.parsing.ItemParser;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 public class ItemTypeFactory {
+
+    public static ItemType createItemTypeFromJSoundCompactItem(Item item) {
+        if (item.isString()) {
+            String typeString = item.getStringValue();
+            if (typeString.contains("=")) {
+                throw new ParsingException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
+            }
+            Name typeName = Name.createVariableInDefaultTypeNamespace(typeString);
+            if (!BuiltinTypesCatalogue.typeExists(typeName)) {
+                throw new ParsingException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
+            }
+            BuiltinTypesCatalogue.getItemTypeByName(typeName);
+        }
+        if (item.isArray()) {
+            List<Item> members = item.getItems();
+            if (members.size() != 1) {
+                throw new ParsingException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
+            }
+            ItemType memberType = createItemTypeFromJSoundCompactItem(members.get(0));
+            return new ArrayItemType(
+                    null,
+                    BuiltinTypesCatalogue.arrayItem,
+                    new ArrayContentDescriptor(memberType),
+                    null,
+                    null,
+                    Collections.emptyList()
+            );
+        }
+        if (item.isObject()) {
+            Map<String, FieldDescriptor> fields = new TreeMap<>();
+            for (String key : item.getKeys()) {
+                if (key.startsWith("!")) {
+                    throw new ParsingException("! not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                }
+                if (key.endsWith("?")) {
+                    throw new ParsingException("? not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                }
+                Item value = item.getItemByKey(key);
+                FieldDescriptor fieldDescriptor = new FieldDescriptor();
+                fieldDescriptor.setName(key);
+                fieldDescriptor.setRequired(false);
+                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(value));
+                fieldDescriptor.setUnique(false);
+                fieldDescriptor.setDefaultValue(null);
+                fields.put(key, fieldDescriptor);
+            }
+            return new ObjectItemType(
+                    null,
+                    BuiltinTypesCatalogue.objectItem,
+                    false,
+                    fields,
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        }
+        return null;
+    }
+
     /**
      * @param signature of the wanted function item type
      * @return a function item type with the given signature
