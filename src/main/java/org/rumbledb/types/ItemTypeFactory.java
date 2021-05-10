@@ -68,7 +68,6 @@ public class ItemTypeFactory {
                 fieldDescriptor.setDefaultValue(null);
                 fields.put(key, fieldDescriptor);
             }
-            System.err.println("Object type : " + BuiltinTypesCatalogue.objectItem);
             return new ObjectItemType(
                     name,
                     BuiltinTypesCatalogue.objectItem,
