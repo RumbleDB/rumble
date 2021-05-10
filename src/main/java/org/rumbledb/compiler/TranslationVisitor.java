@@ -452,7 +452,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             pe.initCause(e);
             throw pe;
         }
-        Name name = parseName(ctx.qname(), true, false);
+        Name name = parseName(ctx.qname(), false, true);
         ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem);
         return new TypeDeclaration(
                 type,
