@@ -92,6 +92,7 @@ public enum ErrorCode {
 
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
+    InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
