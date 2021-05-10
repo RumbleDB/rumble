@@ -44,7 +44,6 @@ public class Prolog extends Node {
         this.declarations = new ArrayList<Node>(variableDeclarations);
         this.declarations.addAll(functionDeclarations);
         this.declarations.addAll(typeDeclarations);
-        System.err.println(this.declarations.size() + "declarations.");
         this.importedModules = new ArrayList<>();
     }
 
@@ -78,12 +77,10 @@ public class Prolog extends Node {
     }
 
     public void setDeclarations(List<Node> declarations) {
-        System.err.println("Setting.");
         this.declarations = declarations;
     }
 
     public void clearDeclarations() {
-        System.err.println("Clearing.");
         this.declarations.clear();
     }
 
@@ -92,7 +89,6 @@ public class Prolog extends Node {
         List<Node> result = new ArrayList<>();
         result.addAll(this.importedModules);
         result.addAll(this.declarations);
-        System.err.println(result.size() + "children." + this.hashCode());
         return result;
     }
 

@@ -337,7 +337,6 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         );
                     }
                 }
-                System.err.println("Add declaration: " + typeDeclaration);
                 typeDeclarations.add(typeDeclaration);
             }
         }
