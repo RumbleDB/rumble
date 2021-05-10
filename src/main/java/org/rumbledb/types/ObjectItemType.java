@@ -44,7 +44,6 @@ public class ObjectItemType implements ItemType {
             List<String> constraints,
             List<Item> enumeration
     ) {
-        System.err.println("Base type : " + baseType);
         this.name = name;
         this.isClosed = isClosed;
         this.content = content == null ? Collections.emptyMap() : content;
