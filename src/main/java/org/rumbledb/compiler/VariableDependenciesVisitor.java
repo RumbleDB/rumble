@@ -56,6 +56,7 @@ import org.rumbledb.expressions.flowr.SimpleMapExpression;
 import org.rumbledb.expressions.flowr.WhereClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.DynamicFunctionCallExpression;
 import org.rumbledb.expressions.postfix.FilterExpression;
@@ -450,6 +451,21 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 );
             }
         }
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            visit(typeDeclaration, null);
+            nameToNodeMap.put(typeDeclaration.getDefinition().getName(), typeDeclaration);
+            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
+                System.err.print(typeDeclaration.getDefinition().getName().toString());
+                System.err.println(
+                    String.join(
+                        ", ",
+                        getInputVariableDependencies(typeDeclaration).stream()
+                            .map(x -> x.toString())
+                            .collect(Collectors.toList())
+                    )
+                );
+            }
+        }
         return nameToNodeMap;
     }
 
@@ -494,6 +510,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 }
             }
         }
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            dependencyGraph.addVertex(typeDeclaration);
+        }
         return dependencyGraph;
     }
 
@@ -525,6 +544,12 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression));
+        return null;
+    }
+
+    @Override
+    public Void visitTypeDeclaration(TypeDeclaration expression, Void argument) {
+        addInputVariableDependencies(expression, Collections.emptySet());
         return null;
     }
 }

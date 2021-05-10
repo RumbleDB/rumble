@@ -15,6 +15,7 @@ public class FieldDescriptor {
     }
 
     public void setType(ItemType type) {
+        System.err.println("Setting type: " + type);
         this.type = type;
     }
 

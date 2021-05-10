@@ -18,7 +18,7 @@ import java.util.TreeMap;
 
 public class ItemTypeFactory {
 
-    public static ItemType createItemTypeFromJSoundCompactItem(Item item) {
+    public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item) {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
@@ -28,14 +28,14 @@ public class ItemTypeFactory {
             if (!BuiltinTypesCatalogue.typeExists(typeName)) {
                 throw new InvalidSchemaException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
             }
-            BuiltinTypesCatalogue.getItemTypeByName(typeName);
+            return BuiltinTypesCatalogue.getItemTypeByName(typeName);
         }
         if (item.isArray()) {
             List<Item> members = item.getItems();
             if (members.size() != 1) {
                 throw new InvalidSchemaException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
             }
-            ItemType memberType = createItemTypeFromJSoundCompactItem(members.get(0));
+            ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0));
             return new ArrayItemType(
                     null,
                     BuiltinTypesCatalogue.arrayItem,
@@ -63,13 +63,14 @@ public class ItemTypeFactory {
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
                 fieldDescriptor.setName(key);
                 fieldDescriptor.setRequired(required);
-                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(value));
+                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(null, value));
                 fieldDescriptor.setUnique(false);
                 fieldDescriptor.setDefaultValue(null);
                 fields.put(key, fieldDescriptor);
             }
+            System.err.println("Object type : " + BuiltinTypesCatalogue.objectItem);
             return new ObjectItemType(
-                    null,
+                    name,
                     BuiltinTypesCatalogue.objectItem,
                     false,
                     fields,
@@ -77,7 +78,7 @@ public class ItemTypeFactory {
                     Collections.emptyList()
             );
         }
-        return null;
+        throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
     /**
