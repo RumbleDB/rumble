@@ -402,10 +402,10 @@ public interface ItemType extends Serializable {
      * @return a String that uniquely identify an item type
      */
     default String getIdentifierString() {
-        if (this.hasName()) {
-            return this.getName().toString();
+        if (!this.hasName()) {
+            return "<anonymous>";
         }
-        throw new UnsupportedOperationException("default implementation of uniqueString always requires a Name");
+        return this.getName().toString();
     }
 
     String toString();

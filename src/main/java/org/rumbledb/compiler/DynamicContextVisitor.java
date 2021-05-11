@@ -40,12 +40,14 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -235,6 +237,14 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 "External variable value is not provided!",
                 variableDeclaration.getMetadata()
         );
+    }
+
+    @Override
+    public DynamicContext visitTypeDeclaration(TypeDeclaration declaration, DynamicContext argument) {
+        ItemType type = declaration.getDefinition();
+        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+
+        return argument;
     }
 
     @Override

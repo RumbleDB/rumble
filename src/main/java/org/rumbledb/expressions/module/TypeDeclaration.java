@@ -22,7 +22,6 @@ package org.rumbledb.expressions.module;
 
 
 import org.rumbledb.compiler.VisitorConfig;
-import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
@@ -34,25 +33,18 @@ import java.util.List;
 
 public class TypeDeclaration extends Node {
 
-    private final Name name;
     private final ItemType typeDefinition;
 
     public TypeDeclaration(
-            Name name,
             ItemType typeDefinition,
             ExceptionMetadata metadata
     ) {
         super(metadata);
         this.typeDefinition = typeDefinition;
-        this.name = name;
     }
 
     public ItemType getDefinition() {
         return this.typeDefinition;
-    }
-
-    public Name getName() {
-        return this.name;
     }
 
     @Override
@@ -75,7 +67,7 @@ public class TypeDeclaration extends Node {
         for (int i = 0; i < indent; ++i) {
             buffer.append("  ");
         }
-        buffer.append("TypeDeclaration " + this.getName());
+        buffer.append("TypeDeclaration " + this.typeDefinition.getName());
         buffer.append(" as " + this.typeDefinition.toString());
         buffer.append("\n");
     }
@@ -83,7 +75,7 @@ public class TypeDeclaration extends Node {
     @Override
     public void serializeToJSONiq(StringBuffer sb, int indent) {
         indentIt(sb, indent);
-        sb.append("declare type " + this.name + " as " + this.typeDefinition + ";\n");
+        sb.append("declare type " + this.typeDefinition.getName() + " as " + this.typeDefinition + ";\n");
     }
 
     @Override

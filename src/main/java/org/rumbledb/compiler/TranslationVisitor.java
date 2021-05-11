@@ -324,11 +324,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
                 if (!this.isMainModule) {
                     String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
-                    String typeNamespace = typeDeclaration.getName().getNamespace();
+                    String typeNamespace = typeDeclaration.getDefinition().getName().getNamespace();
                     if (typeNamespace == null || !typeNamespace.equals(moduleNamespace)) {
                         throw new NamespaceDoesNotMatchModuleException(
-                                "Function "
-                                    + typeDeclaration.getName().getLocalName()
+                                "Type "
+                                    + typeDeclaration.getDefinition().getName().getLocalName()
                                     + ": namespace "
                                     + typeNamespace
                                     + " must match module namespace "
@@ -451,10 +451,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             pe.initCause(e);
             throw pe;
         }
-        Name name = parseName(ctx.qname(), true, false);
-        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(definitionItem);
+        Name name = parseName(ctx.qname(), false, true);
+        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem);
         return new TypeDeclaration(
-                name,
                 type,
                 createMetadataFromContext(ctx)
         );

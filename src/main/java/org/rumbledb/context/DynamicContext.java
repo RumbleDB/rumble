@@ -42,6 +42,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration conf;
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
+    private InScopeSchemaTypes inScopeSchemaTypes;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -63,6 +64,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.variableValues = new VariableValues();
         this.conf = conf;
         this.namedFunctions = new NamedFunctions();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -189,6 +191,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return this.parent.getModuleContext();
         }
         return this;
+    }
+
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in dynamic context.");
     }
 
 }
