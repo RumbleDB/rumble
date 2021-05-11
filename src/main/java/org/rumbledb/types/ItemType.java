@@ -23,7 +23,9 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.io.Serializable;
 import java.util.List;
@@ -414,5 +416,13 @@ public interface ItemType extends Serializable {
         throw new UnsupportedOperationException(
                 "toDataFrameType method is not supported for " + this.toString() + " item types"
         );
+    }
+
+    default boolean isResolved() {
+        return true;
+    }
+
+    default void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        return;
     }
 }
