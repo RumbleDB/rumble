@@ -46,6 +46,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -304,6 +305,10 @@ public abstract class AbstractNodeVisitor<T> {
     public T visitFunctionDeclaration(FunctionDeclaration expression, T argument) {
         return defaultAction(expression, argument);
     }
-    // endregion
+
+    public T visitTypeDeclaration(TypeDeclaration expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
 
 }

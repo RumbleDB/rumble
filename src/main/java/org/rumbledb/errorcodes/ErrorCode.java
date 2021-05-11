@@ -92,6 +92,7 @@ public enum ErrorCode {
 
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
+    InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
@@ -101,6 +102,7 @@ public enum ErrorCode {
     DuplicateModuleTargetNamespace("XQST0047"),
     NamespaceDoesNotMatchModule("XQST0048"),
     VariableAlreadyExists("XQST0049"),
+    UndefinedTypeErrorCode("XQST0051"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
     MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),
