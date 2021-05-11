@@ -24,7 +24,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -59,6 +58,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
+        }
         if (!this.child.isRDDOrDataFrame()) {
             List<Item> items = new ArrayList<>();
             this.child.open(dynamicContext);
@@ -189,6 +191,6 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
         if (itemType.isFunctionItemType()) {
             return itemToMatch.isFunction();
         }
-        throw new OurBadException("Type unrecognized: " + itemType);
+        return itemToMatch.getDynamicType().isSubtypeOf(itemType);
     }
 }

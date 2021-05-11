@@ -20,6 +20,8 @@
 
 package org.rumbledb.types;
 
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
@@ -55,6 +57,20 @@ public class SequenceType implements Serializable {
         this.itemType = null;
         this.arity = null;
         this.isEmptySequence = true;
+    }
+
+    public boolean isResolved() {
+        if (this.isEmptySequence) {
+            return true;
+        }
+        return this.itemType.isResolved();
+    }
+
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (this.isEmptySequence) {
+            return;
+        }
+        this.itemType.resolve(context, metadata);
     }
 
     public boolean isEmptySequence() {

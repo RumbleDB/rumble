@@ -133,6 +133,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
 
@@ -1243,7 +1244,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
+        Name name = parseName(itemTypeContext.qname(), false, true);
+        if (!BuiltinTypesCatalogue.typeExists(name)) {
+            return new ItemTypeReference(name);
+        }
+        return BuiltinTypesCatalogue.getItemTypeByName(name);
     }
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
