@@ -138,6 +138,7 @@ import org.rumbledb.runtime.primary.NullRuntimeIterator;
 import org.rumbledb.runtime.primary.ObjectConstructorRuntimeIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
@@ -847,16 +848,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getMetadata()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
-        // Commented out until we can annotate validated sequences.
-        /*RuntimeIterator resultIterator = new TreatIterator(
+        RuntimeIterator resultIterator = new TreatIterator(
                 runtimeIterator,
-                expression.getSequenceType(),
+                new SequenceType(BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
                 ErrorCode.UnexpectedTypeErrorCode,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
-        resultIterator.setStaticContext(expression.getStaticContext());*/
-        return runtimeIterator;
+        resultIterator.setStaticContext(expression.getStaticContext());
+        return resultIterator;
     }
 
     @Override
