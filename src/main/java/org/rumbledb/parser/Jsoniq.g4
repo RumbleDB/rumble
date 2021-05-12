@@ -171,9 +171,9 @@ arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=fun
 unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
 valueExpr               : simpleMap_expr=simpleMapExpr
-                        | validateExpr=validateExpr;
+                        | validate_expr=validateExpr;
 
-validateExpr            : 'validate' 'type' '{' Expr '}';
+validateExpr            : 'validate' 'type' sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
