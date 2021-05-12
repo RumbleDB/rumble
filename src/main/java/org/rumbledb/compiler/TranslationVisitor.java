@@ -51,6 +51,7 @@ import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
@@ -442,6 +443,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
         String definitionString = ctx.type_definition.getText();
         Item definitionItem = null;
+        if (definitionString.trim().startsWith("\"")) {
+            throw new InvalidSchemaException(
+                    "The schema definition must be an object.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (definitionString.trim().startsWith("[")) {
+            throw new InvalidSchemaException(
+                    "Schema definitions for top-level array types are not supported yet. Please let us know if you would like for us to prioritize this feature.",
+                    createMetadataFromContext(ctx)
+            );
+        }
         try {
             definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx));
         } catch (ParsingException e) {
