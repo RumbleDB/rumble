@@ -122,6 +122,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -1002,7 +1003,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
-        return this.visitExpr(ctx.expr());
+        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
+        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+        return new ValidateTypeExpression(mainExpr, sequenceType, createMetadataFromContext(ctx));
     }
     // endregion
 

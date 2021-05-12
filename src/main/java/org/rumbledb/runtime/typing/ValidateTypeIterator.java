@@ -1,4 +1,4 @@
-package sparksoniq.spark;
+package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -9,26 +9,79 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
-import org.rumbledb.context.Name;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
-import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.ItemType;
+
+import sparksoniq.spark.DataFrameUtils;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
-public class DataFrameUtils {
-    public static Dataset<Row> convertItemRDDToDataFrame(
+public class ValidateTypeIterator extends DataFrameRuntimeIterator {
+
+    private static final long serialVersionUID = 1L;
+
+    private ItemType itemType;
+
+    public ValidateTypeIterator(
+            RuntimeIterator instance,
+            ItemType itemType,
+            ExecutionMode executionMode,
+            ExceptionMetadata iteratorMetadata
+    ) {
+        super(Collections.singletonList(instance), executionMode, iteratorMetadata);
+        this.itemType = itemType;
+    }
+
+    @Override
+    public Dataset<Row> getDataFrame(DynamicContext context) {
+        RuntimeIterator inputDataIterator = this.children.get(0);
+
+        try {
+
+            if (inputDataIterator.isDataFrame()) {
+                Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                validateItemTypeAgainstDataFrame(
+                    itemType,
+                    inputDataAsDataFrame.schema()
+                );
+                return inputDataAsDataFrame;
+            }
+
+            if (inputDataIterator.isRDDOrDataFrame()) {
+                JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
+                return convertRDDToValidDataFrame(rdd, itemType);
+            }
+
+            List<Item> items = inputDataIterator.materialize(context);
+            return convertLocalItemsToValidDataFrame(items, itemType);
+        } catch (MLInvalidDataFrameSchemaException ex) {
+            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+                    "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
+                    getMetadata()
+            );
+            e.initCause(ex);
+            throw e;
+        }
+    }
+
+    private static Dataset<Row> convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
-            Item schemaItem
+            ItemType itemType
     ) {
         Item firstDataItem = (Item) itemRDD.take(1).get(0);
-        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        checkForValidity(itemType, firstDataItem);
+        StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {
                 private static final long serialVersionUID = 1L;
@@ -42,40 +95,11 @@ public class DataFrameUtils {
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
     }
 
-    public static boolean isSequenceOfObjects(Dataset<Row> dataFrame) {
-        StructType schema = dataFrame.schema();
-        List<String> fieldNames = Arrays.asList(schema.fieldNames());
-        return fieldNames.size() != 1 || !fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName);
-    }
-
-    public static List<String> getFields(Dataset<Row> dataFrame) {
-        if (!isSequenceOfObjects(dataFrame)) {
-            throw new OurBadException("Cannot get fields if the sequence is not a sequence of objects.");
-        }
-        StructType schema = dataFrame.schema();
-        List<String> fieldNames = Arrays.asList(schema.fieldNames());
-        return fieldNames;
-    }
-
-    public static Dataset<Row> convertLocalItemsToDataFrame(
-            List<Item> items,
-            Item schemaItem
-    ) {
-        if (items.size() == 0) {
-            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
-        }
-        ObjectItem firstDataItem = (ObjectItem) items.get(0);
-        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
-        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
-        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
-    }
-
-    private static void validateSchemaAgainstAnItem(
-            Item schemaItem,
+    private static void checkForValidity(
+            ItemType itemType,
             Item dataItem
     ) {
-        for (String schemaColumn : schemaItem.getKeys()) {
+        for (String schemaColumn : itemType.getObjectContentFacet().keySet()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Fields defined in schema must fully match the fields of input data: "
@@ -87,7 +111,7 @@ public class DataFrameUtils {
         }
 
         for (String dataColumn : dataItem.getKeys()) {
-            if (!schemaItem.getKeys().contains(dataColumn)) {
+            if (!itemType.getObjectContentFacet().keySet().contains(dataColumn)) {
                 throw new MLInvalidDataFrameSchemaException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
@@ -98,13 +122,19 @@ public class DataFrameUtils {
         }
     }
 
-    private static StructType generateDataFrameSchemaFromSchemaItem(Item schemaItem) {
+    private static StructType convertToDataFrameSchema(ItemType itemType) {
+        if (!itemType.isObjectItemType()) {
+            throw new MLInvalidDataFrameSchemaException(
+                    "Error while checking against the DataFrame schema: it is not an object type: " + itemType
+            );
+
+        }
         List<StructField> fields = new ArrayList<>();
         try {
-            for (String columnName : schemaItem.getKeys()) {
-                StructField field = generateStructFieldFromNameAndItem(
+            for (String columnName : itemType.getObjectContentFacet().keySet()) {
+                StructField field = createStructField(
                     columnName,
-                    schemaItem.getItemByKey(columnName)
+                    itemType.getObjectContentFacet().get(columnName).getType()
                 );
                 fields.add(field);
             }
@@ -118,56 +148,45 @@ public class DataFrameUtils {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
-        DataType type = generateDataTypeFromItem(item);
+    private static StructField createStructField(String columnName, ItemType item) {
+        DataType type = convertToDataType(item);
         return DataTypes.createStructField(columnName, type, true);
     }
 
-    private static DataType generateDataTypeFromItem(Item item) {
-        if (item.isArray()) {
-            validateArrayItemInSchema(item);
-            Item arrayContentsTypeItem = item.getItemAt(0);
-            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
+    private static DataType convertToDataType(ItemType itemType) {
+        if (itemType.isArrayItemType()) {
+            ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet().getType();
+            DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType);
             return DataTypes.createArrayType(arrayContentsType);
         }
 
-        if (item.isObject()) {
-            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
+        if (itemType.isObjectItemType()) {
+            return convertToDataFrameSchema(itemType);
         }
 
-        if (item.isString()) {
-            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(
-                Name.createVariableInDefaultTypeNamespace(item.getStringValue())
-            );
-            return ItemParser.getDataFrameDataTypeFromItemType(itemType);
-        }
-
-        throw new MLInvalidDataFrameSchemaException(
-                "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
-        );
+        return ItemParser.getDataFrameDataTypeFromItemType(itemType);
     }
 
-    private static void validateArrayItemInSchema(Item item) {
-        List<Item> arrayTypes = item.getItems();
-        if (arrayTypes.size() == 0) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Arrays in schema must define a type for their contents."
-            );
+    private static Dataset<Row> convertLocalItemsToValidDataFrame(
+            List<Item> items,
+            ItemType itemType
+    ) {
+        if (items.size() == 0) {
+            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
         }
-        if (arrayTypes.size() > 1) {
-            throw new MLInvalidDataFrameSchemaException(
-                    "Arrays in schema can define only a single type for their contents: "
-                        + item.serialize()
-                        + " is invalid."
-            );
-        }
+        ObjectItem firstDataItem = (ObjectItem) items.get(0);
+        checkForValidity(itemType, firstDataItem);
+        StructType schema = convertToDataFrameSchema(itemType);
+        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
     }
 
-    public static void validateSchemaItemAgainstDataFrame(
-            Item schemaItem,
+
+    private static void validateItemTypeAgainstDataFrame(
+            ItemType itemType,
             StructType dataFrameSchema
     ) {
-        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        StructType generatedSchema = convertToDataFrameSchema(itemType);
         for (StructField column : dataFrameSchema.fields()) {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
@@ -179,7 +198,7 @@ public class DataFrameUtils {
                 }
 
                 DataType generatedDataType = structField.dataType();
-                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
+                if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
                     return true;
                 }
 
@@ -219,16 +238,4 @@ public class DataFrameUtils {
         }
     }
 
-    public static boolean isUserTypeApplicable(
-            DataType userSchemaColumnDataType,
-            DataType columnDataType
-    ) {
-        return userSchemaColumnDataType.equals(columnDataType)
-            ||
-            (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
-            ||
-            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
-            ||
-            (userSchemaColumnDataType.equals(DataTypes.IntegerType) && columnDataType.equals(DataTypes.ShortType));
-    }
 }

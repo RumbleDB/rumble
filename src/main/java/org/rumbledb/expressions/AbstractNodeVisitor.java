@@ -310,5 +310,9 @@ public abstract class AbstractNodeVisitor<T> {
         return defaultAction(expression, argument);
     }
 
+    public T visitValidateTypeExpression(ValidateTypeExpression expression, T argument) {
+        return defaultAction(expression, argument);
+    }
+
 
 }
