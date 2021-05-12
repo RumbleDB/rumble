@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(false, false, false)" :)
+(:JIQS: ShouldRun; Output="(false, false, false, false)" :)
 import module namespace typeModule = "typeModule.jq";
 declare type local:x as { "foo" : "integer" };
 declare type local:y as { "foo" : [ "integer" ] };
