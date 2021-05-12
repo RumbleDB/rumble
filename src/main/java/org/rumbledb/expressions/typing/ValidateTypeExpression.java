@@ -11,7 +11,6 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 public class ValidateTypeExpression extends Expression {
 
@@ -25,9 +24,9 @@ public class ValidateTypeExpression extends Expression {
         }
         this.mainExpression = mainExpression;
         this.sequenceType = sequenceType;
-        if (sequenceType.getArity() != Arity.OneOrZero && sequenceType.getArity() != Arity.One) {
+        if (sequenceType.isEmptySequence()) {
             throw new OurBadException(
-                    "Cast expressions cannot have an arity of more than one, something went wrong with the parser."
+                    "It is not possible to validate against the empty sequence type. Please use empty() instead to check for emptiness."
             );
         }
     }

@@ -46,13 +46,16 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
     @Override
     public Dataset<Row> getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.children.get(0);
+        if (!this.itemType.isResolved()) {
+            this.itemType.resolve(context, getMetadata());
+        }
 
         try {
 
             if (inputDataIterator.isDataFrame()) {
                 Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 validateItemTypeAgainstDataFrame(
-                    itemType,
+                    this.itemType,
                     inputDataAsDataFrame.schema()
                 );
                 return inputDataAsDataFrame;
@@ -60,11 +63,11 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, itemType);
+                return convertRDDToValidDataFrame(rdd, this.itemType);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return convertLocalItemsToValidDataFrame(items, itemType);
+            return convertLocalItemsToValidDataFrame(items, this.itemType);
         } catch (MLInvalidDataFrameSchemaException ex) {
             MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),

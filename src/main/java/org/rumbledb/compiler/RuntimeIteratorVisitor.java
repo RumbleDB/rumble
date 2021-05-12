@@ -847,15 +847,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                 expression.getMetadata()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
-        RuntimeIterator resultIterator = new TreatIterator(
+        // Commented out until we can annotate validated sequences.
+        /*RuntimeIterator resultIterator = new TreatIterator(
                 runtimeIterator,
                 expression.getSequenceType(),
                 ErrorCode.UnexpectedTypeErrorCode,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
-        runtimeIterator.setStaticContext(expression.getStaticContext());
-        return resultIterator;
+        resultIterator.setStaticContext(expression.getStaticContext());*/
+        return runtimeIterator;
     }
 
     @Override
