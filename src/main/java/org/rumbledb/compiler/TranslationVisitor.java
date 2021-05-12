@@ -974,7 +974,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitValueExpr(ctx.main_expr);
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
         }
@@ -989,6 +989,20 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 negated,
                 createMetadataFromContext(ctx)
         );
+    }
+
+
+    @Override
+    public Node visitValueExpr(JsoniqParser.ValueExprContext ctx) {
+        if (ctx.simpleMap_expr != null) {
+            return this.visitSimpleMapExpr(ctx.simpleMap_expr);
+        }
+        return this.visitValidateExpr(ctx.validate_expr);
+    }
+
+    @Override
+    public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
+        return this.visitExpr(ctx.expr());
     }
     // endregion
 

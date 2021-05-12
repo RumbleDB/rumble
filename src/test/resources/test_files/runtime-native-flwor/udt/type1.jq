@@ -2,4 +2,6 @@
 declare type local:x as { "foo" : "integer" };
 declare type local:y as { "foo" : [ "integer" ] };
 declare type local:z as { "!foo" : [ "integer" ] };
-2+2
+validate type local:x* {
+  { "foo" : 2 }
+}
