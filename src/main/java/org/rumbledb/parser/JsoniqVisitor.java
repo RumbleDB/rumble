@@ -362,6 +362,18 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitUnaryExpr(JsoniqParser.UnaryExprContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#valueExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValueExpr(JsoniqParser.ValueExprContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#validateExpr}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitValidateExpr(JsoniqParser.ValidateExprContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#simpleMapExpr}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
