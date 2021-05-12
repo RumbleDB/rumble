@@ -168,7 +168,12 @@ castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 
 arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
 
-unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
+unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
+
+valueExpr               : simpleMap_expr=simpleMapExpr
+                        | validateExpr=validateExpr;
+
+validateExpr            : 'validate' 'type' '{' Expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
