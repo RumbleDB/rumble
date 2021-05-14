@@ -51,6 +51,7 @@ import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
@@ -121,6 +122,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
@@ -442,6 +444,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     public Node visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
         String definitionString = ctx.type_definition.getText();
         Item definitionItem = null;
+        if (definitionString.trim().startsWith("\"")) {
+            throw new InvalidSchemaException(
+                    "The schema definition must be an object.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (definitionString.trim().startsWith("[")) {
+            throw new InvalidSchemaException(
+                    "Schema definitions for top-level array types are not supported yet. Please let us know if you would like for us to prioritize this feature.",
+                    createMetadataFromContext(ctx)
+            );
+        }
         try {
             definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx));
         } catch (ParsingException e) {
@@ -961,7 +975,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitValueExpr(ctx.main_expr);
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
         }
@@ -976,6 +990,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 negated,
                 createMetadataFromContext(ctx)
         );
+    }
+
+
+    @Override
+    public Node visitValueExpr(JsoniqParser.ValueExprContext ctx) {
+        if (ctx.simpleMap_expr != null) {
+            return this.visitSimpleMapExpr(ctx.simpleMap_expr);
+        }
+        return this.visitValidateExpr(ctx.validate_expr);
+    }
+
+    @Override
+    public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
+        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
+        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+        return new ValidateTypeExpression(mainExpr, sequenceType, createMetadataFromContext(ctx));
     }
     // endregion
 
