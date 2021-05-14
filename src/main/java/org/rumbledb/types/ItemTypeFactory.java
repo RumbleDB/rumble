@@ -80,6 +80,73 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    public static ItemType createItemTypeFromJSoundItem(Name name, Item item) {
+        if (item.isString()) {
+            String typeString = item.getStringValue();
+            if (typeString.contains("=")) {
+                throw new InvalidSchemaException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
+            }
+            Name typeName = Name.createVariableInDefaultTypeNamespace(typeString);
+            if (!BuiltinTypesCatalogue.typeExists(typeName)) {
+                throw new InvalidSchemaException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
+            }
+            return BuiltinTypesCatalogue.getItemTypeByName(typeName);
+        }
+        if (!item.isObject()) {
+            throw new InvalidSchemaException(
+                    "Invalid JSound type definition, a type descriptor must be a string or an object: " + item,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (item.getItemByKey("kind").getStringValue().equals("array")) {
+            Item memberTypeDescriptor = item.getItemByKey("content");
+            ItemType memberType = createItemTypeFromJSoundCompactItem(null, memberTypeDescriptor);
+            return new ArrayItemType(
+                    null,
+                    BuiltinTypesCatalogue.arrayItem,
+                    new ArrayContentDescriptor(memberType),
+                    null,
+                    null,
+                    Collections.emptyList()
+            );
+        }
+        if (item.getItemByKey("kind").getStringValue().equals("array")) {
+            Item contentDescriptor = item.getItemByKey("content");
+            Map<String, FieldDescriptor> fields = new TreeMap<>();
+            for (Item fieldDescriptorItem : contentDescriptor.getItems()) {
+                String key = fieldDescriptorItem.getItemByKey("key").getStringValue();
+                List<String> keys = fieldDescriptorItem.getKeys();
+                Item value = item.getItemByKey(key);
+                boolean required = false;
+                if (keys.contains("required") && fieldDescriptorItem.getItemByKey("required").getBooleanValue()) {
+                    required = true;
+                }
+                if (keys.contains("unique") && fieldDescriptorItem.getItemByKey("unique").getBooleanValue()) {
+                    throw new InvalidSchemaException(
+                            "unique property not supported yet",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                FieldDescriptor fieldDescriptor = new FieldDescriptor();
+                fieldDescriptor.setName(key);
+                fieldDescriptor.setRequired(required);
+                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(null, value));
+                fieldDescriptor.setUnique(false);
+                fieldDescriptor.setDefaultValue(null);
+                fields.put(key, fieldDescriptor);
+            }
+            return new ObjectItemType(
+                    name,
+                    BuiltinTypesCatalogue.objectItem,
+                    false,
+                    fields,
+                    Collections.emptyList(),
+                    Collections.emptyList()
+            );
+        }
+        throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
+    }
+
     /**
      * @param signature of the wanted function item type
      * @return a function item type with the given signature
