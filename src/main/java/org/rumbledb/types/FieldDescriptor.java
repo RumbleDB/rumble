@@ -1,8 +1,13 @@
 package org.rumbledb.types;
 
+import java.io.Serializable;
+
 import org.rumbledb.api.Item;
 
-public class FieldDescriptor {
+public class FieldDescriptor implements Serializable {
+
+    private static final long serialVersionUID = 1L;
+
     public String name;
     private ItemType type;
     private boolean required = false;
@@ -53,5 +58,25 @@ public class FieldDescriptor {
 
     public boolean requiredIsSet() {
         return this.requiredIsSet;
+    }
+
+    @Override
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Field " + this.name + " of type " + this.type);
+        if (this.isRequired()) {
+            sb.append(", required");
+        } else {
+            sb.append(", not required");
+        }
+        if (this.isUnique()) {
+            sb.append(", unique");
+        } else {
+            sb.append(", not unique");
+        }
+        if (this.defaultValue != null) {
+            sb.append(", default value: " + this.defaultValue);
+        }
+        return sb.toString();
     }
 }
