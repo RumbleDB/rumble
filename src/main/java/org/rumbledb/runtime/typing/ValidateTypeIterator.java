@@ -169,8 +169,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             StructField field = schema.fields()[fieldIndex];
             String fieldName = field.name();
             FieldDescriptor fieldDescriptor = null;
-            if(itemType != null)
-            {
+            if (itemType != null) {
                 fieldDescriptor = itemType.getObjectContentFacet().get(fieldName);
             }
             Object rowColumn = convertColumn(item, fieldDescriptor, field);
@@ -183,14 +182,13 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
-        if (fieldDescriptor != null &&  fieldDescriptor.isRequired() && columnValueItem == null) {
+        if (fieldDescriptor != null && fieldDescriptor.isRequired() && columnValueItem == null) {
             throw new MLInvalidDataFrameSchemaException(
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
         try {
-            if(columnValueItem == null)
-            {
+            if (columnValueItem == null) {
                 return null;
             }
             return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
