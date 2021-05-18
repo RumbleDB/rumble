@@ -14,6 +14,7 @@ import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
@@ -35,7 +36,7 @@ public class DataFrameUtils {
 
                 @Override
                 public Row call(Item item) {
-                    return ItemParser.getRowFromItemUsingSchema(item, schema);
+                    return ValidateTypeIterator.convertLocalItemToRow(item, null, schema);
                 }
             }
         );
@@ -67,8 +68,17 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+        List<Row> rows = getRowsFromItemsUsingSchema(items, null, schema);
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+    }
+
+    private static List<Row> getRowsFromItemsUsingSchema(List<Item> items, ItemType itemType, StructType schema) {
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            Row row = ValidateTypeIterator.convertLocalItemToRow(item, itemType, schema);
+            rows.add(row);
+        }
+        return rows;
     }
 
     private static void validateSchemaAgainstAnItem(
