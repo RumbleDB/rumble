@@ -48,6 +48,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -200,22 +201,22 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             } else {
                 item = ItemFactory.getInstance().createStringItem(value);
             }
-            items.add(item);
-            if (
-                variableDeclaration.getSequenceType().isEmptySequence()
-                    || !InstanceOfIterator.doesItemTypeMatchItem(
-                        variableDeclaration.getSequenceType().getItemType(),
-                        item
-                    )
-            ) {
+            if (!items.isEmpty() && variableDeclaration.getSequenceType().isEmptySequence()) {
                 throw new UnexpectedTypeException(
-                        "External variable value ("
-                            + value
-                            + ") does not match the expected type ("
-                            + variableDeclaration.getSequenceType()
-                            + ").",
+                        "External variable value has declare typed () but items were provided.",
                         variableDeclaration.getMetadata()
                 );
+            }
+            ItemType itemType = variableDeclaration.getSequenceType().getItemType();
+            if (
+                !InstanceOfIterator.doesItemTypeMatchItem(
+                    itemType,
+                    item
+                )
+            ) {
+                items.add(CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata()));
+            } else {
+                items.add(item);
             }
             argument.getVariableValues()
                 .addVariableValue(
