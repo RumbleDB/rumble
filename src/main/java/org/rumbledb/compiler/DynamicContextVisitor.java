@@ -200,23 +200,43 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
                 item = ItemFactory.getInstance().createStringItem(value);
+                ItemType itemType = variableDeclaration.getSequenceType().getItemType();
+                if (
+                    !InstanceOfIterator.doesItemTypeMatchItem(
+                        itemType,
+                        item
+                    )
+                ) {
+                    Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
+                    if (castItem == null) {
+                        throw new UnexpectedTypeException(
+                                "External variable value ("
+                                    + item.serialize()
+                                    + ") does not match the expected type ("
+                                    + variableDeclaration.getSequenceType()
+                                    + ").",
+                                variableDeclaration.getMetadata()
+                        );
+                    }
+                    item = castItem;
+                }
             }
-            if (!items.isEmpty() && variableDeclaration.getSequenceType().isEmptySequence()) {
+            items.add(item);
+            if (
+                variableDeclaration.getSequenceType().isEmptySequence()
+                    || !InstanceOfIterator.doesItemTypeMatchItem(
+                        variableDeclaration.getSequenceType().getItemType(),
+                        item
+                    )
+            ) {
                 throw new UnexpectedTypeException(
-                        "External variable value has declare typed () but items were provided.",
+                        "External variable value ("
+                            + item.serialize()
+                            + ") does not match the expected type ("
+                            + variableDeclaration.getSequenceType()
+                            + ").",
                         variableDeclaration.getMetadata()
                 );
-            }
-            ItemType itemType = variableDeclaration.getSequenceType().getItemType();
-            if (
-                !InstanceOfIterator.doesItemTypeMatchItem(
-                    itemType,
-                    item
-                )
-            ) {
-                items.add(CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata()));
-            } else {
-                items.add(item);
             }
             argument.getVariableValues()
                 .addVariableValue(
