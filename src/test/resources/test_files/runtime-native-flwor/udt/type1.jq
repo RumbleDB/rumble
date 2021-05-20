@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, Success, Success, Success, Success, Success)" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, Success, Success, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ], "bar" : 4 }, { })" :)
 declare type local:x as { "foo" : "integer" };
 declare type local:y as { "foo" : [ "integer" ] };
 declare type local:z as { "!foo" : [ "integer" ] };
@@ -41,4 +41,9 @@ try {
   }
 } catch XQDY0027 {
   "Success"
+},
+validate type local:y* {
+  { "foo" : [ 2 ] },
+  { "foo" : [ 3, 4 ], "bar" : 4 },
+  { }
 }
