@@ -10,7 +10,7 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
@@ -87,7 +87,7 @@ public class DataFrameUtils {
     ) {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
                             + schemaColumn
@@ -98,7 +98,7 @@ public class DataFrameUtils {
 
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + dataColumn
@@ -119,7 +119,7 @@ public class DataFrameUtils {
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
-            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+            InvalidInstanceException e = new InvalidInstanceException(
                     "Error while applying the schema; " + ex.getMessage()
             );
             e.initCause(ex);
@@ -152,7 +152,7 @@ public class DataFrameUtils {
             return ItemParser.getDataFrameDataTypeFromItemType(itemType);
         }
 
-        throw new MLInvalidDataFrameSchemaException(
+        throw new InvalidInstanceException(
                 "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
         );
     }
@@ -160,12 +160,12 @@ public class DataFrameUtils {
     private static void validateArrayItemInSchema(Item item) {
         List<Item> arrayTypes = item.getItems();
         if (arrayTypes.size() == 0) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Arrays in schema must define a type for their contents."
             );
         }
         if (arrayTypes.size() > 1) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Arrays in schema can define only a single type for their contents: "
                         + item.serialize()
                         + " is invalid."
@@ -193,7 +193,7 @@ public class DataFrameUtils {
                     return true;
                 }
 
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "expected '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
@@ -206,7 +206,7 @@ public class DataFrameUtils {
             });
 
             if (!columnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + columnName
@@ -219,7 +219,7 @@ public class DataFrameUtils {
             boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
 
             if (!userColumnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
                             + generatedSchemaColumnName

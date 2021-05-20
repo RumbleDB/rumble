@@ -22,21 +22,21 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class MLInvalidDataFrameSchemaException extends RumbleException {
+public class InvalidInstanceException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public MLInvalidDataFrameSchemaException(String message) {
+    public InvalidInstanceException(String message) {
         super(
             message,
-            ErrorCode.MLInvalidDataFrameSchemaErrorCode
+            ErrorCode.InvalidInstance
         );
     }
 
-    public MLInvalidDataFrameSchemaException(String message, ExceptionMetadata metadata) {
+    public InvalidInstanceException(String message, ExceptionMetadata metadata) {
         super(
             message,
-            ErrorCode.MLInvalidDataFrameSchemaErrorCode,
+            ErrorCode.InvalidInstance,
             metadata
         );
     }
