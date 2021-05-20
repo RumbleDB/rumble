@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, Success, Success, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ], "bar" : 4 }, { })" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, Success, Success, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, { }, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, Success, Success, Success, Success)" :)
 declare type local:x as { "foo" : "integer" };
 declare type local:y as { "foo" : [ "integer" ] };
 declare type local:z as { "!foo" : [ "integer" ] };
@@ -46,4 +46,57 @@ validate type local:y* {
   { "foo" : [ 2 ] },
   { "foo" : [ 3, 4 ], "bar" : 4 },
   { }
+},
+try {
+  validate type local:y* {
+    { "foo" : 2 }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:y* {
+    { "foo" : { "bar" : "foo" } }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:y* {
+    { "foo" : [ "foo" ] }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+validate type local:z* {
+  { "foo" : [ 2 ] },
+  { "foo" : [ 3, 4 ], "bar" : 4 }
+},
+try {
+  validate type local:z* {
+    { "foo" : 2 }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z* {
+    { "foo" : { "bar" : "foo" } }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z* {
+    { "foo" : [ "foo" ] }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z* {
+    { }
+  }
+} catch XQDY0027 {
+  "Success"
 }
