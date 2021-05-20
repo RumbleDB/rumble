@@ -164,18 +164,29 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
     }
 
     public static Row convertLocalItemToRow(Item item, ItemType itemType, StructType schema) {
-        Object[] rowColumns = new Object[schema.fields().length];
-        for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
-            StructField field = schema.fields()[fieldIndex];
-            String fieldName = field.name();
-            FieldDescriptor fieldDescriptor = null;
-            if (itemType != null) {
-                fieldDescriptor = itemType.getObjectContentFacet().get(fieldName);
+        if (itemType == null || itemType.isObjectItemType()) {
+            if (!item.isObject()) {
+                throw new InvalidInstanceException(
+                        "Item " + item.serialize() + " is not an object, but an object was expected."
+                );
             }
-            Object rowColumn = convertColumn(item, fieldDescriptor, field);
-            rowColumns[fieldIndex] = rowColumn;
+            Object[] rowColumns = new Object[schema.fields().length];
+            for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+                StructField field = schema.fields()[fieldIndex];
+                String fieldName = field.name();
+                FieldDescriptor fieldDescriptor = null;
+                if (itemType != null) {
+                    fieldDescriptor = itemType.getObjectContentFacet().get(fieldName);
+                }
+                Object rowColumn = convertColumn(item, fieldDescriptor, field);
+                rowColumns[fieldIndex] = rowColumn;
+            }
+            return RowFactory.create(rowColumns);
         }
-        return RowFactory.create(rowColumns);
+        throw new OurBadException(
+                "We do not support validation against non-object types yet. Please contact us if you would like us to prioritize this feature.",
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 
     private static Object convertColumn(Item item, FieldDescriptor fieldDescriptor, StructField field) {
