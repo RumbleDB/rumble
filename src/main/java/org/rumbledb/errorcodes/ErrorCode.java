@@ -61,7 +61,6 @@ public enum ErrorCode {
     UnrecognizedRumbleMLParamReferenceErrorCode("RBML0002"),
     InvalidRumbleMLParamErrorCode("RBML0003"),
     MLNotADataFrameErrorCode("RBML0004"),
-    MLInvalidDataFrameSchemaErrorCode("RBML0005"),
 
 
     CliErrorCode("RBST0001"),
@@ -90,6 +89,7 @@ public enum ErrorCode {
 
     UnexpectedTypeErrorCode("XPTY0004"),
 
+    InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
     InvalidSchemaErrorCode("XQST0012"),

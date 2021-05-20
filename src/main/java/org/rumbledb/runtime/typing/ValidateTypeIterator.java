@@ -13,7 +13,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
@@ -74,8 +74,8 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             return convertLocalItemsToDataFrame(items, this.itemType);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+        } catch (InvalidInstanceException ex) {
+            InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                     getMetadata()
             );
@@ -104,7 +104,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
 
     private static StructType convertToDataFrameSchema(ItemType itemType) {
         if (!itemType.isObjectItemType()) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Error while checking against the DataFrame schema: it is not an object type: " + itemType
             );
 
@@ -119,7 +119,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
-            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+            InvalidInstanceException e = new InvalidInstanceException(
                     "Error while applying the schema; " + ex.getMessage()
             );
             e.initCause(ex);
@@ -183,7 +183,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
         if (fieldDescriptor != null && fieldDescriptor.isRequired() && columnValueItem == null) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
@@ -192,8 +192,8 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                 return null;
             }
             return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            throw new MLInvalidDataFrameSchemaException(
+        } catch (InvalidInstanceException ex) {
+            throw new InvalidInstanceException(
                     "Data does not fit to the given schema in field '"
                         + fieldName
                         + "'; "
@@ -206,7 +206,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
-                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException("Type mismatch " + dataType);
                 }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
@@ -220,7 +220,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
 
             if (dataType instanceof StructType) {
                 if (!item.isObject()) {
-                    throw new MLInvalidDataFrameSchemaException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException("Type mismatch " + dataType);
                 }
                 return ValidateTypeIterator.convertLocalItemToRow(item, null, (StructType) dataType);
             }
@@ -233,7 +233,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -249,7 +249,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -265,7 +265,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -281,7 +281,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -297,7 +297,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -313,7 +313,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -329,7 +329,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -345,7 +345,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -361,7 +361,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                         ExceptionMetadata.EMPTY_METADATA
                     );
                     if (i == null) {
-                        throw new MLInvalidDataFrameSchemaException(
+                        throw new InvalidInstanceException(
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
@@ -371,7 +371,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             }
         } catch (OurBadException ex) {
             // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
-            throw new MLInvalidDataFrameSchemaException(ex.getJSONiqErrorMessage());
+            throw new InvalidInstanceException(ex.getJSONiqErrorMessage());
         }
 
         throw new OurBadException(
@@ -400,7 +400,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                     return true;
                 }
 
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "expected '"
                             + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
@@ -413,7 +413,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             });
 
             if (!columnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + columnName
@@ -426,7 +426,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
 
             if (!userColumnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
                             + generatedSchemaColumnName

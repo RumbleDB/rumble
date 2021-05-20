@@ -6,7 +6,7 @@ import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
+import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -51,8 +51,8 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
-        } catch (MLInvalidDataFrameSchemaException ex) {
-            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+        } catch (InvalidInstanceException ex) {
+            InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
                     getMetadata()
             );
