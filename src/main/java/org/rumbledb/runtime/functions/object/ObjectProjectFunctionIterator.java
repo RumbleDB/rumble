@@ -22,8 +22,6 @@ package org.rumbledb.runtime.functions.object;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -31,11 +29,12 @@ import org.rumbledb.exceptions.InvalidSelectorException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
-import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -159,13 +158,13 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("object");
-        if (!DataFrameUtils.isSequenceOfObjects(childDataFrame)) {
+        if (!childDataFrame.isSequenceOfObjects()) {
             return childDataFrame;
         }
-        List<String> fieldNames = DataFrameUtils.getFields(childDataFrame);
+        List<String> fieldNames = childDataFrame.getKeys();
 
         List<String> keys = new ArrayList<>();
         this.projectionKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
@@ -176,21 +175,21 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
             }
         }
         if (keys.isEmpty()) {
-            return childDataFrame.sparkSession()
-                .sql(
+            return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT NULL as `%s` FROM object",
                         SparkSessionManager.emptyObjectJSONiqItemColumnName
-                    )
+                    ),
+                    BuiltinTypesCatalogue.objectItem
                 );
         }
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
-        Dataset<Row> result = childDataFrame.sparkSession()
-            .sql(
+        JSoundDataFrame result = childDataFrame.evaluateSQL(
                 String.format(
                     "SELECT %s FROM object",
                     projectionVariables
-                )
+                ),
+                BuiltinTypesCatalogue.objectItem
             );
         return result;
     }
