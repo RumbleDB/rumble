@@ -25,11 +25,10 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 
 import java.io.Serializable;
 import java.util.List;
@@ -80,7 +79,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
             DynamicContext parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, Dataset<Row>> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues
     ) {
         if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");

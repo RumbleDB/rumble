@@ -30,8 +30,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
@@ -41,6 +39,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
@@ -341,7 +340,7 @@ public class NullItem implements Item {
     }
 
     @Override
-    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         throw new OurBadException(" Item '" + this.serialize() + "' is a null!");
     }
 

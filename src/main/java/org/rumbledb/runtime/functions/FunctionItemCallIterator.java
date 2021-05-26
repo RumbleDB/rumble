@@ -21,8 +21,6 @@
 package org.rumbledb.runtime.functions;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -33,6 +31,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.ConstantRuntimeIterator;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -91,7 +90,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, JSoundDataFrame> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 
@@ -197,7 +196,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
         Map<Name, JavaRDD<Item>> RDDArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getRDDVariablesInClosure()
         );
-        Map<Name, Dataset<Row>> DFArgumentValues = new LinkedHashMap<>(
+        Map<Name, JSoundDataFrame> DFArgumentValues = new LinkedHashMap<>(
                 this.functionItem.getDFVariablesInClosure()
         );
 
@@ -330,7 +329,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         if (this.isPartialApplication) {
             throw new OurBadException(
                     "Unexpected program state reached. Partially applied function calls must be evaluated locally."
