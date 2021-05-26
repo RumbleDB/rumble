@@ -39,8 +39,11 @@ public class JSoundDataFrame {
                 if (
                     this.itemType.equals(BuiltinTypesCatalogue.item)
                         || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
+                        || this.itemType.equals(BuiltinTypesCatalogue.arrayItem)
                 ) {
-                    this.itemType = BuiltinTypesCatalogue.arrayItem;
+                    this.itemType = ItemTypeFactory.createArrayTypeWithSparkDataTypeContent(
+                        ((ArrayType) type).elementType()
+                    );
                 }
                 if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
                     this.dataFrame.printSchema();
@@ -48,6 +51,7 @@ public class JSoundDataFrame {
                             "Inconsistency in internal representation: " + this.itemType + " is not an array type."
                     );
                 }
+                return;
             }
             if (type instanceof StructType) {
                 this.dataFrame.printSchema();
@@ -59,7 +63,7 @@ public class JSoundDataFrame {
                 this.itemType.equals(BuiltinTypesCatalogue.item)
                     || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)
             ) {
-                this.itemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, this.dataFrame.schema());
+                this.itemType = ItemParser.convertDataTypeToItemType(type);
             }
 
             if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
@@ -68,9 +72,14 @@ public class JSoundDataFrame {
                         "Inconsistency in internal representation: " + this.itemType + " is not an atomic type."
                 );
             }
+            return;
         }
-        if (this.itemType.equals(BuiltinTypesCatalogue.item) || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)) {
-            this.itemType = BuiltinTypesCatalogue.objectItem;
+        if (
+            this.itemType.equals(BuiltinTypesCatalogue.item)
+                || this.itemType.equals(BuiltinTypesCatalogue.objectItem)
+                || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
+        ) {
+            this.itemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, this.dataFrame.schema());
         }
         if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             this.dataFrame.printSchema();

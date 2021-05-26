@@ -121,4 +121,15 @@ public class ItemTypeFactory {
 
         return new ObjectItemType(objectName, BuiltinTypesCatalogue.objectItem, true, content, null, null);
     }
+
+    public static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                new ArrayContentDescriptor(ItemParser.convertDataTypeToItemType(type)),
+                null,
+                null,
+                null
+        );
+    }
 }
