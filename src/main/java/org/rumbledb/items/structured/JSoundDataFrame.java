@@ -18,7 +18,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
-import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 public class JSoundDataFrame {
@@ -28,6 +27,41 @@ public class JSoundDataFrame {
     public JSoundDataFrame(Dataset<Row> dataFrame, ItemType itemType) {
         this.dataFrame = dataFrame;
         this.itemType = itemType;
+        StructType schema = this.dataFrame.schema();
+        String[] fieldNames = schema.fieldNames();
+        if (
+            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
+        ) {
+            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
+            StructField field = schema.fields()[i];
+            DataType type = field.dataType();
+            if (type instanceof ArrayType) {
+                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
+                    this.dataFrame.printSchema();
+                    throw new OurBadException(
+                            "Inconsistency in internal representation: " + this.itemType + " is not an array type."
+                    );
+                }
+            }
+            if (type instanceof StructType) {
+                this.dataFrame.printSchema();
+                throw new OurBadException(
+                        "Inconsistency in internal representation: " + this.itemType + " is an object type."
+                );
+            }
+            if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
+                this.dataFrame.printSchema();
+                throw new OurBadException(
+                        "Inconsistency in internal representation: " + this.itemType + " is not an atomic type."
+                );
+            }
+        }
+        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
+            this.dataFrame.printSchema();
+            throw new OurBadException(
+                    "Inconsistency in internal representation: " + this.itemType + " is not an object type."
+            );
+        }
     }
 
     public JSoundDataFrame(Dataset<Row> dataFrame) {
@@ -59,83 +93,14 @@ public class JSoundDataFrame {
     }
 
     public List<String> getKeys() {
-        if (!isSequenceOfObjects()) {
+        if (!this.itemType.isObjectItemType()) {
             throw new OurBadException("Cannot get the keys if the sequence is not a sequence of objects.");
         }
-        return Arrays.asList(dataFrame.schema().fieldNames());
+        return Arrays.asList(this.dataFrame.schema().fieldNames());
     }
 
     public void createOrReplaceTempView(String name) {
         this.dataFrame.createOrReplaceTempView(name);
-    }
-
-    public boolean isSequenceOfObjects() {
-        return DataFrameUtils.isSequenceOfObjects(this.dataFrame);
-    }
-
-    public boolean isSequenceOfArrays() {
-        StructType schema = this.dataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (
-            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
-        ) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof ArrayType) {
-                if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
-                    throw new OurBadException(
-                            "Inconsistency in internal representation: " + this.itemType + " is not an array type."
-                    );
-                }
-                return true;
-            }
-            if (type instanceof StructType) {
-                throw new OurBadException("Inconsistency in internal representation: expecting atomic or array.");
-            }
-            if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-                throw new OurBadException(
-                        "Inconsistency in internal representation: " + this.itemType + " is not an atomic type."
-                );
-            }
-            return false;
-        }
-        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
-            throw new OurBadException(
-                    "Inconsistency in internal representation: " + this.itemType + " is an array type."
-            );
-        }
-        return false;
-    }
-
-    public boolean isSequenceOfAtomics() {
-        StructType schema = this.dataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (
-            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
-        ) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof ArrayType) {
-                return false;
-            }
-            if (type instanceof StructType) {
-                throw new OurBadException("Inconsistency in internal representation: expecting atomic or array.");
-            }
-            if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-                throw new OurBadException(
-                        "Inconsistency in internal representation: " + this.itemType + " is not an atomic type."
-                );
-            }
-            return true;
-        }
-        if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
-            throw new OurBadException(
-                    "Inconsistency in internal representation: " + this.itemType + " is an atomic type."
-            );
-        }
-        return false;
     }
 
     public JSoundDataFrame evaluateSQL(String sqlQuery, ItemType outputType) {

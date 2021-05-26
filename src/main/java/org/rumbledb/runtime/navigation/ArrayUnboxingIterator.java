@@ -162,7 +162,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("array");
-        if (childDataFrame.isSequenceOfArrays()) {
+        if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(

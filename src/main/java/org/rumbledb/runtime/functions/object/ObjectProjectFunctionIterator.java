@@ -161,7 +161,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("object");
-        if (!childDataFrame.isSequenceOfObjects()) {
+        if (!childDataFrame.getItemType().isObjectItemType()) {
             return childDataFrame;
         }
         List<String> fieldNames = childDataFrame.getKeys();

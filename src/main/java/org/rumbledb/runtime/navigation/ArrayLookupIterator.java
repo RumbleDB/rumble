@@ -197,7 +197,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
         childDataFrame.createOrReplaceTempView("array");
-        if (childDataFrame.isSequenceOfArrays()) {
+        if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
             if (elementType instanceof StructType) {
                 return childDataFrame.evaluateSQL(
