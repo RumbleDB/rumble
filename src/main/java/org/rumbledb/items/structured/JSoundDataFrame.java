@@ -104,7 +104,13 @@ public class JSoundDataFrame {
     }
 
     public JSoundDataFrame evaluateSQL(String sqlQuery, ItemType outputType) {
-        return new JSoundDataFrame(this.dataFrame.sparkSession().sql(sqlQuery), outputType);
+        Dataset<Row> resultDF = this.dataFrame.sparkSession().sql(sqlQuery);
+        ItemType type = outputType;
+        if(type.equals(BuiltinTypesCatalogue.item))
+        {
+            type = ItemTypeFactory.createItemTypeFromSparkStructType(null, resultDF.schema());
+        }
+        return new JSoundDataFrame(resultDF, type);
     }
 
     public boolean isEmptySequence() {

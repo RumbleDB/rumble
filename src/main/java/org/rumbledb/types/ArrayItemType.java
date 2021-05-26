@@ -45,7 +45,11 @@ public class ArrayItemType implements ItemType {
         this.name = name;
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-        this.content = content;
+        if (content == null) {
+            this.content = new ArrayContentDescriptor(BuiltinTypesCatalogue.item);
+        } else {
+            this.content = content;
+        }
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.enumeration = enumeration;
