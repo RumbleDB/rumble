@@ -62,6 +62,13 @@ public class JSoundDataFrame {
                     "Inconsistency in internal representation: " + this.itemType + " is not an object type."
             );
         }
+        if (
+            itemType.equals(BuiltinTypesCatalogue.item)
+                || itemType.equals(BuiltinTypesCatalogue.objectItem)
+                || itemType.equals(BuiltinTypesCatalogue.arrayItem)
+        ) {
+            this.itemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, this.dataFrame.schema());
+        }
     }
 
     public JSoundDataFrame(Dataset<Row> dataFrame) {
@@ -106,7 +113,11 @@ public class JSoundDataFrame {
     public JSoundDataFrame evaluateSQL(String sqlQuery, ItemType outputType) {
         Dataset<Row> resultDF = this.dataFrame.sparkSession().sql(sqlQuery);
         ItemType type = outputType;
-        if (type.equals(BuiltinTypesCatalogue.item)) {
+        if (
+            type.equals(BuiltinTypesCatalogue.item)
+                || type.equals(BuiltinTypesCatalogue.objectItem)
+                || type.equals(BuiltinTypesCatalogue.arrayItem)
+        ) {
             type = ItemTypeFactory.createItemTypeFromSparkStructType(null, resultDF.schema());
         }
         return new JSoundDataFrame(resultDF, type);
