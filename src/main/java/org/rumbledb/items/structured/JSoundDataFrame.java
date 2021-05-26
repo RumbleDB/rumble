@@ -154,4 +154,8 @@ public class JSoundDataFrame {
         String[] fieldNames = schema.fieldNames();
         return Arrays.asList(fieldNames).contains(key);
     }
+
+    public List<Row> take(int n) {
+        return Arrays.asList((Row[]) this.dataFrame.take(n));
+    }
 }

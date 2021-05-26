@@ -39,6 +39,8 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -293,7 +295,11 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         }
         childDataFrame.createOrReplaceTempView("object");
         if (childDataFrame.hasKey(key)) {
-            ItemType type = childDataFrame.getItemType().getObjectContentFacet().get(key).getType();
+            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
+            ItemType type = BuiltinTypesCatalogue.item;
+            if (fieldDescriptor != null) {
+                type = fieldDescriptor.getType();
+            }
             if (type.isObjectItemType()) {
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
                     String.format("SELECT `%s`.* FROM object", key),

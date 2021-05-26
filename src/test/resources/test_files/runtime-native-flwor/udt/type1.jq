@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, Success, Success, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, { }, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, Success, Success, Success, Success)" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, true, Success, Success, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, { }, Success, Success, Success, { "foo" : [ 2 ] }, { "foo" : [ 3, 4 ] }, Success, Success, Success, Success)" :)
 declare type local:x as { "foo" : "integer" };
 declare type local:y as { "foo" : [ "integer" ] };
 declare type local:z as { "!foo" : [ "integer" ] };
@@ -7,6 +7,11 @@ validate type local:x* {
   { "foo" : 3, "bar" : 4 },
   { }
 },
+validate type local:x* {
+  { "foo" : 2 },
+  { "foo" : 3, "bar" : 4 },
+  { }
+} instance of local:x+,
 try {
   validate type local:x* {
     { "foo" : "foo" }
