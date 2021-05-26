@@ -7,7 +7,11 @@ import java.util.List;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataType;
+import org.rumbledb.api.Item;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
@@ -70,5 +74,22 @@ public class JSoundDataFrame {
     public JSoundDataFrame evaluateSQL(String sqlQuery, ItemType outputType)
     {
         return new JSoundDataFrame(this.dataFrame.sparkSession().sql(sqlQuery), outputType);
+    }
+    
+    public boolean isEmptySequence()
+    {
+        return this.dataFrame.isEmpty();
+    }
+    
+    public Item getExactlyOneItem()
+    {
+        List<Row> result = this.dataFrame.takeAsList(1);
+        DataType fieldType = this.dataFrame.schema().fields()[0].dataType();
+        return ItemParser.convertValueToItem(result.get(0).get(0), fieldType, ExceptionMetadata.EMPTY_METADATA);
+    }
+    
+    public JSoundDataFrame distinct()
+    {
+        return new JSoundDataFrame(this.dataFrame.distinct(), this.itemType);
     }
 }

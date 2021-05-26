@@ -17,6 +17,7 @@ import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
@@ -190,14 +191,13 @@ public class TreatIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-        int count = df.takeAsList(1).size();
-        checkEmptySequence(count);
-        if (count == 0) {
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        checkEmptySequence(df.isEmptySequence()?0:1);
+        if (df.isEmptySequence()) {
             return df;
         }
-        ItemType dataItemType = getItemType(df);
+        ItemType dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }

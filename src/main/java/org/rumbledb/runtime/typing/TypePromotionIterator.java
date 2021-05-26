@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
@@ -160,29 +161,28 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-        int count = df.takeAsList(1).size();
-        checkEmptySequence(count);
-        if (count == 0) {
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        checkEmptySequence(df.isEmptySequence()?0:1);
+        if (df.isEmptySequence()) {
             return df;
         }
-        ItemType dataItemType = TreatIterator.getItemType(df);
+        ItemType dataItemType = df.getItemType();
         if (
             dataItemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
                 && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
         ) {
             df.createOrReplaceTempView("input");
-            df = df.sparkSession()
-                .sql(
+            df = df.evaluateSQL(
                     "SELECT CAST (`"
                         + SparkSessionManager.atomicJSONiqItemColumnName
                         + "` AS double) AS `"
                         + SparkSessionManager.atomicJSONiqItemColumnName
-                        + "` FROM input"
+                        + "` FROM input",
+                        this.itemType
                 );
         }
-        dataItemType = TreatIterator.getItemType(df);
+        dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.itemType)) {
             return df;
         }

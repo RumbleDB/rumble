@@ -33,10 +33,12 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -168,22 +170,20 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        Dataset<Row> df = iterator.getDataFrame(context);
-        if (df.isEmpty()) {
+        JSoundDataFrame df = iterator.getDataFrame(context);
+        if (df.isEmptySequence()) {
             return zeroElement;
         }
         df.createOrReplaceTempView("input");
-        Dataset<Row> summedDF = df.sparkSession()
-            .sql(
+        JSoundDataFrame summedDF = df.evaluateSQL(
                 String.format(
                     "SELECT SUM(`%s`) as `%s` FROM input",
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     SparkSessionManager.atomicJSONiqItemColumnName
-                )
+                ),
+                df.getItemType()
             );
-        List<Row> result = summedDF.takeAsList(1);
-        DataType fieldType = summedDF.schema().fields()[0].dataType();
-        return ItemParser.convertValueToItem(result.get(0).get(0), fieldType, metadata);
+        return summedDF.getExactlyOneItem();
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
