@@ -193,7 +193,7 @@ public class TreatIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
-        checkEmptySequence(df.isEmptySequence()?0:1);
+        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
         }

@@ -5,8 +5,6 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -247,7 +245,10 @@ public class RumbleMLUtils {
         vectorAssembler.setOutputCol(outputColumnName);
 
         try {
-            return new JSoundDataFrame(vectorAssembler.transform(inputDataset.getDataFrame()), BuiltinTypesCatalogue.objectItem);
+            return new JSoundDataFrame(
+                    vectorAssembler.transform(inputDataset.getDataFrame()),
+                    BuiltinTypesCatalogue.objectItem
+            );
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "

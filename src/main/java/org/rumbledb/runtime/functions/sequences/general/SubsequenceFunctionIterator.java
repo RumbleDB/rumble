@@ -103,18 +103,23 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         df.createOrReplaceTempView("input");
         if (this.length != -1) {
             df = df.evaluateSQL(
-                    String.format(
-                        "SELECT * FROM input LIMIT %s",
-                        Integer.toString(this.startPosition + this.length - 1)
-                    ),
-                    df.getItemType()
-                );
+                String.format(
+                    "SELECT * FROM input LIMIT %s",
+                    Integer.toString(this.startPosition + this.length - 1)
+                ),
+                df.getItemType()
+            );
         }
 
-        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(df.getDataFrame(), 1L, SparkSessionManager.temporaryColumnName);
+        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
+            df.getDataFrame(),
+            1L,
+            SparkSessionManager.temporaryColumnName
+        );
 
         ds.createOrReplaceTempView("input");
-        ds = ds.sparkSession().sql(
+        ds = ds.sparkSession()
+            .sql(
                 String.format(
                     "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
                     selectSQL,

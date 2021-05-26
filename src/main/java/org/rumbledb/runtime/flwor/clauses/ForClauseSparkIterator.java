@@ -753,7 +753,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
-            Dataset<Row> rows = iterator.getDataFrame(context);
+            Dataset<Row> rows = iterator.getDataFrame(context).getDataFrame();
 
             rows.createOrReplaceTempView("assignment");
             if (DataFrameUtils.isSequenceOfObjects(rows)) {

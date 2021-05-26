@@ -1,8 +1,6 @@
 package sparksoniq.spark.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -48,11 +46,17 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return new JSoundDataFrame(DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem), BuiltinTypesCatalogue.objectItem);
+                return new JSoundDataFrame(
+                        DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem),
+                        BuiltinTypesCatalogue.objectItem
+                );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return new JSoundDataFrame(DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem), BuiltinTypesCatalogue.objectItem);
+            return new JSoundDataFrame(
+                    DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem),
+                    BuiltinTypesCatalogue.objectItem
+            );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),

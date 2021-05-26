@@ -2,7 +2,6 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
@@ -100,7 +99,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                 }
             }
         );
-        return new JSoundDataFrame(SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema), itemType);
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
+                itemType
+        );
     }
 
     private static StructType convertToDataFrameSchema(ItemType itemType) {
@@ -153,7 +155,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             ItemType itemType
     ) {
         if (items.size() == 0) {
-            return new JSoundDataFrame(SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(), itemType);
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    itemType
+            );
         }
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
@@ -161,7 +166,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             Row row = convertLocalItemToRow(item, itemType, schema);
             rows.add(row);
         }
-        return new JSoundDataFrame(SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema), itemType);
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
+                itemType
+        );
     }
 
     public static Row convertLocalItemToRow(Item item, ItemType itemType, StructType schema) {

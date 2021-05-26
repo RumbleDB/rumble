@@ -176,21 +176,21 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         }
         if (keys.isEmpty()) {
             return childDataFrame.evaluateSQL(
-                    String.format(
-                        "SELECT NULL as `%s` FROM object",
-                        SparkSessionManager.emptyObjectJSONiqItemColumnName
-                    ),
-                    BuiltinTypesCatalogue.objectItem
-                );
-        }
-        String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
-        JSoundDataFrame result = childDataFrame.evaluateSQL(
                 String.format(
-                    "SELECT %s FROM object",
-                    projectionVariables
+                    "SELECT NULL as `%s` FROM object",
+                    SparkSessionManager.emptyObjectJSONiqItemColumnName
                 ),
                 BuiltinTypesCatalogue.objectItem
             );
+        }
+        String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
+        JSoundDataFrame result = childDataFrame.evaluateSQL(
+            String.format(
+                "SELECT %s FROM object",
+                projectionVariables
+            ),
+            BuiltinTypesCatalogue.objectItem
+        );
         return result;
     }
 }

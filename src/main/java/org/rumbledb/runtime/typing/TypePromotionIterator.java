@@ -2,8 +2,6 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -163,7 +161,7 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
-        checkEmptySequence(df.isEmptySequence()?0:1);
+        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
         }
@@ -174,13 +172,13 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         ) {
             df.createOrReplaceTempView("input");
             df = df.evaluateSQL(
-                    "SELECT CAST (`"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
-                        + "` AS double) AS `"
-                        + SparkSessionManager.atomicJSONiqItemColumnName
-                        + "` FROM input",
-                        this.itemType
-                );
+                "SELECT CAST (`"
+                    + SparkSessionManager.atomicJSONiqItemColumnName
+                    + "` AS double) AS `"
+                    + SparkSessionManager.atomicJSONiqItemColumnName
+                    + "` FROM input",
+                this.itemType
+            );
         }
         dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.itemType)) {

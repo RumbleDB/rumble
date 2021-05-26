@@ -22,23 +22,22 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
@@ -160,41 +159,31 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("array");
-        StructType schema = childDataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (
-            fieldNames.length == 1 && Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)
-        ) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof ArrayType) {
-                ArrayType arrayType = (ArrayType) type;
-                DataType elementType = arrayType.elementType();
-                if (elementType instanceof StructType) {
-                    return childDataFrame.sparkSession()
-                        .sql(
-                            String.format(
-                                "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName
-                            )
-                        );
-                }
-                return childDataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT explode(`%s`) AS `%s` FROM array",
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            SparkSessionManager.atomicJSONiqItemColumnName
-                        )
-                    );
+        if (childDataFrame.isSequenceOfArrays()) {
+            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
+            if (elementType.isObjectItemType()) {
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName
+                    ),
+                    elementType
+                );
             }
+            return childDataFrame.evaluateSQL(
+                String.format(
+                    "SELECT explode(`%s`) AS `%s` FROM array",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName
+                ),
+                elementType
+            );
         }
-        return childDataFrame.sparkSession().emptyDataFrame();
+        return JSoundDataFrame.emptyDataFrame();
     }
 }

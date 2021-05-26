@@ -21,9 +21,6 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -32,13 +29,11 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -176,13 +171,13 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         }
         df.createOrReplaceTempView("input");
         JSoundDataFrame summedDF = df.evaluateSQL(
-                String.format(
-                    "SELECT SUM(`%s`) as `%s` FROM input",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName
-                ),
-                df.getItemType()
-            );
+            String.format(
+                "SELECT SUM(`%s`) as `%s` FROM input",
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.atomicJSONiqItemColumnName
+            ),
+            df.getItemType()
+        );
         return summedDF.getExactlyOneItem();
     }
 
