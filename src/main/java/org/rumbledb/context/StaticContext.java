@@ -46,6 +46,7 @@ public class StaticContext implements Serializable, KryoSerializable {
     private transient Map<Name, InScopeVariable> inScopeVariables;
     private transient Map<String, String> staticallyKnownNamespaces;
     private transient UserDefinedFunctionExecutionModes userDefinedFunctionExecutionModes;
+    private transient InScopeSchemaTypes inScopeSchemaTypes;
     private StaticContext parent;
     private URI staticBaseURI;
     private boolean emptySequenceOrderLeast;
@@ -78,6 +79,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
         this.configuration = null;
+        this.inScopeSchemaTypes = null;
     }
 
     public StaticContext(URI staticBaseURI, RumbleRuntimeConfiguration configuration) {
@@ -89,6 +91,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = true;
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
     }
 
     public StaticContext(StaticContext parent) {
@@ -98,6 +101,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.contextItemStaticType = null;
         this.staticallyKnownFunctionSignatures = new HashMap<>();
         this.configuration = null;
+        this.inScopeSchemaTypes = null;
     }
 
     public StaticContext getParent() {
@@ -368,5 +372,15 @@ public class StaticContext implements Serializable, KryoSerializable {
         for (String prefix : defaultBindings.keySet()) {
             bindNamespace(prefix, defaultBindings.get(prefix));
         }
+    }
+
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in static context.");
     }
 }

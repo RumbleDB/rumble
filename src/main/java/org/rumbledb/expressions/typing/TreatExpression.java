@@ -61,9 +61,8 @@ public class TreatExpression extends Expression {
             !sequenceType.isEmptySequence()
                 && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
         ) {
-            return ExecutionMode.RDD;
+            return expression.getHighestExecutionMode(visitorConfig);
         }
         return ExecutionMode.LOCAL;
     }

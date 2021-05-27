@@ -88,6 +88,9 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+        }
         this.resultCount = 0;
         this.iterator.open(this.currentDynamicContextForLocalExecution);
         this.setNextResult();
@@ -161,6 +164,9 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
+        }
         JavaRDD<Item> childRDD = this.iterator.getRDD(dynamicContext);
 
         if (this.sequenceType.getArity() != SequenceType.Arity.ZeroOrMore) {
@@ -192,6 +198,9 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
+        }
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
         checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {

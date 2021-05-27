@@ -510,9 +510,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
                 }
             }
         }
-        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
-            dependencyGraph.addVertex(typeDeclaration);
-        }
         return dependencyGraph;
     }
 
@@ -521,6 +518,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
         Map<Name, Node> nameToNodeMap = buildNameToNodeMap(prolog);
         DirectedAcyclicGraph<Node, DefaultEdge> dependencyGraph = buildDependencyGraph(nameToNodeMap, prolog);
         List<Node> resolvedList = new ArrayList<>();
+        for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
+            resolvedList.add(typeDeclaration);
+        }
         Iterator<Node> iterator = dependencyGraph.iterator();
         while (iterator.hasNext()) {
             Node nextDeclaration = iterator.next();
@@ -544,12 +544,6 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
     public Void visitFunctionDeclaration(FunctionDeclaration expression, Void argument) {
         visit(expression.getExpression(), null);
         addInputVariableDependencies(expression, getInputVariableDependencies(expression));
-        return null;
-    }
-
-    @Override
-    public Void visitTypeDeclaration(TypeDeclaration expression, Void argument) {
-        addInputVariableDependencies(expression, Collections.emptySet());
         return null;
     }
 }
