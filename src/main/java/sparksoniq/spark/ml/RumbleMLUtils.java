@@ -5,8 +5,6 @@ import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -14,6 +12,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -234,8 +233,8 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    public static Dataset<Row> createDataFrameContainingVectorizedColumn(
-            Dataset<Row> inputDataset,
+    public static JSoundDataFrame createDataFrameContainingVectorizedColumn(
+            JSoundDataFrame inputDataset,
             String paramNameExposedToTheUser,
             String[] arrayOfInputColumnNames,
             String outputColumnName,
@@ -246,7 +245,10 @@ public class RumbleMLUtils {
         vectorAssembler.setOutputCol(outputColumnName);
 
         try {
-            return vectorAssembler.transform(inputDataset);
+            return new JSoundDataFrame(
+                    vectorAssembler.transform(inputDataset.getDataFrame()),
+                    BuiltinTypesCatalogue.objectItem
+            );
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "

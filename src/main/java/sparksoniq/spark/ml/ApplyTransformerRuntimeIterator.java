@@ -16,7 +16,9 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
@@ -32,7 +34,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     private String transformerShortName;
     private Transformer transformer;
 
-    private Dataset<Row> inputDataset;
+    private JSoundDataFrame inputDataset;
     private Item paramMapItem;
     private List<String> columnNamesOfGeneratedVectors = new ArrayList<>();
 
@@ -48,7 +50,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         this.inputDataset = getInputDataset(context);
         this.paramMapItem = getParamMapItem(context);
 
@@ -62,11 +64,11 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         );
 
         try {
-            Dataset<Row> result = this.transformer.transform(this.inputDataset, paramMap);
+            Dataset<Row> result = this.transformer.transform(this.inputDataset.getDataFrame(), paramMap);
             for (String name : this.columnNamesOfGeneratedVectors) {
                 result = result.drop(name);
             }
-            return result;
+            return new JSoundDataFrame(result, BuiltinTypesCatalogue.objectItem);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             if (e.getMessage().matches(".*DecimalType.*is not supported.*")) {
                 throw new InvalidRumbleMLParamException(
@@ -88,7 +90,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private Dataset<Row> getInputDataset(DynamicContext context) {
+    private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name transformerInputVariableName = GetTransformerFunctionIterator.transformerParameterNames
             .get(0);
 
@@ -199,7 +201,7 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
     }
 
     private boolean isVectorizationNeededForParam(String specialParamName, String[] paramValue) {
-        StructType schema = this.inputDataset.schema();
+        StructType schema = this.inputDataset.getDataFrame().schema();
         if (paramValue.length == 1) {
             String columnName = paramValue[0];
             DataType columnType;

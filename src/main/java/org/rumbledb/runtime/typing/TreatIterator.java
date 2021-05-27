@@ -16,11 +16,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -186,18 +187,17 @@ public class TreatIterator extends HybridRuntimeIterator {
         if (fields.length == 1 && fields[0].name().equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             dataType = fields[0].dataType();
         }
-        return ItemParser.convertDataTypeToItemType(dataType);
+        return ItemTypeFactory.createItemType(dataType);
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.iterator.getDataFrame(dynamicContext);
-        int count = df.takeAsList(1).size();
-        checkEmptySequence(count);
-        if (count == 0) {
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
+        checkEmptySequence(df.isEmptySequence() ? 0 : 1);
+        if (df.isEmptySequence()) {
             return df;
         }
-        ItemType dataItemType = getItemType(df);
+        ItemType dataItemType = df.getItemType();
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
             return df;
         }

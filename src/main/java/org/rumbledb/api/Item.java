@@ -7,13 +7,12 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FunctionSignature;
@@ -463,7 +462,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    default public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

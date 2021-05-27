@@ -5,8 +5,6 @@ import org.apache.spark.ml.Estimator;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -19,6 +17,7 @@ import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -40,7 +39,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     private String estimatorShortName;
     private Estimator<?> estimator;
 
-    private Dataset<Row> inputDataset;
+    private JSoundDataFrame inputDataset;
     private Item paramMapItem;
 
     public ApplyEstimatorRuntimeIterator(
@@ -72,7 +71,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
 
         Transformer fittedModel;
         try {
-            fittedModel = this.estimator.fit(this.inputDataset, paramMap);
+            fittedModel = this.estimator.fit(this.inputDataset.getDataFrame(), paramMap);
         } catch (IllegalArgumentException | NoSuchElementException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameters provided to "
@@ -86,7 +85,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         return generateTransformerFunctionItem(fittedModel);
     }
 
-    private Dataset<Row> getInputDataset(DynamicContext context) {
+    private JSoundDataFrame getInputDataset(DynamicContext context) {
         Name estimatorInputVariableName = GetEstimatorFunctionIterator.estimatorFunctionParameterNames
             .get(0);
 
@@ -198,7 +197,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private boolean isVectorizationNeededForParam(String specialParamName, String[] paramValue) {
-        StructType schema = this.inputDataset.schema();
+        StructType schema = this.inputDataset.getDataFrame().schema();
         if (paramValue.length == 1) {
             String columnName = paramValue[0];
             DataType columnType;

@@ -1,15 +1,15 @@
 package sparksoniq.spark.ml;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.spark.DataFrameUtils;
 
@@ -28,7 +28,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.children.get(0);
         RuntimeIterator schemaIterator = this.children.get(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
@@ -36,21 +36,27 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         try {
 
             if (inputDataIterator.isDataFrame()) {
-                Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
-                    inputDataAsDataFrame.schema()
+                    inputDataAsDataFrame.getDataFrame().schema()
                 );
                 return inputDataAsDataFrame;
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem);
+                return new JSoundDataFrame(
+                        DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem),
+                        BuiltinTypesCatalogue.objectItem
+                );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem);
+            return new JSoundDataFrame(
+                    DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem),
+                    BuiltinTypesCatalogue.objectItem
+            );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),

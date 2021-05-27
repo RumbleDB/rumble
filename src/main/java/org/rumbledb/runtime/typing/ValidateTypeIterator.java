@@ -2,7 +2,6 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
@@ -17,6 +16,7 @@ import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -50,7 +50,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator inputDataIterator = this.children.get(0);
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
@@ -59,10 +59,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         try {
 
             if (inputDataIterator.isDataFrame()) {
-                Dataset<Row> inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
                 validateItemTypeAgainstDataFrame(
                     this.itemType,
-                    inputDataAsDataFrame.schema()
+                    inputDataAsDataFrame.getDataFrame().schema()
                 );
                 return inputDataAsDataFrame;
             }
@@ -84,7 +84,7 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private static Dataset<Row> convertRDDToValidDataFrame(
+    private static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
             ItemType itemType
     ) {
@@ -99,7 +99,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                 }
             }
         );
-        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema),
+                itemType
+        );
     }
 
     private static StructType convertToDataFrameSchema(ItemType itemType) {
@@ -147,12 +150,15 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
         return ItemParser.getDataFrameDataTypeFromItemType(itemType);
     }
 
-    private static Dataset<Row> convertLocalItemsToDataFrame(
+    private static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType
     ) {
         if (items.size() == 0) {
-            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    itemType
+            );
         }
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
@@ -160,7 +166,10 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
             Row row = convertLocalItemToRow(item, itemType, schema);
             rows.add(row);
         }
-        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+        return new JSoundDataFrame(
+                SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema),
+                itemType
+        );
     }
 
     public static Row convertLocalItemToRow(Item item, ItemType itemType, StructType schema) {

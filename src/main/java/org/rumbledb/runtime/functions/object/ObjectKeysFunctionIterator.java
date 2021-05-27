@@ -22,14 +22,13 @@ package org.rumbledb.runtime.functions.object;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -70,9 +69,8 @@ public class ObjectKeysFunctionIterator extends HybridRuntimeIterator {
     }
 
     private void setResultsFromDF() {
-        Dataset<Row> childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
-        String[] keys = childDF.schema().fieldNames();
-        for (String key : keys) {
+        JSoundDataFrame childDF = this.iterator.getDataFrame(this.currentDynamicContextForLocalExecution);
+        for (String key : childDF.getKeys()) {
             if (
                 !key.equals(SparkSessionManager.emptyObjectJSONiqItemColumnName)
                     && !key.equals(SparkSessionManager.atomicJSONiqItemColumnName)
