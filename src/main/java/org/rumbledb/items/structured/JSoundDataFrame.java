@@ -41,9 +41,7 @@ public class JSoundDataFrame {
                         || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
                         || this.itemType.equals(BuiltinTypesCatalogue.arrayItem)
                 ) {
-                    this.itemType = ItemTypeFactory.createArrayTypeWithSparkDataTypeContent(
-                        ((ArrayType) type).elementType()
-                    );
+                    this.itemType = ItemTypeFactory.createItemType(type);
                 }
                 if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.arrayItem)) {
                     this.dataFrame.printSchema();
@@ -63,7 +61,7 @@ public class JSoundDataFrame {
                 this.itemType.equals(BuiltinTypesCatalogue.item)
                     || this.itemType.equals(BuiltinTypesCatalogue.atomicItem)
             ) {
-                this.itemType = ItemParser.convertDataTypeToItemType(type);
+                this.itemType = ItemTypeFactory.createItemType(type);
             }
 
             if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)) {
@@ -79,7 +77,7 @@ public class JSoundDataFrame {
                 || this.itemType.equals(BuiltinTypesCatalogue.objectItem)
                 || this.itemType.equals(BuiltinTypesCatalogue.JSONItem)
         ) {
-            this.itemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, this.dataFrame.schema());
+            this.itemType = ItemTypeFactory.createItemType(this.dataFrame.schema());
         }
         if (!this.itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             this.dataFrame.printSchema();

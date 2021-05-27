@@ -408,7 +408,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     .read()
                     .parquet(uri.toString())
                     .schema();
-                ItemType schemaItemType = ItemTypeFactory.createItemTypeFromSparkStructType(null, s);
+                ItemType schemaItemType = ItemTypeFactory.createItemType(s);
                 System.out.println(schemaItemType.toString());
                 // TODO : check if arity is correct
                 expression.setInferredSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));

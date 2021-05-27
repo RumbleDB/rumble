@@ -161,43 +161,6 @@ public class ItemParser implements Serializable {
         return convertValueToItem(null, 0, o, fieldType, metadata);
     }
 
-    public static ItemType convertDataTypeToItemType(DataType dt) {
-        if (dt instanceof StructType) {
-            return BuiltinTypesCatalogue.objectItem;
-        }
-        if (dt instanceof ArrayType) {
-            return BuiltinTypesCatalogue.arrayItem;
-        }
-        if (dt.equals(DataTypes.StringType)) {
-            return BuiltinTypesCatalogue.stringItem;
-        } else if (dt.equals(DataTypes.BooleanType)) {
-            return BuiltinTypesCatalogue.booleanItem;
-        } else if (dt.equals(DataTypes.DoubleType)) {
-            return BuiltinTypesCatalogue.doubleItem;
-        } else if (dt.equals(DataTypes.IntegerType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.FloatType)) {
-            return BuiltinTypesCatalogue.floatItem;
-        } else if (dt.equals(decimalType)) {
-            return BuiltinTypesCatalogue.decimalItem;
-        } else if (dt.equals(DataTypes.LongType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.NullType)) {
-            return BuiltinTypesCatalogue.nullItem;
-        } else if (dt.equals(DataTypes.ShortType)) {
-            return BuiltinTypesCatalogue.integerItem;
-        } else if (dt.equals(DataTypes.TimestampType)) {
-            return BuiltinTypesCatalogue.dateTimeItem;
-        } else if (dt.equals(DataTypes.DateType)) {
-            return BuiltinTypesCatalogue.dateItem;
-        } else if (dt.equals(DataTypes.BinaryType)) {
-            return BuiltinTypesCatalogue.hexBinaryItem;
-        } else if (dt instanceof VectorUDT) {
-            return BuiltinTypesCatalogue.arrayItem;
-        }
-        throw new OurBadException("DataFrame type unsupported: " + dt);
-    }
-
     private static Item convertValueToItem(
             Row row,
             int i,

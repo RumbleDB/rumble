@@ -199,7 +199,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         childDataFrame.createOrReplaceTempView("array");
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
-            if (elementType instanceof StructType) {
+            if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
