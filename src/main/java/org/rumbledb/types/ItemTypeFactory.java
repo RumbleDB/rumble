@@ -75,7 +75,7 @@ public class ItemTypeFactory {
             return new ObjectItemType(
                     name,
                     BuiltinTypesCatalogue.objectItem,
-                    false,
+                    true,
                     fields,
                     Collections.emptyList(),
                     Collections.emptyList()
