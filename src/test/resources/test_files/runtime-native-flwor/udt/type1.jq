@@ -17,12 +17,12 @@ validate type local:x* {
   { "foo" : 3 },
   { }
 }).foo instance of integer+,
-(validate type local:y+ {
+(validate type local:y+ { parallelize((
   { "foo" : [ 2 ] },
   { "foo" : [ 3, 4 ] },
   { "foo" : [ ] },
   { }
-}).foo[] instance of integer+,
+))}).foo[] instance of integer+,
 (validate type local:y+ {
   { "foo" : [ 2 ] },
   { "foo" : [ 3, 4 ] },
