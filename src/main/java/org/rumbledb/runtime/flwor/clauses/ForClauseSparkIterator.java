@@ -759,7 +759,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             if (rows.getItemType().isObjectItemType()) {
                 String[] fields = rows.getDataFrame().schema().fieldNames();
                 String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
-                df = rows.getDataFrame().sparkSession()
+                df = rows.getDataFrame()
+                    .sparkSession()
                     .sql(
                         String.format(
                             "SELECT struct(%s) AS `%s` FROM assignment",
@@ -768,7 +769,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         )
                     );
             } else {
-                df = rows.getDataFrame().sparkSession()
+                df = rows.getDataFrame()
+                    .sparkSession()
                     .sql(
                         String.format(
                             "SELECT `%s` AS `%s` FROM assignment",

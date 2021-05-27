@@ -23,7 +23,6 @@ package org.rumbledb.compiler;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -84,9 +83,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
+            if (!paramEntry.getValue().isResolved()) {
+                paramEntry.getValue().resolve(argument, expression.getMetadata());
+            }
+        }
+        if (!expression.getReturnType().isResolved()) {
+            expression.getReturnType().resolve(argument, expression.getMetadata());
         }
         RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);

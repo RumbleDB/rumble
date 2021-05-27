@@ -83,6 +83,7 @@ public enum ErrorCode {
     StaticallyInferredEmptySequenceNotFromCommaExpression("XPST0005"),
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
+    UndefinedTypeErrorCode("XPST0051"),
     CastableErrorCode("XPST0080"),
     PrefixCannotBeExpandedErrorCode("XPST0081"),
 
@@ -102,7 +103,6 @@ public enum ErrorCode {
     DuplicateModuleTargetNamespace("XQST0047"),
     NamespaceDoesNotMatchModule("XQST0048"),
     VariableAlreadyExists("XQST0049"),
-    UndefinedTypeErrorCode("XQST0051"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
     MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),

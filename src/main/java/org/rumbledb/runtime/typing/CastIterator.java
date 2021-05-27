@@ -46,9 +46,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
-        if(!this.sequenceType.getItemType().isAtomicItemType())
-        {
-            throw new UnknownCastTypeException("The type " + this.sequenceType.getItemType().getIdentifierString() + " is not atomic. Cast can only be used with atomic types.", getMetadata());
+        if (!this.sequenceType.getItemType().isAtomicItemType()) {
+            throw new UnknownCastTypeException(
+                    "The type "
+                        + this.sequenceType.getItemType().getIdentifierString()
+                        + " is not atomic. Cast can only be used with atomic types.",
+                    getMetadata()
+            );
         }
         Item item;
         try {
