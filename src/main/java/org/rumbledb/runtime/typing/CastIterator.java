@@ -8,6 +8,7 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
@@ -42,6 +43,13 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
+        }
+        if(!this.sequenceType.getItemType().isAtomicItemType())
+        {
+            throw new UnknownCastTypeException("The type " + this.sequenceType.getItemType().getIdentifierString() + " is not atomic. Cast can only be used with atomic types.", getMetadata());
+        }
         Item item;
         try {
             item = this.child.materializeAtMostOneItemOrNull(dynamicContext);

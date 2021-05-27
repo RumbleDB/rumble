@@ -6,6 +6,7 @@ import org.rumbledb.exceptions.CastableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -38,6 +39,13 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
     ) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(dynamicContext, getMetadata());
+        }
+        if(!this.sequenceType.getItemType().isAtomicItemType())
+        {
+            throw new UnknownCastTypeException("The type " + this.sequenceType.getItemType().getIdentifierString() + " is not atomic. Castable can only be used with atomic types.", getMetadata());
+        }
         Item item;
         try {
             item = this.child.materializeAtMostOneItemOrNull(dynamicContext);

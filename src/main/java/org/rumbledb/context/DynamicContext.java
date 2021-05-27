@@ -51,6 +51,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.variableValues = null;
         this.conf = null;
         this.namedFunctions = null;
+        this.inScopeSchemaTypes = null;
     }
 
     /**
@@ -72,7 +73,9 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
         this.parent = parent;
         this.variableValues = new VariableValues(this.parent.variableValues);
+        this.conf = null;
         this.namedFunctions = null;
+        this.inScopeSchemaTypes = null;
     }
 
     public DynamicContext(

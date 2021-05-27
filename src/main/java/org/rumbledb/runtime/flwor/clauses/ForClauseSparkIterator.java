@@ -39,6 +39,7 @@ import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -50,7 +51,6 @@ import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
-import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
@@ -753,13 +753,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         Dataset<Row> df = null;;
         if (iterator.isDataFrame()) {
-            Dataset<Row> rows = iterator.getDataFrame(context).getDataFrame();
+            JSoundDataFrame rows = iterator.getDataFrame(context);
 
             rows.createOrReplaceTempView("assignment");
-            if (DataFrameUtils.isSequenceOfObjects(rows)) {
-                String[] fields = rows.schema().fieldNames();
+            if (rows.getItemType().isObjectItemType()) {
+                String[] fields = rows.getDataFrame().schema().fieldNames();
                 String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
-                df = rows.sparkSession()
+                df = rows.getDataFrame().sparkSession()
                     .sql(
                         String.format(
                             "SELECT struct(%s) AS `%s` FROM assignment",
@@ -768,7 +768,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         )
                     );
             } else {
-                df = rows.sparkSession()
+                df = rows.getDataFrame().sparkSession()
                     .sql(
                         String.format(
                             "SELECT `%s` AS `%s` FROM assignment",
