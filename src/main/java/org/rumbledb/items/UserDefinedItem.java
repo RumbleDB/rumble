@@ -40,8 +40,8 @@ public class UserDefinedItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        kryo.writeClassAndObject(output, item);
-        kryo.writeClassAndObject(output, type);
+        kryo.writeClassAndObject(output, this.item);
+        kryo.writeClassAndObject(output, this.type);
     }
 
     @Override

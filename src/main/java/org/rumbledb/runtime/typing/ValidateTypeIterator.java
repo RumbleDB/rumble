@@ -467,12 +467,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, itemType));
+        return childrenItems.map(x -> validate(x, this.itemType));
     }
 
     @Override
     protected void openLocal() {
-        this.children.get(0).open(currentDynamicContextForLocalExecution);
+        this.children.get(0).open(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
@@ -482,7 +482,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected void resetLocal() {
-        this.children.get(0).reset(currentDynamicContextForLocalExecution);
+        this.children.get(0).reset(this.currentDynamicContextForLocalExecution);
     }
 
     @Override
@@ -492,48 +492,48 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), itemType);
+        return validate(this.children.get(0).next(), this.itemType);
     }
 
     private Item validate(Item item, ItemType type) {
-        if (itemType.isAtomicItemType()) {
+        if (this.itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
-                        "Expected atomic item of type " + itemType.getIdentifierString()
+                        "Expected atomic item of type " + this.itemType.getIdentifierString()
                 );
             }
-            return ItemFactory.getInstance().createUserDefinedItem(item, itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(item, this.itemType);
         }
-        if (itemType.isArrayItemType()) {
+        if (this.itemType.isArrayItemType()) {
             if (!item.isArray()) {
                 throw new InvalidInstanceException(
-                        "Expected array item of type " + itemType.getIdentifierString()
+                        "Expected array item of type " + this.itemType.getIdentifierString()
                 );
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet().getType()));
+                members.add(validate(member, this.itemType.getArrayContentFacet().getType()));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, this.itemType);
         }
-        if (itemType.isObjectItemType()) {
+        if (this.itemType.isObjectItemType()) {
             if (!item.isObject()) {
                 throw new InvalidInstanceException(
-                        "Expected object item of type " + itemType.getIdentifierString()
+                        "Expected object item of type " + this.itemType.getIdentifierString()
                 );
             }
             List<String> keys = new ArrayList<>();
             List<Item> values = new ArrayList<>();
-            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
+            Map<String, FieldDescriptor> facets = this.itemType.getObjectContentFacet();
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
                     keys.add(key);
                     values.add(validate(item.getItemByKey(key), facets.get(key).getType()));
                 } else {
-                    if (itemType.getClosedFacet()) {
+                    if (this.itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
-                                "Unexpected key in closed object type + " + itemType.getIdentifierString() + " : " + key
+                                "Unexpected key in closed object type + " + this.itemType.getIdentifierString() + " : " + key
                         );
                     }
                     keys.add(key);
@@ -549,19 +549,19 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     }
                     if (facets.get(key).isRequired()) {
                         throw new InvalidInstanceException(
-                                "Missing required key in object type + " + itemType.getIdentifierString() + " : " + key
+                                "Missing required key in object type + " + this.itemType.getIdentifierString() + " : " + key
                         );
                     }
                 }
             }
             Item objectItem = ItemFactory.getInstance()
                 .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(objectItem, this.itemType);
         }
-        if (itemType.isFunctionItemType()) {
+        if (this.itemType.isFunctionItemType()) {
             if (!item.isFunction()) {
                 throw new InvalidInstanceException(
-                        "Expected function item of type " + itemType.getIdentifierString()
+                        "Expected function item of type " + this.itemType.getIdentifierString()
                 );
             }
             return item;

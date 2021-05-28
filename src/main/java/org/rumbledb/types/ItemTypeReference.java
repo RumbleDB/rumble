@@ -30,6 +30,10 @@ public class ItemTypeReference implements ItemType {
             throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
         }
         this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if(!this.resolvedItemType.isResolved())
+        {
+            this.resolvedItemType.resolve(context, metadata);
+        }
     }
 
     @Override
