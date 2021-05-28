@@ -30,6 +30,9 @@ public class ItemTypeReference implements ItemType {
             throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
         }
         this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if (!this.resolvedItemType.isResolved()) {
+            this.resolvedItemType.resolve(context, metadata);
+        }
     }
 
     @Override
@@ -301,5 +304,13 @@ public class ItemTypeReference implements ItemType {
             throw new OurBadException("Unresolved type: " + this.name);
         }
         return this.resolvedItemType.toDataFrameType();
+    }
+
+    @Override
+    public boolean isDataFrameType() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isDataFrameType();
     }
 }

@@ -39,6 +39,7 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -267,7 +268,6 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     public DynamicContext visitTypeDeclaration(TypeDeclaration declaration, DynamicContext argument) {
         ItemType type = declaration.getDefinition();
         argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
-
         return argument;
     }
 
@@ -290,5 +290,14 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 module.getNamespace()
             );
         return argument;
+    }
+
+    @Override
+    public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
+        DynamicContext generatedContext = visitDescendants(prolog, argument);
+        for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+            itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
+        }
+        return generatedContext;
     }
 }

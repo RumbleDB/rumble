@@ -1,7 +1,9 @@
 package org.rumbledb.types;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.*;
 
@@ -159,6 +161,23 @@ public class ArrayItemType implements ItemType {
     public String toString() {
         // consider add content and various stuff
         return this.name.toString();
+    }
+
+    @Override
+    public boolean isDataFrameType() {
+        return this.content.getType().isDataFrameType();
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.content.getType().isResolved()) {
+            this.content.getType().resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public boolean isResolved() {
+        return this.content.getType().isResolved();
     }
 
 }
