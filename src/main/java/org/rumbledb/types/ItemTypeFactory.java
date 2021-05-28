@@ -29,10 +29,7 @@ public class ItemTypeFactory {
                 throw new InvalidSchemaException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
             }
             Name typeName = Name.createVariableInDefaultTypeNamespace(typeString);
-            if (!BuiltinTypesCatalogue.typeExists(typeName)) {
-                throw new InvalidSchemaException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
-            }
-            return BuiltinTypesCatalogue.getItemTypeByName(typeName);
+            return new ItemTypeReference(typeName);
         }
         if (item.isArray()) {
             List<Item> members = item.getItems();
