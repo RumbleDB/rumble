@@ -533,7 +533,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 } else {
                     if (this.itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
-                                "Unexpected key in closed object type + " + this.itemType.getIdentifierString() + " : " + key
+                                "Unexpected key in closed object type + "
+                                    + this.itemType.getIdentifierString()
+                                    + " : "
+                                    + key
                         );
                     }
                     keys.add(key);
@@ -549,7 +552,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     }
                     if (facets.get(key).isRequired()) {
                         throw new InvalidInstanceException(
-                                "Missing required key in object type + " + this.itemType.getIdentifierString() + " : " + key
+                                "Missing required key in object type + "
+                                    + this.itemType.getIdentifierString()
+                                    + " : "
+                                    + key
                         );
                     }
                 }

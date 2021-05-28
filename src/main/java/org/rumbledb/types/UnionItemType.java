@@ -8,7 +8,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Arrays;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 
 public class UnionItemType implements ItemType {
@@ -131,21 +130,20 @@ public class UnionItemType implements ItemType {
     public boolean isDataFrameType() {
         return false;
     }
-    
+
     @Override
     public boolean isResolved() {
         for (ItemType itemType : this.content.getTypes()) {
-            if(!itemType.isResolved())
+            if (!itemType.isResolved())
                 return false;
         }
         return true;
     }
-    
+
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         for (ItemType itemType : this.content.getTypes()) {
-            if(!itemType.isResolved())
-            {
+            if (!itemType.isResolved()) {
                 itemType.resolve(context, metadata);
             }
         }

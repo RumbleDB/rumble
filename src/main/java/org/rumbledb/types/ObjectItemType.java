@@ -238,7 +238,7 @@ public class ObjectItemType implements ItemType {
         }
         return true;
     }
-    
+
     @Override
     public boolean isResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
@@ -248,12 +248,11 @@ public class ObjectItemType implements ItemType {
         }
         return true;
     }
-    
+
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if(!entry.getValue().getType().isResolved())
-            {
+            if (!entry.getValue().getType().isResolved()) {
                 entry.getValue().getType().resolve(context, metadata);
             }
         }
