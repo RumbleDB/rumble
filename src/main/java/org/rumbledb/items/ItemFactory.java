@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -162,6 +163,10 @@ public class ItemFactory {
 
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {
         return new ObjectItem(keyValuePairs);
+    }
+
+    public Item createUserDefinedItem(Item item, ItemType type) {
+        return new UserDefinedItem(item, type);
     }
 
 }

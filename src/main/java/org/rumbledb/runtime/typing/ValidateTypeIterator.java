@@ -15,9 +15,10 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.DataFrameRuntimeIterator;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -32,8 +33,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-public class ValidateTypeIterator extends DataFrameRuntimeIterator {
+public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -454,6 +456,111 @@ public class ValidateTypeIterator extends DataFrameRuntimeIterator {
                 );
             }
         }
+    }
+
+    @Override
+    protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
+        return childrenItems.map(x -> validate(x, itemType));
+    }
+
+    @Override
+    protected void openLocal() {
+        this.children.get(0).open(currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected void closeLocal() {
+        this.children.get(0).close();
+    }
+
+    @Override
+    protected void resetLocal() {
+        this.children.get(0).reset(currentDynamicContextForLocalExecution);
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.children.get(0).hasNext();
+    }
+
+    @Override
+    protected Item nextLocal() {
+        return validate(this.children.get(0).next(), itemType);
+    }
+
+    private Item validate(Item item, ItemType type) {
+        if (itemType.isAtomicItemType()) {
+            if (!item.isAtomic()) {
+                throw new InvalidInstanceException(
+                        "Expected atomic item of type " + itemType.getIdentifierString()
+                );
+            }
+            return ItemFactory.getInstance().createUserDefinedItem(item, itemType);
+        }
+        if (itemType.isArrayItemType()) {
+            if (!item.isArray()) {
+                throw new InvalidInstanceException(
+                        "Expected array item of type " + itemType.getIdentifierString()
+                );
+            }
+            List<Item> members = new ArrayList<>();
+            for (Item member : item.getItems()) {
+                members.add(validate(member, itemType.getArrayContentFacet().getType()));
+            }
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
+        }
+        if (itemType.isObjectItemType()) {
+            if (!item.isObject()) {
+                throw new InvalidInstanceException(
+                        "Expected object item of type " + itemType.getIdentifierString()
+                );
+            }
+            List<String> keys = new ArrayList<>();
+            List<Item> values = new ArrayList<>();
+            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
+            for (String key : item.getKeys()) {
+                if (facets.containsKey(key)) {
+                    keys.add(key);
+                    values.add(validate(item.getItemByKey(key), facets.get(key).getType()));
+                } else {
+                    if (itemType.getClosedFacet()) {
+                        throw new InvalidInstanceException(
+                                "Unexpected key in closed object type + " + itemType.getIdentifierString() + " : " + key
+                        );
+                    }
+                    keys.add(key);
+                    values.add(item.getItemByKey(key));
+                }
+            }
+            for (String key : facets.keySet()) {
+                if (!item.getKeys().contains(key)) {
+                    Item defaultValue = facets.get(key).getDefaultValue();
+                    if (defaultValue != null) {
+                        keys.add(key);
+                        values.add(defaultValue);
+                    }
+                    if (facets.get(key).isRequired()) {
+                        throw new InvalidInstanceException(
+                                "Missing required key in object type + " + itemType.getIdentifierString() + " : " + key
+                        );
+                    }
+                }
+            }
+            Item objectItem = ItemFactory.getInstance()
+                .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
+            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
+        }
+        if (itemType.isFunctionItemType()) {
+            if (!item.isFunction()) {
+                throw new InvalidInstanceException(
+                        "Expected function item of type " + itemType.getIdentifierString()
+                );
+            }
+            return item;
+        }
+        return item;
     }
 
 }
