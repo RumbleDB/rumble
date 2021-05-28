@@ -302,4 +302,12 @@ public class ItemTypeReference implements ItemType {
         }
         return this.resolvedItemType.toDataFrameType();
     }
+
+    @Override
+    public boolean isDataFrameType() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isDataFrameType();
+    }
 }

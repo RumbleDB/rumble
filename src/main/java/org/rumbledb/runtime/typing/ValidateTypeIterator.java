@@ -57,6 +57,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
+        if (!this.itemType.isDataFrameType()) {
+            throw new OurBadException(
+                    "Cannot build a dataframe for a type not compatible with DataFrames: "
+                        + this.itemType.getIdentifierString()
+            );
+        }
 
         try {
 

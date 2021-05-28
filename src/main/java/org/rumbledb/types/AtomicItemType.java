@@ -506,4 +506,9 @@ public class AtomicItemType implements ItemType {
     public DataType toDataFrameType() {
         return this.dataFrameType;
     }
+
+    @Override
+    public boolean isDataFrameType() {
+        return true;
+    }
 }

@@ -161,4 +161,9 @@ public class ArrayItemType implements ItemType {
         return this.name.toString();
     }
 
+    @Override
+    public boolean isDataFrameType() {
+        return this.content.getType().isDataFrameType();
+    }
+
 }

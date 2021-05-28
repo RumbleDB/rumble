@@ -123,4 +123,9 @@ public class UnionItemType implements ItemType {
     public DataType toDataFrameType() {
         return DataTypes.BinaryType;
     }
+
+    @Override
+    public boolean isDataFrameType() {
+        return false;
+    }
 }

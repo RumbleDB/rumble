@@ -93,4 +93,9 @@ public class FunctionItemType implements ItemType {
     public String toString() {
         return this.isGeneric ? "function(*)" : this.signature.toString();
     }
+
+    @Override
+    public boolean isDataFrameType() {
+        return false;
+    }
 }

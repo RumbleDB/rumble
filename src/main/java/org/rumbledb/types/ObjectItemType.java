@@ -223,4 +223,17 @@ public class ObjectItemType implements ItemType {
             return sb.toString();
         }
     }
+
+    @Override
+    public boolean isDataFrameType() {
+        if (!this.isClosed) {
+            return false;
+        }
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!entry.getValue().getType().isDataFrameType()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
