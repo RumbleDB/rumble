@@ -33,6 +33,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.CommaExpressionIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FLWORDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
@@ -106,10 +107,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
      * @param metadata the metadata.
      * @return the joined tuple.
      */
-    public static Dataset<Row> joinInputTupleWithSequenceOnPredicate(
+    public static FLWORDataFrame joinInputTupleWithSequenceOnPredicate(
             DynamicContext context,
-            Dataset<Row> leftInputTuple,
-            Dataset<Row> rightInputTuple,
+            FLWORDataFrame leftInputTuple,
+            FLWORDataFrame rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             List<Name> variablesInLeftInputTuple, // really needed?
             List<Name> variablesInRightInputTuple, // really needed?

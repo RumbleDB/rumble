@@ -37,6 +37,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FLWORDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 
@@ -105,7 +106,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             return result;
         }
-        Dataset<Row> df = this.child.getDataFrame(context);
+        FLWORDataFrame fdf = this.child.getDataFrame(context);
+        Dataset<Row> df = fdf.getDataFrame();
         StructType oldSchema = df.schema();
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             oldSchema,
@@ -113,6 +115,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
+        // TODO need to take types into account when converting.
         return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
     }
 
