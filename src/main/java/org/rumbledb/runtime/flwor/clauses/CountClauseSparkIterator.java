@@ -40,6 +40,7 @@ import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -170,7 +171,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         dfWithIndex.createOrReplaceTempView("input");
         FLWORSchema flworSchema = new FLWORSchema(df.getSchema());
-        flworSchema.setBytes(variableName);
+        flworSchema.setNativeType(variableName, BuiltinTypesCatalogue.longItem);
         FLWORDataFrame result = new FLWORDataFrame(
                 dfWithIndex.sparkSession()
                     .sql(
