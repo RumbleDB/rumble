@@ -175,7 +175,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             context
         );
         if (nativeQueryResult != null) {
-            return new FLWORDataFrame(nativeQueryResult, fdf);
+            return new FLWORDataFrame(nativeQueryResult, fdf.getSchema());
         }
 
         // was not possible, we use let udf
@@ -204,7 +204,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
-        return new FLWORDataFrame(df, fdf);
+        return new FLWORDataFrame(df, fdf.getSchema());
     }
 
     private FLWORDataFrame getDataFrameIfJoinPossible(DynamicContext context) {

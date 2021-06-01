@@ -36,6 +36,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FLWORDataFrame;
+import org.rumbledb.runtime.flwor.FLWORSchema;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -136,7 +137,6 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         }
 
         FLWORDataFrame dfWithIndex = addSerializedCountColumn(fdf, this.outputTupleProjection, this.variableName);
-        dfWithIndex.setBytes(this.variableName);
         return dfWithIndex;
     }
 
@@ -169,6 +169,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         dfWithIndex.createOrReplaceTempView("input");
+        FLWORSchema flworSchema = new FLWORSchema(df.getSchema());
+        flworSchema.setBytes(variableName);
         FLWORDataFrame result = new FLWORDataFrame(
                 dfWithIndex.sparkSession()
                     .sql(
@@ -178,7 +180,8 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                             variableName,
                             variableName
                         )
-                    )
+                    ),
+                flworSchema
         );
         return result;
     }

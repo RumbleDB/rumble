@@ -130,4 +130,25 @@ public class FLWORSchema implements Serializable {
         return this.nativelyTypedSequences.get(name.toString());
     }
 
+    public String toString() {
+        StringBuffer sb = new StringBuffer();
+        sb.append("Counts:\n");
+        for (String s : this.counts) {
+            sb.append(s + "\n");
+        }
+        sb.append("Array of bytes:\n");
+        for (String s : this.sequencesAsArraysOfBytes) {
+            sb.append(s + "\n");
+        }
+        sb.append("Bytes:\n");
+        for (String s : this.sequencesAsBytes) {
+            sb.append(s + "\n");
+        }
+        sb.append("Native types:\n");
+        for (String s : this.nativelyTypedSequences.keySet()) {
+            sb.append(s + " : " + this.nativelyTypedSequences.get(s));
+        }
+        return sb.toString();
+    }
+
 }

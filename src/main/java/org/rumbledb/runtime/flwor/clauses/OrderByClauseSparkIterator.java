@@ -451,7 +451,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             appendedOrderingColumnsName,
                             orderingSQL
                         )
-                    )
+                    ),
+                df.getSchema()
         );
     }
 
@@ -574,7 +575,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             selectSQL,
                             orderSql
                         )
-                    )
+                    ),
+                dataFrame.getSchema()
         );
     }
 
