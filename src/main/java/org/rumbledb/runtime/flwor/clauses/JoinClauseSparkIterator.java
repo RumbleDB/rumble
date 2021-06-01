@@ -119,7 +119,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             Name newRightSideVariableName, // really needed?
             ExceptionMetadata metadata
     ) {
-        Dataset<Row> result = tryNativeQueryStatically(
+        FLWORDataFrame result = tryNativeQueryStatically(
             context,
             leftInputTuple,
             rightInputTuple,
@@ -296,7 +296,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         // Now we need to register or join predicate as a UDF.
-        leftInputTuple.sparkSession()
+        leftInputTuple.getDataFrame().sparkSession()
             .udf()
             .register(
                 "joinUDF",
@@ -318,7 +318,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                         UDFParameters
                     )
                 );
-            return resultDF;
+            return new FLWORDataFrame(resultDF);
         }
 
         if (optimizableJoin) {
@@ -335,7 +335,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                         UDFParameters
                     )
                 );
-            return resultDF;
+            return new FLWORDataFrame(resultDF);
         }
         // Otherwise, it's a regular join.
         Dataset<Row> resultDF = leftInputTuple.sparkSession()
@@ -348,7 +348,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
-        return resultDF;
+        return new FLWORDataFrame(resultDF);
     }
 
     private static boolean extractEqualityComparisonsForHashing(
@@ -410,7 +410,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public FLWORDataFrame getDataFrame(DynamicContext context) {
         // TODO Auto-generated method stub
         return null;
     }
@@ -439,10 +439,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the group by clause if successful, null otherwise
      */
-    private static Dataset<Row> tryNativeQueryStatically(
+    private static FLWORDataFrame tryNativeQueryStatically(
             DynamicContext context,
-            Dataset<Row> leftInputTuple,
-            Dataset<Row> rightInputTuple,
+            FLWORDataFrame leftInputTuple,
+            FLWORDataFrame rightInputTuple,
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             RuntimeIterator predicateIterator,
             boolean isLeftOuterJoin,
@@ -479,14 +479,14 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             columnsToSelect,
             newRightSideVariableName != null
         );
-        return leftInputTuple.sparkSession()
+        return new FLWORDataFrame(leftInputTuple.sparkSession()
             .sql(
                 String.format(
                     "SELECT %s FROM left JOIN right ON %s",
                     projectionVariables,
                     nativeQuery.getResultingQuery()
                 )
-            );
+            ));
     }
 
 }

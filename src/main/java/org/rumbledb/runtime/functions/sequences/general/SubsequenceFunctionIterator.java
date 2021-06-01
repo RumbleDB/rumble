@@ -115,7 +115,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
             df.getDataFrame(),
             1L,
             SparkSessionManager.temporaryColumnName
-        );
+        ).getDataFrame();
 
         ds.createOrReplaceTempView("input");
         ds = ds.sparkSession()

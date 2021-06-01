@@ -39,6 +39,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FLWORDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
@@ -248,7 +249,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FLWORDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -264,7 +265,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        FLWORDataFrame df = this.child.getDataFrame(context);
         StructType inputSchema;
         String[] columnNamesArray;
         List<String> columnNames;
@@ -308,7 +309,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         df.createOrReplaceTempView("input");
 
-        Dataset<Row> nativeQueryResult = tryNativeQuery(
+        FLWORDataFrame nativeQueryResult = tryNativeQuery(
             df,
             variableAccessNames,
             this.outputTupleProjection,
@@ -412,7 +413,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                     appendedGroupingColumnsName
                 )
             );
-        return result;
+        return new FLWORDataFrame(result);
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
@@ -504,8 +505,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
      * @param context current dynamic context of the dataframe
      * @return resulting dataframe of the group by clause if successful, null otherwise
      */
-    private Dataset<Row> tryNativeQuery(
-            Dataset<Row> dataFrame,
+    private FLWORDataFrame tryNativeQuery(
+            FLWORDataFrame dataFrame,
             List<Name> groupingVariables,
             Map<Name, DynamicContext.VariableDependency> dependencies,
             StructType inputSchema,
@@ -572,14 +573,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
         System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
         System.out.println("[INFO] group-by part: " + groupByString);
-        return dataFrame.sparkSession()
+        return new FLWORDataFrame(dataFrame.sparkSession()
             .sql(
                 String.format(
                     "select %s from input group by %s",
                     selectString,
                     groupByString
                 )
-            );
+            ));
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {

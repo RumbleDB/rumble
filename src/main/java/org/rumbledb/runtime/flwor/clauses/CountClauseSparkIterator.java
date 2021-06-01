@@ -135,16 +135,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             return fdf;
         }
 
-        Dataset<Row> dfWithIndex = addSerializedCountColumn(fdf.getDataFrame(), this.outputTupleProjection, this.variableName);
-        FLWORDataFrame result = new FLWORDataFrame(dfWithIndex, fdf);
-        result.setBytes(this.variableName);
-        return result;
+        FLWORDataFrame dfWithIndex = addSerializedCountColumn(fdf, this.outputTupleProjection, this.variableName);
+        dfWithIndex.setBytes(this.variableName);
+        return dfWithIndex;
     }
 
     // This method, which implements count semantics, is also intended for use by other clauses (e.g., for clause with
     // positional variables).
-    public static Dataset<Row> addSerializedCountColumn(
-            Dataset<Row> df,
+    public static FLWORDataFrame addSerializedCountColumn(
+            FLWORDataFrame df,
             Map<Name, DynamicContext.VariableDependency> outputDependencies,
             Name variableName
     ) {
@@ -159,7 +158,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
 
-        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
+        FLWORDataFrame dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
         df.sparkSession()
             .udf()
@@ -170,7 +169,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         dfWithIndex.createOrReplaceTempView("input");
-        dfWithIndex = dfWithIndex.sparkSession()
+        dfWithIndex = new FLWORDataFrame(dfWithIndex.sparkSession()
             .sql(
                 String.format(
                     "select %s serializeCountIndex(`%s`) as `%s` from input",
@@ -178,7 +177,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                     variableName,
                     variableName
                 )
-            );
+            ));
         return dfWithIndex;
     }
 

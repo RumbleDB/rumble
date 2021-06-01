@@ -8,9 +8,11 @@ import java.util.Set;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.SparkSession;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.types.ItemType;
 
 public class FLWORDataFrame implements Serializable {
@@ -136,6 +138,22 @@ public class FLWORDataFrame implements Serializable {
     public ItemType getNativeType(Name name) {
         return this.nativelyTypedSequences.get(name.toString());
     }
+    
+    public StructType schema()
+    {
+        return this.dataFrame.schema();
+    }
 
+    public void createOrReplaceTempView(String name) {
+        this.dataFrame.createOrReplaceTempView(name);
+    }
+
+    public long count() {
+        return this.dataFrame.count();
+    }
+    
+    public SparkSession sparkSession() {
+        return this.dataFrame.sparkSession();
+    }
 
 }
