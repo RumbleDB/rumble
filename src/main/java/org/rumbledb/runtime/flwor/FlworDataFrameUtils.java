@@ -800,8 +800,8 @@ public class FlworDataFrameUtils {
      * @param indexName - name of the index column
      * @return returns DataFrame with the added 'indexName' column containing indices
      */
-    public static Dataset<Row> zipWithIndex(FLWORDataFrame df, Long offset, String indexName) {
-        Dataset<Row> dfWithPartitionId = df.getDataFrame()
+    public static Dataset<Row> zipWithIndex(Dataset<Row> df, Long offset, String indexName) {
+        Dataset<Row> dfWithPartitionId = df
             .withColumn("partition_id", spark_partition_id())
             .withColumn("inc_id", monotonically_increasing_id());
 

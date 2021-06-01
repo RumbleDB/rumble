@@ -158,7 +158,7 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
 
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
 
-        FLWORDataFrame dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
+        Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df.getDataFrame(), 1L, variableName.toString());
 
         df.sparkSession()
             .udf()
@@ -169,16 +169,18 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
             );
 
         dfWithIndex.createOrReplaceTempView("input");
-        dfWithIndex = new FLWORDataFrame(dfWithIndex.sparkSession()
-            .sql(
-                String.format(
-                    "select %s serializeCountIndex(`%s`) as `%s` from input",
-                    selectSQL,
-                    variableName,
-                    variableName
-                )
-            ));
-        return dfWithIndex;
+        FLWORDataFrame result = new FLWORDataFrame(
+                dfWithIndex.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s serializeCountIndex(`%s`) as `%s` from input",
+                            selectSQL,
+                            variableName,
+                            variableName
+                        )
+                    )
+        );
+        return result;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {

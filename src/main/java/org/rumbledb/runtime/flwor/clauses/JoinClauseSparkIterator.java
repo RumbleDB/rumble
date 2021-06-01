@@ -296,7 +296,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         // Now we need to register or join predicate as a UDF.
-        leftInputTuple.getDataFrame().sparkSession()
+        leftInputTuple.getDataFrame()
+            .sparkSession()
             .udf()
             .register(
                 "joinUDF",
@@ -479,14 +480,16 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             columnsToSelect,
             newRightSideVariableName != null
         );
-        return new FLWORDataFrame(leftInputTuple.sparkSession()
-            .sql(
-                String.format(
-                    "SELECT %s FROM left JOIN right ON %s",
-                    projectionVariables,
-                    nativeQuery.getResultingQuery()
-                )
-            ));
+        return new FLWORDataFrame(
+                leftInputTuple.sparkSession()
+                    .sql(
+                        String.format(
+                            "SELECT %s FROM left JOIN right ON %s",
+                            projectionVariables,
+                            nativeQuery.getResultingQuery()
+                        )
+                    )
+        );
     }
 
 }

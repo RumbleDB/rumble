@@ -440,17 +440,19 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
-        return new FLWORDataFrame(df.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
-                    projectSQL,
-                    selectSQL,
-                    UDFParameters,
-                    appendedOrderingColumnsName,
-                    orderingSQL
-                )
-            ));
+        return new FLWORDataFrame(
+                df.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from (select %s createOrderingColumns(%s) as `%s` from input order by %s)",
+                            projectSQL,
+                            selectSQL,
+                            UDFParameters,
+                            appendedOrderingColumnsName,
+                            orderingSQL
+                        )
+                    )
+        );
     }
 
     public Map<Name, DynamicContext.VariableDependency> getDynamicContextVariableDependencies() {
@@ -564,14 +566,16 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query: " + orderSql);
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
-        return new FLWORDataFrame(dataFrame.sparkSession()
-            .sql(
-                String.format(
-                    "select %s from input order by %s",
-                    selectSQL,
-                    orderSql
-                )
-            ));
+        return new FLWORDataFrame(
+                dataFrame.sparkSession()
+                    .sql(
+                        String.format(
+                            "select %s from input order by %s",
+                            selectSQL,
+                            orderSql
+                        )
+                    )
+        );
     }
 
     public boolean containsClause(FLWOR_CLAUSES kind) {
