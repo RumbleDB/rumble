@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
@@ -179,7 +180,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticContext(argument);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getBody(), functionDeclarationContext);
+        this.visit(expression.getLocalBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
         declaration.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
@@ -191,23 +192,70 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
-        StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.getParams()
-            .forEach(
-                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
-                    paramName,
-                    sequenceType,
+        StaticContext functionDeclarationContextLocal = new StaticContext(argument);
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
+        {
+            functionDeclarationContextLocal.addVariable(
+                    entry.getKey(),
+                    entry.getValue(),
                     expression.getMetadata(),
                     ExecutionMode.LOCAL
-                )
-            );
+                );
+        }
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getBody(), functionDeclarationContext);
+        this.visit(expression.getLocalBody(), functionDeclarationContextLocal);
+
+        StaticContext functionDeclarationContextRDD = new StaticContext(argument);
+        boolean first = true;
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
+        {
+            if(first)
+            {
+                functionDeclarationContextRDD.addVariable(
+                    entry.getKey(),
+                    entry.getValue(),
+                    expression.getMetadata(),
+                    ExecutionMode.RDD
+                );
+                first = false;
+            } else {
+                functionDeclarationContextRDD.addVariable(
+                    entry.getKey(),
+                    entry.getValue(),
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL
+                );
+            }
+        }
+        StaticContext functionDeclarationContextDF = new StaticContext(argument);
+        this.visit(expression.getRDDBody(), functionDeclarationContextRDD);
+        first = true;
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
+        {
+            if(first)
+            {
+                functionDeclarationContextDF.addVariable(
+                    entry.getKey(),
+                    entry.getValue(),
+                    expression.getMetadata(),
+                    ExecutionMode.DATAFRAME
+                );
+                first = false;
+            } else {
+                functionDeclarationContextDF.addVariable(
+                    entry.getKey(),
+                    entry.getValue(),
+                    expression.getMetadata(),
+                    ExecutionMode.LOCAL
+                );
+            }
+        }
+        this.visit(expression.getDFBody(), functionDeclarationContextDF);
         expression.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
         );
-        return functionDeclarationContext;
+        return argument;
     }
 
     @Override

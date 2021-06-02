@@ -39,12 +39,16 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private Map<Name, SequenceType> paramNameToSequenceTypes;
     SequenceType returnType;
     RuntimeIterator bodyIterator;
+    RuntimeIterator bodyRDDIterator;
+    RuntimeIterator bodyDFIterator;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             RuntimeIterator bodyIterator,
+            RuntimeIterator bodyRDDIterator,
+            RuntimeIterator bodyDFIterator,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
@@ -53,11 +57,15 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
         this.bodyIterator = bodyIterator;
+        this.bodyRDDIterator = bodyRDDIterator;
+        this.bodyDFIterator = bodyDFIterator;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
+        RuntimeIterator bodyRDDIteratorCopy = ((RuntimeIterator) this.bodyRDDIterator).deepCopy();
+        RuntimeIterator bodyDFIteratorCopy = ((RuntimeIterator) this.bodyDFIterator).deepCopy();
         FunctionItem function = new FunctionItem(
                 this.functionName,
                 this.paramNameToSequenceTypes,

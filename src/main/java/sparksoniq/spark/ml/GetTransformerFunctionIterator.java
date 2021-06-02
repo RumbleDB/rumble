@@ -143,6 +143,8 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                                 returnType
                         ),
                         new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
+                        bodyIterator,
+                        bodyIterator,
                         bodyIterator
                 );
 

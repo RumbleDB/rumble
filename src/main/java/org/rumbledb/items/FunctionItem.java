@@ -59,6 +59,8 @@ public class FunctionItem implements Item {
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
     private RuntimeIterator bodyIterator;
+    private RuntimeIterator bodyRDDIterator;
+    private RuntimeIterator bodyDFIterator;
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -73,12 +75,16 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            RuntimeIterator bodyRDDIterator,
+            RuntimeIterator bodyDFIterator
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
+        this.bodyRDDIterator = bodyRDDIterator;
+        this.bodyDFIterator = bodyDFIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();

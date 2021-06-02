@@ -266,6 +266,8 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                         returnType
                 ),
                 new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
+                bodyIterator,
+                bodyIterator,
                 bodyIterator
         );
     }

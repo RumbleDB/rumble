@@ -497,12 +497,16 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        RuntimeIterator bodyIterator = this.visit(expression.getBody(), argument);
+        RuntimeIterator bodyIterator = this.visit(expression.getLocalBody(), argument);
+        RuntimeIterator bodyRDDIterator = this.visit(expression.getRDDBody(), argument);
+        RuntimeIterator bodyDFIterator = this.visit(expression.getDFBody(), argument);
         RuntimeIterator runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
                 bodyIterator,
+                bodyRDDIterator,
+                bodyDFIterator,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
