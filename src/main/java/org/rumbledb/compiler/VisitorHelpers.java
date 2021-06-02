@@ -3,6 +3,7 @@ package org.rumbledb.compiler;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.misc.ParseCancellationException;
+import org.apache.commons.io.IOUtils;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -74,7 +76,8 @@ public class VisitorHelpers {
     public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
-        return parseMainModule(CharStreams.fromStream(in), location, configuration);
+        String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        return parseMainModule(query, location, configuration);
     }
 
     public static LibraryModule parseLibraryModuleFromLocation(
@@ -85,7 +88,8 @@ public class VisitorHelpers {
     )
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, metadata);
-        return parseLibraryModule(CharStreams.fromStream(in), location, importingModuleContext, configuration);
+        String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
+        return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
     public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
@@ -94,10 +98,11 @@ public class VisitorHelpers {
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
-        return parseMainModule(CharStreams.fromString(query), location, configuration);
+        return parseMainModule(query, location, configuration);
     }
 
-    public static MainModule parseMainModule(CharStream stream, URI uri, RumbleRuntimeConfiguration configuration) {
+    public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
+        CharStream stream = CharStreams.fromString(query);
         StringBuffer sb = new StringBuffer();
         sb.append((char) stream.LA(1));
         sb.append((char) stream.LA(2));
@@ -106,24 +111,25 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
         if (sb.toString().equals("xquery")) {
-            return parseXQueryMainModule(stream, uri, configuration);
+            return parseXQueryMainModule(query, uri, configuration);
         } else {
-            return parseJSONiqMainModule(stream, uri, configuration);
+            return parseJSONiqMainModule(query, uri, configuration);
         }
 
     }
 
     public static MainModule parseJSONiqMainModule(
-            CharStream stream,
+            String query,
             URI uri,
             RumbleRuntimeConfiguration configuration
     ) {
+        CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -145,7 +151,8 @@ public class VisitorHelpers {
                     new ExceptionMetadata(
                             uri.toString(),
                             lexer.getLine(),
-                            lexer.getCharPositionInLine()
+                            lexer.getCharPositionInLine(),
+                            query
                     )
             );
             e.initCause(ex);
@@ -154,16 +161,17 @@ public class VisitorHelpers {
     }
 
     public static MainModule parseXQueryMainModule(
-            CharStream stream,
+            String query,
             URI uri,
             RumbleRuntimeConfiguration configuration
     ) {
+        CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
         StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
         try {
             // TODO Handle module extras
             XQueryParser.MainModuleContext main = parser.module().mainModule();
@@ -184,7 +192,8 @@ public class VisitorHelpers {
                     new ExceptionMetadata(
                             uri.toString(),
                             lexer.getLine(),
-                            lexer.getCharPositionInLine()
+                            lexer.getCharPositionInLine(),
+                            query
                     )
             );
             e.initCause(ex);
@@ -193,11 +202,12 @@ public class VisitorHelpers {
     }
 
     public static LibraryModule parseLibraryModule(
-            CharStream stream,
+            String query,
             URI uri,
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
+        CharStream stream = CharStreams.fromString(query);
         StringBuffer sb = new StringBuffer();
         sb.append((char) stream.LA(1));
         sb.append((char) stream.LA(2));
@@ -206,19 +216,20 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
         if (sb.toString().equals("xquery")) {
-            return parseXQueryLibraryModule(stream, uri, importingModuleContext, configuration);
+            return parseXQueryLibraryModule(query, uri, importingModuleContext, configuration);
         } else {
-            return parseJSONiqLibraryModule(stream, uri, importingModuleContext, configuration);
+            return parseJSONiqLibraryModule(query, uri, importingModuleContext, configuration);
         }
 
     }
 
     public static LibraryModule parseJSONiqLibraryModule(
-            CharStream stream,
+            String query,
             URI uri,
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
+        CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
@@ -226,7 +237,7 @@ public class VisitorHelpers {
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration);
+        TranslationVisitor visitor = new TranslationVisitor(moduleContext, false, configuration, query);
         try {
             // TODO Handle module extras
             JsoniqParser.ModuleAndThisIsItContext module = parser.moduleAndThisIsIt();
@@ -241,7 +252,8 @@ public class VisitorHelpers {
                     new ExceptionMetadata(
                             uri.toString(),
                             lexer.getLine(),
-                            lexer.getCharPositionInLine()
+                            lexer.getCharPositionInLine(),
+                            query
                     )
             );
             e.initCause(ex);
@@ -250,11 +262,12 @@ public class VisitorHelpers {
     }
 
     public static LibraryModule parseXQueryLibraryModule(
-            CharStream stream,
+            String query,
             URI uri,
             StaticContext importingModuleContext,
             RumbleRuntimeConfiguration configuration
     ) {
+        CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
@@ -262,7 +275,7 @@ public class VisitorHelpers {
         moduleContext.setUserDefinedFunctionsExecutionModes(
             importingModuleContext.getUserDefinedFunctionsExecutionModes()
         );
-        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration);
+        XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, false, configuration, query);
         try {
             // TODO Handle module extras
             XQueryParser.LibraryModuleContext main = parser.module().libraryModule();
@@ -276,7 +289,8 @@ public class VisitorHelpers {
                     new ExceptionMetadata(
                             uri.toString(),
                             lexer.getLine(),
-                            lexer.getCharPositionInLine()
+                            lexer.getCharPositionInLine(),
+                            query
                     )
             );
             e.initCause(ex);
