@@ -34,7 +34,7 @@ public class ExceptionMetadata implements Serializable {
     private final int tokenLineNumber;
     private final int tokenColumnNumber;
     private final String code;
-    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 0, 0, "");
+    public static final ExceptionMetadata EMPTY_METADATA = new ExceptionMetadata("none", 1, 0, "");
 
     /**
      * Builds a new metadata object
@@ -100,7 +100,7 @@ public class ExceptionMetadata implements Serializable {
             buffer.append(lines[this.tokenLineNumber - 1]);
         }
         buffer.append("\n");
-        for (int i = 0; i < this.tokenColumnNumber - 1; ++i) {
+        for (int i = 0; i < this.tokenColumnNumber; ++i) {
             buffer.append(" ");
         }
         buffer.append("^\n");
