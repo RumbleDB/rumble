@@ -202,7 +202,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getBodies().get(0), functionDeclarationContextLocal);
+        this.visit(expression.getBodies().get(0L), functionDeclarationContextLocal);
 
         StaticContext functionDeclarationContextRDD = new StaticContext(argument);
         boolean first = true;
