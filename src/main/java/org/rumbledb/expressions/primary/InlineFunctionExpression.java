@@ -21,7 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
-import org.apache.commons.lang.SerializationUtils;
+import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -92,7 +92,7 @@ public class InlineFunctionExpression extends Expression {
 
     @Override
     public List<Node> getChildren() {
-        return new ArrayList<>(bodies.values());
+        return new ArrayList<>(this.bodies.values());
     }
 
     public void registerUserDefinedFunctionExecutionMode(

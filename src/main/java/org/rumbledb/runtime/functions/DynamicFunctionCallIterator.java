@@ -71,7 +71,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void openLocal() {
-        super.open(this.currentDynamicContextForLocalExecution);
         setFunctionItemAndIteratorWithCurrentContext(this.currentDynamicContextForLocalExecution);
         this.functionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
@@ -144,7 +143,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
 
     @Override
     public void resetLocal() {
-        super.reset(this.currentDynamicContextForLocalExecution);
         this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -156,7 +154,6 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (this.isOpen) {
             this.functionCallIterator.close();
         }
-        super.close();
     }
 
     @Override

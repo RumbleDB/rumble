@@ -32,6 +32,7 @@ import java.util.List;
 
 public class ReturnClause extends Clause {
 
+    private static final long serialVersionUID = 1L;
 
     private final Expression returnExpr;
 

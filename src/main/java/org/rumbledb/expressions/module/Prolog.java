@@ -31,6 +31,7 @@ import java.util.stream.Collectors;
 
 public class Prolog extends Node {
 
+    private static final long serialVersionUID = 1L;
     private List<Node> declarations;
     private List<LibraryModule> importedModules;
 
