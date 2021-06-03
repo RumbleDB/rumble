@@ -133,13 +133,13 @@ public class InlineFunctionExpression extends Expression {
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
-        for (int i = 0; i < indent + 2; ++i) {
-            buffer.append("  ");
-        }
         for (long l : this.bodies.keySet()) {
+            for (int i = 0; i < indent; ++i) {
+                buffer.append("  ");
+            }
+            buffer.append("Body " + l + ":\n");
             this.bodies.get(l).print(buffer, indent + 2);
         }
-        buffer.append("Body:\n");
     }
 
     @Override
