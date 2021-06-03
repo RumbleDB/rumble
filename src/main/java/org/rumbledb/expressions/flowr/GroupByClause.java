@@ -32,6 +32,7 @@ import java.util.List;
 
 public class GroupByClause extends Clause {
 
+    private static final long serialVersionUID = 1L;
     private final List<GroupByVariableDeclaration> variables;
 
     public GroupByClause(List<GroupByVariableDeclaration> variables, ExceptionMetadata metadata) {

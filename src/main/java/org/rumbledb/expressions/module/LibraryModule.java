@@ -31,6 +31,7 @@ import java.util.List;
 
 public class LibraryModule extends Module {
 
+    private static final long serialVersionUID = 1L;
     protected StaticContext staticContext;
     private String namespace;
     private final Prolog prolog;

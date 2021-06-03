@@ -32,6 +32,7 @@ import java.util.List;
 
 public class DecimalLiteralExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private BigDecimal value;
 
     public DecimalLiteralExpression(BigDecimal value, ExceptionMetadata metadata) {

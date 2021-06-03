@@ -149,7 +149,7 @@ public class FunctionItem implements Item {
     }
 
     public RuntimeIterator getBodyIterator() {
-        return this.bodyIterators.get(0);
+        return this.bodyIterators.get(0L);
     }
 
     public Map<Long, RuntimeIterator> getBodyIterators() {

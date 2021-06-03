@@ -34,6 +34,7 @@ import java.util.List;
 
 public class FunctionDeclaration extends Node {
 
+    private static final long serialVersionUID = 1L;
     private final InlineFunctionExpression functionExpression;
 
     public FunctionDeclaration(

@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.Map;
 
 public class InlineFunctionExpression extends Expression {
+    private static final long serialVersionUID = 1L;
 
     private final Name name;
     private final FunctionIdentifier functionIdentifier;
@@ -58,7 +59,10 @@ public class InlineFunctionExpression extends Expression {
         this.returnType = returnType;
         this.bodies = new HashMap<>();
         this.bodies.put(0L, body);
-        this.bodies.put(1L, (Expression) SerializationUtils.clone(body));
+        // for inline functions, we maintain another version for ML models
+        if (this.name == null) {
+            this.bodies.put(1L, (Expression) SerializationUtils.clone(body));
+        }
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
@@ -100,7 +104,7 @@ public class InlineFunctionExpression extends Expression {
             getStaticContext().getUserDefinedFunctionsExecutionModes()
                 .setExecutionMode(
                     identifier,
-                    this.bodies.get(0).getHighestExecutionMode(visitorConfig),
+                    this.bodies.get(0L).getHighestExecutionMode(visitorConfig),
                     visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                     this.getMetadata()
                 );
@@ -164,7 +168,7 @@ public class InlineFunctionExpression extends Expression {
                 sb.append("\n");
             indentIt(sb, indent);
             sb.append("{\n");
-            this.bodies.get(0).serializeToJSONiq(sb, indent + 1);
+            this.bodies.get(0L).serializeToJSONiq(sb, indent + 1);
             indentIt(sb, indent);
             sb.append("}\n");
         }

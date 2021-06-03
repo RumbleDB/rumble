@@ -32,6 +32,7 @@ import org.rumbledb.expressions.Node;
 
 public class NotExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
 
     public NotExpression(Expression mainExpression, ExceptionMetadata metadata) {

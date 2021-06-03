@@ -31,6 +31,7 @@ import org.rumbledb.expressions.Node;
 
 public class DoubleLiteralExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private double value;
 
     public DoubleLiteralExpression(double value, ExceptionMetadata metadata) {

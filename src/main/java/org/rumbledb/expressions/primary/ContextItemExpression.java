@@ -30,6 +30,8 @@ import org.rumbledb.expressions.Node;
 
 public class ContextItemExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     public ContextItemExpression(ExceptionMetadata metadataFromContext) {
         super(metadataFromContext);
     }
