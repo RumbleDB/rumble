@@ -134,7 +134,7 @@ public class InlineFunctionExpression extends Expression {
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
         for (long l : this.bodies.keySet()) {
-            for (int i = 0; i < indent; ++i) {
+            for (int i = 0; i < indent + 1; ++i) {
                 buffer.append("  ");
             }
             buffer.append("Body " + l + ":\n");
