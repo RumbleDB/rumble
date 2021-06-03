@@ -142,6 +142,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -497,16 +498,15 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
             paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
         }
         SequenceType returnType = expression.getReturnType();
-        RuntimeIterator bodyIterator = this.visit(expression.getLocalBody(), argument);
-        RuntimeIterator bodyRDDIterator = this.visit(expression.getRDDBody(), argument);
-        RuntimeIterator bodyDFIterator = this.visit(expression.getDFBody(), argument);
+        Map<Long, RuntimeIterator> bodyIterators = new HashMap<>();
+        for (long l : expression.getBodies().keySet()) {
+            bodyIterators.put(l, this.visit(expression.getBodies().get(l), argument));
+        }
         RuntimeIterator runtimeIterator = new FunctionRuntimeIterator(
                 expression.getName(),
                 paramNameToSequenceTypes,
                 returnType,
-                bodyIterator,
-                bodyRDDIterator,
-                bodyDFIterator,
+                bodyIterators,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );

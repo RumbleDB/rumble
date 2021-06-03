@@ -180,7 +180,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticContext(argument);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getLocalBody(), functionDeclarationContext);
+        this.visit(expression.getBody(), functionDeclarationContext);
         expression.initHighestExecutionMode(this.visitorConfig);
         declaration.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
@@ -202,7 +202,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getLocalBody(), functionDeclarationContextLocal);
+        this.visit(expression.getBodies().get(0), functionDeclarationContextLocal);
 
         StaticContext functionDeclarationContextRDD = new StaticContext(argument);
         boolean first = true;
@@ -212,7 +212,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                     entry.getKey(),
                     entry.getValue(),
                     expression.getMetadata(),
-                    ExecutionMode.RDD
+                    ExecutionMode.DATAFRAME
                 );
                 first = false;
             } else {
@@ -225,27 +225,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         StaticContext functionDeclarationContextDF = new StaticContext(argument);
-        this.visit(expression.getRDDBody(), functionDeclarationContextRDD);
-        first = true;
-        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
-            if (first) {
-                functionDeclarationContextDF.addVariable(
-                    entry.getKey(),
-                    entry.getValue(),
-                    expression.getMetadata(),
-                    ExecutionMode.DATAFRAME
-                );
-                first = false;
-            } else {
-                functionDeclarationContextDF.addVariable(
-                    entry.getKey(),
-                    entry.getValue(),
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL
-                );
-            }
-        }
-        this.visit(expression.getDFBody(), functionDeclarationContextDF);
+        this.visit(expression.getBodies().get(1L), functionDeclarationContextDF);
         expression.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig

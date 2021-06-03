@@ -64,7 +64,7 @@ public class FunctionDeclaration extends Node {
 
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.functionExpression.getLocalBody().getHighestExecutionMode(visitorConfig);
+        this.highestExecutionMode = this.functionExpression.getBody().getHighestExecutionMode(visitorConfig);
     }
 
     /**

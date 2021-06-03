@@ -440,20 +440,11 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the body RDD iterator, if it is a function item.
+     * Returns the body iterator, if it is a function item.
      * 
      * @return the function signature.
      */
-    default public RuntimeIterator getBodyRDDIterator() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the body DF iterator, if it is a function item.
-     * 
-     * @return the function signature.
-     */
-    default public RuntimeIterator getBodyDFIterator() {
+    default public Map<Long, RuntimeIterator> getBodyIterators() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

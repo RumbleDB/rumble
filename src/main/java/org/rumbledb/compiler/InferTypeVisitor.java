@@ -345,7 +345,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
         SequenceType returnType = expression.getActualReturnType();
         if (returnType == null) {
-            returnType = expression.getLocalBody().getInferredSequenceType();
+            returnType = expression.getBody().getInferredSequenceType();
         }
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType);
@@ -1945,7 +1945,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         visitDescendants(expression, argument);
 
         InlineFunctionExpression inlineExpression = (InlineFunctionExpression) expression.getExpression();
-        SequenceType inferredType = inlineExpression.getLocalBody().getInferredSequenceType();
+        SequenceType inferredType = inlineExpression.getBody().getInferredSequenceType();
         SequenceType expectedType = inlineExpression.getActualReturnType();
 
         if (expectedType == null) {

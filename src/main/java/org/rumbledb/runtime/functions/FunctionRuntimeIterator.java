@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.functions;
 
+import java.util.HashMap;
 import java.util.Map;
 
 import org.rumbledb.api.Item;
@@ -38,17 +39,13 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
     private Name functionName;
     private Map<Name, SequenceType> paramNameToSequenceTypes;
     SequenceType returnType;
-    RuntimeIterator bodyIterator;
-    RuntimeIterator bodyRDDIterator;
-    RuntimeIterator bodyDFIterator;
+    Map<Long, RuntimeIterator> bodyIterators;
 
     public FunctionRuntimeIterator(
             Name functionName,
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
-            RuntimeIterator bodyIterator,
-            RuntimeIterator bodyRDDIterator,
-            RuntimeIterator bodyDFIterator,
+            Map<Long, RuntimeIterator> bodyIterators,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
@@ -56,24 +53,21 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
         this.functionName = functionName;
         this.paramNameToSequenceTypes = paramNameToSequenceTypes;
         this.returnType = returnType;
-        this.bodyIterator = bodyIterator;
-        this.bodyRDDIterator = bodyRDDIterator;
-        this.bodyDFIterator = bodyDFIterator;
+        this.bodyIterators = bodyIterators;
     }
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        RuntimeIterator bodyIteratorCopy = ((RuntimeIterator) this.bodyIterator).deepCopy();
-        RuntimeIterator bodyRDDIteratorCopy = ((RuntimeIterator) this.bodyRDDIterator).deepCopy();
-        RuntimeIterator bodyDFIteratorCopy = ((RuntimeIterator) this.bodyDFIterator).deepCopy();
+        Map<Long, RuntimeIterator> bodyIteratorsCopy = new HashMap<>();
+        for (long l : this.bodyIterators.keySet()) {
+            bodyIteratorsCopy.put(l, (RuntimeIterator) this.bodyIterators.get(l).deepCopy());
+        }
         FunctionItem function = new FunctionItem(
                 this.functionName,
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                bodyIteratorCopy,
-                bodyRDDIteratorCopy,
-                bodyDFIteratorCopy
+                bodyIteratorsCopy
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;

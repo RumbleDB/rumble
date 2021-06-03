@@ -40,7 +40,9 @@ import org.rumbledb.types.SequenceType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
 
@@ -107,11 +109,24 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             try {
                 Estimator<?> estimator = (Estimator<?>) this.estimatorSparkMLClass.newInstance();
-                RuntimeIterator bodyIterator = new ApplyEstimatorRuntimeIterator(
-                        this.estimatorShortName,
-                        estimator,
-                        ExecutionMode.LOCAL,
-                        getMetadata()
+                Map<Long, RuntimeIterator> bodyIterators = new HashMap<>();
+                bodyIterators.put(
+                    0L,
+                    new ApplyEstimatorRuntimeIterator(
+                            this.estimatorShortName,
+                            estimator,
+                            ExecutionMode.LOCAL,
+                            getMetadata()
+                    )
+                );
+                bodyIterators.put(
+                    1L,
+                    new ApplyEstimatorRuntimeIterator(
+                            this.estimatorShortName,
+                            estimator,
+                            ExecutionMode.DATAFRAME,
+                            getMetadata()
+                    )
                 );
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
                     Arrays.asList(
@@ -143,9 +158,7 @@ public class GetEstimatorFunctionIterator extends LocalFunctionCallIterator {
                                 returnType
                         ),
                         new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
-                        bodyIterator,
-                        bodyIterator,
-                        bodyIterator
+                        bodyIterators
                 );
 
             } catch (InstantiationException | IllegalAccessException e) {

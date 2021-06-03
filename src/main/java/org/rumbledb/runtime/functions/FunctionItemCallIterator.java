@@ -232,9 +232,7 @@ public class FunctionItemCallIterator extends HybridRuntimeIterator {
                         this.functionItem.getSignature().getReturnType()
                 ),
                 this.functionItem.getModuleDynamicContext(),
-                this.functionItem.getBodyIterator(),
-                this.functionItem.getBodyRDDIterator(),
-                this.functionItem.getBodyDFIterator(),
+                this.functionItem.getBodyIterators(),
                 localArgumentValues,
                 RDDArgumentValues,
                 DFArgumentValues
