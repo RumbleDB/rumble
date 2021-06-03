@@ -97,6 +97,8 @@ public class FunctionItem implements Item {
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
             RuntimeIterator bodyIterator,
+            RuntimeIterator bodyRDDIterator,
+            RuntimeIterator bodyDFIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, JSoundDataFrame> DFVariablesInClosure
@@ -105,6 +107,8 @@ public class FunctionItem implements Item {
         this.parameterNames = parameterNames;
         this.signature = signature;
         this.bodyIterator = bodyIterator;
+        this.bodyRDDIterator = bodyRDDIterator;
+        this.bodyDFIterator = bodyDFIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -116,7 +120,9 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            RuntimeIterator bodyIterator,
+            RuntimeIterator bodyRDDIterator,
+            RuntimeIterator bodyDFIterator
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -129,6 +135,8 @@ public class FunctionItem implements Item {
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
         this.bodyIterator = bodyIterator;
+        this.bodyRDDIterator = bodyRDDIterator;
+        this.bodyDFIterator = bodyDFIterator;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -156,6 +164,14 @@ public class FunctionItem implements Item {
 
     public RuntimeIterator getBodyIterator() {
         return this.bodyIterator;
+    }
+
+    public RuntimeIterator getBodyRDDIterator() {
+        return this.bodyRDDIterator;
+    }
+
+    public RuntimeIterator getDFBodyIterator() {
+        return this.bodyDFIterator;
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {

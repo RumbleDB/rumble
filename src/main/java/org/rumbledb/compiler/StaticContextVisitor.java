@@ -193,24 +193,21 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContextLocal = new StaticContext(argument);
-        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
-        {
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
             functionDeclarationContextLocal.addVariable(
-                    entry.getKey(),
-                    entry.getValue(),
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL
-                );
+                entry.getKey(),
+                entry.getValue(),
+                expression.getMetadata(),
+                ExecutionMode.LOCAL
+            );
         }
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getLocalBody(), functionDeclarationContextLocal);
 
         StaticContext functionDeclarationContextRDD = new StaticContext(argument);
         boolean first = true;
-        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
-        {
-            if(first)
-            {
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
+            if (first) {
                 functionDeclarationContextRDD.addVariable(
                     entry.getKey(),
                     entry.getValue(),
@@ -230,10 +227,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext functionDeclarationContextDF = new StaticContext(argument);
         this.visit(expression.getRDDBody(), functionDeclarationContextRDD);
         first = true;
-        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet())
-        {
-            if(first)
-            {
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
+            if (first) {
                 functionDeclarationContextDF.addVariable(
                     entry.getKey(),
                     entry.getValue(),
