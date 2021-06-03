@@ -71,7 +71,9 @@ public class FunctionRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
                 this.paramNameToSequenceTypes,
                 this.returnType,
                 dynamicContext.getModuleContext(),
-                bodyIteratorCopy
+                bodyIteratorCopy,
+                bodyRDDIteratorCopy,
+                bodyDFIteratorCopy
         );
         function.populateClosureFromDynamicContext(dynamicContext, getMetadata());
         return function;
