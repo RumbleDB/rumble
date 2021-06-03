@@ -31,6 +31,8 @@ import org.rumbledb.expressions.Node;
 
 public class BooleanLiteralExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     private boolean value;
 
     public BooleanLiteralExpression(boolean value, ExceptionMetadata metadata) {

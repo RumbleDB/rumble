@@ -31,6 +31,8 @@ import java.util.List;
 
 public class ComparisonExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     public static enum ComparisonOperator {
         VC_EQ("eq"),
         VC_NE("ne"),

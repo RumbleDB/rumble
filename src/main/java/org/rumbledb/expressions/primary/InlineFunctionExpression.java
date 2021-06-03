@@ -33,6 +33,7 @@ import org.rumbledb.types.SequenceType;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,13 +41,13 @@ public class InlineFunctionExpression extends Expression {
 
     private final Name name;
     private final FunctionIdentifier functionIdentifier;
-    private final Map<Name, SequenceType> params;
+    private final LinkedHashMap<Name, SequenceType> params;
     private final SequenceType returnType;
     private final Map<Long, Expression> bodies;
 
     public InlineFunctionExpression(
             Name name,
-            Map<Name, SequenceType> params,
+            LinkedHashMap<Name, SequenceType> params,
             SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata

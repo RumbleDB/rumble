@@ -31,6 +31,8 @@ import java.util.List;
 
 public class ArrayConstructorExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     private Expression expression;
 
     public ArrayConstructorExpression(Expression expression, ExceptionMetadata metadata) {
