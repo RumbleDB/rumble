@@ -141,9 +141,7 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
-            if (configuration.doStaticAnalysis()) {
-                inferTypes(mainModule, configuration);
-            }
+            inferTypes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -182,9 +180,7 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
-            if (configuration.doStaticAnalysis()) {
-                inferTypes(mainModule, configuration);
-            }
+            inferTypes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
