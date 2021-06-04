@@ -128,7 +128,8 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         if (!this.functionItem.getBodyIterator().getHighestExecutionMode().equals(this.getHighestExecutionMode())) {
             throw new OurBadException(
                     "Execution mode mismatch in dynamic function call. At this point, Rumble only supports higher-order functions "
-                        + "that are either machine learning models or estimators (which process validated and structured sequences of objects at any scale), or that take and return just one item at a time."
+                        + "that are either machine learning models or estimators (which process validated and structured sequences of objects at any scale), or that take and return just one item at a time.",
+                        getMetadata()
             );
         }
         this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
