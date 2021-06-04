@@ -87,6 +87,7 @@ public class DynamicFunctionCallExpression extends Expression {
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
+        this.mainExpression.print(buffer, indent + 1);
         for (Expression arg : this.arguments) {
             if (arg == null) {
                 for (int i = 0; i < indent; ++i) {
@@ -126,5 +127,8 @@ public class DynamicFunctionCallExpression extends Expression {
             return;
         }
         this.highestExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
+        if (this.highestExecutionMode.equals(ExecutionMode.RDD)) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+        }
     }
 }
