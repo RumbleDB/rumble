@@ -150,16 +150,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
+    private String code;
 
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration
+            RumbleRuntimeConfiguration configuration,
+            String code
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
         this.isMainModule = isMainModule;
+        this.code = code;
     }
 
     // endregion expr
@@ -1705,7 +1708,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new ExceptionMetadata(
                 this.moduleContext.getStaticBaseURI().toString(),
                 token.getLine(),
-                token.getCharPositionInLine()
+                token.getCharPositionInLine(),
+                this.code
         );
     }
 
