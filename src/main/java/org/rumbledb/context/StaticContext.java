@@ -153,7 +153,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("Variable " + varName + " not in scope", null);
+            throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -168,7 +168,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("function " + identifier + " not in scope", null);
+            throw new SemanticException("function " + identifier + " not in scope", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
