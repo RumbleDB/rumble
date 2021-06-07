@@ -44,8 +44,15 @@ public class SequenceType implements Serializable {
 
 
     public SequenceType(ItemType itemType, Arity arity) {
+        if (arity == Arity.Zero) {
+            this.itemType = BuiltinTypesCatalogue.item;
+            this.arity = Arity.Zero;
+            this.isEmptySequence = true;
+            return;
+        }
         this.itemType = itemType;
         this.arity = arity;
+        this.isEmptySequence = false;
         if (this.itemType == null) {
             throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
         }
@@ -57,6 +64,7 @@ public class SequenceType implements Serializable {
     public SequenceType(ItemType itemType) {
         this.itemType = itemType;
         this.arity = Arity.One;
+        this.isEmptySequence = false;
         if (this.itemType == null) {
             throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
         }
@@ -64,7 +72,7 @@ public class SequenceType implements Serializable {
 
     private SequenceType() {
         this.itemType = BuiltinTypesCatalogue.item;
-        this.arity = null;
+        this.arity = Arity.Zero;
         this.isEmptySequence = true;
     }
 
@@ -247,11 +255,23 @@ public class SequenceType implements Serializable {
             public String getSymbol() {
                 return "";
             }
+        },
+        Zero {
+            @Override
+            public String getSymbol() {
+                return "<void>";
+            }
         };
 
         public abstract String getSymbol();
 
         public boolean isSubtypeOf(Arity superArity) {
+            if (superArity == Zero) {
+                return this == Arity.Zero;
+            }
+            if (this == Zero) {
+                return this == Arity.ZeroOrMore || this == Arity.OneOrZero;
+            }
             if (superArity == Arity.ZeroOrMore || superArity == this)
                 return true;
             else
@@ -259,6 +279,9 @@ public class SequenceType implements Serializable {
         }
 
         public Arity multiplyWith(Arity other) {
+            if (this == Zero || other == Zero) {
+                return Zero;
+            }
             if (this == One && other == One) {
                 return One;
             } else if (this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)) {
