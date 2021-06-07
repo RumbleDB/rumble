@@ -47,36 +47,14 @@ public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         Item stringItem = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+
         if (stringItem == null) {
-            return ItemFactory.getInstance().createStringItem("test");
-            //return ItemFactory.getInstance().createStringItem("");
+            return ItemFactory.getInstance().createStringItem("");
         } else {
             String input = stringItem.getStringValue();
-            return ItemFactory.getInstance().createStringItem(input.toUpperCase());
+            return ItemFactory.getInstance().createStringItem(input.toLowerCase());
         }
 
     }
 
-    /*
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (stringItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
-            } else {
-                String input = stringItem.getStringValue();
-                return ItemFactory.getInstance().createStringItem(input.toLowerCase());
-            }
-
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
-                    getMetadata()
-            );
-    }
-    */
 }
