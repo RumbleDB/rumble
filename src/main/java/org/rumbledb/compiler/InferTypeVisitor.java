@@ -191,7 +191,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         if (inferredEmptyCheck) {
-            if (type.isEmptySequence()) {
+            if (type != null && type.isEmptySequence()) {
                 throwStaticTypeException(
                     "Inferred type for "
                         + nodeName
