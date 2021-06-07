@@ -21,16 +21,18 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
+import java.util.Locale;
 
-public class LowerCaseFunctionIterator extends LocalFunctionCallIterator {
+public class LowerCaseFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -42,6 +44,20 @@ public class LowerCaseFunctionIterator extends LocalFunctionCallIterator {
         super(arguments, executionMode, iteratorMetadata);
     }
 
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
+        Item stringItem = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
+        if (stringItem == null) {
+            return ItemFactory.getInstance().createStringItem("test");
+            //return ItemFactory.getInstance().createStringItem("");
+        } else {
+            String input = stringItem.getStringValue();
+            return ItemFactory.getInstance().createStringItem(input.toUpperCase());
+        }
+
+    }
+
+    /*
     @Override
     public Item next() {
         if (this.hasNext) {
@@ -62,4 +78,5 @@ public class LowerCaseFunctionIterator extends LocalFunctionCallIterator {
                     getMetadata()
             );
     }
+    */
 }
