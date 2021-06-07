@@ -33,6 +33,7 @@ import java.util.List;
 
 public class ObjectLookupExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
     private Expression lookupExpression;
 

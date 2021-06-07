@@ -36,6 +36,7 @@ import java.util.List;
 
 public class LetClause extends Clause {
 
+    private static final long serialVersionUID = 1L;
     private final Name variableName;
     protected SequenceType sequenceType;
     protected Expression expression;

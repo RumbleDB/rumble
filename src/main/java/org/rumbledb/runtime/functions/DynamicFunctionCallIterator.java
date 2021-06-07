@@ -20,20 +20,23 @@
 
 package org.rumbledb.runtime.functions;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.NamedFunctions;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.runtime.LocalRuntimeIterator;
+import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 
-public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
+public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // dynamic: functionIdentifier is not known at compile time
     // it is known only after evaluating postfix expression at runtime
 
@@ -67,15 +70,19 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        setFunctionItemAndIteratorWithCurrentContext();
+    public void openLocal() {
+        setFunctionItemAndIteratorWithCurrentContext(this.currentDynamicContextForLocalExecution);
         this.functionCallIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
-    public Item next() {
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    public Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResult;
             setNextResult();
@@ -103,11 +110,9 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
         }
     }
 
-    private void setFunctionItemAndIteratorWithCurrentContext() {
+    private void setFunctionItemAndIteratorWithCurrentContext(DynamicContext context) {
         try {
-            this.functionItem = this.functionItemIterator.materializeAtMostOneItemOrNull(
-                this.currentDynamicContextForLocalExecution
-            );
+            this.functionItem = this.functionItemIterator.materializeAtMostOneItemOrNull(context);
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     "A dynamic function call can not be performed on a sequence of more than one item.",
@@ -120,6 +125,14 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
                     getMetadata()
             );
         }
+        if (!this.functionItem.getBodyIterator().getHighestExecutionMode().equals(this.getHighestExecutionMode())) {
+            throw new OurBadException(
+                    "Execution mode mismatch in dynamic function call: expression expects "
+                        + this.getHighestExecutionMode()
+                        + " but function item expects "
+                        + this.functionItem.getBodyIterator().getHighestExecutionMode()
+            );
+        }
         this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
             this.functionItem,
             this.functionItem.getBodyIterator().getHighestExecutionMode(),
@@ -129,19 +142,29 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
     }
 
     @Override
-    public void reset(DynamicContext context) {
-        super.reset(context);
+    public void resetLocal() {
         this.functionCallIterator.reset(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
 
     @Override
-    public void close() {
+    public void closeLocal() {
         // ensure that recursive function calls terminate gracefully
         // the function call in the body of the deepest recursion call is never visited, never opened and never closed
         if (this.isOpen) {
             this.functionCallIterator.close();
         }
-        super.close();
+    }
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
+        return this.functionCallIterator.getRDD(dynamicContext);
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        setFunctionItemAndIteratorWithCurrentContext(dynamicContext);
+        return this.functionCallIterator.getDataFrame(dynamicContext);
     }
 }

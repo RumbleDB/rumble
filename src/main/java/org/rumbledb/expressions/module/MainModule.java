@@ -33,6 +33,7 @@ import java.util.List;
 
 public class MainModule extends Module {
 
+    private static final long serialVersionUID = 1L;
     protected StaticContext staticContext;
     private final Prolog prolog;
     private final Expression expression;

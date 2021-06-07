@@ -36,7 +36,8 @@ import org.rumbledb.types.SequenceType;
  */
 public abstract class Expression extends Node {
 
-    protected StaticContext staticContext;
+    private static final long serialVersionUID = 1L;
+    protected transient StaticContext staticContext;
 
     protected SequenceType inferredSequenceType;
 

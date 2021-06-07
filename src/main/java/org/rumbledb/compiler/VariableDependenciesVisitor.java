@@ -352,7 +352,9 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
     @Override
     public Void visitInlineFunctionExpr(InlineFunctionExpression expression, Void argument) {
-        visit(expression.getBody(), null);
+        for (long l : expression.getBodies().keySet()) {
+            visit(expression.getBodies().get(l), null);
+        }
         addInputVariableDependencies(expression, getInputVariableDependencies(expression.getBody()));
         removeInputVariableDependencies(expression, expression.getParams().keySet());
         return null;

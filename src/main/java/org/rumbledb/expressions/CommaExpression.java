@@ -29,6 +29,8 @@ import java.util.List;
 
 public class CommaExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     private final List<Expression> expressions;
 
     public CommaExpression(List<Expression> expressions, ExceptionMetadata metadata) {

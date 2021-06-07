@@ -58,7 +58,7 @@ public class FunctionItem implements Item {
 
     // signature contains type information for all parameters and the return value
     private FunctionSignature signature;
-    private RuntimeIterator bodyIterator;
+    private Map<Long, RuntimeIterator> bodyIterators;
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
@@ -73,12 +73,12 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            Map<Long, RuntimeIterator> bodyIterators
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIterators = bodyIterators;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -90,7 +90,7 @@ public class FunctionItem implements Item {
             List<Name> parameterNames,
             FunctionSignature signature,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator,
+            Map<Long, RuntimeIterator> bodyIterators,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
             Map<Name, JSoundDataFrame> DFVariablesInClosure
@@ -98,7 +98,7 @@ public class FunctionItem implements Item {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
         this.signature = signature;
-        this.bodyIterator = bodyIterator;
+        this.bodyIterators = bodyIterators;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = localVariablesInClosure;
         this.RDDVariablesInClosure = RDDVariablesInClosure;
@@ -110,7 +110,7 @@ public class FunctionItem implements Item {
             Map<Name, SequenceType> paramNameToSequenceTypes,
             SequenceType returnType,
             DynamicContext dynamicModuleContext,
-            RuntimeIterator bodyIterator
+            Map<Long, RuntimeIterator> bodyIterators
     ) {
         List<Name> paramNames = new ArrayList<>();
         List<SequenceType> parameters = new ArrayList<>();
@@ -122,7 +122,7 @@ public class FunctionItem implements Item {
         this.identifier = new FunctionIdentifier(name, paramNames.size());
         this.parameterNames = paramNames;
         this.signature = new FunctionSignature(parameters, returnType);
-        this.bodyIterator = bodyIterator;
+        this.bodyIterators = bodyIterators;
         this.dynamicModuleContext = dynamicModuleContext;
         this.localVariablesInClosure = new HashMap<>();
         this.RDDVariablesInClosure = new HashMap<>();
@@ -149,7 +149,11 @@ public class FunctionItem implements Item {
     }
 
     public RuntimeIterator getBodyIterator() {
-        return this.bodyIterator;
+        return this.bodyIterators.get(0L);
+    }
+
+    public Map<Long, RuntimeIterator> getBodyIterators() {
+        return this.bodyIterators;
     }
 
     public Map<Name, List<Item>> getLocalVariablesInClosure() {
@@ -200,7 +204,9 @@ public class FunctionItem implements Item {
             sb.append(param + " ");
         }
         sb.append("Signature: " + this.signature + "\n");
-        sb.append("Body:\n" + this.bodyIterator + "\n");
+        for (long l : this.bodyIterators.keySet()) {
+            sb.append("Body " + l + ":\n" + this.bodyIterators.get(l) + "\n");
+        }
         sb.append("Closure:\n");
         sb.append("  Local:\n");
         for (Name name : this.localVariablesInClosure.keySet()) {
@@ -243,7 +249,7 @@ public class FunctionItem implements Item {
         try {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             ObjectOutputStream oos = new ObjectOutputStream(bos);
-            oos.writeObject(this.bodyIterator);
+            oos.writeObject(this.bodyIterators);
             oos.flush();
             byte[] data = bos.toByteArray();
             output.writeInt(data.length);
@@ -274,7 +280,7 @@ public class FunctionItem implements Item {
             byte[] data = input.readBytes(dataLength);
             ByteArrayInputStream bis = new ByteArrayInputStream(data);
             ObjectInputStream ois = new ObjectInputStream(bis);
-            this.bodyIterator = (RuntimeIterator) ois.readObject();
+            this.bodyIterators = (Map<Long, RuntimeIterator>) ois.readObject();
         } catch (Exception e) {
             throw new OurBadException(
                     "Error converting functionItem-bodyRuntimeIterator to functionItem:" + e.getMessage()

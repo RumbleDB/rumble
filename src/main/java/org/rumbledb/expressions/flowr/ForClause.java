@@ -36,6 +36,7 @@ import java.util.List;
 
 public class ForClause extends Clause {
 
+    private static final long serialVersionUID = 1L;
     private final Name variableName;
     private final boolean allowingEmpty;
     private final Name positionalVariableName;

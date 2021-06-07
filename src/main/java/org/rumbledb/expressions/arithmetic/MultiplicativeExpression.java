@@ -31,6 +31,7 @@ import java.util.Arrays;
 import java.util.List;
 
 public class MultiplicativeExpression extends Expression {
+    private static final long serialVersionUID = 1L;
 
     public static enum MultiplicativeOperator {
         MUL("*"),

@@ -32,6 +32,8 @@ import org.rumbledb.expressions.Node;
 
 public class NullLiteralExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     public NullLiteralExpression(ExceptionMetadata metadata) {
         super(metadata);
     }

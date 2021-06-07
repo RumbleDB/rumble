@@ -33,6 +33,7 @@ import java.util.List;
 
 public class ConditionalExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private final Expression conditionExpression;
     private final Expression thenExpression;
     private final Expression elseExpression;

@@ -24,6 +24,7 @@ import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
@@ -32,8 +33,9 @@ import java.util.function.Predicate;
  * This is the top-level class for nodes in the intermediate representation of a
  * JSONiq query. Nodes include expressions, clauses, function declarations, etc.
  */
-public abstract class Node {
+public abstract class Node implements Serializable {
 
+    private static final long serialVersionUID = 1L;
     private ExceptionMetadata metadata;
 
     protected ExecutionMode highestExecutionMode = ExecutionMode.UNSET;

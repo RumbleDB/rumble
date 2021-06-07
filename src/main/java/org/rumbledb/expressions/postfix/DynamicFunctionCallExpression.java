@@ -20,9 +20,11 @@
 
 package org.rumbledb.expressions.postfix;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import java.util.ArrayList;
@@ -31,6 +33,7 @@ import java.util.stream.Collectors;
 
 public class DynamicFunctionCallExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
     private List<Expression> arguments;
 
@@ -114,5 +117,14 @@ public class DynamicFunctionCallExpression extends Expression {
             }
         }
         sb.append(")\n");
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (this.arguments.size() == 0) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        this.highestExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
     }
 }

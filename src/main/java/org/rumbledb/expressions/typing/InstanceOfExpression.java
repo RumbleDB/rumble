@@ -33,6 +33,7 @@ import org.rumbledb.types.SequenceType;
 
 public class InstanceOfExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
     private SequenceType sequenceType;
 

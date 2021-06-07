@@ -21,6 +21,7 @@
 package org.rumbledb.expressions.primary;
 
 
+import org.apache.commons.lang3.SerializationUtils;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -30,21 +31,24 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
 
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 public class InlineFunctionExpression extends Expression {
+    private static final long serialVersionUID = 1L;
 
     private final Name name;
     private final FunctionIdentifier functionIdentifier;
-    private final Map<Name, SequenceType> params;
+    private final LinkedHashMap<Name, SequenceType> params;
     private final SequenceType returnType;
-    private final Expression body;
+    private final Map<Long, Expression> bodies;
 
     public InlineFunctionExpression(
             Name name,
-            Map<Name, SequenceType> params,
+            LinkedHashMap<Name, SequenceType> params,
             SequenceType returnType,
             Expression body,
             ExceptionMetadata metadata
@@ -53,7 +57,12 @@ public class InlineFunctionExpression extends Expression {
         this.name = name;
         this.params = params;
         this.returnType = returnType;
-        this.body = body;
+        this.bodies = new HashMap<>();
+        this.bodies.put(0L, body);
+        // for inline functions, we maintain another version for ML models
+        if (this.name == null) {
+            this.bodies.put(1L, (Expression) SerializationUtils.clone(body));
+        }
         this.functionIdentifier = new FunctionIdentifier(name, params.size());
     }
 
@@ -78,12 +87,12 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public Expression getBody() {
-        return this.body;
+        return this.bodies.get(0L);
     }
 
     @Override
     public List<Node> getChildren() {
-        return Arrays.asList(this.body);
+        return new ArrayList<>(this.bodies.values());
     }
 
     public void registerUserDefinedFunctionExecutionMode(
@@ -95,7 +104,7 @@ public class InlineFunctionExpression extends Expression {
             getStaticContext().getUserDefinedFunctionsExecutionModes()
                 .setExecutionMode(
                     identifier,
-                    this.body.getHighestExecutionMode(visitorConfig),
+                    this.bodies.get(0L).getHighestExecutionMode(visitorConfig),
                     visitorConfig.suppressErrorsForFunctionSignatureCollision(),
                     this.getMetadata()
                 );
@@ -124,11 +133,13 @@ public class InlineFunctionExpression extends Expression {
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
         buffer.append("\n");
-        for (int i = 0; i < indent + 2; ++i) {
-            buffer.append("  ");
+        for (long l : this.bodies.keySet()) {
+            for (int i = 0; i < indent + 1; ++i) {
+                buffer.append("  ");
+            }
+            buffer.append("Body " + l + ":\n");
+            this.bodies.get(l).print(buffer, indent + 2);
         }
-        buffer.append("Body:\n");
-        this.body.print(buffer, indent + 2);
     }
 
     @Override
@@ -157,10 +168,14 @@ public class InlineFunctionExpression extends Expression {
                 sb.append("\n");
             indentIt(sb, indent);
             sb.append("{\n");
-            this.body.serializeToJSONiq(sb, indent + 1);
+            this.bodies.get(0L).serializeToJSONiq(sb, indent + 1);
             indentIt(sb, indent);
             sb.append("}\n");
         }
+    }
+
+    public Map<Long, Expression> getBodies() {
+        return this.bodies;
     }
 }
 

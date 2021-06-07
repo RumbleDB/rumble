@@ -27,7 +27,9 @@ import org.rumbledb.types.SequenceType;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.NoSuchElementException;
 
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
@@ -232,11 +234,24 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
     }
 
     private Item generateTransformerFunctionItem(Transformer fittedModel) {
-        RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
-                fittedModel,
-                ExecutionMode.DATAFRAME,
-                getMetadata()
+        Map<Long, RuntimeIterator> bodyIterators = new HashMap<>();
+        bodyIterators.put(
+            0L,
+            new ApplyTransformerRuntimeIterator(
+                    RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
+                    fittedModel,
+                    ExecutionMode.LOCAL,
+                    getMetadata()
+            )
+        );
+        bodyIterators.put(
+            1L,
+            new ApplyTransformerRuntimeIterator(
+                    RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
+                    fittedModel,
+                    ExecutionMode.DATAFRAME,
+                    getMetadata()
+            )
         );
         List<SequenceType> paramTypes = Collections.unmodifiableList(
             Arrays.asList(
@@ -266,7 +281,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                         returnType
                 ),
                 new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
-                bodyIterator
+                bodyIterators
         );
     }
 }

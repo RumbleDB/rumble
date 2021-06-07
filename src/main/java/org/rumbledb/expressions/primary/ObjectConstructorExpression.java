@@ -31,6 +31,7 @@ import java.util.List;
 
 public class ObjectConstructorExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private boolean isMergedConstructor = false;
     private List<Expression> values;
     private List<Expression> keys;

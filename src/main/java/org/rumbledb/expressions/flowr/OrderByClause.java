@@ -31,6 +31,7 @@ import java.util.List;
 
 public class OrderByClause extends Clause {
 
+    private static final long serialVersionUID = 1L;
 
     private final List<OrderByClauseSortingKey> sortingKeys;
     private final boolean isStable;

@@ -30,6 +30,7 @@ import java.util.List;
 
 
 public class CountClause extends Clause {
+    private static final long serialVersionUID = 1L;
     private VariableReferenceExpression countClauseVar;
 
     public CountClause(VariableReferenceExpression countClauseVar, ExceptionMetadata metadata) {

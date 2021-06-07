@@ -40,6 +40,7 @@ import java.util.stream.Collectors;
 
 public class FunctionCallExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
     private final FunctionIdentifier identifier;
     private final List<Expression> arguments; // null for placeholder
     private final boolean isPartialApplication;

@@ -13,6 +13,8 @@ import org.rumbledb.types.SequenceType.Arity;
 
 public class CastableExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     protected Expression mainExpression;
     private SequenceType sequenceType;
 

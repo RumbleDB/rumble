@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class IsStaticallyExpression extends Expression {
+    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
     private SequenceType sequenceType;
 

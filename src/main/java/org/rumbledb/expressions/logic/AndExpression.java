@@ -29,6 +29,8 @@ import java.util.Arrays;
 import java.util.List;
 
 public class AndExpression extends Expression {
+    private static final long serialVersionUID = 1L;
+
     private Expression leftExpression;
     private Expression rightExpression;
 

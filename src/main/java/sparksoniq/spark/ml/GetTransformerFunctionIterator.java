@@ -40,7 +40,9 @@ import org.rumbledb.types.SequenceType;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
 
@@ -107,11 +109,24 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = false;
             try {
                 Transformer transformer = (Transformer) this.transformerSparkMLClass.newInstance();
-                RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                        this.transformerShortName,
-                        transformer,
-                        ExecutionMode.DATAFRAME,
-                        getMetadata()
+                Map<Long, RuntimeIterator> bodyIterators = new HashMap<>();
+                bodyIterators.put(
+                    0L,
+                    new ApplyTransformerRuntimeIterator(
+                            this.transformerShortName,
+                            transformer,
+                            ExecutionMode.LOCAL,
+                            getMetadata()
+                    )
+                );
+                bodyIterators.put(
+                    1L,
+                    new ApplyTransformerRuntimeIterator(
+                            this.transformerShortName,
+                            transformer,
+                            ExecutionMode.DATAFRAME,
+                            getMetadata()
+                    )
                 );
                 List<SequenceType> paramTypes = Collections.unmodifiableList(
                     Arrays.asList(
@@ -143,7 +158,7 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                                 returnType
                         ),
                         new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
-                        bodyIterator
+                        bodyIterators
                 );
 
             } catch (InstantiationException | IllegalAccessException e) {

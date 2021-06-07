@@ -33,6 +33,8 @@ import java.util.List;
 
 public class ArrayUnboxingExpression extends Expression {
 
+    private static final long serialVersionUID = 1L;
+
     private Expression mainExpression;
 
     public ArrayUnboxingExpression(Expression mainExpression, ExceptionMetadata metadata) {
