@@ -596,7 +596,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.getMetadata()
             );
         }
-        if (!expressionSequenceType.getItemType().isStaticallyCastableAs(castedSequenceType.getItemType())) {
+        if (
+            !expressionSequenceType.getItemType().isAtomicItemType()
+                || !expressionSequenceType.getItemType().isStaticallyCastableAs(castedSequenceType.getItemType())
+        ) {
             throwStaticTypeException(
                 "It is never possible to cast a "
                     +
