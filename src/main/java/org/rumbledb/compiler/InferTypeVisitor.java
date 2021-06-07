@@ -1056,6 +1056,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     "'+' and '*' arities are not allowed for this comparison operator: " + operator,
                     expression.getMetadata()
                 );
+                returnArity = SequenceType.Arity.OneOrZero;
             }
         }
 
