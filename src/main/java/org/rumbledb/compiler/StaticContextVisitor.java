@@ -313,6 +313,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
         }
+        // TODO set cardinalities to * for all non-grouping input tuple variables
         clause.initHighestExecutionMode(this.visitorConfig);
         return groupByClauseContext;
     }
