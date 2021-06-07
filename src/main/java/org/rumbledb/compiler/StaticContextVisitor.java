@@ -131,7 +131,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         } else {
             // note: sequence type can be null
-            expression.setType(argument.getVariableSequenceType(variableName));
+            expression.setActualType(argument.getVariableSequenceType(variableName));
             ExecutionMode mode = argument.getVariableStorageMode(variableName);
             if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
                 mode = ExecutionMode.LOCAL;

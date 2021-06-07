@@ -64,7 +64,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         return this.type;
     }
 
-    public void setType(SequenceType type) {
+    public void setActualType(SequenceType type) {
         this.type = type;
     }
 
@@ -92,7 +92,7 @@ public class VariableReferenceExpression extends Expression implements Serializa
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);
