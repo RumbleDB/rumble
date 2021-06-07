@@ -878,6 +878,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
                 );
             }
+            inferredType = BuiltinTypesCatalogue.atomicItem;
         }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
