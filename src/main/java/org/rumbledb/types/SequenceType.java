@@ -57,10 +57,13 @@ public class SequenceType implements Serializable {
     public SequenceType(ItemType itemType) {
         this.itemType = itemType;
         this.arity = Arity.One;
+        if (this.itemType == null) {
+            throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
+        }
     }
 
     private SequenceType() {
-        this.itemType = null;
+        this.itemType = BuiltinTypesCatalogue.item;
         this.arity = null;
         this.isEmptySequence = true;
     }
@@ -84,9 +87,6 @@ public class SequenceType implements Serializable {
     }
 
     public ItemType getItemType() {
-        if (this.isEmptySequence) {
-            throw new OurBadException("Empty sequence type has no item");
-        }
         return this.itemType;
     }
 
