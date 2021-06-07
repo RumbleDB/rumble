@@ -46,8 +46,11 @@ public class SequenceType implements Serializable {
     public SequenceType(ItemType itemType, Arity arity) {
         this.itemType = itemType;
         this.arity = arity;
+        if (this.itemType == null) {
+            throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
+        }
         if (this.arity == null) {
-            throw new OurBadException("Missing arity in incomplete sequence type" + this.itemType);
+            throw new OurBadException("Missing arity in incomplete sequence type " + this.itemType);
         }
     }
 
