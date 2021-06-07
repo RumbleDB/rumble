@@ -76,7 +76,7 @@ public abstract class Expression extends Node {
      * Sets the inferred static type, for used by the static
      * analysis visitor.
      * 
-     * @param inferredSequenceType the statically inferred sequence type to set.
+     * @param staticSequenceType the statically inferred sequence type to set.
      */
     public void setStaticSequenceType(SequenceType staticSequenceType) {
         this.staticSequenceType = staticSequenceType;
