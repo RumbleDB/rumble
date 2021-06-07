@@ -99,9 +99,6 @@ public class SequenceType implements Serializable {
     }
 
     public Arity getArity() {
-        if (this.isEmptySequence) {
-            throw new OurBadException("Empty sequence type has no arity");
-        }
         return this.arity;
     }
 
