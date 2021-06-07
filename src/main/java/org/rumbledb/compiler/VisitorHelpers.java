@@ -58,7 +58,7 @@ public class VisitorHelpers {
         System.out.println("* Starting type inference *");
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
         System.out.println("* Completed type inference *");
-        if (conf.printInferredTypes()) {
+        if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
     }
