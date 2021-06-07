@@ -95,7 +95,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 metadata
         );
         SequenceType sequenceType = functionItem.getSignature().getReturnType();
-        if (sequenceType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        if (sequenceType.equals(SequenceType.ITEM_STAR)) {
             return functionCallIterator;
         }
         if (
@@ -167,7 +167,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 !builtinFunction.getSignature()
                     .getParameterTypes()
                     .get(i)
-                    .equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)
+                    .equals(SequenceType.ITEM_STAR)
             ) {
                 SequenceType sequenceType = builtinFunction.getSignature().getParameterTypes().get(i);
                 if (
@@ -215,7 +215,7 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             );
         }
 
-        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.ITEM_STAR)) {
             if (!checkReturnTypesOfBuiltinFunctions) {
                 return functionCallIterator;
             }

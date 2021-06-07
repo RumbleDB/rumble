@@ -497,7 +497,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 // we did not annotate a specific function, therefore we use default return type
                 SequenceType returnType = signature.getReturnType();
                 if (returnType == null) {
-                    returnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    returnType = SequenceType.ITEM_STAR;
                 }
                 expression.setStaticSequenceType(returnType);
             }

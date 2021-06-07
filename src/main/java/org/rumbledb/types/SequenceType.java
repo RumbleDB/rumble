@@ -31,11 +31,10 @@ import java.util.Map;
 public class SequenceType implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Arity arity;
     private ItemType itemType;
-    private boolean isEmptySequence = false;
+    private Arity arity;
 
-    public final static SequenceType MOST_GENERAL_SEQUENCE_TYPE = new SequenceType(
+    public final static SequenceType ITEM_STAR = new SequenceType(
             BuiltinTypesCatalogue.item,
             Arity.ZeroOrMore
     );
@@ -47,12 +46,10 @@ public class SequenceType implements Serializable {
         if (arity == Arity.Zero) {
             this.itemType = BuiltinTypesCatalogue.item;
             this.arity = Arity.Zero;
-            this.isEmptySequence = true;
             return;
         }
         this.itemType = itemType;
         this.arity = arity;
-        this.isEmptySequence = false;
         if (this.itemType == null) {
             throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
         }
@@ -64,7 +61,6 @@ public class SequenceType implements Serializable {
     public SequenceType(ItemType itemType) {
         this.itemType = itemType;
         this.arity = Arity.One;
-        this.isEmptySequence = false;
         if (this.itemType == null) {
             throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
         }
@@ -73,25 +69,24 @@ public class SequenceType implements Serializable {
     private SequenceType() {
         this.itemType = BuiltinTypesCatalogue.item;
         this.arity = Arity.Zero;
-        this.isEmptySequence = true;
     }
 
     public boolean isResolved() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return true;
         }
         return this.itemType.isResolved();
     }
 
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return;
         }
         this.itemType.resolve(context, metadata);
     }
 
     public boolean isEmptySequence() {
-        return this.isEmptySequence;
+        return this.arity == Arity.Zero;
     }
 
     public ItemType getItemType() {
@@ -103,7 +98,7 @@ public class SequenceType implements Serializable {
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
@@ -113,7 +108,7 @@ public class SequenceType implements Serializable {
 
     // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
     public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.isAritySubtypeOf(superType.arity)
@@ -129,7 +124,7 @@ public class SequenceType implements Serializable {
     }
 
     public boolean hasEffectiveBooleanValue() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return true;
         } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
@@ -153,7 +148,7 @@ public class SequenceType implements Serializable {
 
     public boolean hasOverlapWith(SequenceType other) {
         // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
-        if (this.isEmptySequence()) {
+        if (isEmptySequence()) {
             return other.isEmptySequence()
                 || other.getArity() == Arity.OneOrZero
                 || other.getArity() == Arity.ZeroOrMore;
@@ -167,7 +162,7 @@ public class SequenceType implements Serializable {
     }
 
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             if (other.isEmptySequence()) {
                 return this;
             } else {
@@ -203,7 +198,7 @@ public class SequenceType implements Serializable {
 
     // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
     public SequenceType incrementArity() {
-        if (!this.isEmptySequence()) {
+        if (!isEmptySequence()) {
             if (this.arity == Arity.One) {
                 return new SequenceType(this.getItemType(), Arity.OneOrMore);
             } else if (this.arity == Arity.OneOrZero) {
@@ -219,7 +214,7 @@ public class SequenceType implements Serializable {
             return false;
         }
         SequenceType sequenceType = (SequenceType) other;
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return sequenceType.isEmptySequence();
         }
         if (sequenceType.isEmptySequence()) {
@@ -294,7 +289,7 @@ public class SequenceType implements Serializable {
 
     @Override
     public String toString() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return "()";
         }
         StringBuilder result = new StringBuilder();

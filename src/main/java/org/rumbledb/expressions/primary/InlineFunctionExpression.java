@@ -70,7 +70,7 @@ public class InlineFunctionExpression extends Expression {
     }
 
     public SequenceType getReturnType() {
-        return this.returnType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.returnType;
+        return this.returnType == null ? SequenceType.ITEM_STAR : this.returnType;
     }
 
     public SequenceType getActualReturnType() {

@@ -63,7 +63,7 @@ public class LetClause extends Clause {
     }
 
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+        return this.sequenceType == null ? SequenceType.ITEM_STAR : this.sequenceType;
     }
 
     public SequenceType getActualSequenceType() {
