@@ -1715,7 +1715,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType forType;
 
         while (clause != null) {
-            this.visit(clause, clause.getStaticContext();
+            this.visit(clause, clause.getStaticContext());
             // if there are for clauses we need to consider their arities for the returning expression
             if (clause.getClauseType() == FLWOR_CLAUSES.FOR) {
                 forType = ((ForClause) clause).getExpression().getStaticSequenceType();
