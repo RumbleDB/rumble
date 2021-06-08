@@ -1960,9 +1960,14 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitVariableDeclaration(VariableDeclaration expression, StaticContext argument) {
         visitDescendants(expression, argument);
         SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = (declaredType == null
-            ? expression.getExpression()
-            : ((TreatExpression) expression.getExpression()).getMainExpression()).getStaticSequenceType();
+        SequenceType inferredType = SequenceType.ITEM_STAR;
+        if (declaredType == null) {
+            if (expression.getExpression() != null) {
+                inferredType = expression.getExpression().getStaticSequenceType();
+            }
+        } else {
+            inferredType = declaredType;
+        }
         checkVariableType(
             declaredType,
             inferredType,
