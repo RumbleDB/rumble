@@ -688,6 +688,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 "'+' and '*' arities are not allowed for additive expressions",
                 expression.getMetadata()
             );
+            inferredArity = SequenceType.Arity.OneOrZero;
         }
 
         ItemType leftItemType = leftInferredType.getItemType();
