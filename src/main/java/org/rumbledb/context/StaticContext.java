@@ -37,6 +37,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class StaticContext implements Serializable, KryoSerializable {
@@ -214,7 +215,10 @@ public class StaticContext implements Serializable, KryoSerializable {
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
         stringBuilder.append("Static context with variables: ");
-        this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
+        for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue().getSequenceType());
+        }
         stringBuilder.append("\n");
         if (this.userDefinedFunctionExecutionModes != null) {
             stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());

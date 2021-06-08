@@ -242,7 +242,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
-        StaticContext result = this.visit(clause, argument);
+        StaticContext result = argument;
         while (clause != null) {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
