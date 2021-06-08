@@ -1661,6 +1661,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
             return argument;
         }
+        if (mainType.isEmptySequence()) {
+            expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+        }
 
         throwStaticTypeException(
             "the type of a dynamic function call main expression must be function, instead inferred " + mainType,
@@ -1726,6 +1729,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             clause = clause.getNextClause();
         }
 
+        System.err.println(expression.getReturnClause().getReturnExpr().getStaticSequenceType());
         SequenceType returnType = expression.getReturnClause().getReturnExpr().getStaticSequenceType();
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
         returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
@@ -1766,7 +1770,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        checkVariableType(
+        checkAndUpdateVariableStaticType(
             declaredType,
             inferredType,
             expression.getNextClause().getStaticContext(),
@@ -1786,7 +1790,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType inferredType = (declaredType == null
             ? expression.getExpression()
             : ((TreatExpression) expression.getExpression()).getMainExpression()).getStaticSequenceType();
-        checkVariableType(
+        checkAndUpdateVariableStaticType(
             declaredType,
             inferredType,
             expression.getNextClause().getStaticContext(),
@@ -1840,7 +1844,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     inferredType = ((TreatExpression) groupByVarExpr).getMainExpression().getStaticSequenceType();
                     expectedType = declaredType;
                 }
-                checkVariableType(
+                checkAndUpdateVariableStaticType(
                     declaredType,
                     inferredType,
                     nextClause.getStaticContext(),
@@ -1925,7 +1929,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     // if [declaredType] is not null, check if the inferred type matches or can be promoted to the declared type
     // (otherwise throw type error)
     // if [declaredType] is null, replace the type of [variableName] in the [context] with the inferred type
-    public void checkVariableType(
+    public void checkAndUpdateVariableStaticType(
             SequenceType declaredType,
             SequenceType inferredType,
             StaticContext context,
@@ -1968,7 +1972,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         } else {
             inferredType = declaredType;
         }
-        checkVariableType(
+        checkAndUpdateVariableStaticType(
             declaredType,
             inferredType,
             argument,
