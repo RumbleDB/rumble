@@ -26,12 +26,13 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
+import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
-import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -41,7 +42,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class SumFunctionIterator extends LocalFunctionCallIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -56,14 +57,28 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     @Override
-    public Item materializeFirstItemOrNull(DynamicContext context) {
+    public void open(DynamicContext context) {
+        super.open(context);
         this.item = computeSum(
-            zeroElement(),
-            this.children.get(0),
-            this.currentDynamicContextForLocalExecution,
-            getMetadata()
+                zeroElement(),
+                this.children.get(0),
+                this.currentDynamicContextForLocalExecution,
+                getMetadata()
         );
-        return this.item;
+        this.hasNext = this.item != null;
+    }
+
+    @Override
+    public Item next() {
+        if (this.hasNext) {
+            this.hasNext = false;
+            return this.item;
+        } else {
+            throw new IteratorFlowException(
+                    FLOW_EXCEPTION_MESSAGE + "SUM function",
+                    getMetadata()
+            );
+        }
     }
 
     private Item zeroElement() {
@@ -82,24 +97,24 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         if (iterator.isDataFrame()) {
             return computeDataFrame(
-                zeroElement,
-                iterator,
-                context,
-                metadata
+                    zeroElement,
+                    iterator,
+                    context,
+                    metadata
             );
         } else if (iterator.isRDDOrDataFrame()) {
             return computeRDD(
-                zeroElement,
-                iterator,
-                context,
-                metadata
+                    zeroElement,
+                    iterator,
+                    context,
+                    metadata
             );
         } else {
             return computeLocally(
-                zeroElement,
-                iterator,
-                context,
-                metadata
+                    zeroElement,
+                    iterator,
+                    context,
+                    metadata
             );
         }
     }
@@ -121,10 +136,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (sum == null) {
                 throw new InvalidArgumentTypeException(
                         " \"+\": operation not possible with parameters of type \""
-                            + result.getDynamicType().toString()
-                            + "\" and \""
-                            + results.get(i).getDynamicType().toString()
-                            + "\"",
+                                + result.getDynamicType().toString()
+                                + "\" and \""
+                                + results.get(i).getDynamicType().toString()
+                                + "\"",
                         metadata
                 );
             }
@@ -156,12 +171,12 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         df.createOrReplaceTempView("input");
         JSoundDataFrame summedDF = df.evaluateSQL(
-            String.format(
-                "SELECT SUM(`%s`) as `%s` FROM input",
-                SparkSessionManager.atomicJSONiqItemColumnName,
-                SparkSessionManager.atomicJSONiqItemColumnName
-            ),
-            df.getItemType()
+                String.format(
+                        "SELECT SUM(`%s`) as `%s` FROM input",
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName
+                ),
+                df.getItemType()
         );
         return summedDF.getExactlyOneItem();
     }
@@ -170,7 +185,7 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
-                new TreeMap<Name, DynamicContext.VariableDependency>();
+                    new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {
