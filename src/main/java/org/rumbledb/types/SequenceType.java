@@ -25,6 +25,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -409,6 +410,50 @@ public class SequenceType implements Serializable {
         );
 
         sequenceTypes.put("null?", new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "function(object*, object) as object*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Arrays.asList(
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                ),
+                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)
+                        )
+                    )
+            )
+        );
+        sequenceTypes.put(
+            "function(object*, object) as function(object*, object) as object*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Arrays.asList(
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                ),
+                                new SequenceType(
+                                        ItemTypeFactory.createFunctionItemType(
+                                            new FunctionSignature(
+                                                    Arrays.asList(
+                                                        new SequenceType(
+                                                                BuiltinTypesCatalogue.objectItem,
+                                                                SequenceType.Arity.ZeroOrMore
+                                                        ),
+                                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                                    ),
+                                                    new SequenceType(
+                                                            BuiltinTypesCatalogue.objectItem,
+                                                            SequenceType.Arity.ZeroOrMore
+                                                    )
+                                            )
+                                        )
+                                )
+                        )
+                    )
+            )
+        );
     }
 
     public static SequenceType createSequenceType(String userFriendlyName) {

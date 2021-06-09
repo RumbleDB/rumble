@@ -2194,7 +2194,7 @@ public class BuiltinFunctionCatalogue {
                 "get-transformer"
         ),
         "string",
-        "item",
+        "function(object*, object) as object*",
         GetTransformerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -2209,7 +2209,7 @@ public class BuiltinFunctionCatalogue {
                 "get-estimator"
         ),
         "string",
-        "item",
+        "function(object*, object) as function(object*, object) as object*",
         GetEstimatorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -2223,9 +2223,9 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "annotate"
         ),
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         "object",
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         AnnotateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
