@@ -34,7 +34,6 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public Exp10FunctionIterator(
             List<RuntimeIterator> arguments,
@@ -46,7 +45,7 @@ public class Exp10FunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        Item exponent = this.iterator.materializeFirstItemOrNull(context);
+        Item exponent = this.children.get(0).materializeFirstItemOrNull(context);
         if (exponent == null) {
             return null;
         }
