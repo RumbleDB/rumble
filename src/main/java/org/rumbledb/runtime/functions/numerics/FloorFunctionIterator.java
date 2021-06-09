@@ -54,9 +54,7 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         return ItemFactory.getInstance()
             .createDoubleItem(
                 Math.floor(
-                    this.children.get(0)
-                        .materializeFirstItemOrNull(context)
-                        .castToDoubleValue()
+                        value.castToDoubleValue()
                 )
             );
     }
