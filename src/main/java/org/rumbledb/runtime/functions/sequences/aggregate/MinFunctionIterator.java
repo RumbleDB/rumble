@@ -74,7 +74,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 return Collections.min(results, comparator);
             } catch (RumbleException e) {
                 RumbleException ex = new InvalidArgumentTypeException(
-                        "Max expression input error. Input has to be non-null atomics of matching types.",
+                        "Min expression input error. Input has to be non-null atomics of matching types.",
                         getMetadata()
                 );
                 ex.initCause(e);
@@ -83,7 +83,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
 
         JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        this.iterator.close();
         if (rdd.isEmpty()) {
             return null;
         }
