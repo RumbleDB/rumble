@@ -48,8 +48,14 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         Item base = this.children.get(0).materializeFirstItemOrNull(context);
+        if (base == null) {
+            return null;
+        }
         Item exponent = this.children.get(1)
             .materializeFirstItemOrNull(context);
+        if (exponent == null) {
+            return null;
+        }
         try {
             return ItemFactory.getInstance()
                 .createDoubleItem(Math.pow(base.castToDoubleValue(), exponent.castToDoubleValue()));
