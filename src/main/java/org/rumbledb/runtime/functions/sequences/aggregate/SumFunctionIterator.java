@@ -60,10 +60,10 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
         this.item = computeSum(
-                zeroElement(),
-                this.children.get(0),
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
+            zeroElement(),
+            this.children.get(0),
+            this.currentDynamicContextForLocalExecution,
+            getMetadata()
         );
         this.hasNext = this.item != null;
     }
@@ -97,24 +97,24 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     ) {
         if (iterator.isDataFrame()) {
             return computeDataFrame(
-                    zeroElement,
-                    iterator,
-                    context,
-                    metadata
+                zeroElement,
+                iterator,
+                context,
+                metadata
             );
         } else if (iterator.isRDDOrDataFrame()) {
             return computeRDD(
-                    zeroElement,
-                    iterator,
-                    context,
-                    metadata
+                zeroElement,
+                iterator,
+                context,
+                metadata
             );
         } else {
             return computeLocally(
-                    zeroElement,
-                    iterator,
-                    context,
-                    metadata
+                zeroElement,
+                iterator,
+                context,
+                metadata
             );
         }
     }
@@ -136,10 +136,10 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
             if (sum == null) {
                 throw new InvalidArgumentTypeException(
                         " \"+\": operation not possible with parameters of type \""
-                                + result.getDynamicType().toString()
-                                + "\" and \""
-                                + results.get(i).getDynamicType().toString()
-                                + "\"",
+                            + result.getDynamicType().toString()
+                            + "\" and \""
+                            + results.get(i).getDynamicType().toString()
+                            + "\"",
                         metadata
                 );
             }
@@ -171,12 +171,12 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         }
         df.createOrReplaceTempView("input");
         JSoundDataFrame summedDF = df.evaluateSQL(
-                String.format(
-                        "SELECT SUM(`%s`) as `%s` FROM input",
-                        SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName
-                ),
-                df.getItemType()
+            String.format(
+                "SELECT SUM(`%s`) as `%s` FROM input",
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                SparkSessionManager.atomicJSONiqItemColumnName
+            ),
+            df.getItemType()
         );
         return summedDF.getExactlyOneItem();
     }
@@ -185,7 +185,7 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
         if (this.children.get(0) instanceof VariableReferenceIterator) {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
-                    new TreeMap<Name, DynamicContext.VariableDependency>();
+                new TreeMap<Name, DynamicContext.VariableDependency>();
             result.put(expr.getVariableName(), DynamicContext.VariableDependency.SUM);
             return result;
         } else {
