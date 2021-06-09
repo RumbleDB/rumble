@@ -214,10 +214,17 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Static context with variables: ");
+        stringBuilder.append("Static context with variables:\n");
         for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
             stringBuilder.append(entry.getKey());
             stringBuilder.append(" as " + entry.getValue().getSequenceType());
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Static context with user-defined functions:\n");
+        for (Entry<FunctionIdentifier, FunctionSignature> entry : this.staticallyKnownFunctionSignatures.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue());
+            stringBuilder.append("\n");
         }
         stringBuilder.append("\n");
         if (this.userDefinedFunctionExecutionModes != null) {

@@ -53,6 +53,7 @@ import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -184,6 +185,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         declaration.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
+        );
+        argument.addFunctionSignature(
+            expression.getFunctionIdentifier(),
+            new FunctionSignature(
+                    new ArrayList<>(expression.getParams().values()),
+                    expression.getReturnType()
+            )
         );
         return argument;
     }
