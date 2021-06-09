@@ -7,7 +7,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
@@ -1638,8 +1637,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             DynamicFunctionCallExpression expression,
             StaticContext argument
     ) {
+        System.err.println("Before descendant visit.");
+        System.err.println(expression);
         // since we do not specify function's signature in the itemType we can only check that it is a function
         visitDescendants(expression, argument);
+        System.err.println("After descendant visit.");
+        System.err.println(expression);
 
         SequenceType mainType = expression.getMainExpression().getStaticSequenceType();
         basicChecks(mainType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
@@ -1656,22 +1659,73 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
         }
+        List<SequenceType> actualParameterTypes = new ArrayList<>();
+        List<SequenceType> formalParameterTypes = null;
+        if (signature != null) {
+            formalParameterTypes = signature.getParameterTypes();
+        }
+        List<SequenceType> partialFormalParameterTypes = new ArrayList<>();
+        boolean isPartialApplication = false;
+        int i = 0;
+        for (Expression e : expression.getArguments()) {
+            if (e == null) {
+                isPartialApplication = true;
+                if (signature != null) {
+                    partialFormalParameterTypes.add(formalParameterTypes.get(i));
+                } else {
+                    partialFormalParameterTypes.add(SequenceType.ITEM_STAR);
+                }
+            }
+            if (e != null) {
+                actualParameterTypes.add(e.getStaticSequenceType());
+            }
+            ++i;
+        }
+        if (mainType.isEmptySequence()) {
+            expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
+            System.out.println(
+                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
+            );
+            return argument;
+        }
+        if (isPartialApplication) {
+            FunctionSignature newSignature = new FunctionSignature(
+                    partialFormalParameterTypes,
+                    signature.getReturnType()
+            );
+            expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature)));
+            System.out.println(
+                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
+            );
+            return argument;
+        }
+        if (isAnyFunction) {
+            expression.setStaticSequenceType(SequenceType.ITEM_STAR);
+            System.out.println(
+                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
+            );
+            return argument;
+        }
+        if (signature != null) {
+            if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
+                throwStaticTypeException(
+                    "the type of a dynamic function call main expression must be function, instead inferred "
+                        + mainType,
+                    expression.getMetadata()
+                );
+            }
 
-        List<SequenceType> argsType = expression.getArguments()
-            .stream()
-            .map(Expression::getStaticSequenceType)
-            .collect(Collectors.toList());
-        if (isAnyFunction || (signature != null && checkArguments(signature.getParameterTypes(), argsType))) {
-            // TODO: need to add support for partial application
             expression.setStaticSequenceType(signature.getReturnType());
             System.out.println(
                 "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
             );
             return argument;
         }
-        if (mainType.isEmptySequence()) {
-            expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
-        }
+
+        expression.setStaticSequenceType(SequenceType.ITEM_STAR);
+        System.out.println(
+            "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
+        );
 
         throwStaticTypeException(
             "the type of a dynamic function call main expression must be function, instead inferred " + mainType,

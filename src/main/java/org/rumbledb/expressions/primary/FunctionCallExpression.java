@@ -177,7 +177,7 @@ public class FunctionCallExpression extends Expression {
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {
-                for (int i = 0; i < indent; ++i) {
+                for (int i = 0; i < indent + 1; ++i) {
                     buffer.append("  ");
                 }
                 buffer.append("?\n");
