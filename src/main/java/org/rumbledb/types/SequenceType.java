@@ -52,10 +52,20 @@ public class SequenceType implements Serializable {
         this.itemType = itemType;
         this.arity = arity;
         if (this.itemType == null) {
-            throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
+            System.err.println(
+                "[WARNING] Missing item type in incomplete sequence type "
+                    + this.arity
+                    + ", defaulting to item. Please let us know as we would like to look into this!"
+            );
+            this.itemType = BuiltinTypesCatalogue.item;
         }
         if (this.arity == null) {
-            throw new OurBadException("Missing arity in incomplete sequence type " + this.itemType);
+            System.err.println(
+                "[WARNING] Missing arity in incomplete sequence type "
+                    + this.itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!"
+            );
+            this.arity = Arity.ZeroOrMore;
         }
     }
 

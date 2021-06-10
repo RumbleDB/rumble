@@ -243,7 +243,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        System.out.println("visited comma expression with inferred type: " + inferredType);
         expression.setStaticSequenceType(inferredType);
         return argument;
     }
@@ -252,42 +251,36 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitString(StringLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting String literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
         return argument;
     }
 
     @Override
     public StaticContext visitInteger(IntegerLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting Int literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.integerItem));
         return argument;
     }
 
     @Override
     public StaticContext visitDouble(DoubleLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting Double literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.doubleItem));
         return argument;
     }
 
     @Override
     public StaticContext visitDecimal(DecimalLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting Decimal literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.decimalItem));
         return argument;
     }
 
     @Override
     public StaticContext visitNull(NullLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting Null literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.nullItem));
         return argument;
     }
 
     @Override
     public StaticContext visitBoolean(BooleanLiteralExpression expression, StaticContext argument) {
-        System.out.println("visiting Boolean literal");
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
         return argument;
     }
@@ -297,23 +290,23 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         SequenceType variableType = expression.getActualType();
         if (variableType == null) {
             // if is null, no 'as [SequenceType]' part was present in the declaration, therefore we infer it
-            System.out.println("variable reference type was null so we infer it");
             variableType = expression.getStaticContext().getVariableSequenceType(expression.getVariableName());
             // we also set variableReference type
             if (variableType == null) {
+                System.err.println(
+                    "pWARNING] Variable reference type was null so we infer it. Please let us know as we would like to look into it."
+                );
                 variableType = SequenceType.ITEM_STAR;
             }
             expression.setActualType(variableType);
         }
         basicChecks(variableType, expression.getClass().getSimpleName(), false, true, expression.getMetadata());
-        System.out.println("visiting variable reference with type: " + variableType);
         expression.setStaticSequenceType(variableType);
         return argument;
     }
 
     @Override
     public StaticContext visitArrayConstructor(ArrayConstructorExpression expression, StaticContext argument) {
-        System.out.println("visiting Array constructor literal");
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.arrayItem));
         return argument;
@@ -321,7 +314,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitObjectConstructor(ObjectConstructorExpression expression, StaticContext argument) {
-        System.out.println("visiting Object constructor literal");
         visitDescendants(expression, argument);
         if (expression.isMergedConstructor()) {
             // if it is a merged constructor the child must be a subtype of object* inferred type
@@ -370,7 +362,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             contextType = new SequenceType(BuiltinTypesCatalogue.item);
         }
         expression.setStaticSequenceType(contextType);
-        System.out.println("Visited context expression, set type: " + contextType);
         return argument;
     }
 
@@ -384,7 +375,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         List<SequenceType> params = new ArrayList<>(expression.getParams().values());
         FunctionSignature signature = new FunctionSignature(params, returnType);
         expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
-        System.out.println("Visited inline function expression");
         return argument;
     }
 
@@ -414,7 +404,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getMetadata()
             );
         }
-        System.out.println("Visited named function expression");
         return argument;
     }
 
@@ -446,7 +435,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     .parquet(uri.toString())
                     .schema();
                 ItemType schemaItemType = ItemTypeFactory.createItemType(s);
-                System.out.println(schemaItemType.toString());
                 // TODO : check if arity is correct
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
                 return true;
@@ -520,7 +508,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
 
-        System.out.println("Visited static function call, set type to " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -530,7 +517,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
-        System.out.println("visiting Castable expression");
         visitDescendants(expression, argument);
         ItemType itemType = expression.getSequenceType().getItemType();
         if (itemType.equals(BuiltinTypesCatalogue.atomicItem)) {
@@ -561,7 +547,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
-        System.out.println("visiting Cast expression");
         visitDescendants(expression, argument);
 
         // check at static time for casting errors (note cast only allows for normal or ? arity)
@@ -633,7 +618,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitIsStaticallyExpr(IsStaticallyExpression expression, StaticContext argument) {
-        System.out.println("visiting StaticallyIs expression");
         visitDescendants(expression, argument);
 
         SequenceType inferred = expression.getMainExpression().getStaticSequenceType();
@@ -651,7 +635,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
-        System.out.println("visiting InstanceOf expression");
         visitDescendants(expression, argument);
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.booleanItem));
         return argument;
@@ -659,7 +642,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
-        System.out.println("visiting Treat expression");
         visitDescendants(expression, argument);
 
         // check at static time for treat errors
@@ -778,7 +760,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
-        System.out.println("visiting Additive expression, set type: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -905,7 +886,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
-        System.out.println("visiting Multiplicative expression, set type: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -960,7 +940,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(childItemType, childInferredType.getArity()));
-        System.out.println("visiting Unary expression, set type: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1215,7 +1194,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(resultingType);
-        System.out.println("visiting Conditional expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1295,7 +1273,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(returnType);
-        System.out.println("visiting Switch expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1328,7 +1305,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
         expression.setStaticSequenceType(inferredType);
-        System.out.println("visiting TryCatch expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1371,7 +1347,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         basicChecks(inferredType, expression.getClass().getSimpleName(), false, true, expression.getMetadata());
         expression.setStaticSequenceType(inferredType);
-        System.out.println("visiting TypeSwitch expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1423,7 +1398,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         expression.setStaticSequenceType(
             new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.ZeroOrMore)
         );
-        System.out.println("visiting Range expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1454,7 +1428,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.stringItem));
-        System.out.println("visiting Concat expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1495,7 +1468,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             ? SequenceType.Arity.OneOrZero
             : SequenceType.Arity.ZeroOrMore;
         expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.item, inferredArity));
-        System.out.println("visiting ArrayLookup expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1563,7 +1535,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(new SequenceType(inferredType, inferredArity));
-        System.out.println("visiting ObjectLookup expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1589,9 +1560,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(SequenceType.createSequenceType("item*"));
-        System.out.println(
-            "visiting ArrayUnboxingExpression expression, type set to: " + expression.getStaticSequenceType()
-        );
         return argument;
     }
 
@@ -1632,7 +1600,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ? SequenceType.Arity.OneOrZero
                 : SequenceType.Arity.ZeroOrMore;
         expression.setStaticSequenceType(new SequenceType(mainType.getItemType(), inferredArity));
-        System.out.println("visiting Filter expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1661,18 +1628,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(mainType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (mainType.isEmptySequence()) {
             expression.setStaticSequenceType(SequenceType.EMPTY_SEQUENCE);
-            System.out.println(
-                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
-            );
             return argument;
         }
 
         ItemType type = mainType.getItemType();
         if (!type.isFunctionItemType()) {
             expression.setStaticSequenceType(SequenceType.ITEM_STAR);
-            System.out.println(
-                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
-            );
 
             throwStaticTypeException(
                 "the type of a dynamic function call main expression must be function, instead inferred " + mainType,
@@ -1683,9 +1644,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         if (type.equals(BuiltinTypesCatalogue.anyFunctionItem)) {
             expression.setStaticSequenceType(SequenceType.ITEM_STAR);
-            System.out.println(
-                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
-            );
             return argument;
         }
 
@@ -1715,9 +1673,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                     signature.getReturnType()
             );
             expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(newSignature)));
-            System.out.println(
-                "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
-            );
             return argument;
         }
         if (!checkArguments(formalParameterTypes, actualParameterTypes)) {
@@ -1729,9 +1684,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         }
 
         expression.setStaticSequenceType(signature.getReturnType());
-        System.out.println(
-            "visiting DynamicFunctionCall expression, type set to: " + expression.getStaticSequenceType()
-        );
         return argument;
     }
 
@@ -1755,7 +1707,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
         SequenceType.Arity resultingArity = leftType.getArity().multiplyWith(rightType.getArity());
         expression.setStaticSequenceType(new SequenceType(rightType.getItemType(), resultingArity));
-        System.out.println("visiting SimpleMap expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1796,7 +1747,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         basicChecks(returnType, expression.getClass().getSimpleName(), true, true, expression.getMetadata());
         returnType = new SequenceType(returnType.getItemType(), returnType.getArity().multiplyWith(forArities));
         expression.setStaticSequenceType(returnType);
-        System.out.println("visiting Flowr expression, type set to: " + expression.getStaticSequenceType());
         return argument;
     }
 
@@ -1841,7 +1791,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getMetadata()
         );
 
-        System.out.println("visiting For clause, inferred var " + expression.getVariableName() + " : " + inferredType);
         return argument;
     }
 
@@ -1861,7 +1810,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             expression.getMetadata()
         );
 
-        System.out.println("visiting Let clause, var " + expression.getVariableName() + " : " + inferredType);
         return argument;
     }
 
@@ -1999,9 +1947,6 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             Name variableName,
             ExceptionMetadata metadata
     ) {
-        System.err.println("Check and update. Context:");
-        System.err.println(context);
-        System.err.println("Variable : " + variableName.getNamespace() + ":" + variableName.getLocalName());
         basicChecks(inferredType, nodeName, true, false, metadata);
 
         if (declaredType == null) {
@@ -2079,21 +2024,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        System.out.println("Visiting library module: " + libraryModule.getNamespace());
-        System.out.println("Static context: " + libraryModule.getStaticContext());
         visitDescendants(libraryModule, libraryModule.getStaticContext());
-        System.out.println("Visited library module: " + libraryModule.getNamespace());
         return argument;
     }
 
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
-        System.out.println("Visiting prolog.");
-        System.out.println("Static context: " + argument);
         for (Node child : prolog.getChildren()) {
             visit(child, argument);
         }
-        System.out.println("Visited prolog: " + argument);
         return argument;
     }
 
