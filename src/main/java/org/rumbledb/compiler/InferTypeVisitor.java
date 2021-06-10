@@ -110,9 +110,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private void throwStaticTypeException(String message, ErrorCode code) {
         if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
-            throwStaticTypeException(
-                message,
-                code
+            throw new UnexpectedStaticTypeException(
+                    message,
+                    code
             );
         }
     }
@@ -128,10 +128,10 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private void throwStaticTypeException(String message, ErrorCode code, ExceptionMetadata metadata) {
         if (this.rumbleRuntimeConfiguration.doStaticAnalysis()) {
-            throwStaticTypeException(
-                message,
-                code,
-                metadata
+            throw new UnexpectedStaticTypeException(
+                    message,
+                    code,
+                    metadata
             );
         }
     }
