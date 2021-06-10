@@ -162,6 +162,9 @@ public class NamedFunctions implements Serializable, KryoSerializable {
             ExceptionMetadata metadata
     ) {
         BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
+        if (builtinFunction == null) {
+            throw new UnknownFunctionCallException(identifier.getName(), identifier.getArity(), metadata);
+        }
         for (int i = 0; i < arguments.size(); i++) {
             if (
                 !builtinFunction.getSignature()

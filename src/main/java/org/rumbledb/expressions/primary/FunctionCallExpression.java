@@ -95,6 +95,13 @@ public class FunctionCallExpression extends Expression {
                 );
             }
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(this.identifier);
+            if (builtinFunction == null) {
+                throw new UnknownFunctionCallException(
+                        this.identifier.getName(),
+                        this.identifier.getArity(),
+                        this.getMetadata()
+                );
+            }
             this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }

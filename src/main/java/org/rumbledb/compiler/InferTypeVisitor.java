@@ -21,6 +21,7 @@ import org.rumbledb.exceptions.CannotRetrieveResourceException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IsStaticallyUnexpectedTypeException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -52,6 +53,9 @@ import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -386,16 +390,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     private FunctionSignature getSignature(FunctionIdentifier identifier, StaticContext staticContext) {
         BuiltinFunction function = null;
         FunctionSignature signature = null;
-        try {
-            function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
-        } catch (OurBadException exception) {
-            signature = staticContext.getFunctionSignature(identifier);
-        }
-
+        function = BuiltinFunctionCatalogue.getBuiltinFunction(identifier);
         if (function != null) {
             signature = function.getSignature();
+        } else {
+            signature = staticContext.getFunctionSignature(identifier);
         }
-
         return signature;
     }
 
@@ -403,9 +403,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitNamedFunctionRef(NamedFunctionReferenceExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
 
-        FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
-
-        expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
+        try {
+            FunctionSignature signature = getSignature(expression.getIdentifier(), expression.getStaticContext());
+            expression.setStaticSequenceType(new SequenceType(ItemTypeFactory.createFunctionItemType(signature)));
+        } catch (UnknownFunctionCallException e) {
+            throw new UnknownFunctionCallException(
+                    expression.getIdentifier().getName(),
+                    expression.getIdentifier().getArity(),
+                    expression.getMetadata()
+            );
+        }
         System.out.println("Visited named function expression");
         return argument;
     }
@@ -463,8 +470,13 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
         visitDescendants(expression, argument);
-        FunctionSignature signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
-
+        FunctionSignature signature = null;
+        try {
+            signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
+        } catch (UnknownFunctionCallException e) {
+            e.setMetadata(expression.getMetadata());
+            throw e;
+        }
         List<Expression> parameterExpressions = expression.getArguments();
         List<SequenceType> parameterTypes = signature.getParameterTypes();
         List<SequenceType> partialParams = new ArrayList<>();
@@ -1986,6 +1998,9 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             Name variableName,
             ExceptionMetadata metadata
     ) {
+        System.err.println("Check and update. Context:");
+        System.err.println(context);
+        System.err.println("Variable : " + variableName.getNamespace() + ":" + variableName.getLocalName());
         basicChecks(inferredType, nodeName, true, false, metadata);
 
         if (declaredType == null) {
@@ -2052,6 +2067,32 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         }
 
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(mainModule, mainModule.getStaticContext());
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
+        System.out.println("Visiting library module: " + libraryModule.getNamespace());
+        System.out.println("Static context: " + libraryModule.getStaticContext());
+        visitDescendants(libraryModule, libraryModule.getStaticContext());
+        System.out.println("Visited library module: " + libraryModule.getNamespace());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        System.out.println("Visiting prolog.");
+        System.out.println("Static context: " + argument);
+        for (Node child : prolog.getChildren()) {
+            visit(child, argument);
+        }
+        System.out.println("Visited prolog: " + argument);
         return argument;
     }
 

@@ -123,6 +123,10 @@ public class RumbleException extends RuntimeException {
         return this.metadata;
     }
 
+    public void setMetadata(ExceptionMetadata metadata) {
+        this.metadata = metadata;
+    }
+
     public String getJSONiqErrorMessage() {
         return this.errorMessage;
     }

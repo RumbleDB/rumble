@@ -24,6 +24,7 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
@@ -169,7 +170,11 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("function " + identifier + " not in scope", ExceptionMetadata.EMPTY_METADATA);
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 
@@ -218,12 +223,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
             stringBuilder.append(entry.getKey());
             stringBuilder.append(" as " + entry.getValue().getSequenceType());
+            stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
             stringBuilder.append("\n");
         }
         stringBuilder.append("Static context with user-defined functions:\n");
         for (Entry<FunctionIdentifier, FunctionSignature> entry : this.staticallyKnownFunctionSignatures.entrySet()) {
             stringBuilder.append(entry.getKey());
             stringBuilder.append(" as " + entry.getValue());
+            stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
             stringBuilder.append("\n");
         }
         stringBuilder.append("\n");

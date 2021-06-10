@@ -106,6 +106,8 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
+        System.out.println("Visiting library module: " + libraryModule.getNamespace());
+        System.out.println("Static context: " + libraryModule.getStaticContext());
         if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
