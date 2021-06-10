@@ -19,7 +19,7 @@ public class ItemItemType implements ItemType {
     public ItemItemType() {
     }
 
-    private ItemItemType(Name name) {
+    ItemItemType(Name name) {
         this.name = name;
     }
 

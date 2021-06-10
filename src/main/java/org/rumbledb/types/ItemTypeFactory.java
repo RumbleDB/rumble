@@ -22,6 +22,22 @@ import java.util.TreeMap;
 
 public class ItemTypeFactory {
 
+    private static ItemType arrayItem = null;
+
+    public static ItemType createArrayItem() {
+        if (arrayItem == null) {
+            arrayItem = new ArrayItemType(
+                    new Name(Name.JS_NS, "js", "array"),
+                    BuiltinTypesCatalogue.JSONItem,
+                    null,
+                    null,
+                    null,
+                    null
+            );
+        }
+        return arrayItem;
+    }
+
     public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item) {
         if (item.isString()) {
             String typeString = item.getStringValue();
@@ -39,7 +55,7 @@ public class ItemTypeFactory {
             ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0));
             return new ArrayItemType(
                     null,
-                    BuiltinTypesCatalogue.arrayItem,
+                    createArrayItem(),
                     new ArrayContentDescriptor(memberType),
                     null,
                     null,

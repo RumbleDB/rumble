@@ -81,6 +81,7 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
@@ -1752,12 +1753,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitForClause(ForClause expression, StaticContext argument) {
-        visit(expression.getExpression(), expression.getStaticContext());
-
+        visitDescendants(expression, argument);
         SequenceType declaredType = expression.getActualSequenceType();
-        SequenceType inferredType = (declaredType == null
-            ? expression.getExpression()
-            : ((TreatExpression) expression.getExpression()).getMainExpression()).getStaticSequenceType();
+        SequenceType inferredType = SequenceType.ITEM_STAR;
+        if (declaredType == null) {
+            inferredType = expression.getExpression().getStaticSequenceType();
+        } else {
+            inferredType = declaredType;
+        }
+
         basicChecks(inferredType, expression.getClass().getSimpleName(), true, false, expression.getMetadata());
         if (inferredType.isEmptySequence()) {
             if (!expression.isAllowEmpty()) {
@@ -2033,6 +2037,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         for (Node child : prolog.getChildren()) {
             visit(child, argument);
         }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
+        visitDescendants(expression, expression.getStaticContext());
+        expression.setStaticSequenceType(
+            new SequenceType(BuiltinTypesCatalogue.objectItem, expression.getSequenceType().getArity())
+        );
         return argument;
     }
 

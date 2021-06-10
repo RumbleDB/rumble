@@ -231,7 +231,7 @@ public class AtomicItemType implements ItemType {
     public AtomicItemType() {
     }
 
-    private AtomicItemType(Name name, Set<FacetTypes> allowedFacets, DataType dataFrameType) {
+    AtomicItemType(Name name, Set<FacetTypes> allowedFacets, DataType dataFrameType) {
         this.name = name;
         this.allowedFacets = allowedFacets;
         this.dataFrameType = dataFrameType;
