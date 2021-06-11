@@ -24,13 +24,12 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.MultiplicativeOperationIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.math.BigInteger;
@@ -38,7 +37,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class AvgFunctionIterator extends LocalFunctionCallIterator {
+public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -53,25 +52,22 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         Item count = CountFunctionIterator.computeCount(
             this.children.get(0),
-            this.currentDynamicContextForLocalExecution,
+            context,
             getMetadata()
         );
         if (count.isInt() && count.getIntValue() == 0) {
-            this.hasNext = false;
-            return;
+            return null;
         }
         if (count.isInteger() && count.getIntegerValue().equals(BigInteger.ZERO)) {
-            this.hasNext = false;
-            return;
+            return null;
         }
         Item sum = SumFunctionIterator.computeSum(
             ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO),
             this.children.get(0),
-            this.currentDynamicContextForLocalExecution,
+            context,
             getMetadata()
         );
         this.item = MultiplicativeOperationIterator.processItem(
@@ -80,20 +76,7 @@ public class AvgFunctionIterator extends LocalFunctionCallIterator {
             MultiplicativeExpression.MultiplicativeOperator.DIV,
             getMetadata()
         );
-        this.hasNext = true;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.item;
-        } else {
-            throw new IteratorFlowException(
-                    FLOW_EXCEPTION_MESSAGE + "SUM function",
-                    getMetadata()
-            );
-        }
+        return this.item;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
