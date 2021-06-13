@@ -11,6 +11,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
@@ -19,7 +20,7 @@ import java.util.Arrays;
 import java.util.Calendar;
 import java.util.List;
 
-public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
+public class FormatDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item valueDateItem = null;
@@ -31,6 +32,112 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+    }
+
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        this.valueDateItem = this.children.get(0)
+                .materializeFirstItemOrNull(context);
+        this.pictureStringItem = this.children.get(1)
+                .materializeFirstItemOrNull(context);
+        if (this.valueDateItem == null || this.pictureStringItem == null) {
+            return null;
+        }
+        try {
+            if (this.valueDateItem.isNull()) {
+                return this.valueDateItem;
+            }
+
+            DateTime dateValue = this.valueDateItem.getDateTimeValue();
+            String pictureString = this.pictureStringItem.getStringValue();
+
+            int startOfSequence = 0;
+            boolean variableMarkerSequence = false;
+
+            StringBuilder result = new StringBuilder();
+
+            // Iterate over picture
+            for (int i = 0; i < pictureString.length(); i++) {
+                char c = pictureString.charAt(i);
+                if (variableMarkerSequence) {
+                    if (c == ']') {
+                        String variableMarker = pictureString.substring(startOfSequence, i);
+                        String pattern = parseVariableMarker(variableMarker, result);
+
+                        SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
+                        Calendar formatCalendar = Calendar.getInstance();
+                        formatCalendar.set(
+                                dateValue.getYear(),
+                                dateValue.getMonthOfYear() - 1,
+                                dateValue.getDayOfMonth()
+                        );
+                        result.append(simpleDateFormat.format(formatCalendar.getTime()));
+
+                        variableMarkerSequence = false;
+                        startOfSequence = i + 1;
+                    }
+                } else {
+                    if (c == ']') {
+                        if (i == pictureString.length() - 1 || pictureString.charAt(i + 1) != ']') {
+                            String message = String.format(
+                                    "\"%s\": incorrect syntax",
+                                    this.pictureStringItem.serialize()
+                            );
+                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                        } else {
+                            String literalSubstring = pictureString.substring(startOfSequence, i + 1);
+                            result.append(literalSubstring);
+                            startOfSequence = i + 2;
+                            i++;
+                        }
+                    } else if (c == '[') {
+                        if (i == pictureString.length() - 1) {
+                            String message = String.format(
+                                    "\"%s\": incorrect syntax",
+                                    this.pictureStringItem.serialize()
+                            );
+                            throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                        }
+
+                        if (pictureString.charAt(i + 1) == '[') {
+                            String literalSubstring = pictureString.substring(startOfSequence, i + 1);
+                            result.append(literalSubstring);
+                            startOfSequence = i + 2;
+                            i++;
+                        } else {
+                            String literalSubstring = pictureString.substring(startOfSequence, i);
+                            result.append(literalSubstring);
+                            variableMarkerSequence = true;
+                            startOfSequence = i + 1;
+                        }
+                    }
+                }
+            }
+
+            if (startOfSequence != pictureString.length()) {
+                if (variableMarkerSequence) {
+                    String message = String.format(
+                            "\"%s\": incorrect syntax",
+                            this.pictureStringItem.serialize()
+                    );
+                    throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
+                } else {
+                    String literalSubstring = pictureString.substring(
+                            startOfSequence,
+                            pictureString.length()
+                    );
+                    result.append(literalSubstring);
+                }
+            }
+            return ItemFactory.getInstance().createStringItem(result.toString());
+        } catch (UnsupportedOperationException | IllegalArgumentException e) {
+            String message = String.format(
+                    "\"%s\": not castable to type %s",
+                    this.valueDateItem.serialize(),
+                    "date"
+            );
+            throw new CastException(message, getMetadata());
+        }
     }
 
     private String parsePresentationModifiers(String presentationModifiers) {
@@ -235,119 +342,4 @@ public class FormatDateFunctionIterator extends LocalFunctionCallIterator {
         return pattern.toString();
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                if (this.valueDateItem.isNull()) {
-                    return this.valueDateItem;
-                }
-
-                DateTime dateValue = this.valueDateItem.getDateTimeValue();
-                String pictureString = this.pictureStringItem.getStringValue();
-
-                int startOfSequence = 0;
-                boolean variableMarkerSequence = false;
-
-                StringBuilder result = new StringBuilder();
-
-                // Iterate over picture
-                for (int i = 0; i < pictureString.length(); i++) {
-                    char c = pictureString.charAt(i);
-                    if (variableMarkerSequence) {
-                        if (c == ']') {
-                            String variableMarker = pictureString.substring(startOfSequence, i);
-                            String pattern = parseVariableMarker(variableMarker, result);
-
-                            SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
-                            Calendar formatCalendar = Calendar.getInstance();
-                            formatCalendar.set(
-                                dateValue.getYear(),
-                                dateValue.getMonthOfYear() - 1,
-                                dateValue.getDayOfMonth()
-                            );
-                            result.append(simpleDateFormat.format(formatCalendar.getTime()));
-
-                            variableMarkerSequence = false;
-                            startOfSequence = i + 1;
-                        }
-                    } else {
-                        if (c == ']') {
-                            if (i == pictureString.length() - 1 || pictureString.charAt(i + 1) != ']') {
-                                String message = String.format(
-                                    "\"%s\": incorrect syntax",
-                                    this.pictureStringItem.serialize()
-                                );
-                                throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                            } else {
-                                String literalSubstring = pictureString.substring(startOfSequence, i + 1);
-                                result.append(literalSubstring);
-                                startOfSequence = i + 2;
-                                i++;
-                            }
-                        } else if (c == '[') {
-                            if (i == pictureString.length() - 1) {
-                                String message = String.format(
-                                    "\"%s\": incorrect syntax",
-                                    this.pictureStringItem.serialize()
-                                );
-                                throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                            }
-
-                            if (pictureString.charAt(i + 1) == '[') {
-                                String literalSubstring = pictureString.substring(startOfSequence, i + 1);
-                                result.append(literalSubstring);
-                                startOfSequence = i + 2;
-                                i++;
-                            } else {
-                                String literalSubstring = pictureString.substring(startOfSequence, i);
-                                result.append(literalSubstring);
-                                variableMarkerSequence = true;
-                                startOfSequence = i + 1;
-                            }
-                        }
-                    }
-                }
-
-                if (startOfSequence != pictureString.length()) {
-                    if (variableMarkerSequence) {
-                        String message = String.format(
-                            "\"%s\": incorrect syntax",
-                            this.pictureStringItem.serialize()
-                        );
-                        throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
-                    } else {
-                        String literalSubstring = pictureString.substring(
-                            startOfSequence,
-                            pictureString.length()
-                        );
-                        result.append(literalSubstring);
-                    }
-                }
-                return ItemFactory.getInstance().createStringItem(result.toString());
-            } catch (UnsupportedOperationException | IllegalArgumentException e) {
-                String message = String.format(
-                    "\"%s\": not castable to type %s",
-                    this.valueDateItem.serialize(),
-                    "date"
-                );
-                throw new CastException(message, getMetadata());
-            }
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " format-date function",
-                    getMetadata()
-            );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.valueDateItem = this.children.get(0)
-            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.pictureStringItem = this.children.get(1)
-            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.valueDateItem != null && this.pictureStringItem != null;
-    }
 }
