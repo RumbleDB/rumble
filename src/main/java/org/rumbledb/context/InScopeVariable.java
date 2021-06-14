@@ -3,6 +3,7 @@ package org.rumbledb.context;
 import java.io.Serializable;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.SequenceType;
 
@@ -45,6 +46,14 @@ public class InScopeVariable implements Serializable, KryoSerializable {
 
     public ExecutionMode getStorageMode() {
         return this.storageMode;
+    }
+
+    public void setStorageMode(ExecutionMode mode) {
+        if(this.storageMode != ExecutionMode.UNSET)
+        {
+            throw new OurBadException("Error: execution mode for variable " + this.name + " was already set.");
+        }
+        this.storageMode = mode;
     }
 
     @Override

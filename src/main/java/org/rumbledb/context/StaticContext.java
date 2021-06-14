@@ -200,6 +200,10 @@ public class StaticContext implements Serializable, KryoSerializable {
         return getInScopeVariable(varName).getStorageMode();
     }
 
+    public void setVariableStorageMode(Name varName, ExecutionMode mode) {
+        getInScopeVariable(varName).setStorageMode(mode);
+    }
+
     public void addVariable(
             Name varName,
             SequenceType type,
