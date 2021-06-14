@@ -207,10 +207,9 @@ public class StaticContext implements Serializable, KryoSerializable {
     public void addVariable(
             Name varName,
             SequenceType type,
-            ExceptionMetadata metadata,
-            ExecutionMode storageMode
+            ExceptionMetadata metadata
     ) {
-        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET));
     }
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
@@ -394,8 +393,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                     this.addVariable(
                         entry.getKey(),
                         entry.getValue().getSequenceType().incrementArity(),
-                        entry.getValue().getMetadata(),
-                        entry.getValue().getStorageMode()
+                        entry.getValue().getMetadata()
                     );
                 }
             }
