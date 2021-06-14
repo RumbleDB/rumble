@@ -114,7 +114,7 @@ public class DynamicFunctionCallIterator extends LocalRuntimeIterator {
                     getMetadata()
             );
         }
-        if (this.functionItem == null && !this.functionItem.isFunction()) {
+        if (this.functionItem == null || !this.functionItem.isFunction()) {
             throw new UnexpectedTypeException(
                     "Dynamic function calls can only be performed on functions.",
                     getMetadata()

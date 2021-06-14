@@ -38,7 +38,7 @@ public abstract class Expression extends Node {
 
     protected StaticContext staticContext;
 
-    protected SequenceType inferredSequenceType;
+    protected SequenceType staticSequenceType;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
@@ -68,18 +68,18 @@ public abstract class Expression extends Node {
      * 
      * @return the statically inferred sequence type.
      */
-    public SequenceType getInferredSequenceType() {
-        return this.inferredSequenceType;
+    public SequenceType getStaticSequenceType() {
+        return this.staticSequenceType;
     }
 
     /**
      * Sets the inferred static type, for used by the static
      * analysis visitor.
      * 
-     * @param inferredSequenceType the statically inferred sequence type to set.
+     * @param staticSequenceType the statically inferred sequence type to set.
      */
-    public void setInferredSequenceType(SequenceType inferredSequenceType) {
-        this.inferredSequenceType = inferredSequenceType;
+    public void setStaticSequenceType(SequenceType staticSequenceType) {
+        this.staticSequenceType = staticSequenceType;
     }
 
     @Override
@@ -89,7 +89,13 @@ public abstract class Expression extends Node {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

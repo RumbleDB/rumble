@@ -54,9 +54,20 @@ public class ValidateTypeExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append(
+            " ("
+                + (this.sequenceType.toString())
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ") "
+        );
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

@@ -4,6 +4,7 @@ import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.*;
@@ -243,6 +244,7 @@ public class ObjectItemType implements ItemType {
     public boolean isResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
+                System.err.println("Unresolved: " + entry.getValue().getType().getClass().getCanonicalName());
                 return false;
             }
         }
@@ -251,6 +253,15 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!entry.getValue().getType().isResolved()) {
+                entry.getValue().getType().resolve(context, metadata);
+            }
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 entry.getValue().getType().resolve(context, metadata);
