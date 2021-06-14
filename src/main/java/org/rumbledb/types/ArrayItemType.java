@@ -47,8 +47,7 @@ public class ArrayItemType implements ItemType {
             List<Item> enumeration
     ) {
         this.name = name;
-        if(baseType == null)
-        {
+        if (baseType == null) {
             throw new OurBadException("Unexpected error: baseType is null.");
         }
         this.baseType = baseType;
