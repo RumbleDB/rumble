@@ -5,13 +5,11 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import java.util.List;
 
@@ -31,22 +29,22 @@ public class DayTimeDurationFunctionIterator extends AtMostOneItemLocalRuntimeIt
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.durationStringItem = this.children.get(0)
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         if (this.durationStringItem == null) {
             return null;
         }
         try {
             Period period = DurationItem.getDurationFromString(
-                    this.durationStringItem.getStringValue(),
-                    BuiltinTypesCatalogue.dayTimeDurationItem
+                this.durationStringItem.getStringValue(),
+                BuiltinTypesCatalogue.dayTimeDurationItem
             );
             return ItemFactory.getInstance().createDayTimeDurationItem(period);
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             String message = String.format(
-                    "\"%s\": value of type %s is not castable to type %s",
-                    this.durationStringItem.serialize(),
-                    "string",
-                    "dayTimeDuration"
+                "\"%s\": value of type %s is not castable to type %s",
+                this.durationStringItem.serialize(),
+                "string",
+                "dayTimeDuration"
             );
             throw new CastException(message, getMetadata());
         }

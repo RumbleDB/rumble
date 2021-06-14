@@ -23,19 +23,17 @@ package org.rumbledb.runtime.functions.arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
+public class ArraySizeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator arrayIterator;
 
     public ArraySizeFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -46,26 +44,12 @@ public class ArraySizeFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.arrayIterator = this.children.get(0);
-        this.arrayIterator.open(context);
-        this.hasNext = this.arrayIterator.hasNext();
-        this.arrayIterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-
-            Item array = this.arrayIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            return ItemFactory.getInstance().createIntItem(array.getSize());
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item array = this.children.get(0).materializeFirstItemOrNull(context);
+        if (array == null) {
+            return null;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "SIZE function",
-                getMetadata()
-        );
+        return ItemFactory.getInstance().createIntItem(array.getSize());
     }
+
 }

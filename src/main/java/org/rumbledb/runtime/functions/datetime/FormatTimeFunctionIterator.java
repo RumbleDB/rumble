@@ -7,13 +7,11 @@ import org.rumbledb.exceptions.CastException;
 import org.rumbledb.exceptions.ComponentSpecifierNotAvailableException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IncorrectSyntaxFormatDateTimeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.text.SimpleDateFormat;
 import java.util.Arrays;
@@ -37,9 +35,9 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.valueTimeItem = this.children.get(0)
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         this.pictureStringItem = this.children.get(1)
-                .materializeFirstItemOrNull(context);
+            .materializeFirstItemOrNull(context);
         if (this.valueTimeItem == null || this.pictureStringItem == null) {
             return null;
         }
@@ -68,12 +66,12 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                         SimpleDateFormat simpleDateFormat = new SimpleDateFormat(pattern.toString());
                         Calendar formatCalendar = Calendar.getInstance();
                         formatCalendar.set(
-                                timeValue.getYear(),
-                                timeValue.getMonthOfYear() - 1,
-                                timeValue.getDayOfMonth(),
-                                timeValue.getHourOfDay(),
-                                timeValue.getMinuteOfHour(),
-                                timeValue.getSecondOfMinute()
+                            timeValue.getYear(),
+                            timeValue.getMonthOfYear() - 1,
+                            timeValue.getDayOfMonth(),
+                            timeValue.getHourOfDay(),
+                            timeValue.getMinuteOfHour(),
+                            timeValue.getSecondOfMinute()
                         );
                         result.append(simpleDateFormat.format(formatCalendar.getTime()));
 
@@ -84,8 +82,8 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     if (c == ']') {
                         if (i == pictureString.length() - 1 || pictureString.charAt(i + 1) != ']') {
                             String message = String.format(
-                                    "\"%s\": incorrect syntax",
-                                    this.pictureStringItem.serialize()
+                                "\"%s\": incorrect syntax",
+                                this.pictureStringItem.serialize()
                             );
                             throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                         } else {
@@ -97,8 +95,8 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
                     } else if (c == '[') {
                         if (i == pictureString.length() - 1) {
                             String message = String.format(
-                                    "\"%s\": incorrect syntax",
-                                    this.pictureStringItem.serialize()
+                                "\"%s\": incorrect syntax",
+                                this.pictureStringItem.serialize()
                             );
                             throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                         }
@@ -121,14 +119,14 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             if (startOfSequence != pictureString.length()) {
                 if (variableMarkerSequence) {
                     String message = String.format(
-                            "\"%s\": incorrect syntax",
-                            this.pictureStringItem.serialize()
+                        "\"%s\": incorrect syntax",
+                        this.pictureStringItem.serialize()
                     );
                     throw new IncorrectSyntaxFormatDateTimeException(message, getMetadata());
                 } else {
                     String literalSubstring = pictureString.substring(
-                            startOfSequence,
-                            pictureString.length()
+                        startOfSequence,
+                        pictureString.length()
                     );
                     result.append(literalSubstring);
                 }
@@ -136,9 +134,9 @@ public class FormatTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             return ItemFactory.getInstance().createStringItem(result.toString());
         } catch (UnsupportedOperationException | IllegalArgumentException e) {
             String message = String.format(
-                    "\"%s\": not castable to type %s",
-                    this.valueTimeItem.serialize(),
-                    "time"
+                "\"%s\": not castable to type %s",
+                this.valueTimeItem.serialize(),
+                "time"
             );
             throw new CastException(message, getMetadata());
         }

@@ -4,12 +4,10 @@ import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
@@ -29,13 +27,13 @@ public class TimezoneFromTimeFunctionIterator extends AtMostOneItemLocalRuntimeI
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         this.timeItem = this.children.get(0).materializeFirstItemOrNull(context);
-        if(this.timeItem == null || !this.timeItem.hasTimeZone()) {
+        if (this.timeItem == null || !this.timeItem.hasTimeZone()) {
             return null;
         }
         return ItemFactory.getInstance()
-                .createDayTimeDurationItem(
-                        new Period(this.timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
-                );
+            .createDayTimeDurationItem(
+                new Period(this.timeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+            );
     }
 
 }
