@@ -5,6 +5,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
 
@@ -46,6 +47,10 @@ public class ArrayItemType implements ItemType {
             List<Item> enumeration
     ) {
         this.name = name;
+        if(baseType == null)
+        {
+            throw new OurBadException("Unexpected error: baseType is null.");
+        }
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         if (content == null) {
@@ -161,7 +166,7 @@ public class ArrayItemType implements ItemType {
     @Override
     public String toString() {
         // consider add content and various stuff
-        return this.name.toString();
+        return (this.name == null) ? "<anonymous>" : this.name.toString();
     }
 
     @Override
