@@ -511,4 +511,9 @@ public class AtomicItemType implements ItemType {
     public boolean isDataFrameType() {
         return true;
     }
+
+    @Override
+    public boolean isResolved() {
+        return true;
+    }
 }

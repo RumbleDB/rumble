@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
@@ -90,6 +91,13 @@ public class SequenceType implements Serializable {
     }
 
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (isEmptySequence()) {
+            return;
+        }
+        this.itemType.resolve(context, metadata);
+    }
+
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
         if (isEmptySequence()) {
             return;
         }

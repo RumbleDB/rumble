@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -231,6 +232,12 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(entry.getKey());
             stringBuilder.append(" as " + entry.getValue());
             stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Static context with user-defined types:\n");
+        for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+            stringBuilder.append(itemType.getName());
+            stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
             stringBuilder.append("\n");
         }
         stringBuilder.append("\n");

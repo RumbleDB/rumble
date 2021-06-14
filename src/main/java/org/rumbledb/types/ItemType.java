@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.io.Serializable;
@@ -430,6 +431,10 @@ public interface ItemType extends Serializable {
     }
 
     default void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        return;
+    }
+
+    default void resolve(StaticContext context, ExceptionMetadata metadata) {
         return;
     }
 }

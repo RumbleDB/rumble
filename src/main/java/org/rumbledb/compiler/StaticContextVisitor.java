@@ -24,11 +24,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
 import org.rumbledb.exceptions.VariableAlreadyExistsException;
@@ -48,12 +50,20 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -120,6 +130,11 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             this.importedModuleContexts.get(libraryModule.getNamespace()),
             libraryModule.getNamespace()
         );
+        argument.getInScopeSchemaTypes()
+            .importModuleTypes(
+                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes(),
+                libraryModule.getNamespace()
+            );
         return argument;
     }
 
@@ -172,6 +187,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            if (expression.getActualReturnType() != null) {
+                expression.getActualReturnType().resolve(argument, ExceptionMetadata.EMPTY_METADATA);
+            }
+            for (Entry<Name, SequenceType> itemType : expression.getParams().entrySet()) {
+                itemType.getValue().resolve(argument, ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
         // define a static context for the function body, add params to the context and visit the body expression
         List<ExecutionMode> modes = argument.getUserDefinedFunctionsExecutionModes()
             .getParameterExecutionMode(
@@ -275,6 +298,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
+        clause.getSequenceType().resolve(result, ExceptionMetadata.EMPTY_METADATA);
 
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
@@ -299,6 +323,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
+        clause.getSequenceType().resolve(result, ExceptionMetadata.EMPTY_METADATA);
 
         return result;
     }
@@ -359,6 +384,9 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
             this.visit(c.getReturnExpression(), caseContext);
+            for (SequenceType sequenceType : c.getUnion()) {
+                sequenceType.resolve(argument, expression.getMetadata());
+            }
         }
 
         Name defaultCaseVariableName = expression.getDefaultCase().getVariableName();
@@ -403,6 +431,73 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
             );
         }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeDeclaration(TypeDeclaration declaration, StaticContext argument) {
+        ItemType type = declaration.getDefinition();
+        // only first pass
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        }
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(prolog, argument);
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+                itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            expression.getSequenceType().resolve(argument, expression.getMetadata());
+        }
+        expression.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            expression.getSequenceType().resolve(argument, expression.getMetadata());
+        }
+        expression.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        expression.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        expression.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
+            expression.getSequenceType().resolve(argument, expression.getMetadata());
+        }
+        expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
 

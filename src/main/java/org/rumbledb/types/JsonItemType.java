@@ -80,4 +80,9 @@ public class JsonItemType implements ItemType {
     public boolean isDataFrameType() {
         return false;
     }
+
+    @Override
+    public boolean isResolved() {
+        return true;
+    }
 }

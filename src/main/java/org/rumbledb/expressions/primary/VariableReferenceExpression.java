@@ -92,7 +92,13 @@ public class VariableReferenceExpression extends Expression implements Serializa
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

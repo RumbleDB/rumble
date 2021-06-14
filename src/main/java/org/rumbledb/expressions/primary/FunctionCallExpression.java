@@ -180,7 +180,13 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {

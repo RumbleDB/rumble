@@ -116,13 +116,25 @@ public class InlineFunctionExpression extends Expression {
         for (Map.Entry<Name, SequenceType> entry : this.params.entrySet()) {
             buffer.append(entry.getKey());
             buffer.append(", ");
-            buffer.append(entry.getValue().toString());
+            buffer.append(
+                entry.getValue().toString() + (entry.getValue().isResolved() ? " (resolved)" : " (unresolved)")
+            );
             buffer.append(", ");
         }
-        buffer.append(this.returnType == null ? "not set" : this.returnType.toString());
+        buffer.append(
+            this.returnType == null
+                ? "not set"
+                : this.returnType.toString() + (this.returnType.isResolved() ? " (resolved)" : " (unresolved)")
+        );
         buffer.append(")");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (int i = 0; i < indent + 2; ++i) {
             buffer.append("  ");
