@@ -116,8 +116,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
-        System.out.println("Visiting library module: " + libraryModule.getNamespace());
-        System.out.println("Static context: " + libraryModule.getStaticContext());
         if (!this.importedModuleContexts.containsKey(libraryModule.getNamespace())) {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
@@ -189,10 +187,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
             if (expression.getActualReturnType() != null) {
-                expression.getActualReturnType().resolve(argument, ExceptionMetadata.EMPTY_METADATA);
+                expression.getActualReturnType().resolve(argument, declaration.getMetadata());
             }
             for (Entry<Name, SequenceType> itemType : expression.getParams().entrySet()) {
-                itemType.getValue().resolve(argument, ExceptionMetadata.EMPTY_METADATA);
+                itemType.getValue().resolve(argument, declaration.getMetadata());
             }
         }
         // define a static context for the function body, add params to the context and visit the body expression
@@ -298,7 +296,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
-        clause.getSequenceType().resolve(result, ExceptionMetadata.EMPTY_METADATA);
+        clause.getSequenceType().resolve(result, clause.getMetadata());
 
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
@@ -323,7 +321,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             clause.getMetadata(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
-        clause.getSequenceType().resolve(result, ExceptionMetadata.EMPTY_METADATA);
+        clause.getSequenceType().resolve(result, clause.getMetadata());
 
         return result;
     }
@@ -449,7 +447,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         StaticContext generatedContext = visitDescendants(prolog, argument);
         if (this.visitorConfig.suppressErrorsForCallingMissingFunctions()) {
             for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
-                itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
+                itemType.resolve(generatedContext, prolog.getMetadata());
             }
         }
         return generatedContext;
