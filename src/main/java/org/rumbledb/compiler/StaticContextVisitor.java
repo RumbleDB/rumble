@@ -138,7 +138,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             InlineFunctionExpression expression
     ) {
         for (Name name : expression.getParams().keySet()) {
-            //SequenceType type = expression.getParams().get(name);
+            SequenceType type = expression.getParams().get(name);
             functionDeclarationContext.addVariable(
                 name,
                 expression.getParams().get(name),
@@ -232,7 +232,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         this.visit(clause.getExpression(), argument);
 
         StaticContext result = new StaticContext(argument);
-        result.addVariable(
+        argument.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
             clause.getMetadata()

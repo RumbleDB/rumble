@@ -43,6 +43,7 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
@@ -74,7 +75,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
-        visitDescendants(mainModule, argument);
+        visitDescendants(mainModule, mainModule.getStaticContext());
         mainModule.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
@@ -83,6 +84,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitLibraryModule(LibraryModule libraryModule, StaticContext argument) {
         if (libraryModule.getProlog() != null) {
             libraryModule.getProlog().initHighestExecutionMode(this.visitorConfig);
+            this.visit(libraryModule.getProlog(), libraryModule.getStaticContext());
         }
         libraryModule.initHighestExecutionMode(this.visitorConfig);
         return argument;
@@ -92,7 +94,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
         Name variableName = expression.getVariableName();
-        ExecutionMode mode = argument.getVariableStorageMode(variableName);
+        ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
         if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
             mode = ExecutionMode.LOCAL;
         }
@@ -126,7 +128,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
         // define a static context for the function body, add params to the context and visit the body expression
-        List<ExecutionMode> modes = argument.getUserDefinedFunctionsExecutionModes()
+        List<ExecutionMode> modes = expression.getStaticContext()
+            .getUserDefinedFunctionsExecutionModes()
             .getParameterExecutionMode(
                 expression.getFunctionIdentifier(),
                 expression.getMetadata()
@@ -145,13 +148,14 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
-         
+
         expression.getParams()
             .forEach(
-                (paramName, sequenceType) -> expression.getStaticContext().setVariableStorageMode(
-                    paramName,
-                    ExecutionMode.LOCAL
-                )
+                (paramName, sequenceType) -> expression.getStaticContext()
+                    .setVariableStorageMode(
+                        paramName,
+                        ExecutionMode.LOCAL
+                    )
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), expression.getStaticContext());
@@ -164,7 +168,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
+        visitDescendants(expression, expression.getStaticContext());
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
         if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
@@ -178,7 +182,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
                 }
             }
-            argument.getUserDefinedFunctionsExecutionModes()
+            expression.getStaticContext()
+                .getUserDefinedFunctionsExecutionModes()
                 .setParameterExecutionMode(
                     identifier,
                     modes,
@@ -195,7 +200,11 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
         while (clause != null) {
-            this.visit(clause, clause.getStaticContext());
+            if (clause.getNextClause() != null) {
+                this.visit(clause, clause.getNextClause().getStaticContext());
+            } else {
+                this.visit(clause, null);
+            }
             clause = clause.getNextClause();
         }
         expression.initHighestExecutionMode(this.visitorConfig);
@@ -205,31 +214,29 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     // region FLWOR vars
     @Override
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
-        this.visit(clause.getExpression(), argument);
+        this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        StaticContext result = new StaticContext(argument);
-        
-        result.setVariableStorageMode(
+        argument.setVariableStorageMode(
             clause.getVariableName(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
 
         if (clause.getPositionalVariableName() != null) {
-            result.setVariableStorageMode(
+            argument.setVariableStorageMode(
                 clause.getPositionalVariableName(),
                 ExecutionMode.LOCAL
             );
         }
-        return result;
+        return argument;
     }
 
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
-        this.visit(clause.getExpression(), argument);
+        this.visit(clause.getExpression(), clause.getExpression().getStaticContext());
         clause.initHighestExecutionMode(this.visitorConfig);
 
-        clause.getStaticContext().setVariableStorageMode(
+        argument.setVariableStorageMode(
             clause.getVariableName(),
             clause.getVariableHighestStorageMode(this.visitorConfig)
         );
@@ -239,23 +246,22 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
-        StaticContext groupByClauseContext = new StaticContext(argument);
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
             // if a variable declaration takes place
-            this.visit(variable.getExpression(), argument);
-            groupByClauseContext.setVariableStorageMode(
+            this.visit(variable.getExpression(), null);
+            argument.setVariableStorageMode(
                 variable.getVariableName(),
                 ExecutionMode.LOCAL
             );
         }
         clause.initHighestExecutionMode(this.visitorConfig);
-        return groupByClauseContext;
+        return argument;
     }
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
         expression.initHighestExecutionMode(this.visitorConfig);
-        expression.getCountVariable().getStaticContext().setVariableStorageMode(
+        argument.setVariableStorageMode(
             expression.getCountVariable().getVariableName(),
             ExecutionMode.LOCAL
         );
@@ -268,29 +274,31 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     // region control
     @Override
     public StaticContext visitTypeSwitchExpression(TypeSwitchExpression expression, StaticContext argument) {
-        this.visit(expression.getTestCondition(), argument);
+        this.visit(expression.getTestCondition(), null);
         for (TypeswitchCase c : expression.getCases()) {
             Name variableName = c.getVariableName();
             if (variableName != null) {
-                c.getReturnExpression().getStaticContext().setVariableStorageMode(
-                    variableName,
-                    ExecutionMode.LOCAL
-                );
+                c.getReturnExpression()
+                    .getStaticContext()
+                    .setVariableStorageMode(
+                        variableName,
+                        ExecutionMode.LOCAL
+                    );
             }
             this.visit(c.getReturnExpression(), c.getReturnExpression().getStaticContext());
         }
 
         Name defaultCaseVariableName = expression.getDefaultCase().getVariableName();
         if (defaultCaseVariableName == null) {
-            this.visit(expression.getDefaultCase().getReturnExpression(), argument);
+            this.visit(expression.getDefaultCase().getReturnExpression(), null);
         } else {
             // add variable to child context to visit default return expression
-            StaticContext defaultCaseStaticContext = new StaticContext(argument);
-            defaultCaseStaticContext.setVariableStorageMode(
-                defaultCaseVariableName,
-                ExecutionMode.LOCAL
-            );
-            this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
+            expression.getStaticContext()
+                .setVariableStorageMode(
+                    defaultCaseVariableName,
+                    ExecutionMode.LOCAL
+                );
+            this.visit(expression.getDefaultCase().getReturnExpression(), null);
         }
         expression.initHighestExecutionMode(this.visitorConfig);
         // return the given context unchanged as defined variables go out of scope
@@ -301,7 +309,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitVariableDeclaration(VariableDeclaration variableDeclaration, StaticContext argument) {
         if (variableDeclaration.getExpression() != null) {
-            this.visit(variableDeclaration.getExpression(), argument);
+            this.visit(variableDeclaration.getExpression(), null);
         }
         variableDeclaration.initHighestExecutionMode(this.visitorConfig);
         // first pass.
@@ -309,6 +317,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             variableDeclaration.getVariableName(),
             variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
         );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        visitDescendants(prolog, argument);
+        prolog.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
 
