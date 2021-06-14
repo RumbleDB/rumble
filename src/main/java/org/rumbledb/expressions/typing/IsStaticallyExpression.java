@@ -54,8 +54,10 @@ public class IsStaticallyExpression extends Expression {
         buffer.append(" | " + this.highestExecutionMode);
         buffer.append(
             " | "
-                + (this.staticSequenceType == null ? "not set" : this.staticSequenceType)
-                + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)")
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
         );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
