@@ -22,3 +22,4 @@ for $i in $trained_est2(
     $my-test-data,
     {"inputCol": ["col1"], "outputCol": ["ocol1"]}
 )
+return $i
