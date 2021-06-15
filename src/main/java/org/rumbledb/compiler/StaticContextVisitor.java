@@ -224,7 +224,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 clause.getMetadata()
             );
         }
-        System.err.println("For:\n" + result);
         return result;
     }
 
@@ -240,7 +239,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         );
         clause.getSequenceType().resolve(result, clause.getMetadata());
 
-        System.err.println("Let:\n" + result);
         return result;
     }
 

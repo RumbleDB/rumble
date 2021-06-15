@@ -464,8 +464,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            e.setMetadata(expression.getMetadata());
-            throw e;
+            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
         }
         List<Expression> parameterExpressions = expression.getArguments();
         List<SequenceType> parameterTypes = signature.getParameterTypes();
