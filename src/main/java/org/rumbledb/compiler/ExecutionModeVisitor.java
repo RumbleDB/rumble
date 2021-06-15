@@ -247,12 +247,14 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitGroupByClause(GroupByClause clause, StaticContext argument) {
         for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
-            // if a variable declaration takes place
-            this.visit(variable.getExpression(), null);
-            argument.setVariableStorageMode(
-                variable.getVariableName(),
-                ExecutionMode.LOCAL
-            );
+            if (variable.getExpression() != null) {
+                // if a variable declaration takes place
+                this.visit(variable.getExpression(), null);
+                argument.setVariableStorageMode(
+                    variable.getVariableName(),
+                    ExecutionMode.LOCAL
+                );
+            }
         }
         clause.initHighestExecutionMode(this.visitorConfig);
         return argument;

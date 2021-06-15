@@ -237,13 +237,15 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
             stringBuilder.append("\n");
         }
-        stringBuilder.append("Static context with user-defined types:\n");
-        for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
-            stringBuilder.append(itemType.getName());
-            stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
+        if (this.inScopeSchemaTypes != null) {
+            stringBuilder.append("Static context with user-defined types:\n");
+            for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+                stringBuilder.append(itemType.getName());
+                stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
+                stringBuilder.append("\n");
+            }
             stringBuilder.append("\n");
         }
-        stringBuilder.append("\n");
         if (this.userDefinedFunctionExecutionModes != null) {
             stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
         }
@@ -388,6 +390,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         );
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
+            System.err.println("Next loop: " + current);
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
