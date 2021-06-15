@@ -37,6 +37,9 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
             if (inputDataIterator.isDataFrame()) {
                 JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
+                inputDataAsDataFrame.getDataFrame().printSchema();
+                inputDataAsDataFrame.getDataFrame().show();
+                System.err.println(schemaItem.serialize());
                 DataFrameUtils.validateSchemaItemAgainstDataFrame(
                     schemaItem,
                     inputDataAsDataFrame.getDataFrame().schema()
