@@ -27,6 +27,8 @@ import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType.Arity;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -129,6 +131,11 @@ public class DynamicFunctionCallExpression extends Expression {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         if (this.arguments.size() == 0) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        if(this.getStaticSequenceType().getArity().equals(Arity.One))
+        {
             this.highestExecutionMode = ExecutionMode.LOCAL;
             return;
         }
