@@ -138,7 +138,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             InlineFunctionExpression expression
     ) {
         for (Name name : expression.getParams().keySet()) {
-            SequenceType type = expression.getParams().get(name);
             functionDeclarationContext.addVariable(
                 name,
                 expression.getParams().get(name),
@@ -158,7 +157,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         }
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.setStaticContext(argument);
+        expression.setStaticContext(functionDeclarationContext);
         populateFunctionDeclarationStaticContext(functionDeclarationContext, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
