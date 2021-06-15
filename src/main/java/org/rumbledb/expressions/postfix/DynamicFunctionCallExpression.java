@@ -134,8 +134,7 @@ public class DynamicFunctionCallExpression extends Expression {
             this.highestExecutionMode = ExecutionMode.LOCAL;
             return;
         }
-        if(this.getStaticSequenceType().getArity().equals(Arity.One))
-        {
+        if (this.getStaticSequenceType().getArity().equals(Arity.One)) {
             this.highestExecutionMode = ExecutionMode.LOCAL;
             return;
         }
