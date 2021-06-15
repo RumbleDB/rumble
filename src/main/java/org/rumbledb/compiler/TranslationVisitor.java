@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -406,7 +406,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -417,7 +417,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1375,13 +1375,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
         LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+        SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -1392,7 +1392,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }

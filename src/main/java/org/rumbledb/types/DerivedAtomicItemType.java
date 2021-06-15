@@ -72,7 +72,7 @@ public class DerivedAtomicItemType implements ItemType {
     }
     // TODO : turn builtin derived atomic types into this class
 
-    private DerivedAtomicItemType(
+    DerivedAtomicItemType(
             Name name,
             ItemType baseType,
             ItemType primitiveType,

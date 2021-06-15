@@ -22,7 +22,7 @@ public class FunctionItemType implements ItemType {
     }
 
     // we have a parameter because the empty one is public and inherited
-    private FunctionItemType(boolean isGeneric) {
+    FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
     }

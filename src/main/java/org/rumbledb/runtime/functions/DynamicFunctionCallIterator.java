@@ -119,7 +119,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        if (this.functionItem == null && !this.functionItem.isFunction()) {
+        if (this.functionItem == null || !this.functionItem.isFunction()) {
             throw new UnexpectedTypeException(
                     "Dynamic function calls can only be performed on functions.",
                     getMetadata()

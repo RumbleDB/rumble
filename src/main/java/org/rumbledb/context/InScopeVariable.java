@@ -47,6 +47,10 @@ public class InScopeVariable implements Serializable, KryoSerializable {
         return this.storageMode;
     }
 
+    public void setStorageMode(ExecutionMode mode) {
+        this.storageMode = mode;
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.name);

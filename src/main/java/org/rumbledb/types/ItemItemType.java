@@ -19,7 +19,7 @@ public class ItemItemType implements ItemType {
     public ItemItemType() {
     }
 
-    private ItemItemType(Name name) {
+    ItemItemType(Name name) {
         this.name = name;
     }
 
@@ -79,5 +79,10 @@ public class ItemItemType implements ItemType {
     @Override
     public boolean isDataFrameType() {
         return false;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return true;
     }
 }

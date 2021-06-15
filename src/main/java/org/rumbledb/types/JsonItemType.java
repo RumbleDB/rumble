@@ -16,7 +16,7 @@ public class JsonItemType implements ItemType {
     static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
     private final Name name;
 
-    private JsonItemType(Name name) {
+    JsonItemType(Name name) {
         this.name = name;
     }
 
@@ -79,5 +79,10 @@ public class JsonItemType implements ItemType {
     @Override
     public boolean isDataFrameType() {
         return false;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return true;
     }
 }
