@@ -4,7 +4,7 @@ let $data := structured-json-file("../../../../queries/rumbleML/sample-ml-data-a
 let $binarizer := get-transformer("Binarizer")
 let $intermediate-data := $binarizer($data, {"inputCol": "weight", "outputCol": "binarized_weight", "threshold": 70.0})
 
-let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "age": "integer", "weight": "decimal", "binarized_weight": "double"})
+let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "age": "integer", "weight": "double", "binarized_weight": "double"})
 return $df-intermediate-data
 
 (: calling annotate on the results of a transformer :)

@@ -35,7 +35,6 @@ import java.util.stream.Collectors;
 
 public class DynamicFunctionCallExpression extends Expression {
 
-    private static final long serialVersionUID = 1L;
     private Expression mainExpression;
     private List<Expression> arguments;
 

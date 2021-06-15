@@ -132,6 +132,9 @@ public class ItemTypeReference implements ItemType {
 
 
     public Name getName() {
+        if (this.resolvedItemType != null) {
+            return this.resolvedItemType.getName();
+        }
         return this.name;
     }
 
