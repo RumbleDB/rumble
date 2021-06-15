@@ -148,17 +148,17 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
-
         expression.getParams()
             .forEach(
-                (paramName, sequenceType) -> expression.getStaticContext()
+                (paramName, sequenceType) -> expression.getBody()
+                    .getStaticContext()
                     .setVariableStorageMode(
                         paramName,
                         ExecutionMode.LOCAL
                     )
             );
         // visit the body first to make its execution mode available while adding the function to the catalog
-        this.visit(expression.getBody(), expression.getStaticContext());
+        this.visit(expression.getBody(), expression.getBody().getStaticContext());
         expression.initHighestExecutionMode(this.visitorConfig);
         expression.registerUserDefinedFunctionExecutionMode(
             this.visitorConfig
