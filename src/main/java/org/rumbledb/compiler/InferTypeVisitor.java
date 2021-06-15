@@ -464,8 +464,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
         try {
             signature = getSignature(expression.getFunctionIdentifier(), expression.getStaticContext());
         } catch (UnknownFunctionCallException e) {
-            e.setMetadata(expression.getMetadata());
-            throw e;
+            throw new UnknownFunctionCallException(expression.getFunctionIdentifier(), expression.getMetadata());
         }
         List<Expression> parameterExpressions = expression.getArguments();
         List<SequenceType> parameterTypes = signature.getParameterTypes();
@@ -1848,7 +1847,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             Expression groupByVarExpr = groupByVar.getExpression();
             SequenceType expectedType;
             if (groupByVarExpr != null) {
-                visit(groupByVarExpr, argument);
+                visit(groupByVarExpr, groupByVarExpr.getStaticContext());
                 SequenceType declaredType = groupByVar.getActualSequenceType();
                 SequenceType inferredType;
                 if (declaredType == null) {
