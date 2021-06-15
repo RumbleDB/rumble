@@ -295,7 +295,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             this.visit(expression.getDefaultCase().getReturnExpression(), null);
         } else {
             // add variable to child context to visit default return expression
-            expression.getDefaultCase().getReturnExpression().getStaticContext()
+            expression.getDefaultCase()
+                .getReturnExpression()
+                .getStaticContext()
                 .setVariableStorageMode(
                     defaultCaseVariableName,
                     ExecutionMode.LOCAL
