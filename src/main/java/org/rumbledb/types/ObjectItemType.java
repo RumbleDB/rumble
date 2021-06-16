@@ -205,7 +205,7 @@ public class ObjectItemType implements ItemType {
             sb.append(" (object item)\n");
 
             sb.append("base type : ");
-            sb.append(this.baseType.getIdentifierString());
+            sb.append(this.baseType.toString());
             sb.append("\n");
 
             List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
@@ -219,7 +219,7 @@ public class ObjectItemType implements ItemType {
                         sb.append(" (required)");
                     }
                     sb.append(" : ");
-                    sb.append(field.getType().getIdentifierString());
+                    sb.append(field.getType().toString());
                     sb.append("\n");
                 }
             }

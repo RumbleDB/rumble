@@ -11,6 +11,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.InvalidInstanceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
@@ -162,6 +163,31 @@ public class DataFrameUtils {
             ItemType expectedType,
             ItemType actualType
     ) {
+        if (expectedType.isAtomicItemType()) {
+            if (actualType.isSubtypeOf(expectedType)) {
+                return;
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: " + expectedType + " vs. " + actualType
+            );
+        }
+        if (expectedType.isArrayItemType()) {
+            if (actualType.isArrayItemType()) {
+                if (
+                    actualType.getArrayContentFacet()
+                        .getType()
+                        .isSubtypeOf(expectedType.getArrayContentFacet().getType())
+                ) {
+                    return;
+                }
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: expected "
+                        + expectedType.getArrayContentFacet().getType()
+                        + " but actually "
+                        + actualType.getArrayContentFacet().getType()
+            );
+        }
         for (Entry<String, FieldDescriptor> actualTypeDescriptor : actualType.getObjectContentFacet().entrySet()) {
             final String actualColumnName = actualTypeDescriptor.getKey();
             final ItemType columnDataType = actualTypeDescriptor.getValue().getType();
@@ -176,22 +202,26 @@ public class DataFrameUtils {
                 }
 
                 ItemType expectedColumnType = expectedTypeDescriptor.getValue().getType();
-                if (columnDataType.isSubtypeOf(expectedColumnType)) {
-                    columnMatched = true;
-                    break;
+                try {
+                    validateSchemaItemAgainstDataFrame(expectedColumnType, columnDataType);
+                } catch (Exception e) {
+                    RumbleException ex = new InvalidInstanceException(
+                            "Fields defined in schema must fully match the fields of input data: "
+                                + "expected '"
+                                + expectedColumnType
+                                + "' type for field '"
+                                + actualColumnName
+                                + "', but found '"
+                                + columnDataType
+                                + "'"
+                    );
+                    ex.initCause(e);
+                    throw ex;
                 }
 
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + expectedColumnType
-                            + "' type for field '"
-                            + actualColumnName
-                            + "', but found '"
-                            + columnDataType
-                            + "'"
-                );
-            } ;
+                columnMatched = true;
+                break;
+            }
 
             if (!columnMatched) {
                 throw new InvalidInstanceException(

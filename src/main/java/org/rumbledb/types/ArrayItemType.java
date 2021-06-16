@@ -165,7 +165,10 @@ public class ArrayItemType implements ItemType {
     @Override
     public String toString() {
         // consider add content and various stuff
-        return (this.name == null) ? "<anonymous>" : this.name.toString();
+        return ((this.name == null) ? "<anonymous>" : this.name.toString())
+            + "(array of "
+            + this.getArrayContentFacet().getType()
+            + ")";
     }
 
     @Override
