@@ -17,7 +17,7 @@ let $trained_est := $est($my-training-data,
                  {"inputCol": ["col1", "col2", "col3"], "outputCol": ["ocol1", "ocol2", "ocol2"], "k":2})
 let $my-new-training-data := $trained_est($my-training-data, {"inputCol": ["col1", "col2", "col3"], "outputCol": "features"})
 let $est2 := get-estimator("LogisticRegression")
-let $trained_est2 := $est2($my-new-training-data, {"inputCol": "features"})
+let $trained_est2 := $est2($my-new-training-data, {"featuresCol": "features"})
 for $i in $trained_est2(
     $my-test-data,
     {"inputCol": ["col1"], "outputCol": ["ocol1"]}
