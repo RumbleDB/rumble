@@ -47,6 +47,12 @@ public interface ItemType extends Serializable {
 
 
     default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
+            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
+                return false;
+            }
+            return this.toString().equals(otherType.toString());
+        }
         if (this.getName() == null || otherType.getName() == null) {
             return this == otherType;
         }
