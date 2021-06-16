@@ -40,12 +40,18 @@ public interface ItemType extends Serializable {
     /**
      * Tests for itemType equality.
      *
-     * @param other another item type.
+     * @param other another object.
      * @return true it is equal to other, false otherwise.
      */
     boolean equals(Object other);
 
 
+    /**
+     * Tests for itemType equality.
+     *
+     * @param otherType another item type.
+     * @return true it is equal to other, false otherwise.
+     */
     default boolean isEqualTo(ItemType otherType) {
         if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
             if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
