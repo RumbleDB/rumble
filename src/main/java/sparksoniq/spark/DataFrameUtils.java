@@ -176,8 +176,6 @@ public class DataFrameUtils {
                 }
 
                 ItemType expectedColumnType = expectedTypeDescriptor.getValue().getType();
-                System.err.println(columnDataType.getName().getNamespace());
-                System.err.println(expectedColumnType.getName().getNamespace());
                 if (columnDataType.isSubtypeOf(expectedColumnType)) {
                     columnMatched = true;
                     break;
