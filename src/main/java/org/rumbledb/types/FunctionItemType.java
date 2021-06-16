@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.util.Set;
@@ -25,6 +26,11 @@ public class FunctionItemType implements ItemType {
     FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
+    }
+
+    @Override
+    public Name getName() {
+        return null;
     }
 
     @Override

@@ -13,19 +13,19 @@ public class JsonItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    static final ItemType jsonItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
+    static final ItemType jsonItem = new JsonItemType();
     private final Name name;
 
-    JsonItemType(Name name) {
-        this.name = name;
+    JsonItemType() {
+        this.name = new Name(Name.JS_NS, "js", "json-item");
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ItemType)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) o).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override

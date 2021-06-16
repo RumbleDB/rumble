@@ -112,7 +112,7 @@ public class DerivedAtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getName().equals(((ItemType) other).getName());
+        return isEqualTo((ItemType) other);
     }
 
     @Override

@@ -45,6 +45,13 @@ public interface ItemType extends Serializable {
      */
     boolean equals(Object other);
 
+
+    default boolean isEqualTo(ItemType otherType) {
+        if (this.getName() == null || otherType.getName() == null) {
+            return this == otherType;
+        }
+        return this.getName().equals(otherType.getName());
+    }
     // region kind
 
     /**
