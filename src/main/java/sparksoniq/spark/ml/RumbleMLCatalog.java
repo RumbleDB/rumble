@@ -1288,8 +1288,8 @@ public class RumbleMLCatalog {
     private static final String featuresColParamName = "featuresCol";
     private static final String inputColParamName = "inputCol";
     static {
-        specialParamsThatMayReferToAColumnOfVectors.add(featuresColParamName);
-        specialParamsThatMayReferToAColumnOfVectors.add(inputColParamName);
+        // specialParamsThatMayReferToAColumnOfVectors.add(featuresColParamName);
+        // specialParamsThatMayReferToAColumnOfVectors.add(inputColParamName);
 
         defaultSparkMLValuesOfSpecialParams.put(featuresColParamName, "features");
 
