@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("BucketedRandomProjectionLSH")
 let $tra := $est(
     $data,
-    { "inputCol": ["age", "weight"], "bucketLength": 2.0, "numHashTables": 3, "outputCol": "hashes" }
+    { "inputCol": "features", "bucketLength": 2.0, "numHashTables": 3, "outputCol": "hashes" }
 )
 for $result in $tra(
     $data,
-    { "inputCol": ["age", "weight"]  }
+    { "inputCol": "features"  }
 )
 return {
     "label": $result.label,

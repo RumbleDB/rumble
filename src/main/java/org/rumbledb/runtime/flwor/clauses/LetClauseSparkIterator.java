@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -141,7 +142,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             resultTuple = new FlworTuple(inputTuple);
         }
         if (this.assignmentIterator.isDataFrame()) {
-            Dataset<Row> df = this.assignmentIterator.getDataFrame(context);
+            JSoundDataFrame df = this.assignmentIterator.getDataFrame(context);
             resultTuple.putValue(this.variableName, df);
         } else if (this.assignmentIterator.isRDDOrDataFrame()) {
             JavaRDD<Item> itemRDD = this.assignmentIterator.getRDD(context);
@@ -412,7 +413,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
-                        SequenceType.MOST_GENERAL_SEQUENCE_TYPE,
+                        SequenceType.ITEM_STAR,
                         ExecutionMode.LOCAL,
                         getMetadata()
                 ),

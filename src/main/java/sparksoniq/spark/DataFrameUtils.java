@@ -10,16 +10,18 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
-import org.rumbledb.exceptions.MLInvalidDataFrameSchemaException;
-import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.InvalidInstanceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
@@ -35,26 +37,11 @@ public class DataFrameUtils {
 
                 @Override
                 public Row call(Item item) {
-                    return ItemParser.getRowFromItemUsingSchema(item, schema);
+                    return ValidateTypeIterator.convertLocalItemToRow(item, null, schema);
                 }
             }
         );
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-    }
-
-    public static boolean isSequenceOfObjects(Dataset<Row> dataFrame) {
-        StructType schema = dataFrame.schema();
-        List<String> fieldNames = Arrays.asList(schema.fieldNames());
-        return fieldNames.size() != 1 || !fieldNames.get(0).equals(SparkSessionManager.atomicJSONiqItemColumnName);
-    }
-
-    public static List<String> getFields(Dataset<Row> dataFrame) {
-        if (!isSequenceOfObjects(dataFrame)) {
-            throw new OurBadException("Cannot get fields if the sequence is not a sequence of objects.");
-        }
-        StructType schema = dataFrame.schema();
-        List<String> fieldNames = Arrays.asList(schema.fieldNames());
-        return fieldNames;
     }
 
     public static Dataset<Row> convertLocalItemsToDataFrame(
@@ -67,8 +54,17 @@ public class DataFrameUtils {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = ItemParser.getRowsFromItemsUsingSchema(items, schema);
+        List<Row> rows = getRowsFromItemsUsingSchema(items, null, schema);
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+    }
+
+    private static List<Row> getRowsFromItemsUsingSchema(List<Item> items, ItemType itemType, StructType schema) {
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            Row row = ValidateTypeIterator.convertLocalItemToRow(item, itemType, schema);
+            rows.add(row);
+        }
+        return rows;
     }
 
     private static void validateSchemaAgainstAnItem(
@@ -77,7 +73,7 @@ public class DataFrameUtils {
     ) {
         for (String schemaColumn : schemaItem.getKeys()) {
             if (!dataItem.getKeys().contains(schemaColumn)) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
                             + schemaColumn
@@ -88,7 +84,7 @@ public class DataFrameUtils {
 
         for (String dataColumn : dataItem.getKeys()) {
             if (!schemaItem.getKeys().contains(dataColumn)) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
                             + dataColumn
@@ -109,7 +105,7 @@ public class DataFrameUtils {
                 fields.add(field);
             }
         } catch (IllegalArgumentException ex) {
-            MLInvalidDataFrameSchemaException e = new MLInvalidDataFrameSchemaException(
+            InvalidInstanceException e = new InvalidInstanceException(
                     "Error while applying the schema; " + ex.getMessage()
             );
             e.initCause(ex);
@@ -142,7 +138,7 @@ public class DataFrameUtils {
             return ItemParser.getDataFrameDataTypeFromItemType(itemType);
         }
 
-        throw new MLInvalidDataFrameSchemaException(
+        throw new InvalidInstanceException(
                 "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
         );
     }
@@ -150,12 +146,12 @@ public class DataFrameUtils {
     private static void validateArrayItemInSchema(Item item) {
         List<Item> arrayTypes = item.getItems();
         if (arrayTypes.size() == 0) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Arrays in schema must define a type for their contents."
             );
         }
         if (arrayTypes.size() > 1) {
-            throw new MLInvalidDataFrameSchemaException(
+            throw new InvalidInstanceException(
                     "Arrays in schema can define only a single type for their contents: "
                         + item.serialize()
                         + " is invalid."
@@ -164,55 +160,87 @@ public class DataFrameUtils {
     }
 
     public static void validateSchemaItemAgainstDataFrame(
-            Item schemaItem,
-            StructType dataFrameSchema
+            ItemType expectedType,
+            ItemType actualType
     ) {
-        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        for (StructField column : dataFrameSchema.fields()) {
-            final String columnName = column.name();
-            final DataType columnDataType = column.dataType();
+        if (expectedType.isAtomicItemType()) {
+            if (actualType.isSubtypeOf(expectedType)) {
+                return;
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: " + expectedType + " vs. " + actualType
+            );
+        }
+        if (expectedType.isArrayItemType()) {
+            if (actualType.isArrayItemType()) {
+                if (
+                    actualType.getArrayContentFacet()
+                        .getType()
+                        .isSubtypeOf(expectedType.getArrayContentFacet().getType())
+                ) {
+                    return;
+                }
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: expected "
+                        + expectedType.getArrayContentFacet().getType()
+                        + " but actually "
+                        + actualType.getArrayContentFacet().getType()
+            );
+        }
+        for (Entry<String, FieldDescriptor> actualTypeDescriptor : actualType.getObjectContentFacet().entrySet()) {
+            final String actualColumnName = actualTypeDescriptor.getKey();
+            final ItemType columnDataType = actualTypeDescriptor.getValue().getType();
 
-            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
-                String generatedColumnName = structField.name();
-                if (!generatedColumnName.equals(columnName)) {
-                    return false;
+            boolean columnMatched = false;
+            for (
+                Entry<String, FieldDescriptor> expectedTypeDescriptor : expectedType.getObjectContentFacet().entrySet()
+            ) {
+                String expectedColumnName = expectedTypeDescriptor.getKey();
+                if (!expectedColumnName.equals(actualColumnName)) {
+                    continue;
                 }
 
-                DataType generatedDataType = structField.dataType();
-                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    return true;
+                ItemType expectedColumnType = expectedTypeDescriptor.getValue().getType();
+                try {
+                    validateSchemaItemAgainstDataFrame(expectedColumnType, columnDataType);
+                } catch (Exception e) {
+                    RumbleException ex = new InvalidInstanceException(
+                            "Fields defined in schema must fully match the fields of input data: "
+                                + "expected '"
+                                + expectedColumnType
+                                + "' type for field '"
+                                + actualColumnName
+                                + "', but found '"
+                                + columnDataType
+                                + "'"
+                    );
+                    ex.initCause(e);
+                    throw ex;
                 }
 
-                throw new MLInvalidDataFrameSchemaException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for field '"
-                            + columnName
-                            + "', but found '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
-                            + "'"
-                );
-            });
+                columnMatched = true;
+                break;
+            }
 
             if (!columnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
-                            + columnName
+                            + actualColumnName
                             + "' field."
                 );
             }
         }
 
-        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
-            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
+        for (String expectedColumnName : expectedType.getObjectContentFacet().keySet()) {
+            boolean userColumnMatched = actualType.getObjectContentFacet().keySet().contains(expectedColumnName);
 
             if (!userColumnMatched) {
-                throw new MLInvalidDataFrameSchemaException(
+                throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
-                            + generatedSchemaColumnName
+                            + expectedColumnName
                             + "'."
                 );
             }

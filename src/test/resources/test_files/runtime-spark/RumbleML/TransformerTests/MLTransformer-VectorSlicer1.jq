@@ -3,11 +3,13 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $transformer := get-transformer("VectorSlicer")
 for $result in $transformer(
     $data,
-    {"inputCol": ["age", "weight"], "outputCol": "output", "indices": [ 1 ] }
+    {"inputCol": "features", "outputCol": "output", "indices": [ 1 ] }
 )
 return {
     "label": $result.label,

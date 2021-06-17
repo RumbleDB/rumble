@@ -31,6 +31,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
@@ -90,10 +91,10 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext dynamicContext) {
-        Dataset<Row> df = this.sequenceIterator.getDataFrame(dynamicContext);
+    public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         setInstanceVariables(dynamicContext);
-        StructType inputSchema = df.schema();
+        StructType inputSchema = df.getDataFrame().schema();
 
         List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
 
@@ -101,19 +102,23 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
 
         df.createOrReplaceTempView("input");
         if (this.length != -1) {
-            df = df.sparkSession()
-                .sql(
-                    String.format(
-                        "SELECT * FROM input LIMIT %s",
-                        Integer.toString(this.startPosition + this.length - 1)
-                    )
-                );
+            df = df.evaluateSQL(
+                String.format(
+                    "SELECT * FROM input LIMIT %s",
+                    Integer.toString(this.startPosition + this.length - 1)
+                ),
+                df.getItemType()
+            );
         }
 
-        df = FlworDataFrameUtils.zipWithIndex(df, 1L, SparkSessionManager.temporaryColumnName);
+        Dataset<Row> ds = FlworDataFrameUtils.zipWithIndex(
+            df.getDataFrame(),
+            1L,
+            SparkSessionManager.temporaryColumnName
+        );
 
-        df.createOrReplaceTempView("input");
-        df = df.sparkSession()
+        ds.createOrReplaceTempView("input");
+        ds = ds.sparkSession()
             .sql(
                 String.format(
                     "SELECT %s FROM (SELECT * FROM input WHERE `%s` >= %s)",
@@ -122,7 +127,7 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
                     Integer.toString(this.startPosition)
                 )
             );
-        return df;
+        return new JSoundDataFrame(ds, df.getItemType());
     }
 
     @Override

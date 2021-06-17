@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -150,16 +150,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
+    private String code;
 
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration
+            RumbleRuntimeConfiguration configuration,
+            String code
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
         this.isMainModule = isMainModule;
+        this.code = code;
     }
 
     // endregion expr
@@ -396,14 +399,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.qname(), true, false);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -414,7 +417,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1371,14 +1374,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -1389,7 +1392,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1705,7 +1708,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new ExceptionMetadata(
                 this.moduleContext.getStaticBaseURI().toString(),
                 token.getLine(),
-                token.getCharPositionInLine()
+                token.getCharPositionInLine(),
+                this.code
         );
     }
 

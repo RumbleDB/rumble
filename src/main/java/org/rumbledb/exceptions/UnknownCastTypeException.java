@@ -22,22 +22,11 @@ package org.rumbledb.exceptions;
 
 import org.rumbledb.errorcodes.ErrorCode;
 
-public class MLInvalidDataFrameSchemaException extends RumbleException {
+public class UnknownCastTypeException extends RumbleException {
 
     private static final long serialVersionUID = 1L;
 
-    public MLInvalidDataFrameSchemaException(String message) {
-        super(
-            message,
-            ErrorCode.MLInvalidDataFrameSchemaErrorCode
-        );
-    }
-
-    public MLInvalidDataFrameSchemaException(String message, ExceptionMetadata metadata) {
-        super(
-            message,
-            ErrorCode.MLInvalidDataFrameSchemaErrorCode,
-            metadata
-        );
+    public UnknownCastTypeException(String message, ExceptionMetadata metadata) {
+        super(message, ErrorCode.UnknownCastTypeErrorCode, metadata);
     }
 }

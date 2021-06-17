@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.util.Set;
@@ -22,17 +23,22 @@ public class FunctionItemType implements ItemType {
     }
 
     // we have a parameter because the empty one is public and inherited
-    private FunctionItemType(boolean isGeneric) {
+    FunctionItemType(boolean isGeneric) {
         this.isGeneric = true;
         this.signature = null;
     }
 
     @Override
+    public Name getName() {
+        return null;
+    }
+
+    @Override
     public boolean equals(Object other) {
-        if (!(other instanceof FunctionItemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -92,5 +98,10 @@ public class FunctionItemType implements ItemType {
     @Override
     public String toString() {
         return this.isGeneric ? "function(*)" : this.signature.toString();
+    }
+
+    @Override
+    public boolean isDataFrameType() {
+        return false;
     }
 }

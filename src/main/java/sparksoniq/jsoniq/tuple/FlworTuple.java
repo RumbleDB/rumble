@@ -25,13 +25,14 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.items.structured.JSoundDataFrame;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.io.Serializable;
@@ -45,7 +46,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
     private static final long serialVersionUID = 1L;
     private LinkedHashMap<Name, List<Item>> localVariables;
     private LinkedHashMap<Name, JavaRDD<Item>> rddVariables;
-    private LinkedHashMap<Name, Dataset<Row>> dataFrameVariables;
+    private LinkedHashMap<Name, JSoundDataFrame> dataFrameVariables;
 
     public FlworTuple() {
         this.localVariables = new LinkedHashMap<>(1, 1);
@@ -127,14 +128,14 @@ public class FlworTuple implements Serializable, KryoSerializable {
             return this.rddVariables.get(key);
         }
         if (this.dataFrameVariables.containsKey(key)) {
-            Dataset<Row> df = this.dataFrameVariables.get(key);
+            JSoundDataFrame df = this.dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata));
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
 
-    public Dataset<Row> getDataFrameValue(Name key, ExceptionMetadata metadata) {
+    public JSoundDataFrame getDataFrameValue(Name key, ExceptionMetadata metadata) {
         if (this.dataFrameVariables.containsKey(key)) {
             return this.dataFrameVariables.get(key);
         }
@@ -161,7 +162,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         return this;
     }
 
-    public FlworTuple putValue(Name key, Dataset<Row> value) {
+    public FlworTuple putValue(Name key, JSoundDataFrame value) {
         this.localVariables.remove(key);
         this.rddVariables.remove(key);
         this.dataFrameVariables.put(key, value);

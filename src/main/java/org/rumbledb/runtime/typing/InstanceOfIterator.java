@@ -26,6 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.sequences.general.InstanceOfClosure;
@@ -85,16 +86,24 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             return ItemFactory.getInstance().createBooleanItem(true);
-        } else {
-            JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
-
-            if (isInvalidArity(childRDD.take(2).size())) {
+        }
+        if (this.child.isDataFrame()) {
+            JSoundDataFrame childDF = this.child.getDataFrame(dynamicContext);
+            if (isInvalidArity(childDF.take(2).size())) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
 
-            JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
-            return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
+            ItemType itemType = childDF.getItemType();
+            return ItemFactory.getInstance().createBooleanItem(itemType.isSubtypeOf(this.sequenceType.getItemType()));
         }
+        JavaRDD<Item> childRDD = this.child.getRDD(dynamicContext);
+
+        if (isInvalidArity(childRDD.take(2).size())) {
+            return ItemFactory.getInstance().createBooleanItem(false);
+        }
+
+        JavaRDD<Item> result = childRDD.filter(new InstanceOfClosure(this.sequenceType.getItemType()));
+        return ItemFactory.getInstance().createBooleanItem(result.isEmpty());
     }
 
     private boolean isInvalidArity(long numOfItems) {

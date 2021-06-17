@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:0:COLUMN:0:" :)
+(:JIQS: ShouldNotParse; ErrorCode="XPST0003"; ErrorMetadata="LINE:1:COLUMN:0:" :)
 module namespace hep = "hep.jq";
 
 declare function hep:histogram($values, $lo, $hi, $num-bins) {

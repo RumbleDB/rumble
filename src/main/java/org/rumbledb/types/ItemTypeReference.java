@@ -4,6 +4,7 @@ import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
@@ -30,6 +31,19 @@ public class ItemTypeReference implements ItemType {
             throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
         }
         this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if (!this.resolvedItemType.isResolved()) {
+            this.resolvedItemType.resolve(context, metadata);
+        }
+    }
+
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.name)) {
+            throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
+        }
+        this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if (!this.resolvedItemType.isResolved()) {
+            this.resolvedItemType.resolve(context, metadata);
+        }
     }
 
     @Override
@@ -118,6 +132,9 @@ public class ItemTypeReference implements ItemType {
 
 
     public Name getName() {
+        if (this.resolvedItemType != null) {
+            return this.resolvedItemType.getName();
+        }
         return this.name;
     }
 
@@ -296,10 +313,25 @@ public class ItemTypeReference implements ItemType {
         return this.name.toString();
     }
 
+    public String toString() {
+        if (!this.hasName()) {
+            return "<anonymous>";
+        }
+        return this.name.toString();
+    }
+
     public DataType toDataFrameType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
         return this.resolvedItemType.toDataFrameType();
+    }
+
+    @Override
+    public boolean isDataFrameType() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isDataFrameType();
     }
 }
