@@ -25,6 +25,7 @@ import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.io.Serializable;
@@ -39,11 +40,30 @@ public interface ItemType extends Serializable {
     /**
      * Tests for itemType equality.
      *
-     * @param other another item type.
+     * @param other another object.
      * @return true it is equal to other, false otherwise.
      */
     boolean equals(Object other);
 
+
+    /**
+     * Tests for itemType equality.
+     *
+     * @param otherType another item type.
+     * @return true it is equal to other, false otherwise.
+     */
+    default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
+            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
+                return false;
+            }
+            return this.toString().equals(otherType.toString());
+        }
+        if (this.getName() == null || otherType.getName() == null) {
+            return this == otherType;
+        }
+        return this.getName().equals(otherType.getName());
+    }
     // region kind
 
     /**
@@ -393,7 +413,9 @@ public interface ItemType extends Serializable {
      * @return content facet value for array item types
      */
     default ArrayContentDescriptor getArrayContentFacet() {
-        throw new UnsupportedOperationException("array content facet is allowed only for array item types");
+        throw new UnsupportedOperationException(
+                "array content facet is allowed only for array item types " + this.getClass().getCanonicalName()
+        );
     }
 
     /**
@@ -430,6 +452,10 @@ public interface ItemType extends Serializable {
     }
 
     default void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        return;
+    }
+
+    default void resolve(StaticContext context, ExceptionMetadata metadata) {
         return;
     }
 }

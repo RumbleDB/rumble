@@ -95,6 +95,13 @@ public class FunctionCallExpression extends Expression {
                 );
             }
             BuiltinFunction builtinFunction = BuiltinFunctionCatalogue.getBuiltinFunction(this.identifier);
+            if (builtinFunction == null) {
+                throw new UnknownFunctionCallException(
+                        this.identifier.getName(),
+                        this.identifier.getArity(),
+                        this.getMetadata()
+                );
+            }
             this.highestExecutionMode = this.getBuiltInFunctionExecutionMode(builtinFunction, visitorConfig);
             return;
         }
@@ -173,11 +180,17 @@ public class FunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Expression arg : this.arguments) {
             if (arg == null) {
-                for (int i = 0; i < indent; ++i) {
+                for (int i = 0; i < indent + 1; ++i) {
                     buffer.append("  ");
                 }
                 buffer.append("?\n");

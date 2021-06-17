@@ -4,6 +4,7 @@ import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.*;
@@ -60,7 +61,7 @@ public class ObjectItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -204,7 +205,7 @@ public class ObjectItemType implements ItemType {
             sb.append(" (object item)\n");
 
             sb.append("base type : ");
-            sb.append(this.baseType.getIdentifierString());
+            sb.append(this.baseType.toString());
             sb.append("\n");
 
             List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
@@ -218,7 +219,7 @@ public class ObjectItemType implements ItemType {
                         sb.append(" (required)");
                     }
                     sb.append(" : ");
-                    sb.append(field.getType().getIdentifierString());
+                    sb.append(field.getType().toString());
                     sb.append("\n");
                 }
             }
@@ -243,6 +244,7 @@ public class ObjectItemType implements ItemType {
     public boolean isResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
+                System.err.println("Unresolved: " + entry.getValue().getType().getClass().getCanonicalName());
                 return false;
             }
         }
@@ -251,6 +253,15 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!entry.getValue().getType().isResolved()) {
+                entry.getValue().getType().resolve(context, metadata);
+            }
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 entry.getValue().getType().resolve(context, metadata);

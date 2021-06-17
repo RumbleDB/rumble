@@ -72,7 +72,7 @@ public class DerivedAtomicItemType implements ItemType {
     }
     // TODO : turn builtin derived atomic types into this class
 
-    private DerivedAtomicItemType(
+    DerivedAtomicItemType(
             Name name,
             ItemType baseType,
             ItemType primitiveType,
@@ -112,7 +112,7 @@ public class DerivedAtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override

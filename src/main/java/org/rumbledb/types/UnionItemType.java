@@ -4,6 +4,7 @@ import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.util.Arrays;
@@ -40,7 +41,7 @@ public class UnionItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -142,6 +143,15 @@ public class UnionItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        for (ItemType itemType : this.content.getTypes()) {
+            if (!itemType.isResolved()) {
+                itemType.resolve(context, metadata);
+            }
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
         for (ItemType itemType : this.content.getTypes()) {
             if (!itemType.isResolved()) {
                 itemType.resolve(context, metadata);

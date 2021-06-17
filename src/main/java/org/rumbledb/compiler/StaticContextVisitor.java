@@ -22,18 +22,14 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 
-import org.rumbledb.context.BuiltinFunctionCatalogue;
-import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndeclaredVariableException;
-import org.rumbledb.exceptions.VariableAlreadyExistsException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.control.TypeSwitchExpression;
@@ -48,36 +44,36 @@ import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
-import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.typing.CastExpression;
+import org.rumbledb.expressions.typing.CastableExpression;
+import org.rumbledb.expressions.typing.InstanceOfExpression;
+import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 /**
  * Static context visitor implements a multi-pass algorithm that enables function hoisting
  */
 public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
 
-    private VisitorConfig visitorConfig;
     private Map<String, StaticContext> importedModuleContexts;
 
     StaticContextVisitor() {
-        this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
         this.importedModuleContexts = new HashMap<>();
-    }
-
-    void setVisitorConfig(VisitorConfig visitorConfig) {
-        this.visitorConfig = visitorConfig;
     }
 
     @Override
     protected StaticContext defaultAction(Node node, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(node, argument);
         // initialize execution mode by visiting children and expressions first, then calling initialize methods
-        node.initHighestExecutionMode(this.visitorConfig);
         return generatedContext;
     }
 
@@ -99,7 +95,6 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitMainModule(MainModule mainModule, StaticContext argument) {
         this.importedModuleContexts.clear();
         StaticContext generatedContext = visitDescendants(mainModule, argument);
-        mainModule.initHighestExecutionMode(this.visitorConfig);
         return generatedContext;
     }
 
@@ -109,14 +104,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             StaticContext moduleContext = libraryModule.getStaticContext();
             this.visit(libraryModule.getProlog(), moduleContext);
             this.importedModuleContexts.put(libraryModule.getNamespace(), moduleContext);
-        } else {
-            libraryModule.getProlog().initHighestExecutionMode(this.visitorConfig);
         }
-        libraryModule.initHighestExecutionMode(this.visitorConfig);
         argument.importModuleContext(
             this.importedModuleContexts.get(libraryModule.getNamespace()),
             libraryModule.getNamespace()
         );
+        argument.getInScopeSchemaTypes()
+            .importModuleTypes(
+                this.importedModuleContexts.get(libraryModule.getNamespace()).getInScopeSchemaTypes(),
+                libraryModule.getNamespace()
+            );
         return argument;
     }
 
@@ -131,59 +128,45 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             );
         } else {
             // note: sequence type can be null
-            expression.setType(argument.getVariableSequenceType(variableName));
-            ExecutionMode mode = argument.getVariableStorageMode(variableName);
-            if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
-                mode = ExecutionMode.LOCAL;
-            }
-            expression.setHighestExecutionMode(mode);
-            // TODO: check staticContext available
+            expression.setActualType(argument.getVariableSequenceType(variableName));
             return argument;
         }
     }
 
     private void populateFunctionDeclarationStaticContext(
             StaticContext functionDeclarationContext,
-            List<ExecutionMode> modes,
             InlineFunctionExpression expression
     ) {
-        int i = 0;
         for (Name name : expression.getParams().keySet()) {
-            ExecutionMode mode = modes.get(i);
-            SequenceType type = expression.getParams().get(name);
-            if (type.isEmptySequence()) {
-                mode = ExecutionMode.LOCAL;
-            } else if (type.getArity().equals(Arity.OneOrZero) || type.getArity().equals(Arity.One)) {
-                mode = ExecutionMode.LOCAL;
-            }
             functionDeclarationContext.addVariable(
                 name,
                 expression.getParams().get(name),
-                expression.getMetadata(),
-                mode
+                expression.getMetadata()
             );
-            ++i;
         }
     }
 
     @Override
     public StaticContext visitFunctionDeclaration(FunctionDeclaration declaration, StaticContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
+        if (expression.getActualReturnType() != null) {
+            expression.getActualReturnType().resolve(argument, declaration.getMetadata());
+        }
+        for (Entry<Name, SequenceType> itemType : expression.getParams().entrySet()) {
+            itemType.getValue().resolve(argument, declaration.getMetadata());
+        }
         // define a static context for the function body, add params to the context and visit the body expression
-        List<ExecutionMode> modes = argument.getUserDefinedFunctionsExecutionModes()
-            .getParameterExecutionMode(
-                expression.getFunctionIdentifier(),
-                expression.getMetadata()
-            );
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.setStaticContext(argument);
-        populateFunctionDeclarationStaticContext(functionDeclarationContext, modes, expression);
+        expression.setStaticContext(functionDeclarationContext);
+        populateFunctionDeclarationStaticContext(functionDeclarationContext, expression);
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
-        expression.initHighestExecutionMode(this.visitorConfig);
-        declaration.initHighestExecutionMode(this.visitorConfig);
-        expression.registerUserDefinedFunctionExecutionMode(
-            this.visitorConfig
+        argument.addFunctionSignature(
+            expression.getFunctionIdentifier(),
+            new FunctionSignature(
+                    new ArrayList<>(expression.getParams().values()),
+                    expression.getReturnType()
+            )
         );
         return argument;
     }
@@ -192,62 +175,29 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitInlineFunctionExpr(InlineFunctionExpression expression, StaticContext argument) {
         // define a static context for the function body, add params to the context and visit the body expression
         StaticContext functionDeclarationContext = new StaticContext(argument);
-        expression.getParams()
-            .forEach(
-                (paramName, sequenceType) -> functionDeclarationContext.addVariable(
-                    paramName,
-                    sequenceType,
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL
-                )
+        for (Entry<Name, SequenceType> entry : expression.getParams().entrySet()) {
+            functionDeclarationContext.addVariable(
+                entry.getKey(),
+                entry.getValue(),
+                expression.getMetadata()
             );
+        }
         // visit the body first to make its execution mode available while adding the function to the catalog
         this.visit(expression.getBody(), functionDeclarationContext);
-        expression.initHighestExecutionMode(this.visitorConfig);
-        expression.registerUserDefinedFunctionExecutionMode(
-            this.visitorConfig
-        );
         return functionDeclarationContext;
     }
 
-    @Override
-    public StaticContext visitFunctionCall(FunctionCallExpression expression, StaticContext argument) {
-        visitDescendants(expression, argument);
-        FunctionIdentifier identifier = expression.getFunctionIdentifier();
-        if (!BuiltinFunctionCatalogue.exists(identifier)) {
-            List<ExecutionMode> modes = new ArrayList<>();
-            if (expression.isPartialApplication()) {
-                for (@SuppressWarnings("unused")
-                Expression parameter : expression.getArguments()) {
-                    modes.add(ExecutionMode.LOCAL);
-                }
-            } else {
-                for (Expression parameter : expression.getArguments()) {
-                    modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
-                }
-            }
-            argument.getUserDefinedFunctionsExecutionModes()
-                .setParameterExecutionMode(
-                    identifier,
-                    modes,
-                    expression.getMetadata()
-                );
-        }
-        expression.initFunctionCallHighestExecutionMode(this.visitorConfig);
-        return argument;
-    }
     // endregion
 
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
         Clause clause = expression.getReturnClause().getFirstClause();
-        StaticContext result = this.visit(clause, argument);
+        StaticContext result = argument;
         while (clause != null) {
             result = this.visit(clause, result);
             clause = clause.getNextClause();
         }
-        expression.initHighestExecutionMode(this.visitorConfig);
         return argument;
     }
 
@@ -256,22 +206,20 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitForClause(ForClause clause, StaticContext argument) {
         // TODO visit at...
         this.visit(clause.getExpression(), argument);
-        clause.initHighestExecutionMode(this.visitorConfig);
 
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
-            clause.getMetadata(),
-            clause.getVariableHighestStorageMode(this.visitorConfig)
+            clause.getMetadata()
         );
+        clause.getSequenceType().resolve(result, clause.getMetadata());
 
         if (clause.getPositionalVariableName() != null) {
             result.addVariable(
                 clause.getPositionalVariableName(),
                 new SequenceType(BuiltinTypesCatalogue.integerItem),
-                clause.getMetadata(),
-                ExecutionMode.LOCAL
+                clause.getMetadata()
             );
         }
         return result;
@@ -280,15 +228,14 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitLetClause(LetClause clause, StaticContext argument) {
         this.visit(clause.getExpression(), argument);
-        clause.initHighestExecutionMode(this.visitorConfig);
 
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             clause.getVariableName(),
             clause.getActualSequenceType(),
-            clause.getMetadata(),
-            clause.getVariableHighestStorageMode(this.visitorConfig)
+            clause.getMetadata()
         );
+        clause.getSequenceType().resolve(result, clause.getMetadata());
 
         return result;
     }
@@ -303,8 +250,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 groupByClauseContext.addVariable(
                     variable.getVariableName(),
                     variable.getActualSequenceType(),
-                    clause.getMetadata(),
-                    ExecutionMode.LOCAL
+                    clause.getMetadata()
                 );
             } else if (!argument.isInScope(variable.getVariableName())) {
                 throw new UndeclaredVariableException(
@@ -313,19 +259,16 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 );
             }
         }
-        clause.initHighestExecutionMode(this.visitorConfig);
         return groupByClauseContext;
     }
 
     @Override
     public StaticContext visitCountClause(CountClause expression, StaticContext argument) {
-        expression.initHighestExecutionMode(this.visitorConfig);
         StaticContext result = new StaticContext(argument);
         result.addVariable(
             expression.getCountVariable().getVariableName(),
             new SequenceType(BuiltinTypesCatalogue.integerItem, SequenceType.Arity.One),
-            expression.getMetadata(),
-            ExecutionMode.LOCAL
+            expression.getMetadata()
         );
         this.visit(expression.getCountVariable(), result);
         return result;
@@ -344,11 +287,13 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
                 caseContext.addVariable(
                     variableName,
                     null,
-                    expression.getMetadata(),
-                    ExecutionMode.LOCAL
+                    expression.getMetadata()
                 );
             }
             this.visit(c.getReturnExpression(), caseContext);
+            for (SequenceType sequenceType : c.getUnion()) {
+                sequenceType.resolve(argument, expression.getMetadata());
+            }
         }
 
         Name defaultCaseVariableName = expression.getDefaultCase().getVariableName();
@@ -360,12 +305,10 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
             defaultCaseStaticContext.addVariable(
                 defaultCaseVariableName,
                 null,
-                expression.getMetadata(),
-                ExecutionMode.LOCAL
+                expression.getMetadata()
             );
             this.visit(expression.getDefaultCase().getReturnExpression(), defaultCaseStaticContext);
         }
-        expression.initHighestExecutionMode(this.visitorConfig);
         // return the given context unchanged as defined variables go out of scope
         return argument;
     }
@@ -376,23 +319,64 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
         if (variableDeclaration.getExpression() != null) {
             this.visit(variableDeclaration.getExpression(), argument);
         }
-        variableDeclaration.initHighestExecutionMode(this.visitorConfig);
-        if (argument.hasVariable(variableDeclaration.getVariableName())) {
-            if (!this.visitorConfig.suppressErrorsForFunctionSignatureCollision()) {
-                throw new VariableAlreadyExistsException(
-                        variableDeclaration.getVariableName(),
-                        variableDeclaration.getMetadata()
-                );
-            }
-        } else {
-            // first pass.
-            argument.addVariable(
-                variableDeclaration.getVariableName(),
-                variableDeclaration.getActualSequenceType(),
-                variableDeclaration.getMetadata(),
-                variableDeclaration.getVariableHighestStorageMode(this.visitorConfig)
-            );
+        // first pass.
+        argument.addVariable(
+            variableDeclaration.getVariableName(),
+            variableDeclaration.getActualSequenceType(),
+            variableDeclaration.getMetadata()
+        );
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTypeDeclaration(TypeDeclaration declaration, StaticContext argument) {
+        ItemType type = declaration.getDefinition();
+        // only first pass
+        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
+        StaticContext generatedContext = visitDescendants(prolog, argument);
+        for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+            itemType.resolve(generatedContext, prolog.getMetadata());
         }
+        return generatedContext;
+    }
+
+    @Override
+    public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCastExpression(CastExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitCastableExpression(CastableExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitTreatExpression(TreatExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitInstanceOfExpression(InstanceOfExpression expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        expression.getSequenceType().resolve(argument, expression.getMetadata());
         return argument;
     }
 

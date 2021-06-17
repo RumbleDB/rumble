@@ -84,14 +84,35 @@ public class RumbleException extends RuntimeException {
     }
 
     private static String formatMessage(ErrorCode errorCode, ExceptionMetadata metadata, String message) {
-        return "There was an error.\n\nCode: ["
+        if (metadata.getTokenLineNumber() == 0) {
+            return "There was an error."
+                + "\nCode: ["
+                + errorCode
+                + "]\n"
+                + "Message: "
+                + message
+                + "\n"
+                + "Metadata: "
+                + ((metadata != null) ? metadata.toString() : null)
+                + "\n"
+                + "This code can also be looked up in the documentation and specifications for more information.\n";
+        }
+        return "There was an error on line "
+            + metadata.getTokenLineNumber()
+            + " in "
+            + metadata.getLocation()
+            + ":\n\n"
+            + metadata.getLineInContext()
+            + "\nCode: ["
             + errorCode
-            + "] (this code can be looked up in the documentation and specifications).\n\nLocation information: "
-            + (metadata != null
-                ? metadata.toString()
-                : "")
-            + "\n\n"
-            + message;
+            + "]\n"
+            + "Message: "
+            + message
+            + "\n"
+            + "Metadata: "
+            + ((metadata != null) ? metadata.toString() : null)
+            + "\n"
+            + "This code can also be looked up in the documentation and specifications for more information.\n";
     }
 
     public String getErrorCode() {
@@ -100,6 +121,10 @@ public class RumbleException extends RuntimeException {
 
     public ExceptionMetadata getMetadata() {
         return this.metadata;
+    }
+
+    public void setMetadata(ExceptionMetadata metadata) {
+        this.metadata = metadata;
     }
 
     public String getJSONiqErrorMessage() {

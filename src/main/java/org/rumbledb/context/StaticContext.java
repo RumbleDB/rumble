@@ -24,8 +24,10 @@ import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
+import org.rumbledb.exceptions.UnknownFunctionCallException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.types.FunctionSignature;
+import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
 
 import com.esotericsoftware.kryo.Kryo;
@@ -37,6 +39,7 @@ import java.io.Serializable;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 public class StaticContext implements Serializable, KryoSerializable {
@@ -153,7 +156,7 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("Variable " + varName + " not in scope", null);
+            throw new SemanticException("Variable " + varName + " not in scope", ExceptionMetadata.EMPTY_METADATA);
         }
     }
 
@@ -168,7 +171,11 @@ public class StaticContext implements Serializable, KryoSerializable {
                 }
                 ancestor = ancestor.parent;
             }
-            throw new SemanticException("function " + identifier + " not in scope", null);
+            throw new UnknownFunctionCallException(
+                    identifier.getName(),
+                    identifier.getArity(),
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 
@@ -193,13 +200,16 @@ public class StaticContext implements Serializable, KryoSerializable {
         return getInScopeVariable(varName).getStorageMode();
     }
 
+    public void setVariableStorageMode(Name varName, ExecutionMode mode) {
+        getInScopeVariable(varName).setStorageMode(mode);
+    }
+
     public void addVariable(
             Name varName,
             SequenceType type,
-            ExceptionMetadata metadata,
-            ExecutionMode storageMode
+            ExceptionMetadata metadata
     ) {
-        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, storageMode));
+        this.inScopeVariables.put(varName, new InScopeVariable(varName, type, metadata, ExecutionMode.UNSET));
     }
 
     public void addFunctionSignature(FunctionIdentifier identifier, FunctionSignature signature) {
@@ -213,9 +223,29 @@ public class StaticContext implements Serializable, KryoSerializable {
     @Override
     public String toString() {
         StringBuilder stringBuilder = new StringBuilder();
-        stringBuilder.append("Static context with variables: ");
-        this.inScopeVariables.keySet().forEach(a -> stringBuilder.append(a));
-        stringBuilder.append("\n");
+        stringBuilder.append("Static context with variables:\n");
+        for (Entry<Name, InScopeVariable> entry : this.inScopeVariables.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue().getSequenceType());
+            stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
+            stringBuilder.append("\n");
+        }
+        stringBuilder.append("Static context with user-defined functions:\n");
+        for (Entry<FunctionIdentifier, FunctionSignature> entry : this.staticallyKnownFunctionSignatures.entrySet()) {
+            stringBuilder.append(entry.getKey());
+            stringBuilder.append(" as " + entry.getValue());
+            stringBuilder.append(" (namespace " + entry.getKey().getName().getNamespace() + ")");
+            stringBuilder.append("\n");
+        }
+        if (this.inScopeSchemaTypes != null) {
+            stringBuilder.append("Static context with user-defined types:\n");
+            for (ItemType itemType : this.inScopeSchemaTypes.getInScopeSchemaTypes()) {
+                stringBuilder.append(itemType.getName());
+                stringBuilder.append(itemType.isResolved() ? " (resolved)" : " (unresolved)");
+                stringBuilder.append("\n");
+            }
+            stringBuilder.append("\n");
+        }
         if (this.userDefinedFunctionExecutionModes != null) {
             stringBuilder.append(this.userDefinedFunctionExecutionModes.toString());
         }
@@ -288,6 +318,12 @@ public class StaticContext implements Serializable, KryoSerializable {
                 this.inScopeVariables.put(name, variable);
             }
         }
+        for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
+            if (fi.getName().getNamespace().contentEquals(targetNamespace)) {
+                FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
+                this.staticallyKnownFunctionSignatures.put(fi, signature);
+            }
+        }
     }
 
     public void setUserDefinedFunctionsExecutionModes(
@@ -354,13 +390,13 @@ public class StaticContext implements Serializable, KryoSerializable {
         );
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
+            System.err.println("Next loop: " + current);
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
                         entry.getKey(),
                         entry.getValue().getSequenceType().incrementArity(),
-                        entry.getValue().getMetadata(),
-                        entry.getValue().getStorageMode()
+                        entry.getValue().getMetadata()
                     );
                 }
             }

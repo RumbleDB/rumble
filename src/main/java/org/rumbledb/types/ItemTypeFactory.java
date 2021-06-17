@@ -105,9 +105,6 @@ public class ItemTypeFactory {
             ItemType mappedItemType;
             if (filedType instanceof StructType) {
                 mappedItemType = createItemTypeFromSparkStructType((StructType) filedType);
-            } else if (filedType instanceof ArrayType) {
-                // TODO : add proper function
-                mappedItemType = BuiltinTypesCatalogue.arrayItem;
             } else {
                 mappedItemType = createItemType(filedType);
             }
