@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("LinearSVC")
 let $tra := $est(
     $data,
-    { "labelCol": "binaryLabel", "featuresCol": ["age", "weight"], "maxIter": 10, "regParam": 0.1 }
+    { "labelCol": "binaryLabel", "maxIter": 10, "regParam": 0.1 }
 )
 for $result in $tra(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { }
 )
 return {
     "binaryLabel": $result.binaryLabel,

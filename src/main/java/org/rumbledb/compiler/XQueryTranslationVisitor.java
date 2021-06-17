@@ -375,7 +375,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.eqName(), true, false);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = ITEM_STAR;
         Name paramName;
         SequenceType paramType;
@@ -1283,7 +1283,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitInlineFunctionRef(XQueryParser.InlineFunctionRefContext ctx) {
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;

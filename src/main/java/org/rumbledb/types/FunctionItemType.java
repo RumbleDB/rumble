@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.util.Set;
@@ -28,11 +29,16 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
+    public Name getName() {
+        return null;
+    }
+
+    @Override
     public boolean equals(Object other) {
-        if (!(other instanceof FunctionItemType)) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.toString().equals(other.toString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override

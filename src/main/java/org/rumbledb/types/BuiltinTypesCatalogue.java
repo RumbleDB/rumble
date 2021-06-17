@@ -264,7 +264,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.ShortType // TODO : how to support arbitrary-sized integer
     );
 
-    public static final ItemType JSONItem = new JsonItemType(new Name(Name.JS_NS, "js", "json-item"));
+    public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,

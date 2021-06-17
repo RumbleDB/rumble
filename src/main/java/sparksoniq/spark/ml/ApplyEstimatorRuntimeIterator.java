@@ -15,6 +15,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.MLNotADataFrameException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -73,13 +74,23 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         try {
             fittedModel = this.estimator.fit(this.inputDataset.getDataFrame(), paramMap);
         } catch (IllegalArgumentException | NoSuchElementException e) {
-            throw new InvalidRumbleMLParamException(
+            RumbleException ex = new InvalidRumbleMLParamException(
                     "Parameters provided to "
                         + this.estimatorShortName
                         + " causes the following error: "
-                        + e.getMessage(),
+                        + e.getMessage()
+                        + "\n\nWe are happy to give you a few hints:"
+                        + "\nBy default, we look for the features used to train the model in the field 'features'."
+                        + "\nIf this field does not exist, you can build it with the VectorAssembler transformer by combining the fields you want to include."
+                        + "\n\nFor example:"
+                        + "\nlet $vector-assembler := get-transformer(\"VectorAssembler\")"
+                        + "\nlet $data := $vector-assembler($data, {\"inputCols\" : [ \"age\", \"weight\" ], \"outputCol\" : \"features\" })"
+                        + "\n\nIf the features are in your data, but in a different field than 'features', you can specify that different field name with the parameter 'featuresCol' or 'inputCol' (check the documentation of the estimator to be sure) passed to your estimator."
+                        + "\n\nIf the error says that it must be of the type struct<type:tinyint,size:int,indices:array<int>,values:array<double>> but was actually something different, then it means you specified a field that is not an assembled features array. You need to use the VectorAssembler to prepare it.",
                     getMetadata()
             );
+            ex.initCause(e);
+            throw ex;
         }
 
         return generateTransformerFunctionItem(fittedModel);
