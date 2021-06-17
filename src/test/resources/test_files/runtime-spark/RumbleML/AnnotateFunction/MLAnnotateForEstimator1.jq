@@ -8,15 +8,17 @@ let $local-data := (
     {"id": 5, "col1": 9.2, "col2": 9.2, "col3": 9.2}
 )
 let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal", "col2": "decimal", "col3": "decimal"})
+let $vector-assembler := get-transformer("VectorAssembler")
+let $df-data := $vector-assembler($df-data, {"inputCols" : [ "col1", "col2", "col3" ], "outputCol" : "features" })
 
 let $est := get-estimator("KMeans")
 let $tra := $est(
     $df-data,
-    {"featuresCol": ["col1", "col2", "col3"]}
+    { }
 )
 
 for $i in $tra(
     $df-data,
-    {"featuresCol": ["col1", "col2", "col3"]}
+    { }
 )
 return $i

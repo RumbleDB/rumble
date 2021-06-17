@@ -5,16 +5,18 @@ let $binarizer := get-transformer("Binarizer")
 let $intermediate-data := $binarizer($data, {"inputCol": "weight", "outputCol": "binarized_weight", "threshold": 70.0})
 
 let $df-intermediate-data := annotate($intermediate-data, {"id": "integer", "age": "integer", "weight": "double", "binarized_weight": "double"})
+let $vector-assembler := get-transformer("VectorAssembler")
+let $df-intermediate-data := $vector-assembler($df-intermediate-data, {"inputCols" : [ "binarized_weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("KMeans")
 let $tra := $est(
     $df-intermediate-data,
-    {"featuresCol": ["binarized_weight"]}
+    { }
 )
 
 for $i in $tra(
     $df-intermediate-data,
-    {"featuresCol": ["binarized_weight"]}
+    { }
 )
 return $i
 
