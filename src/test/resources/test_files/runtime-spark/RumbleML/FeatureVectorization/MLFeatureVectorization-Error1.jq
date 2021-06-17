@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="FORG0006"; :)
+(:JIQS: ShouldCrash; ErrorCode="RBML0003"; :)
 let $est := get-estimator("LogisticRegression")
 let $tra := $est(
     libsvm-file("../../../../queries/rumbleML/sample-libsvm-data-short.txt"),
