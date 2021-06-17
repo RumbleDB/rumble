@@ -2,7 +2,7 @@
 let $est := get-estimator("LogisticRegression")
 let $tra := $est(
     libsvm-file("../../../../queries/rumbleML/sample-libsvm-data-short.txt"),
-    {"featuresCol": "label"}
+    {"featuresCol": [ "label" ]}
 )
 let $res := $tra(
     libsvm-file("../../../../queries/rumbleML/sample-libsvm-data-short.txt"),
@@ -10,4 +10,4 @@ let $res := $tra(
 )
 return $res
 
-(: estimator's featuresCol is not an array :)
+(: estimator's featuresCol is not a string :)

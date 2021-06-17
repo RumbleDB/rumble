@@ -9,7 +9,7 @@ let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outpu
 let $transformer := get-transformer("DCT")
 for $result in $transformer(
     $data,
-    { "inputCol": "features" "outputCol": "dct_output", "inverse": false}
+    { "inputCol": "features", "outputCol": "dct_output", "inverse": false}
 )
 
 return {
