@@ -43,7 +43,7 @@ This annotation is required to be applied on any dataset that must be used as in
 
 declare type local:id-and-sentence as {
   "id": "integer",
-  "sentence": "string"}
+  "sentence": "string"
 };
 
 
