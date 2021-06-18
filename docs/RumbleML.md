@@ -74,7 +74,7 @@ declare type local:col-1-2-3 as {
   "col1": "decimal",
   "col2": "decimal",
   "col3": "decimal"
-}
+};
 
 let $vector-assembler := get-transformer("VectorAssembler")(
   ?,
