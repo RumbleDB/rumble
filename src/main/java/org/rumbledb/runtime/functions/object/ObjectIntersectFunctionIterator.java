@@ -47,6 +47,7 @@ public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
      */
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+
     public ObjectIntersectFunctionIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
