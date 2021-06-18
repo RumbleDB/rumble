@@ -49,6 +49,7 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
     // calculated fields
     private Item functionItem;
     private RuntimeIterator functionCallIterator;
+    private boolean isPartialApplication;
     private Item nextResult;
 
     public DynamicFunctionCallIterator(
@@ -58,9 +59,12 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, executionMode, iteratorMetadata);
+        this.isPartialApplication = false;
         for (RuntimeIterator arg : functionArguments) {
             if (arg != null) {
                 this.children.add(arg);
+            } else {
+                this.isPartialApplication = true;
             }
         }
         if (!this.children.contains(functionItemIterator)) {
@@ -148,7 +152,9 @@ public class DynamicFunctionCallIterator extends HybridRuntimeIterator {
         }
         this.functionCallIterator = NamedFunctions.buildUserDefinedFunctionCallIterator(
             this.functionItem,
-            this.functionItem.getBodyIterator().getHighestExecutionMode(),
+            this.isPartialApplication
+                ? ExecutionMode.LOCAL
+                : this.functionItem.getBodyIterator().getHighestExecutionMode(),
             getMetadata(),
             this.functionArguments
         );
