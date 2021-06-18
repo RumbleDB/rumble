@@ -3,7 +3,7 @@ RumbleML is a Machine Learning library built on top of the Rumble engine that ma
 
 The machine learning capabilities are exposed through JSONiq function items. The concepts of "estimator" and "transformer", which are core to Machine Learning, are naturally function items and fit seamlessly in the JSONiq data model.
 
-Training sets, test sets, and validation sets, which containing features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
+Training sets, test sets, and validation sets, which contain features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
 
 The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on: we chose not to reinvent the wheel.
 
@@ -19,7 +19,7 @@ It is an abstraction that either performs a feature transformation or generates 
 
 ## Estimators
 
-An **estimator** is a function item that maps a sequence of objects to a transformer (yes, you got it right: that's a function item. This is why they are also called higher-order functions!).
+An **estimator** is a function item that maps a sequence of objects to a transformer (yes, you got it right: that's a function item returned by a function item. This is why they are also called higher-order functions!).
 
 Estimators abstract the concept of a Machine Learning algorithm or any algorithm that fits or trains on data. For example, a learning algorithm such as _KMeans_ is implemented as an Estimator. Calling this estimator on data essentially trains a KMeansModel, which is a Model and hence a Transformer.
 
@@ -29,19 +29,30 @@ Transformers and estimators are function items in the Rumble Data Model. Their f
 
 ## Type Annotations
 
-RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. While it is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly, Rumble does not support a full object type system yet. Thus, the annotate() function has been introduced as a temporary remedy which facilitates the manual annotation of data against a schema for structured data. This annotation operation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
+RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. It is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly.
+
+Rumble supports a user-defined type system with which you can validate and annotate datasets against a JSound schema.
+
+This annotation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
 
 
 ## Examples
 
 - Tokenizer Example:
 ```
+
+declare type local:id-and-sentence as {
+  "id": "integer",
+  "sentence": "string"}
+};
+
+
 let $local-data := (
     {"id": 1, "sentence": "Hi I heard about Spark"},
     {"id": 2, "sentence": "I wish Java could use case classes"},
     {"id": 3, "sentence": "Logistic regression models are neat"}
 )
-let $df-data := annotate($local-data, {"id": "integer", "sentence": "string"})
+let $df-data := validate type local:id-and-sentence* { $local-data }
 
 let $transformer := get-transformer("Tokenizer")
 for $i in $transformer(
@@ -58,6 +69,18 @@ return $i
 
 - KMeans Example:
 ```
+declare type local:col-1-2-3 as {
+  "id": "integer",
+  "col1": "decimal",
+  "col2": "decimal",
+  "col3": "decimal"
+}
+
+let $vector-assembler := get-transformer("VectorAssembler")(
+  ?,
+  { "inputCols" : [ "col1", "col2", "col3" ], "outputCol" : "features" }
+)
+
 let $local-data := (
     {"id": 0, "col1": 0.0, "col2": 0.0, "col3": 0.0},
     {"id": 1, "col1": 0.1, "col2": 0.1, "col3": 0.1},
@@ -66,17 +89,18 @@ let $local-data := (
     {"id": 4, "col1": 9.1, "col2": 9.1, "col3": 9.1},
     {"id": 5, "col1": 9.2, "col2": 9.2, "col3": 9.2}
 )
-let $df-data := annotate($local-data, {"id": "integer", "col1": "decimal", "col2": "decimal", "col3": "decimal"})
+let $df-data := validate type local:col-1-2-3* {$local-data }
+let $df-data := $vector-assembler($df-data)
 
 let $est := get-estimator("KMeans")
 let $tra := $est(
     $df-data,
-    {"featuresCol": ["col1", "col2", "col3"]}
+    {"featuresCol": "features"}
 )
 
 for $i in $tra(
     $df-data,
-    {"featuresCol": ["col1", "col2", "col3"]}
+    {"featuresCol": "features"}
 )
 return $i
 
