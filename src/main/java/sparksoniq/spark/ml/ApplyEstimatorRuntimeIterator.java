@@ -30,6 +30,8 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.NoSuchElementException;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
 
@@ -74,6 +76,100 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         try {
             fittedModel = this.estimator.fit(this.inputDataset.getDataFrame(), paramMap);
         } catch (IllegalArgumentException | NoSuchElementException e) {
+            String message = e.getMessage();
+            Pattern pattern = Pattern.compile("(.* ]) does not exist. Available: (.*)");
+            Matcher matcher = pattern.matcher(message);
+            if (matcher.find()) {
+                RumbleException ex = new InvalidRumbleMLParamException(
+                        "There is an issue with the parameters provided to the estimator "
+                            + this.estimatorShortName
+                            + "."
+                            + "\nIt seems you provided an array of strings ("
+                            + matcher.group(1)
+                            + ") for parameter featuresCol, inputCol or similar."
+                            + "\nHowever, this parameter should be a string, which is the name of the field associated with an array of features to train on or to transform."
+                            + "\nIf you do not have such a field in your data, then you can build it with the VectorAssembler transformer by combining the fields you want to include."
+                            + "\n\nFor example:"
+                            + "\nlet $vector-assembler := get-transformer(\"VectorAssembler\")"
+                            + "\nlet $data-with-features := $vector-assembler($data, {\"inputCols\" : [ \"age\", \"weight\" ], \"outputCol\" : \"features\" })"
+                            + "\n\nand then"
+                            + "\nlet $est := get-estimator(\""
+                            + this.estimatorShortName
+                            + "\")"
+                            + "\nlet $model := $est($data-with-features, {\"featuresCol\" : \"features\" }) (: assuming featuresCol is the parameter :)"
+                            + "\n\nIf the features are in already your data, you can specify that field name with the parameter 'featuresCol' or 'inputCol' (check the documentation of the estimator to be sure) passed to your estimator.",
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
+            pattern = Pattern.compile("(.*) does not exist. Available: (.*)");
+            matcher = pattern.matcher(message);
+            if (matcher.find()) {
+                RumbleException ex = new InvalidRumbleMLParamException(
+                        "There is an issue with the parameters provided to the estimator "
+                            + this.estimatorShortName
+                            + "."
+                            + "\nIt seems you provided a field ("
+                            + matcher.group(1)
+                            + ") that does not exist"
+                            + "\nThe available fields are: "
+                            + matcher.group(2),
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
+            pattern = Pattern.compile(
+                "requirement failed: Column (.*) must be of type struct<type:tinyint,size:int,indices:array<int>,values:array<double>> but was actually .*"
+            );
+            matcher = pattern.matcher(message);
+            if (matcher.find()) {
+                RumbleException ex = new InvalidRumbleMLParamException(
+                        "There is an issue with the parameters provided to the estimator "
+                            + this.estimatorShortName
+                            + "."
+                            + "\nIt seems you provided an field that is not an array of features for parameter featuresCol, inputCol or similar."
+                            + "\nIf you do not have such a field in your data, then you can build it with the VectorAssembler transformer by combining the fields you want to include."
+                            + "\n\nFor example:"
+                            + "\nlet $vector-assembler := get-transformer(\"VectorAssembler\")"
+                            + "\nlet $data-with-features := $vector-assembler($data, {\"inputCols\" : [ \"age\", \"weight\" ], \"outputCol\" : \"features\" })"
+                            + "\n\nand then"
+                            + "\nlet $est := get-estimator(\""
+                            + this.estimatorShortName
+                            + "\")"
+                            + "\nlet $model := $est($data-with-features, {\"featuresCol\" : \"features\" }) (: assuming featuresCol is the parameter :)"
+                            + "\n\nIf the features are already in your data, you can specify that field name with the parameter 'featuresCol' or 'inputCol' (check the documentation of the estimator to be sure) passed to your estimator.",
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
+            pattern = Pattern.compile(
+                "requirement failed: Column (.*) must be of type struct<type:tinyint,size:int,indices:array<int>,values:array<double>> but was actually .*"
+            );
+            matcher = pattern.matcher(message);
+            if (matcher.find()) {
+                RumbleException ex = new InvalidRumbleMLParamException(
+                        "There is an issue with the parameters provided to the estimator "
+                            + this.estimatorShortName
+                            + "."
+                            + "\nIt seems you provided an field that is not an array of features for parameter featuresCol, inputCol or similar."
+                            + "\nIf you do not have such a field in your data, then you can build it with the VectorAssembler transformer by combining the fields you want to include."
+                            + "\n\nFor example:"
+                            + "\nlet $vector-assembler := get-transformer(\"VectorAssembler\")"
+                            + "\nlet $data-with-features := $vector-assembler($data, {\"inputCols\" : [ \"age\", \"weight\" ], \"outputCol\" : \"features\" })"
+                            + "\n\nand then"
+                            + "\nlet $est := get-estimator(\""
+                            + this.estimatorShortName
+                            + "\")"
+                            + "\nlet $model := $est($data-with-features, {\"featuresCol\" : \"features\" }) (: assuming featuresCol is the parameter :)"
+                            + "\n\nIf the features are already in your data, you can specify that field name with the parameter 'featuresCol' or 'inputCol' (check the documentation of the estimator to be sure) passed to your estimator.",
+                        getMetadata()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
             RumbleException ex = new InvalidRumbleMLParamException(
                     "Parameters provided to "
                         + this.estimatorShortName
