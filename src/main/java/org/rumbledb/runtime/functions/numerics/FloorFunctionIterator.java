@@ -23,21 +23,19 @@ package org.rumbledb.runtime.functions.numerics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
 import java.util.List;
 
-public class FloorFunctionIterator extends LocalFunctionCallIterator {
+public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public FloorFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,27 +46,17 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.floor(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
-                    )
-                );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " floor function", getMetadata());
+        return ItemFactory.getInstance()
+            .createDoubleItem(
+                Math.floor(
+                    value.castToDoubleValue()
+                )
+            );
     }
 
     @Override

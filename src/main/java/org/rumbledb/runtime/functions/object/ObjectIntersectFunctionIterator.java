@@ -49,12 +49,12 @@ public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
     private RuntimeIterator iterator;
 
     public ObjectIntersectFunctionIterator(
-            List<RuntimeIterator> arguments,
+            List<RuntimeIterator> children,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
     ) {
-        super(arguments, executionMode, iteratorMetadata);
-        this.iterator = arguments.get(0);
+        super(children, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
     }
 
     @Override
@@ -137,5 +137,7 @@ public class ObjectIntersectFunctionIterator extends HybridRuntimeIterator {
         JavaSparkContext sparkContext = SparkSessionManager.getInstance().getJavaSparkContext();
         List<Item> listResult = Arrays.asList(reduceResult);
         return sparkContext.parallelize(listResult);
+
     }
+
 }

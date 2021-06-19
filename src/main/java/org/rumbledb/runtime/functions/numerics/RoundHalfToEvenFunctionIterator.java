@@ -26,14 +26,14 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.List;
 
-public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
+public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -48,41 +48,31 @@ public class RoundHalfToEvenFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item value = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            Item precision;
-            if (this.children.size() > 1) {
-                precision = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            }
-            // if second param is not given precision is set as 0 (rounds to a whole number)
-            else {
-                precision = ItemFactory.getInstance().createIntItem(0);
-            }
-            try {
-                BigDecimal bd = new BigDecimal(value.castToDoubleValue());
-                bd = bd.setScale(precision.getIntValue(), RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
-
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        if (value == null) {
+            return null;
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " round-half-to-even function",
-                getMetadata()
-        );
+
+        int precision;
+        if (this.children.size() > 1) {
+            precision = this.children.get(1)
+                .materializeFirstItemOrNull(context)
+                .getIntValue();
+        }
+        // if second param is not given precision is set as 0 (rounds to a whole number)
+        else {
+            precision = 0;
+        }
+        try {
+            BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+            bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
+            return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
+
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
+
     }
 
 

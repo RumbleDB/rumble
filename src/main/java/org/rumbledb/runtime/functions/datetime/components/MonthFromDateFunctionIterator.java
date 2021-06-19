@@ -3,15 +3,14 @@ package org.rumbledb.runtime.functions.datetime.components;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class MonthFromDateFunctionIterator extends LocalFunctionCallIterator {
+public class MonthFromDateFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item dateItem = null;
@@ -25,22 +24,12 @@ public class MonthFromDateFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getMonthOfYear());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " month-from-date function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        this.dateItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (this.dateItem == null) {
+            return null;
         }
+        return ItemFactory.getInstance().createIntItem(this.dateItem.getDateTimeValue().getMonthOfYear());
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateItem = this.children.get(0).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.dateItem != null;
-    }
 }

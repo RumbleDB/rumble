@@ -22,16 +22,16 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class NormalizeSpaceFunctionIterator extends LocalFunctionCallIterator {
+public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,23 +44,15 @@ public class NormalizeSpaceFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
 
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (stringItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
-            }
-
-            return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " normalize-space function",
-                    getMetadata()
-            );
+        if (stringItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
         }
+
+        return ItemFactory.getInstance().createStringItem(StringUtils.normalizeSpace(stringItem.getStringValue()));
     }
+
 }
