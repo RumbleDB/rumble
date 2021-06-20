@@ -79,7 +79,10 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
             }
-            throw new UnexpectedTypeException("Unexpected value in round-half-to-even(): " + value.getDynamicType(), getMetadata());
+            throw new UnexpectedTypeException(
+                    "Unexpected value in round-half-to-even(): " + value.getDynamicType(),
+                    getMetadata()
+            );
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
