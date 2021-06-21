@@ -1146,7 +1146,7 @@ public class BuiltinFunctionCatalogue {
      * function that returns the part of the first variable that precedes the first occurrence of the second
      * variable.
      */
-    static final BuiltinFunction substring_before = createBuiltinFunction(
+    static final BuiltinFunction substring_before1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1158,11 +1158,24 @@ public class BuiltinFunctionCatalogue {
         SubstringBeforeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    static final BuiltinFunction substring_before2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring-before"
+        ),
+        "string?",
+        "string?",
+        "string",
+        "string",
+        SubstringBeforeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
     /**
      * function that returns the part of the first variable that follows the first occurrence of the second
      * vairable.
      */
-    static final BuiltinFunction substring_after = createBuiltinFunction(
+    static final BuiltinFunction substring_after1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1170,6 +1183,19 @@ public class BuiltinFunctionCatalogue {
         ),
         "string?",
         "string?",
+        "string",
+        SubstringAfterFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction substring_after2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "substring-after"
+        ),
+        "string?",
+        "string?",
+        "string",
         "string",
         SubstringAfterFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1262,7 +1288,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that replaces parts of a string according to a regex expression
      */
-    static final BuiltinFunction replace = createBuiltinFunction(
+    static final BuiltinFunction replace1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1275,6 +1301,7 @@ public class BuiltinFunctionCatalogue {
         ReplaceFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     /**
      * function that returns the string length
      */
@@ -1402,7 +1429,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that checks whether a string ends with a substring
      */
-    static final BuiltinFunction ends_with = createBuiltinFunction(
+    static final BuiltinFunction ends_with1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1410,6 +1437,19 @@ public class BuiltinFunctionCatalogue {
         ),
         "string?",
         "string?",
+        "boolean",
+        EndsWithFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction ends_with2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "ends-with"
+        ),
+        "string?",
+        "string?",
+        "string",
         "boolean",
         EndsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1473,7 +1513,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that checks whether a string matches a regular expression
      */
-    static final BuiltinFunction matches = createBuiltinFunction(
+    static final BuiltinFunction matches1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1485,6 +1525,7 @@ public class BuiltinFunctionCatalogue {
         MatchesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+
     /**
      * function that normalizes spaces in a string
      */
@@ -2361,18 +2402,21 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
         builtinFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
-        builtinFunctions.put(replace.getIdentifier(), replace);
+        builtinFunctions.put(replace1.getIdentifier(), replace1);
         builtinFunctions.put(substring2.getIdentifier(), substring2);
         builtinFunctions.put(substring3.getIdentifier(), substring3);
-        builtinFunctions.put(substring_before.getIdentifier(), substring_before);
-        builtinFunctions.put(substring_after.getIdentifier(), substring_after);
+        builtinFunctions.put(substring_before1.getIdentifier(), substring_before1);
+        builtinFunctions.put(substring_before2.getIdentifier(), substring_before2);
+        builtinFunctions.put(substring_after1.getIdentifier(), substring_after1);
+        builtinFunctions.put(substring_after2.getIdentifier(), substring_after2);
         for (int i = 0; i < 100; i++) {
             builtinFunctions.put(
                 new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), i),
                 concat
             );
         }
-        builtinFunctions.put(ends_with.getIdentifier(), ends_with);
+        builtinFunctions.put(ends_with1.getIdentifier(), ends_with1);
+        builtinFunctions.put(ends_with2.getIdentifier(), ends_with2);
         builtinFunctions.put(string_join1.getIdentifier(), string_join1);
         builtinFunctions.put(string_join2.getIdentifier(), string_join2);
         builtinFunctions.put(string_length.getIdentifier(), string_length);
@@ -2384,7 +2428,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(codepoint_equal.getIdentifier(), codepoint_equal);
         builtinFunctions.put(starts_with1.getIdentifier(), starts_with1);
         builtinFunctions.put(starts_with2.getIdentifier(), starts_with2);
-        builtinFunctions.put(matches.getIdentifier(), matches);
+        builtinFunctions.put(matches1.getIdentifier(), matches1);
         builtinFunctions.put(contains1.getIdentifier(), contains1);
         builtinFunctions.put(contains2.getIdentifier(), contains2);
         builtinFunctions.put(normalize_space.getIdentifier(), normalize_space);
