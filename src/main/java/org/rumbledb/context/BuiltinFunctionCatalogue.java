@@ -793,7 +793,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that returns whether two sequences are deep-equal to each other
      */
-    static final BuiltinFunction deep_equal = createBuiltinFunction(
+    static final BuiltinFunction deep_equal1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -801,6 +801,19 @@ public class BuiltinFunctionCatalogue {
         ),
         "item*",
         "item*",
+        "boolean",
+        DeepEqualFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction deep_equal2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "deep-equal"
+        ),
+        "item*",
+        "item*",
+        "string",
         "boolean",
         DeepEqualFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -1404,7 +1417,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that checks whether a string starts with a substring
      */
-    static final BuiltinFunction starts_with = createBuiltinFunction(
+    static final BuiltinFunction starts_with1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1416,10 +1429,23 @@ public class BuiltinFunctionCatalogue {
         StartsWithFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
+    static final BuiltinFunction starts_with2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "starts-with"
+        ),
+        "string?",
+        "string?",
+        "string",
+        "boolean",
+        StartsWithFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
     /**
      * function that checks whether a string contains a substring
      */
-    static final BuiltinFunction contains = createBuiltinFunction(
+    static final BuiltinFunction contains1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1427,6 +1453,19 @@ public class BuiltinFunctionCatalogue {
         ),
         "string?",
         "string?",
+        "boolean",
+        ContainsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction contains2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "contains"
+        ),
+        "string?",
+        "string?",
+        "string",
         "boolean",
         ContainsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2295,8 +2334,8 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(distinct_values.getIdentifier(), distinct_values);
         builtinFunctions.put(index_of.getIdentifier(), index_of);
-        builtinFunctions.put(deep_equal.getIdentifier(), deep_equal);
-
+        builtinFunctions.put(deep_equal1.getIdentifier(), deep_equal1);
+        builtinFunctions.put(deep_equal2.getIdentifier(), deep_equal2);
         builtinFunctions.put(abs.getIdentifier(), abs);
         builtinFunctions.put(ceiling.getIdentifier(), ceiling);
         builtinFunctions.put(floor.getIdentifier(), floor);
@@ -2343,9 +2382,11 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(upper_case.getIdentifier(), upper_case);
         builtinFunctions.put(translate.getIdentifier(), translate);
         builtinFunctions.put(codepoint_equal.getIdentifier(), codepoint_equal);
-        builtinFunctions.put(starts_with.getIdentifier(), starts_with);
+        builtinFunctions.put(starts_with1.getIdentifier(), starts_with1);
+        builtinFunctions.put(starts_with2.getIdentifier(), starts_with2);
         builtinFunctions.put(matches.getIdentifier(), matches);
-        builtinFunctions.put(contains.getIdentifier(), contains);
+        builtinFunctions.put(contains1.getIdentifier(), contains1);
+        builtinFunctions.put(contains2.getIdentifier(), contains2);
         builtinFunctions.put(normalize_space.getIdentifier(), normalize_space);
         builtinFunctions.put(normalize_unicode1.getIdentifier(), normalize_unicode1);
         builtinFunctions.put(normalize_unicode2.getIdentifier(), normalize_unicode2);

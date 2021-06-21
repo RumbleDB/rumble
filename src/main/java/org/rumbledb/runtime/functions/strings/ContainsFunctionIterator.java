@@ -22,6 +22,7 @@ package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -44,6 +45,13 @@ public class ContainsFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
+
         Item substringItem = this.children.get(1)
             .materializeFirstItemOrNull(context);
         if (substringItem == null || substringItem.getStringValue().isEmpty()) {
