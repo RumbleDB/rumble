@@ -24,7 +24,6 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -38,6 +37,7 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
 
     private static final long serialVersionUID = 1L;
+    private RuntimeIterator iterator;
 
     public RoundHalfToEvenFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -65,35 +65,9 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
             precision = 0;
         }
         try {
-            if (value.isInt()) {
-                BigDecimal bd = new BigDecimal(value.getIntValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createIntItem(bd.intValue());
-            }
-            if (value.isInteger()) {
-                BigDecimal bd = new BigDecimal(value.getIntegerValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
-            }
-            if (value.isDouble()) {
-                BigDecimal bd = new BigDecimal(value.getDoubleValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
-            }
-            if (value.isDecimal()) {
-                BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createDecimalItem(bd);
-            }
-            if (value.isFloat()) {
-                BigDecimal bd = new BigDecimal(value.getFloatValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createFloatItem(bd.floatValue());
-            }
-
-            throw new UnexpectedTypeException(
-                    "Unexpected value in round-half-to-even(): " + value.getDynamicType(),
-                    getMetadata()
-            );
+            BigDecimal bd = new BigDecimal(value.castToDoubleValue());
+            bd = bd.setScale(precision, RoundingMode.HALF_EVEN);
+            return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
 
         } catch (IteratorFlowException e) {
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
