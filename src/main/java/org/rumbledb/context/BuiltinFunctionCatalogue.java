@@ -764,7 +764,7 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that returns the values that appear in a sequence, with duplicates eliminated
      */
-    static final BuiltinFunction distinct_values = createBuiltinFunction(
+    static final BuiltinFunction distinct_values1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -775,10 +775,22 @@ public class BuiltinFunctionCatalogue {
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
+    static final BuiltinFunction distinct_values2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "distinct-values"
+        ),
+        "atomic*",
+        "string",
+        "atomic*",
+        DistinctValuesFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
     /**
      * function that returns indices of items that are equal to the search parameter
      */
-    static final BuiltinFunction index_of = createBuiltinFunction(
+    static final BuiltinFunction index_of1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -786,6 +798,19 @@ public class BuiltinFunctionCatalogue {
         ),
         "atomic*",
         "atomic",
+        "integer*",
+        IndexOfFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
+    static final BuiltinFunction index_of2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "index-of"
+        ),
+        "atomic*",
+        "atomic",
+        "string",
         "integer*",
         IndexOfFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
@@ -2373,8 +2398,10 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(one_or_more.getIdentifier(), one_or_more);
         builtinFunctions.put(exactly_one.getIdentifier(), exactly_one);
 
-        builtinFunctions.put(distinct_values.getIdentifier(), distinct_values);
-        builtinFunctions.put(index_of.getIdentifier(), index_of);
+        builtinFunctions.put(distinct_values1.getIdentifier(), distinct_values1);
+        builtinFunctions.put(distinct_values2.getIdentifier(), distinct_values2);
+        builtinFunctions.put(index_of1.getIdentifier(), index_of1);
+        builtinFunctions.put(index_of2.getIdentifier(), index_of2);
         builtinFunctions.put(deep_equal1.getIdentifier(), deep_equal1);
         builtinFunctions.put(deep_equal2.getIdentifier(), deep_equal2);
         builtinFunctions.put(abs.getIdentifier(), abs);
