@@ -897,8 +897,8 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "round-half-to-even"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -908,9 +908,9 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "round-half-to-even"
         ),
-        "double?",
+        "numeric?",
         "integer",
-        "double?",
+        "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
