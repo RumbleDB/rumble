@@ -234,7 +234,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             clause = clause.getNextClause();
         }
-        expression.initHighestExecutionMode(this.visitorConfig);
+        if (expression.alwaysReturnsAtMostOneItem()) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        } else {
+            expression.setHighestExecutionMode(
+                expression.getReturnClause().getHighestExecutionMode(this.visitorConfig)
+            );
+        }
         return argument;
     }
 
