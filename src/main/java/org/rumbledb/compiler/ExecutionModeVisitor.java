@@ -40,6 +40,7 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -172,13 +173,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
         if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
-            if (expression.isPartialApplication()) {
-                for (@SuppressWarnings("unused")
-                Expression parameter : expression.getArguments()) {
-                    modes.add(ExecutionMode.LOCAL);
-                }
-            } else {
-                for (Expression parameter : expression.getArguments()) {
+            for (Expression parameter : expression.getArguments()) {
+                if (parameter == null) {
+                    // This is for a partial application, for ? arguments.
+                    // We do not modify the current mode for this parameter.
+                    modes.add(ExecutionMode.UNSET);
+                } else {
                     modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
                 }
             }
@@ -194,6 +194,33 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         return argument;
     }
     // endregion
+
+    @Override
+    public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
+        visitDescendants(expression, argument);
+        if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            expression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isRDD()) {
+            expression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
 
     // region FLWOR
     @Override

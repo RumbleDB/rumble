@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -45,10 +44,6 @@ public class VariableReferenceExpression extends Expression implements Serializa
     public VariableReferenceExpression(Name name, ExceptionMetadata metadata) {
         super(metadata);
         this.name = name;
-    }
-
-    public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
-        this.highestExecutionMode = highestExecutionMode;
     }
 
     public Name getVariableName() {
