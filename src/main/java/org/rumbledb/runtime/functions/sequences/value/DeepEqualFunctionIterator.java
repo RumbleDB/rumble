@@ -57,12 +57,14 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
         RuntimeIterator sequenceIterator1 = this.children.get(0);
         RuntimeIterator sequenceIterator2 = this.children.get(1);
 
+        /*
         if (this.children.size() == 3) {
             Item strColl = this.children.get(2).materializeFirstItemOrNull(context);
             if (!strColl.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
                 throw new DefaultCollationException("XQST0038", getMetadata());
             }
         }
+        */
 
         if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
