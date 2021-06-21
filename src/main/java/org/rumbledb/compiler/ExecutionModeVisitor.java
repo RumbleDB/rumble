@@ -97,7 +97,26 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         Name variableName = expression.getVariableName();
         ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
         if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
-            mode = ExecutionMode.LOCAL;
+            if (
+                expression.getStaticSequenceType().getArity().equals(Arity.OneOrMore)
+                    ||
+                    expression.getStaticSequenceType().getArity().equals(Arity.ZeroOrMore)
+            ) {
+                if (expression.getStaticSequenceType().getItemType().isObjectItemType()) {
+                    System.err.println(
+                        "[WARNING] Forcing execution mode of variable "
+                            + expression.getVariableName()
+                            + " to DataFrame based on static object* type."
+                    );
+                    expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                    return argument;
+                }
+            }
+            System.err.println(
+                "[WARNING] Forcing execution mode of variable " + expression.getVariableName() + " to local."
+            );
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
         }
         expression.setHighestExecutionMode(mode);
         return argument;
