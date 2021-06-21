@@ -22,9 +22,11 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -94,10 +96,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     // region primary
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
-        /*if (expression.alwaysReturnsAtMostOneItem()) {
+        if (expression.alwaysReturnsAtMostOneItem()) {
             expression.setHighestExecutionMode(ExecutionMode.LOCAL);
             return argument;
-        }*/
+        }
         Name variableName = expression.getVariableName();
         ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
         if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
@@ -107,13 +109,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                     expression.getStaticSequenceType().getArity().equals(Arity.ZeroOrMore)
             ) {
                 if (expression.getStaticSequenceType().getItemType().isObjectItemType()) {
-                    /*System.err.println(
+                    System.err.println(
                         "[WARNING] Forcing execution mode of variable "
                             + expression.getVariableName()
                             + " to DataFrame based on static object* type."
                     );
                     expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
-                    return argument;*/
+                    return argument;
                 }
             }
             System.err.println(
@@ -220,7 +222,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
-        visitDescendants(expression, argument);
+        System.err.println(expression.getStaticContext());
+        visitDescendants(expression, expression.getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
             expression.setHighestExecutionMode(ExecutionMode.RDD);
             return argument;
@@ -313,6 +316,24 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         clause.initHighestExecutionMode(this.visitorConfig);
+        StaticContext clauseContext = clause.getStaticContext();
+        for (Entry<Name, InScopeVariable> entry : argument.getInScopeVariables().entrySet()) {
+            boolean isKeyVariable = false;
+            for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+                if (variable.getExpression() != null) {
+                    if (entry.getKey().equals(variable.getVariableName())) {
+                        isKeyVariable = true;
+                    }
+                }
+            }
+            if (isKeyVariable) {
+                continue;
+            }
+            argument.setVariableStorageMode(
+                entry.getKey(),
+                clauseContext.getVariableStorageMode(entry.getKey())
+            );
+        }
         return argument;
     }
 
