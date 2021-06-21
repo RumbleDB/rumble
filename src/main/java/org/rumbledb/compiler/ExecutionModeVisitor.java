@@ -94,6 +94,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     // region primary
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
+        if (expression.alwaysReturnsAtMostOneItem()) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
         Name variableName = expression.getVariableName();
         ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
         if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
