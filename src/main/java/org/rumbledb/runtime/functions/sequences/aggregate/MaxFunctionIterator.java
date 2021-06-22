@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.RumbleException;
@@ -62,6 +63,12 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         getMetadata()
                 )
         );
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
 
         if (!this.iterator.isRDDOrDataFrame()) {
 

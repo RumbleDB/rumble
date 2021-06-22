@@ -549,9 +549,17 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that returns the minimum of a sequence
      */
-    static final BuiltinFunction min = createBuiltinFunction(
+    static final BuiltinFunction min1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "min"),
         "item*",
+        "atomic?",
+        MinFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction min2 = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "min"),
+        "item*",
+        "string",
         "atomic?",
         MinFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -559,9 +567,17 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that returns the maximum of a sequence
      */
-    static final BuiltinFunction max = createBuiltinFunction(
+    static final BuiltinFunction max1 = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "max"),
         "item*",
+        "atomic?",
+        MaxFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction max2 = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "max"),
+        "item*",
+        "string",
         "atomic?",
         MaxFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2378,8 +2394,10 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
 
-        builtinFunctions.put(min.getIdentifier(), min);
-        builtinFunctions.put(max.getIdentifier(), max);
+        builtinFunctions.put(min1.getIdentifier(), min1);
+        builtinFunctions.put(min2.getIdentifier(), min2);
+        builtinFunctions.put(max1.getIdentifier(), max1);
+        builtinFunctions.put(max2.getIdentifier(), max2);
         builtinFunctions.put(sum1.getIdentifier(), sum1);
         builtinFunctions.put(sum2.getIdentifier(), sum2);
         builtinFunctions.put(avg.getIdentifier(), avg);
