@@ -2135,9 +2135,9 @@ public class BuiltinFunctionCatalogue {
                 "intersect"
         ),
         "item*",
-        "object+",
+        "object",
         ObjectIntersectFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
      * function that projects objects by filtering their pairs and leaves non-objects intact
