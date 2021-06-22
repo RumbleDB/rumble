@@ -2214,6 +2214,22 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function fetches the estimator class from SparkML API
+     */
+    static final BuiltinFunction get_estimator2 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-estimator"
+        ),
+        "string",
+        "object",
+        "function(object*, object) as function(object*, object) as object*",
+        GetEstimatorFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function converts given RDD or local data to a DataFrame using a schema
      */
     static final BuiltinFunction annotate = createBuiltinFunction(
@@ -2408,6 +2424,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(get_transformer.getIdentifier(), get_transformer);
         builtinFunctions.put(get_estimator.getIdentifier(), get_estimator);
+        builtinFunctions.put(get_estimator2.getIdentifier(), get_estimator2);
         builtinFunctions.put(annotate.getIdentifier(), annotate);
 
         builtinFunctions.put(trace.getIdentifier(), trace);
