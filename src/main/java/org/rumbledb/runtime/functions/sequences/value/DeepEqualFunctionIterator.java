@@ -26,6 +26,7 @@ import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -54,6 +55,12 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
     public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator sequenceIterator1 = this.children.get(0);
         RuntimeIterator sequenceIterator2 = this.children.get(1);
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
 
         if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
             JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);

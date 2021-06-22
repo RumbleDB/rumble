@@ -24,6 +24,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.NonAtomicKeyException;
@@ -54,6 +55,16 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         super(arguments, executionMode, iteratorMetadata);
         this.sequenceIterator = this.children.get(0);
         this.searchIterator = this.children.get(1);
+
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
+
     }
 
     @Override
