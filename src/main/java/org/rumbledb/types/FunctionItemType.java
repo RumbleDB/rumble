@@ -58,8 +58,7 @@ public class FunctionItemType implements ItemType {
         ) {
             return true;
         }
-        if(this.signature == null)
-        {
+        if (this.signature == null) {
             return false;
         }
         if (superType.isFunctionItemType() && this.signature.isSubtypeOf(superType.getSignature())) {
