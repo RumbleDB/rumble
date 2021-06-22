@@ -22,9 +22,11 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -220,7 +222,8 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
-        visitDescendants(expression, argument);
+        System.err.println(expression.getStaticContext());
+        visitDescendants(expression, expression.getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
             expression.setHighestExecutionMode(ExecutionMode.RDD);
             return argument;
@@ -313,6 +316,24 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         clause.initHighestExecutionMode(this.visitorConfig);
+        StaticContext clauseContext = clause.getStaticContext();
+        for (Entry<Name, InScopeVariable> entry : argument.getInScopeVariables().entrySet()) {
+            boolean isKeyVariable = false;
+            for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+                if (variable.getExpression() != null) {
+                    if (entry.getKey().equals(variable.getVariableName())) {
+                        isKeyVariable = true;
+                    }
+                }
+            }
+            if (isKeyVariable) {
+                continue;
+            }
+            argument.setVariableStorageMode(
+                entry.getKey(),
+                clauseContext.getVariableStorageMode(entry.getKey())
+            );
+        }
         return argument;
     }
 
