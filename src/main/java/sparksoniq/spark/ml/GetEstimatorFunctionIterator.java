@@ -21,28 +21,19 @@
 package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Estimator;
-import org.apache.spark.ml.param.Param;
-import org.apache.spark.ml.param.ParamMap;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
-import static sparksoniq.spark.ml.RumbleMLUtils.convertRumbleObjectItemToSparkMLParamMap;
-
-import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -81,7 +72,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             estimatorShortName,
             getMetadata()
         );
-        
+
         Class<?> estimatorSparkMLClass = null;
         try {
             estimatorSparkMLClass = Class.forName(estimatorFullClassName);
@@ -94,18 +85,22 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
 
         try {
             Estimator<?> estimator = (Estimator<?>) estimatorSparkMLClass.newInstance();
-            
-            if(paramMapItem != null)
-            {
+
+            if (paramMapItem != null) {
                 for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
                     String paramName = paramMapItem.getKeys().get(paramIndex);
                     Item paramValue = paramMapItem.getValues().get(paramIndex);
-    
+
                     RumbleMLCatalog.validateEstimatorParameterByName(estimatorShortName, paramName, getMetadata());
-    
+
                     String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, getMetadata());
-                    Object paramValueInJava = RumbleMLUtils.convertParamItemToJava(paramName, paramValue, paramJavaTypeName, getMetadata());
-    
+                    Object paramValueInJava = RumbleMLUtils.convertParamItemToJava(
+                        paramName,
+                        paramValue,
+                        paramJavaTypeName,
+                        getMetadata()
+                    );
+
                     estimator.set(paramJavaTypeName, paramValueInJava);
                 }
             }
