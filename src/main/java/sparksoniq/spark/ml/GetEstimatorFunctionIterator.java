@@ -117,7 +117,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                     SequenceType.createSequenceType("object")
                 )
             );
-            SequenceType returnType = SequenceType.createSequenceType("function (object*, object) as object*");
+            SequenceType returnType = SequenceType.createSequenceType("function(object*, object) as object*");
 
             return new FunctionItem(
                     new FunctionIdentifier(
