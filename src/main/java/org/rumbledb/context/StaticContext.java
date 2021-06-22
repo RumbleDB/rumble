@@ -216,7 +216,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.staticallyKnownFunctionSignatures.put(identifier, signature);
     }
 
-    protected Map<Name, InScopeVariable> getInScopeVariables() {
+    public Map<Name, InScopeVariable> getInScopeVariables() {
         return this.inScopeVariables;
     }
 
@@ -228,6 +228,7 @@ public class StaticContext implements Serializable, KryoSerializable {
             stringBuilder.append(entry.getKey());
             stringBuilder.append(" as " + entry.getValue().getSequenceType());
             stringBuilder.append(" (namespace " + entry.getKey().getNamespace() + ")");
+            stringBuilder.append(" | " + entry.getValue().getStorageMode());
             stringBuilder.append("\n");
         }
         stringBuilder.append("Static context with user-defined functions:\n");

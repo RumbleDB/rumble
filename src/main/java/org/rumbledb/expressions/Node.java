@@ -70,8 +70,6 @@ public abstract class Node {
      * This method is used during the static analysis. It is meant to be
      * overridden by subclasses that support higher execution modes. By
      * default, the highest execution mode is assumed to be local.
-     *
-     * @param visitorConfig the configuration of the visitor.
      */
     public final void setHighestExecutionMode(ExecutionMode newMode) {
         this.highestExecutionMode = newMode;
