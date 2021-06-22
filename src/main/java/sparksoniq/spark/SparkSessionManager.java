@@ -91,9 +91,12 @@ public class SparkSessionManager {
 
     private void setDefaultConfiguration() {
         try {
-            this.configuration = new SparkConf()
-                .setAppName(APP_NAME)
-                .set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
+            this.configuration = new SparkConf();
+            if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
+                System.err.println("No app name specified");
+                this.configuration.setAppName(APP_NAME);
+            }
+            this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
             if (!this.configuration.contains("spark.master")) {
                 this.configuration.set("spark.master", "local[*]");
             }
@@ -200,4 +203,5 @@ public class SparkSessionManager {
             return count;
         }
     }
+
 }
