@@ -79,10 +79,10 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
         Class<?> estimatorSparkMLClass = null;
         try {
             estimatorSparkMLClass = Class.forName(estimatorFullClassName);
-            this.hasNext = true;
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
-                    "No SparkML estimator implementation found with the given full class name."
+                    estimatorShortName
+                        + ": we could not find any estimator with that name. Please check the documentation."
             );
         }
 
@@ -104,7 +104,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                         getMetadata()
                     );
 
-                    estimator.set(paramJavaTypeName, paramValueInJava);
+                    estimator.set(paramName, paramValueInJava);
                 }
             }
 
@@ -139,7 +139,10 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
             );
 
         } catch (InstantiationException | IllegalAccessException e) {
-            throw new OurBadException("Error while generating an instance from transformer class.", getMetadata());
+            throw new OurBadException(
+                    "Error while generating an instance from the estimator class " + estimatorFullClassName,
+                    getMetadata()
+            );
         }
     }
 }

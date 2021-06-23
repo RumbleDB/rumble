@@ -310,6 +310,7 @@ public class RumbleMLCatalog {
         paramJavaTypeNames.put("solver", "String");
         paramJavaTypeNames.put("splits", "double[]");
         paramJavaTypeNames.put("splitsArray", "double[][]");
+        paramJavaTypeNames.put("stages", "PipelineStage[]");
         paramJavaTypeNames.put("standardization", "boolean");
         paramJavaTypeNames.put("statement", "String");
         paramJavaTypeNames.put("stepSize", "double");
@@ -734,7 +735,7 @@ public class RumbleMLCatalog {
             )
         );
         estimatorParams.put("PCA", new ArrayList<>(Arrays.asList("inputCol", "k", "outputCol")));
-        estimatorParams.put("Pipeline", new ArrayList<>(Arrays.asList()));
+        estimatorParams.put("Pipeline", new ArrayList<>(Arrays.asList("stages")));
         estimatorParams.put(
             "QuantileDiscretizer",
             new ArrayList<>(

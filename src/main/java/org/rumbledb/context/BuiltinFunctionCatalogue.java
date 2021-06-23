@@ -2199,6 +2199,22 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function fetches the transformer class from SparkML API
+     */
+    static final BuiltinFunction get_transformer2 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-transformer"
+        ),
+        "string",
+        "object",
+        "function(object*, object) as object*",
+        GetTransformerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function fetches the estimator class from SparkML API
      */
     static final BuiltinFunction get_estimator = createBuiltinFunction(
@@ -2423,6 +2439,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(values.getIdentifier(), values);
 
         builtinFunctions.put(get_transformer.getIdentifier(), get_transformer);
+        builtinFunctions.put(get_transformer2.getIdentifier(), get_transformer2);
         builtinFunctions.put(get_estimator.getIdentifier(), get_estimator);
         builtinFunctions.put(get_estimator2.getIdentifier(), get_estimator2);
         builtinFunctions.put(annotate.getIdentifier(), annotate);

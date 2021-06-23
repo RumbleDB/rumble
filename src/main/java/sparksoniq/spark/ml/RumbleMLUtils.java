@@ -123,7 +123,7 @@ public class RumbleMLUtils {
             return convertRumbleAtomicToJava(param, paramJavaTypeName);
         } else {
             // complex SparkML parameters such as Estimator, Transformer, Classifier etc. are not implemented yet
-            throw new OurBadException("Not Implemented");
+            throw new OurBadException("We have not implemented parameter support for type " + paramJavaTypeName);
         }
     }
 
