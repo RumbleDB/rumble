@@ -38,9 +38,6 @@ import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateTimeFu
 import org.rumbledb.runtime.functions.datetime.components.TimezoneFromTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.durations.DayTimeDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.DurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.YearMonthDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFunctionIterator;
@@ -1612,50 +1609,6 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
-     * function that returns the duration item from the supplied string
-     */
-    static final BuiltinFunction duration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "duration"
-        ),
-        "string?",
-        "duration?",
-        DurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the yearMonthDuration item from the supplied string
-     */
-    static final BuiltinFunction yearMonthDuration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "yearMonthDuration"
-        ),
-        "string?",
-        "yearMonthDuration?",
-        YearMonthDurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the dayTimeDuration item from the supplied string
-     */
-    static final BuiltinFunction dayTimeDuration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "dayTimeDuration"
-        ),
-        "string?",
-        "dayTimeDuration?",
-        DayTimeDurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
-
-    /**
      * function that returns the years from a duration
      */
     static final BuiltinFunction years_from_duration = createBuiltinFunction(
@@ -2483,9 +2436,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(number.getIdentifier(), number);
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
 
-        builtinFunctions.put(duration.getIdentifier(), duration);
-        builtinFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
-        builtinFunctions.put(yearMonthDuration.getIdentifier(), yearMonthDuration);
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);
         builtinFunctions.put(days_from_duration.getIdentifier(), days_from_duration);
