@@ -317,7 +317,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction position = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "position"),
-        "integer?",
+        "integer",
         PositionFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -326,7 +326,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction last = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "last"),
-        "integer?",
+        "integer",
         LastFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -879,8 +879,8 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "ceiling"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         CeilingFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -893,8 +893,8 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "floor"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         FloorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -962,7 +962,7 @@ public class BuiltinFunctionCatalogue {
                 "math",
                 "pi"
         ),
-        "double?",
+        "double",
         PiFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );

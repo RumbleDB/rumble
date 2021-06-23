@@ -74,18 +74,24 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             precision = 0;
         }
         try {
+            if (value.isInt()) {
+                BigDecimal bd = new BigDecimal(value.getIntValue()).setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createIntItem(bd.intValue());
+            }
+            if (value.isInteger()) {
+                BigDecimal bd = new BigDecimal(value.getIntegerValue()).setScale(precision, RoundingMode.HALF_UP);
+                return ItemFactory.getInstance().createIntegerItem(bd.toBigInteger());
+            }
             if (value.isDecimal()) {
                 BigDecimal bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
-                BigDecimal bd = new BigDecimal(value.getDoubleValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
             }
             if (value.isFloat()) {
-                BigDecimal bd = new BigDecimal(value.getFloatValue());
-                bd = bd.setScale(precision, RoundingMode.HALF_UP);
+                BigDecimal bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
             }
             throw new UnexpectedTypeException("Unexpected value in round(): " + value.getDynamicType(), getMetadata());
