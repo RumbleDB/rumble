@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.numerics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
@@ -30,6 +31,8 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
 public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -51,12 +54,33 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
-        return ItemFactory.getInstance()
-            .createDoubleItem(
-                Math.floor(
-                    value.castToDoubleValue()
-                )
-            );
+        if (value.isInt()) {
+            return ItemFactory.getInstance().createIntItem(value.getIntValue());
+        }
+        if (value.isInteger()) {
+            return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue());
+        }
+        if (value.isDecimal()) {
+            BigDecimal bd = value.getDecimalValue().setScale(0, RoundingMode.FLOOR);
+            return ItemFactory.getInstance().createDecimalItem(bd);
+        }
+        if (value.isFloat()) {
+            BigDecimal bd = new BigDecimal(value.getFloatValue());
+            bd = bd.setScale(0, RoundingMode.FLOOR);
+            return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+        }
+        if (value.isDouble()) {
+            return ItemFactory.getInstance()
+                .createDoubleItem(
+                    Math.floor(
+                        value.castToDoubleValue()
+                    )
+                );
+        }
+        throw new UnexpectedTypeException(
+                "Unexpected value in floor(): " + value.getDynamicType(),
+                getMetadata()
+        );
     }
 
     @Override
