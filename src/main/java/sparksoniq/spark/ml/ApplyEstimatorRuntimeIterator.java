@@ -56,6 +56,10 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         this.estimator = estimator;
     }
 
+    public Estimator<?> getEstimator() {
+        return this.estimator;
+    }
+
     @Override
     public Item materializeFirstItemOrNull(
             DynamicContext dynamicContext
