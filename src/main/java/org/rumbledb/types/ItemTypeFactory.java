@@ -1,15 +1,20 @@
 package org.rumbledb.types;
 
+import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
+import org.apache.spark.sql.types.CharType;
 import org.apache.spark.sql.types.DataType;
+import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
+import org.apache.spark.sql.types.VarcharType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
-import org.rumbledb.items.parsing.ItemParser;
-
+import org.rumbledb.exceptions.OurBadException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -18,24 +23,20 @@ import java.util.TreeMap;
 
 public class ItemTypeFactory {
 
-    public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item) {
+    public static ItemType createItemTypeFromJSoundCompactItem(Name name, Item item, StaticContext staticContext) {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
                 throw new InvalidSchemaException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
             }
-            Name typeName = Name.createVariableInDefaultTypeNamespace(typeString);
-            if (!BuiltinTypesCatalogue.typeExists(typeName)) {
-                throw new InvalidSchemaException("Type " + typeName + " not found.", ExceptionMetadata.EMPTY_METADATA);
-            }
-            return BuiltinTypesCatalogue.getItemTypeByName(typeName);
+            return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
         if (item.isArray()) {
             List<Item> members = item.getItems();
             if (members.size() != 1) {
                 throw new InvalidSchemaException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
             }
-            ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0));
+            ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0), staticContext);
             return new ArrayItemType(
                     null,
                     BuiltinTypesCatalogue.arrayItem,
@@ -63,7 +64,7 @@ public class ItemTypeFactory {
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
                 fieldDescriptor.setName(key);
                 fieldDescriptor.setRequired(required);
-                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(null, value));
+                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(null, value, staticContext));
                 fieldDescriptor.setUnique(false);
                 fieldDescriptor.setDefaultValue(null);
                 fields.put(key, fieldDescriptor);
@@ -71,7 +72,7 @@ public class ItemTypeFactory {
             return new ObjectItemType(
                     name,
                     BuiltinTypesCatalogue.objectItem,
-                    false,
+                    true,
                     fields,
                     Collections.emptyList(),
                     Collections.emptyList()
@@ -95,21 +96,17 @@ public class ItemTypeFactory {
      * @param structType descriptor of the object
      * @return an object item type representing the type in Rumble
      */
-    public static ObjectItemType createItemTypeFromSparkStructType(String name, StructType structType) {
+    private static ItemType createItemTypeFromSparkStructType(StructType structType) {
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
-        Name objectName = name != null && !name.equals("") ? Name.createVariableInDefaultTypeNamespace(name) : null;
         Map<String, FieldDescriptor> content = new HashMap<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
             ItemType mappedItemType;
             if (filedType instanceof StructType) {
-                mappedItemType = createItemTypeFromSparkStructType(null, (StructType) filedType);
-            } else if (filedType instanceof ArrayType) {
-                // TODO : add proper function
-                mappedItemType = BuiltinTypesCatalogue.arrayItem;
+                mappedItemType = createItemTypeFromSparkStructType((StructType) filedType);
             } else {
-                mappedItemType = ItemParser.convertDataTypeToItemType(filedType);
+                mappedItemType = createItemType(filedType);
             }
             FieldDescriptor fieldDescriptor = new FieldDescriptor();
             fieldDescriptor.setName(field.name());
@@ -119,6 +116,64 @@ public class ItemTypeFactory {
             content.put(field.name(), fieldDescriptor);
         }
 
-        return new ObjectItemType(objectName, BuiltinTypesCatalogue.objectItem, true, content, null, null);
+        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
+    }
+
+    private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {
+        return new ArrayItemType(
+                null,
+                BuiltinTypesCatalogue.arrayItem,
+                new ArrayContentDescriptor(createItemType(type)),
+                null,
+                null,
+                null
+        );
+    }
+
+    public static ItemType createItemType(DataType dt) {
+        if (dt instanceof StructType) {
+            return createItemTypeFromSparkStructType((StructType) dt);
+        }
+        if (dt instanceof ArrayType) {
+            return createArrayTypeWithSparkDataTypeContent(
+                ((ArrayType) dt).elementType()
+            );
+        }
+        if (dt.equals(DataTypes.StringType)) {
+            return BuiltinTypesCatalogue.stringItem;
+        } else if (dt instanceof VarcharType) {
+            return BuiltinTypesCatalogue.stringItem;
+        } else if (dt instanceof CharType) {
+            return BuiltinTypesCatalogue.stringItem;
+        } else if (dt.equals(DataTypes.StringType)) {
+            return BuiltinTypesCatalogue.stringItem;
+        } else if (dt.equals(DataTypes.BooleanType)) {
+            return BuiltinTypesCatalogue.booleanItem;
+        } else if (dt.equals(DataTypes.DoubleType)) {
+            return BuiltinTypesCatalogue.doubleItem;
+        } else if (dt.equals(DataTypes.IntegerType)) {
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (dt.equals(DataTypes.FloatType)) {
+            return BuiltinTypesCatalogue.floatItem;
+        } else if (dt instanceof DecimalType) {
+            return BuiltinTypesCatalogue.decimalItem;
+        } else if (dt.equals(DataTypes.LongType)) {
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (dt.equals(DataTypes.NullType)) {
+            return BuiltinTypesCatalogue.nullItem;
+        } else if (dt.equals(DataTypes.ShortType)) {
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (dt.equals(DataTypes.ByteType)) {
+            return BuiltinTypesCatalogue.integerItem;
+        } else if (dt.equals(DataTypes.TimestampType)) {
+            return BuiltinTypesCatalogue.dateTimeItem;
+        } else if (dt.equals(DataTypes.DateType)) {
+            return BuiltinTypesCatalogue.dateItem;
+        } else if (dt.equals(DataTypes.BinaryType)) {
+            return BuiltinTypesCatalogue.hexBinaryItem;
+        } else if (dt instanceof VectorUDT) {
+            return BuiltinTypesCatalogue.arrayItem;
+        }
+        throw new OurBadException("DataFrame type unsupported: " + dt);
     }
 }

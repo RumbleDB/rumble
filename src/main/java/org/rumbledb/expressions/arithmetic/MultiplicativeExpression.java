@@ -111,7 +111,7 @@ public class MultiplicativeExpression extends Expression {
         buffer.append(getClass().getSimpleName());
         buffer.append(" (" + (this.multiplicativeOperator) + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

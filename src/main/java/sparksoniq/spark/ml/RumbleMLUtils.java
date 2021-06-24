@@ -1,12 +1,11 @@
 package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
 import org.apache.spark.ml.param.ParamMap;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
@@ -14,6 +13,7 @@ import org.rumbledb.exceptions.InvalidRumbleMLParamException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.typing.CastIterator;
 
 import java.lang.reflect.InvocationTargetException;
@@ -122,9 +122,17 @@ public class RumbleMLUtils {
             return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
             return convertRumbleAtomicToJava(param, paramJavaTypeName);
+        } else if (paramJavaTypeName.equals("PipelineStage")) {
+            if (param.isEstimator()) {
+                return param.getEstimator();
+            }
+            if (param.isTransformer()) {
+                return param.getTransformer();
+            }
+            throw new InvalidArgumentTypeException(paramName + " is expected to be an pipeline stage", metadata);
         } else {
             // complex SparkML parameters such as Estimator, Transformer, Classifier etc. are not implemented yet
-            throw new OurBadException("Not Implemented");
+            throw new OurBadException("We have not implemented parameter support for type " + paramJavaTypeName);
         }
     }
 
@@ -148,6 +156,12 @@ public class RumbleMLUtils {
                     doubleArray[i] = (Double) paramAsListInJava.get(i);
                 }
                 return doubleArray;
+            case "PipelineStage[]":
+                PipelineStage[] stageArray = new PipelineStage[paramAsListInJava.size()];
+                for (int i = 0; i < stageArray.length; i++) {
+                    stageArray[i] = (PipelineStage) paramAsListInJava.get(i);
+                }
+                return stageArray;
             default:
                 throw new OurBadException("Unhandled case of arrayList to primitive[] conversion found.");
         }
@@ -234,8 +248,8 @@ public class RumbleMLUtils {
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
-    public static Dataset<Row> createDataFrameContainingVectorizedColumn(
-            Dataset<Row> inputDataset,
+    public static JSoundDataFrame createDataFrameContainingVectorizedColumn(
+            JSoundDataFrame inputDataset,
             String paramNameExposedToTheUser,
             String[] arrayOfInputColumnNames,
             String outputColumnName,
@@ -246,7 +260,10 @@ public class RumbleMLUtils {
         vectorAssembler.setOutputCol(outputColumnName);
 
         try {
-            return vectorAssembler.transform(inputDataset);
+            return new JSoundDataFrame(
+                    vectorAssembler.transform(inputDataset.getDataFrame()),
+                    BuiltinTypesCatalogue.objectItem
+            );
         } catch (IllegalArgumentException e) {
             throw new InvalidRumbleMLParamException(
                     "Parameter provided to "

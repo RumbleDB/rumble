@@ -20,6 +20,7 @@
 
 package iq.base;
 
+import org.apache.commons.lang.exception.ExceptionUtils;
 import org.junit.Assert;
 import org.rumbledb.api.Item;
 import org.rumbledb.api.Rumble;
@@ -175,7 +176,7 @@ public class AnnotationsTestsBase {
                 checkExpectedOutput(this.currentAnnotation.getOutput(), sequence);
             } catch (RumbleException exception) {
                 String errorOutput = exception.getMessage();
-                exception.printStackTrace();
+                errorOutput += "\n" + ExceptionUtils.getStackTrace(exception);
                 Assert.fail("Program did not run when expected to.\nError output: " + errorOutput + "\n");
             }
         } else {

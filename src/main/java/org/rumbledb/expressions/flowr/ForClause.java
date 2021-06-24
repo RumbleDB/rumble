@@ -132,6 +132,7 @@ public class ForClause extends Clause {
                 + (this.variableName)
                 + ", "
                 + this.getSequenceType().toString()
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
                 + ", "
                 + (this.allowingEmpty ? "allowing empty, " : "")
                 + this.positionalVariableName

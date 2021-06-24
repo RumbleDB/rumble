@@ -4,7 +4,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 
-import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.NullFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayDescendantFunctionIterator;
@@ -182,7 +181,7 @@ public class BuiltinFunctionCatalogue {
                 return builtinFunctions.get(array);
             }
         }
-        throw new OurBadException("Unknown builtin function: " + identifier);
+        return null;
     }
 
     public static boolean exists(FunctionIdentifier identifier) {
@@ -2194,7 +2193,23 @@ public class BuiltinFunctionCatalogue {
                 "get-transformer"
         ),
         "string",
-        "item",
+        "function(object*, object) as object*",
+        GetTransformerFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function fetches the transformer class from SparkML API
+     */
+    static final BuiltinFunction get_transformer2 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-transformer"
+        ),
+        "string",
+        "object",
+        "function(object*, object) as object*",
         GetTransformerFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -2209,7 +2224,23 @@ public class BuiltinFunctionCatalogue {
                 "get-estimator"
         ),
         "string",
-        "item",
+        "function(object*, object) as function(object*, object) as object*",
+        GetEstimatorFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function fetches the estimator class from SparkML API
+     */
+    static final BuiltinFunction get_estimator2 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "get-estimator"
+        ),
+        "string",
+        "object",
+        "function(object*, object) as function(object*, object) as object*",
         GetEstimatorFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -2223,9 +2254,9 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "annotate"
         ),
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         "object",
-        "item*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
+        "object*", // TODO: revert back to ObjectItem when TypePromotionIter. has DF implementation
         AnnotateFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.DATAFRAME
     );
@@ -2408,7 +2439,9 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(values.getIdentifier(), values);
 
         builtinFunctions.put(get_transformer.getIdentifier(), get_transformer);
+        builtinFunctions.put(get_transformer2.getIdentifier(), get_transformer2);
         builtinFunctions.put(get_estimator.getIdentifier(), get_estimator);
+        builtinFunctions.put(get_estimator2.getIdentifier(), get_estimator2);
         builtinFunctions.put(annotate.getIdentifier(), annotate);
 
         builtinFunctions.put(trace.getIdentifier(), trace);

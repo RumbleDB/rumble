@@ -22,8 +22,6 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
@@ -34,12 +32,16 @@ import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.primary.ContextExpressionIterator;
 import org.rumbledb.runtime.primary.StringRuntimeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -278,8 +280,8 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupKey(context);
         String key;
         if (this.contextLookup) {
@@ -292,29 +294,31 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             key = this.lookupKey.getStringValue();
         }
         childDataFrame.createOrReplaceTempView("object");
-        StructType schema = childDataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (Arrays.asList(fieldNames).contains(key)) {
-            int i = schema.fieldIndex(key);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof StructType) {
-                Dataset<Row> result = childDataFrame.sparkSession()
-                    .sql(String.format("SELECT `%s`.* FROM object", key));
+        if (childDataFrame.hasKey(key)) {
+            FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
+            ItemType type = BuiltinTypesCatalogue.item;
+            if (fieldDescriptor != null) {
+                type = fieldDescriptor.getType();
+            }
+            if (type.isObjectItemType()) {
+                JSoundDataFrame result = childDataFrame.evaluateSQL(
+                    String.format("SELECT `%s`.* FROM object", key),
+                    type
+                );
                 return result;
             } else {
-                Dataset<Row> result = childDataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT `%s` AS `%s` FROM object",
-                            key,
-                            SparkSessionManager.atomicJSONiqItemColumnName
-                        )
-                    );
+                JSoundDataFrame result = childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT `%s` AS `%s` FROM object",
+                        key,
+                        SparkSessionManager.atomicJSONiqItemColumnName
+                    ),
+                    type
+                );
                 return result;
             }
         }
-        Dataset<Row> result = childDataFrame.sparkSession().sql("SELECT * FROM object WHERE false");
+        JSoundDataFrame result = JSoundDataFrame.emptyDataFrame();
         return result;
     }
 }

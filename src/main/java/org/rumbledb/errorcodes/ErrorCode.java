@@ -61,7 +61,6 @@ public enum ErrorCode {
     UnrecognizedRumbleMLParamReferenceErrorCode("RBML0002"),
     InvalidRumbleMLParamErrorCode("RBML0003"),
     MLNotADataFrameErrorCode("RBML0004"),
-    MLInvalidDataFrameSchemaErrorCode("RBML0005"),
 
 
     CliErrorCode("RBST0001"),
@@ -84,12 +83,14 @@ public enum ErrorCode {
     StaticallyInferredEmptySequenceNotFromCommaExpression("XPST0005"),
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
+    UndefinedTypeErrorCode("XPST0051"),
     CastableErrorCode("XPST0080"),
     PrefixCannotBeExpandedErrorCode("XPST0081"),
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
 
+    InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
     InvalidSchemaErrorCode("XQST0012"),
@@ -102,7 +103,6 @@ public enum ErrorCode {
     DuplicateModuleTargetNamespace("XQST0047"),
     NamespaceDoesNotMatchModule("XQST0048"),
     VariableAlreadyExists("XQST0049"),
-    UndefinedTypeErrorCode("XQST0051"),
     UnknownCastTypeErrorCode("XQST0052"),
     ModuleNotFoundErrorCode("XQST0059"),
     MoreThanOneEmptyOrderDeclarationErrorCode("XQST0069"),
