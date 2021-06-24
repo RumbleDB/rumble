@@ -1343,7 +1343,17 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that returns the string length
      */
-    static final BuiltinFunction string_length = createBuiltinFunction(
+    static final BuiltinFunction string_length0 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string-length"
+        ),
+        "integer",
+        StringLengthFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction string_length1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1567,7 +1577,17 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that normalizes spaces in a string
      */
-    static final BuiltinFunction normalize_space = createBuiltinFunction(
+    static final BuiltinFunction normalize_space0 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "normalize-space"
+        ),
+        "string",
+        NormalizeSpaceFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction normalize_space1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -1596,7 +1616,17 @@ public class BuiltinFunctionCatalogue {
     /**
      * function that that returns the double representation of the input string or number
      */
-    static final BuiltinFunction number = createBuiltinFunction(
+    static final BuiltinFunction number0 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "number"
+        ),
+        "double",
+        NumberFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction number1 = createBuiltinFunction(
         new Name(
                 Name.FN_NS,
                 "fn",
@@ -2417,7 +2447,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(ends_with2.getIdentifier(), ends_with2);
         builtinFunctions.put(string_join1.getIdentifier(), string_join1);
         builtinFunctions.put(string_join2.getIdentifier(), string_join2);
-        builtinFunctions.put(string_length.getIdentifier(), string_length);
+        builtinFunctions.put(string_length0.getIdentifier(), string_length0);
+        builtinFunctions.put(string_length1.getIdentifier(), string_length1);
         builtinFunctions.put(tokenize1.getIdentifier(), tokenize1);
         builtinFunctions.put(tokenize2.getIdentifier(), tokenize2);
         builtinFunctions.put(lower_case.getIdentifier(), lower_case);
@@ -2429,11 +2460,13 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(matches1.getIdentifier(), matches1);
         builtinFunctions.put(contains1.getIdentifier(), contains1);
         builtinFunctions.put(contains2.getIdentifier(), contains2);
-        builtinFunctions.put(normalize_space.getIdentifier(), normalize_space);
+        builtinFunctions.put(normalize_space0.getIdentifier(), normalize_space0);
+        builtinFunctions.put(normalize_space1.getIdentifier(), normalize_space1);
         builtinFunctions.put(normalize_unicode1.getIdentifier(), normalize_unicode1);
         builtinFunctions.put(normalize_unicode2.getIdentifier(), normalize_unicode2);
         builtinFunctions.put(serialize.getIdentifier(), serialize);
-        builtinFunctions.put(number.getIdentifier(), number);
+        builtinFunctions.put(number0.getIdentifier(), number0);
+        builtinFunctions.put(number1.getIdentifier(), number1);
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
 
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);

@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.strings;
 import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -45,6 +46,11 @@ public class NormalizeSpaceFunctionIterator extends AtMostOneItemLocalRuntimeIte
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 0) {
+            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return ItemFactory.getInstance()
+                .createStringItem(StringUtils.normalizeSpace(items.get(0).getStringValue()));
+        }
         Item stringItem = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
