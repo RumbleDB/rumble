@@ -146,8 +146,7 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     /**
      * Creates an expanded name resolving the prefix from namespace bindings.
      * 
-     * @param prefix the prefix
-     * @param localName the local name
+     * @param prefixedName the QName literal.
      * @param moduleContext the module context containing the bindings.
      * @return the expanded name.
      */
