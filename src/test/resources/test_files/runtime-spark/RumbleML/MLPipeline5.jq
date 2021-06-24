@@ -2,22 +2,22 @@
 declare type local:mytype as  {"id": "integer", "label": "integer", "col1": "decimal", "col2": "decimal", "col3": "decimal"};
 
 let $vector-assembler := get-transformer("VectorAssembler", {"inputCols" : [ "col1", "col2", "col3" ], "outputCol" : "features"})
-let $logisticregression := get-estimator("LogisticRegression", { "featuresCol" : "features"})
+let $logisticregression := get-estimator("LogisticRegression", { "featuresCol" : "features" })
 
 let $pipeline := get-estimator("Pipeline", { "stages" : [ $vector-assembler, $logisticregression ] })
 
 
-let $training-data := $vector-assembler(validate type local:mytype* {
+let $training-data := validate type local:mytype* {
     {"id": 0, "label": 1, "col1": 0.0, "col2": 1.1, "col3": 0.1},
     {"id": 1, "label": 0, "col1": 2.0, "col2": 1.0, "col3": -1.0},
     {"id": 2, "label": 0, "col1": 2.0, "col2": 1.3, "col3": 1.0},
     {"id": 3, "label": 1, "col1": 0.0, "col2": 1.2, "col3": -0.5}
-})
-let $test-data := $vector-assembler(validate type local:mytype* {
+}
+let $test-data := validate type local:mytype* {
     {"id": 0, "label": 1, "col1": -1.0, "col2": 1.5, "col3": 1.3},
     {"id": 1, "label": 0, "col1": 3.0, "col2": 2.0, "col3": -0.1},
     {"id": 2, "label": 1, "col1": 0.0, "col2": 2.2, "col3": -1.5}
-})
+}
 
-let $pip := $pipeline($training-data, ?)
-return $pip($test-data)
+let $pip := $pipeline($training-data, {})
+return $pip($test-data, {})

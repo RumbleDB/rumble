@@ -7,6 +7,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.context.DynamicContext;
@@ -598,5 +600,21 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return NativeClauseContext.NoNativeQuery;
+    }
+
+    default boolean isEstimator() {
+        return false;
+    }
+
+    default Estimator<?> getEstimator() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default boolean isTransformer() {
+        return false;
+    }
+
+    default Transformer getTransformer() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

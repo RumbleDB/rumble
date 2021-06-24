@@ -1,6 +1,7 @@
 package sparksoniq.spark.ml;
 
 import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.PipelineStage;
 import org.apache.spark.ml.Transformer;
 import org.apache.spark.ml.feature.VectorAssembler;
 import org.apache.spark.ml.param.Param;
@@ -121,6 +122,14 @@ public class RumbleMLUtils {
             return convertArrayListToPrimitiveArray(paramAsListInJava, paramJavaTypeName);
         } else if (expectedJavaTypeMatchesRumbleAtomic(paramJavaTypeName)) {
             return convertRumbleAtomicToJava(param, paramJavaTypeName);
+        } else if (paramJavaTypeName.equals("PipelineStage")) {
+            if (param.isEstimator()) {
+                return param.getEstimator();
+            }
+            if (param.isTransformer()) {
+                return param.getTransformer();
+            }
+            throw new InvalidArgumentTypeException(paramName + " is expected to be an pipeline stage", metadata);
         } else {
             // complex SparkML parameters such as Estimator, Transformer, Classifier etc. are not implemented yet
             throw new OurBadException("We have not implemented parameter support for type " + paramJavaTypeName);
@@ -147,6 +156,12 @@ public class RumbleMLUtils {
                     doubleArray[i] = (Double) paramAsListInJava.get(i);
                 }
                 return doubleArray;
+            case "PipelineStage[]":
+                PipelineStage[] stageArray = new PipelineStage[paramAsListInJava.size()];
+                for (int i = 0; i < stageArray.length; i++) {
+                    stageArray[i] = (PipelineStage) paramAsListInJava.get(i);
+                }
+                return stageArray;
             default:
                 throw new OurBadException("Unhandled case of arrayList to primitive[] conversion found.");
         }

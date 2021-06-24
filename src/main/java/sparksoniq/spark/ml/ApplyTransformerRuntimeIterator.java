@@ -52,6 +52,10 @@ public class ApplyTransformerRuntimeIterator extends DataFrameRuntimeIterator {
         this.transformer = transformer;
     }
 
+    public Transformer getTransformer() {
+        return this.transformer;
+    }
+
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         this.inputDataset = getInputDataset(context);
