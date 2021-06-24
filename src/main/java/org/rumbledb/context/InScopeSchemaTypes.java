@@ -46,14 +46,23 @@ public class InScopeSchemaTypes implements Serializable, KryoSerializable {
         if (BuiltinTypesCatalogue.typeExists(name)) {
             return true;
         }
+        System.err.println("Checking for existence" + name.getNamespace() + " " + name.getLocalName());
+        for (Name n : this.inScopeSchemaTypes.keySet()) {
+            System.err.println("There is " + name.getNamespace() + " " + name.getLocalName());
+        }
+
         return this.inScopeSchemaTypes.containsKey(name);
     }
 
     public ItemType getInScopeSchemaType(Name name) {
+        System.err.println("Looking up " + name.getNamespace() + " " + name.getLocalName());
         if (
             BuiltinTypesCatalogue.typeExists(name)
         ) {
             return BuiltinTypesCatalogue.getItemTypeByName(name);
+        }
+        for (Name n : this.inScopeSchemaTypes.keySet()) {
+            System.err.println("There is " + name.getNamespace() + " " + name.getLocalName());
         }
         return this.inScopeSchemaTypes.get(name);
     }

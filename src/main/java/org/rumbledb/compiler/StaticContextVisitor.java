@@ -339,6 +339,7 @@ public class StaticContextVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         StaticContext generatedContext = visitDescendants(prolog, argument);
+        System.err.println(generatedContext);
         for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
             itemType.resolve(generatedContext, prolog.getMetadata());
         }
