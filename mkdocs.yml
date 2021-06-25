@@ -8,8 +8,9 @@ pages:
   - '6. Reading data': 'Input.md'
   - '7. Function library': 'Function library.md'
   - '8. CLI and HTTP parameters': 'CLI.md'
-  - '9. Machine learning library': 'RumbleML.md'
-  - '10. Error codes': 'Error codes.md'
-  - '11. Compile from GitHub': 'install.md'
-  - '12. Licenses': 'Licenses.md'
+  - '9. Define and validate your own types'
+  - '10. Machine learning library': 'RumbleML.md'
+  - '11. Error codes': 'Error codes.md'
+  - '12. Compile from GitHub': 'install.md'
+  - '13. Licenses': 'Licenses.md'
 theme: readthedocs
