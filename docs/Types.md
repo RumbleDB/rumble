@@ -6,7 +6,7 @@ Rumble now support user-defined types in a limited fashion.
 
 Rumble user-defined types can be defined with the JSound syntax. A tutorial for the JSound syntax can be found [here](https://github.com/ghislainfourny/jsound-tutorial).
 
-For now, Rumble only allows the definition of user-defined types for objects.
+For now, Rumble only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound.
 
 ## Type declaration
 
@@ -20,6 +20,8 @@ declare type local:my-type as {
 
 { "foo" : "this is a string", "bar" : 42 }
 ```
+
+You can use user-defined types wherever other types can appear: as type annotation for FLWOR variables or global variables, as function parameter or return types, in instance-of or treat-as expressions, etc.
 
 In the above query, although the type is defined, the query returns an object that was not validated against this type.
 
@@ -182,7 +184,7 @@ validate type local:my-type* {
   {
     "foo" : { "bar" : 1 },
     "bar" : [
-      { "first" : "Albert", "last, Einstein" },
+      { "first" : "Albert", "last" : "Einstein" },
       { "first" : "Erwin", "last" : "Schrodinger" }
     ]
   },
