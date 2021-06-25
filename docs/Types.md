@@ -84,7 +84,7 @@ validate type local:my-type* {
   { "foo" : "this is a string", "bar" : 42 },
   { "bar" : 1 },
   { "foo" : "this is yet another string", "bar" : 2 },
-  { "foo" : "this is a string" }
+  { "foo" : "this is a string" },
   { "foo" : "this is a string", "bar" : 42345 },
   { "foo" : "this is a string", "bar" : 42 }
 }
@@ -102,7 +102,7 @@ validate type local:my-type* {
   { "foo" : "this is a string", "bar" : 42 },
   { "bar" : 1 },
   { "foo" : "this is yet another string", "bar" : 2 },
-  { "foo" : "this is a string", "bar" : 1234 }
+  { "foo" : "this is a string", "bar" : 1234 },
   { "foo" : "this is a string", "bar" : 42345 },
   { "foo" : "this is a string", "bar" : 42 }
 }
@@ -125,9 +125,9 @@ declare type local:my-type as {
 
 validate type local:my-type* {
   { "foo" : "this is a string", "bar" : [ 42, 1234 ] },
-  { "bar" : 1 },
+  { "bar" : [ 1 ] },
   { "foo" : "this is yet another string", "bar" : [ 2 ] },
-  { "foo" : "this is a string", "bar" : [ ] }
+  { "foo" : "this is a string", "bar" : [ ] },
   { "foo" : "this is a string", "bar" : [ 1, 2, 3, 4, 5, 6 ] },
   { "foo" : "this is a string", "bar" : [ 42 ] }
 }
@@ -146,7 +146,7 @@ validate type local:my-type* {
   {
     "foo" : { "bar" : 1 },
     "bar" : [
-      { "first" : "Albert", "last, Einstein" },
+      { "first" : "Albert", "last" : "Einstein" },
       { "first" : "Erwin", "last" : "Schrodinger" }
     ]
   },
