@@ -6,7 +6,7 @@ Rumble now support user-defined types in a limited fashion.
 
 Rumble user-defined types can be defined with the JSound syntax. A tutorial for the JSound syntax can be found [here](https://github.com/ghislainfourny/jsound-tutorial).
 
-For now, Rumble only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound.
+For now, Rumble only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound. Also, the @ (primary key) and ? (nullable) characters are not supported at this point. The implementation is still experimental and bugs are still expected, which we will appreciate to be informed of.
 
 ## Type declaration
 
@@ -20,8 +20,6 @@ declare type local:my-type as {
 
 { "foo" : "this is a string", "bar" : 42 }
 ```
-
-You can use user-defined types wherever other types can appear: as type annotation for FLWOR variables or global variables, as function parameter or return types, in instance-of or treat-as expressions, etc.
 
 In the above query, although the type is defined, the query returns an object that was not validated against this type.
 
@@ -40,6 +38,28 @@ validate type local:my-type* {
   { "foo" : "this is a string", "bar" : 42 }
 }
 ```
+
+You can use user-defined types wherever other types can appear: as type annotation for FLWOR variables or global variables, as function parameter or return types, in instance-of or treat-as expressions, etc.
+
+```
+declare type local:my-type as {
+  "foo" : "string",
+  "bar" : "integer"
+};
+
+declare function local:proj($x as local:my-type+) as string*
+{
+  $x.foo
+};
+
+let $a as local:my-type* := validate type local:my-type* {
+  { "foo" : "this is a string", "bar" : 42 }
+}
+return if($a instance of local:my-type*)
+       then local:proj($a)
+       else "Not an instance."
+```
+
 
 You can validate larger sequences
 
