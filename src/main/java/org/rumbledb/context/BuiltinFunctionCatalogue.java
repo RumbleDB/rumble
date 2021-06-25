@@ -861,8 +861,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction abs = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "abs"
         ),
         "numeric?",
@@ -875,8 +875,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction ceiling = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "ceiling"
         ),
         "numeric?",
@@ -889,8 +889,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction floor = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "floor"
         ),
         "numeric?",
@@ -904,8 +904,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction round1 = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "round"
         ),
         "numeric?",
@@ -915,8 +915,8 @@ public class BuiltinFunctionCatalogue {
     );
     static final BuiltinFunction round2 = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "round"
         ),
         "numeric?",
@@ -931,8 +931,8 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction round_half_to_even1 = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "round-half-to-even"
         ),
         "double?",
@@ -942,8 +942,8 @@ public class BuiltinFunctionCatalogue {
     );
     static final BuiltinFunction round_half_to_even2 = createBuiltinFunction(
         new Name(
-                Name.MATH_NS,
-                "math",
+                Name.FN_NS,
+                "fn",
                 "round-half-to-even"
         ),
         "double?",
