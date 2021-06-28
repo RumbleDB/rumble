@@ -10,6 +10,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeFactory;
 
 import sparksoniq.spark.DataFrameUtils;
 
@@ -32,14 +34,20 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         RuntimeIterator inputDataIterator = this.children.get(0);
         RuntimeIterator schemaIterator = this.children.get(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
-
+        ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
+        schemaType.resolve(context, getMetadata());
         try {
 
             if (inputDataIterator.isDataFrame()) {
                 JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-                DataFrameUtils.validateSchemaItemAgainstDataFrame(
-                    schemaItem,
+                inputDataAsDataFrame.getDataFrame().printSchema();
+                inputDataAsDataFrame.getDataFrame().show();
+                ItemType actualSchemaType = ItemTypeFactory.createItemType(
                     inputDataAsDataFrame.getDataFrame().schema()
+                );
+                DataFrameUtils.validateSchemaItemAgainstDataFrame(
+                    schemaType,
+                    actualSchemaType
                 );
                 return inputDataAsDataFrame;
             }

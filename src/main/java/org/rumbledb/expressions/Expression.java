@@ -23,6 +23,7 @@ package org.rumbledb.expressions;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
@@ -38,7 +39,7 @@ public abstract class Expression extends Node {
 
     protected StaticContext staticContext;
 
-    protected SequenceType inferredSequenceType;
+    protected SequenceType staticSequenceType;
 
     protected Expression(ExceptionMetadata metadata) {
         super(metadata);
@@ -68,18 +69,32 @@ public abstract class Expression extends Node {
      * 
      * @return the statically inferred sequence type.
      */
-    public SequenceType getInferredSequenceType() {
-        return this.inferredSequenceType;
+    public SequenceType getStaticSequenceType() {
+        return this.staticSequenceType;
+    }
+
+    /**
+     * Tells whether this expression is guaranteed to return
+     * zero or one item but not more.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean alwaysReturnsAtMostOneItem() {
+        return this.staticSequenceType.getArity().equals(Arity.One)
+            ||
+            this.staticSequenceType.getArity().equals(Arity.OneOrZero)
+            ||
+            this.staticSequenceType.getArity().equals(Arity.Zero);
     }
 
     /**
      * Sets the inferred static type, for used by the static
      * analysis visitor.
      * 
-     * @param inferredSequenceType the statically inferred sequence type to set.
+     * @param staticSequenceType the statically inferred sequence type to set.
      */
-    public void setInferredSequenceType(SequenceType inferredSequenceType) {
-        this.inferredSequenceType = inferredSequenceType;
+    public void setStaticSequenceType(SequenceType staticSequenceType) {
+        this.staticSequenceType = staticSequenceType;
     }
 
     @Override
@@ -89,7 +104,13 @@ public abstract class Expression extends Node {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

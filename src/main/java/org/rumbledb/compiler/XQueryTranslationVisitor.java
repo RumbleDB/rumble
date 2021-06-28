@@ -42,7 +42,7 @@ import java.math.BigDecimal;
 import java.net.URI;
 import java.util.*;
 
-import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBaseVisitor<Node> {
     private StaticContext moduleContext;
@@ -319,7 +319,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.typeDeclaration() != null) {
             seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
         } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            seq = SequenceType.ITEM_STAR;
         }
 
         XQueryParser.ExprSingleContext exprSingle = null;
@@ -335,7 +335,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         }
         if (exprSingle != null) {
             expr = (Expression) this.visitExprSingle(exprSingle);
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (!seq.equals(SequenceType.ITEM_STAR)) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
         }
@@ -375,8 +375,8 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
     @Override
     public Node visitFunctionDecl(XQueryParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.eqName(), true, false);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = MOST_GENERAL_SEQUENCE_TYPE;
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = ITEM_STAR;
         Name paramName;
         SequenceType paramType;
 
@@ -387,7 +387,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.functionParams() != null) {
             for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
                 paramName = parseName(param.qName(), false, false);
-                paramType = MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -398,7 +398,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 if (param.typeDeclaration() != null) {
                     paramType = this.processSequenceType(param.typeDeclaration().sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -407,7 +407,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.functionReturn() != null) {
             fnReturnType = this.processSequenceType(ctx.functionReturn().sequenceType());
         } else {
-            fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            fnReturnType = SequenceType.ITEM_STAR;
         }
 
         Expression bodyExpression = null;
@@ -1283,15 +1283,15 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
 
     @Override
     public Node visitInlineFunctionRef(XQueryParser.InlineFunctionRefContext ctx) {
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;
         if (ctx.functionParams() != null) {
             for (XQueryParser.FunctionParamContext param : ctx.functionParams().functionParam()) {
                 // TODO here we have qname instead eqName
                 paramName = parseName(param.name, false, false);
-                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -1302,7 +1302,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 if (param.type.sequenceType() != null) {
                     paramType = this.processSequenceType(param.type.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1411,7 +1411,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.seq != null) {
             seq = this.processSequenceType(ctx.seq.sequenceType());
         } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            seq = SequenceType.ITEM_STAR;
         }
         emptyFlag = (ctx.flag != null);
         Name atVar = null;
@@ -1432,7 +1432,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
                 seq.getItemType(),
                 SequenceType.Arity.ZeroOrMore
         );
-        if (!expressionType.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        if (!expressionType.equals(SequenceType.ITEM_STAR)) {
             expr = new TreatExpression(expr, expressionType, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
@@ -1461,11 +1461,11 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.typeDeclaration() != null) {
             seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
         } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            seq = SequenceType.ITEM_STAR;
         }
 
         Expression expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-        if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+        if (!seq.equals(SequenceType.ITEM_STAR)) {
             expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
         }
 
@@ -1507,12 +1507,12 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         if (ctx.typeDeclaration() != null) {
             seq = this.processSequenceType(ctx.typeDeclaration().sequenceType());
         } else {
-            seq = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+            seq = SequenceType.ITEM_STAR;
         }
 
         if (ctx.exprSingle() != null) {
             expr = (Expression) this.visitExprSingle(ctx.exprSingle());
-            if (!seq.equals(SequenceType.MOST_GENERAL_SEQUENCE_TYPE)) {
+            if (!seq.equals(SequenceType.ITEM_STAR)) {
                 expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
             }
 
@@ -1620,7 +1620,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
             if (currentVariable.typeDeclaration() != null) {
                 sequenceType = this.processSequenceType(currentVariable.typeDeclaration().sequenceType());
             } else {
-                sequenceType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                sequenceType = SequenceType.ITEM_STAR;
             }
 
             varExpression = (Expression) this.visitExprSingle(currentVariable.exprSingle());

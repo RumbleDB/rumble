@@ -413,7 +413,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         RuntimeIterator filteringPredicateIterator = new PredicateIterator(
                 new VariableReferenceIterator(
                         this.variableName,
-                        SequenceType.MOST_GENERAL_SEQUENCE_TYPE,
+                        SequenceType.ITEM_STAR,
                         ExecutionMode.LOCAL,
                         getMetadata()
                 ),
