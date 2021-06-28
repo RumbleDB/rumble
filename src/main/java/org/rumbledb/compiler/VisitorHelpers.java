@@ -55,10 +55,8 @@ public class VisitorHelpers {
     }
 
     private static void inferTypes(Module module, RumbleRuntimeConfiguration conf) {
-        System.out.println("* Starting type inference *");
         new InferTypeVisitor(conf).visit(module, module.getStaticContext());
-        System.out.println("* Completed type inference *");
-        if (conf.printInferredTypes()) {
+        if (conf.printInferredTypes() || conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
     }
@@ -141,9 +139,8 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
-            if (configuration.doStaticAnalysis()) {
-                inferTypes(mainModule, configuration);
-            }
+            inferTypes(mainModule, configuration);
+            populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -182,9 +179,8 @@ public class VisitorHelpers {
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
-            if (configuration.doStaticAnalysis()) {
-                inferTypes(mainModule, configuration);
-            }
+            inferTypes(mainModule, configuration);
+            populateExecutionModes(mainModule, configuration);
             return mainModule;
         } catch (ParseCancellationException ex) {
             ParsingException e = new ParsingException(
@@ -298,11 +294,11 @@ public class VisitorHelpers {
         }
     }
 
-    private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {
+    private static void populateExecutionModes(Module module, RumbleRuntimeConfiguration conf) {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
-        StaticContextVisitor visitor = new StaticContextVisitor();
+        ExecutionModeVisitor visitor = new ExecutionModeVisitor();
         visitor.visit(module, module.getStaticContext());
 
 
@@ -349,6 +345,18 @@ public class VisitorHelpers {
             );
         }
 
+    }
+
+    private static void populateStaticContext(Module module, RumbleRuntimeConfiguration conf) {
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
+        StaticContextVisitor visitor = new StaticContextVisitor();
+        visitor.visit(module, module.getStaticContext());
+
+        if (conf.isPrintIteratorTree()) {
+            printTree(module, conf);
+        }
     }
 
     public static DynamicContext createDynamicContext(Node node, RumbleRuntimeConfiguration configuration) {

@@ -1,4 +1,4 @@
-(:JIQS: ShouldCrash; ErrorCode="XQDY0027"; :)
+(:JIQS: ShouldCrash; ErrorCode="XPST0051"; :)
 annotate(
     (
         {"id": 1, "age":  20, "weight": 68.8},

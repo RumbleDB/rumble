@@ -70,7 +70,13 @@ public class VariableDeclaration extends Node {
 
     // return item* if sequenceType is [null]
     public SequenceType getSequenceType() {
-        return this.sequenceType == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.sequenceType;
+        if (this.sequenceType != null) {
+            return this.sequenceType;
+        }
+        if (this.expression != null && this.expression.getStaticSequenceType() != null) {
+            return this.expression.getStaticSequenceType();
+        }
+        return SequenceType.ITEM_STAR;
     }
 
     // as above but does NOT default to item*

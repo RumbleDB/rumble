@@ -19,16 +19,16 @@ public class ItemItemType implements ItemType {
     public ItemItemType() {
     }
 
-    private ItemItemType(Name name) {
+    ItemItemType(Name name) {
         this.name = name;
     }
 
     @Override
-    public boolean equals(Object o) {
-        if (!(o instanceof ItemType)) {
+    public boolean equals(Object other) {
+        if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) o).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -79,5 +79,10 @@ public class ItemItemType implements ItemType {
     @Override
     public boolean isDataFrameType() {
         return false;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return true;
     }
 }

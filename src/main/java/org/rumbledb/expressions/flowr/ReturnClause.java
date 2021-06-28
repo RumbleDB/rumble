@@ -20,10 +20,8 @@
 
 package org.rumbledb.expressions.flowr;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -42,23 +40,6 @@ public class ReturnClause extends Clause {
 
     public Expression getReturnExpr() {
         return this.returnExpr;
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        if (this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isRDD()) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-            return;
-        }
-        if (this.returnExpr.getHighestExecutionMode(visitorConfig).isDataFrame()) {
-            this.highestExecutionMode = ExecutionMode.DATAFRAME;
-            return;
-        }
-        this.highestExecutionMode = ExecutionMode.LOCAL;
     }
 
     @Override

@@ -11,15 +11,17 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.InvalidInstanceException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
+import java.util.Map.Entry;
 
 public class DataFrameUtils {
     public static Dataset<Row> convertItemRDDToDataFrame(
@@ -158,55 +160,87 @@ public class DataFrameUtils {
     }
 
     public static void validateSchemaItemAgainstDataFrame(
-            Item schemaItem,
-            StructType dataFrameSchema
+            ItemType expectedType,
+            ItemType actualType
     ) {
-        StructType generatedSchema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        for (StructField column : dataFrameSchema.fields()) {
-            final String columnName = column.name();
-            final DataType columnDataType = column.dataType();
+        if (expectedType.isAtomicItemType()) {
+            if (actualType.isSubtypeOf(expectedType)) {
+                return;
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: " + expectedType + " vs. " + actualType
+            );
+        }
+        if (expectedType.isArrayItemType()) {
+            if (actualType.isArrayItemType()) {
+                if (
+                    actualType.getArrayContentFacet()
+                        .getType()
+                        .isSubtypeOf(expectedType.getArrayContentFacet().getType())
+                ) {
+                    return;
+                }
+            }
+            throw new InvalidInstanceException(
+                    "Type mismatch: expected "
+                        + expectedType.getArrayContentFacet().getType()
+                        + " but actually "
+                        + actualType.getArrayContentFacet().getType()
+            );
+        }
+        for (Entry<String, FieldDescriptor> actualTypeDescriptor : actualType.getObjectContentFacet().entrySet()) {
+            final String actualColumnName = actualTypeDescriptor.getKey();
+            final ItemType columnDataType = actualTypeDescriptor.getValue().getType();
 
-            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
-                String generatedColumnName = structField.name();
-                if (!generatedColumnName.equals(columnName)) {
-                    return false;
+            boolean columnMatched = false;
+            for (
+                Entry<String, FieldDescriptor> expectedTypeDescriptor : expectedType.getObjectContentFacet().entrySet()
+            ) {
+                String expectedColumnName = expectedTypeDescriptor.getKey();
+                if (!expectedColumnName.equals(actualColumnName)) {
+                    continue;
                 }
 
-                DataType generatedDataType = structField.dataType();
-                if (isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    return true;
+                ItemType expectedColumnType = expectedTypeDescriptor.getValue().getType();
+                try {
+                    validateSchemaItemAgainstDataFrame(expectedColumnType, columnDataType);
+                } catch (Exception e) {
+                    RumbleException ex = new InvalidInstanceException(
+                            "Fields defined in schema must fully match the fields of input data: "
+                                + "expected '"
+                                + expectedColumnType
+                                + "' type for field '"
+                                + actualColumnName
+                                + "', but found '"
+                                + columnDataType
+                                + "'"
+                    );
+                    ex.initCause(e);
+                    throw ex;
                 }
 
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for field '"
-                            + columnName
-                            + "', but found '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
-                            + "'"
-                );
-            });
+                columnMatched = true;
+                break;
+            }
 
             if (!columnMatched) {
                 throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "missing type information for '"
-                            + columnName
+                            + actualColumnName
                             + "' field."
                 );
             }
         }
 
-        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
-            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
+        for (String expectedColumnName : expectedType.getObjectContentFacet().keySet()) {
+            boolean userColumnMatched = actualType.getObjectContentFacet().keySet().contains(expectedColumnName);
 
             if (!userColumnMatched) {
                 throw new InvalidInstanceException(
                         "Fields defined in schema must fully match the fields of input data: "
                             + "redundant type information for non-existent field '"
-                            + generatedSchemaColumnName
+                            + expectedColumnName
                             + "'."
                 );
             }
