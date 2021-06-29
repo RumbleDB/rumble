@@ -188,26 +188,21 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             Object[] rowColumns = new Object[schema.fields().length];
-            if(itemType.getClosedFacet())
-            {
-                for(String key : item.getKeys())
-                {
+            if (itemType.getClosedFacet()) {
+                for (String key : item.getKeys()) {
                     boolean found = false;
-                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++)
-                    {
-                        if(key.equals(schema.fields()[fieldIndex].name()))
-                        {
+                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+                        if (key.equals(schema.fields()[fieldIndex].name())) {
                             found = true;
                         }
                     }
-                    if(!found)
-                    {
+                    if (!found) {
                         throw new InvalidInstanceException(
-                            "Unexpected key in closed object type "
-                                + itemType.getIdentifierString()
-                                + " : "
-                                + key
-                                );
+                                "Unexpected key in closed object type "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key
+                        );
                     }
                 }
             }
@@ -441,8 +436,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             final DataType columnDataType = column.dataType();
 
             boolean columnMatched = false;
-            for(StructField structField : generatedSchema.fields())
-            {
+            for (StructField structField : generatedSchema.fields()) {
                 String generatedColumnName = structField.name();
                 if (!generatedColumnName.equals(columnName)) {
                     continue;
@@ -467,11 +461,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (!columnMatched) {
                 throw new InvalidInstanceException(
-                    "Unexpected key in closed object type "
-                        + itemType.getIdentifierString()
-                        + " : "
-                        + columnName
-                        );
+                        "Unexpected key in closed object type "
+                            + itemType.getIdentifierString()
+                            + " : "
+                            + columnName
+                );
             }
         }
 
