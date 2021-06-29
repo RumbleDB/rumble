@@ -3,11 +3,9 @@ package org.rumbledb.expressions.typing;
 import java.util.Collections;
 import java.util.List;
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -80,10 +78,5 @@ public class ValidateTypeExpression extends Expression {
         sb.append(" validate type " + this.sequenceType.toString() + "\n");
         this.mainExpression.serializeToJSONiq(sb, 0);
         sb.append(" as {" + this.sequenceType.toString() + "\n}\n");
-    }
-
-    @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = ExecutionMode.DATAFRAME;
     }
 }
