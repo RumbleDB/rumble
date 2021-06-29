@@ -188,7 +188,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             Object[] rowColumns = new Object[schema.fields().length];
-            if (itemType.getClosedFacet()) {
+            if (itemType != null && itemType.getClosedFacet()) {
                 for (String key : item.getKeys()) {
                     boolean found = false;
                     for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
@@ -237,7 +237,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (columnValueItem == null) {
                 return null;
             }
-            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+            return getRowColumnFromItemUsingDataType(
+                columnValueItem,
+                fieldDescriptor != null ? fieldDescriptor.getType() : null,
+                fieldDataType
+            );
         } catch (InvalidInstanceException ex) {
             throw new InvalidInstanceException(
                     "Data does not fit to the given schema in field '"
@@ -248,7 +252,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, ItemType itemType, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
@@ -259,7 +263,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 DataType elementType = ((ArrayType) dataType).elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
                     Item arrayItem = item.getItemAt(i);
-                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
+                        arrayItem,
+                        itemType != null ? itemType.getArrayContentFacet().getType() : null,
+                        elementType
+                    );
                 }
                 return arrayItemsForRow;
             }
@@ -268,7 +276,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 if (!item.isObject()) {
                     throw new InvalidInstanceException("Type mismatch " + dataType);
                 }
-                return ValidateTypeIterator.convertLocalItemToRow(item, null, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
