@@ -459,8 +459,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
 
-            if(itemType != null && itemType.getClosedFacet())
-            {
+            if (itemType != null && itemType.getClosedFacet()) {
                 if (!columnMatched) {
                     throw new InvalidInstanceException(
                             "Unexpected key in closed object type "
