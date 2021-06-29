@@ -188,6 +188,29 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             Object[] rowColumns = new Object[schema.fields().length];
+            if(itemType.getClosedFacet())
+            {
+                for(String key : item.getKeys())
+                {
+                    boolean found = false;
+                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++)
+                    {
+                        if(key.equals(schema.fields()[fieldIndex].name()))
+                        {
+                            found = true;
+                        }
+                    }
+                    if(!found)
+                    {
+                        throw new InvalidInstanceException(
+                            "Unexpected key in closed object type "
+                                + itemType.getIdentifierString()
+                                + " : "
+                                + key
+                                );
+                    }
+                }
+            }
             for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
                 StructField field = schema.fields()[fieldIndex];
                 String fieldName = field.name();
@@ -417,15 +440,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
 
-            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
+            boolean columnMatched = false;
+            for(StructField structField : generatedSchema.fields())
+            {
                 String generatedColumnName = structField.name();
                 if (!generatedColumnName.equals(columnName)) {
-                    return false;
+                    continue;
                 }
 
                 DataType generatedDataType = structField.dataType();
                 if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    return true;
+                    columnMatched = true;
                 }
 
                 throw new InvalidInstanceException(
@@ -438,15 +463,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                             + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
                             + "'"
                 );
-            });
+            }
 
             if (!columnMatched) {
                 throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "missing type information for '"
-                            + columnName
-                            + "' field."
-                );
+                    "Unexpected key in closed object type "
+                        + itemType.getIdentifierString()
+                        + " : "
+                        + columnName
+                        );
             }
         }
 
