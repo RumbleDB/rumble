@@ -51,6 +51,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -405,6 +406,27 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         visitDescendants(prolog, argument);
         prolog.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
+        visitDescendants(expression, null);
+        if (expression.getSequenceType().getArity().equals(Arity.Zero)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.One)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.OneOrZero)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.OneOrMore)) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.ZeroOrMore)) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+        }
         return argument;
     }
 
