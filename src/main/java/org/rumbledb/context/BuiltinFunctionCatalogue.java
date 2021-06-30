@@ -19,30 +19,8 @@ import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
-import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
-import org.rumbledb.runtime.functions.datetime.components.AdjustTimeToTimezone;
-import org.rumbledb.runtime.functions.datetime.components.DayFromDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.DayFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.HoursFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.HoursFromTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.MinutesFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.MinutesFromTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.MonthFromDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.MonthFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.SecondsFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.SecondsFromTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.TimezoneFromTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.components.YearsFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.components.*;
+import org.rumbledb.runtime.functions.durations.components.*;
 import org.rumbledb.runtime.functions.input.AvroFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.CSVFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
@@ -104,28 +82,7 @@ import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
-import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
-import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.EncodeForURIFunctionIterator;
-import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
-import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
-import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.NormalizeUnicodeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
-import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
-import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
-import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
-import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
+import org.rumbledb.runtime.functions.strings.*;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -926,7 +883,7 @@ public class BuiltinFunctionCatalogue {
     );
     /**
      * function that rounds a value to a specified number of decimal places, rounding to make the last digit even if
-     * two such values are equally near
+     * two such values are equally nearinT
      */
     static final BuiltinFunction round_half_to_even1 = createBuiltinFunction(
         new Name(
@@ -934,8 +891,8 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round-half-to-even"
         ),
-        "double?",
-        "double?",
+        "numeric?",
+        "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -945,9 +902,9 @@ public class BuiltinFunctionCatalogue {
                 "fn",
                 "round-half-to-even"
         ),
-        "double?",
+        "numeric?",
         "integer",
-        "double?",
+        "numeric?",
         RoundHalfToEvenFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
@@ -1148,6 +1105,31 @@ public class BuiltinFunctionCatalogue {
         "double",
         "double",
         ATan2FunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns string
+     */
+    static final BuiltinFunction string0 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string"
+        ),
+        "string",
+        StringFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction string1 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "string"
+        ),
+        "item?",
+        "string",
+        StringFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2103,6 +2085,20 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function that returns the value of the implicit timezone property from the dynamic context.
+     */
+    static final BuiltinFunction implicit_timezone = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "implicit-timezone"
+        ),
+        "dayTimeDuration?",
+        ImplicitTimezoneIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function that returns the keys of a Json Object
      */
     static final BuiltinFunction keys = createBuiltinFunction(
@@ -2459,6 +2455,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(atan.getIdentifier(), atan);
         builtinFunctions.put(atan2.getIdentifier(), atan2);
 
+        builtinFunctions.put(string0.getIdentifier(), string0);
+        builtinFunctions.put(string1.getIdentifier(), string1);
         builtinFunctions.put(codepoints_to_string.getIdentifier(), codepoints_to_string);
         builtinFunctions.put(string_to_codepoints.getIdentifier(), string_to_codepoints);
         builtinFunctions.put(replace1.getIdentifier(), replace1);
@@ -2518,6 +2516,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(timezone_from_dateTime.getIdentifier(), timezone_from_dateTime);
         builtinFunctions.put(adjust_dateTime_to_timezone1.getIdentifier(), adjust_dateTime_to_timezone1);
         builtinFunctions.put(adjust_dateTime_to_timezone2.getIdentifier(), adjust_dateTime_to_timezone2);
+
+        builtinFunctions.put(implicit_timezone.getIdentifier(), implicit_timezone);
 
         builtinFunctions.put(current_date.getIdentifier(), current_date);
         builtinFunctions.put(format_date.getIdentifier(), format_date);

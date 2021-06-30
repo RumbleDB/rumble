@@ -72,6 +72,11 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
+    @Override
     public double castToDoubleValue() {
         return (double) this.value;
     }
@@ -122,6 +127,7 @@ public class FloatItem implements Item {
         if (abs >= 0.000001 && abs <= 1000000) {
             return this.castToDecimalValue().stripTrailingZeros().toPlainString();
         }
+        // When use float.toString or not
         return Float.toString(this.value);
     }
 

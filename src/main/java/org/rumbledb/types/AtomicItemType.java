@@ -154,6 +154,21 @@ public class AtomicItemType implements ItemType {
             ),
             DataTypes.DateType
     );
+    static final AtomicItemType dateTimeStampItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
     static final AtomicItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(

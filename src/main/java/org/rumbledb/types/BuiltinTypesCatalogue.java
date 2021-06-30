@@ -12,6 +12,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 
+
 public class BuiltinTypesCatalogue {
     public static final ItemType item = new ItemItemType(Name.createVariableInDefaultTypeNamespace("item"));
 
@@ -154,6 +155,21 @@ public class BuiltinTypesCatalogue {
             ),
             DataTypes.DateType
     );
+    public static final ItemType dateTimeStampItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
     public static final ItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(
@@ -264,6 +280,111 @@ public class BuiltinTypesCatalogue {
             DataTypes.ShortType // TODO : how to support arbitrary-sized integer
     );
 
+    static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "byte"),
+            intItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
+            false,
+            DataTypes.ByteType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("0")),
+                new IntegerItem(new BigInteger("9223372036854775808")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("-9223372036854775808")),
+                new IntegerItem(new BigInteger("0")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "negativeInteger"),
+            nonPositiveIntegerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("-9223372036854775808")),
+                new IntegerItem(new BigInteger("-1")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "positiveInteger"),
+            nonNegativeIntegerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("1")),
+                new IntegerItem(new BigInteger("9223372036854775807")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedInt"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("0")),
+                new IntegerItem(new BigInteger("4294967295")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedLong"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("0")),
+                new IntegerItem(new BigInteger("18446744073709551615")),
+                true
+            ),
+            false,
+            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedShort"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
+    static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedByte"),
+            integerItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
     public static final ItemType JSONItem = new JsonItemType();
     public static final ItemType objectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
@@ -316,6 +437,7 @@ public class BuiltinTypesCatalogue {
         yearMonthDurationItem,
         dayTimeDurationItem,
         dateTimeItem,
+        dateTimeStampItem,
         dateItem,
         timeItem,
         hexBinaryItem,
@@ -323,7 +445,16 @@ public class BuiltinTypesCatalogue {
         base64BinaryItem,
         item,
         longItem,
-        shortItem
+        shortItem,
+        byteItem,
+        positiveIntegerItem,
+        negativeIntegerItem,
+        nonPositiveIntegerItem,
+        nonNegativeIntegerItem,
+        unsignedIntItem,
+        unsignedLongItem,
+        unsignedShortItem,
+        unsignedByteItem
     );
 
     public static ItemType getItemTypeByName(Name name) {
@@ -341,3 +472,4 @@ public class BuiltinTypesCatalogue {
         throw new OurBadException("Type unrecognized: " + name + "(namespace: " + name.getNamespace() + ")");
     }
 }
+

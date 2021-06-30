@@ -133,4 +133,6 @@ public class ArrayDescendantFunctionIterator extends HybridRuntimeIterator {
         FlatMapFunction<Item, Item> transformation = new ArrayDescendantClosure();
         return childRDD.flatMap(transformation);
     }
+
+    // can extend dataframe support
 }
