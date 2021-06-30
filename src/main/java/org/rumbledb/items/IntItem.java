@@ -83,6 +83,11 @@ public class IntItem implements Item {
         return this.value != 0;
     }
 
+    @Override
+    public String getStringValue() {
+        return String.valueOf(this.value);
+    }
+
     public double castToDoubleValue() {
         return new Integer(this.value).doubleValue();
     }
