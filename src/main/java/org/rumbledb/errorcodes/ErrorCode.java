@@ -67,6 +67,7 @@ public enum ErrorCode {
     UnimplementedErrorCode("RBST0002"),
     JobWithinAJobErrorCode("RBST0003"),
     OurBadErrorCode("RBST0004"),
+    ClusterConnectionErrorCode("RBDY0005"),
 
     UnexpectedStaticType("RBTY0001"),
 
