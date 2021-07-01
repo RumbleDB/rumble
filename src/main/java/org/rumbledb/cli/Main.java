@@ -95,7 +95,7 @@ public class Main {
                 } else {
                     handleException(
                         new OurBadException(
-                                "⚠️  There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
                                     + ex.getMessage()
                         ),
                         showErrorInfo
