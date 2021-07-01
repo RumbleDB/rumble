@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.URI;
 import java.net.URLDecoder;
 import java.util.ArrayList;
@@ -204,7 +205,12 @@ public class RumbleHttpHandler implements HttpHandler {
                     if (sparkExceptionCause != null) {
                         return handleException(sparkExceptionCause);
                     }
-                    return handleException(new RumbleException(ex.getMessage()));
+                    return handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        )
+                    );
                 } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
@@ -214,6 +220,18 @@ public class RumbleHttpHandler implements HttpHandler {
                 } else if (ex instanceof IllegalArgumentException) {
                     return assembleErrorReponse(
                         "It seems that you are not using Java 8. Spark only works with Java 8. If you have several versions of java installed, you need to set your JAVA_HOME accordingly. If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.",
+                        ErrorCode.OurBadErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof ConnectException) {
+                    return assembleErrorReponse(
+                        "There was a problem with the connection to the cluster.",
+                        ErrorCode.ClusterConnectionErrorCode.toString(),
+                        ex.getStackTrace()
+                    );
+                } else if (ex instanceof NullPointerException) {
+                    return assembleErrorReponse(
+                        "There was a null pointer exception.",
                         ErrorCode.OurBadErrorCode.toString(),
                         ex.getStackTrace()
                     );

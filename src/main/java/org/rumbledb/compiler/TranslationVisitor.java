@@ -1362,8 +1362,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         try {
             arity = Integer.parseInt(ctx.arity.getText());
         } catch (NumberFormatException e) {
-            throw new RumbleException(
-                    "Parser error: In a named function reference, arity must be an integer."
+            throw new ParsingException(
+                    "Parser error: In a named function reference, arity must be an integer.",
+                    createMetadataFromContext(ctx)
             );
         }
         return new NamedFunctionReferenceExpression(

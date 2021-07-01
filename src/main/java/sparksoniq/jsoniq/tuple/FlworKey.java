@@ -27,7 +27,6 @@ import com.esotericsoftware.kryo.io.Output;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
@@ -93,7 +92,7 @@ public class FlworKey implements KryoSerializable {
                     ||
                     (item2 != null && !item2.isAtomic())
             ) {
-                throw new RumbleException("Non atomic key not allowed");
+                throw new OurBadException("Non atomic key not allowed");
             }
 
             long comparison = ComparisonIterator.compareItems(
@@ -137,7 +136,7 @@ public class FlworKey implements KryoSerializable {
                     ||
                     (item2 != null && !item2.isAtomic())
             ) {
-                throw new RumbleException("Non atomic key not allowed");
+                throw new OurBadException("Non atomic key not allowed");
             }
 
             EMPTY_ORDER emptyOrder = EMPTY_ORDER.LEAST;

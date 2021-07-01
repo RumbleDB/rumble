@@ -34,14 +34,14 @@ public class RumbleException extends RuntimeException {
     private final String errorMessage;
     private ExceptionMetadata metadata;
 
-    public RumbleException(String message) {
+    RumbleException(String message) {
         super(formatMessage(ErrorCode.RuntimeExceptionErrorCode, ExceptionMetadata.EMPTY_METADATA, message));
         this.errorCode = ErrorCode.RuntimeExceptionErrorCode;
         this.errorMessage = message;
         this.metadata = ExceptionMetadata.EMPTY_METADATA;
     }
 
-    public RumbleException(String message, ErrorCode errorCode) {
+    RumbleException(String message, ErrorCode errorCode) {
         super(formatMessage(errorCode, ExceptionMetadata.EMPTY_METADATA, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
@@ -59,7 +59,7 @@ public class RumbleException extends RuntimeException {
     }
 
 
-    public RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
+    RumbleException(String message, ErrorCode errorCode, ExceptionMetadata metadata) {
         super(formatMessage(errorCode, metadata, message));
         if (!Arrays.asList(ErrorCode.class.getFields()).stream().anyMatch(f -> {
             try {
