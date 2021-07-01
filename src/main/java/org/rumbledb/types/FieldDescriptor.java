@@ -3,6 +3,11 @@ package org.rumbledb.types;
 import java.io.Serializable;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.runtime.typing.CastIterator;
 
 public class FieldDescriptor implements Serializable {
 
@@ -78,5 +83,41 @@ public class FieldDescriptor implements Serializable {
             sb.append(", default value: " + this.defaultValue);
         }
         return sb.toString();
+    }
+    
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.type.isResolved()) {
+            this.type.resolve(context, metadata);
+        }
+        if(this.defaultValue != null)
+        {
+            if(!this.type.isAtomicItemType())
+            {
+                throw new InvalidSchemaException("Default values can only be literals for atomic types", ExceptionMetadata.EMPTY_METADATA);
+            }
+            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if(this.defaultValue == null)
+            {
+                throw new InvalidSchemaException("The literal " + this.defaultValue+ "is not a valid literal for type " + this.type.toString(), ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
+    }
+    
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.type.isResolved()) {
+            this.type.resolve(context, metadata);
+        }
+        if(this.defaultValue != null)
+        {
+            if(!this.type.isAtomicItemType())
+            {
+                throw new InvalidSchemaException("Default values can only be literals for atomic types", ExceptionMetadata.EMPTY_METADATA);
+            }
+            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if(this.defaultValue == null)
+            {
+                throw new InvalidSchemaException("The literal " + this.defaultValue+ "is not a valid literal for type " + this.type.toString(), ExceptionMetadata.EMPTY_METADATA);
+            }
+        }
     }
 }
