@@ -205,7 +205,12 @@ public class RumbleHttpHandler implements HttpHandler {
                     if (sparkExceptionCause != null) {
                         return handleException(sparkExceptionCause);
                     }
-                    return handleException(new OurBadException(ex.getMessage()));
+                    return handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        )
+                    );
                 } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                     return assembleErrorReponse(
                         ex.getMessage(),
