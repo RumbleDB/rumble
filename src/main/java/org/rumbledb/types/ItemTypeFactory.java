@@ -29,7 +29,7 @@ public class ItemTypeFactory {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
-                throw new InvalidSchemaException("= is only supported for the types of value objects", ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException("= is only supported for the types of object values", ExceptionMetadata.EMPTY_METADATA);
             }
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
