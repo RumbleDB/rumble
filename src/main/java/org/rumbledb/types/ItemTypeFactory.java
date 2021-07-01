@@ -15,6 +15,8 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.ItemFactory;
+
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -27,7 +29,10 @@ public class ItemTypeFactory {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
-                throw new InvalidSchemaException("= not supported yet", ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException(
+                        "= is only supported for the types of object values",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
@@ -61,12 +66,29 @@ public class ItemTypeFactory {
                 if (key.startsWith("@")) {
                     throw new InvalidSchemaException("@ not supported yet", ExceptionMetadata.EMPTY_METADATA);
                 }
+                Item defaultValueLiteral = null;
+                if (value.isString() && value.getStringValue().contains("=")) {
+                    String typeString = value.getStringValue();
+                    int index = typeString.indexOf("=");
+                    String defaultLiteral = typeString.substring(index + 1);
+                    if (defaultLiteral.contains("=")) {
+                        throw new InvalidSchemaException(
+                                "= can only appear once in a field descriptor type reference",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    typeString = typeString.substring(0, index);
+                    value = ItemFactory.getInstance().createStringItem(typeString);
+                    defaultValueLiteral = ItemFactory.getInstance().createStringItem(defaultLiteral);
+                }
+
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
                 fieldDescriptor.setName(key);
                 fieldDescriptor.setRequired(required);
-                fieldDescriptor.setType(createItemTypeFromJSoundCompactItem(null, value, staticContext));
+                ItemType type = createItemTypeFromJSoundCompactItem(null, value, staticContext);
+                fieldDescriptor.setType(type);
                 fieldDescriptor.setUnique(false);
-                fieldDescriptor.setDefaultValue(null);
+                fieldDescriptor.setDefaultValue(defaultValueLiteral);
                 fields.put(key, fieldDescriptor);
             }
             return new ObjectItemType(
