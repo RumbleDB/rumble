@@ -29,7 +29,10 @@ public class ItemTypeFactory {
         if (item.isString()) {
             String typeString = item.getStringValue();
             if (typeString.contains("=")) {
-                throw new InvalidSchemaException("= is only supported for the types of object values", ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException(
+                        "= is only supported for the types of object values",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
             return new ItemTypeReference(Name.createTypeNameFromLiteral(typeString, staticContext));
         }
@@ -68,9 +71,11 @@ public class ItemTypeFactory {
                     String typeString = value.getStringValue();
                     int index = typeString.indexOf("=");
                     String defaultLiteral = typeString.substring(index + 1);
-                    if(defaultLiteral.contains("="))
-                    {
-                        throw new InvalidSchemaException("= can only appear once in a field descriptor type reference", ExceptionMetadata.EMPTY_METADATA);
+                    if (defaultLiteral.contains("=")) {
+                        throw new InvalidSchemaException(
+                                "= can only appear once in a field descriptor type reference",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
                     }
                     typeString = typeString.substring(0, index);
                     value = ItemFactory.getInstance().createStringItem(typeString);

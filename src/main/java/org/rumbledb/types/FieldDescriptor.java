@@ -84,39 +84,45 @@ public class FieldDescriptor implements Serializable {
         }
         return sb.toString();
     }
-    
+
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         if (!this.type.isResolved()) {
             this.type.resolve(context, metadata);
         }
-        if(this.defaultValue != null)
-        {
-            if(!this.type.isAtomicItemType())
-            {
-                throw new InvalidSchemaException("Default values can only be literals for atomic types", ExceptionMetadata.EMPTY_METADATA);
+        if (this.defaultValue != null) {
+            if (!this.type.isAtomicItemType()) {
+                throw new InvalidSchemaException(
+                        "Default values can only be literals for atomic types",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
             this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if(this.defaultValue == null)
-            {
-                throw new InvalidSchemaException("The literal " + this.defaultValue+ "is not a valid literal for type " + this.type.toString(), ExceptionMetadata.EMPTY_METADATA);
+            if (this.defaultValue == null) {
+                throw new InvalidSchemaException(
+                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
         }
     }
-    
+
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
         if (!this.type.isResolved()) {
             this.type.resolve(context, metadata);
         }
-        if(this.defaultValue != null)
-        {
-            if(!this.type.isAtomicItemType())
-            {
-                throw new InvalidSchemaException("Default values can only be literals for atomic types", ExceptionMetadata.EMPTY_METADATA);
+        if (this.defaultValue != null) {
+            if (!this.type.isAtomicItemType()) {
+                throw new InvalidSchemaException(
+                        "Default values can only be literals for atomic types",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
             this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if(this.defaultValue == null)
-            {
-                throw new InvalidSchemaException("The literal " + this.defaultValue+ "is not a valid literal for type " + this.type.toString(), ExceptionMetadata.EMPTY_METADATA);
+            if (this.defaultValue == null) {
+                throw new InvalidSchemaException(
+                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
         }
     }
