@@ -228,16 +228,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
-        Item defaultValue = fieldDescriptor!=null?fieldDescriptor.getDefaultValue():null;
-        if (fieldDescriptor != null && defaultValue == null && fieldDescriptor.isRequired() && columnValueItem == null) {
+        Item defaultValue = fieldDescriptor != null ? fieldDescriptor.getDefaultValue() : null;
+        if (
+            fieldDescriptor != null && defaultValue == null && fieldDescriptor.isRequired() && columnValueItem == null
+        ) {
             throw new InvalidInstanceException(
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
         try {
             if (columnValueItem == null) {
-                if(defaultValue != null)
-                {
+                if (defaultValue != null) {
                     return getRowColumnFromItemUsingDataType(
                         defaultValue,
                         fieldDescriptor.getType(),
