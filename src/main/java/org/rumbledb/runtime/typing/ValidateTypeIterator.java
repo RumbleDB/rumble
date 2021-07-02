@@ -160,7 +160,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return ItemParser.getDataFrameDataTypeFromItemType(itemType);
     }
 
-    private static JSoundDataFrame convertLocalItemsToDataFrame(
+    public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType
     ) {
