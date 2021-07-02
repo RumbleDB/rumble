@@ -42,7 +42,7 @@ public class DateTimeStampItem implements Item {
         + "))";
 
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")?";
-    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")";
+    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
     private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
 
@@ -59,17 +59,18 @@ public class DateTimeStampItem implements Item {
         super();
     }
 
-    DateTimeStampItem(DateTime value) {
+    DateTimeStampItem(DateTime value, boolean checkTimezone) {
         super();
-        this.value = value;
+        if (checkTimezone) {
+            this.value = parseDateTimeStamp(this.value.toString(), BuiltinTypesCatalogue.dateTimeStampItem);
+        } else {
+            this.value = value;
+        }
+
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
-        // DateTimeStamp requires the time zone expression at the end of the value
-        if (!dateTimeStampString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
-            return;
-        }
+        this.value = parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
@@ -107,6 +108,11 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public boolean hasDateTime() {
+        return true;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
         return true;
     }
 
@@ -216,7 +222,8 @@ public class DateTimeStampItem implements Item {
         return dateTimeStamp;
     }
 
-    static DateTime parseDateTime(String dateTimeStamp, ItemType dateTimeStampType) throws IllegalArgumentException {
+    static DateTime parseDateTimeStamp(String dateTimeStamp, ItemType dateTimeStampType)
+            throws IllegalArgumentException {
         if (!checkInvalidDateTimeFormat(dateTimeStamp, dateTimeStampType)) {
             throw new IllegalArgumentException();
         }

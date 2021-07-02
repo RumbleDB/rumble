@@ -155,19 +155,12 @@ public class BuiltinTypesCatalogue {
             ),
             DataTypes.DateType
     );
-    public static final ItemType dateTimeStampItem = new AtomicItemType(
+    public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
-            new HashSet<>(
-                    Arrays.asList(
-                        FacetTypes.ENUMERATION,
-                        FacetTypes.CONSTRAINTS,
-                        FacetTypes.MININCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
-                        FacetTypes.EXPLICITTIMEZONE
-                    )
-            ),
+            dateTimeItem,
+            AtomicItemType.dateTimeItem,
+            new Facets(),
+            false,
             DataTypes.DateType
     );
     public static final ItemType dateItem = new AtomicItemType(

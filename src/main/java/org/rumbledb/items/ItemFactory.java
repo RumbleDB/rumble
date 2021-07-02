@@ -121,8 +121,8 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
-    public Item createDateTimeStampItem(DateTime value) {
-        return new DateTimeStampItem(value);
+    public Item createDateTimeStampItem(DateTime dt, boolean checkTimezone) {
+        return new DateTimeStampItem(dt, checkTimezone);
     }
 
     public Item createDateTimeStampItem(String s) {
