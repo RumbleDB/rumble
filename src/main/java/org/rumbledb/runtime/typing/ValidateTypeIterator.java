@@ -24,13 +24,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +66,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (inputDataIterator.isDataFrame()) {
                 JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-                validateItemTypeAgainstDataFrame(
+                checkAnnotationPossibleOrThrowError(
                     this.itemType,
-                    inputDataAsDataFrame.getDataFrame().schema()
+                    inputDataAsDataFrame.getItemType()
                 );
-                return inputDataAsDataFrame;
+                return new JSoundDataFrame(inputDataAsDataFrame.getDataFrame(), this.itemType);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
@@ -444,62 +442,93 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
 
-    private static void validateItemTypeAgainstDataFrame(
-            ItemType itemType,
-            StructType dataFrameSchema
+    private static void checkAnnotationPossibleOrThrowError(
+            ItemType expectedType,
+            ItemType actualType
     ) {
-        StructType generatedSchema = convertToDataFrameSchema(itemType);
-        for (StructField column : dataFrameSchema.fields()) {
-            final String columnName = column.name();
-            final DataType columnDataType = column.dataType();
+        if (expectedType.isObjectItemType()) {
+            if (!actualType.isObjectItemType()) {
+                throw new InvalidInstanceException(
+                        "Unexpected type. Expected "
+                            + expectedType
+                            + " but actually encountered "
+                            + actualType
+                );
+            }
+            // StructType generatedSchema = convertToDataFrameSchema(itemType);
+            for (String columnName : actualType.getObjectContentFacet().keySet()) {
+                final ItemType actualColumnType = actualType.getObjectContentFacet().get(columnName).getType();
 
-            boolean columnMatched = false;
-            for (StructField structField : generatedSchema.fields()) {
-                String generatedColumnName = structField.name();
-                if (!generatedColumnName.equals(columnName)) {
-                    continue;
-                }
+                boolean columnMatched = false;
+                for (String generatedColumnName : expectedType.getObjectContentFacet().keySet()) {
+                    if (!generatedColumnName.equals(columnName)) {
+                        continue;
+                    }
 
-                DataType generatedDataType = structField.dataType();
-                if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
+                    ItemType expectedColumnType = expectedType.getObjectContentFacet()
+                        .get(generatedColumnName)
+                        .getType();
+                    checkAnnotationPossibleOrThrowError(expectedColumnType, actualColumnType);
                     columnMatched = true;
                 }
 
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for field '"
-                            + columnName
-                            + "', but found '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
-                            + "'"
-                );
+                if (expectedType != null && expectedType.getClosedFacet()) {
+                    if (!columnMatched) {
+                        throw new InvalidInstanceException(
+                                "Unexpected key in closed object type "
+                                    + expectedType.getIdentifierString()
+                                    + " : "
+                                    + columnName
+                        );
+                    }
+                }
             }
 
-            if (itemType != null && itemType.getClosedFacet()) {
-                if (!columnMatched) {
+            for (String generatedSchemaColumnName : expectedType.getObjectContentFacet().keySet()) {
+                boolean userColumnMatched = actualType.getObjectContentFacet()
+                    .keySet()
+                    .contains(generatedSchemaColumnName);
+
+                if (!userColumnMatched) {
                     throw new InvalidInstanceException(
-                            "Unexpected key in closed object type "
-                                + itemType.getIdentifierString()
-                                + " : "
-                                + columnName
+                            "Fields defined in schema must fully match the fields of input data: "
+                                + "redundant type information for non-existent field '"
+                                + generatedSchemaColumnName
+                                + "'."
                     );
                 }
             }
         }
-
-        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
-            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
-
-            if (!userColumnMatched) {
+        if (expectedType.isArrayItemType()) {
+            if (!actualType.isArrayItemType()) {
                 throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "redundant type information for non-existent field '"
-                            + generatedSchemaColumnName
-                            + "'."
+                        "Unexpected type. Expected "
+                            + expectedType
+                            + " but actually encountered "
+                            + actualType
                 );
             }
+        }
+        if (expectedType.isAtomicItemType()) {
+            if (!actualType.isAtomicItemType()) {
+                throw new InvalidInstanceException(
+                        "Unexpected type, and dataframe casts are not supported at this point (contact us to prioritize). Expected "
+                            + expectedType
+                            + " but actually encountered "
+                            + actualType
+                );
+            }
+            if (!actualType.isSubtypeOf(expectedType)) {
+                throw new InvalidInstanceException(
+                        "Unexpected type, and dataframe casts are not supported at this point (contact us to prioritize). Expected "
+                            + expectedType
+                            + " but actually encountered "
+                            + actualType
+                );
+            }
+        }
+        if (expectedType.isUnionType()) {
+            throw new InvalidInstanceException("Union types are not supported at this point.");
         }
     }
 

@@ -246,17 +246,4 @@ public class DataFrameUtils {
             }
         }
     }
-
-    public static boolean isUserTypeApplicable(
-            DataType userSchemaColumnDataType,
-            DataType columnDataType
-    ) {
-        return userSchemaColumnDataType.equals(columnDataType)
-            ||
-            (userSchemaColumnDataType.equals(ItemParser.decimalType) && columnDataType.equals(DataTypes.LongType))
-            ||
-            (userSchemaColumnDataType.equals(DataTypes.DoubleType) && columnDataType.equals(DataTypes.FloatType))
-            ||
-            (userSchemaColumnDataType.equals(DataTypes.IntegerType) && columnDataType.equals(DataTypes.ShortType));
-    }
 }
