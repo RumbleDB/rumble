@@ -470,7 +470,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             throw pe;
         }
         Name name = parseName(ctx.qname(), false, true);
-        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem);
+        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
         return new TypeDeclaration(
                 type,
                 createMetadataFromContext(ctx)
@@ -1362,8 +1362,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         try {
             arity = Integer.parseInt(ctx.arity.getText());
         } catch (NumberFormatException e) {
-            throw new RumbleException(
-                    "Parser error: In a named function reference, arity must be an integer."
+            throw new ParsingException(
+                    "Parser error: In a named function reference, arity must be an integer.",
+                    createMetadataFromContext(ctx)
             );
         }
         return new NamedFunctionReferenceExpression(

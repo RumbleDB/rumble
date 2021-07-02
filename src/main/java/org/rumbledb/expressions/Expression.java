@@ -23,6 +23,7 @@ package org.rumbledb.expressions;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 /**
  * An expression is the first-class citizen in JSONiq syntax. Any expression
@@ -70,6 +71,20 @@ public abstract class Expression extends Node {
      */
     public SequenceType getStaticSequenceType() {
         return this.staticSequenceType;
+    }
+
+    /**
+     * Tells whether this expression is guaranteed to return
+     * zero or one item but not more.
+     *
+     * @return true if yes, false otherwise.
+     */
+    public boolean alwaysReturnsAtMostOneItem() {
+        return this.staticSequenceType.getArity().equals(Arity.One)
+            ||
+            this.staticSequenceType.getArity().equals(Arity.OneOrZero)
+            ||
+            this.staticSequenceType.getArity().equals(Arity.Zero);
     }
 
     /**

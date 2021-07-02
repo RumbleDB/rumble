@@ -34,7 +34,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
         RuntimeIterator inputDataIterator = this.children.get(0);
         RuntimeIterator schemaIterator = this.children.get(1);
         Item schemaItem = schemaIterator.materializeFirstItemOrNull(context);
-        ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem);
+        ItemType schemaType = ItemTypeFactory.createItemTypeFromJSoundCompactItem(null, schemaItem, null);
         schemaType.resolve(context, getMetadata());
         try {
 

@@ -42,6 +42,7 @@ public class ExceptionMetadata implements Serializable {
      * @param location the URI of the JSONiq module at which the exception occurred.
      * @param line the line number at which the error occurred.
      * @param column the column number at which the error occurred.
+     * @param code the query code around the error.
      */
     public ExceptionMetadata(String location, int line, int column, String code) {
         this.location = location;
@@ -78,9 +79,9 @@ public class ExceptionMetadata implements Serializable {
     }
 
     /**
-     * Returns the column number.
+     * Returns the the query code around the error.
      *
-     * @return the column number.
+     * @return the the query code around the error.
      */
     public String getCode() {
         return this.code;
