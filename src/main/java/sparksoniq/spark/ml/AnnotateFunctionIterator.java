@@ -9,11 +9,10 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
-
-import sparksoniq.spark.DataFrameUtils;
 
 import java.util.List;
 
@@ -45,24 +44,24 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                 ItemType actualSchemaType = ItemTypeFactory.createItemType(
                     inputDataAsDataFrame.getDataFrame().schema()
                 );
-                DataFrameUtils.validateSchemaItemAgainstDataFrame(
-                    schemaType,
-                    actualSchemaType
-                );
-                return inputDataAsDataFrame;
+                if (actualSchemaType.isSubtypeOf(schemaType)) {
+                    return inputDataAsDataFrame;
+                }
+                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                return ValidateTypeIterator.convertRDDToValidDataFrame(inputDataAsRDDOfItems, schemaType);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
                 return new JSoundDataFrame(
-                        DataFrameUtils.convertItemRDDToDataFrame(rdd, schemaItem),
+                        ValidateTypeIterator.convertItemRDDToDataFrame(rdd, schemaItem),
                         BuiltinTypesCatalogue.objectItem
                 );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
             return new JSoundDataFrame(
-                    DataFrameUtils.convertLocalItemsToDataFrame(items, schemaItem),
+                    ValidateTypeIterator.convertLocalItemsToDataFrame(items, schemaItem),
                     BuiltinTypesCatalogue.objectItem
             );
         } catch (InvalidInstanceException ex) {
