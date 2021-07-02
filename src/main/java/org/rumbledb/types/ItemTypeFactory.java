@@ -18,7 +18,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -53,7 +52,7 @@ public class ItemTypeFactory {
             );
         }
         if (item.isObject()) {
-            Map<String, FieldDescriptor> fields = new TreeMap<>();
+            Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
             for (String key : item.getKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
