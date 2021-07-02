@@ -270,7 +270,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
-                    throw new InvalidInstanceException("Type mismatch, expected " + dataType + " but actual " + item.getDynamicType());
+                    throw new InvalidInstanceException(
+                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
+                    );
                 }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
@@ -288,7 +290,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (dataType instanceof StructType) {
                 if (!item.isObject()) {
-                    throw new InvalidInstanceException("Type mismatch, expected " + dataType + " but actual " + item.getDynamicType());
+                    throw new InvalidInstanceException(
+                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
+                    );
                 }
                 return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }
