@@ -16,6 +16,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
@@ -156,7 +157,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isObjectItemType()) {
             return convertToDataFrameSchema(itemType);
         }
-
         return ItemParser.getDataFrameDataTypeFromItemType(itemType);
     }
 
@@ -255,12 +255,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 fieldDataType
             );
         } catch (InvalidInstanceException ex) {
-            throw new InvalidInstanceException(
+            RumbleException e = new InvalidInstanceException(
                     "Data does not fit to the given schema in field '"
                         + fieldName
                         + "'; "
                         + ex.getJSONiqErrorMessage()
             );
+            e.initCause(ex);
+            throw e;
         }
     }
 
@@ -268,7 +270,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
-                    throw new InvalidInstanceException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException("Type mismatch, expected " + dataType + " but actual " + item.getDynamicType());
                 }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
@@ -286,7 +288,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (dataType instanceof StructType) {
                 if (!item.isObject()) {
-                    throw new InvalidInstanceException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException("Type mismatch, expected " + dataType + " but actual " + item.getDynamicType());
                 }
                 return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }

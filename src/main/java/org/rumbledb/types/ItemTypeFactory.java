@@ -193,7 +193,11 @@ public class ItemTypeFactory {
         } else if (dt.equals(DataTypes.BinaryType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
         } else if (dt instanceof VectorUDT) {
-            return BuiltinTypesCatalogue.arrayItem;
+            VectorUDT vu = (VectorUDT) dt;
+            DataType et = vu.defaultConcreteType();
+            return createArrayTypeWithSparkDataTypeContent(
+                DataTypes.DoubleType
+            );
         }
         throw new OurBadException("DataFrame type unsupported: " + dt);
     }
