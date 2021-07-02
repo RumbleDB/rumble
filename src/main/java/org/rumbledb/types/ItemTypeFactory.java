@@ -18,10 +18,9 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.Collections;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.TreeMap;
 
 public class ItemTypeFactory {
 
@@ -52,7 +51,7 @@ public class ItemTypeFactory {
             );
         }
         if (item.isObject()) {
-            Map<String, FieldDescriptor> fields = new TreeMap<>();
+            Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
             for (String key : item.getKeys()) {
                 Item value = item.getItemByKey(key);
                 boolean required = false;
@@ -121,7 +120,7 @@ public class ItemTypeFactory {
     private static ItemType createItemTypeFromSparkStructType(StructType structType) {
         // TODO : handle type registration
         // TODO : identical anonymous types should be equivalent?
-        Map<String, FieldDescriptor> content = new HashMap<>();
+        Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (StructField field : structType.fields()) {
             DataType filedType = field.dataType();
             ItemType mappedItemType;
@@ -194,7 +193,11 @@ public class ItemTypeFactory {
         } else if (dt.equals(DataTypes.BinaryType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
         } else if (dt instanceof VectorUDT) {
-            return BuiltinTypesCatalogue.arrayItem;
+            VectorUDT vu = (VectorUDT) dt;
+            DataType et = vu.defaultConcreteType();
+            return createArrayTypeWithSparkDataTypeContent(
+                DataTypes.DoubleType
+            );
         }
         throw new OurBadException("DataFrame type unsupported: " + dt);
     }
