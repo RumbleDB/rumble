@@ -19,6 +19,9 @@ public class ItemTypeReference implements ItemType {
     private Name name;
 
     public ItemTypeReference(Name name) {
+        if (name == null) {
+            throw new OurBadException("A type name cannot be null!");
+        }
         this.name = name;
     }
 

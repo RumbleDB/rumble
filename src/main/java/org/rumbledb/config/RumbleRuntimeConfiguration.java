@@ -322,27 +322,78 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     @Override
     public String toString() {
-        String result = "";
-        result += "Master: "
-            + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master")
-            + "\n"
-            +
+        StringBuffer sb = new StringBuffer();
+        sb.append(
+            "App name: "
+                + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.app.name", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Master: "
+                + SparkSessionManager.getInstance().getJavaSparkContext().getConf().get("spark.master", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Driver's memory: "
+                + SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .getConf()
+                    .get("spark.driver.memory", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Number of executors (only applies if running on a cluster): "
+                + SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .getConf()
+                    .get("spark.executor.instances", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Cores per executor (only applies if running on a cluster): "
+                + SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .getConf()
+                    .get("spark.executor.cores", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Memory per executor (only applies if running on a cluster): "
+                + SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .getConf()
+                    .get("spark.executor.memory", "(not set)")
+                + "\n"
+        );
+        sb.append(
+            "Dynamic allocation: "
+                + SparkSessionManager.getInstance()
+                    .getJavaSparkContext()
+                    .getConf()
+                    .get("spark.dynamicAllocation.enabled", "(not set)")
+                + "\n"
+        );
+        sb.append(
             "Item Display Limit: "
-            + getResultSizeCap()
-            + "\n"
-            +
+                + getResultSizeCap()
+                + "\n"
+        );
+        sb.append(
             "Output Path: "
-            + (this.arguments.getOrDefault("output-path", "-"))
-            + "\n"
-            +
+                + (this.arguments.getOrDefault("output-path", "-"))
+                + "\n"
+        );
+        sb.append(
             "Log Path: "
-            + (this.arguments.getOrDefault("log-path", "-"))
-            + "\n"
-            +
+                + (this.arguments.getOrDefault("log-path", "-"))
+                + "\n"
+        );
+        sb.append(
             "Query Path : "
-            + (this.arguments.getOrDefault("query-path", "-"))
-            + "\n";
-        return result;
+                + (this.arguments.getOrDefault("query-path", "-"))
+                + "\n"
+        );
+        return sb.toString();
     }
 
     @Override

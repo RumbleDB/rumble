@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -49,6 +51,9 @@ import org.rumbledb.types.SequenceType;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
+import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -326,4 +331,32 @@ public class FunctionItem implements Item {
             );
         }
     }
+
+    @Override
+    public boolean isEstimator() {
+        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
+    }
+
+    @Override
+    public Estimator<?> getEstimator() {
+        if (!isEstimator()) {
+            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+    }
+
+    @Override
+    public boolean isTransformer() {
+        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+    }
+
+    @Override
+    public Transformer getTransformer() {
+        if (!isTransformer()) {
+            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+    }
+
+
 }

@@ -22,9 +22,11 @@ package org.rumbledb.compiler;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map.Entry;
 
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.InScopeVariable;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -40,6 +42,7 @@ import org.rumbledb.expressions.flowr.GroupByVariableDeclaration;
 import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
+import org.rumbledb.expressions.flowr.ReturnClause;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -48,6 +51,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -93,10 +97,33 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     // region primary
     @Override
     public StaticContext visitVariableReference(VariableReferenceExpression expression, StaticContext argument) {
+        if (expression.alwaysReturnsAtMostOneItem()) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
+        }
         Name variableName = expression.getVariableName();
         ExecutionMode mode = expression.getStaticContext().getVariableStorageMode(variableName);
         if (this.visitorConfig.setUnsetToLocal() && mode.equals(ExecutionMode.UNSET)) {
-            mode = ExecutionMode.LOCAL;
+            if (
+                expression.getStaticSequenceType().getArity().equals(Arity.OneOrMore)
+                    ||
+                    expression.getStaticSequenceType().getArity().equals(Arity.ZeroOrMore)
+            ) {
+                if (expression.getStaticSequenceType().getItemType().isObjectItemType()) {
+                    System.err.println(
+                        "[WARNING] Forcing execution mode of variable "
+                            + expression.getVariableName()
+                            + " to DataFrame based on static object* type."
+                    );
+                    expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                    return argument;
+                }
+            }
+            System.err.println(
+                "[WARNING] Forcing execution mode of variable " + expression.getVariableName() + " to local."
+            );
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+            return argument;
         }
         expression.setHighestExecutionMode(mode);
         return argument;
@@ -172,13 +199,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
         FunctionIdentifier identifier = expression.getFunctionIdentifier();
         if (!BuiltinFunctionCatalogue.exists(identifier)) {
             List<ExecutionMode> modes = new ArrayList<>();
-            if (expression.isPartialApplication()) {
-                for (@SuppressWarnings("unused")
-                Expression parameter : expression.getArguments()) {
-                    modes.add(ExecutionMode.LOCAL);
-                }
-            } else {
-                for (Expression parameter : expression.getArguments()) {
+            for (Expression parameter : expression.getArguments()) {
+                if (parameter == null) {
+                    // This is for a partial application, for ? arguments.
+                    // We do not modify the current mode for this parameter.
+                    modes.add(ExecutionMode.UNSET);
+                } else {
                     modes.add(parameter.getHighestExecutionMode(this.visitorConfig));
                 }
             }
@@ -195,6 +221,34 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     }
     // endregion
 
+    @Override
+    public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
+        System.err.println(expression.getStaticContext());
+        visitDescendants(expression, expression.getStaticContext());
+        if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            expression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isRDD()) {
+            expression.setHighestExecutionMode(ExecutionMode.RDD);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+            return argument;
+        }
+        if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isUnset()) {
+            expression.setHighestExecutionMode(ExecutionMode.UNSET);
+            return argument;
+        }
+        expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
+    }
+
     // region FLWOR
     @Override
     public StaticContext visitFlowrExpression(FlworExpression expression, StaticContext argument) {
@@ -207,7 +261,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
             clause = clause.getNextClause();
         }
-        expression.initHighestExecutionMode(this.visitorConfig);
+        if (expression.alwaysReturnsAtMostOneItem()) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        } else {
+            expression.setHighestExecutionMode(
+                expression.getReturnClause().getHighestExecutionMode(this.visitorConfig)
+            );
+        }
         return argument;
     }
 
@@ -257,6 +317,24 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             }
         }
         clause.initHighestExecutionMode(this.visitorConfig);
+        StaticContext clauseContext = clause.getStaticContext();
+        for (Entry<Name, InScopeVariable> entry : argument.getInScopeVariables().entrySet()) {
+            boolean isKeyVariable = false;
+            for (GroupByVariableDeclaration variable : clause.getGroupVariables()) {
+                if (variable.getExpression() != null) {
+                    if (entry.getKey().equals(variable.getVariableName())) {
+                        isKeyVariable = true;
+                    }
+                }
+            }
+            if (isKeyVariable) {
+                continue;
+            }
+            argument.setVariableStorageMode(
+                entry.getKey(),
+                clauseContext.getVariableStorageMode(entry.getKey())
+            );
+        }
         return argument;
     }
 
@@ -328,6 +406,27 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitProlog(Prolog prolog, StaticContext argument) {
         visitDescendants(prolog, argument);
         prolog.initHighestExecutionMode(this.visitorConfig);
+        return argument;
+    }
+
+    @Override
+    public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
+        visitDescendants(expression, null);
+        if (expression.getSequenceType().getArity().equals(Arity.Zero)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.One)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.OneOrZero)) {
+            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.OneOrMore)) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+        }
+        if (expression.getSequenceType().getArity().equals(Arity.ZeroOrMore)) {
+            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+        }
         return argument;
     }
 

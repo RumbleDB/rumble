@@ -188,6 +188,24 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             Object[] rowColumns = new Object[schema.fields().length];
+            if (itemType != null && itemType.getClosedFacet()) {
+                for (String key : item.getKeys()) {
+                    boolean found = false;
+                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+                        if (key.equals(schema.fields()[fieldIndex].name())) {
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        throw new InvalidInstanceException(
+                                "Unexpected key in closed object type "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key
+                        );
+                    }
+                }
+            }
             for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
                 StructField field = schema.fields()[fieldIndex];
                 String fieldName = field.name();
@@ -210,16 +228,30 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
-        if (fieldDescriptor != null && fieldDescriptor.isRequired() && columnValueItem == null) {
+        Item defaultValue = fieldDescriptor != null ? fieldDescriptor.getDefaultValue() : null;
+        if (
+            fieldDescriptor != null && defaultValue == null && fieldDescriptor.isRequired() && columnValueItem == null
+        ) {
             throw new InvalidInstanceException(
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
         try {
             if (columnValueItem == null) {
+                if (defaultValue != null) {
+                    return getRowColumnFromItemUsingDataType(
+                        defaultValue,
+                        fieldDescriptor.getType(),
+                        fieldDataType
+                    );
+                }
                 return null;
             }
-            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+            return getRowColumnFromItemUsingDataType(
+                columnValueItem,
+                fieldDescriptor != null ? fieldDescriptor.getType() : null,
+                fieldDataType
+            );
         } catch (InvalidInstanceException ex) {
             throw new InvalidInstanceException(
                     "Data does not fit to the given schema in field '"
@@ -230,7 +262,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, ItemType itemType, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
@@ -241,7 +273,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 DataType elementType = ((ArrayType) dataType).elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
                     Item arrayItem = item.getItemAt(i);
-                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
+                        arrayItem,
+                        itemType != null ? itemType.getArrayContentFacet().getType() : null,
+                        elementType
+                    );
                 }
                 return arrayItemsForRow;
             }
@@ -250,7 +286,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 if (!item.isObject()) {
                     throw new InvalidInstanceException("Type mismatch " + dataType);
                 }
-                return ValidateTypeIterator.convertLocalItemToRow(item, null, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
@@ -417,15 +453,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             final String columnName = column.name();
             final DataType columnDataType = column.dataType();
 
-            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
+            boolean columnMatched = false;
+            for (StructField structField : generatedSchema.fields()) {
                 String generatedColumnName = structField.name();
                 if (!generatedColumnName.equals(columnName)) {
-                    return false;
+                    continue;
                 }
 
                 DataType generatedDataType = structField.dataType();
                 if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    return true;
+                    columnMatched = true;
                 }
 
                 throw new InvalidInstanceException(
@@ -438,15 +475,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                             + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
                             + "'"
                 );
-            });
+            }
 
-            if (!columnMatched) {
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "missing type information for '"
-                            + columnName
-                            + "' field."
-                );
+            if (itemType != null && itemType.getClosedFacet()) {
+                if (!columnMatched) {
+                    throw new InvalidInstanceException(
+                            "Unexpected key in closed object type "
+                                + itemType.getIdentifierString()
+                                + " : "
+                                + columnName
+                    );
+                }
             }
         }
 
@@ -495,46 +534,49 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return validate(this.children.get(0).next(), this.itemType);
     }
 
-    private Item validate(Item item, ItemType type) {
-        if (this.itemType.isAtomicItemType()) {
+    private static Item validate(Item item, ItemType itemType) {
+        if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
-                        "Expected atomic item of type " + this.itemType.getIdentifierString()
+                        "Expected an atomic item for type " + itemType.getIdentifierString()
                 );
             }
-            return ItemFactory.getInstance().createUserDefinedItem(item, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(item, itemType);
         }
-        if (this.itemType.isArrayItemType()) {
+        if (itemType.isArrayItemType()) {
             if (!item.isArray()) {
                 throw new InvalidInstanceException(
-                        "Expected array item of type " + this.itemType.getIdentifierString()
+                        "Expected array item for array type " + itemType.getIdentifierString()
                 );
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, this.itemType.getArrayContentFacet().getType()));
+                members.add(validate(member, itemType.getArrayContentFacet().getType()));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
         }
-        if (this.itemType.isObjectItemType()) {
+        if (itemType.isObjectItemType()) {
             if (!item.isObject()) {
                 throw new InvalidInstanceException(
-                        "Expected object item of type " + this.itemType.getIdentifierString()
+                        "Expected an object item for object type "
+                            + itemType.getIdentifierString()
+                            + ", but have "
+                            + item.serialize()
                 );
             }
             List<String> keys = new ArrayList<>();
             List<Item> values = new ArrayList<>();
-            Map<String, FieldDescriptor> facets = this.itemType.getObjectContentFacet();
+            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
                     keys.add(key);
                     values.add(validate(item.getItemByKey(key), facets.get(key).getType()));
                 } else {
-                    if (this.itemType.getClosedFacet()) {
+                    if (itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
                                 "Unexpected key in closed object type + "
-                                    + this.itemType.getIdentifierString()
+                                    + itemType.getIdentifierString()
                                     + " : "
                                     + key
                         );
@@ -553,7 +595,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     if (facets.get(key).isRequired()) {
                         throw new InvalidInstanceException(
                                 "Missing required key in object type + "
-                                    + this.itemType.getIdentifierString()
+                                    + itemType.getIdentifierString()
                                     + " : "
                                     + key
                         );
@@ -562,12 +604,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Item objectItem = ItemFactory.getInstance()
                 .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-            return ItemFactory.getInstance().createUserDefinedItem(objectItem, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
         }
-        if (this.itemType.isFunctionItemType()) {
+        if (itemType.isFunctionItemType()) {
             if (!item.isFunction()) {
                 throw new InvalidInstanceException(
-                        "Expected function item of type " + this.itemType.getIdentifierString()
+                        "Expected function item of type " + itemType.getIdentifierString()
                 );
             }
             return item;

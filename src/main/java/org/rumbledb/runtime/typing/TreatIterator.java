@@ -11,6 +11,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.TreatException;
@@ -155,6 +156,12 @@ public class TreatIterator extends HybridRuntimeIterator {
                         type
                             + " is not expected here. The expected type is "
                             + this.sequenceType,
+                        this.getMetadata()
+                );
+            case InvalidInstance:
+                return new InvalidInstanceException(
+                        "Invalid instance because of arity mismatch. The expected arity is "
+                            + this.sequenceType.getArity(),
                         this.getMetadata()
                 );
             default:
