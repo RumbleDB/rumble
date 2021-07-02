@@ -68,11 +68,13 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (inputDataIterator.isDataFrame()) {
                 JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-                validateItemTypeAgainstDataFrame(
-                    this.itemType,
-                    inputDataAsDataFrame.getDataFrame().schema()
-                );
-                return inputDataAsDataFrame;
+                ItemType actualType = inputDataAsDataFrame.getItemType();
+                if(actualType.isSubtypeOf(this.itemType))
+                {
+                    return inputDataAsDataFrame;
+                }
+                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
@@ -443,65 +445,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-
-    private static void validateItemTypeAgainstDataFrame(
-            ItemType itemType,
-            StructType dataFrameSchema
-    ) {
-        StructType generatedSchema = convertToDataFrameSchema(itemType);
-        for (StructField column : dataFrameSchema.fields()) {
-            final String columnName = column.name();
-            final DataType columnDataType = column.dataType();
-
-            boolean columnMatched = false;
-            for (StructField structField : generatedSchema.fields()) {
-                String generatedColumnName = structField.name();
-                if (!generatedColumnName.equals(columnName)) {
-                    continue;
-                }
-
-                DataType generatedDataType = structField.dataType();
-                if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    columnMatched = true;
-                }
-
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for field '"
-                            + columnName
-                            + "', but found '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
-                            + "'"
-                );
-            }
-
-            if (itemType != null && itemType.getClosedFacet()) {
-                if (!columnMatched) {
-                    throw new InvalidInstanceException(
-                            "Unexpected key in closed object type "
-                                + itemType.getIdentifierString()
-                                + " : "
-                                + columnName
-                    );
-                }
-            }
-        }
-
-        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
-            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
-
-            if (!userColumnMatched) {
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "redundant type information for non-existent field '"
-                            + generatedSchemaColumnName
-                            + "'."
-                );
-            }
-        }
-    }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
