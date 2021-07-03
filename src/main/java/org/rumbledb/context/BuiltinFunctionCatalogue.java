@@ -1456,6 +1456,32 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that resolves IRI reference against an absolute IRI
+     */
+    static final BuiltinFunction resolve_uri1 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "resolve-uri"
+        ),
+        "string?",
+        "anyURI?",
+        ResolveURIFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction resolve_uri2 = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "resolve-uri"
+        ),
+        "string?",
+        "string",
+        "anyURI?",
+        ResolveURIFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that checks whether a string ends with a substring
      */
     static final BuiltinFunction ends_with1 = createBuiltinFunction(
@@ -2497,6 +2523,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(number0.getIdentifier(), number0);
         builtinFunctions.put(number1.getIdentifier(), number1);
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
+        builtinFunctions.put(resolve_uri1.getIdentifier(), resolve_uri1);
+        builtinFunctions.put(resolve_uri2.getIdentifier(), resolve_uri2);
 
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);

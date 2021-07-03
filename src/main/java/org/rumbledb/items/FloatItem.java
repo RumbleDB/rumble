@@ -125,12 +125,11 @@ public class FloatItem implements Item {
             return "-0";
         }
         double abs = Math.abs(this.value);
-        // Mantissa starts from less or equal than 1.0E-7
+        // Mantissa from less or equal than 1.0E-7
         if (abs >= 0.000001 && abs < 1000000) {
             return new BigDecimal(this.value).toString();
-            // return this.castToDecimalValue().stripTrailingZeros().toPlainString();
         }
-        // Force mantissa already from 1.0E6, then let Float.toString take care from 1.0E7
+        // Mantissa already from 1.0E6, then let Float.toString take care of mantissa from 1.0E7
         if (abs >= 1000000 && abs < 10000000) {
             return new DecimalFormat("0.0#######E0").format(this.value);
             // return String.format("%.4E", this.castToDecimalValue().stripTrailingZeros().toPlainString());
