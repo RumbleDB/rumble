@@ -606,15 +606,15 @@ public class BuiltinFunctionCatalogue {
      * function that returns the items of a given sequence
      */
     static final BuiltinFunction unordered = createBuiltinFunction(
-            new Name(
-                    Name.FN_NS,
-                    "fn",
-                    "unorder"
-            ),
-            "item*",
-            "item*",
-            UnorderedFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "unorder"
+        ),
+        "item*",
+        "item*",
+        UnorderedFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
      * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
@@ -1632,14 +1632,14 @@ public class BuiltinFunctionCatalogue {
      * function that returns the value of the default collation property
      */
     static final BuiltinFunction default_collation = createBuiltinFunction(
-            new Name(
-                    Name.FN_NS,
-                    "fn",
-                    "default-collation"
-            ),
-            "string",
-            DefaultCollationFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "default-collation"
+        ),
+        "string",
+        DefaultCollationFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
 
@@ -2174,7 +2174,7 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "item*",
         ArrayMembersFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
      * function that returns the JSON null

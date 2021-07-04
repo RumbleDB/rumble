@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.sequences.general;
 
-import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
