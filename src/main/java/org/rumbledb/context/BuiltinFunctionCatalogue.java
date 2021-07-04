@@ -71,14 +71,7 @@ import org.rumbledb.runtime.functions.sequences.aggregate.SumFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
-import org.rumbledb.runtime.functions.sequences.general.EmptyFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.ExistsFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.HeadFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.InsertBeforeFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.RemoveFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.ReverseFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.SubsequenceFunctionIterator;
-import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.*;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
@@ -610,6 +603,20 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
+     * function that returns the items of a given sequence
+     */
+    static final BuiltinFunction unordered = createBuiltinFunction(
+            new Name(
+                    Name.FN_NS,
+                    "fn",
+                    "unorder"
+            ),
+            "item*",
+            "item*",
+            UnorderedFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
+    /**
      * function that returns a sequence constructed by inserting an item or a sequence of items at a given position
      * within an existing sequence
      */
@@ -756,6 +763,7 @@ public class BuiltinFunctionCatalogue {
         DistinctValuesFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
+
     /**
      * function that returns indices of items that are equal to the search parameter
      */
@@ -2442,6 +2450,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(exists.getIdentifier(), exists);
         builtinFunctions.put(head.getIdentifier(), head);
         builtinFunctions.put(tail.getIdentifier(), tail);
+        builtinFunctions.put(unordered.getIdentifier(), unordered);
         builtinFunctions.put(insert_before.getIdentifier(), insert_before);
         builtinFunctions.put(remove.getIdentifier(), remove);
         builtinFunctions.put(reverse.getIdentifier(), reverse);
@@ -2454,6 +2463,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(distinct_values1.getIdentifier(), distinct_values1);
         builtinFunctions.put(distinct_values2.getIdentifier(), distinct_values2);
+
         builtinFunctions.put(index_of1.getIdentifier(), index_of1);
         builtinFunctions.put(index_of2.getIdentifier(), index_of2);
         builtinFunctions.put(deep_equal1.getIdentifier(), deep_equal1);
