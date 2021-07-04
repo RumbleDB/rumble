@@ -122,6 +122,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 if (item.isString()) {
+                    if (item.getDynamicType().isStaticallyCastableAs(BuiltinTypesCatalogue.intItem)) {
+                        return ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
+                    }
                     return ItemFactory.getInstance()
                         .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
                 }
