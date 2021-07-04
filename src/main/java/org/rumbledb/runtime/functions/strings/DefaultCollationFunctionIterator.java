@@ -14,7 +14,8 @@ public class DefaultCollationFunctionIterator extends AtMostOneItemLocalRuntimeI
     public DefaultCollationFunctionIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata) {
+            ExceptionMetadata iteratorMetadata
+    ) {
         super(children, executionMode, iteratorMetadata);
     }
 
