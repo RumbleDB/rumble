@@ -1629,6 +1629,22 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function that returns the value of the default collation property
+     */
+    static final BuiltinFunction default_collation = createBuiltinFunction(
+            new Name(
+                    Name.FN_NS,
+                    "fn",
+                    "default-collation"
+            ),
+            "string",
+            DefaultCollationFunctionIterator.class,
+            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+
+
+    /**
      * function that that returns the double representation of the input string or number
      */
     static final BuiltinFunction number0 = createBuiltinFunction(
@@ -2530,6 +2546,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(normalize_unicode1.getIdentifier(), normalize_unicode1);
         builtinFunctions.put(normalize_unicode2.getIdentifier(), normalize_unicode2);
         builtinFunctions.put(serialize.getIdentifier(), serialize);
+        builtinFunctions.put(default_collation.getIdentifier(), default_collation);
         builtinFunctions.put(number0.getIdentifier(), number0);
         builtinFunctions.put(number1.getIdentifier(), number1);
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
