@@ -2,6 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.CastException;
@@ -122,11 +123,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 if (item.isString()) {
-                    if (item.getDynamicType().isStaticallyCastableAs(BuiltinTypesCatalogue.intItem)) {
+                    if (StringUtils.isNumeric(item.getStringValue())) {
                         return ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
+                    } else {
+                        return ItemFactory.getInstance()
+                            .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
                     }
-                    return ItemFactory.getInstance()
-                        .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
                 }
                 if (item.isInt()) {
                     return ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
