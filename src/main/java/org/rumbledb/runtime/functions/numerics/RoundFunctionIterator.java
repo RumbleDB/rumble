@@ -79,11 +79,37 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
+                if (precision == 0) {
+                    double dvalue = value.getDoubleValue();
+                    long result = Math.round(dvalue);
+                    if (result != 0) {
+                        return ItemFactory.getInstance().createDoubleItem((double) result);
+                    } else {
+                        if (Math.signum(dvalue) == 1) {
+                            return ItemFactory.getInstance().createDoubleItem(0.0);
+                        } else {
+                            return ItemFactory.getInstance().createDoubleItem(-0.0);
+                        }
+                    }
+                }
                 BigDecimal bd = new BigDecimal(value.getDoubleValue());
                 bd = bd.setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
             }
             if (value.isFloat()) {
+                if (precision == 0) {
+                    float fvalue = value.getFloatValue();
+                    long result = Math.round(fvalue);
+                    if (result != 0) {
+                        ItemFactory.getInstance().createDoubleItem((double) result);
+                    } else {
+                        if (Math.signum(fvalue) == 1) {
+                            return ItemFactory.getInstance().createDoubleItem(0.0);
+                        } else {
+                            return ItemFactory.getInstance().createDoubleItem(-0.0);
+                        }
+                    }
+                }
                 BigDecimal bd = new BigDecimal(value.getFloatValue());
                 bd = bd.setScale(precision, RoundingMode.HALF_UP);
                 return ItemFactory.getInstance().createFloatItem(bd.floatValue());
