@@ -391,7 +391,6 @@ public class StaticContext implements Serializable, KryoSerializable {
         );
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
-            System.err.println("Next loop: " + current);
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
                 if (!this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(

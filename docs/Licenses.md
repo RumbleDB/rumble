@@ -1,6 +1,6 @@
 # Licenses
 
-Rumble uses the following software:
+RumbleDB uses the following software:
 
 - ANTLR v4 Framework - BSD License
 - Apache Commons Text - Apache License

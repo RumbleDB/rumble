@@ -106,7 +106,6 @@ public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIte
                         getMetadata()
                     );
 
-                    System.err.println("Setting " + paramJavaTypeName + " to " + paramValueInJava);
                     try {
                         transformer.set(paramName, paramValueInJava);
                     } catch (NoSuchElementException e) {

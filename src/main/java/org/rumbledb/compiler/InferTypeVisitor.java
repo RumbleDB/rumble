@@ -295,7 +295,7 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
             // we also set variableReference type
             if (variableType == null) {
                 System.err.println(
-                    "pWARNING] Variable reference type was null so we infer it. Please let us know as we would like to look into it."
+                    "[WARNING] Variable reference type was null so we infer it. Please let us know as we would like to look into it."
                 );
                 variableType = SequenceType.ITEM_STAR;
             }

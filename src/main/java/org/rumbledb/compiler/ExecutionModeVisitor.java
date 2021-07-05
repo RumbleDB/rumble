@@ -223,7 +223,6 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     @Override
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
-        System.err.println(expression.getStaticContext());
         visitDescendants(expression, expression.getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
             expression.setHighestExecutionMode(ExecutionMode.RDD);
