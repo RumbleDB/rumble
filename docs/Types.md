@@ -1,12 +1,12 @@
 # User-defined types
 
-Rumble now support user-defined types in a limited fashion.
+RumbleDB now support user-defined types in a limited fashion.
 
 ## JSound Schema Compact syntax
 
-Rumble user-defined types can be defined with the JSound syntax. A tutorial for the JSound syntax can be found [here](https://github.com/ghislainfourny/jsound-tutorial).
+RumbleDB user-defined types can be defined with the JSound syntax. A tutorial for the JSound syntax can be found [here](https://github.com/ghislainfourny/jsound-tutorial).
 
-For now, Rumble only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound. Also, the @ (primary key) and ? (nullable) characters are not supported at this point. The implementation is still experimental and bugs are still expected, which we will appreciate to be informed of.
+For now, RumbleDB only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound. Also, the @ (primary key) and ? (nullable) characters are not supported at this point. The implementation is still experimental and bugs are still expected, which we will appreciate to be informed of.
 
 ## Type declaration
 
@@ -132,7 +132,7 @@ validate type local:my-type* {
 
 ## Extra fields
 
-Extra fields will be rejected. However, the verbose version of JSound supports allowing extra fields (open objects) and will be supported in a future version of Rumble.
+Extra fields will be rejected. However, the verbose version of JSound supports allowing extra fields (open objects) and will be supported in a future version of RumbleDB.
 
 ## Nested arrays
 
@@ -225,10 +225,10 @@ validate type local:my-type* {
 
 ## DataFrames
 
-In fact, Rumble will internally convert the sequence of objects to a Spark DataFrame, leading to faster execution times.
+In fact, RumbleDB will internally convert the sequence of objects to a Spark DataFrame, leading to faster execution times.
 
 In other words, the JSound Compact Schema Syntax is perfect for defining DataFrames schema!
 
 ## What's next?
 
-Once you have validated your data as a dataframe with a user-defined type, you are all set to use the RumbleML Machine Learning library and feed it through ML pipelines!
+Once you have validated your data as a dataframe with a user-defined type, you are all set to use the RumbleDB ML Machine Learning library and feed it through ML pipelines!

@@ -1,6 +1,6 @@
 # Reading data
 
-Rumble is able to read a variety of formats from a variety of file systems.
+RumbleDB is able to read a variety of formats from a variety of file systems.
 
 We support functions to read JSON, JSON Lines, Parquet, CSV, Text and ROOT files from various storage layers such as S3 and HDFS, Azure blob storage. We run most of our tests on Amazon EMR with S3 or HDFS, as well as locally on the local file system, but we welcome feedback on other setups.
 
@@ -69,7 +69,7 @@ where $my-json.property eq "some value"
 return $my-json
 ```
 
-In some cases, JSON Lines files are highly structured, meaning that all objects have the same fields and these fields are associated with values with the same types. In this case, Rumble will be faster navigating such files if you open them with the function structured-json-file().
+In some cases, JSON Lines files are highly structured, meaning that all objects have the same fields and these fields are associated with values with the same types. In this case, RumbleDB will be faster navigating such files if you open them with the function structured-json-file().
 
 structured-json-file() parses one or more json files that follow [JSON-lines](http://jsonlines.org/) format and returns a sequence of objects. This enables better performance with fully structured data and is recommended to use only when such data is available.
 
@@ -85,7 +85,7 @@ return $my-structured-json
 
 ### Text
 
-Text files can be read into a sequence of string items, one string per line. Rumble can open files that have billions or potentially even trillions of lines with the function text-file().
+Text files can be read into a sequence of string items, one string per line. RumbleDB can open files that have billions or potentially even trillions of lines with the function text-file().
 
 text-file() exists in unary and binary. The first parameter specifies the text file (or set of text files) to read and return as a sequence of strings.
 
@@ -106,7 +106,7 @@ Several files or whole directories can be read with the same pattern syntax as i
 
 (Also see examples for json-file for host and port, sets of files and working directory).
 
-There is also a function local-text-file() that reads locally, without parallelism. Rumble can stream through the file efficiently.
+There is also a function local-text-file() that reads locally, without parallelism. RumbleDB can stream through the file efficiently.
 
 
 ```
@@ -118,7 +118,7 @@ count(
 )
 ```
 
-Rumble supports also the W3C-standard functions unparsed-text and unparsed-text-lines. The output of the latter is automatically parallelized as a potentially large sequence of strings.
+RumbleDB supports also the W3C-standard functions unparsed-text and unparsed-text-lines. The output of the latter is automatically parallelized as a potentially large sequence of strings.
 
 
 ```
@@ -230,7 +230,7 @@ return $i
 
 ## Creating your own big sequence
 
-The function parallelize() can be used to create, on the fly, a big sequence of items in such a way that Rumble can spread its querying across cores and machines.
+The function parallelize() can be used to create, on the fly, a big sequence of items in such a way that RumbleDB can spread its querying across cores and machines.
 
 This function behaves like the Spark parallelize() you are familiar with and sends a large sequence to the cluster.
 The rest of the FLWOR expression is then evaluated with Spark transformations on the cluster.
@@ -251,7 +251,7 @@ return $i
 
 ## Supported file systems
 
-As a general rule of thumb, Rumble can read from any file system that Spark can read from. The file system is inferred from the scheme used in the path used in any of the functions described above.
+As a general rule of thumb, RumbleDB can read from any file system that Spark can read from. The file system is inferred from the scheme used in the path used in any of the functions described above.
 
 Note that the scheme is optional, in which case the default file system as configured in Hadoop and Spark is used.
 A relative path can also be provided, in which case the working directory (including its file system) as configured is used.

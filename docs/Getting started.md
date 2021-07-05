@@ -43,16 +43,15 @@ Create, in the same directory as Rumble to keep it simple, a file data.json and 
 
 In a shell, from the directory where the rumble .jar lies, type, all on one line:
 
-    spark-submit spark-rumble-1.12.0.jar --shell yes
+    spark-submit rumbledb-1.14.0.jar --shell yes
                  
-The Rumble shell appears:
+The RumbleDB shell appears:
 
-        ____                  __    __   
-       / __ \__  ______ ___  / /_  / /__ 
-      / /_/ / / / / __ `__ \/ __ \/ / _ \  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/  1.12.0 "Ashoka Tree" beta
-    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/
-    
+        ____                  __    __     ____  ____ 
+       / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
+      / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.14.0 "Acacia" beta
+    /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
     
     Master: local[*]
     Item Display Limit: 200
@@ -91,7 +90,7 @@ Data can be filtered with the where clause. Again, below the hood, a Spark trans
     where $i.quantity gt 99
     return $i
     
-Rumble also supports grouping and aggregation, like so:
+RumbleDB also supports grouping and aggregation, like so:
 
     for $i in json-file("data.json", 10)
     let $quantity := $i.quantity
@@ -99,7 +98,7 @@ Rumble also supports grouping and aggregation, like so:
     return { "product" : $product, "total-quantity" : sum($quantity) }
     
 
-Rumble also supports ordering. Note that clauses (where, let, group by, order by) can appear in any order.
+RumbleDB also supports ordering. Note that clauses (where, let, group by, order by) can appear in any order.
 The only constraint is that the first clause should be a for or a let clause.
 
     for $i in json-file("data.json", 10)
@@ -109,7 +108,7 @@ The only constraint is that the first clause should be a for or a let clause.
     order by $sum descending
     return { "product" : $product, "total-quantity" : $sum }
 
-Finally, Rumble can also parallelize data provided within the query, exactly like Sparks' parallelize() creation:
+Finally, RumbleDB can also parallelize data provided within the query, exactly like Sparks' parallelize() creation:
 
     for $i in parallelize((
      { "product" : "broiler", "store number" : 1, "quantity" : 20  },
@@ -135,8 +134,8 @@ Mind the double parenthesis, as parallelize is a unary function to which we pass
 Further steps could involve:
 
 - Learning JSONiq. More details can be found in the JSONiq section of this documentation and in the [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html) and [tutorials](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb).
-- Storing some data on S3, creating a Spark cluster on Amazon EMR (or Azure blob storage and Azure, etc), and querying the data with Rumble. More details are found in the cluster section of this documentation.
-- Using Rumble with Jupyter notebooks. For this, you can run Rumble as a server with a simple command, and get started by downloading the main JSONiq tutorial as a Jupyter notebook and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation. Jupyter notebooks work both locally and on a cluster.
-- Write JSONiq code, and share it on the Web, as others can import it from HTTP in just one line from within their queries (no package publication or installation required) or specify an HTTP URL as an input query to Rumble!
+- Storing some data on S3, creating a Spark cluster on Amazon EMR (or Azure blob storage and Azure, etc), and querying the data with RumbleDB. More details are found in the cluster section of this documentation.
+- Using RumbleDB with Jupyter notebooks. For this, you can run RumbleDB as a server with a simple command, and get started by downloading the main JSONiq tutorial as a Jupyter notebook and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation. Jupyter notebooks work both locally and on a cluster.
+- Write JSONiq code, and share it on the Web, as others can import it from HTTP in just one line from within their queries (no package publication or installation required) or specify an HTTP URL as an input query to RumbleDB!
 
 
