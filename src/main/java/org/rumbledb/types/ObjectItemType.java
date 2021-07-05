@@ -244,7 +244,6 @@ public class ObjectItemType implements ItemType {
     public boolean isResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
-                System.err.println("Unresolved: " + entry.getValue().getType().getClass().getCanonicalName());
                 return false;
             }
         }

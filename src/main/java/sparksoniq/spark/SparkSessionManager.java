@@ -93,7 +93,7 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
-                System.err.println("No app name specified");
+                System.err.println("[WARNING] No app name specified (you can do so with --conf spark.app.name=your_name). Setting to " + APP_NAME);
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product

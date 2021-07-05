@@ -463,8 +463,7 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         System.err.println(
-            "[INFO] Rumble was able to optimize a join to a native SQL query: "
-                + nativeQuery.getResultingQuery()
+            "[INFO] Rumble was able to optimize a join to a native SQL query."
         );
         leftInputTuple.createOrReplaceTempView("left");
         rightInputTuple.createOrReplaceTempView("right");
