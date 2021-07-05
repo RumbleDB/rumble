@@ -764,7 +764,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         System.out.println(
-            "[INFO] Rumble was able to optimize a let clause to a native SQL query: " + nativeQuery.getResultingQuery()
+            "[INFO] Rumble was able to optimize a let clause to a native SQL query."
         );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         dataFrame.createOrReplaceTempView("input");
