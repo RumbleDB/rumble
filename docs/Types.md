@@ -130,6 +130,24 @@ validate type local:my-type* {
 }
 ```
 
+Or you can provide a default value with the equal sign:
+
+```
+declare type local:my-type as {
+  "foo" : "string=foobar",
+  "!bar" : "integer"
+};
+
+validate type local:my-type* {
+  { "foo" : "this is a string", "bar" : 42 },
+  { "bar" : 1 },
+  { "foo" : "this is yet another string", "bar" : 2 },
+  { "foo" : "this is a string", "bar" : 1234 },
+  { "foo" : "this is a string", "bar" : 42345 },
+  { "foo" : "this is a string", "bar" : 42 }
+}
+```
+
 ## Extra fields
 
 Extra fields will be rejected. However, the verbose version of JSound supports allowing extra fields (open objects) and will be supported in a future version of RumbleDB.
