@@ -25,10 +25,10 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.github.rumbledb</groupId>
-    <artifactId>spark-rumble</artifactId>
-    <version>1.12.0</version>
+    <artifactId>rumbledb</artifactId>
+    <version>1.14.0</version>
     <packaging>jar</packaging>
-    <name>Rumble</name>
+    <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>
     <url>http://rumbledb.org/</url>
     <properties>

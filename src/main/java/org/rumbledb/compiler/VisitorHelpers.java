@@ -341,7 +341,7 @@ public class VisitorHelpers {
         }
         if (module.numberOfUnsetExecutionModes() > 0) {
             System.err.println(
-                "Warning! Some execution modes could not be set. The query may still work, but we would welcome a bug report."
+                "[WARNING] Some execution modes could not be set. The query may still work, but we would welcome a bug report."
             );
         }
 

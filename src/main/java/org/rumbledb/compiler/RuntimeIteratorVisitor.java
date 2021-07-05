@@ -851,7 +851,7 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
         RuntimeIterator resultIterator = new TreatIterator(
                 runtimeIterator,
                 new SequenceType(BuiltinTypesCatalogue.item, expression.getSequenceType().getArity()),
-                ErrorCode.UnexpectedTypeErrorCode,
+                ErrorCode.InvalidInstance,
                 expression.getHighestExecutionMode(this.visitorConfig),
                 expression.getMetadata()
         );
