@@ -1,6 +1,6 @@
 # User-defined types
 
-RumbleDB now support user-defined types in a limited fashion.
+RumbleDB now supports user-defined types in a limited fashion.
 
 ## JSound Schema Compact syntax
 
