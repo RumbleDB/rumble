@@ -24,8 +24,6 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,6 +31,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.runtime.flwor.FLWORDataFrame;
 import org.rumbledb.runtime.flwor.clauses.ForClauseSparkIterator;
 import org.rumbledb.runtime.flwor.clauses.LetClauseSparkIterator;
 
@@ -146,7 +145,7 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
      * @param context the dynamic context in which the evaluate the child clause's dataframe.
      * @return the DataFrame with the tuples returned by the child clause.
      */
-    public abstract Dataset<Row> getDataFrame(
+    public abstract FLWORDataFrame getDataFrame(
             DynamicContext context
     );
 

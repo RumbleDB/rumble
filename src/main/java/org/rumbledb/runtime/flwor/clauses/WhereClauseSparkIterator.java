@@ -35,6 +35,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FLWORDataFrame;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
@@ -144,7 +145,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(
+    public FLWORDataFrame getDataFrame(
             DynamicContext context
     ) {
         if (this.child == null) {
@@ -158,12 +159,13 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
-        Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
+        FLWORDataFrame dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
         if (dataFrameIfJoinPossible != null) {
             return dataFrameIfJoinPossible;
         }
 
-        Dataset<Row> df = this.child.getDataFrame(context);
+        FLWORDataFrame fdf = this.child.getDataFrame(context);
+        Dataset<Row> df = fdf.getDataFrame();
         StructType inputSchema = df.schema();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
@@ -173,7 +175,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             context
         );
         if (nativeQueryResult != null) {
-            return nativeQueryResult;
+            return new FLWORDataFrame(nativeQueryResult, fdf.getSchema());
         }
 
         // was not possible, we use let udf
@@ -202,10 +204,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
-        return df;
+        return new FLWORDataFrame(df, fdf.getSchema());
     }
 
-    private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
+    private FLWORDataFrame getDataFrameIfJoinPossible(DynamicContext context) {
         if (this.evaluationDepthLimit >= 0) {
             return null;
         }
@@ -272,7 +274,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         try {
-            Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
+            FLWORDataFrame leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
             Set<Name> leftVariables = getSubtreeBeyondLimit(limit).getOutputTupleVariableNames();
             this.setEvaluationDepthLimit(limit);
             Map<Name, VariableDependency> temporaryInputProjection = new HashMap<>(this.inputTupleProjection);
@@ -280,7 +282,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 temporaryInputProjection.remove(key);
             }
             this.child.setInputAndOutputTupleVariableDependencies(temporaryInputProjection);
-            Dataset<Row> rightTuples = this.child.getDataFrame(context);
+            FLWORDataFrame rightTuples = this.child.getDataFrame(context);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
 
             Set<Name> rightVariables = this.child.getOutputTupleVariableNames();
@@ -289,7 +291,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // leftTuples.show();
             // rightTuples.show();
 
-            Dataset<Row> result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
+            FLWORDataFrame result = JoinClauseSparkIterator.joinInputTupleWithSequenceOnPredicate(
                 context,
                 leftTuples,
                 rightTuples,
