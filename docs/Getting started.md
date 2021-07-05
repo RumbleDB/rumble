@@ -4,30 +4,30 @@
 
 ### Install Spark
 
-Rumble requires a Spark installation on Linux, Mac or Windows.
+RumbleDB requires a Spark installation on Linux, Mac or Windows.
 
 Users who love the command line can install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu).
 
 However, it is also straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it, and add the subdirectory "bin" within the unpacked directory to the PATH variable, as well as the location of the unpacked directory to SPARK_HOME.
 
-We recommend installing either Spark 2.4.7, or Spark 3.0.2 (we provide a Rumble jar for each one of these, the default is Spark 3).
+We recommend installing either Spark 2.4.7, or Spark 3.0.2 (we provide a RumbleDB jar for each one of these, the default is Spark 3).
 
 You can test that Spark was correctly installed with:
 
     spark-submit --version
     
-Another important comment: if you use Spark 2.4.x, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8. Spark 3.0.2 is documented to work with both Java 8 and Java 11, even though we have not tried Java 11 yet. If there is an issue with the Java version, Rumble will inform you with an appropriate error message. You can check the version that is configured with:
+Another important comment: if you use Spark 2.4.x, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8. Spark 3.0.2 is documented to work with both Java 8 and Java 11, even though we have not tried Java 11 yet. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the version that is configured with:
 
     java -version
 
 
-### Download Rumble
+### Download RumbleDB
 
-Rumble is just a download with no installation. In order to run Rumble, you simply need to download the .jar file from the [download page](https://github.com/Sparksoniq/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3.0.2, you can use the default jar. If you use Spark 2.4.x, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
+RumbleDB is just a download with no installation. In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3.0.2, you can use the default jar. If you use Spark 2.4.x, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
 
 ### Create some data set
 
-Create, in the same directory as Rumble to keep it simple, a file data.json and put the following content inside. This is a small list of JSON objects in the JSON Lines format.
+Create, in the same directory as RumbleDB to keep it simple, a file data.json and put the following content inside. This is a small list of JSON objects in the JSON Lines format.
 
     { "product" : "broiler", "store number" : 1, "quantity" : 20  }
     { "product" : "toaster", "store number" : 2, "quantity" : 100 }
@@ -41,7 +41,7 @@ Create, in the same directory as Rumble to keep it simple, a file data.json and 
 
 ## Running simple queries locally
 
-In a shell, from the directory where the rumble .jar lies, type, all on one line:
+In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
     spark-submit rumbledb-1.14.0.jar --shell yes
                  

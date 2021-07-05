@@ -46,7 +46,7 @@ import java.util.stream.Collectors;
 
 public class RumbleJLineShell {
     private static final String EXIT_COMMAND = "exit";
-    private static final String PROMPT = ANSIColor.CYAN + "rumble$ " + ANSIColor.RESET;
+    private static final String PROMPT = ANSIColor.CYAN + "RumbleDB$ " + ANSIColor.RESET;
     private static final String MID_QUERY_PROMPT = ">>> ";
     private final boolean printTime;
     private final RumbleRuntimeConfiguration configuration;
