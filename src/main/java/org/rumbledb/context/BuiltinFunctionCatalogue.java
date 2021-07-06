@@ -2174,7 +2174,7 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "item*",
         ArrayMembersFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
     );
     /**
      * function that returns the JSON null
