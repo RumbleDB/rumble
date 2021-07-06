@@ -1490,6 +1490,19 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that returns the value of the Static Base URI property from the static context.
+     */
+    static final BuiltinFunction static_base_uri = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "static-base-uri"
+        ),
+        "anyURI?",
+        StaticBaseURIFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that checks whether a string ends with a substring
      */
     static final BuiltinFunction ends_with1 = createBuiltinFunction(
@@ -2552,6 +2565,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
         builtinFunctions.put(resolve_uri1.getIdentifier(), resolve_uri1);
         builtinFunctions.put(resolve_uri2.getIdentifier(), resolve_uri2);
+        builtinFunctions.put(static_base_uri.getIdentifier(), static_base_uri);
 
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);

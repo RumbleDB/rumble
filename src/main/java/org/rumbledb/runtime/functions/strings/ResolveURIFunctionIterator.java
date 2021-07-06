@@ -27,7 +27,6 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        // StaticContext sc = this.children.get(0).sta
         Item relative = this.children.get(0).materializeFirstItemOrNull(context);
         if (relative == null) {
             return null;
@@ -36,8 +35,7 @@ public class ResolveURIFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (this.children.size() == 2) {
             base = this.children.get(1).materializeFirstItemOrNull(context);
         } else {
-            // Item base = fn-static-context
-            base = null;
+            base = ItemFactory.getInstance().createAnyURIItem(this.staticURI.toString());
         }
         if (base == null) {
             return null;
