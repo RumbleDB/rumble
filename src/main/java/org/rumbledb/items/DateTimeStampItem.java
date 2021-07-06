@@ -5,10 +5,6 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.joda.time.DateTime;
 import org.joda.time.DateTimeZone;
-import org.joda.time.format.DateTimeFormatter;
-import org.joda.time.format.DateTimeFormatterBuilder;
-import org.joda.time.format.DateTimeParser;
-import org.joda.time.format.ISODateTimeFormat;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
@@ -18,7 +14,6 @@ import org.rumbledb.types.ItemType;
 
 import java.util.regex.Pattern;
 
-import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
 public class DateTimeStampItem implements Item {
 
@@ -62,7 +57,10 @@ public class DateTimeStampItem implements Item {
     DateTimeStampItem(DateTime value, boolean checkTimezone) {
         super();
         if (checkTimezone) {
-            this.value = parseDateTimeStamp(this.value.toString(), BuiltinTypesCatalogue.dateTimeStampItem);
+            this.value = DateTimeItem.parseDateTimeStamp(
+                this.value.toString(),
+                BuiltinTypesCatalogue.dateTimeStampItem
+            );
         } else {
             this.value = value;
         }
@@ -70,7 +68,7 @@ public class DateTimeStampItem implements Item {
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
+        this.value = DateTimeItem.parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
@@ -152,44 +150,6 @@ public class DateTimeStampItem implements Item {
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeStampFormatter(ItemType dateTimeStampType) {
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateItem)) {
-            DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
-                ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
-            ).toParser();
-            return (new DateTimeFormatterBuilder()).append(dateElementParser())
-                .appendOptional(dtParser)
-                .toFormatter()
-                .withOffsetParsed();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return ISODateTimeFormat.timeParser().withOffsetParsed();
-        }
-        throw new IllegalArgumentException();
-    }
-
-    private static boolean checkInvalidDateTimeFormat(String dateTimeStamp, ItemType dateTimeStampType) {
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return dateTimeStampPattern.matcher(dateTimeStamp).matches();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return dateTimePattern.matcher(dateTimeStamp).matches();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateItem)) {
-            return datePattern.matcher(dateTimeStamp).matches();
-        }
-        if (dateTimeStampType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return timePattern.matcher(dateTimeStamp).matches();
-        }
-        return false;
-    }
-
     private static String fixEndOfDay(String dateTimeStamp) {
         String endOfDay = "24:00:00";
         String startOfDay = "00:00:00";
@@ -224,11 +184,11 @@ public class DateTimeStampItem implements Item {
 
     static DateTime parseDateTimeStamp(String dateTimeStamp, ItemType dateTimeStampType)
             throws IllegalArgumentException {
-        if (!checkInvalidDateTimeFormat(dateTimeStamp, dateTimeStampType)) {
+        if (!DateTimeItem.checkInvalidDateTimeFormat(dateTimeStamp, dateTimeStampType)) {
             throw new IllegalArgumentException();
         }
         dateTimeStamp = fixEndOfDay(dateTimeStamp);
-        return DateTime.parse(dateTimeStamp, getDateTimeStampFormatter(dateTimeStampType));
+        return DateTime.parse(dateTimeStamp, DateTimeItem.getDateTimeFormatter(dateTimeStampType));
     }
 
     @Override

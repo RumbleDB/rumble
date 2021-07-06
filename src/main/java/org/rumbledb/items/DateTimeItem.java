@@ -153,7 +153,10 @@ public class DateTimeItem implements Item {
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+    static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+        }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
@@ -172,7 +175,10 @@ public class DateTimeItem implements Item {
         throw new IllegalArgumentException();
     }
 
-    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+    static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return dateTimePattern.matcher(dateTime).matches();
+        }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
         }
