@@ -57,7 +57,7 @@ public class DateTimeStampItem implements Item {
     DateTimeStampItem(DateTime value, boolean checkTimezone) {
         super();
         if (checkTimezone) {
-            this.value = DateTimeItem.parseDateTimeStamp(
+            this.value = DateTimeItem.parseDateTime(
                 this.value.toString(),
                 BuiltinTypesCatalogue.dateTimeStampItem
             );
@@ -68,7 +68,7 @@ public class DateTimeStampItem implements Item {
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = DateTimeItem.parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
