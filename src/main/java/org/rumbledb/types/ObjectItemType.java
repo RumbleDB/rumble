@@ -128,7 +128,7 @@ public class ObjectItemType implements ItemType {
             return this.content;
         } else {
             // recursively get content facet, overriding new descriptors
-            Map<String, FieldDescriptor> map = new HashMap<>(this.baseType.getObjectContentFacet());
+            Map<String, FieldDescriptor> map = new LinkedHashMap<>(this.baseType.getObjectContentFacet());
             map.putAll(this.content);
             return map;
         }
@@ -254,9 +254,7 @@ public class ObjectItemType implements ItemType {
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isResolved()) {
-                entry.getValue().getType().resolve(context, metadata);
-            }
+            entry.getValue().resolve(context, metadata);
         }
     }
 

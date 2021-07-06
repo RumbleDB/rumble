@@ -2,6 +2,7 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
@@ -11,11 +12,14 @@ import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
@@ -24,13 +28,11 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 
-import sparksoniq.spark.DataFrameUtils;
 import sparksoniq.spark.SparkSessionManager;
 
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -68,11 +70,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (inputDataIterator.isDataFrame()) {
                 JSoundDataFrame inputDataAsDataFrame = inputDataIterator.getDataFrame(context);
-                validateItemTypeAgainstDataFrame(
-                    this.itemType,
-                    inputDataAsDataFrame.getDataFrame().schema()
-                );
-                return inputDataAsDataFrame;
+                ItemType actualType = inputDataAsDataFrame.getItemType();
+                if (actualType.isSubtypeOf(this.itemType)) {
+                    return inputDataAsDataFrame;
+                }
+                JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
@@ -92,7 +95,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         }
     }
 
-    private static JSoundDataFrame convertRDDToValidDataFrame(
+    public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
             ItemType itemType
     ) {
@@ -154,11 +157,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (itemType.isObjectItemType()) {
             return convertToDataFrameSchema(itemType);
         }
-
         return ItemParser.getDataFrameDataTypeFromItemType(itemType);
     }
 
-    private static JSoundDataFrame convertLocalItemsToDataFrame(
+    public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
             ItemType itemType
     ) {
@@ -188,6 +190,24 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 );
             }
             Object[] rowColumns = new Object[schema.fields().length];
+            if (itemType != null && itemType.getClosedFacet()) {
+                for (String key : item.getKeys()) {
+                    boolean found = false;
+                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+                        if (key.equals(schema.fields()[fieldIndex].name())) {
+                            found = true;
+                        }
+                    }
+                    if (!found) {
+                        throw new InvalidInstanceException(
+                                "Unexpected key in closed object type "
+                                    + itemType.getIdentifierString()
+                                    + " : "
+                                    + key
+                        );
+                    }
+                }
+            }
             for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
                 StructField field = schema.fields()[fieldIndex];
                 String fieldName = field.name();
@@ -210,47 +230,71 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
-        if (fieldDescriptor != null && fieldDescriptor.isRequired() && columnValueItem == null) {
+        Item defaultValue = fieldDescriptor != null ? fieldDescriptor.getDefaultValue() : null;
+        if (
+            fieldDescriptor != null && defaultValue == null && fieldDescriptor.isRequired() && columnValueItem == null
+        ) {
             throw new InvalidInstanceException(
                     "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
             );
         }
         try {
             if (columnValueItem == null) {
+                if (defaultValue != null) {
+                    return getRowColumnFromItemUsingDataType(
+                        defaultValue,
+                        fieldDescriptor.getType(),
+                        fieldDataType
+                    );
+                }
                 return null;
             }
-            return getRowColumnFromItemUsingDataType(columnValueItem, fieldDataType);
+            return getRowColumnFromItemUsingDataType(
+                columnValueItem,
+                fieldDescriptor != null ? fieldDescriptor.getType() : null,
+                fieldDataType
+            );
         } catch (InvalidInstanceException ex) {
-            throw new InvalidInstanceException(
+            RumbleException e = new InvalidInstanceException(
                     "Data does not fit to the given schema in field '"
                         + fieldName
                         + "'; "
                         + ex.getJSONiqErrorMessage()
             );
+            e.initCause(ex);
+            throw e;
         }
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, ItemType itemType, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
                 if (!item.isArray()) {
-                    throw new InvalidInstanceException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException(
+                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
+                    );
                 }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
                 DataType elementType = ((ArrayType) dataType).elementType();
                 for (int i = 0; i < arrayItems.size(); i++) {
                     Item arrayItem = item.getItemAt(i);
-                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(arrayItem, elementType);
+                    arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
+                        arrayItem,
+                        itemType != null ? itemType.getArrayContentFacet().getType() : null,
+                        elementType
+                    );
                 }
                 return arrayItemsForRow;
             }
 
             if (dataType instanceof StructType) {
                 if (!item.isObject()) {
-                    throw new InvalidInstanceException("Type mismatch " + dataType);
+                    throw new InvalidInstanceException(
+                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
+                    );
                 }
-                return ValidateTypeIterator.convertLocalItemToRow(item, null, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
@@ -408,62 +452,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
 
-    private static void validateItemTypeAgainstDataFrame(
-            ItemType itemType,
-            StructType dataFrameSchema
-    ) {
-        StructType generatedSchema = convertToDataFrameSchema(itemType);
-        for (StructField column : dataFrameSchema.fields()) {
-            final String columnName = column.name();
-            final DataType columnDataType = column.dataType();
-
-            boolean columnMatched = Arrays.stream(generatedSchema.fields()).anyMatch(structField -> {
-                String generatedColumnName = structField.name();
-                if (!generatedColumnName.equals(columnName)) {
-                    return false;
-                }
-
-                DataType generatedDataType = structField.dataType();
-                if (DataFrameUtils.isUserTypeApplicable(generatedDataType, columnDataType)) {
-                    return true;
-                }
-
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "expected '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(columnDataType)
-                            + "' type for field '"
-                            + columnName
-                            + "', but found '"
-                            + ItemParser.getItemTypeNameFromDataFrameDataType(generatedDataType)
-                            + "'"
-                );
-            });
-
-            if (!columnMatched) {
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "missing type information for '"
-                            + columnName
-                            + "' field."
-                );
-            }
-        }
-
-        for (String generatedSchemaColumnName : generatedSchema.fieldNames()) {
-            boolean userColumnMatched = Arrays.asList(dataFrameSchema.fieldNames()).contains(generatedSchemaColumnName);
-
-            if (!userColumnMatched) {
-                throw new InvalidInstanceException(
-                        "Fields defined in schema must fully match the fields of input data: "
-                            + "redundant type information for non-existent field '"
-                            + generatedSchemaColumnName
-                            + "'."
-                );
-            }
-        }
-    }
-
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
@@ -495,46 +483,49 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return validate(this.children.get(0).next(), this.itemType);
     }
 
-    private Item validate(Item item, ItemType type) {
-        if (this.itemType.isAtomicItemType()) {
+    private static Item validate(Item item, ItemType itemType) {
+        if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
-                        "Expected atomic item of type " + this.itemType.getIdentifierString()
+                        "Expected an atomic item for type " + itemType.getIdentifierString()
                 );
             }
-            return ItemFactory.getInstance().createUserDefinedItem(item, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(item, itemType);
         }
-        if (this.itemType.isArrayItemType()) {
+        if (itemType.isArrayItemType()) {
             if (!item.isArray()) {
                 throw new InvalidInstanceException(
-                        "Expected array item of type " + this.itemType.getIdentifierString()
+                        "Expected array item for array type " + itemType.getIdentifierString()
                 );
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, this.itemType.getArrayContentFacet().getType()));
+                members.add(validate(member, itemType.getArrayContentFacet().getType()));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
         }
-        if (this.itemType.isObjectItemType()) {
+        if (itemType.isObjectItemType()) {
             if (!item.isObject()) {
                 throw new InvalidInstanceException(
-                        "Expected object item of type " + this.itemType.getIdentifierString()
+                        "Expected an object item for object type "
+                            + itemType.getIdentifierString()
+                            + ", but have "
+                            + item.serialize()
                 );
             }
             List<String> keys = new ArrayList<>();
             List<Item> values = new ArrayList<>();
-            Map<String, FieldDescriptor> facets = this.itemType.getObjectContentFacet();
+            Map<String, FieldDescriptor> facets = itemType.getObjectContentFacet();
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
                     keys.add(key);
                     values.add(validate(item.getItemByKey(key), facets.get(key).getType()));
                 } else {
-                    if (this.itemType.getClosedFacet()) {
+                    if (itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
                                 "Unexpected key in closed object type + "
-                                    + this.itemType.getIdentifierString()
+                                    + itemType.getIdentifierString()
                                     + " : "
                                     + key
                         );
@@ -553,7 +544,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     if (facets.get(key).isRequired()) {
                         throw new InvalidInstanceException(
                                 "Missing required key in object type + "
-                                    + this.itemType.getIdentifierString()
+                                    + itemType.getIdentifierString()
                                     + " : "
                                     + key
                         );
@@ -562,12 +553,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Item objectItem = ItemFactory.getInstance()
                 .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-            return ItemFactory.getInstance().createUserDefinedItem(objectItem, this.itemType);
+            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
         }
-        if (this.itemType.isFunctionItemType()) {
+        if (itemType.isFunctionItemType()) {
             if (!item.isFunction()) {
                 throw new InvalidInstanceException(
-                        "Expected function item of type " + this.itemType.getIdentifierString()
+                        "Expected function item of type " + itemType.getIdentifierString()
                 );
             }
             return item;
@@ -575,4 +566,140 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return item;
     }
 
+    public static Dataset<Row> convertItemRDDToDataFrame(
+            JavaRDD<Item> itemRDD,
+            Item schemaItem
+    ) {
+        Item firstDataItem = (Item) itemRDD.take(1).get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        JavaRDD<Row> rowRDD = itemRDD.map(
+            new Function<Item, Row>() {
+                private static final long serialVersionUID = 1L;
+
+                @Override
+                public Row call(Item item) {
+                    return ValidateTypeIterator.convertLocalItemToRow(item, null, schema);
+                }
+            }
+        );
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
+    }
+
+    public static Dataset<Row> convertLocalItemsToDataFrame(
+            List<Item> items,
+            Item schemaItem
+    ) {
+        if (items.size() == 0) {
+            return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+        }
+        ObjectItem firstDataItem = (ObjectItem) items.get(0);
+        validateSchemaAgainstAnItem(schemaItem, firstDataItem);
+        StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
+        List<Row> rows = getRowsFromItemsUsingSchema(items, null, schema);
+        return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
+    }
+
+
+
+    private static List<Row> getRowsFromItemsUsingSchema(List<Item> items, ItemType itemType, StructType schema) {
+        List<Row> rows = new ArrayList<>();
+        for (Item item : items) {
+            Row row = ValidateTypeIterator.convertLocalItemToRow(item, itemType, schema);
+            rows.add(row);
+        }
+        return rows;
+    }
+
+    private static void validateSchemaAgainstAnItem(
+            Item schemaItem,
+            Item dataItem
+    ) {
+        for (String schemaColumn : schemaItem.getKeys()) {
+            if (!dataItem.getKeys().contains(schemaColumn)) {
+                throw new InvalidInstanceException(
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "redundant type information for non-existent field '"
+                            + schemaColumn
+                            + "' column."
+                );
+            }
+        }
+
+        for (String dataColumn : dataItem.getKeys()) {
+            if (!schemaItem.getKeys().contains(dataColumn)) {
+                throw new InvalidInstanceException(
+                        "Fields defined in schema must fully match the fields of input data: "
+                            + "missing type information for '"
+                            + dataColumn
+                            + "' field."
+                );
+            }
+        }
+    }
+
+    private static StructType generateDataFrameSchemaFromSchemaItem(Item schemaItem) {
+        List<StructField> fields = new ArrayList<>();
+        try {
+            for (String columnName : schemaItem.getKeys()) {
+                StructField field = generateStructFieldFromNameAndItem(
+                    columnName,
+                    schemaItem.getItemByKey(columnName)
+                );
+                fields.add(field);
+            }
+        } catch (IllegalArgumentException ex) {
+            InvalidInstanceException e = new InvalidInstanceException(
+                    "Error while applying the schema; " + ex.getMessage()
+            );
+            e.initCause(ex);
+            throw e;
+        }
+        return DataTypes.createStructType(fields);
+    }
+
+    private static StructField generateStructFieldFromNameAndItem(String columnName, Item item) {
+        DataType type = generateDataTypeFromItem(item);
+        return DataTypes.createStructField(columnName, type, true);
+    }
+
+    private static DataType generateDataTypeFromItem(Item item) {
+        if (item.isArray()) {
+            validateArrayItemInSchema(item);
+            Item arrayContentsTypeItem = item.getItemAt(0);
+            DataType arrayContentsType = generateDataTypeFromItem(arrayContentsTypeItem);
+            return DataTypes.createArrayType(arrayContentsType);
+        }
+
+        if (item.isObject()) {
+            return generateDataFrameSchemaFromSchemaItem((ObjectItem) item);
+        }
+
+        if (item.isString()) {
+            ItemType itemType = BuiltinTypesCatalogue.getItemTypeByName(
+                Name.createVariableInDefaultTypeNamespace(item.getStringValue())
+            );
+            return ItemParser.getDataFrameDataTypeFromItemType(itemType);
+        }
+
+        throw new InvalidInstanceException(
+                "Schema can only contain arrays, objects or strings: " + item.serialize() + " is not accepted"
+        );
+    }
+
+    private static void validateArrayItemInSchema(Item item) {
+        List<Item> arrayTypes = item.getItems();
+        if (arrayTypes.size() == 0) {
+            throw new InvalidInstanceException(
+                    "Arrays in schema must define a type for their contents."
+            );
+        }
+        if (arrayTypes.size() > 1) {
+            throw new InvalidInstanceException(
+                    "Arrays in schema can define only a single type for their contents: "
+                        + item.serialize()
+                        + " is invalid."
+            );
+        }
+    }
 }

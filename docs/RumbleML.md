@@ -1,11 +1,11 @@
-# RumbleML
-RumbleML is a Machine Learning library built on top of the Rumble engine that makes it more productive and easier to perform ML tasks thanks to the abstraction layer provided by JSONiq.
+# RumbleDB ML
+RumbleDB ML is a Machine Learning library built on top of the RumbleDB engine that makes it more productive and easier to perform ML tasks thanks to the abstraction layer provided by JSONiq.
 
 The machine learning capabilities are exposed through JSONiq function items. The concepts of "estimator" and "transformer", which are core to Machine Learning, are naturally function items and fit seamlessly in the JSONiq data model.
 
 Training sets, test sets, and validation sets, which contain features and labels, are exposed through JSONiq sequences of object items: the keys of these objects are the features and labels.
 
-The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleML is based on: we chose not to reinvent the wheel.
+The names of the estimators and of the transformers, as well as the functionality they encapsulate, are directly inherited from the [SparkML](https://spark.apache.org/docs/latest/ml-guide.html) library which RumbleDB ML is based on: we chose not to reinvent the wheel.
 
 ## Transformers
 
@@ -25,15 +25,23 @@ Estimators abstract the concept of a Machine Learning algorithm or any algorithm
 
 ## Parameters
 
-Transformers and estimators are function items in the Rumble Data Model. Their first argument is the sequence of objects that represents, for example, the training set or test set. Parameters can be provided as their second argument. This second argument is expected to be an object item. The machine learning parameters form the fields of the said object item as key-value pairs.
+Transformers and estimators are function items in the RumbleDB Data Model. Their first argument is the sequence of objects that represents, for example, the training set or test set. Parameters can be provided as their second argument. This second argument is expected to be an object item. The machine learning parameters form the fields of the said object item as key-value pairs.
 
 ## Type Annotations
 
+<<<<<<< HEAD
 RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. It is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly.
 
 Rumble supports a user-defined type system with which you can validate and annotate datasets against a JSound schema.
 
 This annotation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
+=======
+RumbleDB ML works on highly structured data, because it requires full type information for all the fields in the training set or test set. It is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly.
+
+RumbleDB supports a user-defined type system with which you can validate and annotate datasets against a JSound schema.
+
+This annotation is required to be applied on any dataset that must be used as input to RumbleDB ML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
+>>>>>>> ddae27156d839030762872201ae0d5961abc2b16
 
 
 ## Examples
@@ -113,8 +121,8 @@ return $i
 // { "id" : 5, "col1" : 9.2, "col2" : 9.2, "col3" : 9.2, "prediction" : 1 }
 ```
 
-# RumbleML Functionality Overview:
-## RumbleML - Catalogue of Estimators:
+# RumbleDB ML Functionality Overview:
+## RumblDB eML - Catalogue of Estimators:
 ### [AFTSurvivalRegression](https://spark.apache.org/docs/3.0.0/api/java/org/apache/spark/ml/regression/AFTSurvivalRegression.html)
 #### Parameters:
 ```
@@ -634,7 +642,7 @@ return $i
 - windowSize: integer
 ```
 
-## RumbleML - Catalogue of Transformers:
+## RumbleDB ML - Catalogue of Transformers:
 ### [AFTSurvivalRegressionModel](https://spark.apache.org/docs/3.0.0/api/java/org/apache/spark/ml/regression/AFTSurvivalRegressionModel.html)
 #### Parameters:
 ```
