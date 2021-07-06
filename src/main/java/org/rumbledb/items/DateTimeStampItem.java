@@ -53,13 +53,9 @@ public class DateTimeStampItem implements Item {
         return false;
     }
 
-    public DateTime getValue() {
-        return this.value;
-    }
-
     @Override
     public DateTime getDateTimeValue() {
-        return this.getValue();
+        return this.value;
     }
 
     @Override
@@ -89,26 +85,26 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.getValue().hashCode();
+        return this.value.hashCode();
     }
 
     @Override
     public String serialize() {
-        String value = this.getValue().toString();
-        String zoneString = this.getValue().getZone() == DateTimeZone.UTC
+        String value = this.value.toString();
+        String zoneString = this.value.getZone() == DateTimeZone.UTC
             ? "Z"
-            : this.getValue().getZone().toString().equals(DateTimeZone.getDefault().toString())
+            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
                 ? ""
                 : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - zoneString.length());
-        value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
         return value + zoneString;
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeString(this.getDateTimeValue().getZone().getID());
+        output.writeLong(this.value.getMillis(), true);
+        output.writeString(this.value.getZone().getID());
     }
 
     @Override
