@@ -20,7 +20,7 @@ import java.util.regex.Pattern;
 
 import static org.joda.time.format.ISODateTimeFormat.dateElementParser;
 
-public class DateTimeItem implements Item {
+public class DateTimeStampItem implements Item {
 
     private static final String yearFrag = "((-)?(([1-9]\\d\\d(\\d)+)|(0\\d\\d\\d)))";
     private static final String monthFrag = "((0[1-9])|(1[0-2]))";
@@ -42,34 +42,35 @@ public class DateTimeItem implements Item {
         + "))";
 
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")?";
+    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
     private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
 
     private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
+    private static final Pattern dateTimeStampPattern = Pattern.compile(dateTimeStampLexicalRep);
     private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
     private static final Pattern timePattern = Pattern.compile(timeLexicalRep);
 
 
     private static final long serialVersionUID = 1L;
     private DateTime value;
-    private boolean hasTimeZone = true;
 
-    public DateTimeItem() {
+    public DateTimeStampItem() {
         super();
     }
 
-    DateTimeItem(DateTime value, boolean hasTimeZone) {
+    DateTimeStampItem(DateTime value, boolean checkTimezone) {
         super();
-        this.value = value;
-        this.hasTimeZone = hasTimeZone;
-    }
-
-    DateTimeItem(String dateTimeString) {
-        this.value = parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateTimeItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        if (checkTimezone) {
+            this.value = parseDateTimeStamp(this.value.toString(), BuiltinTypesCatalogue.dateTimeStampItem);
+        } else {
+            this.value = value;
         }
+
+    }
+
+    DateTimeStampItem(String dateTimeStampString) {
+        this.value = parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
@@ -101,17 +102,17 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public boolean hasTimeZone() {
-        return this.hasTimeZone;
-    }
-
-    @Override
     public boolean isDateTime() {
         return true;
     }
 
     @Override
     public boolean hasDateTime() {
+        return true;
+    }
+
+    @Override
+    public boolean hasTimeZone() {
         return true;
     }
 
@@ -135,29 +136,30 @@ public class DateTimeItem implements Item {
                 : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - zoneString.length());
         value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + (this.hasTimeZone ? zoneString : "");
+        return value + zoneString;
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeBoolean(this.hasTimeZone);
         output.writeString(this.getDateTimeValue().getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         Long millis = input.readLong(true);
-        this.hasTimeZone = input.readBoolean();
         DateTimeZone zone = DateTimeZone.forID(input.readString());
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+    private static DateTimeFormatter getDateTimeStampFormatter(ItemType dateTimeStampType) {
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+        }
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateItem)) {
             DateTimeParser dtParser = new DateTimeFormatterBuilder().appendOptional(
                 ((new DateTimeFormatterBuilder()).appendTimeZoneOffset("Z", true, 2, 4).toFormatter()).getParser()
             ).toParser();
@@ -166,68 +168,72 @@ public class DateTimeItem implements Item {
                 .toFormatter()
                 .withOffsetParsed();
         }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.timeItem)) {
             return ISODateTimeFormat.timeParser().withOffsetParsed();
         }
         throw new IllegalArgumentException();
     }
 
-    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
-            return dateTimePattern.matcher(dateTime).matches();
+    private static boolean checkInvalidDateTimeFormat(String dateTimeStamp, ItemType dateTimeStampType) {
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return dateTimeStampPattern.matcher(dateTimeStamp).matches();
         }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.dateItem)) {
-            return datePattern.matcher(dateTime).matches();
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+            return dateTimePattern.matcher(dateTimeStamp).matches();
         }
-        if (dateTimeType.equals(BuiltinTypesCatalogue.timeItem)) {
-            return timePattern.matcher(dateTime).matches();
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.dateItem)) {
+            return datePattern.matcher(dateTimeStamp).matches();
+        }
+        if (dateTimeStampType.equals(BuiltinTypesCatalogue.timeItem)) {
+            return timePattern.matcher(dateTimeStamp).matches();
         }
         return false;
     }
 
-    private static String fixEndOfDay(String dateTime) {
+    private static String fixEndOfDay(String dateTimeStamp) {
         String endOfDay = "24:00:00";
         String startOfDay = "00:00:00";
-        if (dateTime.contains(endOfDay)) {
-            if (dateTime.indexOf(endOfDay) == 0) {
+        if (dateTimeStamp.contains(endOfDay)) {
+            if (dateTimeStamp.indexOf(endOfDay) == 0) {
                 return startOfDay;
             }
-            int indexOfT = dateTime.indexOf('T');
+            int indexOfT = dateTimeStamp.indexOf('T');
             if (
                 indexOfT < 1
-                    || indexOfT != dateTime.indexOf(endOfDay) - 1
-                    || !Character.isDigit(dateTime.charAt(indexOfT - 1))
+                    || indexOfT != dateTimeStamp.indexOf(endOfDay) - 1
+                    || !Character.isDigit(dateTimeStamp.charAt(indexOfT - 1))
             ) {
                 throw new IllegalArgumentException();
             }
             int dayValue;
             try {
-                dayValue = Character.getNumericValue(dateTime.charAt(indexOfT - 1));
+                dayValue = Character.getNumericValue(dateTimeStamp.charAt(indexOfT - 1));
             } catch (Exception e) {
                 throw new IllegalArgumentException();
             }
-            return dateTime.substring(0, indexOfT - 1)
+            return dateTimeStamp.substring(0, indexOfT - 1)
                 +
                 (dayValue + 1)
                 + "T"
                 + startOfDay
                 +
-                dateTime.substring(indexOfT + endOfDay.length() + 1);
+                dateTimeStamp.substring(indexOfT + endOfDay.length() + 1);
         }
-        return dateTime;
+        return dateTimeStamp;
     }
 
-    static DateTime parseDateTime(String dateTime, ItemType dateTimeType) throws IllegalArgumentException {
-        if (!checkInvalidDateTimeFormat(dateTime, dateTimeType)) {
+    static DateTime parseDateTimeStamp(String dateTimeStamp, ItemType dateTimeStampType)
+            throws IllegalArgumentException {
+        if (!checkInvalidDateTimeFormat(dateTimeStamp, dateTimeStampType)) {
             throw new IllegalArgumentException();
         }
-        dateTime = fixEndOfDay(dateTime);
-        return DateTime.parse(dateTime, getDateTimeFormatter(dateTimeType));
+        dateTimeStamp = fixEndOfDay(dateTimeStamp);
+        return DateTime.parse(dateTimeStamp, getDateTimeStampFormatter(dateTimeStampType));
     }
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.dateTimeItem;
+        return BuiltinTypesCatalogue.dateTimeStampItem;
     }
 
     @Override
@@ -235,3 +241,4 @@ public class DateTimeItem implements Item {
         return true;
     }
 }
+
