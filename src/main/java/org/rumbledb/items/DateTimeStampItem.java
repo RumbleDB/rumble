@@ -36,7 +36,7 @@ public class DateTimeStampItem implements Item {
     }
 
     DateTimeStampItem(String dateTimeStampString) {
-        this.value = parseDateTimeStamp(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
+        this.value = DateTimeItem.parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
