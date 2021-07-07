@@ -97,11 +97,6 @@ public class DateTimeItem implements Item {
     }
 
     @Override
-    public String getStringValue() {
-        return this.value.toString();
-    }
-
-    @Override
     public boolean hasTimeZone() {
         return this.hasTimeZone;
     }
