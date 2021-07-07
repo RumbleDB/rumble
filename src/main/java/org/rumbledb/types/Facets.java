@@ -32,7 +32,28 @@ public class Facets {
         return facets;
     }
 
-    private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
+    public static Facets createMinFacets(Item min, boolean isInclusive) {
+        Facets facets = new Facets();
+        if (isInclusive) {
+            facets.setMinInclusive(min);
+        } else {
+            facets.setMinExclusive(min);
+        }
+        return facets;
+    }
+
+    public static Facets createMaxFacets(Item max, boolean isInclusive) {
+        Facets facets = new Facets();
+        if (isInclusive) {
+            facets.setMaxInclusive(max);
+        } else {
+            facets.setMaxExclusive(max);
+        }
+        return facets;
+    }
+
+    private Item minInclusive, maxInclusive;
+    private Item minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
@@ -73,6 +94,7 @@ public class Facets {
     public void setMaxExclusive(Item maxExclusive) {
         this.maxExclusive = maxExclusive;
     }
+
 
     public Integer getMinLength() {
         return this.minLength;

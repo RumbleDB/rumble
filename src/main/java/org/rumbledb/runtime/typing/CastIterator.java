@@ -115,6 +115,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString() && item.getStringValue().trim().equals("null")) {
                     return ItemFactory.getInstance().createNullItem();
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
@@ -145,6 +146,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isFloat()) {
                     return ItemFactory.getInstance().createBooleanItem(item.getFloatValue() != 0);
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.doubleItem)) {
@@ -157,6 +159,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isNumeric()) {
                     return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
                 }
+                return null;
             }
             if (targetType.equals(BuiltinTypesCatalogue.floatItem)) {
                 if (item.isString()) {
@@ -168,6 +171,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isNumeric()) {
                     return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.decimalItem)) {
@@ -181,6 +185,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isNumeric()) {
                     return ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
@@ -194,6 +199,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isNumeric()) {
                     return ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
@@ -207,6 +213,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isNumeric()) {
                     return ItemFactory.getInstance().createIntItem(item.castToIntValue());
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.anyURIItem)) {
@@ -234,53 +241,34 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
                 if (!item.isString() && !item.isNumeric()) {
-                    // If it is not a number, we fail (in this method, this is done with a null as the exception will
-                    // only be thrown if the attempt to cast is made in particular circumstances.
                     return null;
                 }
-
-                // Make sure item is string, then cast to primitive type
-                // Add also if item.isNumeric
                 if (item.isInt()) {
-                    return checkFacetsInteger(item, targetType);
+                    return checkFacetsInt(item, targetType);
                 }
 
+                Item intItem = castItemToType(item, BuiltinTypesCatalogue.intItem, metadata);
+                if (intItem == null) {
+                    return null;
+                }
+                return checkFacetsInt(intItem, targetType);
+            }
+
+            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+                if (!item.isString() && !item.isNumeric()) {
+                    return null;
+                }
                 if (item.isInteger()) {
                     return checkFacetsInteger(item, targetType);
                 }
 
-                if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-                    // If it is not an integer we need to cast it to an integer first (long's primitive type), and then
-                    // annotate.
-                    Item intItem = castItemToType(item, BuiltinTypesCatalogue.intItem, metadata);
-                    if (intItem == null) {
-                        return null;
-                    }
-                    // if (item.isInt()) {
-                    return checkFacetsInt(intItem, targetType);
-                    // }
+                Item integerItem = castItemToType(item, BuiltinTypesCatalogue.integerItem, metadata);
+                if (integerItem == null) {
+                    return null;
                 }
-
-                if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-                    // If it is not an integer we need to cast it to an integer first (long's primitive type), and then
-                    // annotate as long.
-                    Item integerItem = castItemToType(item, BuiltinTypesCatalogue.integerItem, metadata);
-                    if (integerItem == null) {
-                        // xs:positiveInteger("23.4") goes here
-                        return null;
-                    }
-
-                    // if (item.isInteger()) { removed to support casting decimals eg xs:positiveInteger(1.4) gives 1
-                    return checkFacetsInteger(integerItem, targetType);
-                }
-
-                return ItemFactory.getInstance()
-                    .createAnnotatedItem(
-                        item,
-                        targetType
-                    );
+                return checkFacetsInteger(integerItem, targetType);
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
@@ -377,37 +365,34 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static Item checkFacetsInt(Item item, ItemType targetType) {
-        // Use castToInt rather than getInt so it supports String item
-        // compare returns -1 if less, 0 if eq, 1 if greater so <= 0 tests for less or equal
-
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
                 || (targetType.getMaxInclusiveFacet() != null
                     && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
-            // || (targetType.getMinExclusiveFacet() != null && item.getIntValue() <=
-            // targetType.getMinExclusiveFacet().getIntValue())
-            // || (targetType.getMaxExclusiveFacet() != null && item.getIntValue() >=
-            // targetType.getMaxExclusiveFacet().getIntValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
         ) {
             return null;
         }
+
         return ItemFactory.getInstance().createAnnotatedItem(item, targetType);
     }
 
     public static Item checkFacetsInteger(Item item, ItemType targetType) {
-        // Use castToInt rather than getInt so it supports String item
-        // compare returns -1 if less, 0 if eq, 1 if greater so <= 0 tests for less or equal
-
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
                 || (targetType.getMaxInclusiveFacet() != null
                     && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
-            // || (targetType.getMinExclusiveFacet() != null &&
-            // item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
-            // || (targetType.getMaxExclusiveFacet() != null &&
-            // item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
         ) {
             return null;
         }

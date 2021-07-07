@@ -286,9 +286,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
             integerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
+            Facets.createMinFacets(
                 new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("9223372036854775808")),
                 true
             ),
             false,
@@ -299,8 +298,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
             integerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
+            Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("0")),
                 true
             ),
@@ -312,8 +310,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "negativeInteger"),
             nonPositiveIntegerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
+            Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("-1")),
                 true
             ),
@@ -325,9 +322,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "positiveInteger"),
             nonNegativeIntegerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
+            Facets.createMinFacets(
                 new IntegerItem(new BigInteger("1")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
                 true
             ),
             false,
