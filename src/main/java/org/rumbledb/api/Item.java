@@ -316,7 +316,7 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the string value of the item, if it is an atomic type.
+     * Returns the string value of the item, if it is an atomic item.
      *
      * @return the string value.
      */

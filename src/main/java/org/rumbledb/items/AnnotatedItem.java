@@ -113,11 +113,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public boolean isAnnotatedItemType() {
-        return this.itemToAnnotate.isAnnotatedItemType();
-    }
-
-    @Override
     public boolean isDuration() {
         return this.itemToAnnotate.isDuration();
     }
