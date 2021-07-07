@@ -161,15 +161,6 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Tests whether the item is an atomic item of type annotatedItem.
-     *
-     * @return true if it is an atomic item of type annotatedItem, false otherwise.
-     */
-    default boolean isAnnotatedItemType() {
-        return false;
-    }
-
-    /**
      * Tests whether the item is an atomic item of type duration.
      *
      * @return true if it is an atomic item of type duration, false otherwise.
@@ -316,7 +307,7 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the string value of the item, if it is an atomic type.
+     * Returns the string value of the item, if it is an atomic item.
      *
      * @return the string value.
      */
@@ -375,15 +366,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the decimal value as a BigDecimal.
      */
     default BigDecimal getDecimalValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the AnnotatedItem value of the item, if it is a AnnotatedItem.
-     *
-     * @return the AnnotatedItem value.
-     */
-    default long getAnnotatedItemValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
