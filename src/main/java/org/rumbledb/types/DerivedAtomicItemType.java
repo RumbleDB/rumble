@@ -38,58 +38,6 @@ public class DerivedAtomicItemType implements ItemType {
             DataTypes.LongType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("9223372036854775808")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("0")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "negativeInteger"),
-            nonPositiveIntegerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("-1")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "positiveInteger"),
-            nonNegativeIntegerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("1")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
     static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
             Name.createVariableInDefaultTypeNamespace("int"),
             longItem,
@@ -108,58 +56,6 @@ public class DerivedAtomicItemType implements ItemType {
             DataTypes.ShortType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "byte"),
-            intItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
-            false,
-            DataTypes.ByteType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedInt"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("4294967295")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedLong"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("18446744073709551615")),
-                true
-            ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedShort"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedByte"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
 
     private final ItemType baseType, primitiveType;
     private final int typeTreeDepth;

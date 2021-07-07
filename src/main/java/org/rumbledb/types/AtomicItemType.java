@@ -51,7 +51,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.TOTALDIGITS,
                         FacetTypes.FRACTIONDIGITS
                     )
@@ -67,7 +67,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             ),
             DataTypes.DoubleType
@@ -81,7 +81,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             ),
             DataTypes.FloatType
@@ -106,7 +106,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             ),
             DataTypes.BinaryType // TODO : appropriate datatype
@@ -120,7 +120,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             ),
             DataTypes.BinaryType // TODO : appropriate datatype
@@ -134,7 +134,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             ),
             DataTypes.BinaryType // TODO : appropriate datatype
@@ -148,7 +148,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             ),
@@ -163,7 +163,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             ),
@@ -178,7 +178,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             ),
@@ -193,7 +193,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             ),
