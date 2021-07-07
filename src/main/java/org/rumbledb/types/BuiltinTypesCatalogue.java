@@ -154,6 +154,14 @@ public class BuiltinTypesCatalogue {
             ),
             DataTypes.DateType
     );
+    public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            dateTimeItem,
+            AtomicItemType.dateTimeItem,
+            new Facets(),
+            false,
+            DataTypes.DateType
+    );
     public static final ItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(
@@ -316,6 +324,7 @@ public class BuiltinTypesCatalogue {
         yearMonthDurationItem,
         dayTimeDurationItem,
         dateTimeItem,
+        dateTimeStampItem,
         dateItem,
         timeItem,
         hexBinaryItem,

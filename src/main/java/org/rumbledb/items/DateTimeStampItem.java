@@ -12,28 +12,31 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 
-public class DateItem implements Item {
+
+public class DateTimeStampItem implements Item {
 
     private static final long serialVersionUID = 1L;
     private DateTime value;
-    private boolean hasTimeZone = true;
 
-    public DateItem() {
+    public DateTimeStampItem() {
         super();
     }
 
-    DateItem(DateTime value, boolean hasTimeZone) {
+    DateTimeStampItem(DateTime value, boolean checkTimezone) {
         super();
-        this.value = value;
-        this.hasTimeZone = hasTimeZone;
-    }
-
-    DateItem(String dateTimeString) {
-        this.value = DateTimeItem.parseDateTime(dateTimeString, BuiltinTypesCatalogue.dateItem);
-        if (!dateTimeString.endsWith("Z") && this.value.getZone() == DateTimeZone.getDefault()) {
-            this.hasTimeZone = false;
-            this.value = this.value.withZoneRetainFields(DateTimeZone.UTC);
+        if (checkTimezone) {
+            this.value = DateTimeItem.parseDateTime(
+                this.value.toString(),
+                BuiltinTypesCatalogue.dateTimeStampItem
+            );
+        } else {
+            this.value = value;
         }
+
+    }
+
+    DateTimeStampItem(String dateTimeStampString) {
+        this.value = DateTimeItem.parseDateTime(dateTimeStampString, BuiltinTypesCatalogue.dateTimeStampItem);
     }
 
     @Override
@@ -50,10 +53,6 @@ public class DateItem implements Item {
         return false;
     }
 
-    public DateTime getValue() {
-        return this.value;
-    }
-
     @Override
     public DateTime getDateTimeValue() {
         return this.value;
@@ -65,7 +64,7 @@ public class DateItem implements Item {
     }
 
     @Override
-    public boolean isDate() {
+    public boolean isDateTime() {
         return true;
     }
 
@@ -76,7 +75,7 @@ public class DateItem implements Item {
 
     @Override
     public boolean hasTimeZone() {
-        return this.hasTimeZone;
+        return true;
     }
 
     @Override
@@ -86,35 +85,38 @@ public class DateItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.getValue().hashCode();
+        return this.value.hashCode();
     }
 
     @Override
     public String serialize() {
-        String value = this.getValue().toString();
-        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
-        int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
+        String value = this.value.toString();
+        String zoneString = this.value.getZone() == DateTimeZone.UTC
+            ? "Z"
+            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
+                ? ""
+                : value.substring(value.length() - 6);
+        value = value.substring(0, value.length() - zoneString.length());
+        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        return value + zoneString;
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.getDateTimeValue().getMillis(), true);
-        output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.getDateTimeValue().getZone().getID());
+        output.writeLong(this.value.getMillis(), true);
+        output.writeString(this.value.getZone().getID());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         Long millis = input.readLong(true);
-        this.hasTimeZone = input.readBoolean();
         DateTimeZone zone = DateTimeZone.forID(input.readString());
         this.value = new DateTime(millis, zone);
     }
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.dateItem;
+        return BuiltinTypesCatalogue.dateTimeStampItem;
     }
 
     @Override
@@ -122,3 +124,4 @@ public class DateItem implements Item {
         return true;
     }
 }
+
