@@ -24,19 +24,18 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class CountFunctionIterator extends LocalFunctionCallIterator {
+public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     /**
      *
      */
@@ -50,32 +49,26 @@ public class CountFunctionIterator extends LocalFunctionCallIterator {
         super(arguments, executionMode, iteratorMetadata);
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            RuntimeIterator iterator = this.children.get(0);
 
-            // the count($x) case is treated separately because we can short-circuit the
-            // count, e.g., if it comes from the group-by aggregation of a non-grouping
-            // key.
-            if (iterator instanceof VariableReferenceIterator) {
-                VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
-                this.hasNext = false;
-                return this.currentDynamicContextForLocalExecution.getVariableValues()
-                    .getVariableCount(expr.getVariableName());
-            }
-            this.hasNext = false;
-            return computeCount(
-                this.children.get(0),
-                this.currentDynamicContextForLocalExecution,
-                getMetadata()
-            );
-        } else {
-            throw new IteratorFlowException(
-                    FLOW_EXCEPTION_MESSAGE + " count function",
-                    getMetadata()
-            );
+    @Override
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        RuntimeIterator iterator = this.children.get(0);
+
+        // the count($x) case is treated separately because we can short-circuit the
+        // count, e.g., if it comes from the group-by aggregation of a non-grouping
+        // key.
+        if (iterator instanceof VariableReferenceIterator) {
+            VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
+            // this.hasNext = false;
+            return context.getVariableValues()
+                .getVariableCount(expr.getVariableName());
         }
+        return computeCount(
+            iterator,
+            context,
+            getMetadata()
+        );
+
     }
 
     public static Item computeCount(
