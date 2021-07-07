@@ -97,6 +97,10 @@ public class ItemFactory {
         return new FloatItem(d);
     }
 
+    public Item createAnnotatedItem(Item itemToAnnotate, ItemType type) {
+        return new AnnotatedItem(itemToAnnotate, type);
+    }
+
     public Item createDurationItem(Period p) {
         return new DurationItem(p);
     }
@@ -115,6 +119,14 @@ public class ItemFactory {
 
     public Item createDateTimeItem(String s) {
         return new DateTimeItem(s);
+    }
+
+    public Item createDateTimeStampItem(DateTime dt, boolean checkTimezone) {
+        return new DateTimeStampItem(dt, checkTimezone);
+    }
+
+    public Item createDateTimeStampItem(String s) {
+        return new DateTimeStampItem(s);
     }
 
     public Item createDateItem(DateTime dt, boolean hasTimeZone) {
