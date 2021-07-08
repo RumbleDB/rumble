@@ -23,21 +23,22 @@ package org.rumbledb.runtime.functions.numerics;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 
+import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.util.List;
 
-public class FloorFunctionIterator extends LocalFunctionCallIterator {
+public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public FloorFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -48,27 +49,38 @@ public class FloorFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        if (value == null) {
+            return null;
+        }
+        if (value.isInt()) {
+            return ItemFactory.getInstance().createIntItem(value.getIntValue());
+        }
+        if (value.isInteger()) {
+            return ItemFactory.getInstance().createIntegerItem(value.getIntegerValue());
+        }
+        if (value.isDecimal()) {
+            BigDecimal bd = value.getDecimalValue().setScale(0, RoundingMode.FLOOR);
+            return ItemFactory.getInstance().createDecimalItem(bd);
+        }
+        if (value.isFloat()) {
+            BigDecimal bd = new BigDecimal(value.getFloatValue());
+            bd = bd.setScale(0, RoundingMode.FLOOR);
+            return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+        }
+        if (value.isDouble()) {
             return ItemFactory.getInstance()
                 .createDoubleItem(
                     Math.floor(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
+                        value.castToDoubleValue()
                     )
                 );
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " floor function", getMetadata());
+        throw new UnexpectedTypeException(
+                "Unexpected value in floor(): " + value.getDynamicType(),
+                getMetadata()
+        );
     }
 
     @Override
