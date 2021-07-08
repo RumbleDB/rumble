@@ -34,7 +34,6 @@ public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public TanFunctionIterator(
             List<RuntimeIterator> arguments,
