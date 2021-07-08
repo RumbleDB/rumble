@@ -1489,49 +1489,6 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
-    /**
-     * function that returns the duration item from the supplied string
-     */
-    static final BuiltinFunction duration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "duration"
-        ),
-        "string?",
-        "duration?",
-        DurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the yearMonthDuration item from the supplied string
-     */
-    static final BuiltinFunction yearMonthDuration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "yearMonthDuration"
-        ),
-        "string?",
-        "yearMonthDuration?",
-        YearMonthDurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-    /**
-     * function that returns the dayTimeDuration item from the supplied string
-     */
-    static final BuiltinFunction dayTimeDuration = createBuiltinFunction(
-        new Name(
-                Name.FN_NS,
-                "fn",
-                "dayTimeDuration"
-        ),
-        "string?",
-        "dayTimeDuration?",
-        DayTimeDurationFunctionIterator.class,
-        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-    );
-
 
     /**
      * function that returns the years from a duration
