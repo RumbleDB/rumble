@@ -37,9 +37,6 @@ import org.rumbledb.runtime.functions.datetime.components.TimezoneFromDateTimeFu
 import org.rumbledb.runtime.functions.datetime.components.TimezoneFromTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.durations.DayTimeDurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.DurationFunctionIterator;
-import org.rumbledb.runtime.functions.durations.YearMonthDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFunctionIterator;
