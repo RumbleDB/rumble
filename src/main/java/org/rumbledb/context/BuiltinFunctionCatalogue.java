@@ -2341,9 +2341,6 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(number.getIdentifier(), number);
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
 
-        builtinFunctions.put(duration.getIdentifier(), duration);
-        builtinFunctions.put(dayTimeDuration.getIdentifier(), dayTimeDuration);
-        builtinFunctions.put(yearMonthDuration.getIdentifier(), yearMonthDuration);
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);
         builtinFunctions.put(days_from_duration.getIdentifier(), days_from_duration);
