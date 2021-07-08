@@ -94,6 +94,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
+    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
