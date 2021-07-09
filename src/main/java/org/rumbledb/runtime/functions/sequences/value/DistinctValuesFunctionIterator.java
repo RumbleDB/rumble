@@ -23,6 +23,7 @@ package org.rumbledb.runtime.functions.sequences.value;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -48,6 +49,14 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, executionMode, iteratorMetadata);
         this.sequenceIterator = arguments.get(0);
+        if (arguments.size() == 2) {
+            String collation = arguments.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
     }
 
     public Item nextLocal() {

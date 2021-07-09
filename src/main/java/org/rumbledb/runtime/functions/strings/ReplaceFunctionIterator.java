@@ -21,22 +21,22 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidRegexPatternException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.MatchesEmptyStringException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.exceptions.InvalidReplacementStringException;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
 import java.util.regex.PatternSyntaxException;
 
-public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
+public class ReplaceFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -49,56 +49,53 @@ public class ReplaceFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+        Item patternStringItem = this.children.get(1)
+            .materializeFirstItemOrNull(context);
 
-            Item patternStringItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            String pattern = patternStringItem.getStringValue();
+        if (patternStringItem == null) {
+            return null;
+        }
+        String pattern = patternStringItem.getStringValue();
+        Pattern p;
 
-            Pattern p;
-            try {
-                p = Pattern.compile(pattern);
-            } catch (PatternSyntaxException e) {
-                throw new InvalidRegexPatternException(
-                        e.getDescription(),
-                        getMetadata()
-                );
-            }
-            if ("".matches(pattern)) {
-                throw new MatchesEmptyStringException(
-                        "'" + pattern + "' matches empty string",
-                        getMetadata()
-                );
-            }
-
-            Item replacementStringItem = this.children.get(2)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            String replacement = replacementStringItem.getStringValue();
-            if (!(checkReplacementStringForValidity(replacement))) {
-                throw new InvalidReplacementStringException(
-                        "'" + replacement + "' contains a disallowed sequence of characters",
-                        getMetadata()
-                );
-            }
-
-            String input;
-            if (stringItem == null) {
-                input = "";
-            } else {
-                input = stringItem.getStringValue();
-            }
-
-            Matcher m = p.matcher(input);
-            return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " replace function",
+        try {
+            p = Pattern.compile(pattern);
+        } catch (PatternSyntaxException e) {
+            throw new InvalidRegexPatternException(
+                    e.getDescription(),
                     getMetadata()
             );
+        }
+        if ("".matches(pattern)) {
+            throw new MatchesEmptyStringException(
+                    "'" + pattern + "' matches empty string",
+                    getMetadata()
+            );
+        }
+
+        Item replacementStringItem = this.children.get(2)
+            .materializeFirstItemOrNull(context);
+        String replacement = replacementStringItem.getStringValue();
+        if (!(checkReplacementStringForValidity(replacement))) {
+            throw new InvalidReplacementStringException(
+                    "'" + replacement + "' contains a disallowed sequence of characters",
+                    getMetadata()
+            );
+        }
+
+        String input;
+        if (stringItem == null) {
+            input = "";
+        } else {
+            input = stringItem.getStringValue();
+        }
+
+        Matcher m = p.matcher(input);
+        return ItemFactory.getInstance().createStringItem(m.replaceAll(replacement));
+
     }
 
     private static boolean checkReplacementStringForValidity(String repl) {
