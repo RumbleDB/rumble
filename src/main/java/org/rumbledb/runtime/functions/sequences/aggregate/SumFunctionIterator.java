@@ -26,13 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidArgumentTypeException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -42,7 +41,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class SumFunctionIterator extends LocalFunctionCallIterator {
+public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -57,33 +56,22 @@ public class SumFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         this.item = computeSum(
-            zeroElement(),
+            zeroElement(context),
             this.children.get(0),
-            this.currentDynamicContextForLocalExecution,
+            context,
             getMetadata()
         );
-        this.hasNext = this.item != null;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.item;
-        } else {
-            throw new IteratorFlowException(
-                    FLOW_EXCEPTION_MESSAGE + "SUM function",
-                    getMetadata()
-            );
+        if (this.item == null) {
+            return null;
         }
+        return this.item;
     }
 
-    private Item zeroElement() {
+    private Item zeroElement(DynamicContext context) {
         if (this.children.size() > 1) {
-            return this.children.get(1).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+            return this.children.get(1).materializeFirstItemOrNull(context);
         } else {
             return ItemFactory.getInstance().createIntegerItem(BigInteger.ZERO);
         }

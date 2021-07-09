@@ -26,18 +26,18 @@ import org.apache.spark.api.java.Optional;
 import org.apache.spark.api.java.function.FlatMapFunction2;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DefaultCollationException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import scala.Tuple2;
 
 import java.util.Iterator;
 import java.util.List;
 
-public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
+public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -52,48 +52,42 @@ public class DeepEqualFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-
-            RuntimeIterator sequenceIterator1 = this.children.get(0);
-            RuntimeIterator sequenceIterator2 = this.children.get(1);
-
-            if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
-                JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(this.currentDynamicContextForLocalExecution);
-                JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(this.currentDynamicContextForLocalExecution);
-                if (rdd1.partitions().size() == rdd2.partitions().size()) {
-                    FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
-                        new SameElementsAndLengthClosure();
-                    JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
-                    return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
-                } else {
-                    JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
-                    JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
-                    JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined = rdd1Zipped.fullOuterJoin(
-                        rdd2Zipped
-                    );
-                    JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
-                        tuple -> !tuple._2()._1().equals(tuple._2()._2())
-                    );
-                    return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
-                }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        RuntimeIterator sequenceIterator1 = this.children.get(0);
+        RuntimeIterator sequenceIterator2 = this.children.get(1);
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
             }
-            List<Item> items1 = sequenceIterator1.materialize(this.currentDynamicContextForLocalExecution);
-            List<Item> items2 = sequenceIterator2.materialize(this.currentDynamicContextForLocalExecution);
-
-            boolean res = checkDeepEqual(items1, items2);
-            return ItemFactory.getInstance().createBooleanItem(res);
-        } else {
-            throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "deep-equal function", getMetadata());
         }
-    }
 
+        if (sequenceIterator1.isRDDOrDataFrame() && sequenceIterator2.isRDDOrDataFrame()) {
+            JavaRDD<Item> rdd1 = sequenceIterator1.getRDD(context);
+            JavaRDD<Item> rdd2 = sequenceIterator2.getRDD(context);
+            if (rdd1.partitions().size() == rdd2.partitions().size()) {
+                FlatMapFunction2<Iterator<Item>, Iterator<Item>, Boolean> filter =
+                    new SameElementsAndLengthClosure();
+                JavaRDD<Boolean> differences = rdd1.zipPartitions(rdd2, filter);
+                return ItemFactory.getInstance().createBooleanItem(differences.isEmpty());
+            } else {
+                JavaPairRDD<Long, Item> rdd1Zipped = rdd1.zipWithIndex().mapToPair(Tuple2::swap);
+                JavaPairRDD<Long, Item> rdd2Zipped = rdd2.zipWithIndex().mapToPair(Tuple2::swap);
+                JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddJoined = rdd1Zipped.fullOuterJoin(
+                    rdd2Zipped
+                );
+                JavaPairRDD<Long, Tuple2<Optional<Item>, Optional<Item>>> rddFiltered = rddJoined.filter(
+                    tuple -> !tuple._2()._1().equals(tuple._2()._2())
+                );
+                return ItemFactory.getInstance().createBooleanItem(rddFiltered.isEmpty());
+            }
+        }
+        List<Item> items1 = sequenceIterator1.materialize(context);
+        List<Item> items2 = sequenceIterator2.materialize(context);
+
+        boolean res = checkDeepEqual(items1, items2);
+        return ItemFactory.getInstance().createBooleanItem(res);
+    }
 
     public boolean checkDeepEqual(List<Item> items1, List<Item> items2) {
         if (items1.size() != items2.size()) {

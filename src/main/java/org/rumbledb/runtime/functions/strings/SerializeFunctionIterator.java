@@ -61,7 +61,7 @@ public class SerializeFunctionIterator extends LocalFunctionCallIterator {
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
         } else {
             throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function",
+                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " serialize function",
                     getMetadata()
             );
         }

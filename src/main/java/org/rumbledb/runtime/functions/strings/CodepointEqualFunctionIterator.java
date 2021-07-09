@@ -23,15 +23,14 @@ package org.rumbledb.runtime.functions.strings;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
+public class CodepointEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private String input1;
@@ -47,32 +46,20 @@ public class CodepointEqualFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         this.input1 = null;
         this.input2 = null;
-        setNextResult();
+        setNextResult(context);
+        Item result = this.nextResult;
+        return result;
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item result = this.nextResult;
-            setNextResult();
-            return result;
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " codepoint-equal function",
-                    getMetadata()
-            );
-    }
-
-    public void setNextResult() {
+    public void setNextResult(DynamicContext context) {
         if (this.input1 == null || this.input2 == null) {
             Item operandOneItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(context);
             Item operandTwoItem = this.children.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+                .materializeFirstItemOrNull(context);
             if (operandOneItem == null || operandTwoItem == null) {
                 this.hasNext = false;
                 return;
