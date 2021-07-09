@@ -11,6 +11,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
@@ -489,6 +490,18 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         BooleanFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns true if the effective boolean value of the given parameter is false, and false if it is
+     * true.
+     */
+    static final BuiltinFunction not_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "not"),
+        "item*",
+        "boolean",
+        NotFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2466,6 +2479,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
+        builtinFunctions.put(not_function.getIdentifier(), not_function);
 
         builtinFunctions.put(min1.getIdentifier(), min1);
         builtinFunctions.put(min2.getIdentifier(), min2);

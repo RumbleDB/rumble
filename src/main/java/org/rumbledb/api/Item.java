@@ -224,6 +224,52 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an atomic item of type gDay.
+     *
+     * @return true if it is an atomic item of type gDay, false otherwise.
+     */
+    default boolean isGDay() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonth.
+     *
+     * @return true if it is an atomic item of type gMonth, false otherwise.
+     */
+    default boolean isGMonth() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gYear.
+     *
+     * @return true if it is an atomic item of type gYear, false otherwise.
+     */
+    default boolean isGYear() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGMonthDay() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGYearMonth() {
+        return false;
+    }
+
+
+    /**
      * Tests whether the item is an atomic item of type anyURI.
      *
      * @return true if it is an atomic item of type anyURI, false otherwise.

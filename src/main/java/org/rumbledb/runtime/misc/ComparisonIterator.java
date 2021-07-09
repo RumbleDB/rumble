@@ -315,6 +315,31 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             DateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
+        if (left.isGDay() && right.isGDay()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGMonth() && right.isGMonth()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGYear() && right.isGYear()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGMonthDay() && right.isGMonthDay()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGYearMonth() && right.isGYearMonth()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
         if (left.isBoolean() && right.isBoolean()) {
             Boolean l = left.getBooleanValue();
             Boolean r = right.getBooleanValue();

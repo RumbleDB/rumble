@@ -145,6 +145,26 @@ public class ItemFactory {
         return new TimeItem(s);
     }
 
+    public Item createGDayItem(String s) {
+        return new gDayItem(s);
+    }
+
+    public Item createGMonthItem(String s) {
+        return new gMonthItem(s);
+    }
+
+    public Item createGYearItem(String s) {
+        return new gYearItem(s);
+    }
+
+    public Item createGMonthDayItem(String s) {
+        return new gMonthDayItem(s);
+    }
+
+    public Item createGYearMonthItem(String s) {
+        return new gYearMonthItem(s);
+    }
+
     public Item createAnyURIItem(String s) {
         return new AnyURIItem(s);
     }
