@@ -49,14 +49,6 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, executionMode, iteratorMetadata);
         this.sequenceIterator = arguments.get(0);
-        if (arguments.size() == 2) {
-            String collation = arguments.get(1)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                .getStringValue();
-            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
-            }
-        }
     }
 
     public Item nextLocal() {
@@ -88,6 +80,14 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.prevResults = new ArrayList<>();
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         setNextResult();
     }
@@ -114,6 +114,14 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext dynamicContext) {
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1)
+                .materializeFirstItemOrNull(dynamicContext)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(dynamicContext);
         return childRDD.distinct();
     }
@@ -125,6 +133,14 @@ public class DistinctValuesFunctionIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
+        if (this.children.size() == 2) {
+            String collation = this.children.get(1)
+                .materializeFirstItemOrNull(dynamicContext)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
         JSoundDataFrame df = this.sequenceIterator.getDataFrame(dynamicContext);
         return df.distinct();
     }
