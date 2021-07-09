@@ -358,6 +358,37 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+
             return null;
         } catch (Exception e) {
             return null;
