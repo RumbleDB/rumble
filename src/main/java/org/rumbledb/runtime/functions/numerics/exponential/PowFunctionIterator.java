@@ -35,7 +35,6 @@ public class PowFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public PowFunctionIterator(
             List<RuntimeIterator> arguments,

@@ -193,8 +193,6 @@ public class ItemTypeFactory {
         } else if (dt.equals(DataTypes.BinaryType)) {
             return BuiltinTypesCatalogue.hexBinaryItem;
         } else if (dt instanceof VectorUDT) {
-            VectorUDT vu = (VectorUDT) dt;
-            DataType et = vu.defaultConcreteType();
             return createArrayTypeWithSparkDataTypeContent(
                 DataTypes.DoubleType
             );

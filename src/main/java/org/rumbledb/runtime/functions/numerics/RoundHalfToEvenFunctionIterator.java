@@ -38,7 +38,6 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public RoundHalfToEvenFunctionIterator(
             List<RuntimeIterator> arguments,
