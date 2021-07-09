@@ -51,7 +51,7 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!sequenceIterator.isRDDOrDataFrame()) {
             Item result = null;
             try {
-                sequenceIterator.materializeAtMostOneItemOrNull(context);
+                result = sequenceIterator.materializeAtMostOneItemOrNull(context);
             } catch (MoreThanOneItemException e) {
                 throw new SequenceExceptionZeroOrOne(
                         "fn:zero-or-one() called with a sequence containing more than one item",
