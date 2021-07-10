@@ -1,9 +1,9 @@
 # Function library
 
-We list here the functions supported by Rumble, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or Rumble, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
+We list here the functions supported by RumbleDB, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or RumbleDB, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
 
 For the sake of ease of use, all W3C standard builtin functions and JSONiq builtin functions are in the
-Rumble namespace, which is the default function namespace and does not require any prefix in front of function names.
+RumbleDB namespace, which is the default function namespace and does not require any prefix in front of function names.
 
 It is recommended that user-defined functions are put in the local namespace, i.e., their name should have the local: prefix (which is predefined). Otherwise, there is the risk that your code becomes incompatible with subsequent releases if new (unprefixed) builtin functions are introduced.
 

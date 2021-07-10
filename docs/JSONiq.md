@@ -1,6 +1,6 @@
 # JSONiq
 
-Rumble relies on the JSONiq language.
+RumbleDB relies on the JSONiq language.
 
 ## JSONiq reference
 
@@ -8,7 +8,7 @@ The complete specification can be found [here](http://www.jsoniq.org/docs/JSONiq
 
 ## JSONiq tutorial
 
-A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with Rumble.
+A tutorial can be found [here](https://github.com/ghislainfourny/jsoniq-tutorial). All queries in this tutorial will work with RumbleDB.
 
 ## JSONiq tutorial for Python users
 
@@ -96,7 +96,7 @@ mod:func($mod:x)
 
 ### Try/catch
 
-Try/catch expressions are supported. Error codes are in the default, Rumble namespace and do not need prefixes.
+Try/catch expressions are supported. Error codes are in the default, RumbleDB namespace and do not need prefixes.
 
 ```
 try { 1 div 0 } catch FOAR0001 { "Division by zero!" }
@@ -145,7 +145,7 @@ The type system is not quite complete yet, although a lot of progress was made. 
 
 ## Unsupported/Unimplemented features (beta release)
 
-Most core features of JSONiq are now in place, and we are working on getting the last (less used) ones into Rumble as well. We prioritize their implementation on user requests.
+Most core features of JSONiq are now in place, and we are working on getting the last (less used) ones into RumbleDB as well. We prioritize their implementation on user requests.
 
 ### Prolog
 
