@@ -39,6 +39,7 @@ import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIt
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.durations.components.ImplicitTimezoneIterator;
 import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
@@ -2188,6 +2189,20 @@ public class BuiltinFunctionCatalogue {
     );
 
     /**
+     * function that returns the value of the implicit timezone property from the dynamic context.
+     */
+    static final BuiltinFunction implicit_timezone = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "implicit-timezone"
+        ),
+        "dayTimeDuration?",
+        ImplicitTimezoneIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
      * function that returns the keys of a Json Object
      */
     static final BuiltinFunction keys = createBuiltinFunction(
@@ -2610,6 +2625,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(timezone_from_dateTime.getIdentifier(), timezone_from_dateTime);
         builtinFunctions.put(adjust_dateTime_to_timezone1.getIdentifier(), adjust_dateTime_to_timezone1);
         builtinFunctions.put(adjust_dateTime_to_timezone2.getIdentifier(), adjust_dateTime_to_timezone2);
+
+        builtinFunctions.put(implicit_timezone.getIdentifier(), implicit_timezone);
 
         builtinFunctions.put(current_date.getIdentifier(), current_date);
         builtinFunctions.put(format_date.getIdentifier(), format_date);
