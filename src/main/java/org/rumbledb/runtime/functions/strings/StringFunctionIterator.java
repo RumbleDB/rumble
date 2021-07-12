@@ -31,11 +31,11 @@ import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 
-public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+public class StringFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
-    public StringLengthFunctionIterator(
+    public StringFunctionIterator(
             List<RuntimeIterator> arguments,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -47,16 +47,17 @@ public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeItera
     public Item materializeFirstItemOrNull(DynamicContext context) {
         if (this.children.size() == 0) {
             List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
-            return ItemFactory.getInstance().createIntItem(items.get(0).getStringValue().length());
+            return ItemFactory.getInstance().createStringItem(items.get(0).getStringValue());
         }
-        Item stringItem = this.children.get(0)
+
+        Item item = this.children.get(0)
             .materializeFirstItemOrNull(context);
 
-        if (stringItem == null) {
-            return ItemFactory.getInstance().createIntItem(0);
+        if (item == null) {
+            return null;
         }
 
-        return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
+        return ItemFactory.getInstance().createStringItem(item.getStringValue());
     }
 
 }

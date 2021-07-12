@@ -154,6 +154,21 @@ public class AtomicItemType implements ItemType {
             ),
             DataTypes.DateType
     );
+    static final AtomicItemType dateTimeStampItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
     static final AtomicItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
             new HashSet<>(
@@ -336,16 +351,23 @@ public class AtomicItemType implements ItemType {
             else
                 return false;
         }
-        // DateTime can be cast also to Date or Time
+        // DateTime can be cast also to Date or Time or DateTimeStamp
         if (this.equals(dateTimeItem)) {
-            if (other.equals(dateItem) || other.equals(timeItem))
+            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeStampItem))
                 return true;
             else
                 return false;
         }
-        // Date can be cast also to DateTime
+        // DateTimeStamp can be cast also to Date or Time or DateTime
+        if (this.equals(dateTimeStampItem)) {
+            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeItem))
+                return true;
+            else
+                return false;
+        }
+        // Date can be cast also to DateTime or DateTimeStamp
         if (this.equals(dateItem)) {
-            if (other.equals(dateTimeItem))
+            if (other.equals(dateTimeItem) || other.equals(dateTimeStampItem))
                 return true;
             else
                 return false;

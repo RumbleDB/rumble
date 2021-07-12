@@ -410,6 +410,11 @@ public class SequenceType implements Serializable {
             new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero)
         );
 
+        sequenceTypes.put(
+            "dateTimeStamp?",
+            new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.OneOrZero)
+        );
+
         sequenceTypes.put("date?", new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("time?", new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrZero));
@@ -428,6 +433,7 @@ public class SequenceType implements Serializable {
         );
 
         sequenceTypes.put("null?", new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrZero));
+
         sequenceTypes.put(
             "function(object*, object) as object*",
             new SequenceType(
@@ -442,6 +448,7 @@ public class SequenceType implements Serializable {
                     )
             )
         );
+
         sequenceTypes.put(
             "function(object*, object) as function(object*, object) as object*",
             new SequenceType(
@@ -471,6 +478,66 @@ public class SequenceType implements Serializable {
                         )
                     )
             )
+        );
+
+        sequenceTypes.put(
+            "int?",
+            new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "long?",
+            new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "short?",
+            new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "byte?",
+            new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "positiveInteger?",
+            new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "negativeInteger?",
+            new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "nonPositiveInteger?",
+            new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "nonNegativeInteger?",
+            new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedInt?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedLong?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedShort?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedByte?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrZero)
         );
     }
 
