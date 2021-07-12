@@ -664,7 +664,7 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "fn",
-                "unorder"
+                "unordered"
         ),
         "item*",
         "item*",
