@@ -193,6 +193,81 @@ public class BuiltinTypesCatalogue {
             ),
             DataTypes.TimestampType
     );
+    public static final ItemType gDayItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gDay"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
+    public static final ItemType gMonthItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gMonth"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
+    public static final ItemType gYearItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gYear"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
+    public static final ItemType gMonthDayItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gMonthDay"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
+    public static final ItemType gYearMonthItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "gYearMonth"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            ),
+            DataTypes.DateType
+    );
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
             new HashSet<>(
@@ -286,9 +361,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
             integerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
+            Facets.createMinFacets(
                 new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("9223372036854775808")),
                 true
             ),
             false,
@@ -299,8 +373,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
             integerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
+            Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("0")),
                 true
             ),
@@ -312,8 +385,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "negativeInteger"),
             nonPositiveIntegerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
+            Facets.createMaxFacets(
                 new IntegerItem(new BigInteger("-1")),
                 true
             ),
@@ -325,9 +397,8 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "positiveInteger"),
             nonNegativeIntegerItem,
             AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
+            Facets.createMinFacets(
                 new IntegerItem(new BigInteger("1")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
                 true
             ),
             false,
@@ -433,6 +504,11 @@ public class BuiltinTypesCatalogue {
         dateTimeStampItem,
         dateItem,
         timeItem,
+        gDayItem,
+        gMonthItem,
+        gYearItem,
+        gMonthDayItem,
+        gYearMonthItem,
         hexBinaryItem,
         anyURIItem,
         base64BinaryItem,

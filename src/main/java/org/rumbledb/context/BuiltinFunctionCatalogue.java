@@ -11,6 +11,7 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
@@ -544,6 +545,18 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         BooleanFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns true if the effective boolean value of the given parameter is false, and false if it is
+     * true.
+     */
+    static final BuiltinFunction not_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "not"),
+        "item*",
+        "boolean",
+        NotFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -1545,6 +1558,19 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that returns the value of the Static Base URI property from the static context.
+     */
+    static final BuiltinFunction static_base_uri = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "static-base-uri"
+        ),
+        "anyURI?",
+        StaticBaseURIFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that checks whether a string ends with a substring
      */
     static final BuiltinFunction ends_with1 = createBuiltinFunction(
@@ -2507,6 +2533,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
+        builtinFunctions.put(not_function.getIdentifier(), not_function);
 
         builtinFunctions.put(min1.getIdentifier(), min1);
         builtinFunctions.put(min2.getIdentifier(), min2);
@@ -2606,6 +2633,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
         builtinFunctions.put(resolve_uri1.getIdentifier(), resolve_uri1);
         builtinFunctions.put(resolve_uri2.getIdentifier(), resolve_uri2);
+        builtinFunctions.put(static_base_uri.getIdentifier(), static_base_uri);
 
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);
