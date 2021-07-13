@@ -622,7 +622,7 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "fn",
-                "unorder"
+                "unordered"
         ),
         "item*",
         "item*",
@@ -1300,7 +1300,8 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
-     * function that returns substrings
+     * function that returns a string created by concatenating the items in a sequence, with an optional defined
+     * separator between adjacent items.
      */
     static final BuiltinFunction string_join1 = createBuiltinFunction(
         new Name(

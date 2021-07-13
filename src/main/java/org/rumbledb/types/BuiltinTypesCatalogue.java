@@ -331,7 +331,7 @@ public class BuiltinTypesCatalogue {
     );
 
     public static final ItemType intItem = new DerivedAtomicItemType(
-            Name.createVariableInDefaultTypeNamespace("int"),
+            new Name(Name.XS_NS, "xs", "int"),
             longItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),

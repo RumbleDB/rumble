@@ -20,18 +20,19 @@
 
 package org.rumbledb.runtime.functions.strings;
 
+import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
+public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -44,17 +45,14 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            Item joinString = ItemFactory.getInstance().createStringItem("");
-            List<Item> strings = this.children.get(0).materialize(this.currentDynamicContextForLocalExecution);
-            if (this.children.size() > 1) {
-                RuntimeIterator joinStringIterator = this.children.get(1);
-                joinStringIterator.open(this.currentDynamicContextForLocalExecution);
-                if (joinStringIterator.hasNext()) {
-                    joinString = joinStringIterator.next();
-                }
-            }
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item joinString = ItemFactory.getInstance().createStringItem("");
+        if (this.children.size() > 1) {
+            joinString = this.children.get(1).materializeFirstItemOrNull(context);
+        }
+        if (!this.children.get(0).isRDDOrDataFrame()) {
+            List<Item> strings = this.children.get(0).materialize(context);
+
 
             StringBuilder stringBuilder = new StringBuilder();
             for (Item item : strings) {
@@ -66,13 +64,33 @@ public class StringJoinFunctionIterator extends LocalFunctionCallIterator {
                 }
                 stringBuilder.append(item.getStringValue());
             }
-            this.hasNext = false;
             return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-join function",
-                    getMetadata()
-            );
         }
+        JavaRDD<Item> strings = this.children.get(0).getRDD(context);
+        StringBuilder stringBuilder = new StringBuilder();
+        // Item finalJoinString = joinString;
+        // strings.map(item -> stringBuilder.append(constructor(stringBuilder, item, finalJoinString)));
+        for (Item item : strings.collect()) {
+            if (!(item.isString())) {
+                throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
+            }
+            if (!stringBuilder.toString().isEmpty()) {
+                stringBuilder.append(joinString.getStringValue());
+            }
+            stringBuilder.append(item.getStringValue());
+        }
+        return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
+
+
+    private String constructor(StringBuilder stringBuilder, Item item, Item joinString) {
+        if (!(item.isString())) {
+            throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
+        }
+        if (!stringBuilder.toString().isEmpty()) {
+            return joinString.getStringValue().concat(item.getStringValue());
+        }
+        return item.getStringValue();
+    }
+
 }

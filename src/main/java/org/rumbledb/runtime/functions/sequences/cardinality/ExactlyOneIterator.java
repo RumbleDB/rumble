@@ -63,6 +63,7 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
                     getMetadata()
             );
         }
+
     }
 
     @Override

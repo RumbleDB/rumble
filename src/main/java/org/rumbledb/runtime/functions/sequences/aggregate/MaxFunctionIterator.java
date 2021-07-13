@@ -30,9 +30,11 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemComparator;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Collections;
 import java.util.List;
@@ -87,6 +89,23 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 ex.initCause(e);
                 throw ex;
             }
+        }
+
+        if (this.iterator.isDataFrame()) {
+            JSoundDataFrame df = this.iterator.getDataFrame(context);
+            if (df.isEmptySequence()) {
+                return null;
+            }
+            df.createOrReplaceTempView("input");
+            JSoundDataFrame maxDF = df.evaluateSQL(
+                String.format(
+                    "SELECT MAX(`%s`) as `%s` FROM input",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName
+                ),
+                df.getItemType()
+            );
+            return maxDF.getExactlyOneItem();
         }
 
         JavaRDD<Item> rdd = this.iterator.getRDD(context);

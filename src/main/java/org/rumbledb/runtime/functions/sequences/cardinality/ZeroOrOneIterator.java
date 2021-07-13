@@ -26,6 +26,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
@@ -60,18 +61,34 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
                 );
             }
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(context);
-            List<Item> results = rdd.take(2);
-            if (results.size() == 0) {
-                return null;
-            } else if (results.size() == 1) {
-                return results.get(0);
-            } else if (results.size() > 1) {
-                throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        getMetadata()
-                );
+            if (sequenceIterator.isDataFrame()) {
+                JSoundDataFrame df = sequenceIterator.getDataFrame(context);
+                if (df.isEmptySequence()) {
+                    return null;
+                } else if (df.count() == 1) {
+                    return df.getExactlyOneItem();
+                } else {
+                    throw new SequenceExceptionZeroOrOne(
+                            "fn:zero-or-one() called with a sequence containing more than one item",
+                            getMetadata()
+                    );
+                }
+
+            } else {
+                JavaRDD<Item> rdd = sequenceIterator.getRDD(context);
+                List<Item> results = rdd.take(2);
+                if (results.size() == 0) {
+                    return null;
+                } else if (results.size() == 1) {
+                    return results.get(0);
+                } else if (results.size() > 1) {
+                    throw new SequenceExceptionZeroOrOne(
+                            "fn:zero-or-one() called with a sequence containing more than one item",
+                            getMetadata()
+                    );
+                }
             }
+
         }
         return null;
     }
