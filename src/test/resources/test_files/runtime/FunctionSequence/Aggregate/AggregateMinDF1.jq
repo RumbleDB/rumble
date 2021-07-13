@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(1)" :)
+(:JIQS: ShouldRun; Output="1" :)
 let $x := annotate(
   for $i in 1 to 100
   return {"foo":$i, "bar":($i+1)},

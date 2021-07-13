@@ -24,13 +24,11 @@ import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
@@ -70,8 +68,8 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         }
         JavaRDD<Item> strings = this.children.get(0).getRDD(context);
         StringBuilder stringBuilder = new StringBuilder();
-        //Item finalJoinString = joinString;
-        //strings.map(item -> stringBuilder.append(constructor(stringBuilder, item, finalJoinString)));
+        // Item finalJoinString = joinString;
+        // strings.map(item -> stringBuilder.append(constructor(stringBuilder, item, finalJoinString)));
         for (Item item : strings.collect()) {
             if (!(item.isString())) {
                 throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());

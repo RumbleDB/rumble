@@ -47,15 +47,23 @@ public class ExactlyOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        Item value = this.children.get(0).materializeFirstItemOrNull(dynamicContext);
-        if (value == null) {
+        try {
+            Item value = this.children.get(0).materializeAtMostOneItemOrNull(dynamicContext);
+            if (value == null) {
+                throw new SequenceExceptionExactlyOne(
+                        "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
+                        getMetadata()
+                );
+
+            }
+            return value;
+        } catch (MoreThanOneItemException e) {
             throw new SequenceExceptionExactlyOne(
                     "fn:exactly-one() called with a sequence that doesn't contain exactly one item",
                     getMetadata()
             );
-
         }
-        return value;
+
     }
 
     @Override
