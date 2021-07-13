@@ -14,7 +14,6 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
-
 import java.util.List;
 
 public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
