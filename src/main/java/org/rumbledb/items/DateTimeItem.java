@@ -42,10 +42,12 @@ public class DateTimeItem implements Item {
         + "))";
 
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")?";
+    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
     private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
 
     private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
+    private static final Pattern dateTimeStampPattern = Pattern.compile(dateTimeStampLexicalRep);
     private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
     private static final Pattern timePattern = Pattern.compile(timeLexicalRep);
 
@@ -173,7 +175,7 @@ public class DateTimeItem implements Item {
 
     static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-            return dateTimePattern.matcher(dateTime).matches();
+            return dateTimeStampPattern.matcher(dateTime).matches();
         }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
