@@ -296,15 +296,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
             }
             if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
+                if (item.hasTimeZone()) {
+                    if (item.isString()) {
+                        return ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
+                    }
+                    if (item.isDate()) {
+                        return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
+                    }
+                    if (item.isDateTime()) {
+                        return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
+                    }
                 }
-                if (item.isDate()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
-                }
-                if (item.isDateTime()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
-                }
+                return null;
             }
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {

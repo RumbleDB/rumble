@@ -159,7 +159,7 @@ public class BuiltinTypesCatalogue {
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
             dateTimeItem,
             AtomicItemType.dateTimeItem,
-            new Facets(),
+            Facets.createTimezoneFacets(TimezoneFacet.REQUIRED),
             false,
             DataTypes.DateType
     );
