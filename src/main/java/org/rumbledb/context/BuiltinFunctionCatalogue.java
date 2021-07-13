@@ -39,6 +39,7 @@ import org.rumbledb.runtime.functions.datetime.components.YearFromDateFunctionIt
 import org.rumbledb.runtime.functions.datetime.components.YearFromDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.DaysFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.HoursFromDurationFunctionIterator;
+import org.rumbledb.runtime.functions.durations.components.ImplicitTimezoneIterator;
 import org.rumbledb.runtime.functions.durations.components.MinutesFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.MonthsFromDurationFunctionIterator;
 import org.rumbledb.runtime.functions.durations.components.SecondsFromDurationFunctionIterator;
@@ -93,11 +94,43 @@ import org.rumbledb.runtime.functions.sequences.aggregate.SumFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ExactlyOneIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.OneOrMoreIterator;
 import org.rumbledb.runtime.functions.sequences.cardinality.ZeroOrOneIterator;
-import org.rumbledb.runtime.functions.sequences.general.*;
+import org.rumbledb.runtime.functions.sequences.general.EmptyFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.ExistsFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.HeadFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.InsertBeforeFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.RemoveFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.ReverseFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.SubsequenceFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.TailFunctionIterator;
+import org.rumbledb.runtime.functions.sequences.general.UnorderedFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DeepEqualFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.DistinctValuesFunctionIterator;
 import org.rumbledb.runtime.functions.sequences.value.IndexOfFunctionIterator;
-import org.rumbledb.runtime.functions.strings.*;
+import org.rumbledb.runtime.functions.strings.CodepointEqualFunctionIterator;
+import org.rumbledb.runtime.functions.strings.CodepointsToStringFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ConcatFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ContainsFunctionIterator;
+import org.rumbledb.runtime.functions.strings.DefaultCollationFunctionIterator;
+import org.rumbledb.runtime.functions.strings.EncodeForURIFunctionIterator;
+import org.rumbledb.runtime.functions.strings.EndsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.LowerCaseFunctionIterator;
+import org.rumbledb.runtime.functions.strings.MatchesFunctionIterator;
+import org.rumbledb.runtime.functions.strings.NormalizeSpaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.NormalizeUnicodeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
+import org.rumbledb.runtime.functions.strings.ResolveURIFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StringToCodepointsFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SubstringAfterFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SubstringBeforeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.SubstringFunctionIterator;
+import org.rumbledb.runtime.functions.strings.TokenizeFunctionIterator;
+import org.rumbledb.runtime.functions.strings.TranslateFunctionIterator;
+import org.rumbledb.runtime.functions.strings.UpperCaseFunctionIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -631,7 +664,7 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "fn",
-                "unorder"
+                "unordered"
         ),
         "item*",
         "item*",
