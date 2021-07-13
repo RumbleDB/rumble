@@ -60,18 +60,34 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             return result;
         } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(context);
-            List<Item> results = rdd.take(2);
-            if (results.size() == 0) {
-                return null;
-            } else if (results.size() == 1) {
-                return results.get(0);
-            } else if (results.size() > 1) {
-                throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        getMetadata()
-                );
+            if (sequenceIterator.isDataFrame()) {
+                JSoundDataFrame df = sequenceIterator.getDataFrame(context);
+                if (df.isEmptySequence()) {
+                    return null;
+                } else if (df.count() == 1) {
+                    return df.getExactlyOneItem();
+                } else {
+                    throw new SequenceExceptionZeroOrOne(
+                            "fn:zero-or-one() called with a sequence containing more than one item",
+                            getMetadata()
+                    );
+                }
+
+            } else {
+                JavaRDD<Item> rdd = sequenceIterator.getRDD(context);
+                List<Item> results = rdd.take(2);
+                if (results.size() == 0) {
+                    return null;
+                } else if (results.size() == 1) {
+                    return results.get(0);
+                } else if (results.size() > 1) {
+                    throw new SequenceExceptionZeroOrOne(
+                            "fn:zero-or-one() called with a sequence containing more than one item",
+                            getMetadata()
+                    );
+                }
             }
+
         }
         return null;
     }
