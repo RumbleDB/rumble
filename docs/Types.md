@@ -1,6 +1,6 @@
 # User-defined types
 
-RumbleDB now support user-defined types in a limited fashion.
+RumbleDB now supports user-defined types in a limited fashion.
 
 ## JSound Schema Compact syntax
 
@@ -117,6 +117,24 @@ You can, however, make a field required by adding a ! in front of its name:
 ```
 declare type local:my-type as {
   "foo" : "string",
+  "!bar" : "integer"
+};
+
+validate type local:my-type* {
+  { "foo" : "this is a string", "bar" : 42 },
+  { "bar" : 1 },
+  { "foo" : "this is yet another string", "bar" : 2 },
+  { "foo" : "this is a string", "bar" : 1234 },
+  { "foo" : "this is a string", "bar" : 42345 },
+  { "foo" : "this is a string", "bar" : 42 }
+}
+```
+
+Or you can provide a default value with the equal sign:
+
+```
+declare type local:my-type as {
+  "foo" : "string=foobar",
   "!bar" : "integer"
 };
 

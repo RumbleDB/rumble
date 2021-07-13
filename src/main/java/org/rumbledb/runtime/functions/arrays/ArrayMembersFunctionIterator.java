@@ -49,13 +49,14 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
     ) {
         super(arguments, executionMode, iteratorMetadata);
         this.iterator = this.children.get(0);
+        this.nextResults = new LinkedList<>();
     }
 
 
     @Override
     protected void openLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
+        this.nextResults.clear();
         setNextResult();
     }
 
@@ -67,6 +68,7 @@ public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void resetLocal() {
         this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        this.nextResults.clear();
         setNextResult();
     }
 

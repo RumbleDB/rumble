@@ -52,6 +52,12 @@ public class Facets {
         return facets;
     }
 
+    public static Facets createTimezoneFacets(TimezoneFacet explicitTimezone) {
+        Facets facets = new Facets();
+        facets.setExplicitTimezone(explicitTimezone);
+        return facets;
+    }
+
     private Item minInclusive, maxInclusive;
     private Item minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;

@@ -20,7 +20,6 @@ public class JsonItemType implements ItemType {
         this.name = new Name(Name.JS_NS, "js", "json-item");
     }
 
-
     @Override
     public boolean equals(Object other) {
         if (!(other instanceof ItemType)) {

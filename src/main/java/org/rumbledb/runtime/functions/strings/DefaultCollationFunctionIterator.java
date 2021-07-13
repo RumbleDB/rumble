@@ -11,6 +11,9 @@ import org.rumbledb.runtime.RuntimeIterator;
 import java.util.List;
 
 public class DefaultCollationFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
+
+    private static final long serialVersionUID = 1L;
+
     public DefaultCollationFunctionIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
