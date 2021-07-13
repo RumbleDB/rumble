@@ -28,6 +28,8 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
         super(children, executionMode, iteratorMetadata);
     }
 
+    //TODO: implement collection function
+
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         Item stringItem = this.children.get(0)
@@ -39,8 +41,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
         }
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
-        String extension
-        switch
+        return JSoundDataFrame.emptyDataFrame();
     }
 
 }
