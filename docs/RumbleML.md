@@ -29,19 +29,11 @@ Transformers and estimators are function items in the RumbleDB Data Model. Their
 
 ## Type Annotations
 
-<<<<<<< HEAD
-RumbleML works on highly structured data, because it requires full type information for all the fields in the training set or test set. It is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly.
-
-Rumble supports a user-defined type system with which you can validate and annotate datasets against a JSound schema.
-
-This annotation is required to be applied on any dataset that must be used as input to RumbleML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
-=======
 RumbleDB ML works on highly structured data, because it requires full type information for all the fields in the training set or test set. It is on our development plan to automate the detection of these types when the sequence of objects gets created in the fly.
 
 RumbleDB supports a user-defined type system with which you can validate and annotate datasets against a JSound schema.
 
 This annotation is required to be applied on any dataset that must be used as input to RumbleDB ML, but it is superfluous if the data was directly read from a structured input format such as Parquet, CSV, Avro, SVM or ROOT.
->>>>>>> ddae27156d839030762872201ae0d5961abc2b16
 
 
 ## Examples
