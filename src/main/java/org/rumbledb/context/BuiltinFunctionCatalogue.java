@@ -622,7 +622,7 @@ public class BuiltinFunctionCatalogue {
         new Name(
                 Name.FN_NS,
                 "fn",
-                "unordered"
+                "unorder"
         ),
         "item*",
         "item*",
