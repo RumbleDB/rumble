@@ -471,8 +471,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         }
         Name name = parseName(ctx.qname(), false, true);
         String schemaLanguage = null;
-        if(ctx.schema != null)
-        {
+        if (ctx.schema != null) {
             schemaLanguage = ctx.schema.getText();
         } else {
             schemaLanguage = "jsoundcompact";
@@ -489,7 +488,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 type = ItemTypeFactory.createItemTypeFromJSONSchemaItem(name, definitionItem, this.moduleContext);
                 break;
             default:
-                throw new OurBadException("Unrecognized schema syntax: " + schemaLanguage, createMetadataFromContext(ctx));
+                throw new OurBadException(
+                        "Unrecognized schema syntax: " + schemaLanguage,
+                        createMetadataFromContext(ctx)
+                );
         }
         return new TypeDeclaration(
                 type,
