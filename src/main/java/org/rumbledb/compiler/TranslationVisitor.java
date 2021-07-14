@@ -470,7 +470,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             throw pe;
         }
         Name name = parseName(ctx.qname(), false, true);
-        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+        String schemaLanguage = ctx.schema.getText();
+        ItemType type = null;
+        switch (schemaLanguage) {
+            case "jsoundcompact":
+                type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsoundverbose":
+                type = ItemTypeFactory.createItemTypeFromJSoundVerboseItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsonschema":
+                type = ItemTypeFactory.createItemTypeFromJSONSchemaItem(name, definitionItem, this.moduleContext);
+                break;
+            default:
+                type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+        }
         return new TypeDeclaration(
                 type,
                 createMetadataFromContext(ctx)

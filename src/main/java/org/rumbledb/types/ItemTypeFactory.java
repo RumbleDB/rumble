@@ -102,6 +102,14 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
+    public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
+        throw new OurBadException("The JSound verbose syntax is not supported yet.");
+    }
+
+    public static ItemType createItemTypeFromJSONSchemaItem(Name name, Item item, StaticContext staticContext) {
+        throw new OurBadException("The JSON Schema syntax is not supported yet.");
+    }
+
     /**
      * @param signature of the wanted function item type
      * @return a function item type with the given signature

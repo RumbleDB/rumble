@@ -128,6 +128,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitTypeDecl(JsoniqParser.TypeDeclContext ctx);
 	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#schemaLanguage}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSchemaLanguage(JsoniqParser.SchemaLanguageContext ctx);
+	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#paramList}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
