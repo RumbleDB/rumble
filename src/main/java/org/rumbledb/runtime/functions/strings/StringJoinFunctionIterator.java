@@ -50,27 +50,10 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
         if (this.children.size() > 1) {
             joinString = this.children.get(1).materializeFirstItemOrNull(context);
         }
-        if (!this.children.get(0).isRDDOrDataFrame()) {
-            List<Item> strings = this.children.get(0).materialize(context);
+        List<Item> strings = this.children.get(0).materialize(context);
 
-
-            StringBuilder stringBuilder = new StringBuilder();
-            for (Item item : strings) {
-                if (!(item.isString())) {
-                    throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
-                }
-                if (!stringBuilder.toString().isEmpty()) {
-                    stringBuilder.append(joinString.getStringValue());
-                }
-                stringBuilder.append(item.getStringValue());
-            }
-            return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
-        }
-        JavaRDD<Item> strings = this.children.get(0).getRDD(context);
         StringBuilder stringBuilder = new StringBuilder();
-        // Item finalJoinString = joinString;
-        // strings.map(item -> stringBuilder.append(constructor(stringBuilder, item, finalJoinString)));
-        for (Item item : strings.collect()) {
+        for (Item item : strings) {
             if (!(item.isString())) {
                 throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
             }
@@ -79,18 +62,9 @@ public class StringJoinFunctionIterator extends AtMostOneItemLocalRuntimeIterato
             }
             stringBuilder.append(item.getStringValue());
         }
+
         return ItemFactory.getInstance().createStringItem(stringBuilder.toString());
     }
 
-
-    private String constructor(StringBuilder stringBuilder, Item item, Item joinString) {
-        if (!(item.isString())) {
-            throw new UnexpectedTypeException("String item expected", this.children.get(0).getMetadata());
-        }
-        if (!stringBuilder.toString().isEmpty()) {
-            return joinString.getStringValue().concat(item.getStringValue());
-        }
-        return item.getStringValue();
-    }
 
 }
