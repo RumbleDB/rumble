@@ -191,6 +191,8 @@ public class ItemTypeFactory {
                     }
                     if (requiredItem != null) {
                         required = requiredItem.getBooleanValue();
+                    } else {
+                        required = false;
                     }
                     FieldDescriptor fieldDescriptor = new FieldDescriptor();
                     fieldDescriptor.setName(fieldName);
