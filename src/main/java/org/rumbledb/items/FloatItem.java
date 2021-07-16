@@ -74,7 +74,7 @@ public class FloatItem implements Item {
 
     @Override
     public String getStringValue() {
-        return String.valueOf(this.value);
+        return this.serialize();
     }
 
     @Override
@@ -118,11 +118,11 @@ public class FloatItem implements Item {
         if (Float.isInfinite(this.value) && this.value < 0) {
             return "-INF";
         }
-        if (Float.compare(this.value, 0f) == 0) {
-            return "0";
-        }
         if (Float.compare(this.value, -0f) == 0) {
             return "-0";
+        }
+        if (Float.compare(this.value, 0f) == 0) {
+            return "0";
         }
         double abs = Math.abs(this.value);
         // Mantissa from less or equal than 1.0E-7

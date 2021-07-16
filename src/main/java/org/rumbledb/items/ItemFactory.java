@@ -4,6 +4,7 @@ import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 
 import java.math.BigDecimal;
@@ -21,6 +22,9 @@ public class ItemFactory {
     private Item positiveInfinityDoubleItem;
     private Item negativeInfinityDoubleItem;
     private Item NaNDoubleItem;
+    private Item positiveInfinityFloatItem;
+    private Item negativeInfinityFloatItem;
+    private Item NaNFloatItem;
 
     public static ItemFactory getInstance() {
         if (instance == null) {
@@ -32,6 +36,9 @@ public class ItemFactory {
             instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
             instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
             instance.NaNDoubleItem = new DoubleItem(Double.NaN);
+            instance.positiveInfinityFloatItem = new FloatItem(Float.POSITIVE_INFINITY);
+            instance.negativeInfinityFloatItem = new FloatItem(Float.NEGATIVE_INFINITY);
+            instance.NaNFloatItem = new FloatItem(Float.NaN);
         }
         return instance;
     }
@@ -94,6 +101,15 @@ public class ItemFactory {
     }
 
     public Item createFloatItem(float d) {
+        if (d == Float.POSITIVE_INFINITY) {
+            return this.positiveInfinityFloatItem;
+        }
+        if (d == Float.NEGATIVE_INFINITY) {
+            return this.negativeInfinityFloatItem;
+        }
+        if (d == Float.NaN) {
+            return this.NaNFloatItem;
+        }
         return new FloatItem(d);
     }
 

@@ -54,6 +54,13 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
+        if ((value.isDouble() && Double.isNaN(value.getDoubleValue())) || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+            return value;
+        }
+        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))  || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+            return value;
+        }
+
         if (value.isInt()) {
             return ItemFactory.getInstance().createIntItem(value.getIntValue());
         }
@@ -65,9 +72,12 @@ public class FloorFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return ItemFactory.getInstance().createDecimalItem(bd);
         }
         if (value.isFloat()) {
-            BigDecimal bd = new BigDecimal(value.getFloatValue());
-            bd = bd.setScale(0, RoundingMode.FLOOR);
-            return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+            return ItemFactory.getInstance()
+                    .createFloatItem(
+                            (float) Math.floor(
+                                    value.getFloatValue()
+                            )
+                    );
         }
         if (value.isDouble()) {
             return ItemFactory.getInstance()
