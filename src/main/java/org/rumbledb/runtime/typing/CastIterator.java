@@ -12,7 +12,7 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
-import org.rumbledb.items.IntItem;
+import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -186,26 +186,41 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
                 if (item.isString()) {
-                    return checkFacetsInteger(ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()), targetType, false);
+                    return checkFacetsInteger(
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
+                    );
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
                         .createIntegerItem(item.getBooleanValue() ? BigInteger.ONE : BigInteger.ZERO);
                 }
                 if (item.isNumeric()) {
-                    return checkFacetsInteger(ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()), targetType, false);
+                    return checkFacetsInteger(
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
+                    );
                 }
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
                 if (item.isString()) {
-                    return checkFacetsInt(ItemFactory.getInstance().createIntItem(item.castToIntValue()), targetType, false);
+                    return checkFacetsInt(
+                        ItemFactory.getInstance().createIntItem(item.castToIntValue()),
+                        targetType,
+                        false
+                    );
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
                         .createIntItem(item.getBooleanValue() ? 1 : 0);
                 }
                 if (item.isNumeric()) {
+                    if (item.isDecimal()) {
+                        item = new IntegerItem(item.castToIntegerValue());
+                    }
                     Item checkedItem = checkFacetsInteger(item, targetType, false);
                     if (checkedItem != null) {
                         return ItemFactory.getInstance().createIntItem(checkedItem.castToIntValue());
@@ -396,14 +411,14 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static Item checkFacetsInt(Item item, ItemType targetType, boolean annotated) {
         if (
-                (targetType.getMinInclusiveFacet() != null
-                        && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
-                        || (targetType.getMaxInclusiveFacet() != null
-                        && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
-                        || (targetType.getMinExclusiveFacet() != null
-                        && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
-                        || (targetType.getMaxExclusiveFacet() != null
-                        && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
         ) {
             return null;
         }
@@ -415,16 +430,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static Item checkFacetsInteger(Item item, ItemType targetType, boolean annotated) {
         if (
-                (targetType.getMinInclusiveFacet() != null
-                        && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
-                        || (targetType.getMaxInclusiveFacet() != null
-                        && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
-                        || (targetType.getMinExclusiveFacet() != null
-                        &&
-                        item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
-                        || (targetType.getMaxExclusiveFacet() != null
-                        &&
-                        item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
         ) {
             return null;
         }
