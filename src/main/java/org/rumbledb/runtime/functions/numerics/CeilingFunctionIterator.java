@@ -52,10 +52,16 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
-        if ((value.isDouble() && Double.isNaN(value.getDoubleValue())) || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
+        ) {
             return value;
         }
-        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))  || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
+        ) {
             return value;
         }
 
@@ -71,11 +77,11 @@ public class CeilingFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (value.isFloat()) {
             return ItemFactory.getInstance()
-                    .createFloatItem(
-                            (float) Math.ceil(
-                                    value.getFloatValue()
-                            )
-                    );
+                .createFloatItem(
+                    (float) Math.ceil(
+                        value.getFloatValue()
+                    )
+                );
         }
         if (value.isDouble()) {
             return ItemFactory.getInstance()

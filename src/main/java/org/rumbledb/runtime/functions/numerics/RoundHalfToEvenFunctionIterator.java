@@ -31,7 +31,6 @@ import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.List;
 
@@ -54,13 +53,22 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
         if (value == null) {
             return null;
         }
-        if ((value.isDouble() && Double.isNaN(value.getDoubleValue())) || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
+        ) {
             return value;
         }
-        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))  || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
+        ) {
             return value;
         }
-        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0 || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0)))  {
+        if (
+            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
+        ) {
             return value;
         }
 
@@ -111,8 +119,10 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     private double getSign(double doubleValue) {
         double sign = 0;
-        if (doubleValue > 0) sign = 1;
-        if (doubleValue < 0) sign = -1;
+        if (doubleValue > 0)
+            sign = 1;
+        if (doubleValue < 0)
+            sign = -1;
         return sign;
     }
 

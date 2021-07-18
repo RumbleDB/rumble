@@ -20,7 +20,6 @@
 
 package org.rumbledb.runtime.functions.strings;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;

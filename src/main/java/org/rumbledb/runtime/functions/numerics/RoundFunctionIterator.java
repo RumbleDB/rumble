@@ -26,7 +26,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -55,13 +54,22 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (value == null) {
             return null;
         }
-        if ((value.isDouble() && Double.isNaN(value.getDoubleValue())) || (value.isFloat() && Float.isNaN(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
+        ) {
             return value;
         }
-        if ((value.isDouble() && Double.isInfinite(value.getDoubleValue()))  || (value.isFloat() && Float.isInfinite(value.getFloatValue()))) {
+        if (
+            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
+        ) {
             return value;
         }
-        if ((value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0 || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0)))  {
+        if (
+            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
+        ) {
             return value;
         }
         int precision;
@@ -86,7 +94,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (value.isDecimal()) {
                 double sign = getSign(value.getDecimalValue().doubleValue());
                 BigDecimal bd;
-                if (sign ==1) {
+                if (sign == 1) {
                     bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_UP);
                 } else {
                     bd = value.getDecimalValue().setScale(precision, RoundingMode.HALF_DOWN);
@@ -96,7 +104,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (value.isDouble()) {
                 double sign = getSign(value.getDoubleValue());
                 BigDecimal bd;
-                if (sign ==1) {
+                if (sign == 1) {
                     bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_UP);
                 } else {
                     bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_DOWN);
@@ -108,7 +116,7 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
                 double sign = getSign(value.getFloatValue());
                 BigDecimal bd;
-                if (sign ==1) {
+                if (sign == 1) {
                     bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_UP);
                 } else {
                     bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_DOWN);
@@ -124,8 +132,10 @@ public class RoundFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private double getSign(double doubleValue) {
         double sign = 0;
-        if (doubleValue > 0) sign = 1;
-        if (doubleValue < 0) sign = -1;
+        if (doubleValue > 0)
+            sign = 1;
+        if (doubleValue < 0)
+            sign = -1;
         return sign;
     }
 
