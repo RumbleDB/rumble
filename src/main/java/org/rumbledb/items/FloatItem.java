@@ -125,19 +125,19 @@ public class FloatItem implements Item {
             return "0";
         }
         double abs = Math.abs(this.value);
-        // Mantissa from less or equal than 1.0E-7
+        // Convert to decimal between 10E-7 to 10E6
         if (abs >= 0.000001 && abs < 1000000) {
             return new BigDecimal(this.value).toString();
         }
-        // Mantissa already from 1.0E6, then let Float.toString take care of mantissa from 1.0E7
-        if (abs >= 1000000 && abs < 10000000) {
-            return new DecimalFormat("0.0#######E0").format(this.value);
-            // return String.format("%.4E", this.castToDecimalValue().stripTrailingZeros().toPlainString());
+        // Force mantissa between 10E6 and 10E7
+        if (abs < 100000000) {
+            String str = Float.toString(this.value*10);
+            char reducedChar = (char) ((int) str.charAt(str.length()-1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length()-1)).append(reducedChar);
+            return sb.toString();
         }
-        // If less than 0.000001 must use mantissa, so from 0.0000001 = 1.0E-7
-        // If more or = than 1.0E6
-        // When use float.toString or not
         return Float.toString(this.value);
+
     }
 
     @Override
