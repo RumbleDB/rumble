@@ -30,6 +30,7 @@ import org.rumbledb.exceptions.InvalidArgumentTypeException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemComparator;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -60,6 +61,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         ItemComparator comparator = new ItemComparator(
+                true,
                 new InvalidArgumentTypeException(
                         "Min expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()
@@ -80,7 +82,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             try {
-                return Collections.min(results, comparator);
+                return itemTypePromotion(Collections.min(results, comparator));
             } catch (RumbleException e) {
                 RumbleException ex = new InvalidArgumentTypeException(
                         "Min expression input error. Input has to be non-null atomics of matching types.",
@@ -105,16 +107,15 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 ),
                 df.getItemType()
             );
-            return minDF.getExactlyOneItem();
+            return itemTypePromotion(minDF.getExactlyOneItem());
         }
 
         JavaRDD<Item> rdd = this.iterator.getRDD(context);
         if (rdd.isEmpty()) {
             return null;
         }
-
         this.result = rdd.min(comparator);
-        return this.result;
+        return itemTypePromotion(this.result);
 
 
     }
@@ -130,4 +131,18 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             return super.getVariableDependencies();
         }
     }
+
+    private Item itemTypePromotion(Item item) {
+        if (item.isAnyURI()) {
+            return ItemFactory.getInstance().createStringItem(item.getStringValue());
+        }
+        if (item.isFloat()) {
+            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        }
+        if (item.isDecimal()) {
+            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        }
+        return item;
+    }
+
 }
