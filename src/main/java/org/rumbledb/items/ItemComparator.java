@@ -55,10 +55,16 @@ public class ItemComparator implements Comparator<Item>, Serializable {
      */
     public int compare(Item v1, Item v2) {
         if (this.compareMin) {
-            if ((v1.isDouble() && Double.isNaN(v1.getDoubleValue())) || (v1.isFloat() && Float.isNaN(v1.getFloatValue()))) {
+            if (
+                (v1.isDouble() && Double.isNaN(v1.getDoubleValue()))
+                    || (v1.isFloat() && Float.isNaN(v1.getFloatValue()))
+            ) {
                 return -1;
             }
-            if ((v2.isDouble() && Double.isNaN(v2.getDoubleValue())) || (v2.isFloat() && Float.isNaN(v2.getFloatValue()))) {
+            if (
+                (v2.isDouble() && Double.isNaN(v2.getDoubleValue()))
+                    || (v2.isFloat() && Float.isNaN(v2.getFloatValue()))
+            ) {
                 return 1;
             }
         }

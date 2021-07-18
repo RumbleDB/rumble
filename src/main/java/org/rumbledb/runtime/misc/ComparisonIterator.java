@@ -200,13 +200,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (left.isFloat() && Float.isNaN(left.getFloatValue())) {
             return ItemFactory
-                    .getInstance()
-                    .createBooleanItem(false);
+                .getInstance()
+                .createBooleanItem(false);
         }
         if (right.isFloat() && Float.isNaN(right.getFloatValue())) {
             return ItemFactory
-                    .getInstance()
-                    .createBooleanItem(false);
+                .getInstance()
+                .createBooleanItem(false);
         }
         return comparisonResultToBooleanItem(
             (int) comparison,
@@ -230,10 +230,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!left.isNull() && right.isNull()) {
             return 1;
         }
-        if ((left.isDouble() && Double.isNaN(left.getDoubleValue())) || (left.isFloat() && Float.isNaN(left.getFloatValue()))) {
+        if (
+            (left.isDouble() && Double.isNaN(left.getDoubleValue()))
+                || (left.isFloat() && Float.isNaN(left.getFloatValue()))
+        ) {
             return 1;
         }
-        if ((right.isDouble() && Double.isNaN(right.getDoubleValue())) || (right.isFloat() && Float.isNaN(right.getFloatValue()))) {
+        if (
+            (right.isDouble() && Double.isNaN(right.getDoubleValue()))
+                || (right.isFloat() && Float.isNaN(right.getFloatValue()))
+        ) {
             return -1;
         }
         if (
