@@ -21,6 +21,7 @@
 package org.rumbledb.items.parsing;
 
 import org.apache.commons.codec.binary.Hex;
+import org.apache.parquet.format.IntType;
 import org.apache.spark.ml.linalg.DenseVector;
 import org.apache.spark.ml.linalg.SparseVector;
 import org.apache.spark.ml.linalg.Vector;
@@ -350,7 +351,7 @@ public class ItemParser implements Serializable {
         if (itemType.equals(BuiltinTypesCatalogue.dateItem)) {
             return DataTypes.DateType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem) || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
             return DataTypes.TimestampType;
         }
         if (itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
@@ -358,6 +359,15 @@ public class ItemParser implements Serializable {
         }
         if (itemType.equals(BuiltinTypesCatalogue.objectItem)) {
             return vectorType;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.positiveIntegerItem) || itemType.equals(BuiltinTypesCatalogue.nonNegativeIntegerItem) || itemType.equals(BuiltinTypesCatalogue.negativeIntegerItem) || itemType.equals(BuiltinTypesCatalogue.nonPositiveIntegerItem)) {
+            return DataTypes.IntegerType;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.unsignedByteItem) || itemType.equals(BuiltinTypesCatalogue.unsignedLongItem) || itemType.equals(BuiltinTypesCatalogue.unsignedShortItem) || itemType.equals(BuiltinTypesCatalogue.unsignedIntItem)) {
+            return DataTypes.IntegerType;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.intItem) || itemType.equals(BuiltinTypesCatalogue.byteItem) || itemType.equals(BuiltinTypesCatalogue.shortItem)) {
+            return DataTypes.IntegerType;
         }
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."

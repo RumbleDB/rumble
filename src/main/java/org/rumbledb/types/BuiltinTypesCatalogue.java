@@ -348,7 +348,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.ShortType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "byte"),
             intItem,
             AtomicItemType.decimalItem,
@@ -357,7 +357,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.ByteType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
             integerItem,
             AtomicItemType.decimalItem,
@@ -369,7 +369,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
             integerItem,
             AtomicItemType.decimalItem,
@@ -381,7 +381,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "negativeInteger"),
             nonPositiveIntegerItem,
             AtomicItemType.decimalItem,
@@ -393,7 +393,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "positiveInteger"),
             nonNegativeIntegerItem,
             AtomicItemType.decimalItem,
@@ -405,7 +405,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedInt"),
             integerItem,
             AtomicItemType.decimalItem,
@@ -418,7 +418,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedLong"),
             integerItem,
             AtomicItemType.decimalItem,
@@ -431,7 +431,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.LongType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedShort"),
             integerItem,
             AtomicItemType.decimalItem,
@@ -440,7 +440,7 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
+    public static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedByte"),
             integerItem,
             AtomicItemType.decimalItem,
