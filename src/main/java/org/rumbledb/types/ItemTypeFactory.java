@@ -202,7 +202,7 @@ public class ItemTypeFactory {
                     // fieldDescriptor.setDefaultValue(defaultValueLiteral);
                     fields.put(fieldName, fieldDescriptor);
                 }
-                return new ObjectItemType(
+                ItemType it = new ObjectItemType(
                         name,
                         BuiltinTypesCatalogue.objectItem,
                         true,
@@ -210,6 +210,7 @@ public class ItemTypeFactory {
                         Collections.emptyList(),
                         Collections.emptyList()
                 );
+                return it;
             case "array":
                 throw new OurBadException("Kind array is not supported yet.");
             case "atomic":
