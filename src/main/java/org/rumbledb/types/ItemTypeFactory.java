@@ -142,6 +142,19 @@ public class ItemTypeFactory {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
+                boolean closed = false;
+                Item closedItem = item.getItemByKey("closed");
+                if (closedItem != null && !closedItem.isBoolean()) {
+                    throw new InvalidSchemaException(
+                            "'closed' must be a boolean.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (closedItem != null) {
+                    closed = closedItem.getBooleanValue();
+                } else {
+                    closed = true;
+                }
                 List<Item> contents = contentItem.getItems();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
                 for (Item c : contents) {
@@ -205,7 +218,7 @@ public class ItemTypeFactory {
                 ItemType it = new ObjectItemType(
                         name,
                         BuiltinTypesCatalogue.objectItem,
-                        true,
+                        closed,
                         fields,
                         Collections.emptyList(),
                         Collections.emptyList()

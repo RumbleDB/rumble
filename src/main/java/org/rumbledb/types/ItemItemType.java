@@ -85,4 +85,9 @@ public class ItemItemType implements ItemType {
     public boolean isResolved() {
         return true;
     }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        return false;
+    }
 }

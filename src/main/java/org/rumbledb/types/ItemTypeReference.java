@@ -337,4 +337,12 @@ public class ItemTypeReference implements ItemType {
         }
         return this.resolvedItemType.isDataFrameType();
     }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isCompatibleWithDataFrames();
+    }
 }

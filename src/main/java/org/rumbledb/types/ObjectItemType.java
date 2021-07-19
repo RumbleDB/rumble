@@ -263,4 +263,17 @@ public class ObjectItemType implements ItemType {
             entry.getValue().resolve(context, metadata);
         }
     }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (!this.isClosed) {
+            return false;
+        }
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!entry.getValue().getType().isCompatibleWithDataFrames()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
