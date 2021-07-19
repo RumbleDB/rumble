@@ -297,6 +297,8 @@ keyWords                : Kjsoniq
                         | Kcount
                         | Kreturn
                         | Kunordered
+                        | Ktrue
+                        | Kfalse
                         ;
 
 ///////////////////////// literals
@@ -390,6 +392,10 @@ Kversion                : 'version';
 Kjsoniq                 : 'jsoniq';
 
 Kunordered              : 'unordered';
+
+Ktrue                   : 'true';
+
+Kfalse                  : 'false';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
