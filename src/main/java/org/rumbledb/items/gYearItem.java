@@ -137,6 +137,9 @@ public class gYearItem implements Item {
     }
 
     private static boolean checkInvalidGYearFormat(String gYear, ItemType gYearType) {
+        if (gYear.startsWith("0000") || gYear.startsWith("-0000")) {
+            return false;
+        }
         if (gYearType.equals(BuiltinTypesCatalogue.gYearItem)) {
             return gYearPattern.matcher(gYear).matches();
         }
