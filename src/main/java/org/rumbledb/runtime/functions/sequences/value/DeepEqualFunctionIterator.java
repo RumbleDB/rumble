@@ -96,7 +96,6 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
             for (int i = 0; i < items1.size(); i++) {
                 Item item1 = items1.get(i);
                 Item item2 = items2.get(i);
-
                 if (!item1.equals(item2)) {
                     return false;
                 }
