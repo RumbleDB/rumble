@@ -117,13 +117,10 @@ public class ItemTypeFactory {
             );
         }
         String kind = item.getItemByKey("kind").getStringValue();
-        if (!keys.contains("baseType")) {
-            throw new InvalidSchemaException(
-                    "A JSound verbose schema must contain a 'baseType' field.",
-                    ExceptionMetadata.EMPTY_METADATA
-            );
+        String baseType = null;
+        if (keys.contains("baseType")) {
+            baseType = item.getItemByKey("baseType").getStringValue();
         }
-        String baseType = item.getItemByKey("baseType").getStringValue();
         if (keys.contains("name")) {
             String declaredName = item.getItemByKey("name").getStringValue();
             if (!name.equals(name.toString())) {
@@ -133,7 +130,102 @@ public class ItemTypeFactory {
                 );
             }
         }
-        throw new OurBadException("The JSound verbose syntax is not supported yet.");
+        switch (kind) {
+            case "object":
+                if (baseType == null) {
+                    baseType = "object";
+                }
+                Item contentItem = item.getItemByKey("content");
+                if (contentItem == null) {
+                    contentItem = ItemFactory.getInstance().createArrayItem();
+                }
+                if (!contentItem.isArray()) {
+                    throw new InvalidSchemaException(
+                            "The content facet must be an array",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                List<Item> contents = contentItem.getItems();
+                Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
+                for (Item c : contents) {
+                    Item fieldItem = c.getItemByKey("name");
+                    if (fieldItem == null) {
+                        throw new InvalidSchemaException(
+                                "Field descriptor is missing a name.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    if (!fieldItem.isString()) {
+                        throw new InvalidSchemaException(
+                                "Field descriptor must be a string.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    String fieldName = fieldItem.getStringValue();
+
+                    Item typeItem = c.getItemByKey("type");
+                    if (typeItem == null) {
+                        throw new InvalidSchemaException(
+                                "Field descriptor is missing a type.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    ItemType type = null;
+                    if (typeItem.isString()) {
+                        type = new ItemTypeReference(
+                                Name.createTypeNameFromLiteral(typeItem.getStringValue(), staticContext)
+                        );
+                    } else if (typeItem.isObject()) {
+                        type = createItemTypeFromJSoundVerboseItem(null, typeItem, staticContext);
+                    } else {
+                        throw new InvalidSchemaException(
+                                "Field descriptor must be a string or an object.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+
+                    boolean required = false;
+                    Item requiredItem = c.getItemByKey("required");
+                    if (requiredItem != null && !requiredItem.isBoolean()) {
+                        throw new InvalidSchemaException(
+                                "'required' must be a boolean.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    if (requiredItem != null) {
+                        required = requiredItem.getBooleanValue();
+                    } else {
+                        required = false;
+                    }
+                    FieldDescriptor fieldDescriptor = new FieldDescriptor();
+                    fieldDescriptor.setName(fieldName);
+                    fieldDescriptor.setRequired(required);
+                    fieldDescriptor.setType(type);
+                    fieldDescriptor.setUnique(false);
+                    // fieldDescriptor.setDefaultValue(defaultValueLiteral);
+                    fields.put(fieldName, fieldDescriptor);
+                }
+                ItemType it = new ObjectItemType(
+                        name,
+                        BuiltinTypesCatalogue.objectItem,
+                        true,
+                        fields,
+                        Collections.emptyList(),
+                        Collections.emptyList()
+                );
+                return it;
+            case "array":
+                throw new OurBadException("Kind array is not supported yet.");
+            case "atomic":
+                throw new OurBadException("Kind atomic is not supported yet.");
+            case "union":
+                throw new OurBadException("Kind unionis not supported yet.");
+            default:
+                throw new InvalidSchemaException(
+                        "Kind '" + kind + "' does not exist.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+        }
     }
 
     public static ItemType createItemTypeFromJSONSchemaItem(Name name, Item item, StaticContext staticContext) {
