@@ -269,11 +269,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
-        if (right.isDouble() && left.isNumeric()) {
-            double l = left.castToDoubleValue();
-            double r = right.getDoubleValue();
-            return processDouble(l, r);
-        }
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
             float r = 0;
@@ -281,6 +276,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 r = right.getFloatValue();
             } else {
                 r = right.castToFloatValue();
+            }
+            return processFloat(l, r);
+        }
+        if (left.isNumeric() && right.isFloat()) {
+            float l = 0;
+            float r = right.getFloatValue();
+            if (left.isFloat()) {
+                l = left.getFloatValue();
+            } else {
+                l = left.castToFloatValue();
             }
             return processFloat(l, r);
         }
