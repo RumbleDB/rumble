@@ -439,6 +439,15 @@ public interface ItemType extends Serializable {
         return this.getName().toString();
     }
 
+    /**
+     * Checks compatibility with DataFrames.
+     * 
+     * @return true if compatible with DataFrames and false otherwise.
+     */
+    default boolean isCompatibleWithDataFrames() {
+        return false;
+    }
+
     String toString();
 
     default DataType toDataFrameType() {

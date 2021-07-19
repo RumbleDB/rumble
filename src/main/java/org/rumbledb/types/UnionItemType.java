@@ -158,4 +158,9 @@ public class UnionItemType implements ItemType {
             }
         }
     }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        return false;
+    }
 }

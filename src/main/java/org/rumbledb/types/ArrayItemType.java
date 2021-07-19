@@ -195,4 +195,9 @@ public class ArrayItemType implements ItemType {
         return this.content.getType().isResolved();
     }
 
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        return this.content.getType().isCompatibleWithDataFrames();
+    }
+
 }
