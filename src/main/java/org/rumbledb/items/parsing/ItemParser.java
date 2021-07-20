@@ -253,7 +253,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Date) o;
             }
-            Instant instant = value.toInstant();
+            long instant = value.getTime();
             DateTime dt = new DateTime(instant);
             return ItemFactory.getInstance().createDateItem(dt, false);
         } else if (fieldType.equals(DataTypes.BinaryType)) {
