@@ -421,7 +421,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
-                    return new Date(item.getDateTimeValue().getMillis());
+                    return new Date(i.getDateTimeValue().getMillis());
                 }
                 return new Date(item.getDateTimeValue().getMillis());
             }
@@ -437,9 +437,25 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                                 "Type mismatch and cast unsuccessful to " + dataType
                         );
                     }
-                    return new Timestamp(item.getDateTimeValue().getMillis());
+                    return new Timestamp(i.getDateTimeValue().getMillis());
                 }
                 return new Timestamp(item.getDateTimeValue().getMillis());
+            }
+            if (dataType.equals(DataTypes.BinaryType)) {
+                if (!item.isHexBinary() && !item.isBase64Binary()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        BuiltinTypesCatalogue.hexBinaryItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new InvalidInstanceException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getBinaryValue();
+                }
+                return item.getBinaryValue();
             }
         } catch (OurBadException ex) {
             // OurBadExceptions triggered by invalid use of value getters here are caused by user's schema
@@ -455,7 +471,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childrenItems = this.children.get(0).getRDD(context);
-        return childrenItems.map(x -> validate(x, this.itemType));
+        return childrenItems.map(x -> validate(x, this.itemType, getMetadata()));
     }
 
     @Override
@@ -480,17 +496,27 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType);
+        return validate(this.children.get(0).next(), this.itemType, getMetadata());
     }
 
-    private static Item validate(Item item, ItemType itemType) {
+    private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata) {
         if (itemType.isAtomicItemType()) {
             if (!item.isAtomic()) {
                 throw new InvalidInstanceException(
                         "Expected an atomic item for type " + itemType.getIdentifierString()
                 );
             }
-            return ItemFactory.getInstance().createUserDefinedItem(item, itemType);
+            if(InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
+                return item;
+            }
+            Item castType = CastIterator.castItemToType(item, itemType, metadata);
+            if(castType == null)
+            {
+                throw new InvalidInstanceException(
+                    "Cannot cast " + item + " to type " + itemType.getIdentifierString()
+            );
+            }
+            return castType;
         }
         if (itemType.isArrayItemType()) {
             if (!item.isArray()) {
@@ -500,7 +526,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet().getType()));
+                members.add(validate(member, itemType.getArrayContentFacet().getType(), metadata));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
             return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
@@ -520,7 +546,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             for (String key : item.getKeys()) {
                 if (facets.containsKey(key)) {
                     keys.add(key);
-                    values.add(validate(item.getItemByKey(key), facets.get(key).getType()));
+                    values.add(validate(item.getItemByKey(key), facets.get(key).getType(), metadata));
                 } else {
                     if (itemType.getClosedFacet()) {
                         throw new InvalidInstanceException(
