@@ -117,7 +117,10 @@ public class ItemTypeFactory {
             );
         }
         String kind = item.getItemByKey("kind").getStringValue();
-        String baseType = item.getItemByKey("baseType").getStringValue();
+        String baseType = null;
+        if (keys.contains("baseType")) {
+            baseType = item.getItemByKey("baseType").getStringValue();
+        }
         if (keys.contains("name")) {
             String declaredName = item.getItemByKey("name").getStringValue();
             if (!name.equals(name.toString())) {
