@@ -230,15 +230,19 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (!left.isNull() && right.isNull()) {
             return 1;
         }
-        if (right.isNumeric() &&
+        if (
+            right.isNumeric()
+                &&
                 ((left.isDouble() && Double.isNaN(left.getDoubleValue()))
-                || (left.isFloat() && Float.isNaN(left.getFloatValue())))
+                    || (left.isFloat() && Float.isNaN(left.getFloatValue())))
         ) {
             return 1;
         }
-        if (left.isNumeric() &&
+        if (
+            left.isNumeric()
+                &&
                 ((right.isDouble() && Double.isNaN(right.getDoubleValue()))
-                || (right.isFloat() && Float.isNaN(right.getFloatValue())))
+                    || (right.isFloat() && Float.isNaN(right.getFloatValue())))
         ) {
             return -1;
         }
