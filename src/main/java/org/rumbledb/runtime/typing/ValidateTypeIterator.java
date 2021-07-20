@@ -329,6 +329,54 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 }
                 return item.getIntValue();
             }
+            if (dataType.equals(DataTypes.ByteType)) {
+                if (!item.isInt()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        BuiltinTypesCatalogue.intItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new InvalidInstanceException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return (byte) i.getIntValue();
+                }
+                return (byte) item.getIntValue();
+            }
+            if (dataType.equals(DataTypes.ShortType)) {
+                if (!item.isInt()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        BuiltinTypesCatalogue.intItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new InvalidInstanceException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return (short) i.getIntValue();
+                }
+                return (short) item.getIntValue();
+            }
+            if (dataType.equals(DataTypes.LongType)) {
+                if (!item.isInt()) {
+                    Item i = CastIterator.castItemToType(
+                        item,
+                        BuiltinTypesCatalogue.longItem,
+                        ExceptionMetadata.EMPTY_METADATA
+                    );
+                    if (i == null) {
+                        throw new InvalidInstanceException(
+                                "Type mismatch and cast unsuccessful to " + dataType
+                        );
+                    }
+                    return i.getIntegerValue().longValue();
+                }
+                return item.getIntegerValue().longValue();
+            }
             if (dataType.equals(DataTypes.DoubleType)) {
                 if (!item.isDouble()) {
                     Item i = CastIterator.castItemToType(
@@ -506,15 +554,14 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         "Expected an atomic item for type " + itemType.getIdentifierString()
                 );
             }
-            if(InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
+            if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
             Item castType = CastIterator.castItemToType(item, itemType, metadata);
-            if(castType == null)
-            {
+            if (castType == null) {
                 throw new InvalidInstanceException(
-                    "Cannot cast " + item + " to type " + itemType.getIdentifierString()
-            );
+                        "Cannot cast " + item + " to type " + itemType.getIdentifierString()
+                );
             }
             return castType;
         }
