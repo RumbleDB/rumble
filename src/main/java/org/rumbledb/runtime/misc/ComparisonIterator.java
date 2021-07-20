@@ -284,6 +284,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             return processFloat(l, r);
         }
+        if (left.isNumeric() && right.isFloat()) {
+            float l = 0;
+            float r = right.getFloatValue();
+            if (left.isFloat()) {
+                l = left.getFloatValue();
+            } else {
+                l = left.castToFloatValue();
+            }
+            return processFloat(l, r);
+        }
         if (left.isInteger() && right.isInteger()) {
             BigInteger l = left.getIntegerValue();
             BigInteger r = right.getIntegerValue();

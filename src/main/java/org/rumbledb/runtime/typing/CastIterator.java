@@ -5,11 +5,7 @@ import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CastException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnknownCastTypeException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
@@ -172,6 +168,17 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createFloatItem(item.castToFloatValue());
                 }
                 return null;
+            }
+
+            if (
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+            ) {
+                throw new InvalidLexicalValueException(
+                        "NaN or INF cannot be cast to another type than Float or Double",
+                        metadata
+                );
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.decimalItem)) {
@@ -391,6 +398,11 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             return null;
+        } catch (InvalidLexicalValueException i) {
+            throw new InvalidLexicalValueException(
+                    "NaN or INF cannot be cast to another type than Float or Double",
+                    metadata
+            );
         } catch (Exception e) {
             return null;
         }
