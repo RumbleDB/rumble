@@ -38,7 +38,10 @@ public class ItemTypeFactory {
         if (item.isArray()) {
             List<Item> members = item.getItems();
             if (members.size() != 1) {
-                throw new InvalidSchemaException("Invalid JSound, an array type should only contain one member type: " + item.serialize(), ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException(
+                        "Invalid JSound, an array type should only contain one member type: " + item.serialize(),
+                        ExceptionMetadata.EMPTY_METADATA
+                );
             }
             ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0), staticContext);
             return new ArrayItemType(
@@ -224,7 +227,7 @@ public class ItemTypeFactory {
                     } else {
                         unique = false;
                     }
-                    
+
                     Item defaultValue = c.getItemByKey("default");
                     if (defaultValue != null && !defaultValue.isAtomic()) {
                         throw new InvalidSchemaException(
@@ -237,8 +240,7 @@ public class ItemTypeFactory {
                     fieldDescriptor.setRequired(required);
                     fieldDescriptor.setType(type);
                     fieldDescriptor.setUnique(unique);
-                    if(defaultValue != null)
-                    {
+                    if (defaultValue != null) {
                         fieldDescriptor.setDefaultValue(defaultValue);
                     }
                     fields.put(fieldName, fieldDescriptor);
