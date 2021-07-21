@@ -138,6 +138,12 @@ public class ItemTypeFactory {
                 if (baseType == null) {
                     baseType = "object";
                 }
+                if (!baseType.equals("object")) {
+                    throw new InvalidSchemaException(
+                            "We do not support user-defined object subtypes yet. This will come!",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
                 Item contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
                     contentItem = ItemFactory.getInstance().createArrayItem();
