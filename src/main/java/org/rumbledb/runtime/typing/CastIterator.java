@@ -233,7 +233,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 }
-                if (item.isDateTime()) {
+                if (item.isDate()) {
                     return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
             }
@@ -241,7 +241,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
                 }
-                if (item.isDateTime()) {
+                if (item.isTime()) {
                     return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
             }

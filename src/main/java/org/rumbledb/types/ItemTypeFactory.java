@@ -38,7 +38,7 @@ public class ItemTypeFactory {
         if (item.isArray()) {
             List<Item> members = item.getItems();
             if (members.size() != 1) {
-                throw new InvalidSchemaException("Invalid JSound: " + item, ExceptionMetadata.EMPTY_METADATA);
+                throw new InvalidSchemaException("Invalid JSound, an array type should only contain one member type: " + item.serialize(), ExceptionMetadata.EMPTY_METADATA);
             }
             ItemType memberType = createItemTypeFromJSoundCompactItem(null, members.get(0), staticContext);
             return new ArrayItemType(
@@ -210,12 +210,37 @@ public class ItemTypeFactory {
                     } else {
                         required = false;
                     }
+
+                    boolean unique = false;
+                    Item uniqueItem = c.getItemByKey("unique");
+                    if (uniqueItem != null && !uniqueItem.isBoolean()) {
+                        throw new InvalidSchemaException(
+                                "'unique' must be a boolean.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    if (uniqueItem != null) {
+                        unique = uniqueItem.getBooleanValue();
+                    } else {
+                        unique = false;
+                    }
+                    
+                    Item defaultValue = c.getItemByKey("default");
+                    if (defaultValue != null && !defaultValue.isAtomic()) {
+                        throw new InvalidSchemaException(
+                                "'default' must be an atomic value. Default values for non-atomic types are not supported yet.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
                     FieldDescriptor fieldDescriptor = new FieldDescriptor();
                     fieldDescriptor.setName(fieldName);
                     fieldDescriptor.setRequired(required);
                     fieldDescriptor.setType(type);
-                    fieldDescriptor.setUnique(false);
-                    // fieldDescriptor.setDefaultValue(defaultValueLiteral);
+                    fieldDescriptor.setUnique(unique);
+                    if(defaultValue != null)
+                    {
+                        fieldDescriptor.setDefaultValue(defaultValue);
+                    }
                     fields.put(fieldName, fieldDescriptor);
                 }
                 ItemType it = new ObjectItemType(
