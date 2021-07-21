@@ -233,6 +233,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 }
+                if (item.isDate()) {
+                    return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+                }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
@@ -240,6 +243,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
+                }
+                if (item.isTime()) {
+                    return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -250,6 +256,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
                 }
                 if (item.isDate()) {
+                    return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+                }
+                if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
             }
