@@ -422,7 +422,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 expression.setHighestExecutionMode(ExecutionMode.LOCAL);
                 return argument;
             case OneOrMore:
-                if (expression.getSequenceType().getItemType().isCompatibleWithDataFrames()) {
+                if (
+                    expression.getSequenceType().getItemType().isObjectItemType()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                ) {
                     System.err.println(
                         "[INFO] Validation against "
                             + expression.getSequenceType().getItemType()
@@ -442,7 +445,10 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
                 return argument;
             case ZeroOrMore:
-                if (expression.getSequenceType().getItemType().isCompatibleWithDataFrames()) {
+                if (
+                    expression.getSequenceType().getItemType().isObjectItemType()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                ) {
                     System.err.println(
                         "[INFO] Validation against "
                             + expression.getSequenceType().getItemType()

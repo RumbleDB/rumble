@@ -144,6 +144,12 @@ public class ItemTypeFactory {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
+                if (!keys.contains("content")) {
+                    throw new InvalidSchemaException(
+                            "The content facet is missing in an object type declaration.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
                 Item contentItem = item.getItemByKey("content");
                 if (contentItem == null) {
                     contentItem = ItemFactory.getInstance().createArrayItem();
@@ -261,7 +267,68 @@ public class ItemTypeFactory {
                 );
                 return it;
             case "array":
-                throw new OurBadException("Kind array is not supported yet.");
+                if (baseType == null) {
+                    baseType = "array";
+                }
+                if (!baseType.equals("array")) {
+                    throw new InvalidSchemaException(
+                            "We do not support user-defined array subtypes yet. This will come!",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (!keys.contains("content")) {
+                    throw new InvalidSchemaException(
+                            "The content facet is missing in an array type declaration.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                contentItem = item.getItemByKey("content");
+                if (contentItem == null) {
+                    contentItem = ItemFactory.getInstance().createArrayItem();
+                }
+                ItemType memberType = null;
+                if (contentItem.isString()) {
+                    memberType = new ItemTypeReference(
+                            Name.createTypeNameFromLiteral(contentItem.getStringValue(), staticContext)
+                    );
+                } else if (contentItem.isObject()) {
+                    memberType = createItemTypeFromJSoundVerboseItem(null, contentItem, staticContext);
+                } else {
+                    throw new InvalidSchemaException(
+                            "Field descriptor must be a string or an object.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                Integer minLength = null;
+                Integer maxLength = null;
+                if (keys.contains("minLength")) {
+                    Item minLengthItem = item.getItemByKey("minLength");
+                    if (!minLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minLength fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minLength = minLengthItem.castToIntValue();
+                }
+                if (keys.contains("maxLength")) {
+                    Item maxLengthItem = item.getItemByKey("maxLength");
+                    if (!maxLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minLength fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minLength = maxLengthItem.castToIntValue();
+                }
+                return new ArrayItemType(
+                        name,
+                        BuiltinTypesCatalogue.arrayItem,
+                        new ArrayContentDescriptor(memberType),
+                        minLength,
+                        maxLength,
+                        Collections.emptyList()
+                );
             case "atomic":
                 throw new OurBadException("Kind atomic is not supported yet.");
             case "union":
