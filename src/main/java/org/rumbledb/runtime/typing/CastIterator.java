@@ -218,10 +218,11 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                         .createIntItem(item.getBooleanValue() ? 1 : 0);
                 }
                 if (item.isNumeric()) {
-                    if (item.isDecimal()) {
-                        item = new IntegerItem(item.castToIntegerValue());
-                    }
-                    Item checkedItem = checkFacetsInteger(item, targetType, false);
+                    Item checkedItem = checkFacetsInteger(
+                            ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                            targetType,
+                            false
+                    );
                     if (checkedItem != null) {
                         return ItemFactory.getInstance().createIntItem(checkedItem.castToIntValue());
                     }
