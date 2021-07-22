@@ -98,10 +98,10 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 Item item2 = items2.get(i);
                 // Specific to deep-equal but does not apply to eq operator
                 if (
-                        ((item1.isFloat() && Float.isNaN(item1.getFloatValue()))
-                                || (item1.isDouble() && Double.isNaN(item1.getDoubleValue())))
-                                && ((item2.isFloat() && Float.isNaN(item2.getFloatValue()))
-                                || (item2.isDouble() && Double.isNaN(item2.getDoubleValue())))
+                    ((item1.isFloat() && Float.isNaN(item1.getFloatValue()))
+                        || (item1.isDouble() && Double.isNaN(item1.getDoubleValue())))
+                        && ((item2.isFloat() && Float.isNaN(item2.getFloatValue()))
+                            || (item2.isDouble() && Double.isNaN(item2.getDoubleValue())))
                 ) {
                     return true;
                 }

@@ -171,9 +171,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             }
 
             if (
-                    (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
-                            || (item.isDouble()
-                            && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
             ) {
                 throw new InvalidLexicalValueException(
                         "NaN or INF cannot be cast to another type than Float or Double",
