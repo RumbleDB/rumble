@@ -12,7 +12,6 @@ import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.exceptions.UnknownCastTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
-import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
@@ -219,9 +218,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 if (item.isNumeric()) {
                     Item checkedItem = checkFacetsInteger(
-                            ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
-                            targetType,
-                            false
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
                     );
                     if (checkedItem != null) {
                         return ItemFactory.getInstance().createIntItem(checkedItem.castToIntValue());

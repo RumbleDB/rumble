@@ -34,7 +34,6 @@ import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.text.DecimalFormat;
 
 public class FloatItem implements Item {
 
@@ -131,9 +130,9 @@ public class FloatItem implements Item {
         }
         // Force mantissa between 10E6 and 10E7
         if (abs < 100000000) {
-            String str = Float.toString(this.value*10);
-            char reducedChar = (char) ((int) str.charAt(str.length()-1) - 1);
-            StringBuilder sb = new StringBuilder(str.substring(0, str.length()-1)).append(reducedChar);
+            String str = Float.toString(this.value * 10);
+            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
             return sb.toString();
         }
         return Float.toString(this.value);
