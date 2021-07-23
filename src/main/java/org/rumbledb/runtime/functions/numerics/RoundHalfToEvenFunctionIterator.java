@@ -53,13 +53,22 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
         if (value == null) {
             return null;
         }
-        if (value.isDouble() && Double.isNaN(value.getDoubleValue())) {
+        if (
+            (value.isDouble() && Double.isNaN(value.getDoubleValue()))
+                || (value.isFloat() && Float.isNaN(value.getFloatValue()))
+        ) {
             return value;
         }
-        if (value.isDouble() && Double.isInfinite(value.getDoubleValue())) {
+        if (
+            (value.isDouble() && Double.isInfinite(value.getDoubleValue()))
+                || (value.isFloat() && Float.isInfinite(value.getFloatValue()))
+        ) {
             return value;
         }
-        if (value.isDouble() && value.getDoubleValue() == 0d) {
+        if (
+            (value.isDouble() && Double.compare(value.getDoubleValue(), -0d) == 0
+                || (value.isFloat() && Float.compare(value.getFloatValue(), -0f) == 0))
+        ) {
             return value;
         }
 
@@ -87,12 +96,14 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
                 return ItemFactory.getInstance().createDecimalItem(bd);
             }
             if (value.isDouble()) {
+                double sign = getSign(value.getDoubleValue());
                 BigDecimal bd = new BigDecimal(value.getDoubleValue()).setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createDoubleItem(bd.doubleValue());
+                return ItemFactory.getInstance().createDoubleItem(sign * Math.abs(bd.doubleValue()));
             }
             if (value.isFloat()) {
+                double sign = getSign(value.getFloatValue());
                 BigDecimal bd = new BigDecimal(value.getFloatValue()).setScale(precision, RoundingMode.HALF_EVEN);
-                return ItemFactory.getInstance().createFloatItem(bd.floatValue());
+                return ItemFactory.getInstance().createFloatItem((float) sign * Math.abs(bd.floatValue()));
             }
             throw new UnexpectedTypeException(
                     "Unexpected value in round-half-to-even(): " + value.getDynamicType(),
@@ -104,6 +115,15 @@ public class RoundHalfToEvenFunctionIterator extends AtMostOneItemLocalRuntimeIt
             throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
         }
 
+    }
+
+    private double getSign(double doubleValue) {
+        double sign = 0;
+        if (doubleValue > 0)
+            sign = 1;
+        if (doubleValue < 0)
+            sign = -1;
+        return sign;
     }
 
 

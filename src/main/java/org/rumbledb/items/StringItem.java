@@ -97,6 +97,9 @@ public class StringItem implements Item {
         if (trimmedValue.equals("NaN")) {
             return Float.NaN;
         }
+        if (trimmedValue.startsWith("-") && Float.parseFloat(this.getValue()) == -0f) {
+            return -0f;
+        }
         return Float.parseFloat(this.getValue());
     }
 
