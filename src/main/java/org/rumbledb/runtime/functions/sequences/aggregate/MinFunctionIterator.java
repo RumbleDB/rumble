@@ -20,23 +20,18 @@
 
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemComparator;
-import org.rumbledb.items.ItemFactory;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
-import sparksoniq.spark.SparkSessionManager;
-import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
-import org.rumbledb.runtime.misc.ComparisonIterator;
-
+import org.rumbledb.runtime.typing.CastIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -46,9 +41,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private Item result;
     private Item nextResult;
-    private Item minResult;
+    private ItemType returnType;
     private ItemComparator comparator;
 
 
@@ -78,99 +72,81 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             }
         }
 
-        if (!this.iterator.isRDDOrDataFrame()) {
-
-            List<Item> results = this.iterator.materialize(context);
-            if (results.size() == 0) {
-                return null;
-            }
-
-            try {
-                System.out.println("before open context");
-                open(context);
-                System.out.println("before  next");
-                return next();
-                //return itemTypePromotion(Collections.min(results, comparator));
-
-            } catch (RumbleException e) {
-                RumbleException ex = new InvalidArgumentTypeException(
-                        "Min expression input error. Input has to be non-null atomics of matching types.",
-                        getMetadata()
-                );
-                ex.initCause(e);
-                throw ex;
-            }
-        }
-
-        if (this.iterator.isDataFrame()) {
-            JSoundDataFrame df = this.iterator.getDataFrame(context);
-            if (df.isEmptySequence()) {
-                return null;
-            }
-            df.createOrReplaceTempView("input");
-            JSoundDataFrame minDF = df.evaluateSQL(
-                String.format(
-                    "SELECT MIN(`%s`) as `%s` FROM input",
-                    SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName
-                ),
-                df.getItemType()
+        // if (!this.iterator.isRDDOrDataFrame()) {
+        try {
+            return this.nextResult;
+        } catch (RumbleException e) {
+            RumbleException ex = new InvalidArgumentTypeException(
+                    "Min expression input error. Input has to be non-null atomics of matching types.",
+                    getMetadata()
             );
-            return itemTypePromotion(minDF.getExactlyOneItem());
+            ex.initCause(e);
+            throw ex;
         }
-
-        JavaRDD<Item> rdd = this.iterator.getRDD(context);
-        if (rdd.isEmpty()) {
-            return null;
-        }
-        this.result = rdd.min(comparator); // this
-        return itemTypePromotion(this.result);
-
+        // }
+        /*
+         * if (this.iterator.isDataFrame()) {
+         * JSoundDataFrame df = this.iterator.getDataFrame(context);
+         * if (df.isEmptySequence()) {
+         * return null;
+         * }
+         * df.createOrReplaceTempView("input");
+         * JSoundDataFrame minDF = df.evaluateSQL(
+         * String.format(
+         * "SELECT MIN(`%s`) as `%s` FROM input",
+         * SparkSessionManager.atomicJSONiqItemColumnName,
+         * SparkSessionManager.atomicJSONiqItemColumnName
+         * ),
+         * df.getItemType()
+         * );
+         * return itemTypePromotion(minDF.getExactlyOneItem());
+         * }
+         * 
+         * JavaRDD<Item> rdd = this.iterator.getRDD(context);
+         * if (rdd.isEmpty()) {
+         * return null;
+         * }
+         * this.result = rdd.min(comparator); // this
+         * return itemTypePromotion(this.result);
+         */
     }
+
 
     @Override
     public void open(DynamicContext dynamicContext) {
+        super.open(dynamicContext);
         this.iterator.open(dynamicContext);
-        System.out.println("next it  ");
-        this.minResult = this.iterator.next();
-        System.out.println("setNextRes");
+        this.hasNext = this.iterator.hasNext();
+        if (!this.hasNext) {
+            return;
+        }
+        this.nextResult = this.iterator.next();
+        this.returnType = this.nextResult.getDynamicType();
         setNextResult();
     }
 
     @Override
     public Item next() {
-        //Item result = this.nextResult;
-        //setNextResult();
-        System.out.println("NEXT");
-        System.out.println(this.minResult);
-        System.out.println(this.nextResult);
-        return this.minResult;
-        //throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "min function", getMetadata());
+        if (this.nextResult == null) {
+            return null;
+        }
+        if (this.hasNext) {
+            this.hasNext = false;
+            return CastIterator.castItemToType(this.nextResult, this.returnType, getMetadata());
+        }
+        throw new IteratorFlowException(FLOW_EXCEPTION_MESSAGE + "min function", getMetadata());
     }
 
     private void setNextResult() {
-        this.nextResult = null;
         while (this.iterator.hasNext()) {
-            System.out.println("init candidate");
             Item candidateItem = this.iterator.next();
-            System.out.println("candidate is ");
-            System.out.println(candidateItem.getIntValue());
-            long c = ComparisonIterator.compareItems(candidateItem, this.minResult, ComparisonOperator.GC_LT, getMetadata());
-            System.out.println("c");
-            System.out.println(c);
+            promoteType(candidateItem);
+            int c = this.comparator.compare(candidateItem, this.nextResult);
             if (c < 0) {
-                this.minResult = candidateItem;
-                this.nextResult = this.minResult;
+                this.nextResult = candidateItem;
             }
         }
-        System.out.println("out loop");
-        if (this.nextResult == null) {
-            this.hasNext = false;
-            this.iterator.close();
-        } else {
-            this.hasNext = true;
-        }
-        next();
+        this.iterator.close();
     }
 
     @Override
@@ -201,17 +177,20 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         }
     }
 
-    private Item itemTypePromotion(Item item) {
-        if (item.isAnyURI()) {
-            return ItemFactory.getInstance().createStringItem(item.getStringValue());
+
+
+    private void promoteType(Item candidateItem) {
+        if (this.returnType != BuiltinTypesCatalogue.doubleItem && candidateItem.isFloat()) {
+            this.returnType = BuiltinTypesCatalogue.floatItem;
         }
-        if (item.isFloat()) {
-            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        if (candidateItem.isDouble()) {
+            this.returnType = BuiltinTypesCatalogue.doubleItem;
         }
-        if (item.isDecimal()) {
-            return ItemFactory.getInstance().createDoubleItem(item.castToDoubleValue());
+        if (candidateItem.isString()) {
+            this.returnType = BuiltinTypesCatalogue.stringItem;
         }
-        return item;
     }
+
+
 
 }
