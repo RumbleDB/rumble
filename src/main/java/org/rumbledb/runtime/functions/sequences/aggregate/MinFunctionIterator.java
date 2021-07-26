@@ -52,9 +52,11 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private BigDecimal currentMinDecimal;
     private long currentMinLong;
     private Item currentMin;
-    private byte activeType = 0; // 0 = unknown/init  1 = long, 2 = BigDecimal, 3 = float, 4 = long
+    private byte activeType = 0; // 0 = unknown/init 1 = long, 2 = BigDecimal, 3 = float, 4 = long, 5 = anyURI, 6 =
+                                 // String, 7 = other types (date types)
     private ItemType returnType;
     private Item result;
+    private ItemComparator comparator;
 
 
     public MinFunctionIterator(
@@ -64,6 +66,13 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     ) {
         super(arguments, executionMode, iteratorMetadata);
         this.iterator = this.children.get(0);
+        this.comparator = new ItemComparator(
+                true,
+                new InvalidArgumentTypeException(
+                        "Min expression input error. Input has to be non-null atomics of matching types",
+                        getMetadata()
+                )
+        );
     }
 
     @Override
@@ -98,8 +107,24 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         } else if (candidateType.equals(BuiltinTypesCatalogue.doubleItem)) {
                             this.activeType = 4;
                             this.currentMinDouble = candidateItem.castToDoubleValue();
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.anyURIItem)) {
+                            this.activeType = 5;
+                            this.currentMin = candidateItem;
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.stringItem)) {
+                            this.activeType = 6;
+                            this.currentMin = candidateItem;
+                        } else if (
+                            candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
+                                || candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
+                                || candidateType.equals(BuiltinTypesCatalogue.dateTimeItem)
+                                || candidateType.equals(BuiltinTypesCatalogue.dateItem)
+                        ) {
+                            this.activeType = 7;
+                            this.currentMin = candidateItem;
                         } else {
-                            throw new OurBadException("Inconsistent state in state iteration");
+                            this.activeType = 9;
+                            this.currentMin = candidateItem;
+                            // throw new OurBadException("Inconsistent state in state iteration");
                         }
                         this.returnType = candidateType;
                         break;
@@ -107,7 +132,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         // long
                         if (!candidateItem.isNumeric()) {
                             throw new InvalidArgumentTypeException(
-                                    "Cannot compare float with " + candidateItem.getDynamicType(),
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
                                     getMetadata()
                             );
                         }
@@ -152,7 +177,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         // decimal
                         if (!candidateItem.isNumeric()) {
                             throw new InvalidArgumentTypeException(
-                                    "Cannot compare float with " + candidateItem.getDynamicType(),
+                                    "Cannot compare decimal with " + candidateType,
                                     getMetadata()
                             );
                         }
@@ -168,7 +193,8 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             }
                         } else if (candidateItem.isDouble()) {
                             this.activeType = 4;
-                            this.currentMinDouble = this.currentMinFloat;
+                            this.returnType = BuiltinTypesCatalogue.doubleItem;
+                            this.currentMinDouble = this.currentMinDecimal.doubleValue();
                             double candidateItemDouble = candidateItem.getDoubleValue();
                             if (Double.isNaN(candidateItemDouble)) {
                                 this.currentMinDouble = Double.NaN;
@@ -185,15 +211,15 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
                         break;
                     case 3:
-                        System.out.println("case 3");
                         if (!candidateItem.isNumeric()) {
                             throw new InvalidArgumentTypeException(
-                                    "Cannot compare float with " + candidateItem.getDynamicType(),
+                                    "Cannot compare float with " + candidateType,
                                     getMetadata()
                             );
                         }
                         if (candidateItem.isDouble()) {
                             this.activeType = 4;
+                            this.returnType = BuiltinTypesCatalogue.doubleItem;
                             this.currentMinDouble = this.currentMinFloat;
                             double candidateItemDouble = candidateItem.getDoubleValue();
                             if (Double.isNaN(candidateItemDouble) || candidateItemDouble < this.currentMinDouble) {
@@ -210,10 +236,9 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
                         break;
                     case 4:
-                        System.out.println("case 4");
                         if (!candidateItem.isNumeric()) {
                             throw new InvalidArgumentTypeException(
-                                    "Cannot compare double with " + candidateItem.getDynamicType(),
+                                    "Cannot compare double with " + candidateType,
                                     getMetadata()
                             );
                         }
@@ -224,6 +249,55 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             }
                         }
                         break;
+                    case 5:
+                        if (candidateItem.isNumeric()) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare anyURI with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (candidateItem.isString()) {
+                            this.activeType = 6;
+                            this.returnType = BuiltinTypesCatalogue.stringItem;
+                        }
+                        if (this.comparator.compare(candidateItem, this.currentMin) < 0) {
+                            this.currentMin = candidateItem;
+                        }
+                        break;
+                    case 6:
+                        if (candidateItem.isNumeric()) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare string with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (this.comparator.compare(candidateItem, this.currentMin) < 0) {
+                            this.currentMin = candidateItem;
+                            this.returnType = candidateType;
+                        }
+                        break;
+                    case 7:
+                        if (!candidateType.equals(this.returnType)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (this.comparator.compare(candidateItem, this.currentMin) < 0) {
+                            this.currentMin = candidateItem;
+                        }
+                        break;
+                    case 9:
+                        if (candidateItem.isNumeric()) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (this.comparator.compare(candidateItem, this.currentMin) < 0) {
+                            this.currentMin = candidateItem;
+                        }
+                        break;
                     default:
                         throw new OurBadException("Inconsistent state in state iteration");
                 }
@@ -232,7 +306,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
             this.iterator.close();
 
-            Item itemResult = null;
+            Item itemResult;
             switch (this.activeType) {
                 case 0:
                     return null;
@@ -247,6 +321,12 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     break;
                 case 4:
                     itemResult = ItemFactory.getInstance().createDoubleItem(this.currentMinDouble);
+                    break;
+                case 5:
+                case 6:
+                case 7:
+                case 9:
+                    itemResult = this.currentMin;
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
@@ -276,16 +356,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (rdd.isEmpty()) {
             return null;
         }
-
-        ItemComparator comparator = new ItemComparator(
-                true,
-                new InvalidArgumentTypeException(
-                        "Min expression input error. Input has to be non-null atomics of matching types",
-                        getMetadata()
-                )
-        );
-
-        this.result = rdd.min(comparator);
+        this.result = rdd.min(this.comparator);
         return this.result;
     }
 
