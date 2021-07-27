@@ -87,9 +87,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             this.iterator.open(context);
             while (this.iterator.hasNext()) {
                 Item candidateItem = this.iterator.next();
-
+                if (candidateItem.isNull()) {
+                    continue;
+                }
                 ItemType candidateType = candidateItem.getDynamicType();
-
                 // Manage all types and make sure comparison are correct
                 switch (this.activeType) {
                     case 0:
