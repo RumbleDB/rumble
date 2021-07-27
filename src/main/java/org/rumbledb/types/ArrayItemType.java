@@ -5,6 +5,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
@@ -32,11 +33,11 @@ public class ArrayItemType implements ItemType {
     );
 
     final private Name name;
-    final private ArrayContentDescriptor content;
-    final private List<Item> enumeration;
+    private ArrayContentDescriptor content;
+    private List<Item> enumeration;
     final private ItemType baseType;
     final private int typeTreeDepth;
-    final private Integer minLength, maxLength;
+    private Integer minLength, maxLength;
 
     ArrayItemType(
             Name name,
@@ -52,11 +53,7 @@ public class ArrayItemType implements ItemType {
         }
         this.baseType = baseType;
         this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-        if (content == null) {
-            this.content = new ArrayContentDescriptor(BuiltinTypesCatalogue.item);
-        } else {
-            this.content = content;
-        }
+        this.content = content;
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.enumeration = enumeration;
@@ -117,22 +114,22 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public List<Item> getEnumerationFacet() {
-        return this.enumeration != null || this.isPrimitive() ? this.enumeration : this.baseType.getEnumerationFacet();
+        return this.enumeration;
     }
 
     @Override
     public Integer getMinLengthFacet() {
-        return this.minLength != null || this.isPrimitive() ? this.minLength : this.baseType.getMinLengthFacet();
+        return this.minLength;
     }
 
     @Override
     public Integer getMaxLengthFacet() {
-        return this.maxLength != null || this.isPrimitive() ? this.maxLength : this.baseType.getMaxLengthFacet();
+        return this.maxLength;
     }
 
     @Override
     public ArrayContentDescriptor getArrayContentFacet() {
-        return this.content != null || this.isPrimitive() ? this.content : this.baseType.getArrayContentFacet();
+        return this.content;
     }
 
     @Override
@@ -181,6 +178,15 @@ public class ArrayItemType implements ItemType {
         if (!this.content.getType().isResolved()) {
             this.content.getType().resolve(context, metadata);
         }
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            if (!this.baseType.isArrayItemType()) {
+                if (this.content == null) {
+                    this.content = this.baseType.getArrayContentFacet();
+                }
+            }
+            checkSubtypeConsistency();
+        }
     }
 
     @Override
@@ -188,11 +194,48 @@ public class ArrayItemType implements ItemType {
         if (!this.content.getType().isResolved()) {
             this.content.getType().resolve(context, metadata);
         }
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            if (this.baseType.isArrayItemType()) {
+                if (this.content == null) {
+                    this.content = this.baseType.getArrayContentFacet();
+                }
+                if (this.minLength == null) {
+                    this.minLength = this.baseType.getMinLengthFacet();
+                }
+                if (this.maxLength == null) {
+                    this.maxLength = this.baseType.getMaxLengthFacet();
+                }
+                
+                if (this.enumeration == null) {
+                    this.enumeration = this.baseType.getEnumerationFacet();
+                }
+            }
+            checkSubtypeConsistency();
+        }
     }
 
     @Override
     public boolean isResolved() {
-        return this.content.getType().isResolved();
+        return this.content.getType().isResolved() && this.baseType.isResolved();
+    }
+
+    public void checkSubtypeConsistency() {
+        if (!this.baseType.isArrayItemType()) {
+            if (!this.equals(BuiltinTypesCatalogue.arrayItem)) {
+                throw new InvalidSchemaException(
+                        "Any user-defined array type must have an array type as its base type.",
+                        null
+                );
+            }
+            return;
+        }
+        if (!this.content.getType().isSubtypeOf(this.baseType.getArrayContentFacet().getType())) {
+            throw new InvalidSchemaException(
+                    "The content of an array subtype must be a subtype of the content of its base type.",
+                    null
+            );
+        }
     }
 
     @Override
