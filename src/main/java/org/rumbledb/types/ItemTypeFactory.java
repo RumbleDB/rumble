@@ -47,7 +47,7 @@ public class ItemTypeFactory {
             return new ArrayItemType(
                     null,
                     BuiltinTypesCatalogue.arrayItem,
-                    new ArrayContentDescriptor(memberType),
+                    memberType,
                     null,
                     null,
                     Collections.emptyList()
@@ -126,7 +126,7 @@ public class ItemTypeFactory {
         }
         if (keys.contains("name")) {
             String declaredName = item.getItemByKey("name").getStringValue();
-            if (!name.equals(name.toString())) {
+            if (!declaredName.equals(name.toString())) {
                 throw new InvalidSchemaException(
                         "The 'name' field does not match the type's name.",
                         ExceptionMetadata.EMPTY_METADATA
@@ -324,7 +324,7 @@ public class ItemTypeFactory {
                 return new ArrayItemType(
                         name,
                         BuiltinTypesCatalogue.arrayItem,
-                        new ArrayContentDescriptor(memberType),
+                        memberType,
                         minLength,
                         maxLength,
                         Collections.emptyList()
@@ -387,7 +387,7 @@ public class ItemTypeFactory {
         return new ArrayItemType(
                 null,
                 BuiltinTypesCatalogue.arrayItem,
-                new ArrayContentDescriptor(createItemType(type)),
+                createItemType(type),
                 null,
                 null,
                 null
