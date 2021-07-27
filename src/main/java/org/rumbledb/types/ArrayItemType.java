@@ -14,15 +14,6 @@ public class ArrayItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static ArrayItemType anyArrayItem = new ArrayItemType(
-            new Name(Name.JS_NS, "js", "array"),
-            BuiltinTypesCatalogue.JSONItem,
-            null,
-            null,
-            null,
-            null
-    );
-
     final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
                 FacetTypes.ENUMERATION,
@@ -33,16 +24,17 @@ public class ArrayItemType implements ItemType {
     );
 
     final private Name name;
-    private ArrayContentDescriptor content;
-    private List<Item> enumeration;
     final private ItemType baseType;
-    final private int typeTreeDepth;
+    private int typeTreeDepth;
+
+    private ItemType content;
+    private List<Item> enumeration;
     private Integer minLength, maxLength;
 
     ArrayItemType(
             Name name,
             ItemType baseType,
-            ArrayContentDescriptor content,
+            ItemType content,
             Integer minLength,
             Integer maxLength,
             List<Item> enumeration
@@ -52,7 +44,6 @@ public class ArrayItemType implements ItemType {
             throw new OurBadException("Unexpected error: baseType is null.");
         }
         this.baseType = baseType;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.content = content;
         this.minLength = minLength;
         this.maxLength = maxLength;
@@ -89,17 +80,17 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyArrayItem));
+        return !(this.equals(BuiltinTypesCatalogue.arrayItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyArrayItem);
+        return this.equals(BuiltinTypesCatalogue.arrayItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyArrayItem;
+        return BuiltinTypesCatalogue.arrayItem;
     }
 
     @Override
@@ -128,7 +119,7 @@ public class ArrayItemType implements ItemType {
     }
 
     @Override
-    public ArrayContentDescriptor getArrayContentFacet() {
+    public ItemType getArrayContentFacet() {
         return this.content;
     }
 
@@ -143,7 +134,7 @@ public class ArrayItemType implements ItemType {
         sb.append("}");
         if (this.content != null) {
             sb.append("-content{");
-            sb.append(this.content.getType().getIdentifierString());
+            sb.append(this.content.getIdentifierString());
             sb.append("}");
         }
         if (this.enumeration != null) {
@@ -164,39 +155,24 @@ public class ArrayItemType implements ItemType {
         // consider add content and various stuff
         return ((this.name == null) ? "<anonymous>" : this.name.toString())
             + "(array of "
-            + this.getArrayContentFacet().getType()
+            + this.getArrayContentFacet()
             + ")";
     }
 
     @Override
     public boolean isDataFrameType() {
-        return this.content.getType().isDataFrameType();
+        return this.content.isDataFrameType();
     }
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (!this.content.getType().isResolved()) {
-            this.content.getType().resolve(context, metadata);
-        }
-        if (!this.baseType.isResolved()) {
-            this.baseType.resolve(context, metadata);
-            if (!this.baseType.isArrayItemType()) {
-                if (this.content == null) {
-                    this.content = this.baseType.getArrayContentFacet();
-                }
-            }
-            checkSubtypeConsistency();
-        }
-    }
-
-    @Override
-    public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        if (!this.content.getType().isResolved()) {
-            this.content.getType().resolve(context, metadata);
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
         }
         if (!this.baseType.isResolved()) {
             this.baseType.resolve(context, metadata);
             if (this.baseType.isArrayItemType()) {
+                this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
                 if (this.content == null) {
                     this.content = this.baseType.getArrayContentFacet();
                 }
@@ -206,7 +182,32 @@ public class ArrayItemType implements ItemType {
                 if (this.maxLength == null) {
                     this.maxLength = this.baseType.getMaxLengthFacet();
                 }
-                
+                if (this.enumeration == null) {
+                    this.enumeration = this.baseType.getEnumerationFacet();
+                }
+            }
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
+        }
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            if (this.baseType.isArrayItemType()) {
+                this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
+                if (this.content == null) {
+                    this.content = this.baseType.getArrayContentFacet();
+                }
+                if (this.minLength == null) {
+                    this.minLength = this.baseType.getMinLengthFacet();
+                }
+                if (this.maxLength == null) {
+                    this.maxLength = this.baseType.getMaxLengthFacet();
+                }
                 if (this.enumeration == null) {
                     this.enumeration = this.baseType.getEnumerationFacet();
                 }
@@ -217,7 +218,7 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
-        return this.content.getType().isResolved() && this.baseType.isResolved();
+        return this.content.isResolved() && this.baseType.isResolved();
     }
 
     public void checkSubtypeConsistency() {
@@ -230,9 +231,21 @@ public class ArrayItemType implements ItemType {
             }
             return;
         }
-        if (!this.content.getType().isSubtypeOf(this.baseType.getArrayContentFacet().getType())) {
+        if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
             throw new InvalidSchemaException(
                     "The content of an array subtype must be a subtype of the content of its base type.",
+                    null
+            );
+        }
+        if (this.baseType.getMinLengthFacet() != null && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
+            throw new InvalidSchemaException(
+                    "The minLength facet of an array subtype must be greater or equal to that of its base type.",
+                    null
+            );
+        }
+        if (this.baseType.getMaxLengthFacet() != null && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
+            throw new InvalidSchemaException(
+                    "The maxLength facet of an array subtype must be lesser or equal to that of its base type.",
                     null
             );
         }
@@ -240,7 +253,7 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isCompatibleWithDataFrames() {
-        return this.content.getType().isCompatibleWithDataFrames();
+        return this.content.isCompatibleWithDataFrames();
     }
 
 }
