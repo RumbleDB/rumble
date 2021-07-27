@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ }, { "foo" : { } }, { "bar" : { } }, { "foo" : { }, "bar" : { } }, { "foo" : { } }, { "bar" : { } }, { "foo" : { }, "bar" : { } }, { }, { }, Success, Success, Success, Success, Success, Success)" :)
+(:JIQS: ShouldRun; Output="({ }, { "foo" : { } }, { "bar" : { } }, { "foo" : { }, "bar" : { } }, { "foo" : { } }, { "bar" : { } }, { "foo" : { }, "bar" : { } }, { }, { }, { "foo" : 2, "nested" : { "foobar" : "AABBCC" } }, { "foo" : 2, "nested" : { "foobar" : "AABBCC" } }, { "foo" : { "bar" : 2 } }, { "bar" : { "bar" : 2 } }, { "foo" : { "bar" : 2 } }, { "bar" : { "bar" : 2 } })" :)
 declare type local:x as jsound verbose {
   "kind" : "object",
   "content" : [ ],
