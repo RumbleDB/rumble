@@ -86,13 +86,14 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
+            Item candidateItem = null;
+            ItemType candidateType = null;
             while (this.iterator.hasNext()) {
-                Item candidateItem = this.iterator.next();
+                candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
                     return ItemFactory.getInstance().createNullItem();
                 }
-                ItemType candidateType = candidateItem.getDynamicType();
-
+                candidateType = candidateItem.getDynamicType();
                 // Manage all types and make sure comparison are correct
                 switch (this.activeType) {
                     case 0:
@@ -317,7 +318,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item itemResult;
             switch (this.activeType) {
                 case 0:
-                    return ItemFactory.getInstance().createNullItem();
+                    return null;
                 case 1:
                     itemResult = ItemFactory.getInstance().createLongItem(this.currentMinLong);
                     break;
