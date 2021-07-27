@@ -122,6 +122,12 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.activeType = 7;
                             this.currentMin = candidateItem;
                         } else {
+                            if (candidateType.equals(BuiltinTypesCatalogue.durationItem)) {
+                                throw new InvalidArgumentTypeException(
+                                        "Cannot compare " + this.returnType + " with " + candidateType,
+                                        getMetadata()
+                                );
+                            }
                             this.activeType = 9;
                             this.currentMin = candidateItem;
                             // throw new OurBadException("Inconsistent state in state iteration");
