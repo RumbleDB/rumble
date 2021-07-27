@@ -48,6 +48,12 @@ public class ArrayItemType implements ItemType {
         this.minLength = minLength;
         this.maxLength = maxLength;
         this.enumeration = enumeration;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (this.content.isResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
     }
 
     @Override
@@ -95,6 +101,9 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public ItemType getBaseType() {
+        if (!isResolved()) {
+            throw new OurBadException("Base type not resolved in array type " + this);
+        }
         return this.baseType;
     }
 
@@ -159,6 +168,32 @@ public class ArrayItemType implements ItemType {
             + ")";
     }
 
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isArrayItemType()) {
+            if (this.content == null) {
+                this.content = this.baseType.getArrayContentFacet();
+            }
+            if (this.minLength == null) {
+                this.minLength = this.baseType.getMinLengthFacet();
+            }
+            if (this.maxLength == null) {
+                this.maxLength = this.baseType.getMaxLengthFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            return;
+        }
+        if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            throw new OurBadException("This cannot be the base type of an array type: " + this.baseType);
+
+        }
+        if (this.content == null) {
+            throw new OurBadException("Content cannot be null in primitive array type.");
+        }
+    }
+
     @Override
     public boolean isDataFrameType() {
         return this.content.isDataFrameType();
@@ -166,54 +201,26 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (isResolved()) {
-            return;
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
         }
-        this.baseType.resolve(context, metadata);
-        if (this.baseType.isArrayItemType()) {
-            this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-            if (this.content == null) {
-                this.content = this.baseType.getArrayContentFacet();
-            } else {
-                this.content.resolve(context, metadata);
-            }
-            if (this.minLength == null) {
-                this.minLength = this.baseType.getMinLengthFacet();
-            }
-            if (this.maxLength == null) {
-                this.maxLength = this.baseType.getMaxLengthFacet();
-            }
-            if (this.enumeration == null) {
-                this.enumeration = this.baseType.getEnumerationFacet();
-            }
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
+            checkSubtypeConsistency();
         }
-        checkSubtypeConsistency();
     }
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        if (isResolved()) {
-            return;
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
         }
-        this.baseType.resolve(context, metadata);
-        if (this.baseType.isArrayItemType()) {
-            this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-            if (this.content == null) {
-                this.content = this.baseType.getArrayContentFacet();
-            } else {
-                this.content.resolve(context, metadata);
-            }
-            if (this.minLength == null) {
-                this.minLength = this.baseType.getMinLengthFacet();
-            }
-            if (this.maxLength == null) {
-                this.maxLength = this.baseType.getMaxLengthFacet();
-            }
-            if (this.enumeration == null) {
-                this.enumeration = this.baseType.getEnumerationFacet();
-            }
+        if (!this.content.isResolved()) {
+            this.content.resolve(context, metadata);
+            checkSubtypeConsistency();
         }
-        checkSubtypeConsistency();
     }
 
     @Override
@@ -223,10 +230,10 @@ public class ArrayItemType implements ItemType {
 
     public void checkSubtypeConsistency() {
         if (!this.baseType.isArrayItemType()) {
-            if (!this.equals(BuiltinTypesCatalogue.arrayItem)) {
+            if (this.getTypeTreeDepth() >= 3) {
                 throw new InvalidSchemaException(
                         "Any user-defined array type must have an array type as its base type.",
-                        null
+                        ExceptionMetadata.EMPTY_METADATA
                 );
             }
             return;
@@ -234,19 +241,19 @@ public class ArrayItemType implements ItemType {
         if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
             throw new InvalidSchemaException(
                     "The content of an array subtype must be a subtype of the content of its base type.",
-                    null
+                    ExceptionMetadata.EMPTY_METADATA
             );
         }
         if (this.baseType.getMinLengthFacet() != null && this.getMinLengthFacet() < this.baseType.getMinLengthFacet()) {
             throw new InvalidSchemaException(
                     "The minLength facet of an array subtype must be greater or equal to that of its base type.",
-                    null
+                    ExceptionMetadata.EMPTY_METADATA
             );
         }
         if (this.baseType.getMaxLengthFacet() != null && this.getMaxLengthFacet() > this.baseType.getMaxLengthFacet()) {
             throw new InvalidSchemaException(
                     "The maxLength facet of an array subtype must be lesser or equal to that of its base type.",
-                    null
+                    ExceptionMetadata.EMPTY_METADATA
             );
         }
     }

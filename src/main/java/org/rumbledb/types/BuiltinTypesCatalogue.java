@@ -390,7 +390,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType arrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
             BuiltinTypesCatalogue.JSONItem,
-            null,
+            BuiltinTypesCatalogue.item,
             null,
             null,
             null
