@@ -270,12 +270,6 @@ public class ItemTypeFactory {
                 if (baseType == null) {
                     baseType = "array";
                 }
-                if (!baseType.equals("array")) {
-                    throw new InvalidSchemaException(
-                            "We do not support user-defined array subtypes yet. This will come!",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
-                }
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
                             "The content facet is missing in an array type declaration.",
