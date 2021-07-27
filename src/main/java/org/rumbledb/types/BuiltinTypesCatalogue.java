@@ -350,7 +350,7 @@ public class BuiltinTypesCatalogue {
 
     public static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "byte"),
-            intItem,
+            shortItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
             false,
@@ -405,22 +405,9 @@ public class BuiltinTypesCatalogue {
             DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
     );
 
-    public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedInt"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("4294967295")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
     public static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedLong"),
-            integerItem,
+            nonNegativeIntegerItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(
                 new IntegerItem(new BigInteger("0")),
@@ -431,9 +418,22 @@ public class BuiltinTypesCatalogue {
             DataTypes.LongType // TODO : how to support arbitrary-sized integer
     );
 
+    public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
+            new Name(Name.XS_NS, "xs", "unsignedInt"),
+            unsignedLongItem,
+            AtomicItemType.decimalItem,
+            Facets.createMinMaxFacets(
+                new IntegerItem(new BigInteger("0")),
+                new IntegerItem(new BigInteger("4294967295")),
+                true
+            ),
+            false,
+            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+    );
+
     public static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedShort"),
-            integerItem,
+            unsignedIntItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
             false,
@@ -442,7 +442,7 @@ public class BuiltinTypesCatalogue {
 
     public static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "unsignedByte"),
-            integerItem,
+            unsignedShortItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
             false,
