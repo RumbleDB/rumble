@@ -412,7 +412,7 @@ public interface ItemType extends Serializable {
      *
      * @return content facet value for array item types
      */
-    default ArrayContentDescriptor getArrayContentFacet() {
+    default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
                 "array content facet is allowed only for array item types " + this.getClass().getCanonicalName()
         );

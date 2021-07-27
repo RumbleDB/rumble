@@ -149,7 +149,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     private static DataType convertToDataType(ItemType itemType) {
         if (itemType.isArrayItemType()) {
-            ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet().getType();
+            ItemType arrayContentsTypeItemType = itemType.getArrayContentFacet();
             DataType arrayContentsType = convertToDataType(arrayContentsTypeItemType);
             return DataTypes.createArrayType(arrayContentsType);
         }
@@ -281,7 +281,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     Item arrayItem = item.getItemAt(i);
                     arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
                         arrayItem,
-                        itemType != null ? itemType.getArrayContentFacet().getType() : null,
+                        itemType != null ? itemType.getArrayContentFacet() : null,
                         elementType
                     );
                 }
@@ -573,7 +573,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
-                members.add(validate(member, itemType.getArrayContentFacet().getType(), metadata));
+                members.add(validate(member, itemType.getArrayContentFacet(), metadata));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
             return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);

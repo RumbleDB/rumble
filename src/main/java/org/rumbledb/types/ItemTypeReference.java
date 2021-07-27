@@ -295,7 +295,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getClosedFacet();
     }
 
-    public ArrayContentDescriptor getArrayContentFacet() {
+    public ItemType getArrayContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
