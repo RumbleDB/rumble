@@ -105,7 +105,6 @@ public class DeepEqualFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 ) {
                     return true;
                 }
-
                 if (!item1.equals(item2)) {
                     return false;
                 }

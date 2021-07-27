@@ -145,6 +145,9 @@ public class gYearMonthItem implements Item {
     }
 
     private static boolean checkInvalidGYearMonthFormat(String gYearMonth, ItemType gYearMonthType) {
+        if (gYearMonth.startsWith("0000") || gYearMonth.startsWith("-0000")) {
+            return false;
+        }
         if (gYearMonthType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
             return gYearMonthPattern.matcher(gYearMonth).matches();
         }

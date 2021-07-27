@@ -11,7 +11,9 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.TrueFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
@@ -533,6 +535,24 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         NotFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns true.
+     */
+    static final BuiltinFunction true_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "true"),
+        "boolean",
+        TrueFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns false.
+     */
+    static final BuiltinFunction false_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "false"),
+        "boolean",
+        FalseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -2511,6 +2531,8 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
         builtinFunctions.put(not_function.getIdentifier(), not_function);
+        builtinFunctions.put(true_function.getIdentifier(), true_function);
+        builtinFunctions.put(false_function.getIdentifier(), false_function);
 
         builtinFunctions.put(min1.getIdentifier(), min1);
         builtinFunctions.put(min2.getIdentifier(), min2);

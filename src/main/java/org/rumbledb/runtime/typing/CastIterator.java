@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.Collections;
 
 
+
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private final RuntimeIterator child;
@@ -178,6 +179,16 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
 
+            if (
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+            ) {
+                throw new InvalidLexicalValueException(
+                        "NaN or INF cannot be cast to another type than Float or Double",
+                        metadata
+                );
+            }
             if (
                 (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
                     || (item.isDouble()
