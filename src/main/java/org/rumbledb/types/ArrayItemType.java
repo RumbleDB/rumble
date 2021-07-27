@@ -166,59 +166,59 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (!this.content.isResolved()) {
-            this.content.resolve(context, metadata);
+        if (isResolved()) {
+            return;
         }
-        if (!this.baseType.isResolved()) {
-            this.baseType.resolve(context, metadata);
-            if (this.baseType.isArrayItemType()) {
-                this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-                if (this.content == null) {
-                    this.content = this.baseType.getArrayContentFacet();
-                }
-                if (this.minLength == null) {
-                    this.minLength = this.baseType.getMinLengthFacet();
-                }
-                if (this.maxLength == null) {
-                    this.maxLength = this.baseType.getMaxLengthFacet();
-                }
-                if (this.enumeration == null) {
-                    this.enumeration = this.baseType.getEnumerationFacet();
-                }
+        this.baseType.resolve(context, metadata);
+        if (this.baseType.isArrayItemType()) {
+            this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
+            if (this.content == null) {
+                this.content = this.baseType.getArrayContentFacet();
+            } else {
+                this.content.resolve(context, metadata);
             }
-            checkSubtypeConsistency();
+            if (this.minLength == null) {
+                this.minLength = this.baseType.getMinLengthFacet();
+            }
+            if (this.maxLength == null) {
+                this.maxLength = this.baseType.getMaxLengthFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
         }
+        checkSubtypeConsistency();
     }
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
-        if (!this.content.isResolved()) {
-            this.content.resolve(context, metadata);
+        if (isResolved()) {
+            return;
         }
-        if (!this.baseType.isResolved()) {
-            this.baseType.resolve(context, metadata);
-            if (this.baseType.isArrayItemType()) {
-                this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
-                if (this.content == null) {
-                    this.content = this.baseType.getArrayContentFacet();
-                }
-                if (this.minLength == null) {
-                    this.minLength = this.baseType.getMinLengthFacet();
-                }
-                if (this.maxLength == null) {
-                    this.maxLength = this.baseType.getMaxLengthFacet();
-                }
-                if (this.enumeration == null) {
-                    this.enumeration = this.baseType.getEnumerationFacet();
-                }
+        this.baseType.resolve(context, metadata);
+        if (this.baseType.isArrayItemType()) {
+            this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
+            if (this.content == null) {
+                this.content = this.baseType.getArrayContentFacet();
+            } else {
+                this.content.resolve(context, metadata);
             }
-            checkSubtypeConsistency();
+            if (this.minLength == null) {
+                this.minLength = this.baseType.getMinLengthFacet();
+            }
+            if (this.maxLength == null) {
+                this.maxLength = this.baseType.getMaxLengthFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
         }
+        checkSubtypeConsistency();
     }
 
     @Override
     public boolean isResolved() {
-        return this.content.isResolved() && this.baseType.isResolved();
+        return this.baseType.isResolved() && this.content.isResolved();
     }
 
     public void checkSubtypeConsistency() {
