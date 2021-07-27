@@ -89,7 +89,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             while (this.iterator.hasNext()) {
                 Item candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
-                    continue;
+                    return ItemFactory.getInstance().createNullItem();
                 }
                 ItemType candidateType = candidateItem.getDynamicType();
 
@@ -317,7 +317,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item itemResult;
             switch (this.activeType) {
                 case 0:
-                    return null;
+                    return ItemFactory.getInstance().createNullItem();
                 case 1:
                     itemResult = ItemFactory.getInstance().createLongItem(this.currentMinLong);
                     break;
