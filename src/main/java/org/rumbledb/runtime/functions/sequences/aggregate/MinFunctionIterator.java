@@ -89,7 +89,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             while (this.iterator.hasNext()) {
                 Item candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
-                    continue;
+                    return null;
                 }
                 ItemType candidateType = candidateItem.getDynamicType();
 
