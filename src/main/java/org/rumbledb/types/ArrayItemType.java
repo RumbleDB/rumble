@@ -218,7 +218,7 @@ public class ArrayItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
-        return this.baseType.isResolved() && this.content.isResolved();
+        return this.baseType.isResolved() && this.content != null && this.content.isResolved();
     }
 
     public void checkSubtypeConsistency() {
