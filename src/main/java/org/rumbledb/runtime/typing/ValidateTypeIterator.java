@@ -105,7 +105,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
-                    return convertLocalItemToRow(item, itemType, schema);
+                    return convertLocalItemToRow(item, schema);
                 }
             }
         );
@@ -173,7 +173,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
-            Row row = convertLocalItemToRow(item, itemType, schema);
+            Row row = convertLocalItemToRow(item, schema);
             rows.add(row);
         }
         return new JSoundDataFrame(
@@ -182,62 +182,27 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    public static Row convertLocalItemToRow(Item item, ItemType itemType, StructType schema) {
-        if (itemType == null || itemType.isObjectItemType()) {
-            if (!item.isObject()) {
-                throw new InvalidInstanceException(
-                        "Item " + item.serialize() + " is not an object, but an object was expected."
-                );
-            }
-            Object[] rowColumns = new Object[schema.fields().length];
-            if (itemType != null && itemType.getClosedFacet()) {
-                for (String key : item.getKeys()) {
-                    boolean found = false;
-                    for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
-                        if (key.equals(schema.fields()[fieldIndex].name())) {
-                            found = true;
-                        }
-                    }
-                    if (!found) {
-                        throw new InvalidInstanceException(
-                                "Unexpected key in closed object type "
-                                    + itemType.getIdentifierString()
-                                    + " : "
-                                    + key
-                        );
-                    }
-                }
-            }
-            for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
-                StructField field = schema.fields()[fieldIndex];
-                String fieldName = field.name();
-                FieldDescriptor fieldDescriptor = null;
-                if (itemType != null) {
-                    fieldDescriptor = itemType.getObjectContentFacet().get(fieldName);
-                }
-                Object rowColumn = convertColumn(item, fieldDescriptor, field);
-                rowColumns[fieldIndex] = rowColumn;
-            }
-            return RowFactory.create(rowColumns);
+    private static Row convertLocalItemToRow(Item item, StructType schema) {
+        Object[] rowColumns = new Object[schema.fields().length];
+        for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+            StructField field = schema.fields()[fieldIndex];
+            Object rowColumn = convertColumn(item, field);
+            rowColumns[fieldIndex] = rowColumn;
         }
-        throw new OurBadException(
-                "We do not support validation against non-object types yet. Please contact us if you would like us to prioritize this feature.",
-                ExceptionMetadata.EMPTY_METADATA
-        );
+        return RowFactory.create(rowColumns);
     }
 
-    private static Object convertColumn(Item item, FieldDescriptor fieldDescriptor, StructField field) {
+    private static Object convertColumn(Item item, StructField field) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
         return getRowColumnFromItemUsingDataType(
             columnValueItem,
-            fieldDescriptor != null ? fieldDescriptor.getType() : null,
             fieldDataType
         );
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, ItemType itemType, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
                 List<Item> arrayItems = item.getItems();
@@ -247,7 +212,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     Item arrayItem = item.getItemAt(i);
                     arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
                         arrayItem,
-                        itemType != null ? itemType.getArrayContentFacet() : null,
                         elementType
                     );
                 }
@@ -255,7 +219,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
 
             if (dataType instanceof StructType) {
-                return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
@@ -448,7 +412,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
-                    return ValidateTypeIterator.convertLocalItemToRow(item, null, schema);
+                    return ValidateTypeIterator.convertLocalItemToRow(item, schema);
                 }
             }
         );
@@ -465,16 +429,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         ObjectItem firstDataItem = (ObjectItem) items.get(0);
         validateSchemaAgainstAnItem(schemaItem, firstDataItem);
         StructType schema = generateDataFrameSchemaFromSchemaItem(schemaItem);
-        List<Row> rows = getRowsFromItemsUsingSchema(items, null, schema);
+        List<Row> rows = getRowsFromItemsUsingSchema(items, schema);
         return SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rows, schema);
     }
 
 
 
-    private static List<Row> getRowsFromItemsUsingSchema(List<Item> items, ItemType itemType, StructType schema) {
+    private static List<Row> getRowsFromItemsUsingSchema(List<Item> items, StructType schema) {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
-            Row row = ValidateTypeIterator.convertLocalItemToRow(item, itemType, schema);
+            Row row = ValidateTypeIterator.convertLocalItemToRow(item, schema);
             rows.add(row);
         }
         return rows;
