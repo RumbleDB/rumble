@@ -141,12 +141,6 @@ public class ItemTypeFactory {
                 if (baseType == null) {
                     baseType = BuiltinTypesCatalogue.objectItem;
                 }
-                if (!baseType.equals(BuiltinTypesCatalogue.objectItem)) {
-                    throw new InvalidSchemaException(
-                            "We do not support user-defined object subtypes yet. This will come!",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
-                }
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
                             "The content facet is missing in an object type declaration.",
