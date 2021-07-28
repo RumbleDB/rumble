@@ -101,6 +101,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
                 @Override
                 public Row call(Item item) {
+                    item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
                     return convertLocalItemToRow(item, schema);
                 }
             }
