@@ -120,13 +120,16 @@ public class ItemTypeFactory {
             );
         }
         String kind = item.getItemByKey("kind").getStringValue();
-        String baseType = null;
+        ItemType baseType = null;
         if (keys.contains("baseType")) {
-            baseType = item.getItemByKey("baseType").getStringValue();
+            String baseTypeString = item.getItemByKey("baseType").getStringValue();
+            Name baseTypeName = Name.createTypeNameFromLiteral(baseTypeString, staticContext);
+            baseType = new ItemTypeReference(baseTypeName);
         }
         if (keys.contains("name")) {
-            String declaredName = item.getItemByKey("name").getStringValue();
-            if (!declaredName.equals(name.toString())) {
+            String declaredNameString = item.getItemByKey("name").getStringValue();
+            Name declaredName = Name.createTypeNameFromLiteral(declaredNameString, staticContext);
+            if (!declaredName.equals(name)) {
                 throw new InvalidSchemaException(
                         "The 'name' field does not match the type's name.",
                         ExceptionMetadata.EMPTY_METADATA
@@ -136,13 +139,7 @@ public class ItemTypeFactory {
         switch (kind) {
             case "object":
                 if (baseType == null) {
-                    baseType = "object";
-                }
-                if (!baseType.equals("object")) {
-                    throw new InvalidSchemaException(
-                            "We do not support user-defined object subtypes yet. This will come!",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                    baseType = BuiltinTypesCatalogue.objectItem;
                 }
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
@@ -259,7 +256,7 @@ public class ItemTypeFactory {
                 }
                 ItemType it = new ObjectItemType(
                         name,
-                        BuiltinTypesCatalogue.objectItem,
+                        baseType,
                         closed,
                         fields,
                         Collections.emptyList(),
@@ -268,17 +265,11 @@ public class ItemTypeFactory {
                 return it;
             case "array":
                 if (baseType == null) {
-                    baseType = "array";
-                }
-                if (!baseType.equals("array")) {
-                    throw new InvalidSchemaException(
-                            "We do not support user-defined array subtypes yet. This will come!",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
+                    baseType = BuiltinTypesCatalogue.arrayItem;
                 }
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
-                            "The content facet is missing in an array type declaration.",
+                            "The content facet is required in an array type declaration.",
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
@@ -295,7 +286,7 @@ public class ItemTypeFactory {
                     memberType = createItemTypeFromJSoundVerboseItem(null, contentItem, staticContext);
                 } else {
                     throw new InvalidSchemaException(
-                            "Field descriptor must be a string or an object.",
+                            "The content of an array must be a string or an object.",
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
@@ -323,7 +314,7 @@ public class ItemTypeFactory {
                 }
                 return new ArrayItemType(
                         name,
-                        BuiltinTypesCatalogue.arrayItem,
+                        baseType,
                         memberType,
                         minLength,
                         maxLength,
