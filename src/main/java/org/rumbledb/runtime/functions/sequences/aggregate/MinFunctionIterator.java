@@ -259,7 +259,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         break;
                     case 5:
-                        if (candidateItem.isNumeric()) {
+                        if (!candidateItem.isString() || !candidateItem.isAnyURI()) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare anyURI with " + candidateType,
                                     getMetadata()
@@ -274,7 +274,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         break;
                     case 6:
-                        if (candidateItem.isNumeric()) {
+                        if (!candidateItem.isString() && !candidateItem.isAnyURI()) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare string with " + candidateType,
                                     getMetadata()
