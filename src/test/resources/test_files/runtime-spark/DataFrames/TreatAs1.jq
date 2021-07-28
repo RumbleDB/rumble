@@ -16,7 +16,7 @@ try {
 let $a := annotate({"foo" : 1e0},{"foo":"integer"})
 let $b := $a.foo treat as double
 return $b
-} catch XPDY0050
+} catch XQDY0027
 {
   "good"
 },
@@ -24,7 +24,7 @@ try {
 let $a := annotate({"foo" : 1e0},{"foo":"integer"})
 let $b := $a.foo treat as double?
 return $b
-} catch XPDY0050
+} catch XQDY0027
 {
   "good"
 },
@@ -32,7 +32,7 @@ try {
 let $a := annotate({"foo" : 1e0},{"foo":"integer"})
 let $b := $a.foo treat as double*
   return $b
-} catch XPDY0050
+} catch XQDY0027
 {
   "good"
 },
@@ -40,7 +40,7 @@ try {
 let $a := annotate({"foo" : 1e0},{"foo":"integer"})
 let $b := $a.foo treat as double+
   return $b
-} catch XPDY0050
+} catch XQDY0027
 {
   "good"
 },
