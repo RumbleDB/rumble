@@ -186,8 +186,10 @@ public class ArrayItemType implements ItemType {
             return;
         }
         if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
-            throw new OurBadException("This cannot be the base type of an array type: " + this.baseType);
-
+            throw new InvalidSchemaException(
+                    "This type cannot be the base type of an array type: " + this.baseType,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive array type.");
@@ -240,7 +242,11 @@ public class ArrayItemType implements ItemType {
         }
         if (!this.content.isSubtypeOf(this.baseType.getArrayContentFacet())) {
             throw new InvalidSchemaException(
-                    "The content of an array subtype must be a subtype of the content of its base type.",
+                    "The content of an array subtype (here: "
+                        + this.content
+                        + ") must be a subtype of the content of its base type (here: "
+                        + this.baseType.getArrayContentFacet()
+                        + ")",
                     ExceptionMetadata.EMPTY_METADATA
             );
         }

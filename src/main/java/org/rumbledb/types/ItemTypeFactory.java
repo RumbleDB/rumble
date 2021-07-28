@@ -275,7 +275,7 @@ public class ItemTypeFactory {
                 }
                 if (!keys.contains("content")) {
                     throw new InvalidSchemaException(
-                            "The content facet is missing in an array type declaration.",
+                            "The content facet is required in an array type declaration.",
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
@@ -292,7 +292,7 @@ public class ItemTypeFactory {
                     memberType = createItemTypeFromJSoundVerboseItem(null, contentItem, staticContext);
                 } else {
                     throw new InvalidSchemaException(
-                            "Field descriptor must be a string or an object.",
+                            "The content of an array must be a string or an object.",
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
