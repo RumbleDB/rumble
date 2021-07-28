@@ -52,6 +52,7 @@ public class ObjectItemType implements ItemType {
         this.name = name;
         this.baseType = baseType;
         this.isClosed = isClosed;
+        this.content = content == null ? Collections.emptyMap() : content;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
         if (this.baseType.isResolved()) {
