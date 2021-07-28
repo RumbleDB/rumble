@@ -299,209 +299,79 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             if (dataType.equals(DataTypes.BooleanType)) {
                 if (!item.isBoolean()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.booleanItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getBooleanValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.booleanItem, dataType);
                 }
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
                 if (!item.isInt()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.intItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getIntValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
                 }
                 return item.getIntValue();
             }
             if (dataType.equals(DataTypes.ByteType)) {
                 if (!item.isInt()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.intItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return (byte) i.getIntValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
                 }
                 return (byte) item.getIntValue();
             }
             if (dataType.equals(DataTypes.ShortType)) {
                 if (!item.isInt()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.intItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return (short) i.getIntValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
                 }
                 return (short) item.getIntValue();
             }
             if (dataType.equals(DataTypes.LongType)) {
                 if (!item.isInt()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.longItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getIntegerValue().longValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.longItem, dataType);
                 }
                 return item.getIntegerValue().longValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
                 if (!item.isDouble()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.doubleItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getDoubleValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.doubleItem, dataType);
                 }
                 return item.getDoubleValue();
             }
             if (dataType.equals(DataTypes.FloatType)) {
                 if (!item.isFloat()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.floatItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getFloatValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.floatItem, dataType);
                 }
                 return item.getFloatValue();
             }
             if (dataType.equals(ItemParser.decimalType)) {
                 if (!item.isDecimal()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.decimalItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getDecimalValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.decimalItem, dataType);
                 }
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
                 if (!item.isString()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.stringItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getStringValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.stringItem, dataType);
                 }
                 return item.getStringValue();
             }
             if (dataType.equals(DataTypes.NullType)) {
                 if (!item.isNull()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.nullItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return null;
+                    validateItem(item, BuiltinTypesCatalogue.nullItem, dataType);
                 }
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
                 if (!item.isDate()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.dateItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return new Date(i.getDateTimeValue().getMillis());
+                    item = validateItem(item, BuiltinTypesCatalogue.dateItem, dataType);
                 }
                 return new Date(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
                 if (!item.isDateTime()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.dateTimeItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return new Timestamp(i.getDateTimeValue().getMillis());
+                    item = validateItem(item, BuiltinTypesCatalogue.dateTimeItem, dataType);
                 }
                 return new Timestamp(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
                 if (!item.isHexBinary() && !item.isBase64Binary()) {
-                    Item i = CastIterator.castItemToType(
-                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
-                        BuiltinTypesCatalogue.hexBinaryItem,
-                        ExceptionMetadata.EMPTY_METADATA
-                    );
-                    if (i == null) {
-                        throw new InvalidInstanceException(
-                                "Type mismatch and cast unsuccessful to " + dataType
-                        );
-                    }
-                    return i.getBinaryValue();
+                    item = validateItem(item, BuiltinTypesCatalogue.hexBinaryItem, dataType);
                 }
                 return item.getBinaryValue();
             }
@@ -513,6 +383,25 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         throw new OurBadException(
                 "Unhandled item type found while generating rows: '" + dataType + "' ."
         );
+    }
+
+    private static Item validateItem(Item item, ItemType itemType, DataType dataType) {
+        if (!item.isAtomic()) {
+            throw new InvalidInstanceException(
+                    "Type mismatch (" + item.getDynamicType() + ") and cast unsuccessful to " + dataType
+            );
+        }
+        Item i = CastIterator.castItemToType(
+            ItemFactory.getInstance().createStringItem(item.getStringValue()),
+            itemType,
+            ExceptionMetadata.EMPTY_METADATA
+        );
+        if (i == null) {
+            throw new InvalidInstanceException(
+                    "Type mismatch (" + item.getDynamicType() + ") cast unsuccessful to " + dataType
+            );
+        }
+        return i;
     }
 
 
