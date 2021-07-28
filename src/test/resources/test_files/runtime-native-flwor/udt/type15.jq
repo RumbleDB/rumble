@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="([ 1, 2 ], [ ], [ 1 ], [ 1, 2 ], [ 1.2, 2 ], [ 1.2, 2 ], [ 1, 2 ], [ 1, 2 ])" :)
+(:JIQS: ShouldRun; Output="([ 1, 2 ], [ ], [ 1 ], [ 1, 2 ], [ 1.2, 2 ], [ 1.2, 2 ], Success, Success)" :)
 declare type local:x as jsound verbose {
   "kind" : "array",
   "content" : "decimal"
@@ -7,7 +7,7 @@ declare type local:x as jsound verbose {
 declare type local:y as jsound verbose {
   "kind" : "array",
   "baseType" : "local:x",
-  "content" : "int"
+  "content" : "integer"
 };
 
 validate type local:y* {
@@ -26,7 +26,7 @@ validate type local:x* {
 },
 try {
   validate type local:y {
-    [ 1, 2 ]
+    [ 1.2, 2 ]
   }
 } catch XQDY0027 {
   "Success"

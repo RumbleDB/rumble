@@ -300,7 +300,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.BooleanType)) {
                 if (!item.isBoolean()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.booleanItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -316,7 +316,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.IntegerType)) {
                 if (!item.isInt()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.intItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -332,7 +332,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.ByteType)) {
                 if (!item.isInt()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.intItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -348,7 +348,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.ShortType)) {
                 if (!item.isInt()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.intItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -364,7 +364,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.LongType)) {
                 if (!item.isInt()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.longItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -380,7 +380,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.DoubleType)) {
                 if (!item.isDouble()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.doubleItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -396,7 +396,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.FloatType)) {
                 if (!item.isFloat()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.floatItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -412,7 +412,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(ItemParser.decimalType)) {
                 if (!item.isDecimal()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.decimalItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -428,7 +428,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.StringType)) {
                 if (!item.isString()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.stringItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -444,7 +444,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.NullType)) {
                 if (!item.isNull()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.nullItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -460,7 +460,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.DateType)) {
                 if (!item.isDate()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.dateItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -476,7 +476,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.TimestampType)) {
                 if (!item.isDateTime()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.dateTimeItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -492,7 +492,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.BinaryType)) {
                 if (!item.isHexBinary() && !item.isBase64Binary()) {
                     Item i = CastIterator.castItemToType(
-                        item,
+                        ItemFactory.getInstance().createStringItem(item.getStringValue()),
                         BuiltinTypesCatalogue.hexBinaryItem,
                         ExceptionMetadata.EMPTY_METADATA
                     );
@@ -557,7 +557,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
-            Item castType = CastIterator.castItemToType(item, itemType, metadata);
+            Item castType = CastIterator.castItemToType(
+                ItemFactory.getInstance().createStringItem(item.getStringValue()),
+                itemType,
+                metadata
+            );
             if (castType == null) {
                 throw new InvalidInstanceException(
                         "Cannot cast " + item + " to type " + itemType.getIdentifierString()
