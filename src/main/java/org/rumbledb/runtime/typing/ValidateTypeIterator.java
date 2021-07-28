@@ -16,7 +16,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.ObjectItem;
@@ -173,6 +172,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         StructType schema = convertToDataFrameSchema(itemType);
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
+            item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
             Row row = convertLocalItemToRow(item, itemType, schema);
             rows.add(row);
         }
@@ -230,50 +230,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         Item columnValueItem = item.getItemByKey(fieldName);
-        Item defaultValue = fieldDescriptor != null ? fieldDescriptor.getDefaultValue() : null;
-        if (
-            fieldDescriptor != null && defaultValue == null && fieldDescriptor.isRequired() && columnValueItem == null
-        ) {
-            throw new InvalidInstanceException(
-                    "Missing field '" + fieldName + "' in object '" + item.serialize() + "'."
-            );
-        }
-        try {
-            if (columnValueItem == null) {
-                if (defaultValue != null) {
-                    return getRowColumnFromItemUsingDataType(
-                        defaultValue,
-                        fieldDescriptor.getType(),
-                        fieldDataType
-                    );
-                }
-                return null;
-            }
-            return getRowColumnFromItemUsingDataType(
-                columnValueItem,
-                fieldDescriptor != null ? fieldDescriptor.getType() : null,
-                fieldDataType
-            );
-        } catch (InvalidInstanceException ex) {
-            RumbleException e = new InvalidInstanceException(
-                    "Data does not fit to the given schema in field '"
-                        + fieldName
-                        + "'; "
-                        + ex.getJSONiqErrorMessage()
-            );
-            e.initCause(ex);
-            throw e;
-        }
+        return getRowColumnFromItemUsingDataType(
+            columnValueItem,
+            fieldDescriptor != null ? fieldDescriptor.getType() : null,
+            fieldDataType
+        );
     }
 
     private static Object getRowColumnFromItemUsingDataType(Item item, ItemType itemType, DataType dataType) {
         try {
             if (dataType instanceof ArrayType) {
-                if (!item.isArray()) {
-                    throw new InvalidInstanceException(
-                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
-                    );
-                }
                 List<Item> arrayItems = item.getItems();
                 Object[] arrayItemsForRow = new Object[arrayItems.size()];
                 DataType elementType = ((ArrayType) dataType).elementType();
@@ -289,90 +255,46 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
 
             if (dataType instanceof StructType) {
-                if (!item.isObject()) {
-                    throw new InvalidInstanceException(
-                            "Type mismatch, expected " + dataType + " but actual " + item.getDynamicType()
-                    );
-                }
                 return ValidateTypeIterator.convertLocalItemToRow(item, itemType, (StructType) dataType);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
-                if (!item.isBoolean()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.booleanItem, dataType);
-                }
                 return item.getBooleanValue();
             }
             if (dataType.equals(DataTypes.IntegerType)) {
-                if (!item.isInt()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
-                }
                 return item.getIntValue();
             }
             if (dataType.equals(DataTypes.ByteType)) {
-                if (!item.isInt()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
-                }
                 return (byte) item.getIntValue();
             }
             if (dataType.equals(DataTypes.ShortType)) {
-                if (!item.isInt()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.intItem, dataType);
-                }
                 return (short) item.getIntValue();
             }
             if (dataType.equals(DataTypes.LongType)) {
-                if (!item.isInt()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.longItem, dataType);
-                }
                 return item.getIntegerValue().longValue();
             }
             if (dataType.equals(DataTypes.DoubleType)) {
-                if (!item.isDouble()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.doubleItem, dataType);
-                }
                 return item.getDoubleValue();
             }
             if (dataType.equals(DataTypes.FloatType)) {
-                if (!item.isFloat()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.floatItem, dataType);
-                }
                 return item.getFloatValue();
             }
             if (dataType.equals(ItemParser.decimalType)) {
-                if (!item.isDecimal()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.decimalItem, dataType);
-                }
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
-                if (!item.isString()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.stringItem, dataType);
-                }
                 return item.getStringValue();
             }
             if (dataType.equals(DataTypes.NullType)) {
-                if (!item.isNull()) {
-                    validateItem(item, BuiltinTypesCatalogue.nullItem, dataType);
-                }
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
-                if (!item.isDate()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.dateItem, dataType);
-                }
                 return new Date(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
-                if (!item.isDateTime()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.dateTimeItem, dataType);
-                }
                 return new Timestamp(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.BinaryType)) {
-                if (!item.isHexBinary() && !item.isBase64Binary()) {
-                    item = validateItem(item, BuiltinTypesCatalogue.hexBinaryItem, dataType);
-                }
                 return item.getBinaryValue();
             }
         } catch (OurBadException ex) {
@@ -383,25 +305,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         throw new OurBadException(
                 "Unhandled item type found while generating rows: '" + dataType + "' ."
         );
-    }
-
-    private static Item validateItem(Item item, ItemType itemType, DataType dataType) {
-        if (!item.isAtomic()) {
-            throw new InvalidInstanceException(
-                    "Type mismatch (" + item.getDynamicType() + ") and cast unsuccessful to " + dataType
-            );
-        }
-        Item i = CastIterator.castItemToType(
-            ItemFactory.getInstance().createStringItem(item.getStringValue()),
-            itemType,
-            ExceptionMetadata.EMPTY_METADATA
-        );
-        if (i == null) {
-            throw new InvalidInstanceException(
-                    "Type mismatch (" + item.getDynamicType() + ") cast unsuccessful to " + dataType
-            );
-        }
-        return i;
     }
 
 
