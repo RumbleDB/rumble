@@ -21,6 +21,9 @@
 package org.rumbledb.runtime.functions.sequences.aggregate;
 
 import org.apache.spark.api.java.JavaRDD;
+import org.joda.time.DateTime;
+import org.joda.time.Instant;
+import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -51,12 +54,20 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
     private float currentMaxFloat;
     private BigDecimal currentMaxDecimal;
     private long currentMaxLong;
-    private Item currentMax;
-    private byte activeType = 0; // 0 = unknown/init 1 = long, 2 = BigDecimal, 3 = float, 4 = long, 5 = anyURI, 6 =
-    // String, 7 = other types (date types)
+    private String currentMaxURI;
+    private String currentMaxString;
+    private boolean currentMaxBoolean;
+    private boolean hasTimeZone = false;
+    private DateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
+    private DateTime currentMaxDateTime;
+    private Period currentMaxDayTimeDuration;
+    private Period currentMaxYearMonthDuration;
+    private DateTime currentMaxTime;
+    private byte activeType = 0;
     private ItemType returnType;
     private Item result;
     private ItemComparator comparator;
+
 
     public MaxFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -66,7 +77,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         super(arguments, executionMode, iteratorMetadata);
         this.iterator = this.children.get(0);
         this.comparator = new ItemComparator(
-                false,
+                true,
                 new InvalidArgumentTypeException(
                         "Max expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()
@@ -85,16 +96,17 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
+            Item candidateItem = null;
+            ItemType candidateType = null;
+            Instant now = null;
             while (this.iterator.hasNext()) {
-                Item candidateItem = this.iterator.next();
+                candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
-                    continue;
+                    return ItemFactory.getInstance().createNullItem();
                 }
-                ItemType candidateType = candidateItem.getDynamicType();
-                // Manage all types and make sure comparison are correct
+                candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
                     case 0:
-                        // initialization, take whatever first type
                         if (candidateType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
                             this.activeType = 1;
                             this.currentMaxLong = candidateItem.castToDecimalValue().longValue();
@@ -109,28 +121,39 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             this.currentMaxDouble = candidateItem.castToDoubleValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.anyURIItem)) {
                             this.activeType = 5;
-                            this.currentMax = candidateItem;
+                            this.currentMaxURI = candidateItem.getStringValue();
                         } else if (candidateType.equals(BuiltinTypesCatalogue.stringItem)) {
                             this.activeType = 6;
-                            this.currentMax = candidateItem;
-                        } else if (
-                            candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)
-                                || candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)
-                                || candidateType.equals(BuiltinTypesCatalogue.dateTimeItem)
-                                || candidateType.equals(BuiltinTypesCatalogue.dateItem)
-                        ) {
+                            this.currentMaxString = candidateItem.getStringValue();
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.booleanItem)) {
                             this.activeType = 7;
-                            this.currentMax = candidateItem;
-                        } else {
-                            if (candidateType.equals(BuiltinTypesCatalogue.durationItem)) {
-                                throw new InvalidArgumentTypeException(
-                                        "Cannot compare " + this.returnType + " with " + candidateType,
-                                        getMetadata()
-                                );
+                            this.currentMaxBoolean = candidateItem.getBooleanValue();
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.dateItem)) {
+                            this.activeType = 8;
+                            this.currentMaxDate = candidateItem.getDateTimeValue();
+                            if (candidateItem.hasTimeZone()) {
+                                this.hasTimeZone = true;
                             }
+                        } else if (candidateType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)) {
                             this.activeType = 9;
-                            this.currentMax = candidateItem;
-                            // throw new OurBadException("Inconsistent state in state iteration");
+                            this.currentMaxDateTime = candidateItem.getDateTimeValue();
+                            if (candidateItem.hasTimeZone()) {
+                                this.hasTimeZone = true;
+                            }
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
+                            this.activeType = 10;
+                            this.currentMaxDayTimeDuration = candidateItem.getDurationValue();
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
+                            this.activeType = 11;
+                            this.currentMaxYearMonthDuration = candidateItem.getDurationValue();
+                        } else if (candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
+                            this.activeType = 12;
+                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                            if (candidateItem.hasTimeZone()) {
+                                this.hasTimeZone = true;
+                            }
+                        } else {
+                            throw new OurBadException("Inconsistent state in state iteration");
                         }
                         this.returnType = candidateType;
                         break;
@@ -256,7 +279,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         break;
                     case 5:
-                        if (candidateItem.isNumeric()) {
+                        if (!candidateItem.isString() && !candidateItem.isAnyURI()) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare anyURI with " + candidateType,
                                     getMetadata()
@@ -265,43 +288,104 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         if (candidateItem.isString()) {
                             this.activeType = 6;
                             this.returnType = BuiltinTypesCatalogue.stringItem;
-                        }
-                        if (this.comparator.compare(candidateItem, this.currentMax) > 0) {
-                            this.currentMax = candidateItem;
+                            this.currentMaxString = this.currentMaxURI;
+                            if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                                this.currentMaxString = candidateItem.getStringValue();
+                            }
+                        } else if (candidateItem.getStringValue().compareTo(this.currentMaxURI) > 0) {
+                            this.currentMaxURI = candidateItem.getStringValue();
+
                         }
                         break;
                     case 6:
-                        if (candidateItem.isNumeric()) {
+                        if (!candidateItem.isString() && !candidateItem.isAnyURI()) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare string with " + candidateType,
                                     getMetadata()
                             );
                         }
-                        if (this.comparator.compare(candidateItem, this.currentMax) > 0) {
-                            this.currentMax = candidateItem;
+                        if (candidateItem.getStringValue().compareTo(this.currentMaxString) > 0) {
+                            this.currentMaxString = candidateItem.getStringValue();
                             this.returnType = candidateType;
                         }
                         break;
                     case 7:
-                        if (!candidateType.equals(this.returnType)) {
+                        if (!candidateType.equals(BuiltinTypesCatalogue.booleanItem)) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare " + this.returnType + " with " + candidateType,
                                     getMetadata()
                             );
                         }
-                        if (this.comparator.compare(candidateItem, this.currentMax) > 0) {
-                            this.currentMax = candidateItem;
+                        if (Boolean.compare(candidateItem.getBooleanValue(), this.currentMaxBoolean) > 0) {
+                            this.currentMaxBoolean = candidateItem.getBooleanValue();
+                        }
+                        break;
+                    case 8:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.dateItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (candidateItem.getDateTimeValue().toDate().compareTo(this.currentMaxDate.toDate()) > 0) {
+                            this.currentMaxDate = candidateItem.getDateTimeValue();
+                            this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
                     case 9:
-                        if (candidateItem.isNumeric()) {
+                        if (!candidateType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)) {
                             throw new InvalidArgumentTypeException(
                                     "Cannot compare " + this.returnType + " with " + candidateType,
                                     getMetadata()
                             );
                         }
-                        if (this.comparator.compare(candidateItem, this.currentMax) > 0) {
-                            this.currentMax = candidateItem;
+                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxDateTime) > 0) {
+                            this.currentMaxDateTime = candidateItem.getDateTimeValue();
+                            this.hasTimeZone = candidateItem.hasTimeZone();
+                        }
+                        break;
+                    case 10:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.dayTimeDurationItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        now = new Instant();
+                        if (
+                            candidateItem.getDurationValue()
+                                .toDurationFrom(now)
+                                .compareTo(this.currentMaxDayTimeDuration.toDurationFrom(now)) > 0
+                        ) {
+                            this.currentMaxDayTimeDuration = candidateItem.getDurationValue();
+                        }
+                        break;
+                    case 11:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        now = new Instant();
+                        if (
+                            candidateItem.getDurationValue()
+                                .toDurationFrom(now)
+                                .compareTo(this.currentMaxYearMonthDuration.toDurationFrom(now)) > 0
+                        ) {
+                            this.currentMaxYearMonthDuration = candidateItem.getDurationValue();
+                        }
+                        break;
+                    case 12:
+                        if (!candidateType.equals(BuiltinTypesCatalogue.timeItem)) {
+                            throw new InvalidArgumentTypeException(
+                                    "Cannot compare " + this.returnType + " with " + candidateType,
+                                    getMetadata()
+                            );
+                        }
+                        if (candidateItem.getDateTimeValue().compareTo(this.currentMaxTime) > 0) {
+                            this.currentMaxTime = candidateItem.getDateTimeValue();
+                            this.hasTimeZone = candidateItem.hasTimeZone();
                         }
                         break;
                     default:
@@ -329,10 +413,30 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     itemResult = ItemFactory.getInstance().createDoubleItem(this.currentMaxDouble);
                     break;
                 case 5:
+                    itemResult = ItemFactory.getInstance().createAnyURIItem(this.currentMaxURI);
+                    break;
                 case 6:
+                    itemResult = ItemFactory.getInstance().createStringItem(this.currentMaxString);
+                    break;
                 case 7:
+                    itemResult = ItemFactory.getInstance().createBooleanItem(this.currentMaxBoolean);
+                    break;
+                case 8:
+                    itemResult = ItemFactory.getInstance().createDateItem(this.currentMaxDate, this.hasTimeZone);
+                    break;
                 case 9:
-                    itemResult = this.currentMax;
+                    itemResult = ItemFactory.getInstance()
+                        .createDateTimeItem(this.currentMaxDateTime, this.hasTimeZone);
+                    break;
+                case 10:
+                    itemResult = ItemFactory.getInstance().createDayTimeDurationItem(this.currentMaxDayTimeDuration);
+                    break;
+                case 11:
+                    itemResult = ItemFactory.getInstance()
+                        .createYearMonthDurationItem(this.currentMaxYearMonthDuration);
+                    break;
+                case 12:
+                    itemResult = ItemFactory.getInstance().createTimeItem(this.currentMaxTime, this.hasTimeZone);
                     break;
                 default:
                     throw new OurBadException("Inconsistent state in state iteration");
