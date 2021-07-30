@@ -50,6 +50,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+    private boolean currentMinIsNullItem = false; // Only happens if all elements are null
     private double currentMaxDouble;
     private float currentMaxFloat;
     private BigDecimal currentMaxDecimal;
@@ -77,7 +78,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         super(arguments, executionMode, iteratorMetadata);
         this.iterator = this.children.get(0);
         this.comparator = new ItemComparator(
-                true,
+                false,
                 new InvalidArgumentTypeException(
                         "Max expression input error. Input has to be non-null atomics of matching types",
                         getMetadata()
@@ -102,7 +103,8 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             while (this.iterator.hasNext()) {
                 candidateItem = this.iterator.next();
                 if (candidateItem.isNull()) {
-                    return ItemFactory.getInstance().createNullItem();
+                    this.currentMinIsNullItem = true;
+                    continue;
                 }
                 candidateType = candidateItem.getDynamicType();
                 switch (this.activeType) {
@@ -399,6 +401,9 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             Item itemResult;
             switch (this.activeType) {
                 case 0:
+                    if (this.currentMinIsNullItem) {
+                        return ItemFactory.getInstance().createNullItem();
+                    }
                     return null;
                 case 1:
                     itemResult = ItemFactory.getInstance().createLongItem(this.currentMaxLong);
