@@ -16,12 +16,7 @@ import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.TrueFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
-import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.*;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateTimeToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustDateToTimezone;
 import org.rumbledb.runtime.functions.datetime.components.AdjustTimeToTimezone;
@@ -1860,6 +1855,21 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
+     * function that returns a xs:dateTime value created by combining an xs:date and an xs:time
+     */
+    static final BuiltinFunction dateTime = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "dateTime"
+        ),
+        "date?",
+        "time?",
+        "dateTime?",
+        DateTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
      * function that returns the year from a dateTime
      */
     static final BuiltinFunction year_from_dateTime = createBuiltinFunction(
@@ -2643,6 +2653,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtinFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
+        builtinFunctions.put(dateTime.getIdentifier(), dateTime);
         builtinFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtinFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
         builtinFunctions.put(day_from_dateTime.getIdentifier(), day_from_dateTime);
