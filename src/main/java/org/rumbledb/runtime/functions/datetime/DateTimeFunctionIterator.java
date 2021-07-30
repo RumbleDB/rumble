@@ -34,23 +34,34 @@ public class DateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator 
         if (this.dateItem == null || this.timeItem == null) {
             return null;
         }
-        DateTime dt = new DateTime(this.dateItem.getDateTimeValue()).withTime(
-            this.timeItem.getDateTimeValue().toLocalTime()
-        );
+        DateTime dt = null;
+        DateTime dateDt = this.dateItem.getDateTimeValue();
+        DateTime timeDt = this.timeItem.getDateTimeValue();
+
         if (this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            if (this.dateItem.getDateTimeValue().getZone() == this.timeItem.getDateTimeValue().getZone()) {
+            if (dateDt.getZone() == timeDt.getZone()) {
+                dt = new DateTime().withZone(dateDt.getZone())
+                    .withDate(dateDt.toLocalDate())
+                    .withTime(timeDt.toLocalTime());
                 return ItemFactory.getInstance().createDateTimeItem(dt, true);
             } else {
-                throw new InvalidTimezoneException("The two arguments have inconsistent timezones", getMetadata());
+                throw new InconsistentTimezonesException(
+                        "The two arguments have inconsistent timezones",
+                        getMetadata()
+                );
             }
         } else if (this.dateItem.hasTimeZone() && !this.timeItem.hasTimeZone()) {
-            dt = dt.withZone(this.dateItem.getDateTimeValue().getZone());
+            dt = new DateTime().withZone(dateDt.getZone())
+                .withDate(dateDt.toLocalDate())
+                .withTime(timeDt.toLocalTime());
             return ItemFactory.getInstance().createDateTimeItem(dt, true);
         } else if (!this.dateItem.hasTimeZone() && this.timeItem.hasTimeZone()) {
-            dt = dt.withZone(this.dateItem.getDateTimeValue().getZone());
-            return ItemFactory.getInstance().createDateTimeItem(dt, true);
+            dt = new DateTime().withZone(timeDt.getZone())
+                .withDate(dateDt.toLocalDate())
+                .withTime(timeDt.toLocalTime());
+            return ItemFactory.getInstance().createDateTimeItem(dt.withTime(timeDt.toLocalTime()), true);
         }
-
+        dt = new DateTime(dateDt).withTime(timeDt.toLocalTime());
         return ItemFactory.getInstance().createDateTimeItem(dt, false);
 
     }
