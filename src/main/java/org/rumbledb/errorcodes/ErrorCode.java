@@ -114,7 +114,7 @@ public enum ErrorCode {
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-
+    ArithmeticOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003");
 
 
