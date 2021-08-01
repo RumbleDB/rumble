@@ -29,6 +29,7 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -107,6 +108,10 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     continue;
                 }
                 candidateType = candidateItem.getDynamicType();
+                if (candidateType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
+                    candidateItem = new DoubleItem(candidateItem.castToDoubleValue());
+                    candidateType = BuiltinTypesCatalogue.doubleItem;
+                }
                 switch (this.activeType) {
                     case 0:
                         if (candidateType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
@@ -259,7 +264,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         } else {
                             if (!Float.isNaN(this.currentMaxFloat)) {
                                 float candidateItemFloat = candidateItem.castToFloatValue();
-                                if (candidateItemFloat > this.currentMaxFloat) {
+                                if (candidateItemFloat > this.currentMaxFloat || Float.isNaN(candidateItemFloat)) {
                                     this.currentMaxFloat = candidateItemFloat;
                                 }
                             }
@@ -275,7 +280,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                         }
                         if (!Double.isNaN(this.currentMaxDouble)) {
                             double candidateItemDouble = candidateItem.castToDoubleValue();
-                            if (candidateItemDouble > this.currentMaxDouble) {
+                            if (candidateItemDouble > this.currentMaxDouble || Double.isNaN(candidateItemDouble)) {
                                 this.currentMaxDouble = candidateItemDouble;
                             }
                         }

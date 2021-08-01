@@ -34,6 +34,11 @@ public class BuiltinTypesCatalogue {
             ),
             DataTypes.StringType
     );
+    public static final ItemType untypedAtomicItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "untypedAtomic"),
+            Collections.emptySet(),
+            DataTypes.BinaryType
+    );
 
     // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
     // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
@@ -487,6 +492,7 @@ public class BuiltinTypesCatalogue {
         objectItem,
         atomicItem,
         stringItem,
+        untypedAtomicItem,
         integerItem,
         intItem,
         decimalItem,
