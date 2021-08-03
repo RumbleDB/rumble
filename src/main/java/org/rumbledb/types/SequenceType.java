@@ -342,6 +342,19 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("atomic?", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("atomic*", new SequenceType(BuiltinTypesCatalogue.atomicItem, SequenceType.Arity.ZeroOrMore));
 
+        sequenceTypes.put(
+            "untypedAtomic",
+            new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem, SequenceType.Arity.One)
+        );
+        sequenceTypes.put(
+            "untypedAtomic?",
+            new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem, SequenceType.Arity.OneOrZero)
+        );
+        sequenceTypes.put(
+            "untypedAtomic*",
+            new SequenceType(BuiltinTypesCatalogue.untypedAtomicItem, SequenceType.Arity.ZeroOrMore)
+        );
+
         sequenceTypes.put("string", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.One));
         sequenceTypes.put("string?", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.OneOrZero));
         sequenceTypes.put("string*", new SequenceType(BuiltinTypesCatalogue.stringItem, SequenceType.Arity.ZeroOrMore));

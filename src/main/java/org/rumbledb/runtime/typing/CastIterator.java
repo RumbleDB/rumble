@@ -115,9 +115,14 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 return null;
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
+                return ItemFactory.getInstance().createUntypedAtomicItem(item.serialize());
+            }
+
             if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
                 return ItemFactory.getInstance().createStringItem(item.serialize());
             }
+
 
             if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 if (item.isString()) {
