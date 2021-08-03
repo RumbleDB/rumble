@@ -89,15 +89,6 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Tests whether the item is an atomic item of type untypedAtomic.
-     *
-     * @return true if it is an atomic item of type untypedAtomic, false otherwise.
-     */
-    default boolean isUntypedAtomic() {
-        return false;
-    }
-
-    /**
      * Tests whether the item is an atomic item of type default boolean.
      *
      * @return true if it is an atomic item of type default boolean, false otherwise.
@@ -367,15 +358,6 @@ public interface Item extends Serializable, KryoSerializable {
      * @return the string value.
      */
     default String getStringValue() {
-        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
-    }
-
-    /**
-     * Returns the untypedAtomic value of the item, if it is an atomic item.
-     *
-     * @return the untypedAtomic value.
-     */
-    default String getUntypedAtomicValue() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 

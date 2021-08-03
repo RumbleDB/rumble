@@ -29,7 +29,6 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.DoubleItem;
 import org.rumbledb.items.ItemComparator;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
@@ -106,10 +105,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createNullItem();
                 }
                 candidateType = candidateItem.getDynamicType();
-                if (candidateType.equals(BuiltinTypesCatalogue.untypedAtomicItem)) {
-                    candidateItem = new DoubleItem(candidateItem.castToDoubleValue());
-                    candidateType = BuiltinTypesCatalogue.doubleItem;
-                }
                 switch (this.activeType) {
                     case 0:
                         if (candidateType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
