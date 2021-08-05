@@ -32,6 +32,11 @@ public class DayTimeDurationItem extends DurationItem {
     }
 
     @Override
+    public String getStringValue() {
+        return this.value.toString();
+    }
+
+    @Override
     public boolean isAtomic() {
         return true;
     }

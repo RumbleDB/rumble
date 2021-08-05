@@ -57,6 +57,11 @@ public class TimeItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        return this.serialize();
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
