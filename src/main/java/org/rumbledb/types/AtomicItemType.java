@@ -290,6 +290,15 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
+    public ItemType getPrimitiveType() {
+        if(this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem))
+        {
+            return durationItem;
+        }
+        return this;
+    }
+
+    @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
         if (this.equals(other))
