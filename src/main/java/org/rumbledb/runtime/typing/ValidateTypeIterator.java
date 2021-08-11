@@ -124,7 +124,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             for (String columnName : itemType.getObjectContentFacet().keySet()) {
                 StructField field = createStructField(
                     columnName,
-                    itemType.getObjectContentFacet().get(columnName).getType()
+                    itemType.getObjectContentFacet().get(columnName).getType(),
+                    !itemType.getObjectContentFacet().get(columnName).isRequired()
                 );
                 fields.add(field);
             }
@@ -138,9 +139,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         return DataTypes.createStructType(fields);
     }
 
-    private static StructField createStructField(String columnName, ItemType item) {
+    private static StructField createStructField(String columnName, ItemType item, boolean nullable) {
         DataType type = convertToDataType(item);
-        return DataTypes.createStructField(columnName, type, true);
+        return DataTypes.createStructField(columnName, type, nullable);
     }
 
     private static DataType convertToDataType(ItemType itemType) {
