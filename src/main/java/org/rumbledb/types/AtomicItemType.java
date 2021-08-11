@@ -291,8 +291,7 @@ public class AtomicItemType implements ItemType {
 
     @Override
     public ItemType getPrimitiveType() {
-        if(this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem))
-        {
+        if (this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem)) {
             return durationItem;
         }
         return this;
