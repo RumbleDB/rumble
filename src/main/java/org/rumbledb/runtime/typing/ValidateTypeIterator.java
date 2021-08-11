@@ -200,6 +200,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
     private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+        if (item == null) {
+            return null;
+        }
         try {
             if (dataType instanceof ArrayType) {
                 List<Item> arrayItems = item.getItems();

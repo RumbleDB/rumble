@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -321,13 +320,6 @@ public class ItemTypeReference implements ItemType {
             return "<anonymous>";
         }
         return this.name.toString();
-    }
-
-    public DataType toDataFrameType() {
-        if (this.resolvedItemType == null) {
-            throw new OurBadException("Unresolved type: " + this.name);
-        }
-        return this.resolvedItemType.toDataFrameType();
     }
 
     @Override
