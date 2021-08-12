@@ -223,7 +223,7 @@ public class DataFrameContext implements Serializable {
                         object,
                         ((ArrayType) dt).elementType(),
                         ExceptionMetadata.EMPTY_METADATA,
-                        itemType==null?null:itemType.getArrayContentFacet()
+                        itemType == null ? null : itemType.getArrayContentFacet()
                     );
                     items.add(item);
                 }

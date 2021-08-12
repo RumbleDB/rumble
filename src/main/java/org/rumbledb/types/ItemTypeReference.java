@@ -312,8 +312,7 @@ public class ItemTypeReference implements ItemType {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        if(this.resolvedItemType == null)
-        {
+        if (this.resolvedItemType == null) {
             return this.name.toString();
         }
         return this.resolvedItemType.getIdentifierString();
@@ -323,8 +322,7 @@ public class ItemTypeReference implements ItemType {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        if(this.resolvedItemType == null)
-        {
+        if (this.resolvedItemType == null) {
             return this.name.toString();
         }
         return this.resolvedItemType.toString();

@@ -314,7 +314,7 @@ public class SequenceType implements Serializable {
         }
         StringBuilder result = new StringBuilder();
         Name name = this.getItemType().getName();
-        result.append(name!=null?name:"<anonymous>");
+        result.append(name != null ? name : "<anonymous>");
         result.append(this.arity.getSymbol());
         return result.toString();
     }

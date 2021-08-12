@@ -211,9 +211,8 @@ public class ObjectItemType implements ItemType {
             sb.append("base type : ");
             sb.append(this.baseType.toString());
             sb.append("\n");
-            
-            if(isResolved())
-            {
+
+            if (isResolved()) {
                 List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
                 if (fields.size() > 0) {
                     sb.append("content facet:\n");
