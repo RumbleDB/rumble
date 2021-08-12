@@ -140,7 +140,7 @@ public class JSoundDataFrame implements Serializable {
     public Item getExactlyOneItem() {
         List<Row> result = this.dataFrame.takeAsList(1);
         DataType fieldType = this.dataFrame.schema().fields()[0].dataType();
-        return ItemParser.convertValueToItem(result.get(0).get(0), fieldType, ExceptionMetadata.EMPTY_METADATA);
+        return ItemParser.convertValueToItem(result.get(0).get(0), fieldType, ExceptionMetadata.EMPTY_METADATA, this.itemType);
     }
 
     public JSoundDataFrame distinct() {

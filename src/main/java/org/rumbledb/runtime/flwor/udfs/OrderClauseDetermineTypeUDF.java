@@ -55,7 +55,7 @@ public class OrderClauseDetermineTypeUDF implements UDF1<Row, List<String>> {
 
     @Override
     public List<String> call(Row row) {
-        this.dataFrameContext.setFromRow(row);
+        this.dataFrameContext.setFromRow(row, null);
 
         this.result.clear();
         for (OrderByClauseAnnotatedChildIterator expressionWithIterator : this.expressionsWithIterator) {

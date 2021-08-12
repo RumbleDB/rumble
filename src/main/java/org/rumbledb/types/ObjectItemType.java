@@ -211,21 +211,26 @@ public class ObjectItemType implements ItemType {
             sb.append("base type : ");
             sb.append(this.baseType.toString());
             sb.append("\n");
-
-            List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
-            if (fields.size() > 0) {
-                sb.append("content facet:\n");
-                // String comma = "";
-                for (FieldDescriptor field : fields) {
-                    sb.append("  ");
-                    sb.append(field.getName());
-                    if (field.isRequired()) {
-                        sb.append(" (required)");
+            
+            if(isResolved())
+            {
+                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
+                if (fields.size() > 0) {
+                    sb.append("content facet:\n");
+                    // String comma = "";
+                    for (FieldDescriptor field : fields) {
+                        sb.append("  ");
+                        sb.append(field.getName());
+                        if (field.isRequired()) {
+                            sb.append(" (required)");
+                        }
+                        sb.append(" : ");
+                        sb.append(field.getType().toString());
+                        sb.append("\n");
                     }
-                    sb.append(" : ");
-                    sb.append(field.getType().toString());
-                    sb.append("\n");
                 }
+            } else {
+                sb.append("(content not resolved yet)");
             }
             return sb.toString();
         }

@@ -312,14 +312,22 @@ public class ItemTypeReference implements ItemType {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        return this.name.toString();
+        if(this.resolvedItemType == null)
+        {
+            return this.name.toString();
+        }
+        return this.resolvedItemType.getIdentifierString();
     }
 
     public String toString() {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        return this.name.toString();
+        if(this.resolvedItemType == null)
+        {
+            return this.name.toString();
+        }
+        return this.resolvedItemType.toString();
     }
 
     @Override

@@ -314,6 +314,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
+            System.out.println(item.getDynamicType().getName());
             Item castType = CastIterator.castItemToType(
                 ItemFactory.getInstance().createStringItem(item.getStringValue()),
                 itemType,
@@ -321,7 +322,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             );
             if (castType == null) {
                 throw new InvalidInstanceException(
-                        "Cannot cast " + item + " to type " + itemType.getIdentifierString()
+                        "Cannot cast " + item.serialize() + " to type " + itemType.getIdentifierString()
                 );
             }
             return castType;

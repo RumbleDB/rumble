@@ -143,7 +143,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
         JavaRDD<Row> rowRDD = df.javaRDD();
-        return rowRDD.map(new RowToItemMapper(metadata));
+        return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
     }
 
     public void materialize(DynamicContext context, List<Item> result) {

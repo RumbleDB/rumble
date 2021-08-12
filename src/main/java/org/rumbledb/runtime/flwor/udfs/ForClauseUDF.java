@@ -55,7 +55,7 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
 
     @Override
     public List<byte[]> call(Row row) {
-        this.dataFrameContext.setFromRow(row);
+        this.dataFrameContext.setFromRow(row, null);
 
         this.results.clear();
         // apply expression in the dynamic context

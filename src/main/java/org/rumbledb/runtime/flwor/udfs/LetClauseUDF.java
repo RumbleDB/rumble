@@ -52,7 +52,7 @@ public class LetClauseUDF implements UDF1<Row, byte[]> {
 
     @Override
     public byte[] call(Row row) {
-        this.dataFrameContext.setFromRow(row);
+        this.dataFrameContext.setFromRow(row, null);
 
         this.expression.materialize(this.dataFrameContext.getContext(), this.nextResult);
 

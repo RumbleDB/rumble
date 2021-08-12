@@ -36,7 +36,7 @@ public class GenericLetClauseUDF<T> implements UDF1<Row, T> {
 
     @Override
     public T call(Row row) {
-        this.dataFrameContext.setFromRow(row);
+        this.dataFrameContext.setFromRow(row, null);
 
         this.expression.materialize(this.dataFrameContext.getContext(), this.nextResult);
 
