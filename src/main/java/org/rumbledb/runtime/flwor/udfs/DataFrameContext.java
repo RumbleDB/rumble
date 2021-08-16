@@ -97,6 +97,10 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
+    public void setFromRow(Row row) {
+        setFromRow(row, null);
+    }
+
     /**
      * Sets the context from a DataFrame row.
      * 
