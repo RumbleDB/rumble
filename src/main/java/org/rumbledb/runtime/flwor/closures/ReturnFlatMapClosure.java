@@ -53,7 +53,7 @@ public class ReturnFlatMapClosure implements FlatMapFunction<Row, Item> {
 
     @Override
     public Iterator<Item> call(Row row) {
-        this.dataFrameContext.setFromRow(row, null);
+        this.dataFrameContext.setFromRow(row);
         this.expression.materialize(this.dataFrameContext.getContext(), this.results);
         return this.results.iterator();
     }
