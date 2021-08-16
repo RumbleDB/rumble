@@ -49,7 +49,7 @@ public class HashUDF implements UDF1<Row, Long> {
 
     @Override
     public Long call(Row row) {
-        this.dataFrameContext.setFromRow(row, null);
+        this.dataFrameContext.setFromRow(row);
 
         Item item = null;
         try {
