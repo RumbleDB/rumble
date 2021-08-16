@@ -205,20 +205,16 @@ public class TreatIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext dynamicContext) {
-        System.err.println("Treat's getDF.");
         if (!this.sequenceType.isResolved()) {
             this.sequenceType.resolve(dynamicContext, getMetadata());
         }
         JSoundDataFrame df = this.iterator.getDataFrame(dynamicContext);
-        df.getDataFrame().show();
         checkEmptySequence(df.isEmptySequence() ? 0 : 1);
         if (df.isEmptySequence()) {
             return df;
         }
         ItemType dataItemType = df.getItemType();
-        df.getDataFrame().show();
         if (dataItemType.isSubtypeOf(this.sequenceType.getItemType())) {
-            System.err.println("Treat's getDF returning.");
             return df;
         }
         throw errorToThrow("" + dataItemType);
