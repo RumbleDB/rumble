@@ -496,11 +496,6 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public DataType toDataFrameType() {
-        return this.dataFrameType != null ? this.dataFrameType : this.baseType.toDataFrameType();
-    }
-
-    @Override
     public boolean isDataFrameType() {
         return true;
     }
