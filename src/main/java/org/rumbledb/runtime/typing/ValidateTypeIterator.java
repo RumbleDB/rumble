@@ -79,7 +79,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return convertLocalItemsToDataFrame(items, this.itemType);
+            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType);
+            System.err.println("Returning from DF validation with");
+            jdf.getDataFrame().show();
+            return jdf;
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
@@ -301,7 +304,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        return validate(this.children.get(0).next(), this.itemType, getMetadata());
+        System.err.println("local validation nextLocal.");
+        Item i = validate(this.children.get(0).next(), this.itemType, getMetadata());
+        System.err.println("Item: " + i);
+        return i;
     }
 
     private static Item validate(Item item, ItemType itemType, ExceptionMetadata metadata) {
