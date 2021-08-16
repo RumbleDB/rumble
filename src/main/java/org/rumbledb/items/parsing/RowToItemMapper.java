@@ -37,11 +37,14 @@ public class RowToItemMapper implements Function<Row, Item> {
         this.itemType = itemType;
     }
 
+    public RowToItemMapper(ExceptionMetadata metadata) {
+        this.metadata = metadata;
+        this.itemType = null;
+    }
+
     @Override
     public Item call(Row row) throws Exception {
-        System.err.println("Calling RowToItemMapper.call()");
         Item result = ItemParser.getItemFromRow(row, this.metadata, this.itemType);
-        System.err.println("Result: " + result.serialize());
         return result;
     }
 }
