@@ -24,18 +24,27 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.types.ItemType;
 
 public class RowToItemMapper implements Function<Row, Item> {
 
     private static final long serialVersionUID = 1L;
     private final ExceptionMetadata metadata;
+    private final ItemType itemType;
+
+    public RowToItemMapper(ExceptionMetadata metadata, ItemType itemType) {
+        this.metadata = metadata;
+        this.itemType = itemType;
+    }
 
     public RowToItemMapper(ExceptionMetadata metadata) {
         this.metadata = metadata;
+        this.itemType = null;
     }
 
     @Override
     public Item call(Row row) throws Exception {
-        return ItemParser.getItemFromRow(row, this.metadata);
+        Item result = ItemParser.getItemFromRow(row, this.metadata);
+        return result;
     }
 }
