@@ -142,7 +142,6 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     }
 
     public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
-        System.err.println("Calling dataFrameToRDDOfItems.");
         JavaRDD<Row> rowRDD = df.javaRDD();
         JavaRDD<Item> result = rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         return result;
