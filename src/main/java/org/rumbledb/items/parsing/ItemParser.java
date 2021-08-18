@@ -331,8 +331,11 @@ public class ItemParser implements Serializable {
         if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
             return DataTypes.BooleanType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+        if (itemType.equals(BuiltinTypesCatalogue.intItem)) {
             return DataTypes.IntegerType;
+        }
+        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+            return decimalType;
         }
         if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
             return DataTypes.DoubleType;
