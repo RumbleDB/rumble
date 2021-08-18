@@ -10,7 +10,6 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.DataFrameRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 
@@ -51,17 +50,11 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return new JSoundDataFrame(
-                        ValidateTypeIterator.convertItemRDDToDataFrame(rdd, schemaItem),
-                        BuiltinTypesCatalogue.objectItem
-                );
+                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return new JSoundDataFrame(
-                    ValidateTypeIterator.convertLocalItemsToDataFrame(items, schemaItem),
-                    BuiltinTypesCatalogue.objectItem
-            );
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(items, schemaType);
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
