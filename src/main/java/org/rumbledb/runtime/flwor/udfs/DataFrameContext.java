@@ -35,6 +35,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.types.ItemType;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -97,11 +99,23 @@ public class DataFrameContext implements Serializable {
 
     /**
      * Sets the context from a DataFrame row.
+     * Temporary until FLWOR data frames fully handle type conversions.
      * 
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.
      * 
      */
     public void setFromRow(Row row) {
+        setFromRow(row, null);
+    }
+
+    /**
+     * Sets the context from a DataFrame row.
+     *
+     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
+     * @param itemType the itemType to use for the conversion.
+     *
+     */
+    public void setFromRow(Row row, ItemType itemType) {
         this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
@@ -220,14 +234,15 @@ public class DataFrameContext implements Serializable {
                     Item item = ItemParser.convertValueToItem(
                         object,
                         ((ArrayType) dt).elementType(),
-                        ExceptionMetadata.EMPTY_METADATA
+                        ExceptionMetadata.EMPTY_METADATA,
+                        null
                     );
                     items.add(item);
                 }
                 return items;
             }
         }
-        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA);
+        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, null);
         return Collections.singletonList(item);
     }
 }

@@ -124,10 +124,6 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
-        return getItemFromRow(row, metadata, null);
-    }
-
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
@@ -139,7 +135,7 @@ public class ItemParser implements Serializable {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
-            Item newItem = convertValueToItem(row, i, null, fieldType, metadata);
+            Item newItem = convertValueToItem(row, i, null, fieldType, metadata, itemType);
             // NULL values in DataFrames are mapped to absent in JSONiq.
             if (
                 !newItem.isNull()
@@ -160,9 +156,10 @@ public class ItemParser implements Serializable {
     public static Item convertValueToItem(
             Object o,
             DataType fieldType,
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            ItemType itemType
     ) {
-        return convertValueToItem(null, 0, o, fieldType, metadata);
+        return convertValueToItem(null, 0, o, fieldType, metadata, itemType);
     }
 
     private static Item convertValueToItem(
@@ -170,7 +167,8 @@ public class ItemParser implements Serializable {
             int i,
             Object o,
             DataType fieldType,
-            ExceptionMetadata metadata
+            ExceptionMetadata metadata,
+            ItemType itemType
     ) {
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
@@ -275,7 +273,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Row) o;
             }
-            return getItemFromRow(value, metadata);
+            return getItemFromRow(value, metadata, itemType);
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
@@ -283,14 +281,14 @@ public class ItemParser implements Serializable {
             if (row != null) {
                 List<Object> objects = row.getList(i);
                 for (Object object : objects) {
-                    members.add(convertValueToItem(object, dataType, metadata));
+                    members.add(convertValueToItem(object, dataType, metadata, null));
                 }
             } else {
                 @SuppressWarnings("unchecked")
                 Object arrayObject = ((WrappedArray<Object>) o).array();
                 for (int index = 0; index < Array.getLength(arrayObject); index++) {
                     Object value = Array.get(arrayObject, index);
-                    members.add(convertValueToItem(value, dataType, metadata));
+                    members.add(convertValueToItem(value, dataType, metadata, null));
                 }
             }
             return ItemFactory.getInstance().createArrayItem(members);
