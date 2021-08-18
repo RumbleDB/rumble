@@ -125,6 +125,10 @@ public class ItemParser implements Serializable {
     }
 
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
+        return getItemFromRow(row, metadata, null);
+    }
+
+    public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
         StructType schema = row.schema();
