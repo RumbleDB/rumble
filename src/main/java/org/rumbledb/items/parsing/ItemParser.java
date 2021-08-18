@@ -124,10 +124,6 @@ public class ItemParser implements Serializable {
         }
     }
 
-    public static Item getItemFromRow(Row row, ExceptionMetadata metadata) {
-        return getItemFromRow(row, metadata, null);
-    }
-
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
@@ -143,7 +139,6 @@ public class ItemParser implements Serializable {
                 ? null
                 : itemType.getObjectContentFacet().get(fieldName).getType();
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
-            System.err.println("And back with " + newItem);
             // NULL values in DataFrames are mapped to absent in JSONiq.
             if (
                 !newItem.isNull()
@@ -168,7 +163,6 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata,
             ItemType itemType
     ) {
-        System.err.println("Passsed (convertValueToItem): " + itemType);
         return convertValueToItem(null, 0, o, fieldType, metadata, itemType);
     }
 
@@ -335,9 +329,7 @@ public class ItemParser implements Serializable {
             } else {
                 value = (Row) o;
             }
-            System.err.println("Calling getItemFromRow");
             Item item = getItemFromRow(value, metadata, itemType);
-            System.err.println("Returning from getItemFromRow");
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                 return item;
             } else {
