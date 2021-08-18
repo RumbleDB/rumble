@@ -97,23 +97,15 @@ public class DataFrameContext implements Serializable {
         this.input = new Input();
     }
 
-    /**
-     * Sets the context from a DataFrame row.
-     * Temporary until FLWOR data frames fully handle type conversions.
-     * 
-     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
-     * 
-     */
     public void setFromRow(Row row) {
         setFromRow(row, null);
     }
 
     /**
      * Sets the context from a DataFrame row.
-     *
+     * 
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.
-     * @param itemType the itemType to use for the conversion.
-     *
+     * 
      */
     public void setFromRow(Row row, ItemType itemType) {
         this.context.getVariableValues().removeAllVariables();
@@ -122,7 +114,7 @@ public class DataFrameContext implements Serializable {
         for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
             if (columnName.endsWith(".sequence")) {
-                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
                         FlworDataFrameUtils.variableForColumnName(columnName),
@@ -130,7 +122,7 @@ public class DataFrameContext implements Serializable {
                     );
             }
             if (!columnName.endsWith(".count")) {
-                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
                         FlworDataFrameUtils.variableForColumnName(columnName),
@@ -198,7 +190,7 @@ public class DataFrameContext implements Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Item> readColumnAsSequenceOfItems(Row row, int columnIndex) {
+    private List<Item> readColumnAsSequenceOfItems(Row row, ItemType itemType, int columnIndex) {
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:
@@ -235,14 +227,14 @@ public class DataFrameContext implements Serializable {
                         object,
                         ((ArrayType) dt).elementType(),
                         ExceptionMetadata.EMPTY_METADATA,
-                        null
+                        itemType == null ? null : itemType.getArrayContentFacet()
                     );
                     items.add(item);
                 }
                 return items;
             }
         }
-        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, null);
+        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
         return Collections.singletonList(item);
     }
 }
