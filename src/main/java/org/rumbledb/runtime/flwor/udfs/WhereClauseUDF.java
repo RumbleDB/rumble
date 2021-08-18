@@ -46,7 +46,7 @@ public class WhereClauseUDF implements UDF1<Row, Boolean> {
 
     @Override
     public Boolean call(Row row) {
-        this.dataFrameContext.setFromRow(row, null);
+        this.dataFrameContext.setFromRow(row);
 
         DynamicContext dynamicContext = this.dataFrameContext.getContext();
 
