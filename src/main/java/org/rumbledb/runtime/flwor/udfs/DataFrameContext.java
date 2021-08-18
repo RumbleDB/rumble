@@ -96,16 +96,23 @@ public class DataFrameContext implements Serializable {
         this.output = new Output(128, -1);
         this.input = new Input();
     }
-
+ 
+    /**
+     * Sets the context from a DataFrame row.
+     * 
+     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
+     * 
+     */
     public void setFromRow(Row row) {
         setFromRow(row, null);
     }
 
     /**
      * Sets the context from a DataFrame row.
-     * 
+     *
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.
-     * 
+     * @param itemType the itemType to use for the conversion.
+     *
      */
     public void setFromRow(Row row, ItemType itemType) {
         this.context.getVariableValues().removeAllVariables();
