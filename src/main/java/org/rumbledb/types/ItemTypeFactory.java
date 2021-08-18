@@ -82,7 +82,6 @@ public class ItemTypeFactory {
                     typeString = typeString.substring(0, index);
                     value = ItemFactory.getInstance().createStringItem(typeString);
                     defaultValueLiteral = ItemFactory.getInstance().createStringItem(defaultLiteral);
-                    System.out.println("Literal " + defaultValueLiteral.serialize());
                 }
 
                 FieldDescriptor fieldDescriptor = new FieldDescriptor();
