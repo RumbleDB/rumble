@@ -96,7 +96,7 @@ public class DataFrameContext implements Serializable {
         this.output = new Output(128, -1);
         this.input = new Input();
     }
- 
+
     /**
      * Sets the context from a DataFrame row.
      * 
