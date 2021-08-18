@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
@@ -227,11 +226,6 @@ public class AtomicItemType implements ItemType {
     }
 
     AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
-        this.name = name;
-        this.allowedFacets = allowedFacets;
-    }
-
-    AtomicItemType(Name name, Set<FacetTypes> allowedFacets, DataType dataType) {
         this.name = name;
         this.allowedFacets = allowedFacets;
     }
