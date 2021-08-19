@@ -10,11 +10,13 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -35,16 +37,23 @@ public class AnnotatedItem implements Item {
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
         this.type = type;
+        if(type.getName() == null)
+        {
+            throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
+        }
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
         this.itemToAnnotate.write(kryo, output);
+        this.type.getName().write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.itemToAnnotate.read(kryo, input);
+        this.itemToAnnotate = kryo.readObject(input, Item.class);
+        Name name = kryo.readObject(input, Name.class);
+        this.type = new ItemTypeReference(name);
     }
 
     @Override
@@ -244,6 +253,7 @@ public class AnnotatedItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
+        System.err.println("Getting dynamic type: " + this.type);
         return this.type;
     }
 
