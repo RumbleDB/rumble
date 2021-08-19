@@ -357,40 +357,40 @@ public class ItemParser implements Serializable {
     }
 
     public static DataType getDataFrameDataTypeFromItemType(ItemType itemType) {
-        if (itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.booleanItem)) {
             return DataTypes.BooleanType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.intItem)) {
-            return DataTypes.IntegerType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
-            return decimalType;
-        }
-        if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.doubleItem)) {
             return DataTypes.DoubleType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.floatItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
             return DataTypes.FloatType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
+            return DataTypes.IntegerType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
+            return DataTypes.LongType;
+        }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
             return decimalType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.nullItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
             return DataTypes.NullType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.dateItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
             return DataTypes.DateType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)) {
             return DataTypes.TimestampType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.equals(BuiltinTypesCatalogue.objectItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
             return vectorType;
         }
         throw new IllegalArgumentException(
