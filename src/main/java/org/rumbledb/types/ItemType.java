@@ -397,7 +397,11 @@ public interface ItemType extends Serializable {
      * @return content facet value for object item types (cumulative facet)
      */
     default Map<String, FieldDescriptor> getObjectContentFacet() {
-        throw new UnsupportedOperationException("object content facet is allowed only for object item types");
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
     }
 
     /**
@@ -414,7 +418,9 @@ public interface ItemType extends Serializable {
      */
     default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
-                "array content facet is allowed only for array item types " + this.getClass().getCanonicalName()
+                "array content facet is allowed only for array item types (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
         );
     }
 
