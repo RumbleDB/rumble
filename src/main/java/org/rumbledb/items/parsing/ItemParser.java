@@ -199,6 +199,10 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata,
             ItemType itemType
     ) {
+        if(itemType != null && itemType.getName() == null)
+        {
+            itemType = itemType.getBaseType();
+        }
         if (row != null && row.isNullAt(i)) {
             return ItemFactory.getInstance().createNullItem();
         } else if (fieldType.equals(DataTypes.StringType)) {
@@ -209,7 +213,7 @@ public class ItemParser implements Serializable {
                 s = (String) o;
             }
             Item item = ItemFactory.getInstance().createStringItem(s);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.stringItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.stringItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -222,7 +226,7 @@ public class ItemParser implements Serializable {
                 b = (Boolean) o;
             }
             Item item = ItemFactory.getInstance().createBooleanItem(b);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.booleanItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -235,7 +239,7 @@ public class ItemParser implements Serializable {
                 value = (Double) o;
             }
             Item item = ItemFactory.getInstance().createDoubleItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.doubleItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -248,7 +252,7 @@ public class ItemParser implements Serializable {
                 value = (Integer) o;
             }
             Item item = ItemFactory.getInstance().createIntItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.intItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.intItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -261,7 +265,7 @@ public class ItemParser implements Serializable {
                 value = (Float) o;
             }
             Item item = ItemFactory.getInstance().createFloatItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.floatItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.floatItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -274,7 +278,7 @@ public class ItemParser implements Serializable {
                 value = (BigDecimal) o;
             }
             Item item = ItemFactory.getInstance().createDecimalItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.decimalItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -287,7 +291,7 @@ public class ItemParser implements Serializable {
                 value = new BigDecimal((Long) o);
             }
             Item item = ItemFactory.getInstance().createDecimalItem(value);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -313,7 +317,7 @@ public class ItemParser implements Serializable {
             Instant instant = value.toInstant();
             DateTime dt = new DateTime(instant);
             Item item = ItemFactory.getInstance().createDateTimeItem(dt, false);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -328,7 +332,7 @@ public class ItemParser implements Serializable {
             long instant = value.getTime();
             DateTime dt = new DateTime(instant);
             Item item = ItemFactory.getInstance().createDateItem(dt, false);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.dateItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -341,7 +345,7 @@ public class ItemParser implements Serializable {
                 value = (byte[]) o;
             }
             Item item = ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(value));
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.hexBinaryItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -354,7 +358,7 @@ public class ItemParser implements Serializable {
                 value = (Row) o;
             }
             Item item = getItemFromRow(value, metadata, itemType);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -378,7 +382,7 @@ public class ItemParser implements Serializable {
                 }
             }
             Item item = ItemFactory.getInstance().createArrayItem(members);
-            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem) || itemType.getName() == null) {
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                 return item;
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -398,7 +402,7 @@ public class ItemParser implements Serializable {
                     members.add(ItemFactory.getInstance().createDoubleItem(value));
                 }
                 Item item = ItemFactory.getInstance().createArrayItem(members);
-                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem) || itemType.getName() == null) {
+                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.arrayItem)) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
@@ -415,7 +419,7 @@ public class ItemParser implements Serializable {
                     objectValueList.add(ItemFactory.getInstance().createDoubleItem(vectorValues[j]));
                 }
                 Item item = ItemFactory.getInstance().createObjectItem(objectKeyList, objectValueList, metadata);
-                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem) || itemType.getName() == null) {
+                if (itemType == null || itemType.equals(BuiltinTypesCatalogue.objectItem)) {
                     return item;
                 } else {
                     return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
