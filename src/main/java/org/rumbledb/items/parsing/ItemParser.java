@@ -133,11 +133,15 @@ public class ItemParser implements Serializable {
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
-        Map<String, FieldDescriptor> content = itemType.getObjectContentFacet();
-        if (content == null) {
-            throw new OurBadException(
-                    "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
-            );
+        Map<String, FieldDescriptor> content = null;
+
+        if (itemType != null) {
+            content = itemType.getObjectContentFacet();
+            if (content == null) {
+                throw new OurBadException(
+                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
+                );
+            }
         }
 
         for (int i = 0; i < fields.length; ++i) {
@@ -145,7 +149,7 @@ public class ItemParser implements Serializable {
             DataType fieldType = field.dataType();
             String fieldName = field.name();
             ItemType fieldItemType = null;
-            if (itemType != null) {
+            if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
                 if (descriptor == null) {
                     throw new OurBadException(
