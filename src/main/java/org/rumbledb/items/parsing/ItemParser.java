@@ -44,6 +44,7 @@ import org.rumbledb.items.ItemFactory;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.FieldDescriptor;
 import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
@@ -57,6 +58,7 @@ import java.sql.Timestamp;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class ItemParser implements Serializable {
 
@@ -131,13 +133,40 @@ public class ItemParser implements Serializable {
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
+        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+
+        Map<String, FieldDescriptor> content = null;
+
+        if (itemType != null) {
+            content = itemType.getObjectContentFacet();
+            if (content == null) {
+                throw new OurBadException(
+                        "Object descriptor content in type " + itemType.getIdentifierString() + " is null."
+                );
+            }
+        }
+
         for (int i = 0; i < fields.length; ++i) {
             StructField field = fields[i];
             DataType fieldType = field.dataType();
             String fieldName = field.name();
-            ItemType fieldItemType = itemType == null
-                ? null
-                : itemType.getObjectContentFacet().get(fieldName).getType();
+            ItemType fieldItemType = null;
+            if (content != null) {
+                FieldDescriptor descriptor = content.get(fieldName);
+                if (descriptor == null) {
+                    throw new OurBadException(
+                            "Descriptor for " + fieldName + " in type " + itemType.getIdentifierString() + " is null."
+                    );
+                }
+                fieldItemType = descriptor.getType();
+                if (fieldItemType == null) {
+                    throw new OurBadException(
+                            "Type for field " + fieldName + " in type " + itemType.getIdentifierString() + " is null."
+                    );
+                }
+            }
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
             // NULL values in DataFrames are mapped to absent in JSONiq.
             if (
@@ -150,10 +179,6 @@ public class ItemParser implements Serializable {
             }
         }
 
-        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return values.get(0);
-        }
-        System.err.println("And returning.");
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
