@@ -133,6 +133,10 @@ public class ItemParser implements Serializable {
         StructField[] fields = schema.fields();
         String[] fieldnames = schema.fieldNames();
 
+        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return convertValueToItem(row, 0, null, fields[0].dataType(), metadata, itemType);
+        }
+
         Map<String, FieldDescriptor> content = null;
 
         if (itemType != null) {
@@ -175,9 +179,6 @@ public class ItemParser implements Serializable {
             }
         }
 
-        if (fields.length == 1 && fieldnames[0].equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            return values.get(0);
-        }
         return ItemFactory.getInstance().createObjectItem(keys, values, metadata);
     }
 
