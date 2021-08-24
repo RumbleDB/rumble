@@ -199,8 +199,7 @@ public class ItemParser implements Serializable {
             ExceptionMetadata metadata,
             ItemType itemType
     ) {
-        if(itemType != null && itemType.getName() == null)
-        {
+        if (itemType != null && itemType.getName() == null) {
             itemType = itemType.getBaseType();
         }
         if (row != null && row.isNullAt(i)) {

@@ -37,21 +37,20 @@ public class AnnotatedItem implements Item {
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
         this.type = type;
-        if(type.getName() == null)
-        {
+        if (type.getName() == null) {
             throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
         }
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        this.itemToAnnotate.write(kryo, output);
+        kryo.writeClassAndObject(output, this.itemToAnnotate);
         this.type.getName().write(kryo, output);
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.itemToAnnotate = kryo.readObject(input, Item.class);
+        this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
         Name name = kryo.readObject(input, Name.class);
         this.type = new ItemTypeReference(name);
     }
