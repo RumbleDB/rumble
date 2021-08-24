@@ -22,10 +22,16 @@ package sparksoniq.spark;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.BooleanType;
+import org.apache.spark.sql.types.DoubleType;
+import org.apache.spark.sql.types.FloatType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -142,6 +148,7 @@ public class SparkSessionManager {
     private void initializeKryoSerialization() {
         if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            // this.configuration.set("spark.kryo.registrationRequired", "true");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,
                 AnnotatedItem.class,
@@ -175,7 +182,20 @@ public class SparkSessionManager {
                 FlworTuple.class,
                 FlworKey.class,
                 RuntimeIterator.class,
-                RuntimeTupleIterator.class };
+                RuntimeTupleIterator.class,
+                StructType.class,
+                StructType[].class,
+                StructField.class,
+                StructField[].class,
+                BooleanType.class,
+                DoubleType.class,
+                FloatType.class,
+                IntType.class,
+                BooleanType.class,
+                BooleanType.class,
+                BooleanType.class,
+                BooleanType.class,
+            };
 
             this.configuration.registerKryoClasses(serializedClasses);
         }

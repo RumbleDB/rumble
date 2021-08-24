@@ -252,7 +252,6 @@ public class AnnotatedItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        System.err.println("Getting dynamic type: " + this.type);
         return this.type;
     }
 

@@ -388,7 +388,10 @@ public class ItemParser implements Serializable {
         } else if (fieldType instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) fieldType;
             DataType dataType = arrayType.elementType();
-            ItemType memberType = itemType == null ? null : itemType.getArrayContentFacet();
+            ItemType memberType = null;
+            if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
+                memberType = itemType.getArrayContentFacet();
+            }
             List<Item> members = new ArrayList<>();
             if (row != null) {
                 List<Object> objects = row.getList(i);
