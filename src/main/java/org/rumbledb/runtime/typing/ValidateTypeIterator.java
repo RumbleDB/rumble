@@ -80,7 +80,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType);
-            System.err.println("Returning from DF validation with");
             jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
@@ -304,9 +303,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     @Override
     protected Item nextLocal() {
-        System.err.println("local validation nextLocal.");
         Item i = validate(this.children.get(0).next(), this.itemType, getMetadata());
-        System.err.println("Item: " + i);
         return i;
     }
 
@@ -320,7 +317,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (InstanceOfIterator.doesItemTypeMatchItem(itemType, item)) {
                 return item;
             }
-            System.out.println(item.getDynamicType().getName());
             Item castType = CastIterator.castItemToType(
                 ItemFactory.getInstance().createStringItem(item.getStringValue()),
                 itemType,
@@ -344,7 +340,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 members.add(validate(member, itemType.getArrayContentFacet(), metadata));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
         }
         if (itemType.isObjectItemType()) {
             if (!item.isObject()) {
@@ -394,7 +393,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Item objectItem = ItemFactory.getInstance()
                 .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(objectItem, itemType);
         }
         if (itemType.isFunctionItemType()) {
             if (!item.isFunction()) {

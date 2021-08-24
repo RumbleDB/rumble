@@ -129,9 +129,6 @@ public class FlworTuple implements Serializable, KryoSerializable {
         }
         if (this.dataFrameVariables.containsKey(key)) {
             JSoundDataFrame df = this.dataFrameVariables.get(key);
-            System.err.println("FLWORTuple");
-            df.getDataFrame().show();
-            System.err.println(df.getItemType());
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
