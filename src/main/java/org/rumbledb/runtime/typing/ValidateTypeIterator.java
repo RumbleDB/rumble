@@ -344,7 +344,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 members.add(validate(member, itemType.getArrayContentFacet(), metadata));
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            return ItemFactory.getInstance().createUserDefinedItem(arrayItem, itemType);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
         }
         if (itemType.isObjectItemType()) {
             if (!item.isObject()) {
@@ -394,7 +397,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Item objectItem = ItemFactory.getInstance()
                 .createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
-            return ItemFactory.getInstance().createUserDefinedItem(objectItem, itemType);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
+            return ItemFactory.getInstance().createAnnotatedItem(objectItem, itemType);
         }
         if (itemType.isFunctionItemType()) {
             if (!item.isFunction()) {

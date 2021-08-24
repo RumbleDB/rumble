@@ -45,13 +45,13 @@ public class AnnotatedItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeClassAndObject(output, this.itemToAnnotate);
-        this.type.getName().write(kryo, output);
+        kryo.writeClassAndObject(output, this.type.getName());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
         this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
-        Name name = kryo.readObject(input, Name.class);
+        Name name = (Name) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
         this.type = new ItemTypeReference(name);
     }
 
