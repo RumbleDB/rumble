@@ -197,7 +197,6 @@ public class VariableValues implements Serializable, KryoSerializable {
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
             JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
-            df.getDataFrame().show();
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
