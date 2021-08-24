@@ -67,11 +67,25 @@ public class ItemParser implements Serializable {
     private static final DataType vectorType = new VectorUDT();
     public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
 
+    /**
+     * Parses a JSON string to an item.
+     * 
+     * @param string the JSON string.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
     public static Item getItemFromString(String string, ExceptionMetadata metadata) {
         JsonReader object = new JsonReader(new StringReader(string));
         return ItemParser.getItemFromObject(object, metadata);
     }
 
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     * 
+     * @param object the JSON reader.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
     public static Item getItemFromObject(JsonReader object, ExceptionMetadata metadata) {
         try {
             if (object.peek() == JsonToken.STRING) {
@@ -126,6 +140,14 @@ public class ItemParser implements Serializable {
         }
     }
 
+    /**
+     * Converts a DataFrame row to an item.
+     * 
+     * @param row the DataFrame row.
+     * @param metadata exception metadata is an error is thrown.
+     * @param itemType the type to annotate the output item with (for now, it can be null for no annotation).
+     * @return the converted item.
+     */
     public static Item getItemFromRow(Row row, ExceptionMetadata metadata, ItemType itemType) {
         List<String> keys = new ArrayList<>();
         List<Item> values = new ArrayList<>();
@@ -139,7 +161,7 @@ public class ItemParser implements Serializable {
 
         Map<String, FieldDescriptor> content = null;
 
-        if (itemType != null) {
+        if (itemType != null && !itemType.equals(BuiltinTypesCatalogue.item)) {
             content = itemType.getObjectContentFacet();
             if (content == null) {
                 throw new OurBadException(
@@ -155,16 +177,17 @@ public class ItemParser implements Serializable {
             ItemType fieldItemType = null;
             if (content != null) {
                 FieldDescriptor descriptor = content.get(fieldName);
-                if (descriptor == null) {
-                    throw new OurBadException(
-                            "Descriptor for " + fieldName + " in type " + itemType.getIdentifierString() + " is null."
-                    );
-                }
-                fieldItemType = descriptor.getType();
-                if (fieldItemType == null) {
-                    throw new OurBadException(
-                            "Type for field " + fieldName + " in type " + itemType.getIdentifierString() + " is null."
-                    );
+                if (descriptor != null) {
+                    fieldItemType = descriptor.getType();
+                    if (fieldItemType == null) {
+                        throw new OurBadException(
+                                "Type for field "
+                                    + fieldName
+                                    + " in type "
+                                    + itemType.getIdentifierString()
+                                    + " is null."
+                        );
+                    }
                 }
             }
             Item newItem = convertValueToItem(row, i, null, fieldType, metadata, fieldItemType);
