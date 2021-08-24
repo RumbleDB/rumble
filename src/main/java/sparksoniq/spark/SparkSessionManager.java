@@ -28,21 +28,38 @@ import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.AnnotatedItem;
+import org.rumbledb.items.AnyURIItem;
 import org.rumbledb.items.ArrayItem;
+import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
+import org.rumbledb.items.DateItem;
+import org.rumbledb.items.DateTimeItem;
+import org.rumbledb.items.DateTimeStampItem;
+import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
+import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FloatItem;
+import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
+import org.rumbledb.items.TimeItem;
+import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -127,16 +144,33 @@ public class SparkSessionManager {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,
+                AnnotatedItem.class,
                 ArrayItem.class,
                 ObjectItem.class,
-                StringItem.class,
-                IntItem.class,
-                IntegerItem.class,
-                FloatItem.class,
-                DoubleItem.class,
-                DecimalItem.class,
-                NullItem.class,
+                AnyURIItem.class,
+                Base64BinaryItem.class,
                 BooleanItem.class,
+                DateItem.class,
+                DateTimeItem.class,
+                DateTimeStampItem.class,
+                DayTimeDurationItem.class,
+                DecimalItem.class,
+                DoubleItem.class,
+                DurationItem.class,
+                FloatItem.class,
+                HexBinaryItem.class,
+                IntegerItem.class,
+                IntItem.class,
+                NullItem.class,
+                StringItem.class,
+                TimeItem.class,
+                YearMonthDurationItem.class,
+                FunctionItem.class,
+                FunctionIdentifier.class,
+                Name.class,
+                SequenceType.class,
+                SequenceType.Arity.class,
+                ItemType.class,
                 DynamicContext.class,
                 FlworTuple.class,
                 FlworKey.class,
