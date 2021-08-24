@@ -54,11 +54,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.AnnotatedItem;
+import org.rumbledb.items.AnyURIItem;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DateItem;
 import org.rumbledb.items.DateTimeItem;
+import org.rumbledb.items.DateTimeStampItem;
 import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
@@ -94,16 +97,29 @@ public class FlworDataFrameUtils {
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
+        kryo.register(AnnotatedItem.class);
+
         kryo.register(ArrayItem.class);
         kryo.register(ObjectItem.class);
-        kryo.register(StringItem.class);
-        kryo.register(IntItem.class);
-        kryo.register(IntegerItem.class);
-        kryo.register(FloatItem.class);
-        kryo.register(DoubleItem.class);
-        kryo.register(DecimalItem.class);
-        kryo.register(NullItem.class);
+
+        kryo.register(AnyURIItem.class);
+        kryo.register(Base64BinaryItem.class);
         kryo.register(BooleanItem.class);
+        kryo.register(DateItem.class);
+        kryo.register(DateTimeItem.class);
+        kryo.register(DateTimeStampItem.class);
+        kryo.register(DayTimeDurationItem.class);
+        kryo.register(DecimalItem.class);
+        kryo.register(DoubleItem.class);
+        kryo.register(DurationItem.class);
+        kryo.register(FloatItem.class);
+        kryo.register(HexBinaryItem.class);
+        kryo.register(IntegerItem.class);
+        kryo.register(IntItem.class);
+        kryo.register(NullItem.class);
+        kryo.register(StringItem.class);
+        kryo.register(TimeItem.class);
+        kryo.register(YearMonthDurationItem.class);
 
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
@@ -111,17 +127,6 @@ public class FlworDataFrameUtils {
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
-
-        kryo.register(DurationItem.class);
-        kryo.register(YearMonthDurationItem.class);
-        kryo.register(DayTimeDurationItem.class);
-
-        kryo.register(DateTimeItem.class);
-        kryo.register(DateItem.class);
-        kryo.register(TimeItem.class);
-
-        kryo.register(Base64BinaryItem.class);
-        kryo.register(HexBinaryItem.class);
 
         kryo.register(ArrayList.class);
 
