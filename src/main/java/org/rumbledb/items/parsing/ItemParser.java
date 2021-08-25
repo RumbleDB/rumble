@@ -485,7 +485,7 @@ public class ItemParser implements Serializable {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
             return DataTypes.DateType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
             return DataTypes.TimestampType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
