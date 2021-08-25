@@ -1,165 +1,15 @@
 package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.IntegerItem;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
 public class DerivedAtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
-
-    static final DerivedAtomicItemType integerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "integer"),
-            AtomicItemType.decimalItem,
-            AtomicItemType.decimalItem,
-            Facets.getIntegerFacets(),
-            false,
-            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType longItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "long"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
-                true
-            ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "nonNegativeInteger"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("9223372036854775808")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "nonPositiveInteger"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("0")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "negativeInteger"),
-            nonPositiveIntegerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("-1")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "positiveInteger"),
-            nonNegativeIntegerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("1")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
-            Name.createVariableInDefaultTypeNamespace("int"),
-            longItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType shortItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "short"),
-            intItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
-            false,
-            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "byte"),
-            intItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
-            false,
-            DataTypes.ByteType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedInt"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("4294967295")),
-                true
-            ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedLong"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("0")),
-                new IntegerItem(new BigInteger("18446744073709551615")),
-                true
-            ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedShort"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "unsignedByte"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
 
     private final ItemType baseType, primitiveType;
     private final int typeTreeDepth;
@@ -170,10 +20,9 @@ public class DerivedAtomicItemType implements ItemType {
     private final List<String> constraints;
     private final List<Item> enumeration;
     private final TimezoneFacet explicitTimezone;
-    private final DataType dataFrameType;
 
-    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, DataType dataFrameType) {
-        this(name, baseType, primitiveType, facets, true, dataFrameType);
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
+        this(name, baseType, primitiveType, facets, true);
     }
     // TODO : turn builtin derived atomic types into this class
 
@@ -182,8 +31,7 @@ public class DerivedAtomicItemType implements ItemType {
             ItemType baseType,
             ItemType primitiveType,
             Facets facets,
-            boolean isUserDefined,
-            DataType dataFrameType
+            boolean isUserDefined
     ) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
@@ -208,8 +56,6 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
-
-        this.dataFrameType = dataFrameType;
     }
 
     @Override

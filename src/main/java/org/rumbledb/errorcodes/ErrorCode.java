@@ -37,6 +37,7 @@ public enum ErrorCode {
     OneOrMoreErrorCode("FORG0004"),
     ExactlyOneErrorCode("FORG0005"),
     InvalidArgumentType("FORG0006"),
+    InconsistentTimezones("FORG0008"),
     InvalidRegexPatternErrorCode("FORX0002"),
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
