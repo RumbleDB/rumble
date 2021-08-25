@@ -46,7 +46,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.TOTALDIGITS,
                         FacetTypes.FRACTIONDIGITS
                     )
@@ -61,7 +61,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -74,7 +74,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -96,7 +96,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -109,7 +109,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -122,7 +122,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -135,7 +135,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -149,7 +149,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -163,7 +163,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -177,7 +177,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
