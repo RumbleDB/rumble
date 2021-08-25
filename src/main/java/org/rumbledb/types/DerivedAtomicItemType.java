@@ -1,8 +1,6 @@
 package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.items.IntItem;
@@ -21,8 +19,7 @@ public class DerivedAtomicItemType implements ItemType {
             AtomicItemType.decimalItem,
             AtomicItemType.decimalItem,
             Facets.getIntegerFacets(),
-            false,
-            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType longItem = new DerivedAtomicItemType(
@@ -34,8 +31,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("9223372036854775807")),
                 true
             ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
@@ -47,8 +43,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("9223372036854775808")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
@@ -60,8 +55,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("0")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
@@ -73,8 +67,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("-1")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
@@ -86,8 +79,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("9223372036854775807")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
@@ -95,8 +87,7 @@ public class DerivedAtomicItemType implements ItemType {
             longItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType shortItem = new DerivedAtomicItemType(
@@ -104,8 +95,7 @@ public class DerivedAtomicItemType implements ItemType {
             intItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
-            false,
-            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
@@ -113,8 +103,7 @@ public class DerivedAtomicItemType implements ItemType {
             intItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
-            false,
-            DataTypes.ByteType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
@@ -126,8 +115,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("4294967295")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
@@ -139,8 +127,7 @@ public class DerivedAtomicItemType implements ItemType {
                 new IntegerItem(new BigInteger("18446744073709551615")),
                 true
             ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
@@ -148,8 +135,7 @@ public class DerivedAtomicItemType implements ItemType {
             integerItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
@@ -157,8 +143,7 @@ public class DerivedAtomicItemType implements ItemType {
             integerItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     private final ItemType baseType, primitiveType;
@@ -170,10 +155,9 @@ public class DerivedAtomicItemType implements ItemType {
     private final List<String> constraints;
     private final List<Item> enumeration;
     private final TimezoneFacet explicitTimezone;
-    private final DataType dataFrameType;
 
-    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, DataType dataFrameType) {
-        this(name, baseType, primitiveType, facets, true, dataFrameType);
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
+        this(name, baseType, primitiveType, facets, true);
     }
     // TODO : turn builtin derived atomic types into this class
 
@@ -182,8 +166,7 @@ public class DerivedAtomicItemType implements ItemType {
             ItemType baseType,
             ItemType primitiveType,
             Facets facets,
-            boolean isUserDefined,
-            DataType dataFrameType
+            boolean isUserDefined
     ) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
@@ -208,8 +191,6 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
-
-        this.dataFrameType = dataFrameType;
     }
 
     @Override
