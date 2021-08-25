@@ -39,10 +39,7 @@ decimalFormatDecl       : 'declare'
                           (dfPropertyName '=' stringLiteral)*;
 
 qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (local_name=nCNameOrKeyWord | local_namekw = keyWords);
-
-nCNameOrKeyWord         : NCName
-                        | NullLiteral;
+                          (local_name=NCName | local_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -303,6 +300,9 @@ keyWords                : Kjsoniq
                         | Korder
                         | Kcount
                         | Kreturn
+                        | Kunordered
+                        | Ktrue
+                        | Kfalse
                         ;
 
 ///////////////////////// literals
@@ -394,6 +394,12 @@ Kcastable               : 'castable';
 Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
+
+Kunordered              : 'unordered';
+
+Ktrue                   : 'true';
+
+Kfalse                  : 'false';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 

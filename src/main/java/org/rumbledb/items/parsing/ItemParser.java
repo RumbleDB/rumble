@@ -491,9 +491,6 @@ public class ItemParser implements Serializable {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
         }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
-            return vectorType;
-        }
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
         );
