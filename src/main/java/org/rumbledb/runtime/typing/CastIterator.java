@@ -55,6 +55,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         Item item;
         try {
             item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, getMetadata());
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type "
@@ -317,6 +320,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createDateItem(item.getStringValue().trim());
                 }
+                if (item.isDate()) {
+                    return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
+                }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
@@ -324,6 +330,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             if (targetType.equals(BuiltinTypesCatalogue.timeItem)) {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createTimeItem(item.getStringValue().trim());
+                }
+                if (item.isTime()) {
+                    return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createTimeItem(item.getDateTimeValue(), item.hasTimeZone());
@@ -334,6 +343,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createDateTimeItem(item.getStringValue().trim());
                 }
                 if (item.isDate()) {
+                    return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
+                }
+                if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
             }

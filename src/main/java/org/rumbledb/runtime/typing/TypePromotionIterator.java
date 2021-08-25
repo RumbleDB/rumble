@@ -97,6 +97,9 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
         this.nextResult = null;
         if (this.iterator.hasNext()) {
             this.nextResult = this.iterator.next();
+            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
+                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+            }
             this.childIndex++;
         } else {
             checkEmptySequence(this.childIndex);

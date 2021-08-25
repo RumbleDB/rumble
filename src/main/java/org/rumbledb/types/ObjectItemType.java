@@ -6,6 +6,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
 
@@ -32,12 +34,12 @@ public class ObjectItemType implements ItemType {
     );
 
     final private Name name;
-    final private Map<String, FieldDescriptor> content;
-    final private boolean isClosed;
-    final private List<String> constraints;
-    final private List<Item> enumeration;
+    private Map<String, FieldDescriptor> content;
+    private boolean isClosed;
+    private List<String> constraints;
+    private List<Item> enumeration;
     final private ItemType baseType;
-    final private int typeTreeDepth;
+    private int typeTreeDepth;
 
     ObjectItemType(
             Name name,
@@ -48,12 +50,14 @@ public class ObjectItemType implements ItemType {
             List<Item> enumeration
     ) {
         this.name = name;
+        this.baseType = baseType;
         this.isClosed = isClosed;
         this.content = content == null ? Collections.emptyMap() : content;
-        this.baseType = baseType;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+        }
     }
 
     @Override
@@ -208,20 +212,24 @@ public class ObjectItemType implements ItemType {
             sb.append(this.baseType.toString());
             sb.append("\n");
 
-            List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
-            if (fields.size() > 0) {
-                sb.append("content facet:\n");
-                // String comma = "";
-                for (FieldDescriptor field : fields) {
-                    sb.append("  ");
-                    sb.append(field.getName());
-                    if (field.isRequired()) {
-                        sb.append(" (required)");
+            if (isResolved()) {
+                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
+                if (fields.size() > 0) {
+                    sb.append("content facet:\n");
+                    // String comma = "";
+                    for (FieldDescriptor field : fields) {
+                        sb.append("  ");
+                        sb.append(field.getName());
+                        if (field.isRequired()) {
+                            sb.append(" (required)");
+                        }
+                        sb.append(" : ");
+                        sb.append(field.getType().toString());
+                        sb.append("\n");
                     }
-                    sb.append(" : ");
-                    sb.append(field.getType().toString());
-                    sb.append("\n");
                 }
+            } else {
+                sb.append("(content not resolved yet)");
             }
             return sb.toString();
         }
@@ -252,6 +260,10 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 entry.getValue().resolve(context, metadata);
@@ -261,8 +273,47 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             entry.getValue().resolve(context, metadata);
+        }
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (!this.isClosed) {
+            return false;
+        }
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!entry.getValue().getType().isCompatibleWithDataFrames()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isObjectItemType()) {
+            if (this.content == null) {
+                this.content = this.baseType.getObjectContentFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            return;
+        }
+        if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            throw new InvalidSchemaException(
+                    "This type cannot be the base type of an object type: " + this.baseType,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (this.content == null) {
+            throw new OurBadException("Content cannot be null in primitive object type.");
         }
     }
 }

@@ -96,13 +96,14 @@ public class FieldDescriptor implements Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if (this.defaultValue == null) {
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            this.defaultValue = castValue;
         }
     }
 
@@ -117,13 +118,14 @@ public class FieldDescriptor implements Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if (this.defaultValue == null) {
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            this.defaultValue = castValue;
         }
     }
 }

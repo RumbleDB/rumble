@@ -80,6 +80,9 @@ public class InstanceOfIterator extends AtMostOneItemLocalRuntimeIterator {
 
             ItemType itemType = this.sequenceType.getItemType();
             for (Item item : items) {
+                if (item != null && !item.getDynamicType().isResolved()) {
+                    item.getDynamicType().resolve(dynamicContext, getMetadata());
+                }
                 if (!doesItemTypeMatchItem(itemType, item)) {
                     return ItemFactory.getInstance().createBooleanItem(false);
                 }

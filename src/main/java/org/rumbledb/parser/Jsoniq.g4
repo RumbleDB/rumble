@@ -60,7 +60,11 @@ functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
 
-typeDecl                : 'declare' 'type' type_name=qname 'as' type_definition=exprSingle;
+typeDecl                : 'declare' 'type' type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+
+schemaLanguage          : 'jsound' 'compact'
+                        | 'jsound' 'verbose'
+                        | 'json' 'schema';
 
 paramList               : param (',' param)*;
 
