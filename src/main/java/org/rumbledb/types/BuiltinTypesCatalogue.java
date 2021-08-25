@@ -247,7 +247,6 @@ public class BuiltinTypesCatalogue {
                     )
             )
     );
-
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
             new HashSet<>(
