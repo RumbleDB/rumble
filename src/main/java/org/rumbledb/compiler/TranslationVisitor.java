@@ -1315,7 +1315,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         if (
             BuiltinTypesCatalogue.typeExists(typeName)
                 && children.size() == 1
-                && !name.equals(Name.createVariableInDefaultXQueryFunctionNamespace("boolean"))
+                && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
             return new CastExpression(
                     children.get(0),
