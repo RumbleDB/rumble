@@ -11,8 +11,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
@@ -47,11 +47,11 @@ public class AnnotatedItem implements Item {
 
     @Override
     public boolean equals(Object otherItem) {
-        if (otherItem instanceof AnnotatedItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
                 (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
+                ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
             return c == 0;

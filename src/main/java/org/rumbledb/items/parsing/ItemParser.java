@@ -485,40 +485,11 @@ public class ItemParser implements Serializable {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateItem)) {
             return DataTypes.DateType;
         }
-        if (
-            itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeItem)
-                || itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)
-        ) {
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.dateTimeStampItem)) {
             return DataTypes.TimestampType;
         }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.hexBinaryItem)) {
             return DataTypes.BinaryType;
-        }
-        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.objectItem)) {
-            return vectorType;
-        }
-        if (
-            itemType.equals(BuiltinTypesCatalogue.positiveIntegerItem)
-                || itemType.equals(BuiltinTypesCatalogue.nonNegativeIntegerItem)
-                || itemType.equals(BuiltinTypesCatalogue.negativeIntegerItem)
-                || itemType.equals(BuiltinTypesCatalogue.nonPositiveIntegerItem)
-        ) {
-            return DataTypes.IntegerType;
-        }
-        if (
-            itemType.equals(BuiltinTypesCatalogue.unsignedByteItem)
-                || itemType.equals(BuiltinTypesCatalogue.unsignedLongItem)
-                || itemType.equals(BuiltinTypesCatalogue.unsignedShortItem)
-                || itemType.equals(BuiltinTypesCatalogue.unsignedIntItem)
-        ) {
-            return DataTypes.IntegerType;
-        }
-        if (
-            itemType.equals(BuiltinTypesCatalogue.intItem)
-                || itemType.equals(BuiltinTypesCatalogue.byteItem)
-                || itemType.equals(BuiltinTypesCatalogue.shortItem)
-        ) {
-            return DataTypes.IntegerType;
         }
         throw new IllegalArgumentException(
                 "Unexpected item type found: '" + itemType + "' in namespace " + itemType.getName().getNamespace() + "."
