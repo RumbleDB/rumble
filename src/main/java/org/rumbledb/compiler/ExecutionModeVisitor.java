@@ -428,7 +428,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ) {
                     System.err.println(
                         "[INFO] Validation against "
-                            + expression.getSequenceType().getItemType()
+                            + expression.getSequenceType().getItemType().getName()
                             + " compatible with data frames."
                     );
                     expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
@@ -451,7 +451,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
                 ) {
                     System.err.println(
                         "[INFO] Validation against "
-                            + expression.getSequenceType().getItemType()
+                            + expression.getSequenceType().getItemType().getName()
                             + " compatible with data frames."
                     );
                     expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);

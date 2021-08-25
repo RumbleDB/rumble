@@ -57,6 +57,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         Item item;
         try {
             item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, getMetadata());
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     " Sequence of more than one item can not be treated as type "
