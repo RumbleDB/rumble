@@ -11,11 +11,15 @@ import org.rumbledb.runtime.functions.arrays.ArrayFlattenFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArrayMembersFunctionIterator;
 import org.rumbledb.runtime.functions.arrays.ArraySizeFunctionIterator;
 import org.rumbledb.runtime.functions.booleans.BooleanFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.FalseFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.NotFunctionIterator;
+import org.rumbledb.runtime.functions.booleans.TrueFunctionIterator;
 import org.rumbledb.runtime.functions.context.LastFunctionIterator;
 import org.rumbledb.runtime.functions.context.PositionFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.CurrentTimeFunctionIterator;
+import org.rumbledb.runtime.functions.datetime.DateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatDateTimeFunctionIterator;
 import org.rumbledb.runtime.functions.datetime.FormatTimeFunctionIterator;
@@ -121,6 +125,7 @@ import org.rumbledb.runtime.functions.strings.ReplaceFunctionIterator;
 import org.rumbledb.runtime.functions.strings.ResolveURIFunctionIterator;
 import org.rumbledb.runtime.functions.strings.SerializeFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StartsWithFunctionIterator;
+import org.rumbledb.runtime.functions.strings.StaticBaseURIFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringJoinFunctionIterator;
 import org.rumbledb.runtime.functions.strings.StringLengthFunctionIterator;
@@ -544,6 +549,36 @@ public class BuiltinFunctionCatalogue {
         "item*",
         "boolean",
         BooleanFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    /**
+     * function that returns true if the effective boolean value of the given parameter is false, and false if it is
+     * true.
+     */
+    static final BuiltinFunction not_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "not"),
+        "item*",
+        "boolean",
+        NotFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns true.
+     */
+    static final BuiltinFunction true_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "true"),
+        "boolean",
+        TrueFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns false.
+     */
+    static final BuiltinFunction false_function = createBuiltinFunction(
+        new Name(Name.FN_NS, "fn", "false"),
+        "boolean",
+        FalseFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
@@ -1342,7 +1377,8 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
-     * function that returns substrings
+     * function that returns a string created by concatenating the items in a sequence, with an optional defined
+     * separator between adjacent items.
      */
     static final BuiltinFunction string_join1 = createBuiltinFunction(
         new Name(
@@ -1542,6 +1578,19 @@ public class BuiltinFunctionCatalogue {
         "string",
         "anyURI?",
         ResolveURIFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns the value of the Static Base URI property from the static context.
+     */
+    static final BuiltinFunction static_base_uri = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "static-base-uri"
+        ),
+        "anyURI?",
+        StaticBaseURIFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
@@ -1834,6 +1883,21 @@ public class BuiltinFunctionCatalogue {
         "string",
         "string?",
         FormatDateTimeFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    /**
+     * function that returns a xs:dateTime value created by combining an xs:date and an xs:time
+     */
+    static final BuiltinFunction dateTime = createBuiltinFunction(
+        new Name(
+                Name.FN_NS,
+                "fn",
+                "dateTime"
+        ),
+        "date?",
+        "time?",
+        "dateTime?",
+        DateTimeFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
     /**
@@ -2507,6 +2571,9 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(count.getIdentifier(), count);
         builtinFunctions.put(boolean_function.getIdentifier(), boolean_function);
+        builtinFunctions.put(not_function.getIdentifier(), not_function);
+        builtinFunctions.put(true_function.getIdentifier(), true_function);
+        builtinFunctions.put(false_function.getIdentifier(), false_function);
 
         builtinFunctions.put(min1.getIdentifier(), min1);
         builtinFunctions.put(min2.getIdentifier(), min2);
@@ -2606,6 +2673,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(encode_for_uri.getIdentifier(), encode_for_uri);
         builtinFunctions.put(resolve_uri1.getIdentifier(), resolve_uri1);
         builtinFunctions.put(resolve_uri2.getIdentifier(), resolve_uri2);
+        builtinFunctions.put(static_base_uri.getIdentifier(), static_base_uri);
 
         builtinFunctions.put(years_from_duration.getIdentifier(), years_from_duration);
         builtinFunctions.put(months_from_duration.getIdentifier(), months_from_duration);
@@ -2616,6 +2684,7 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(current_dateTime.getIdentifier(), current_dateTime);
         builtinFunctions.put(format_dateTime.getIdentifier(), format_dateTime);
+        builtinFunctions.put(dateTime.getIdentifier(), dateTime);
         builtinFunctions.put(year_from_dateTime.getIdentifier(), year_from_dateTime);
         builtinFunctions.put(month_from_dateTime.getIdentifier(), month_from_dateTime);
         builtinFunctions.put(day_from_dateTime.getIdentifier(), day_from_dateTime);
