@@ -191,8 +191,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonth"),
@@ -206,8 +205,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gYearItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYear"),
@@ -221,8 +219,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gMonthDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonthDay"),
@@ -236,8 +233,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gYearMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYearMonth"),
@@ -251,8 +247,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
@@ -444,7 +439,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType arrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
             BuiltinTypesCatalogue.JSONItem,
-            null,
+            BuiltinTypesCatalogue.item,
             null,
             null,
             null

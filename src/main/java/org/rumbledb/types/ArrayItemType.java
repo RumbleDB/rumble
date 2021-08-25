@@ -170,6 +170,8 @@ public class ArrayItemType implements ItemType {
 
     public void processBaseType() {
         this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        System.err.println("processBaseType()");
+        System.err.println(this.toString());
         if (this.baseType.isArrayItemType()) {
             if (this.content == null) {
                 this.content = this.baseType.getArrayContentFacet();
