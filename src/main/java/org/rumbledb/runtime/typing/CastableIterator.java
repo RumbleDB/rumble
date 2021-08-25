@@ -53,6 +53,9 @@ public class CastableIterator extends AtMostOneItemLocalRuntimeIterator {
         Item item;
         try {
             item = this.child.materializeAtMostOneItemOrNull(dynamicContext);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(dynamicContext, getMetadata());
+            }
         } catch (MoreThanOneItemException e) {
             return ItemFactory.getInstance().createBooleanItem(false);
         }
