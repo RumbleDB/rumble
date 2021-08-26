@@ -189,6 +189,8 @@ predicate               : '[' expr ']';
 objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
+                        | Ktrue
+                        | Kfalse
                         | Literal
                         | stringLiteral
                         | varRef
@@ -413,11 +415,9 @@ ArgumentPlaceholder     : '?';
 
 NullLiteral             : 'null';
 
-Literal                 : NumericLiteral | BooleanLiteral;
+Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
-
-BooleanLiteral          : 'true' | 'false';
 
 IntegerLiteral          : Digits ;
 
