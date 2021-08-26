@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="(3, 2, -3, 1.13, 8500, 3.14, NaN, INF, -INF, 0, -0)" :)
+(:JIQS: ShouldRun; Output="(3, 2, -2, 1.13, 8500, 3.14, NaN, INF, -INF, 0, -0)" :)
 fn:round(2.5),
 round(2.4999),
 round(-2.5),
