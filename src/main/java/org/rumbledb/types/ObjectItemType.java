@@ -265,7 +265,9 @@ public class ObjectItemType implements ItemType {
             processBaseType();
         }
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            entry.getValue().resolve(context, metadata);
+            if (!entry.getValue().getType().isResolved()) {
+                entry.getValue().resolve(context, metadata);
+            }
         }
     }
 

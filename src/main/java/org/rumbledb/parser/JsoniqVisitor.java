@@ -92,12 +92,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitQname(JsoniqParser.QnameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWord}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNCNameOrKeyWord(JsoniqParser.NCNameOrKeyWordContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#dfPropertyName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
