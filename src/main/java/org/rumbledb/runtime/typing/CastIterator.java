@@ -2,13 +2,10 @@ package org.rumbledb.runtime.typing;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.binary.Hex;
+import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.CastException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
-import org.rumbledb.exceptions.UnknownCastTypeException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.ItemFactory;
@@ -22,6 +19,7 @@ import org.rumbledb.types.SequenceType.Arity;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Collections;
+
 
 
 public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
@@ -117,6 +115,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isString() && item.getStringValue().trim().equals("null")) {
                     return ItemFactory.getInstance().createNullItem();
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.stringItem)) {
@@ -125,8 +124,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
             if (targetType.equals(BuiltinTypesCatalogue.booleanItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance()
-                        .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
+                    if (StringUtils.isNumeric(item.getStringValue())) {
+                        return ItemFactory.getInstance().createBooleanItem(item.castToIntValue() != 0);
+                    } else {
+                        return ItemFactory.getInstance()
+                            .createBooleanItem(Boolean.parseBoolean(item.getStringValue().trim()));
+                    }
                 }
                 if (item.isInt()) {
                     return ItemFactory.getInstance().createBooleanItem(item.getIntValue() != 0);
@@ -168,6 +171,38 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
             }
 
+            if (
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+            ) {
+                throw new InvalidLexicalValueException(
+                        "NaN or INF cannot be cast to another type than Float or Double",
+                        metadata
+                );
+            }
+
+            if (
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+            ) {
+                throw new InvalidLexicalValueException(
+                        "NaN or INF cannot be cast to another type than Float or Double",
+                        metadata
+                );
+            }
+            if (
+                (item.isFloat() && (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())))
+                    || (item.isDouble()
+                        && (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())))
+            ) {
+                throw new InvalidLexicalValueException(
+                        "NaN or INF cannot be cast to another type than Float or Double",
+                        metadata
+                );
+            }
+
             if (targetType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 if (item.isString()) {
                     return ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
@@ -180,31 +215,50 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
                 }
             }
-
             if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
+                    return checkFacetsInteger(
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
+                    );
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
                         .createIntegerItem(item.getBooleanValue() ? BigInteger.ONE : BigInteger.ZERO);
                 }
                 if (item.isNumeric()) {
-                    return ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
+                    return checkFacetsInteger(
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
+                    );
                 }
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
                 if (item.isString()) {
-                    return ItemFactory.getInstance().createIntItem(item.castToIntValue());
+                    return checkFacetsInt(
+                        ItemFactory.getInstance().createIntItem(item.castToIntValue()),
+                        targetType,
+                        false
+                    );
                 }
                 if (item.isBoolean()) {
                     return ItemFactory.getInstance()
                         .createIntItem(item.getBooleanValue() ? 1 : 0);
                 }
                 if (item.isNumeric()) {
-                    return ItemFactory.getInstance().createIntItem(item.castToIntValue());
+                    Item checkedItem = checkFacetsInteger(
+                        ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue()),
+                        targetType,
+                        false
+                    );
+                    if (checkedItem != null) {
+                        return ItemFactory.getInstance().createIntItem(checkedItem.castToIntValue());
+                    }
                 }
+                return null;
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.anyURIItem)) {
@@ -230,6 +284,36 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isBase64Binary()) {
                     return ItemFactory.getInstance().createHexBinaryItem(Hex.encodeHexString(item.getBinaryValue()));
                 }
+            }
+
+            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
+                if (!item.isString() && !item.isNumeric()) {
+                    return null;
+                }
+                if (item.isInt()) {
+                    return checkFacetsInt(item, targetType, true);
+                }
+
+                Item intItem = castItemToType(item, BuiltinTypesCatalogue.intItem, metadata);
+                if (intItem == null) {
+                    return null;
+                }
+                return checkFacetsInt(intItem, targetType, true);
+            }
+
+            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+                if (!item.isString() && !item.isNumeric()) {
+                    return null;
+                }
+                if (item.isInteger()) {
+                    return checkFacetsInteger(item, targetType, true);
+                }
+
+                Item integerItem = castItemToType(item, BuiltinTypesCatalogue.integerItem, metadata);
+                if (integerItem == null) {
+                    return null;
+                }
+                return checkFacetsInteger(integerItem, targetType, true);
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
@@ -264,6 +348,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 if (item.isDateTime()) {
                     return ItemFactory.getInstance().createDateTimeItem(item.getDateTimeValue(), item.hasTimeZone());
                 }
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
+                }
+                if (item.isDate()) {
+                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
+                }
+                if (item.isDateTime()) {
+                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
+                }
+                return null;
             }
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {
@@ -317,9 +413,124 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
             }
 
+            if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+            if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
+                if (item.isString()) {
+                    return ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
+                }
+                return null;
+            }
+
             return null;
+        } catch (InvalidLexicalValueException i) {
+            throw new InvalidLexicalValueException(
+                    "NaN or INF cannot be cast to another type than Float or Double",
+                    metadata
+            );
         } catch (Exception e) {
             return null;
         }
     }
+
+    public static Item checkFacetsInt(Item item, ItemType targetType, boolean annotated) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
+        ) {
+            return null;
+        }
+        if (annotated) {
+            return ItemFactory.getInstance().createAnnotatedItem(item, targetType);
+        }
+        return item;
+    }
+
+    public static Item checkFacetsInteger(Item item, ItemType targetType, boolean annotated) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
+        ) {
+            return null;
+        }
+
+        if (annotated) {
+            return ItemFactory.getInstance().createAnnotatedItem(item, targetType);
+        }
+        return item;
+
+    }
+
+    public static Item checkAnnotatedFacetsInt(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
+        ) {
+            return null;
+        }
+
+        return ItemFactory.getInstance().createAnnotatedItem(item, targetType);
+    }
+
+    public static Item checkAnnotatedFacetsInteger(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getIntegerValue().compareTo(targetType.getMaxExclusiveFacet().getIntegerValue()) >= 0)
+        ) {
+            return null;
+        }
+
+        return ItemFactory.getInstance().createAnnotatedItem(item, targetType);
+    }
 }
+
