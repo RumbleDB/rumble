@@ -20,14 +20,12 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -49,31 +47,16 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator sequenceIterator = this.children.get(0);
-        if (!sequenceIterator.isRDDOrDataFrame()) {
-            Item result = null;
-            try {
-                result = sequenceIterator.materializeAtMostOneItemOrNull(context);
-            } catch (MoreThanOneItemException e) {
-                throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        getMetadata()
-                );
-            }
-            return result;
-        } else 
-        {
-            Item item = null;
-            try {
-                item = sequenceIterator.materializeAtMostOneItemOrNull(context);
-            } catch (MoreThanOneItemException e)
-            {
-                throw new SequenceExceptionZeroOrOne(
+        Item result = null;
+        try {
+            result = sequenceIterator.materializeAtMostOneItemOrNull(context);
+        } catch (MoreThanOneItemException e) {
+            throw new SequenceExceptionZeroOrOne(
                     "fn:zero-or-one() called with a sequence containing more than one item",
                     getMetadata()
-                        );
-            }
-            return item;
+            );
         }
+        return result;
     }
 
 }
