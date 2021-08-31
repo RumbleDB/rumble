@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -59,21 +60,20 @@ public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
             return result;
-        } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(context);
-            List<Item> results = rdd.take(2);
-            if (results.size() == 0) {
-                return null;
-            } else if (results.size() == 1) {
-                return results.get(0);
-            } else if (results.size() > 1) {
+        } else 
+        {
+            Item item = null;
+            try {
+                item = sequenceIterator.materializeAtMostOneItemOrNull(context);
+            } catch (MoreThanOneItemException e)
+            {
                 throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        getMetadata()
-                );
+                    "fn:zero-or-one() called with a sequence containing more than one item",
+                    getMetadata()
+                        );
             }
+            return item;
         }
-        return null;
     }
 
 }
