@@ -240,27 +240,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 );
             }
 
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-                if (item.isString()) {
-                    result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
-                } else if (item.isBoolean()) {
-                    result = ItemFactory.getInstance()
-                        .createIntItem(item.getBooleanValue() ? 1 : 0);
-                } else if (item.isNumeric()) {
-                    result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
-                } else {
-                    return null;
-                }
-                if (!checkFacetsInt(result, targetType)) {
-                    return null;
-                }
-                result = ItemFactory.getInstance().createIntItem(item.castToIntValue());
-                if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
-                    return result;
-                }
-                return new AnnotatedItem(result, targetType);
-            }
-
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createIntegerItem(item.castToIntegerValue());
@@ -277,6 +256,12 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 if (targetType.equals(BuiltinTypesCatalogue.integerItem)) {
                     return result;
+                }
+                if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
+                    result = ItemFactory.getInstance().createIntItem(item.castToIntValue());
+                    if (targetType.equals(BuiltinTypesCatalogue.intItem)) {
+                        return result;
+                    }
                 }
                 return new AnnotatedItem(result, targetType);
             }
@@ -558,22 +543,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         } catch (Exception e) {
             return null;
         }
-    }
-
-    public static boolean checkFacetsInt(Item item, ItemType targetType) {
-        if (
-            (targetType.getMinInclusiveFacet() != null
-                && item.getIntValue() < targetType.getMinInclusiveFacet().getIntValue())
-                || (targetType.getMaxInclusiveFacet() != null
-                    && item.getIntValue() > targetType.getMaxInclusiveFacet().getIntValue())
-                || (targetType.getMinExclusiveFacet() != null
-                    && item.getIntValue() <= targetType.getMinExclusiveFacet().getIntValue())
-                || (targetType.getMaxExclusiveFacet() != null
-                    && item.getIntValue() <= targetType.getMaxExclusiveFacet().getIntValue())
-        ) {
-            return false;
-        }
-        return true;
     }
 
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
