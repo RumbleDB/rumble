@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="([ 1, 2 ], [ ], [ 1 ], [ 1, 2 ], [ 1.2, 2 ], [ 1.2, 2 ], Success, Success)" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "bar" : "2021-01-01" }, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "foo" : 22 }, { "foo" : 24 }, Success, Success, true, true, true, true)" :)
 declare type local:x as jsound verbose {
   "kind" : "object",
   "baseType" : "object",
@@ -43,4 +43,16 @@ try {
   }
 } catch XQDY0027 {
   "Success"
-}
+},
+validate type local:y {
+  { "foo" : "2", "bar" : "2021-01-01" }
+} instance of local:y,
+validate type local:y {
+  { "foo" : "2", "bar" : "2021-01-01" }
+} instance of local:x,
+validate type local:y* {
+  { "foo" : "2", "bar" : "2021-01-01" }
+} instance of local:y+,
+validate type local:y+ {
+  { "foo" : "2", "bar" : "2021-01-01" }
+} instance of local:x*

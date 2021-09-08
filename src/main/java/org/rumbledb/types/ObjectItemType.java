@@ -128,14 +128,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public Map<String, FieldDescriptor> getObjectContentFacet() {
-        if (this.isPrimitive()) {
-            return this.content;
-        } else {
-            // recursively get content facet, overriding new descriptors
-            Map<String, FieldDescriptor> map = new LinkedHashMap<>(this.baseType.getObjectContentFacet());
-            map.putAll(this.content);
-            return map;
-        }
+        return this.content;
     }
 
     @Override
@@ -300,6 +293,11 @@ public class ObjectItemType implements ItemType {
         if (this.baseType.isObjectItemType()) {
             if (this.content == null) {
                 this.content = this.baseType.getObjectContentFacet();
+            } else {
+                for(Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet())
+                {
+                    this.content.put(entry.getKey(), entry.getValue());
+                }
             }
             if (this.enumeration == null) {
                 this.enumeration = this.baseType.getEnumerationFacet();
