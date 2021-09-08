@@ -294,8 +294,7 @@ public class ObjectItemType implements ItemType {
             if (this.content == null) {
                 this.content = this.baseType.getObjectContentFacet();
             } else {
-                for(Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet())
-                {
+                for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
                     this.content.put(entry.getKey(), entry.getValue());
                 }
             }
