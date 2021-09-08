@@ -265,6 +265,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 }
                 return new AnnotatedItem(result, targetType);
             }
+
             if (targetType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
                 if (item.isString()) {
                     result = ItemFactory.getInstance().createDecimalItem(item.castToDecimalValue());
@@ -333,36 +334,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return result;
                 }
                 return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.intItem)) {
-                if (!item.isString() && !item.isNumeric()) {
-                    return null;
-                }
-                if (item.isInt()) {
-                    return checkFacetsInt(item, targetType, true);
-                }
-
-                Item intItem = castItemToType(item, BuiltinTypesCatalogue.intItem, metadata);
-                if (intItem == null) {
-                    return null;
-                }
-                return checkFacetsInt(intItem, targetType, true);
-            }
-
-            if (targetType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
-                if (!item.isString() && !item.isNumeric()) {
-                    return null;
-                }
-                if (item.isInteger()) {
-                    return checkFacetsInteger(item, targetType, true);
-                }
-
-                Item integerItem = castItemToType(item, BuiltinTypesCatalogue.integerItem, metadata);
-                if (integerItem == null) {
-                    return null;
-                }
-                return checkFacetsInteger(integerItem, targetType, true);
             }
 
             if (targetType.equals(BuiltinTypesCatalogue.dateItem)) {
@@ -436,18 +407,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return result;
                 }
                 return new AnnotatedItem(result, targetType);
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getStringValue().trim());
-                }
-                if (item.isDate()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), false);
-                }
-                if (item.isDateTime()) {
-                    return ItemFactory.getInstance().createDateTimeStampItem(item.getDateTimeValue(), true);
-                }
-                return null;
             }
             if (targetType.equals(BuiltinTypesCatalogue.yearMonthDurationItem)) {
                 if (item.isString()) {
@@ -573,37 +532,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                     return result;
                 }
                 return new AnnotatedItem(result, targetType);
-            }
-
-            if (targetType.equals(BuiltinTypesCatalogue.gDayItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createGDayItem(item.getStringValue().trim());
-                }
-                return null;
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gMonthItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createGMonthItem(item.getStringValue().trim());
-                }
-                return null;
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gYearItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createGYearItem(item.getStringValue().trim());
-                }
-                return null;
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gMonthDayItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createGMonthDayItem(item.getStringValue().trim());
-                }
-                return null;
-            }
-            if (targetType.equals(BuiltinTypesCatalogue.gYearMonthItem)) {
-                if (item.isString()) {
-                    return ItemFactory.getInstance().createGYearMonthItem(item.getStringValue().trim());
-                }
-                return null;
             }
 
             return null;
