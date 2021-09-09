@@ -109,6 +109,11 @@ public class DoubleItem implements Item {
     }
 
     @Override
+    public boolean isNaN() {
+        return Double.isNaN(this.value);
+    }
+
+    @Override
     public String serialize() {
         if (Double.isNaN(this.value)) {
             return "NaN";
