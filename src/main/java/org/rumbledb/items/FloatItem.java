@@ -170,6 +170,11 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public boolean isNaN() {
+        return Float.isNaN(this.value);
+    }
+
+    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         if (Float.isInfinite(this.value)) {
             return NativeClauseContext.NoNativeQuery;
