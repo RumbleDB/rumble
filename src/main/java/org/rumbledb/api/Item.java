@@ -622,6 +622,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Checks doubles and floats for NaN.
+     *
+     * @return true if NaN, false if not NaN.
+     */
+    default boolean isNaN() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Tests for logical equality. The semantics are that of the eq operator.
      *
      * @param other another item.
