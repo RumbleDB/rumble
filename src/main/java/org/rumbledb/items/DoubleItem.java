@@ -70,7 +70,26 @@ public class DoubleItem implements Item {
 
     @Override
     public String getStringValue() {
-        return String.valueOf(this.value);
+        if (Double.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Double.compare(this.value, 0d) == 0) {
+            return "0";
+        }
+        if (Double.compare(this.value, -0d) == 0) {
+            return "-0";
+        }
+        double abs = Math.abs(this.value);
+        if (abs >= 0.000001 && abs <= 1000000) {
+            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
+        }
+        return Double.toString(this.value);
     }
 
     @Override
@@ -115,26 +134,7 @@ public class DoubleItem implements Item {
 
     @Override
     public String serialize() {
-        if (Double.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Double.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Double.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Double.compare(this.value, 0d) == 0) {
-            return "0";
-        }
-        if (Double.compare(this.value, -0d) == 0) {
-            return "-0";
-        }
-        double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
-        }
-        return Double.toString(this.value);
+        return getStringValue();
     }
 
     @Override
