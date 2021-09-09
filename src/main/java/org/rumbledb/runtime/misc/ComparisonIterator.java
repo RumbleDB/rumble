@@ -188,22 +188,22 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
         // NaN never compares successfully.
-        if (left.isDouble() && Double.isNaN(left.getDoubleValue())) {
+        if (left.isDouble() && left.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(false);
         }
-        if (right.isDouble() && Double.isNaN(right.getDoubleValue())) {
+        if (right.isDouble() && right.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(false);
         }
-        if (left.isFloat() && Float.isNaN(left.getFloatValue())) {
+        if (left.isFloat() && left.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(false);
         }
-        if (right.isFloat() && Float.isNaN(right.getFloatValue())) {
+        if (right.isFloat() && right.isNaN()) {
             return ItemFactory
                 .getInstance()
                 .createBooleanItem(false);
@@ -229,22 +229,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (!left.isNull() && right.isNull()) {
             return 1;
-        }
-        if (
-            right.isNumeric()
-                &&
-                ((left.isDouble() && Double.isNaN(left.getDoubleValue()))
-                    || (left.isFloat() && Float.isNaN(left.getFloatValue())))
-        ) {
-            return 1;
-        }
-        if (
-            left.isNumeric()
-                &&
-                ((right.isDouble() && Double.isNaN(right.getDoubleValue()))
-                    || (right.isFloat() && Float.isNaN(right.getFloatValue())))
-        ) {
-            return -1;
         }
         if (
             left.isInt()
@@ -416,9 +400,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             float l,
             float r
     ) {
-        // Check equality to have -0 to be equal 0
-        if (l == r)
-            return 0;
         return Float.compare(l, r);
     }
 
