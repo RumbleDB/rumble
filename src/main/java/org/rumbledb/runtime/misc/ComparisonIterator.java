@@ -412,7 +412,7 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         if (l == 0f && r == 0f) {
             return 0;
         }
-        // NaN is greater than all other doubles.
+        // NaN is greater than all other floats.
         // Each consumer should make sure to override if necessary.
         return Float.compare(l, r);
     }
