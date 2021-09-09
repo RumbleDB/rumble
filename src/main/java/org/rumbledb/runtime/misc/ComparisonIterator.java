@@ -198,6 +198,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 .getInstance()
                 .createBooleanItem(false);
         }
+        if (left.isFloat() && Float.isNaN(left.getFloatValue())) {
+            return ItemFactory
+                .getInstance()
+                .createBooleanItem(false);
+        }
+        if (right.isFloat() && Float.isNaN(right.getFloatValue())) {
+            return ItemFactory
+                .getInstance()
+                .createBooleanItem(false);
+        }
         return comparisonResultToBooleanItem(
             (int) comparison,
             this.comparisonOperator,
@@ -221,6 +231,22 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             return 1;
         }
         if (
+            right.isNumeric()
+                &&
+                ((left.isDouble() && Double.isNaN(left.getDoubleValue()))
+                    || (left.isFloat() && Float.isNaN(left.getFloatValue())))
+        ) {
+            return 1;
+        }
+        if (
+            left.isNumeric()
+                &&
+                ((right.isDouble() && Double.isNaN(right.getDoubleValue()))
+                    || (right.isFloat() && Float.isNaN(right.getFloatValue())))
+        ) {
+            return -1;
+        }
+        if (
             left.isInt()
                 && right.isInt()
         ) {
@@ -238,16 +264,17 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             }
             return processDouble(l, r);
         }
-        if (right.isDouble() && left.isNumeric()) {
+        if (left.isNumeric() && right.isDouble()) {
             double l = left.castToDoubleValue();
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
-        if (right.isDouble() && left.isNumeric()) {
+        if (left.isNumeric() && right.isDouble()) {
             double l = left.castToDoubleValue();
             double r = right.getDoubleValue();
             return processDouble(l, r);
         }
+
         if (left.isFloat() && right.isNumeric()) {
             float l = left.getFloatValue();
             float r = 0;
@@ -255,6 +282,16 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 r = right.getFloatValue();
             } else {
                 r = right.castToFloatValue();
+            }
+            return processFloat(l, r);
+        }
+        if (left.isNumeric() && right.isFloat()) {
+            float l = 0;
+            float r = right.getFloatValue();
+            if (left.isFloat()) {
+                l = left.getFloatValue();
+            } else {
+                l = left.castToFloatValue();
             }
             return processFloat(l, r);
         }
@@ -315,6 +352,31 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             DateTime r = right.getDateTimeValue();
             return processDateTime(l, r);
         }
+        if (left.isGDay() && right.isGDay()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGMonth() && right.isGMonth()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGYear() && right.isGYear()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGMonthDay() && right.isGMonthDay()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
+        if (left.isGYearMonth() && right.isGYearMonth()) {
+            DateTime l = left.getDateTimeValue();
+            DateTime r = right.getDateTimeValue();
+            return processDateTime(l, r);
+        }
         if (left.isBoolean() && right.isBoolean()) {
             Boolean l = left.getBooleanValue();
             Boolean r = right.getBooleanValue();
@@ -354,6 +416,9 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             float l,
             float r
     ) {
+        // Check equality to have -0 to be equal 0
+        if (l == r)
+            return 0;
         return Float.compare(l, r);
     }
 
