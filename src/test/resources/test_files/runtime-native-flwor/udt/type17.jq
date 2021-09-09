@@ -4,7 +4,8 @@ declare type local:x as jsound verbose {
   "baseType" : "object",
   "content" : [
     { "name" : "foo", "type" : "integer" }
-  ]
+  ],
+  "closed" : false
 };
 
 declare type local:y as jsound verbose {
