@@ -208,16 +208,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
                 .getInstance()
                 .createBooleanItem(false);
         }
-        if (left.isFloat() && Float.isNaN(left.getFloatValue())) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
-        }
-        if (right.isFloat() && Float.isNaN(right.getFloatValue())) {
-            return ItemFactory
-                .getInstance()
-                .createBooleanItem(false);
-        }
         return comparisonResultToBooleanItem(
             (int) comparison,
             this.comparisonOperator,
@@ -239,22 +229,6 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
         }
         if (!left.isNull() && right.isNull()) {
             return 1;
-        }
-        if (
-            right.isNumeric()
-                &&
-                ((left.isDouble() && Double.isNaN(left.getDoubleValue()))
-                    || (left.isFloat() && Float.isNaN(left.getFloatValue())))
-        ) {
-            return 1;
-        }
-        if (
-            left.isNumeric()
-                &&
-                ((right.isDouble() && Double.isNaN(right.getDoubleValue()))
-                    || (right.isFloat() && Float.isNaN(right.getFloatValue())))
-        ) {
-            return -1;
         }
         if (
             left.isInt()
