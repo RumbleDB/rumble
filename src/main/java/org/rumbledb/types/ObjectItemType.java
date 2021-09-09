@@ -295,7 +295,10 @@ public class ObjectItemType implements ItemType {
                 this.content = this.baseType.getObjectContentFacet();
             } else {
                 for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
-                    this.content.put(entry.getKey(), entry.getValue());
+                    if(!this.content.containsKey(entry.getKey()))
+                    {
+                        this.content.put(entry.getKey(), entry.getValue());
+                    }
                 }
             }
             if (this.enumeration == null) {

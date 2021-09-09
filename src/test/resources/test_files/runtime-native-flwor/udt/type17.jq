@@ -15,6 +15,15 @@ declare type local:y as jsound verbose {
   ]
 };
 
+declare type local:z as jsound verbose {
+  "kind" : "object",
+  "baseType" : "local:x",
+  "content" : [
+    { "name" : "foo", "type" : "int" },
+    { "name" : "bar", "type" : "date" }
+  ]
+};
+
 validate type local:y* {
   { "foo" : "2", "bar" : "2021-01-01" },
   { "foo" : 22 },
@@ -44,6 +53,28 @@ try {
 } catch XQDY0027 {
   "Success"
 },
+
+validate type local:z {
+  { "foo" : "2", "bar" : "2021-01-01" }
+},
+
+validate type local:z* {
+  { "foo" : "2", "bar" : "2021-01-01" },
+  { "foo" : 22 },
+  { "bar" : "2021-01-01" }
+},
+validate type local:x {
+    { "foo" : "192384576198347569283745692384756" }
+},
+try {
+  validate type local:z {
+    { "foo" : "192384576198347569283745692384756", "bar" : "2021-01-01" }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+
+
 validate type local:y {
   { "foo" : "2", "bar" : "2021-01-01" }
 } instance of local:y,
