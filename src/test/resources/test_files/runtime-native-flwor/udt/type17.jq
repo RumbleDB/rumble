@@ -13,7 +13,8 @@ declare type local:y as jsound verbose {
   "baseType" : "local:x",
   "content" : [
     { "name" : "bar", "type" : "date" }
-  ]
+  ],
+  "closed" : true
 };
 
 declare type local:z as jsound verbose {
@@ -22,7 +23,8 @@ declare type local:z as jsound verbose {
   "content" : [
     { "name" : "foo", "type" : "int" },
     { "name" : "bar", "type" : "date" }
-  ]
+  ],
+  "closed" : true
 };
 
 validate type local:y* {
@@ -33,19 +35,14 @@ validate type local:y* {
 validate type local:y {
   { "foo" : "2", "bar" : "2021-01-01" }
 },
-validate type local:x {
-  { "foo" : 22 }
-},
 validate type local:x* {
+  { "foo" : "2", "bar" : "2021-01-01" },
   { "foo" : 22 },
-  { "foo" : 24 }
+  { "bar" : "2021-01-01" },
+  { "foo" : "192384576198347569283745692384756", "foobar" : true }
 },
-try {
-  validate type local:x {
-    { "foo" : "2", "bar" : "2021-01-01" }
-  }
-} catch XQDY0027 {
-  "Success"
+validate type local:x {
+  { "foo" : "2", "bar" : "2021-01-01" }
 },
 try {
   validate type local:y* {
@@ -64,12 +61,30 @@ validate type local:z* {
   { "foo" : 22 },
   { "bar" : "2021-01-01" }
 },
-validate type local:x {
-    { "foo" : "192384576198347569283745692384756" }
-},
 try {
   validate type local:z {
     { "foo" : "192384576198347569283745692384756", "bar" : "2021-01-01" }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z {
+    { "foo" : "2", "bar" : "2021-01-01", "foobar" : true }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z* {
+    { "foo" : "192384576198347569283745692384756", "bar" : "2021-01-01" }
+  }
+} catch XQDY0027 {
+  "Success"
+},
+try {
+  validate type local:z* {
+    { "foo" : "2", "bar" : "2021-01-01", "foobar" : true }
   }
 } catch XQDY0027 {
   "Success"
