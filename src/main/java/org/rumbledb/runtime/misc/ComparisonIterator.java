@@ -393,6 +393,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             double l,
             double r
     ) {
+        // Positive and negative zero compare equal
+        // Each consumer should make sure to override if necessary.
+        if (l == 0d && r == 0d) {
+            return 0;
+        }
+        // NaN is greater than all other doubles.
+        // Each consumer should make sure to override if necessary.
         return Double.compare(l, r);
     }
 
@@ -400,6 +407,13 @@ public class ComparisonIterator extends AtMostOneItemLocalRuntimeIterator {
             float l,
             float r
     ) {
+        // Positive and negative zero compare equal
+        // Each consumer should make sure to override if necessary.
+        if (l == 0f && r == 0f) {
+            return 0;
+        }
+        // NaN is greater than all other doubles.
+        // Each consumer should make sure to override if necessary.
         return Float.compare(l, r);
     }
 
