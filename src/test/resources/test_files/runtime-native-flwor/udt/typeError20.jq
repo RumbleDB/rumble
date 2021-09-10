@@ -15,9 +15,9 @@ declare type local:y as jsound verbose {
   ]
 };
 
-declare type local:y as jsound verbose {
+declare type local:z as jsound verbose {
   "kind" : "object",
-  "baseType" : "local:x",
+  "baseType" : "local:y",
   "content" : [
     { "name" : "foo", "type" : "decimal" }
   ]
