@@ -57,6 +57,9 @@ public class ObjectItemType implements ItemType {
         this.enumeration = enumeration;
         if (this.baseType.isResolved()) {
             processBaseType();
+            if (areContentTypesResolved()) {
+                checkSubtypeConsistency();
+            }
         }
     }
 
@@ -243,6 +246,10 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
+        return this.baseType.isResolved() && areContentTypesResolved();
+    }
+
+    private boolean areContentTypesResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 return false;
@@ -257,10 +264,11 @@ public class ObjectItemType implements ItemType {
             this.baseType.resolve(context, metadata);
             processBaseType();
         }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isResolved()) {
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
                 entry.getValue().resolve(context, metadata);
             }
+            checkSubtypeConsistency();
         }
     }
 
@@ -270,8 +278,11 @@ public class ObjectItemType implements ItemType {
             this.baseType.resolve(context, metadata);
             processBaseType();
         }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            entry.getValue().resolve(context, metadata);
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                entry.getValue().resolve(context, metadata);
+            }
+            checkSubtypeConsistency();
         }
     }
 
@@ -313,6 +324,58 @@ public class ObjectItemType implements ItemType {
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive object type.");
+        }
+    }
+
+    public void checkSubtypeConsistency() {
+        if (!this.baseType.isObjectItemType()) {
+            if (this.getTypeTreeDepth() >= 3) {
+                throw new InvalidSchemaException(
+                        "Any user-defined object type must have an object type as its base type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            return;
+        }
+        // TODO Check field types
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!this.getBaseType().getObjectContentFacet().containsKey(entry.getKey())) {
+                if (this.baseType.getClosedFacet()) {
+                    throw new InvalidSchemaException(
+                            "If the base type is closed, it is not possible to add new fields.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                } else {
+                    continue;
+                }
+            }
+            FieldDescriptor superTypeDescriptor = this.getBaseType().getObjectContentFacet().get(entry.getKey());
+            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
+                throw new InvalidSchemaException(
+                        "The type of an object field descriptor (here: "
+                            + entry.getValue().getType()
+                            + ") associated with key "
+                            + entry.getKey()
+                            + " must be a subtype of the type declared for this field in its base type (here: "
+                            + superTypeDescriptor.getType()
+                            + ")",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
+                throw new InvalidSchemaException(
+                        "Since the field "
+                            + entry.getKey()
+                            + " is required in the base type, it must also be required in the derived type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+        }
+        if (this.baseType.getClosedFacet() && !this.isClosed) {
+            throw new InvalidSchemaException(
+                    "If the base type is closed, it is not possible to re-open it.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 }
