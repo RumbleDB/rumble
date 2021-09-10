@@ -310,8 +310,7 @@ public class ObjectItemType implements ItemType {
                         this.content.put(entry.getKey(), entry.getValue());
                     } else {
                         FieldDescriptor descriptor = this.content.get(entry.getKey());
-                        if(descriptor.requiredIsSet())
-                        {
+                        if (descriptor.requiredIsSet()) {
                             descriptor.setRequired(entry.getValue().isRequired());
                         }
                     }
