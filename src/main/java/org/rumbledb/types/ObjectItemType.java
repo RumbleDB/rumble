@@ -308,6 +308,12 @@ public class ObjectItemType implements ItemType {
                 for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
                     if (!this.content.containsKey(entry.getKey())) {
                         this.content.put(entry.getKey(), entry.getValue());
+                    } else {
+                        FieldDescriptor descriptor = this.content.get(entry.getKey());
+                        if(descriptor.requiredIsSet())
+                        {
+                            descriptor.setRequired(entry.getValue().isRequired());
+                        }
                     }
                 }
             }

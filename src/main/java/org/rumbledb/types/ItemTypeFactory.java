@@ -310,7 +310,7 @@ public class ItemTypeFactory {
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
-                    minLength = maxLengthItem.castToIntValue();
+                    maxLength = maxLengthItem.castToIntValue();
                 }
                 return new ArrayItemType(
                         name,
