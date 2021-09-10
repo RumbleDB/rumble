@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "bar" : "2021-01-01" }, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "foo" : 22 }, { "foo" : 24 }, Success, Success, true, true, true, true)" :)
+(:JIQS: ShouldRun; Output="({ "bar" : "2021-01-01", "foo" : 2 }, { "foo" : 22 }, { "bar" : "2021-01-01" }, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "bar" : "2021-01-01" }, { "foo" : 192384576198347569283745692384756, "foobar" : true }, { "foo" : 2, "bar" : "2021-01-01" }, Success, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 2, "bar" : "2021-01-01" }, { "foo" : 22 }, { "bar" : "2021-01-01" }, Success, Success, Success, Success, true, true, true, true)" :)
 declare type local:x as jsound verbose {
   "kind" : "object",
   "baseType" : "object",
