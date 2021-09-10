@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XQST0012"; ErrorMetadata="LINE:1:COLUMN:0:" :)
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, Success)" :)
 declare type local:x as jsound verbose {
   "kind" : "object",
   "baseType" : "object",

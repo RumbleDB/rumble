@@ -310,7 +310,7 @@ public class ObjectItemType implements ItemType {
                         this.content.put(entry.getKey(), entry.getValue());
                     } else {
                         FieldDescriptor descriptor = this.content.get(entry.getKey());
-                        if (descriptor.requiredIsSet()) {
+                        if (!descriptor.requiredIsSet()) {
                             descriptor.setRequired(entry.getValue().isRequired());
                         }
                     }
@@ -367,6 +367,8 @@ public class ObjectItemType implements ItemType {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            System.err.println("Req " + entry.getValue().isRequired());
+            System.err.println("SReq " + superTypeDescriptor.isRequired());
             if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "

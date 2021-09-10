@@ -1,4 +1,4 @@
-(:JIQS: ShouldNotParse; ErrorCode="XQST0012"; ErrorMetadata="LINE:1:COLUMN:0:" :)
+(:JIQS: ShouldRun; Output="([ 1, 2, 3, 4, 5, 6, 7 ], [ 1 ], [ 1, 2, 3 ], Success, Success, Success)" :)
 declare type local:a as jsound verbose {
   "kind" : "array",
   "baseType" : "array",

@@ -346,7 +346,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         "Array has " + members.size() + " members but the type requires at least " + minLength
                 );
             }
-            System.err.println("Max length: " + maxLength);
             if (maxLength != null && members.size() > maxLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at most " + maxLength
