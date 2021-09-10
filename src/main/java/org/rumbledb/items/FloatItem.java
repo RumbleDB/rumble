@@ -73,7 +73,34 @@ public class FloatItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.serialize();
+        if (Float.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Float.compare(this.value, -0f) == 0) {
+            return "-0";
+        }
+        if (Float.compare(this.value, 0f) == 0) {
+            return "0";
+        }
+        double abs = Math.abs(this.value);
+        // Convert to decimal between 10E-7 to 10E6
+        if (abs >= 0.000001 && abs < 1000000) {
+            return new BigDecimal(this.value).toString();
+        }
+        // Force mantissa between 10E6 and 10E7
+        if (abs < 100000000) {
+            String str = Float.toString(this.value * 10);
+            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
+            return sb.toString();
+        }
+        return Float.toString(this.value);
     }
 
     @Override
@@ -108,35 +135,7 @@ public class FloatItem implements Item {
 
     @Override
     public String serialize() {
-        if (Float.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Float.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Float.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Float.compare(this.value, -0f) == 0) {
-            return "-0";
-        }
-        if (Float.compare(this.value, 0f) == 0) {
-            return "0";
-        }
-        double abs = Math.abs(this.value);
-        // Convert to decimal between 10E-7 to 10E6
-        if (abs >= 0.000001 && abs < 1000000) {
-            return new BigDecimal(this.value).toString();
-        }
-        // Force mantissa between 10E6 and 10E7
-        if (abs < 100000000) {
-            String str = Float.toString(this.value * 10);
-            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
-            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
-            return sb.toString();
-        }
-        return Float.toString(this.value);
-
+        return getStringValue();
     }
 
     @Override
@@ -166,6 +165,11 @@ public class FloatItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public boolean isNaN() {
+        return Float.isNaN(this.value);
     }
 
     @Override

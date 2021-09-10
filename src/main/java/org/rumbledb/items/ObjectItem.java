@@ -165,7 +165,17 @@ public class ObjectItem implements Item {
         for (int i = 0; i < this.keys.size(); ++i) {
             String key = this.keys.get(i);
             Item value = this.values.get(i);
-            boolean isStringValue = value.isString();
+            boolean isStringValue = value.isAtomic() && !value.isNumeric() && !value.isBoolean() && !value.isNull();
+            if (value.isDouble()) {
+                if (Double.isNaN(value.getDoubleValue()) || Double.isInfinite(value.getDoubleValue())) {
+                    isStringValue = true;
+                }
+            }
+            if (value.isFloat()) {
+                if (Float.isNaN(value.getFloatValue()) || Float.isInfinite(value.getFloatValue())) {
+                    isStringValue = true;
+                }
+            }
             sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
             if (isStringValue) {
                 sb.append("\"");

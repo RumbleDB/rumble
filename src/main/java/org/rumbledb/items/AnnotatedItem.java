@@ -11,13 +11,15 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
+import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -38,15 +40,18 @@ public class AnnotatedItem implements Item {
     public AnnotatedItem(Item itemToAnnotate, ItemType type) {
         this.itemToAnnotate = itemToAnnotate;
         this.type = type;
+        if (type.getName() == null) {
+            throw new OurBadException("It it not possible to annotate an item with an anonymous type.");
+        }
     }
 
     @Override
     public boolean equals(Object otherItem) {
-        if (otherItem instanceof AnnotatedItem) {
+        if (otherItem instanceof Item) {
             long c = ComparisonIterator.compareItems(
                 this,
                 (Item) otherItem,
-                ComparisonExpression.ComparisonOperator.VC_EQ,
+                ComparisonOperator.VC_EQ,
                 ExceptionMetadata.EMPTY_METADATA
             );
             return c == 0;
@@ -56,12 +61,15 @@ public class AnnotatedItem implements Item {
 
     @Override
     public void write(Kryo kryo, Output output) {
-        this.itemToAnnotate.write(kryo, output);
+        kryo.writeClassAndObject(output, this.itemToAnnotate);
+        kryo.writeClassAndObject(output, this.type.getName());
     }
 
     @Override
     public void read(Kryo kryo, Input input) {
-        this.itemToAnnotate.read(kryo, input);
+        this.itemToAnnotate = (Item) kryo.readClassAndObject(input);
+        Name name = (Name) kryo.readClassAndObject(input);// kryo.readObject(input, Name.class);
+        this.type = new ItemTypeReference(name);
     }
 
     @Override

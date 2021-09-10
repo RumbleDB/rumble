@@ -57,9 +57,15 @@ public class AtMostOneItemTypePromotionIterator extends AtMostOneItemLocalRuntim
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (!this.sequenceType.isResolved()) {
+            this.sequenceType.resolve(context, getMetadata());
+        }
         Item item = null;
         try {
             item = this.iterator.materializeAtMostOneItemOrNull(context);
+            if (item != null && !item.getDynamicType().isResolved()) {
+                item.getDynamicType().resolve(context, getMetadata());
+            }
         } catch (MoreThanOneItemException e) {
             throw new UnexpectedTypeException(
                     this.exceptionMessage

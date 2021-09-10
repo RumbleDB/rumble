@@ -35,6 +35,8 @@ public class ItemComparator implements Comparator<Item>, Serializable {
     private static final long serialVersionUID = 1L;
 
     private RumbleException exception;
+    // For min(), NaN is returned if it appears in the input sequence. It must thus compare to less
+    // than any other number for this purpose.
     private boolean compareMin = false;
 
     public ItemComparator(RumbleException exception) {

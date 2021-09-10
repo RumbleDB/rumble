@@ -21,6 +21,7 @@
 package org.rumbledb.types;
 
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
@@ -312,7 +313,8 @@ public class SequenceType implements Serializable {
             return "()";
         }
         StringBuilder result = new StringBuilder();
-        result.append(this.getItemType().toString());
+        Name name = this.getItemType().getName();
+        result.append(name != null ? name : "<anonymous>");
         result.append(this.arity.getSymbol());
         return result.toString();
     }
@@ -420,16 +422,12 @@ public class SequenceType implements Serializable {
         sequenceTypes.put("time?", new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("gDay?", new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.OneOrZero));
-
         sequenceTypes.put("gMonth?", new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.OneOrZero));
-
         sequenceTypes.put("gYear?", new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.OneOrZero));
-
         sequenceTypes.put(
             "gMonthDay?",
             new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.OneOrZero)
         );
-
         sequenceTypes.put(
             "gYearMonth?",
             new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrZero)

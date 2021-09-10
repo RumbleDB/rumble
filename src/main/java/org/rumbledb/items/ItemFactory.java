@@ -212,8 +212,4 @@ public class ItemFactory {
         return new ObjectItem(keyValuePairs);
     }
 
-    public Item createUserDefinedItem(Item item, ItemType type) {
-        return new UserDefinedItem(item, type);
-    }
-
 }

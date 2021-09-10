@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
@@ -295,7 +294,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getClosedFacet();
     }
 
-    public ArrayContentDescriptor getArrayContentFacet() {
+    public ItemType getArrayContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
@@ -313,21 +312,20 @@ public class ItemTypeReference implements ItemType {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        return this.name.toString();
+        if (this.resolvedItemType == null) {
+            return this.name.toString();
+        }
+        return this.resolvedItemType.getIdentifierString();
     }
 
     public String toString() {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        return this.name.toString();
-    }
-
-    public DataType toDataFrameType() {
         if (this.resolvedItemType == null) {
-            throw new OurBadException("Unresolved type: " + this.name);
+            return this.name.toString();
         }
-        return this.resolvedItemType.toDataFrameType();
+        return this.resolvedItemType.toString();
     }
 
     @Override
@@ -336,5 +334,13 @@ public class ItemTypeReference implements ItemType {
             throw new OurBadException("Unresolved type: " + this.name);
         }
         return this.resolvedItemType.isDataFrameType();
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isCompatibleWithDataFrames();
     }
 }

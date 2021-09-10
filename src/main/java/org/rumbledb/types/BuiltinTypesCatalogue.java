@@ -1,6 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.IntItem;
@@ -18,8 +17,7 @@ public class BuiltinTypesCatalogue {
 
     public static final ItemType atomicItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "atomic"),
-            Collections.emptySet(),
-            DataTypes.BinaryType
+            Collections.emptySet()
     );
     public static final ItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
@@ -31,16 +29,14 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.StringType
+            )
     );
 
     // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
     // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
     public static final ItemType numericItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "numeric"),
-            Collections.emptySet(),
-            DataTypes.BinaryType // TODO: consider if specific type is needed
+            Collections.emptySet()
     );
 
     public static final ItemType decimalItem = new AtomicItemType(
@@ -56,8 +52,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.TOTALDIGITS,
                         FacetTypes.FRACTIONDIGITS
                     )
-            ),
-            DataTypes.createDecimalType()
+            )
     );
     public static final ItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
@@ -70,8 +65,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXINCLUSIVE
                     )
-            ),
-            DataTypes.DoubleType
+            )
     );
     public static final ItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
@@ -84,19 +78,16 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXINCLUSIVE
                     )
-            ),
-            DataTypes.FloatType
+            )
     );
 
     public static final ItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
-            DataTypes.BooleanType
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
     );
     public static final ItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
-            Collections.emptySet(),
-            DataTypes.NullType // TODO : see appropriate type
+            Collections.emptySet()
     );
     public static final ItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration"),
@@ -109,8 +100,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXINCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     public static final ItemType yearMonthDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
@@ -123,8 +113,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXINCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     public static final ItemType dayTimeDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
@@ -137,8 +126,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINEXCLUSIVE,
                         FacetTypes.MAXINCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     public static final ItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),
@@ -152,16 +140,14 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType dateTimeStampItem = new DerivedAtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTimeStamp"),
             dateTimeItem,
             AtomicItemType.dateTimeItem,
             Facets.createTimezoneFacets(TimezoneFacet.REQUIRED),
-            false,
-            DataTypes.DateType
+            false
     );
     public static final ItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
@@ -175,8 +161,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.TimestampType
+            )
     );
     public static final ItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
@@ -190,8 +175,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.TimestampType
+            )
     );
     public static final ItemType gDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gDay"),
@@ -205,8 +189,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonth"),
@@ -220,8 +203,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gYearItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYear"),
@@ -235,8 +217,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gMonthDayItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gMonthDay"),
@@ -250,8 +231,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType gYearMonthItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "gYearMonth"),
@@ -265,8 +245,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
     );
     public static final ItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
@@ -278,8 +257,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.BinaryType
+            )
     );
     public static final ItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
@@ -291,8 +269,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.StringType
+            )
     );
     public static final ItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
@@ -304,8 +281,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.BinaryType
+            )
     );
 
     public static final ItemType integerItem = new DerivedAtomicItemType(
@@ -313,8 +289,7 @@ public class BuiltinTypesCatalogue {
             AtomicItemType.decimalItem,
             AtomicItemType.decimalItem,
             Facets.getIntegerFacets(),
-            false,
-            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final ItemType longItem = new DerivedAtomicItemType(
@@ -326,8 +301,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("9223372036854775807")),
                 true
             ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final ItemType intItem = new DerivedAtomicItemType(
@@ -335,8 +309,7 @@ public class BuiltinTypesCatalogue {
             longItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final ItemType shortItem = new DerivedAtomicItemType(
@@ -344,8 +317,7 @@ public class BuiltinTypesCatalogue {
             intItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
-            false,
-            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType byteItem = new DerivedAtomicItemType(
@@ -353,8 +325,7 @@ public class BuiltinTypesCatalogue {
             shortItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(-128), new IntItem(127), true),
-            false,
-            DataTypes.ByteType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType nonNegativeIntegerItem = new DerivedAtomicItemType(
@@ -365,8 +336,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("0")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType nonPositiveIntegerItem = new DerivedAtomicItemType(
@@ -377,8 +347,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("0")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType negativeIntegerItem = new DerivedAtomicItemType(
@@ -389,8 +358,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("-1")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType positiveIntegerItem = new DerivedAtomicItemType(
@@ -401,8 +369,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("1")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType unsignedLongItem = new DerivedAtomicItemType(
@@ -414,8 +381,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("18446744073709551615")),
                 true
             ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType unsignedIntItem = new DerivedAtomicItemType(
@@ -427,8 +393,7 @@ public class BuiltinTypesCatalogue {
                 new IntegerItem(new BigInteger("4294967295")),
                 true
             ),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType unsignedShortItem = new DerivedAtomicItemType(
@@ -436,8 +401,7 @@ public class BuiltinTypesCatalogue {
             unsignedIntItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(65535), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final DerivedAtomicItemType unsignedByteItem = new DerivedAtomicItemType(
@@ -445,8 +409,7 @@ public class BuiltinTypesCatalogue {
             unsignedShortItem,
             AtomicItemType.decimalItem,
             Facets.createMinMaxFacets(new IntItem(0), new IntItem(255), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
+            false
     );
 
     public static final ItemType JSONItem = new JsonItemType();
@@ -461,7 +424,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType arrayItem = new ArrayItemType(
             new Name(Name.JS_NS, "js", "array"),
             BuiltinTypesCatalogue.JSONItem,
-            null,
+            BuiltinTypesCatalogue.item,
             null,
             null,
             null

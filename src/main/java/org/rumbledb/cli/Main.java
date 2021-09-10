@@ -93,6 +93,9 @@ public class Main {
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
+                    if (showErrorInfo) {
+                        ex.printStackTrace();
+                    }
                     handleException(
                         new OurBadException(
                                 "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "

@@ -397,7 +397,13 @@ public interface ItemType extends Serializable {
      * @return content facet value for object item types (cumulative facet)
      */
     default Map<String, FieldDescriptor> getObjectContentFacet() {
-        throw new UnsupportedOperationException("object content facet is allowed only for object item types");
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
     }
 
     /**
@@ -412,9 +418,13 @@ public interface ItemType extends Serializable {
      *
      * @return content facet value for array item types
      */
-    default ArrayContentDescriptor getArrayContentFacet() {
+    default ItemType getArrayContentFacet() {
         throw new UnsupportedOperationException(
-                "array content facet is allowed only for array item types " + this.getClass().getCanonicalName()
+                "array content facet is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
         );
     }
 
@@ -437,6 +447,15 @@ public interface ItemType extends Serializable {
             return "<anonymous>";
         }
         return this.getName().toString();
+    }
+
+    /**
+     * Checks compatibility with DataFrames.
+     * 
+     * @return true if compatible with DataFrames and false otherwise.
+     */
+    default boolean isCompatibleWithDataFrames() {
+        return false;
     }
 
     String toString();

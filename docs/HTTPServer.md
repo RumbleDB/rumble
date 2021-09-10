@@ -10,6 +10,8 @@ This command will not return until you force it to (Ctrl+C on Linux and Mac). Th
 
 Most users will not have to do anything beyond running the above command. For most of them, the next step would be to open a Jupyter notebook that connects to this server automatically.
 
+This HTTP server is built as a basic server for the single user use case, i.e., the user runs their own RumbleDB server on their laptop or cluster, and connects to it via their Jupyter notebook, one query at a time. Some of our users have more advanced needs, or have a larger user base, and typically prefer to implement their own HTTP server, lauching RumbleDB queries either via the public RumbleDB Java API (like the basic HTTP server does -- so its code can serve as a demo of the Java API) or via the RumbleDB CLI.
+
 Caution! Launching a server always has consequences on security, especially as RumbleDB can read from and write to your disk; So make sure you activate your firewall. In later versions, we may support authentication tokens.
 
 ## Testing that it works (not necessary for most end users)
