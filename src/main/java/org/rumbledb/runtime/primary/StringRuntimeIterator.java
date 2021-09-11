@@ -37,7 +37,7 @@ public class StringRuntimeIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public StringRuntimeIterator(String value, ExecutionMode executionMode, ExceptionMetadata iteratorMetadata) {
         super(null, executionMode, iteratorMetadata);
-        this.item = ItemFactory.getInstance().createStringItem(StringEscapeUtils.unescapeJson(value));
+        this.item = ItemFactory.getInstance().createStringItem(value);
     }
 
     @Override
