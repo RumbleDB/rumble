@@ -61,7 +61,7 @@ public class DateItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return this.serialize();
     }
 
     @Override
