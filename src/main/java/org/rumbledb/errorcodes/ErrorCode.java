@@ -27,8 +27,11 @@ public enum ErrorCode {
     InvalidLexicalValueErrorCode("FOCA0002"),
     InvalidNaNOperation("FOCA0005"),
     CodepointNotValidErrorCode("FOCH0001"),
+    UnsupportedCollationExceptionCode("FOCH0002"),
     InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
+
+    UnidentifiedErrorExceptionCode("FOER0000"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),

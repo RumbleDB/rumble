@@ -90,7 +90,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (this.children.size() == 2) {
             String collation = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
             if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
-                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
 
