@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.primary;
 
+import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
