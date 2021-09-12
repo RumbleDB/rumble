@@ -321,9 +321,40 @@ public class ItemTypeFactory {
                         Collections.emptyList()
                 );
             case "atomic":
-                throw new OurBadException("Kind atomic is not supported yet.");
+                ItemType type = item.getDynamicType();
+                if (type.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
+                    return AtomicItemType.decimalItem;
+                } else if (type == BuiltinTypesCatalogue.floatItem) {
+                    return AtomicItemType.floatItem;
+                } else if (type == BuiltinTypesCatalogue.doubleItem) {
+                    return AtomicItemType.doubleItem;
+                } else if (type == BuiltinTypesCatalogue.booleanItem) {
+                    return AtomicItemType.booleanItem;
+                } else if (type == BuiltinTypesCatalogue.dateItem) {
+                    return AtomicItemType.dateItem;
+                } else if (type == BuiltinTypesCatalogue.dateTimeStampItem) {
+                    return AtomicItemType.dateTimeStampItem;
+                } else if (type == BuiltinTypesCatalogue.dateTimeItem) {
+                    return AtomicItemType.dateTimeItem;
+                } else if (type == BuiltinTypesCatalogue.timeItem) {
+                    return AtomicItemType.timeItem;
+                } else if (type == BuiltinTypesCatalogue.dayTimeDurationItem) {
+                    return AtomicItemType.dayTimeDurationItem;
+                } else if (type == BuiltinTypesCatalogue.yearMonthDurationItem) {
+                    return AtomicItemType.yearMonthDurationItem;
+                } else if (type == BuiltinTypesCatalogue.anyURIItem) {
+                    return AtomicItemType.anyURIItem;
+                } else if (type == BuiltinTypesCatalogue.stringItem) {
+                    return AtomicItemType.stringItem;
+                } else if (type == BuiltinTypesCatalogue.hexBinaryItem) {
+                    return AtomicItemType.hexBinaryItem;
+                } else if (type == BuiltinTypesCatalogue.base64BinaryItem) {
+                    return AtomicItemType.base64BinaryItem;
+                } else {
+                    throw new OurBadException("Type " + type + " not supported yet.");
+                }
             case "union":
-                throw new OurBadException("Kind unionis not supported yet.");
+                throw new OurBadException("Kind union is not supported yet.");
             default:
                 throw new InvalidSchemaException(
                         "Kind '" + kind + "' does not exist.",
