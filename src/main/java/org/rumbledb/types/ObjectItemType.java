@@ -15,15 +15,6 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static ObjectItemType anyObjectItem = new ObjectItemType(
-            new Name(Name.JS_NS, "js", "object"),
-            BuiltinTypesCatalogue.JSONItem,
-            false,
-            Collections.emptyMap(),
-            Collections.emptyList(),
-            null
-    );
-
     final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
                 FacetTypes.ENUMERATION,
@@ -93,17 +84,17 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyObjectItem));
+        return !(this.equals(BuiltinTypesCatalogue.objectItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyObjectItem);
+        return this.equals(BuiltinTypesCatalogue.objectItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyObjectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
@@ -307,7 +298,22 @@ public class ObjectItemType implements ItemType {
             } else {
                 for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
                     if (!this.content.containsKey(entry.getKey())) {
-                        this.content.put(entry.getKey(), entry.getValue());
+                        FieldDescriptor descriptor = entry.getValue();
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(false);
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(false);
+                        }
+                        this.content.put(entry.getKey(), descriptor);
+                    } else {
+                        FieldDescriptor descriptor = this.content.get(entry.getKey());
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(entry.getValue().isRequired());
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(entry.getValue().isUnique());
+                        }
                     }
                 }
             }
@@ -362,6 +368,8 @@ public class ObjectItemType implements ItemType {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            System.err.println("Req " + entry.getValue().isRequired());
+            System.err.println("SReq " + superTypeDescriptor.isRequired());
             if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
                 throw new InvalidSchemaException(
                         "Since the field "
