@@ -163,7 +163,7 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         childDataFrame.createOrReplaceTempView("array");
         if (childDataFrame.getItemType().isArrayItemType()) {
-            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
+            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
                     String.format(

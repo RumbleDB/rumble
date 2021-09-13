@@ -26,14 +26,14 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class LastFunctionIterator extends LocalFunctionCallIterator {
+public class LastFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -47,22 +47,12 @@ public class LastFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.hasNext = true;
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            Item result = this.currentDynamicContextForLocalExecution.getVariableValues().getLast();
-            if (result == null) {
-                throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
-            }
-            return result;
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item result = context.getVariableValues().getLast();
+        if (result == null) {
+            throw new AbsentPartOfDynamicContextException("Context undefined (last) ", getMetadata());
         }
-        return null;
+        return result;
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {

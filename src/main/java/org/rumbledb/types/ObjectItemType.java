@@ -6,21 +6,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.exceptions.OurBadException;
 
 import java.util.*;
 
 public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
-
-    final static ObjectItemType anyObjectItem = new ObjectItemType(
-            new Name(Name.JS_NS, "js", "object"),
-            BuiltinTypesCatalogue.JSONItem,
-            false,
-            Collections.emptyMap(),
-            Collections.emptyList(),
-            null
-    );
 
     final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
@@ -32,12 +25,12 @@ public class ObjectItemType implements ItemType {
     );
 
     final private Name name;
-    final private Map<String, FieldDescriptor> content;
-    final private boolean isClosed;
-    final private List<String> constraints;
-    final private List<Item> enumeration;
+    private Map<String, FieldDescriptor> content;
+    private boolean isClosed;
+    private List<String> constraints;
+    private List<Item> enumeration;
     final private ItemType baseType;
-    final private int typeTreeDepth;
+    private int typeTreeDepth;
 
     ObjectItemType(
             Name name,
@@ -48,12 +41,17 @@ public class ObjectItemType implements ItemType {
             List<Item> enumeration
     ) {
         this.name = name;
+        this.baseType = baseType;
         this.isClosed = isClosed;
         this.content = content == null ? Collections.emptyMap() : content;
-        this.baseType = baseType;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
         this.enumeration = enumeration;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+            if (areContentTypesResolved()) {
+                checkSubtypeConsistency();
+            }
+        }
     }
 
     @Override
@@ -86,17 +84,17 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyObjectItem));
+        return !(this.equals(BuiltinTypesCatalogue.objectItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyObjectItem);
+        return this.equals(BuiltinTypesCatalogue.objectItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyObjectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
@@ -124,14 +122,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public Map<String, FieldDescriptor> getObjectContentFacet() {
-        if (this.isPrimitive()) {
-            return this.content;
-        } else {
-            // recursively get content facet, overriding new descriptors
-            Map<String, FieldDescriptor> map = new LinkedHashMap<>(this.baseType.getObjectContentFacet());
-            map.putAll(this.content);
-            return map;
-        }
+        return this.content;
     }
 
     @Override
@@ -208,20 +199,24 @@ public class ObjectItemType implements ItemType {
             sb.append(this.baseType.toString());
             sb.append("\n");
 
-            List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
-            if (fields.size() > 0) {
-                sb.append("content facet:\n");
-                // String comma = "";
-                for (FieldDescriptor field : fields) {
-                    sb.append("  ");
-                    sb.append(field.getName());
-                    if (field.isRequired()) {
-                        sb.append(" (required)");
+            if (isResolved()) {
+                List<FieldDescriptor> fields = new ArrayList<>(this.getObjectContentFacet().values());
+                if (fields.size() > 0) {
+                    sb.append("content facet:\n");
+                    // String comma = "";
+                    for (FieldDescriptor field : fields) {
+                        sb.append("  ");
+                        sb.append(field.getName());
+                        if (field.isRequired()) {
+                            sb.append(" (required)");
+                        }
+                        sb.append(" : ");
+                        sb.append(field.getType().toString());
+                        sb.append("\n");
                     }
-                    sb.append(" : ");
-                    sb.append(field.getType().toString());
-                    sb.append("\n");
                 }
+            } else {
+                sb.append("(content not resolved yet)");
             }
             return sb.toString();
         }
@@ -242,6 +237,10 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
+        return this.baseType.isResolved() && areContentTypesResolved();
+    }
+
+    private boolean areContentTypesResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 return false;
@@ -252,15 +251,139 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            entry.getValue().resolve(context, metadata);
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                entry.getValue().resolve(context, metadata);
+            }
+            checkSubtypeConsistency();
         }
     }
 
     @Override
     public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                entry.getValue().resolve(context, metadata);
+            }
+            checkSubtypeConsistency();
+        }
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (!this.isClosed) {
+            return false;
+        }
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            entry.getValue().resolve(context, metadata);
+            if (!entry.getValue().getType().isCompatibleWithDataFrames()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isObjectItemType()) {
+            if (this.content == null) {
+                this.content = this.baseType.getObjectContentFacet();
+            } else {
+                for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
+                    if (!this.content.containsKey(entry.getKey())) {
+                        FieldDescriptor descriptor = entry.getValue();
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(false);
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(false);
+                        }
+                        this.content.put(entry.getKey(), descriptor);
+                    } else {
+                        FieldDescriptor descriptor = this.content.get(entry.getKey());
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(entry.getValue().isRequired());
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(entry.getValue().isUnique());
+                        }
+                    }
+                }
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            return;
+        }
+        if (!this.baseType.equals(BuiltinTypesCatalogue.JSONItem)) {
+            throw new InvalidSchemaException(
+                    "This type cannot be the base type of an object type: " + this.baseType,
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (this.content == null) {
+            throw new OurBadException("Content cannot be null in primitive object type.");
+        }
+    }
+
+    public void checkSubtypeConsistency() {
+        if (!this.baseType.isObjectItemType()) {
+            if (this.getTypeTreeDepth() >= 3) {
+                throw new InvalidSchemaException(
+                        "Any user-defined object type must have an object type as its base type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            return;
+        }
+        // TODO Check field types
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!this.getBaseType().getObjectContentFacet().containsKey(entry.getKey())) {
+                if (this.baseType.getClosedFacet()) {
+                    throw new InvalidSchemaException(
+                            "If the base type is closed, it is not possible to add new fields.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                } else {
+                    continue;
+                }
+            }
+            FieldDescriptor superTypeDescriptor = this.getBaseType().getObjectContentFacet().get(entry.getKey());
+            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
+                throw new InvalidSchemaException(
+                        "The type of an object field descriptor (here: "
+                            + entry.getValue().getType()
+                            + ") associated with key "
+                            + entry.getKey()
+                            + " must be a subtype of the type declared for this field in its base type (here: "
+                            + superTypeDescriptor.getType()
+                            + ")",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            System.err.println("Req " + entry.getValue().isRequired());
+            System.err.println("SReq " + superTypeDescriptor.isRequired());
+            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
+                throw new InvalidSchemaException(
+                        "Since the field "
+                            + entry.getKey()
+                            + " is required in the base type, it must also be required in the derived type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+        }
+        if (this.baseType.getClosedFacet() && !this.isClosed) {
+            throw new InvalidSchemaException(
+                    "If the base type is closed, it is not possible to re-open it.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 }

@@ -4,15 +4,14 @@ import org.joda.time.Period;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class TimezoneFromDateTimeFunctionIterator extends LocalFunctionCallIterator {
+public class TimezoneFromDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private Item dateTimeItem = null;
@@ -26,26 +25,15 @@ public class TimezoneFromDateTimeFunctionIterator extends LocalFunctionCallItera
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDayTimeDurationItem(
-                    new Period(this.dateTimeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
-                );
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " timezone-from-dateTime function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        this.dateTimeItem = this.children.get(0).materializeFirstItemOrNull(context);
+        if (this.dateTimeItem == null || !this.dateTimeItem.hasTimeZone()) {
+            return null;
         }
+        return ItemFactory.getInstance()
+            .createDayTimeDurationItem(
+                new Period(this.dateTimeItem.getDateTimeValue().getZone().toTimeZone().getRawOffset())
+            );
     }
 
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.dateTimeItem = this.children.get(0)
-            .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.dateTimeItem != null && this.dateTimeItem.hasTimeZone();
-    }
 }

@@ -411,22 +411,65 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     @Override
     public StaticContext visitValidateTypeExpression(ValidateTypeExpression expression, StaticContext argument) {
         visitDescendants(expression, null);
-        if (expression.getSequenceType().getArity().equals(Arity.Zero)) {
-            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        switch (expression.getSequenceType().getArity()) {
+            case Zero:
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            case One:
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            case OneOrZero:
+                expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                return argument;
+            case OneOrMore:
+                if (
+                    expression.getSequenceType().getItemType().isObjectItemType()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                ) {
+                    System.err.println(
+                        "[INFO] Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
+                    expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                } else {
+                    if (
+                        expression.getMainExpression()
+                            .getHighestExecutionMode(this.visitorConfig)
+                            .equals(ExecutionMode.LOCAL)
+                    ) {
+                        expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                    } else {
+                        expression.setHighestExecutionMode(ExecutionMode.RDD);
+                    }
+                }
+                return argument;
+            case ZeroOrMore:
+                if (
+                    expression.getSequenceType().getItemType().isObjectItemType()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                ) {
+                    System.err.println(
+                        "[INFO] Validation against "
+                            + expression.getSequenceType().getItemType().getName()
+                            + " compatible with data frames."
+                    );
+                    expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                } else {
+                    if (
+                        expression.getMainExpression()
+                            .getHighestExecutionMode(this.visitorConfig)
+                            .equals(ExecutionMode.LOCAL)
+                    ) {
+                        expression.setHighestExecutionMode(ExecutionMode.LOCAL);
+                    } else {
+                        expression.setHighestExecutionMode(ExecutionMode.RDD);
+                    }
+                }
+                return argument;
+            default:
+                return argument;
         }
-        if (expression.getSequenceType().getArity().equals(Arity.One)) {
-            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
-        }
-        if (expression.getSequenceType().getArity().equals(Arity.OneOrZero)) {
-            expression.setHighestExecutionMode(ExecutionMode.LOCAL);
-        }
-        if (expression.getSequenceType().getArity().equals(Arity.OneOrMore)) {
-            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
-        }
-        if (expression.getSequenceType().getArity().equals(Arity.ZeroOrMore)) {
-            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
-        }
-        return argument;
     }
 
 }

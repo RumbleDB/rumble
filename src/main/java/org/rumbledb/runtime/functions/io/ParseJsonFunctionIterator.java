@@ -29,13 +29,13 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.io.StringReader;
 import java.util.List;
 
-public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
+public class ParseJsonFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -50,39 +50,30 @@ public class ParseJsonFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         this.string = this.children.get(0).materializeFirstItemOrNull(context);
-        this.hasNext = this.string != null;
+        if (this.string == null) {
+            return null;
+        }
+        try {
+            JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
+            return ItemParser.getItemFromObject(object, getMetadata());
+        } catch (IteratorFlowException e) {
+            RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+            ex.initCause(e);
+            throw ex;
+        }
     }
 
     @Override
     public void reset(DynamicContext context) {
         super.reset(context);
         this.string = this.children.get(0).materializeFirstItemOrNull(context);
-        this.hasNext = this.string != null;
-    }
-
-    @Override
-    public void close() {
-        super.close();
-    }
-
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                JsonReader object = new JsonReader(new StringReader(this.string.getStringValue()));
-                return ItemParser.getItemFromObject(object, getMetadata());
-            } catch (IteratorFlowException e) {
-                RumbleException ex = new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-                ex.initCause(e);
-                throw ex;
-            }
+        if (this.string == null) {
+            return;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-parse function", getMetadata());
     }
+
 
 
 }

@@ -470,7 +470,29 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             throw pe;
         }
         Name name = parseName(ctx.qname(), false, true);
-        ItemType type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+        String schemaLanguage = null;
+        if (ctx.schema != null) {
+            schemaLanguage = ctx.schema.getText();
+        } else {
+            schemaLanguage = "jsoundcompact";
+        }
+        ItemType type = null;
+        switch (schemaLanguage) {
+            case "jsoundcompact":
+                type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsoundverbose":
+                type = ItemTypeFactory.createItemTypeFromJSoundVerboseItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsonschema":
+                type = ItemTypeFactory.createItemTypeFromJSONSchemaItem(name, definitionItem, this.moduleContext);
+                break;
+            default:
+                throw new OurBadException(
+                        "Unrecognized schema syntax: " + schemaLanguage,
+                        createMetadataFromContext(ctx)
+                );
+        }
         return new TypeDeclaration(
                 type,
                 createMetadataFromContext(ctx)
@@ -1286,26 +1308,18 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true, false);
-        if (
-            BuiltinTypesCatalogue.typeExists(name)
-                && children.size() == 1
-        ) {
-            return new CastExpression(
-                    children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
-                    createMetadataFromContext(ctx)
-            );
+        Name typeName = name;
+        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+            typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
         }
         if (
-            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(typeName)
                 && children.size() == 1
-                && name.getNamespace() != null
-                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
-                && !name.getLocalName().equals("boolean")
+                && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
             return new CastExpression(
                     children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
                     createMetadataFromContext(ctx)
             );
         }

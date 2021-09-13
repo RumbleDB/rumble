@@ -4,11 +4,13 @@
 
 RumbleDB can be run as an HTTP server that listens for queries. In order to do so, you can use the --server and --port parameters:
 
-    spark-submit rumbledb-1.14.0.jar --server yes --port 8001
+    spark-submit rumbledb-1.15.0.jar --server yes --port 8001
     
 This command will not return until you force it to (Ctrl+C on Linux and Mac). This is because the server has to run permanently to listen to incoming requests.
 
 Most users will not have to do anything beyond running the above command. For most of them, the next step would be to open a Jupyter notebook that connects to this server automatically.
+
+This HTTP server is built as a basic server for the single user use case, i.e., the user runs their own RumbleDB server on their laptop or cluster, and connects to it via their Jupyter notebook, one query at a time. Some of our users have more advanced needs, or have a larger user base, and typically prefer to implement their own HTTP server, lauching RumbleDB queries either via the public RumbleDB Java API (like the basic HTTP server does -- so its code can serve as a demo of the Java API) or via the RumbleDB CLI.
 
 Caution! Launching a server always has consequences on security, especially as RumbleDB can read from and write to your disk; So make sure you activate your firewall. In later versions, we may support authentication tokens.
 
@@ -92,11 +94,11 @@ Then there are two options
 - Connect to the master with SSH with an extra parameter for securely tunneling the HTTP connection (for example `-L 8001:localhost:8001` or any port of your choosing)
 - Download the RumbleDB jar to the master node
 
-    wget https://github.com/RumbleDB/rumble/releases/download/v1.12.0/rumbledb-1.14.0.jar
+    wget https://github.com/RumbleDB/rumble/releases/download/v1.12.0/rumbledb-1.15.0.jar
     
 - Launch the HTTP server on the master node (it will be accessible under `http://localhost:8001/jsoniq`).
 
-    spark-submit rumbledb-1.14.0.jar --server yes --port 8001
+    spark-submit rumbledb-1.15.0.jar --server yes --port 8001
 
 - And then use Jupyter notebooks in the same way you would do it locally (it magically works because of the tunneling)
 
@@ -104,7 +106,7 @@ Then there are two options
 
 There is also another way that does not need any tunnelling: you can specify the hostname of your EC2 machine (copied over from the EC2 dashboard) with the --host parameter. For example, with the placeholder <ec2-hostname>:
 
-    spark-submit rumbledb-1.14.0.jar --server yes --port 8001 --host <ec2-hostname>
+    spark-submit rumbledb-1.15.0.jar --server yes --port 8001 --host <ec2-hostname>
 
 You also need to make sure in your EMR security group that the chosen port (e.g., 8001) is accessible from the machine in which you run your Jupyter notebook. Then, you can point your Jupyter notebook on this machine to `http://<ec2-hostname>:8001/jsoniq`.
 

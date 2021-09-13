@@ -26,7 +26,7 @@
 
     <groupId>com.github.rumbledb</groupId>
     <artifactId>rumbledb</artifactId>
-    <version>1.14.0</version>
+    <version>1.15.0</version>
     <packaging>jar</packaging>
     <name>RumbleDB</name>
     <description>A JSONiq engine to query large-scale JSON datasets stored on HDFS. Spark under the hood.</description>

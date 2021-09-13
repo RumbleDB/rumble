@@ -92,12 +92,6 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 */
 	T visitQname(JsoniqParser.QnameContext ctx);
 	/**
-	 * Visit a parse tree produced by {@link JsoniqParser#nCNameOrKeyWord}.
-	 * @param ctx the parse tree
-	 * @return the visitor result
-	 */
-	T visitNCNameOrKeyWord(JsoniqParser.NCNameOrKeyWordContext ctx);
-	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#dfPropertyName}.
 	 * @param ctx the parse tree
 	 * @return the visitor result
@@ -127,6 +121,12 @@ public interface JsoniqVisitor<T> extends ParseTreeVisitor<T> {
 	 * @return the visitor result
 	 */
 	T visitTypeDecl(JsoniqParser.TypeDeclContext ctx);
+	/**
+	 * Visit a parse tree produced by {@link JsoniqParser#schemaLanguage}.
+	 * @param ctx the parse tree
+	 * @return the visitor result
+	 */
+	T visitSchemaLanguage(JsoniqParser.SchemaLanguageContext ctx);
 	/**
 	 * Visit a parse tree produced by {@link JsoniqParser#paramList}.
 	 * @param ctx the parse tree
