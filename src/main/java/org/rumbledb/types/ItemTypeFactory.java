@@ -154,22 +154,25 @@ public class ItemTypeFactory {
                 if (baseType == null) {
                     baseType = BuiltinTypesCatalogue.objectItem;
                 }
-                if (!keys.contains("content")) {
-                    throw new InvalidSchemaException(
-                            "The content facet is missing in an object type declaration.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
-                }
+
                 Item contentItem = item.getItemByKey("content");
-                if (contentItem == null) {
-                    contentItem = ItemFactory.getInstance().createArrayItem();
-                }
-                if (!contentItem.isArray()) {
-                    throw new InvalidSchemaException(
-                            "The content facet must be an array",
-                            ExceptionMetadata.EMPTY_METADATA
+                if (!keys.contains("content")) {
+                    System.err.println(
+                        "[WARNING] The content facet of an object type is missing. By default, no fields are defined or overriden."
                     );
+                    contentItem = ItemFactory.getInstance().createArrayItem();
+                } else {
+                    if (contentItem == null) {
+                        contentItem = ItemFactory.getInstance().createArrayItem();
+                    }
+                    if (!contentItem.isArray()) {
+                        throw new InvalidSchemaException(
+                                "The content facet must be an array",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
                 }
+
                 boolean closed = false;
                 Item closedItem = item.getItemByKey("closed");
                 if (closedItem != null && !closedItem.isBoolean()) {
@@ -182,7 +185,7 @@ public class ItemTypeFactory {
                     closed = closedItem.getBooleanValue();
                 } else {
                     System.err.println(
-                        "[WARNING] The closed facet is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
+                        "[WARNING] The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
                     );
                     closed = true;
                 }
@@ -198,7 +201,7 @@ public class ItemTypeFactory {
                     }
                     if (!fieldItem.isString()) {
                         throw new InvalidSchemaException(
-                                "Field descriptor must be a string.",
+                                "The name of a field must be a string.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
@@ -220,7 +223,7 @@ public class ItemTypeFactory {
                         type = createItemTypeFromJSoundVerboseItem(null, typeItem, staticContext);
                     } else {
                         throw new InvalidSchemaException(
-                                "Field descriptor must be a string or an object.",
+                                "The tyep of a field descriptor must be a string or an object.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
