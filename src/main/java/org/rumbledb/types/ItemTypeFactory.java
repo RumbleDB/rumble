@@ -98,7 +98,6 @@ public class ItemTypeFactory {
                     name,
                     BuiltinTypesCatalogue.objectItem,
                     true,
-                    true,
                     fields,
                     Collections.emptyList(),
                     Collections.emptyList()
@@ -172,7 +171,6 @@ public class ItemTypeFactory {
                     );
                 }
                 boolean closed = false;
-                boolean isClosedDefined = false;
                 Item closedItem = item.getItemByKey("closed");
                 if (closedItem != null && !closedItem.isBoolean()) {
                     throw new InvalidSchemaException(
@@ -182,7 +180,11 @@ public class ItemTypeFactory {
                 }
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
-                    isClosedDefined = true;
+                } else {
+                    System.err.println(
+                        "[WARNING] The closed facet is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
+                    );
+                    closed = true;
                 }
                 List<Item> contents = contentItem.getItems();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
@@ -275,7 +277,6 @@ public class ItemTypeFactory {
                 ItemType it = new ObjectItemType(
                         name,
                         baseType,
-                        isClosedDefined,
                         closed,
                         fields,
                         Collections.emptyList(),
@@ -390,7 +391,7 @@ public class ItemTypeFactory {
             content.put(field.name(), fieldDescriptor);
         }
 
-        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, true, content, null, null);
+        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {

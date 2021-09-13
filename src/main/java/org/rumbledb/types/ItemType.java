@@ -416,23 +416,6 @@ public interface ItemType extends Serializable {
 
     /**
      *
-     * @return true if the closed facet is defined, false otherwise.
-     */
-    default boolean isClosedFacetDefined() {
-        throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
-    }
-
-    /**
-     * Sets the close facet value.
-     * 
-     * @param closed true to close, false to open.
-     */
-    default void setClosedFacet(boolean closed) {
-        throw new UnsupportedOperationException("closed facet is not allowed only for object item types");
-    }
-
-    /**
-     *
      * @return content facet value for array item types
      */
     default ItemType getArrayContentFacet() {

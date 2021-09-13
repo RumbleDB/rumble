@@ -27,7 +27,6 @@ public class ObjectItemType implements ItemType {
     final private Name name;
     private Map<String, FieldDescriptor> content;
     private boolean isClosed;
-    private boolean isClosedDefined;
     private List<String> constraints;
     private List<Item> enumeration;
     final private ItemType baseType;
@@ -36,7 +35,6 @@ public class ObjectItemType implements ItemType {
     ObjectItemType(
             Name name,
             ItemType baseType,
-            boolean isClosedDefined,
             boolean isClosed,
             Map<String, FieldDescriptor> content,
             List<String> constraints,
@@ -44,7 +42,6 @@ public class ObjectItemType implements ItemType {
     ) {
         this.name = name;
         this.baseType = baseType;
-        this.isClosedDefined = isClosedDefined;
         this.isClosed = isClosed;
         this.content = content == null ? Collections.emptyMap() : content;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
@@ -131,17 +128,6 @@ public class ObjectItemType implements ItemType {
     @Override
     public boolean getClosedFacet() {
         return this.isClosed;
-    }
-
-    @Override
-    public boolean isClosedFacetDefined() {
-        return this.isClosedDefined;
-    }
-
-    @Override
-    public void setClosedFacet(boolean closed) {
-        this.isClosed = closed;
-        this.isClosedDefined = true;
     }
 
     @Override
@@ -330,9 +316,6 @@ public class ObjectItemType implements ItemType {
                         }
                     }
                 }
-            }
-            if (!this.isClosedDefined) {
-                setClosedFacet(this.baseType.getClosedFacet());
             }
             if (this.enumeration == null) {
                 this.enumeration = this.baseType.getEnumerationFacet();
