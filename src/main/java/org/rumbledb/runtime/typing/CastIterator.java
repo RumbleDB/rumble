@@ -569,6 +569,18 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsString(Item item, ItemType targetType) {
+        if (
+            (targetType.getLengthFacet() != null && item.getStringValue().length() != targetType.getLengthFacet())
+                ||
+                (targetType.getMinLengthFacet() != null
+                    && item.getStringValue().length() < targetType.getMinLengthFacet())
+                ||
+                (targetType.getMaxLengthFacet() != null
+                    && item.getStringValue().length() > targetType.getMaxLengthFacet())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
@@ -577,42 +589,179 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkFacetsDouble(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDoubleValue() < targetType.getMinInclusiveFacet().getDoubleValue())
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDoubleValue() > targetType.getMaxInclusiveFacet().getDoubleValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDoubleValue() <= targetType.getMinExclusiveFacet().getDoubleValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDoubleValue() >= targetType.getMaxExclusiveFacet().getDoubleValue())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsFloat(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getFloatValue() < targetType.getMinInclusiveFacet().getFloatValue())
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getFloatValue() > targetType.getMaxInclusiveFacet().getFloatValue())
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getFloatValue() <= targetType.getMinExclusiveFacet().getFloatValue())
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getFloatValue() >= targetType.getMaxExclusiveFacet().getFloatValue())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDecimalValue().compareTo(targetType.getMinInclusiveFacet().getDecimalValue()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDecimalValue().compareTo(targetType.getMaxInclusiveFacet().getDecimalValue()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDecimalValue().compareTo(targetType.getMinExclusiveFacet().getDecimalValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDecimalValue().compareTo(targetType.getMaxExclusiveFacet().getDecimalValue()) >= 0)
+        ) {
+            return false;
+        }
+
+        if (
+            targetType.getTotalDigitsFacet() != null
+                && targetType.getTotalDigitsFacet() != BuiltinTypesCatalogue.decimalItem.getTotalDigitsFacet()
+        ) {
+            return false;
+        }
+
+        if (
+            targetType.getFractionDigitsFacet() != null
+                && targetType.getFractionDigitsFacet() != BuiltinTypesCatalogue.decimalItem.getFractionDigitsFacet()
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsAnyURI(Item item, ItemType targetType) {
-        return true;
+        return checkFacetsString(item, targetType);
     }
 
     public static boolean checkFacetsBase64Binary(Item item, ItemType targetType) {
-        return true;
+        return checkFacetsString(item, targetType);
     }
 
     public static boolean checkFacetsHexBinary(Item item, ItemType targetType) {
+        return checkFacetsString(item, targetType);
+    }
+
+    public static boolean checkDateTimeMinMaxFacets(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDateTimeValue().compareTo(targetType.getMaxInclusiveFacet().getDateTimeValue()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDateTimeValue().compareTo(targetType.getMinExclusiveFacet().getDateTimeValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDateTimeValue().compareTo(targetType.getMaxExclusiveFacet().getDateTimeValue()) >= 0)
+        ) {
+            return false;
+        }
         return true;
     }
 
     public static boolean checkFacetsDate(Item item, ItemType targetType) {
+        if (!checkDateTimeMinMaxFacets(item, targetType)) {
+            return false;
+        }
+
+        if (
+            targetType.getExplicitTimezoneFacet() != null
+                && !targetType.getExplicitTimezoneFacet()
+                    .equals(BuiltinTypesCatalogue.dateItem.getExplicitTimezoneFacet())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsTime(Item item, ItemType targetType) {
+        if (!checkDateTimeMinMaxFacets(item, targetType)) {
+            return false;
+        }
+
+        if (
+            targetType.getExplicitTimezoneFacet() != null
+                && !targetType.getExplicitTimezoneFacet()
+                    .equals(BuiltinTypesCatalogue.timeItem.getExplicitTimezoneFacet())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsDateTime(Item item, ItemType targetType) {
+        if (!checkDateTimeMinMaxFacets(item, targetType)) {
+            return false;
+        }
+
+        if (
+            targetType.getExplicitTimezoneFacet() != null
+                && !targetType.getExplicitTimezoneFacet()
+                    .equals(BuiltinTypesCatalogue.dateTimeItem.getExplicitTimezoneFacet())
+        ) {
+            return false;
+        }
+
         return true;
     }
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDurationValue()
+                    .toStandardDuration()
+                    .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) == -1)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) == 1)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
+        ) {
+            return false;
+        }
+
+
         return true;
     }
 }
