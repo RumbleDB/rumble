@@ -1,6 +1,6 @@
 # Function library
 
-We list here the functions supported by RumbleDB, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or RumbleDB, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304).
+We list here the most important functions supported by RumbleDB, and introduce them by means of examples. Highly detailed specifications can be found in the [underlying W3C standard](https://www.w3.org/TR/xpath-functions-30/#func-floor), unless the function is marked as specific to JSON or RumbleDB, in which case it can be found [here](http://www.jsoniq.org/docs/JSONiq/html-single/index.html#idm34604304). JSONiq and RumbleDB intentionally do not support builtin functions on XML nodes, NOTATION or QNames. RumbleDB supports almost all other W3C-standardized functions, please contact us if you are still missing one.
 
 For the sake of ease of use, all W3C standard builtin functions and JSONiq builtin functions are in the
 RumbleDB namespace, which is the default function namespace and does not require any prefix in front of function names.
