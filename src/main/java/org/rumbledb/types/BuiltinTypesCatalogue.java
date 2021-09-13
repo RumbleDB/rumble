@@ -416,6 +416,7 @@ public class BuiltinTypesCatalogue {
     public static final ItemType objectItem = new ObjectItemType(
             new Name(Name.JS_NS, "js", "object"),
             BuiltinTypesCatalogue.JSONItem,
+            true,
             false,
             Collections.emptyMap(),
             Collections.emptyList(),

@@ -15,6 +15,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.Collections;
@@ -97,6 +98,7 @@ public class ItemTypeFactory {
                     name,
                     BuiltinTypesCatalogue.objectItem,
                     true,
+                    true,
                     fields,
                     Collections.emptyList(),
                     Collections.emptyList()
@@ -136,6 +138,18 @@ public class ItemTypeFactory {
                 );
             }
         }
+        if (keys.contains("enumeration")) {
+            throw new UnsupportedFeatureException(
+                    "The enumeration facet is not supported yet, but it will come in a subsequent release.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (keys.contains("constraints")) {
+            throw new UnsupportedFeatureException(
+                    "The constraints facet is not supported yet, but it will come in a subsequent release.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         switch (kind) {
             case "object":
                 if (baseType == null) {
@@ -158,6 +172,7 @@ public class ItemTypeFactory {
                     );
                 }
                 boolean closed = false;
+                boolean isClosedDefined = false;
                 Item closedItem = item.getItemByKey("closed");
                 if (closedItem != null && !closedItem.isBoolean()) {
                     throw new InvalidSchemaException(
@@ -167,8 +182,7 @@ public class ItemTypeFactory {
                 }
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
-                } else {
-                    closed = true;
+                    isClosedDefined = true;
                 }
                 List<Item> contents = contentItem.getItems();
                 Map<String, FieldDescriptor> fields = new LinkedHashMap<>();
@@ -210,6 +224,7 @@ public class ItemTypeFactory {
                     }
 
                     boolean required = false;
+                    boolean isRequiredSet = false;
                     Item requiredItem = c.getItemByKey("required");
                     if (requiredItem != null && !requiredItem.isBoolean()) {
                         throw new InvalidSchemaException(
@@ -219,11 +234,11 @@ public class ItemTypeFactory {
                     }
                     if (requiredItem != null) {
                         required = requiredItem.getBooleanValue();
-                    } else {
-                        required = false;
+                        isRequiredSet = true;
                     }
 
                     boolean unique = false;
+                    boolean isUniqueSet = false;
                     Item uniqueItem = c.getItemByKey("unique");
                     if (uniqueItem != null && !uniqueItem.isBoolean()) {
                         throw new InvalidSchemaException(
@@ -233,8 +248,7 @@ public class ItemTypeFactory {
                     }
                     if (uniqueItem != null) {
                         unique = uniqueItem.getBooleanValue();
-                    } else {
-                        unique = false;
+                        isUniqueSet = true;
                     }
 
                     Item defaultValue = c.getItemByKey("default");
@@ -246,9 +260,13 @@ public class ItemTypeFactory {
                     }
                     FieldDescriptor fieldDescriptor = new FieldDescriptor();
                     fieldDescriptor.setName(fieldName);
-                    fieldDescriptor.setRequired(required);
                     fieldDescriptor.setType(type);
-                    fieldDescriptor.setUnique(unique);
+                    if (isRequiredSet) {
+                        fieldDescriptor.setRequired(required);
+                    }
+                    if (isUniqueSet) {
+                        fieldDescriptor.setUnique(unique);
+                    }
                     if (defaultValue != null) {
                         fieldDescriptor.setDefaultValue(defaultValue);
                     }
@@ -257,6 +275,7 @@ public class ItemTypeFactory {
                 ItemType it = new ObjectItemType(
                         name,
                         baseType,
+                        isClosedDefined,
                         closed,
                         fields,
                         Collections.emptyList(),
@@ -371,7 +390,7 @@ public class ItemTypeFactory {
             content.put(field.name(), fieldDescriptor);
         }
 
-        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, null, null);
+        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, true, content, null, null);
     }
 
     private static ItemType createArrayTypeWithSparkDataTypeContent(DataType type) {

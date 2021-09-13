@@ -15,15 +15,6 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static ObjectItemType anyObjectItem = new ObjectItemType(
-            new Name(Name.JS_NS, "js", "object"),
-            BuiltinTypesCatalogue.JSONItem,
-            false,
-            Collections.emptyMap(),
-            Collections.emptyList(),
-            null
-    );
-
     final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
                 FacetTypes.ENUMERATION,
@@ -36,6 +27,7 @@ public class ObjectItemType implements ItemType {
     final private Name name;
     private Map<String, FieldDescriptor> content;
     private boolean isClosed;
+    private boolean isClosedDefined;
     private List<String> constraints;
     private List<Item> enumeration;
     final private ItemType baseType;
@@ -44,6 +36,7 @@ public class ObjectItemType implements ItemType {
     ObjectItemType(
             Name name,
             ItemType baseType,
+            boolean isClosedDefined,
             boolean isClosed,
             Map<String, FieldDescriptor> content,
             List<String> constraints,
@@ -51,6 +44,7 @@ public class ObjectItemType implements ItemType {
     ) {
         this.name = name;
         this.baseType = baseType;
+        this.isClosedDefined = isClosedDefined;
         this.isClosed = isClosed;
         this.content = content == null ? Collections.emptyMap() : content;
         this.constraints = constraints == null ? Collections.emptyList() : constraints;
@@ -93,17 +87,17 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyObjectItem));
+        return !(this.equals(BuiltinTypesCatalogue.objectItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyObjectItem);
+        return this.equals(BuiltinTypesCatalogue.objectItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyObjectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
@@ -137,6 +131,17 @@ public class ObjectItemType implements ItemType {
     @Override
     public boolean getClosedFacet() {
         return this.isClosed;
+    }
+
+    @Override
+    public boolean isClosedFacetDefined() {
+        return this.isClosedDefined;
+    }
+
+    @Override
+    public void setClosedFacet(boolean closed) {
+        this.isClosed = closed;
+        this.isClosedDefined = true;
     }
 
     @Override
@@ -307,14 +312,27 @@ public class ObjectItemType implements ItemType {
             } else {
                 for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
                     if (!this.content.containsKey(entry.getKey())) {
-                        this.content.put(entry.getKey(), entry.getValue());
+                        FieldDescriptor descriptor = entry.getValue();
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(false);
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(false);
+                        }
+                        this.content.put(entry.getKey(), descriptor);
                     } else {
                         FieldDescriptor descriptor = this.content.get(entry.getKey());
                         if (!descriptor.requiredIsSet()) {
                             descriptor.setRequired(entry.getValue().isRequired());
                         }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(entry.getValue().isUnique());
+                        }
                     }
                 }
+            }
+            if (!this.isClosedDefined) {
+                setClosedFacet(this.baseType.getClosedFacet());
             }
             if (this.enumeration == null) {
                 this.enumeration = this.baseType.getEnumerationFacet();
