@@ -10,7 +10,7 @@ Users who love the command line can install Spark with a package management syst
 
 However, it is also straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it, and add the subdirectory "bin" within the unpacked directory to the PATH variable, as well as the location of the unpacked directory to SPARK_HOME.
 
-We recommend installing either Spark 2.4.7, or Spark 3.0.2 (we provide a RumbleDB jar for each one of these, the default is Spark 3).
+We recommend installing either Spark 3.0.3, or Spark 3.1.2 (we also provide a RumbleDB jar for Spark 2 for legacy purposes, however it is not recommended to use it for new projects).
 
 You can test that Spark was correctly installed with:
 
@@ -23,7 +23,7 @@ Another important comment: if you use Spark 2.4.x, you need to make sure that yo
 
 ### Download RumbleDB
 
-RumbleDB is just a download with no installation. In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3.0.2, you can use the default jar. If you use Spark 2.4.x, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
+RumbleDB is just a download with no installation. In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3, you can use the default jar. If you use Spark 2, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
 
 ### Create some data set
 
@@ -43,14 +43,14 @@ Create, in the same directory as RumbleDB to keep it simple, a file data.json an
 
 In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
-    spark-submit rumbledb-1.14.0.jar --shell yes
+    spark-submit rumbledb-1.15.0.jar --shell yes
                  
 The RumbleDB shell appears:
 
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.14.0 "Acacia" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.15.0 "Ivory Palm
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
     
     Master: local[*]
