@@ -27,6 +27,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.SequenceExceptionOneOrMore;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
@@ -57,6 +58,23 @@ public class OneOrMoreIterator extends HybridRuntimeIterator {
                 "fn:one-or-more() called with a sequence containing less than 1 item",
                 getMetadata()
         );
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        if (childDataFrame.isEmptySequence()) {
+            throw new SequenceExceptionOneOrMore(
+                    "fn:one-or-more() called with a sequence containing less than 1 item",
+                    getMetadata()
+            );
+        }
+        return childDataFrame;
     }
 
     @Override

@@ -19,6 +19,7 @@ public class FieldDescriptor implements Serializable {
     private Item defaultValue = null;
     private boolean unique = false;
     private boolean requiredIsSet = false;
+    private boolean uniqueIsSet = false;
 
     public void setName(String name) {
         this.name = name;
@@ -38,6 +39,7 @@ public class FieldDescriptor implements Serializable {
     }
 
     public void setUnique(Boolean unique) {
+        this.uniqueIsSet = true;
         this.unique = unique;
     }
 
@@ -63,6 +65,10 @@ public class FieldDescriptor implements Serializable {
 
     public boolean requiredIsSet() {
         return this.requiredIsSet;
+    }
+
+    public boolean uniqueIsSet() {
+        return this.uniqueIsSet;
     }
 
     @Override
@@ -96,13 +102,14 @@ public class FieldDescriptor implements Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if (this.defaultValue == null) {
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            this.defaultValue = castValue;
         }
     }
 
@@ -117,13 +124,14 @@ public class FieldDescriptor implements Serializable {
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
-            this.defaultValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
-            if (this.defaultValue == null) {
+            Item castValue = CastIterator.castItemToType(this.defaultValue, this.type, null);
+            if (castValue == null) {
                 throw new InvalidSchemaException(
-                        "The literal " + this.defaultValue + "is not a valid literal for type " + this.type.toString(),
+                        "The literal " + this.defaultValue + " is not a valid literal for type " + this.type.toString(),
                         ExceptionMetadata.EMPTY_METADATA
                 );
             }
+            this.defaultValue = castValue;
         }
     }
 }

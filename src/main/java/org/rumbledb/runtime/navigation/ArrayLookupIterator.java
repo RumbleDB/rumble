@@ -198,7 +198,7 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         initLookupPosition(context);
         childDataFrame.createOrReplaceTempView("array");
         if (childDataFrame.getItemType().isArrayItemType()) {
-            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet().getType();
+            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
                     String.format(

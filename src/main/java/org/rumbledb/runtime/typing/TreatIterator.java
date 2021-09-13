@@ -123,6 +123,9 @@ public class TreatIterator extends HybridRuntimeIterator {
             } else {
                 this.nextResult = this.iterator.next();
             }
+            if (this.nextResult != null && !this.nextResult.getDynamicType().isResolved()) {
+                this.nextResult.getDynamicType().resolve(this.currentDynamicContextForLocalExecution, getMetadata());
+            }
             if (this.nextResult != null) {
                 this.resultCount++;
             }

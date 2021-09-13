@@ -860,7 +860,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         ) {
             return new CastExpression(
                     children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(name), SequenceType.Arity.OneOrZero),
                     createMetadataFromContext(ctx)
             );
         }
@@ -873,7 +873,7 @@ public class XQueryTranslationVisitor extends org.rumbledb.parser.XQueryParserBa
         ) {
             return new CastExpression(
                     children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(name), SequenceType.Arity.OneOrZero),
                     createMetadataFromContext(ctx)
             );
         }

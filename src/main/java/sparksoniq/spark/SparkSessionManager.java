@@ -22,27 +22,50 @@ package sparksoniq.spark;
 
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
+import org.apache.parquet.format.IntType;
 import org.apache.spark.SparkConf;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.JavaSparkContext;
 import org.apache.spark.sql.SparkSession;
+import org.apache.spark.sql.types.BooleanType;
+import org.apache.spark.sql.types.DoubleType;
+import org.apache.spark.sql.types.FloatType;
+import org.apache.spark.sql.types.StructField;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.FunctionIdentifier;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CannotMaterializeException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.AnnotatedItem;
+import org.rumbledb.items.AnyURIItem;
 import org.rumbledb.items.ArrayItem;
+import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
+import org.rumbledb.items.DateItem;
+import org.rumbledb.items.DateTimeItem;
+import org.rumbledb.items.DateTimeStampItem;
+import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
+import org.rumbledb.items.DurationItem;
 import org.rumbledb.items.FloatItem;
+import org.rumbledb.items.FunctionItem;
+import org.rumbledb.items.HexBinaryItem;
 import org.rumbledb.items.IntItem;
 import org.rumbledb.items.IntegerItem;
 import org.rumbledb.items.NullItem;
 import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
+import org.rumbledb.items.TimeItem;
+import org.rumbledb.items.YearMonthDurationItem;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+
 import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -93,7 +116,10 @@ public class SparkSessionManager {
         try {
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
-                System.err.println("No app name specified");
+                System.err.println(
+                    "[WARNING] No app name specified (you can do so with --conf spark.app.name=your_name). Setting to "
+                        + APP_NAME
+                );
                 this.configuration.setAppName(APP_NAME);
             }
             this.configuration.set("spark.sql.crossJoin.enabled", "true"); // enables cartesian product
@@ -122,23 +148,54 @@ public class SparkSessionManager {
     private void initializeKryoSerialization() {
         if (!this.configuration.contains("spark.serializer")) {
             this.configuration.set("spark.serializer", "org.apache.spark.serializer.KryoSerializer");
+            // this.configuration.set("spark.kryo.registrationRequired", "true");
             Class<?>[] serializedClasses = new Class[] {
                 Item.class,
+                AnnotatedItem.class,
                 ArrayItem.class,
                 ObjectItem.class,
-                StringItem.class,
-                IntItem.class,
-                IntegerItem.class,
-                FloatItem.class,
-                DoubleItem.class,
-                DecimalItem.class,
-                NullItem.class,
+                AnyURIItem.class,
+                Base64BinaryItem.class,
                 BooleanItem.class,
+                DateItem.class,
+                DateTimeItem.class,
+                DateTimeStampItem.class,
+                DayTimeDurationItem.class,
+                DecimalItem.class,
+                DoubleItem.class,
+                DurationItem.class,
+                FloatItem.class,
+                HexBinaryItem.class,
+                IntegerItem.class,
+                IntItem.class,
+                NullItem.class,
+                StringItem.class,
+                TimeItem.class,
+                YearMonthDurationItem.class,
+                FunctionItem.class,
+                FunctionIdentifier.class,
+                Name.class,
+                SequenceType.class,
+                SequenceType.Arity.class,
+                ItemType.class,
                 DynamicContext.class,
                 FlworTuple.class,
                 FlworKey.class,
                 RuntimeIterator.class,
-                RuntimeTupleIterator.class };
+                RuntimeTupleIterator.class,
+                StructType.class,
+                StructType[].class,
+                StructField.class,
+                StructField[].class,
+                BooleanType.class,
+                DoubleType.class,
+                FloatType.class,
+                IntType.class,
+                BooleanType.class,
+                BooleanType.class,
+                BooleanType.class,
+                BooleanType.class,
+            };
 
             this.configuration.registerKryoClasses(serializedClasses);
         }

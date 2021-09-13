@@ -21,6 +21,9 @@ public class ItemFactory {
     private Item positiveInfinityDoubleItem;
     private Item negativeInfinityDoubleItem;
     private Item NaNDoubleItem;
+    private Item positiveInfinityFloatItem;
+    private Item negativeInfinityFloatItem;
+    private Item NaNFloatItem;
 
     public static ItemFactory getInstance() {
         if (instance == null) {
@@ -32,6 +35,9 @@ public class ItemFactory {
             instance.positiveInfinityDoubleItem = new DoubleItem(Double.POSITIVE_INFINITY);
             instance.negativeInfinityDoubleItem = new DoubleItem(Double.NEGATIVE_INFINITY);
             instance.NaNDoubleItem = new DoubleItem(Double.NaN);
+            instance.positiveInfinityFloatItem = new FloatItem(Float.POSITIVE_INFINITY);
+            instance.negativeInfinityFloatItem = new FloatItem(Float.NEGATIVE_INFINITY);
+            instance.NaNFloatItem = new FloatItem(Float.NaN);
         }
         return instance;
     }
@@ -94,7 +100,20 @@ public class ItemFactory {
     }
 
     public Item createFloatItem(float d) {
+        if (d == Float.POSITIVE_INFINITY) {
+            return this.positiveInfinityFloatItem;
+        }
+        if (d == Float.NEGATIVE_INFINITY) {
+            return this.negativeInfinityFloatItem;
+        }
+        if (d == Float.NaN) {
+            return this.NaNFloatItem;
+        }
         return new FloatItem(d);
+    }
+
+    public Item createAnnotatedItem(Item itemToAnnotate, ItemType type) {
+        return new AnnotatedItem(itemToAnnotate, type);
     }
 
     public Item createDurationItem(Period p) {
@@ -117,6 +136,14 @@ public class ItemFactory {
         return new DateTimeItem(s);
     }
 
+    public Item createDateTimeStampItem(DateTime dt, boolean checkTimezone) {
+        return new DateTimeStampItem(dt, checkTimezone);
+    }
+
+    public Item createDateTimeStampItem(String s) {
+        return new DateTimeStampItem(s);
+    }
+
     public Item createDateItem(DateTime dt, boolean hasTimeZone) {
         return new DateItem(dt, hasTimeZone);
     }
@@ -131,6 +158,26 @@ public class ItemFactory {
 
     public Item createTimeItem(String s) {
         return new TimeItem(s);
+    }
+
+    public Item createGDayItem(String s) {
+        return new gDayItem(s);
+    }
+
+    public Item createGMonthItem(String s) {
+        return new gMonthItem(s);
+    }
+
+    public Item createGYearItem(String s) {
+        return new gYearItem(s);
+    }
+
+    public Item createGMonthDayItem(String s) {
+        return new gMonthDayItem(s);
+    }
+
+    public Item createGYearMonthItem(String s) {
+        return new gYearMonthItem(s);
     }
 
     public Item createAnyURIItem(String s) {
@@ -163,10 +210,6 @@ public class ItemFactory {
 
     public Item createObjectItem(Map<String, List<Item>> keyValuePairs) {
         return new ObjectItem(keyValuePairs);
-    }
-
-    public Item createUserDefinedItem(Item item, ItemType type) {
-        return new UserDefinedItem(item, type);
     }
 
 }

@@ -39,10 +39,7 @@ decimalFormatDecl       : 'declare'
                           (dfPropertyName '=' stringLiteral)*;
 
 qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (local_name=nCNameOrKeyWord | local_namekw = keyWords);
-
-nCNameOrKeyWord         : NCName
-                        | NullLiteral;
+                          (local_name=NCName | local_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -63,7 +60,11 @@ functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
 
-typeDecl                : 'declare' 'type' type_name=qname 'as' type_definition=exprSingle;
+typeDecl                : 'declare' 'type' type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+
+schemaLanguage          : 'jsound' 'compact'
+                        | 'jsound' 'verbose'
+                        | 'json' 'schema';
 
 paramList               : param (',' param)*;
 
@@ -188,6 +189,8 @@ predicate               : '[' expr ']';
 objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
+                        | Ktrue
+                        | Kfalse
                         | Literal
                         | stringLiteral
                         | varRef
@@ -299,6 +302,9 @@ keyWords                : Kjsoniq
                         | Korder
                         | Kcount
                         | Kreturn
+                        | Kunordered
+                        | Ktrue
+                        | Kfalse
                         ;
 
 ///////////////////////// literals
@@ -391,6 +397,12 @@ Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
 
+Kunordered              : 'unordered';
+
+Ktrue                   : 'true';
+
+Kfalse                  : 'false';
+
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
@@ -403,11 +415,9 @@ ArgumentPlaceholder     : '?';
 
 NullLiteral             : 'null';
 
-Literal                 : NumericLiteral | BooleanLiteral;
+Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
-
-BooleanLiteral          : 'true' | 'false';
 
 IntegerLiteral          : Digits ;
 

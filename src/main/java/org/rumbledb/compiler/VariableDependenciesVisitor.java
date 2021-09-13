@@ -31,7 +31,6 @@ import java.util.List;
 import java.util.Set;
 import java.util.TreeMap;
 import java.util.TreeSet;
-import java.util.stream.Collectors;
 import java.util.Map;
 
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -95,6 +94,7 @@ import org.rumbledb.expressions.primary.VariableReferenceExpression;
  */
 public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
 
+    @SuppressWarnings("unused")
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
 
     /**
@@ -424,47 +424,14 @@ public class VariableDependenciesVisitor extends AbstractNodeVisitor<Void> {
             }
             visit(variableDeclaration, null);
             nameToNodeMap.put(variableDeclaration.getVariableName(), variableDeclaration);
-            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.err.print(variableDeclaration.getVariableName());
-                System.err.println(
-                    String.join(
-                        ", ",
-                        getInputVariableDependencies(variableDeclaration).stream()
-                            .map(x -> x.toString())
-                            .collect(Collectors.toList())
-                    )
-                );
-            }
         }
         for (FunctionDeclaration functionDeclaration : prolog.getFunctionDeclarations()) {
             visit(functionDeclaration, null);
             nameToNodeMap.put(functionDeclaration.getFunctionIdentifier().getNameWithArity(), functionDeclaration);
-            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.err.print(functionDeclaration.getFunctionIdentifier().toString());
-                System.err.println(
-                    String.join(
-                        ", ",
-                        getInputVariableDependencies(functionDeclaration).stream()
-                            .map(x -> x.toString())
-                            .collect(Collectors.toList())
-                    )
-                );
-            }
         }
         for (TypeDeclaration typeDeclaration : prolog.getTypeDeclarations()) {
             visit(typeDeclaration, null);
             nameToNodeMap.put(typeDeclaration.getDefinition().getName(), typeDeclaration);
-            if (this.rumbleRuntimeConfiguration.isPrintIteratorTree()) {
-                System.err.print(typeDeclaration.getDefinition().getName().toString());
-                System.err.println(
-                    String.join(
-                        ", ",
-                        getInputVariableDependencies(typeDeclaration).stream()
-                            .map(x -> x.toString())
-                            .collect(Collectors.toList())
-                    )
-                );
-            }
         }
         return nameToNodeMap;
     }

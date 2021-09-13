@@ -211,11 +211,13 @@ public class NamedFunctions implements Serializable, KryoSerializable {
                 );
             functionCallIterator = constructor.newInstance(arguments, executionMode, metadata);
         } catch (ReflectiveOperationException ex) {
-            throw new UnknownFunctionCallException(
+            RuntimeException e = new UnknownFunctionCallException(
                     identifier.getName(),
                     arguments.size(),
                     metadata
             );
+            e.initCause(ex);
+            throw e;
         }
 
         if (!builtinFunction.getSignature().getReturnType().equals(SequenceType.ITEM_STAR)) {

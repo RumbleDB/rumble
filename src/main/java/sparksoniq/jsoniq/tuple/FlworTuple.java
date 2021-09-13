@@ -130,7 +130,7 @@ public class FlworTuple implements Serializable, KryoSerializable {
         if (this.dataFrameVariables.containsKey(key)) {
             JSoundDataFrame df = this.dataFrameVariables.get(key);
             JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata));
+            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
         throw new OurBadException("Undeclared FLOWR variable", metadata);
     }
