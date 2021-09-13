@@ -1,12 +1,12 @@
 # User-defined types
 
-RumbleDB now supports user-defined types in a limited fashion.
+RumbleDB now supports user-defined array and object types both with the JSound compact syntax and the JSound verbose syntax.
 
 ## JSound Schema Compact syntax
 
 RumbleDB user-defined types can be defined with the JSound syntax. A tutorial for the JSound syntax can be found [here](https://github.com/ghislainfourny/jsound-tutorial).
 
-For now, RumbleDB only allows the definition of user-defined types for objects and has initial, experimemental, limited support of JSound. Also, the @ (primary key) and ? (nullable) characters are not supported at this point. The implementation is still experimental and bugs are still expected, which we will appreciate to be informed of.
+For now, RumbleDB only allows the definition of user-defined types for objects and arrays. User-defined atomic types and union types will follow soon. Also, the @ (primary key) and ? (nullable) characters are not supported at this point. The implementation is still experimental and bugs are still expected, which we will appreciate to be informed of.
 
 ## Type declaration
 
@@ -246,6 +246,35 @@ validate type local:my-type* {
 In fact, RumbleDB will internally convert the sequence of objects to a Spark DataFrame, leading to faster execution times.
 
 In other words, the JSound Compact Schema Syntax is perfect for defining DataFrames schema!
+
+## Verbose syntax
+
+For advanced JSound features, such as open object types or subtypes, the verbose syntax must be used, like so: 
+
+```
+declare type local:x as jsound verbose {
+  "kind" : "object",
+  "baseType" : "object",
+  "content" : [
+    { "name" : "foo", "type" : "integer" }
+  ],
+  "closed" : false
+};
+
+declare type local:y as jsound verbose {
+  "kind" : "object",
+  "baseType" : "local:x",
+  "content" : [
+    { "name" : "bar", "type" : "date" }
+  ],
+  "closed" : true
+};
+```
+
+The JSound type system, as its name indicates, is sound: you can only make subtypes more restrictive than the super type. The
+complete specification of both syntaxes is available on the [JSound website](https://www.jsound-spec.org/).
+
+In the feature, RumbleDB will support user-defined atomic types and union types via the verbose syntax.
 
 ## What's next?
 
