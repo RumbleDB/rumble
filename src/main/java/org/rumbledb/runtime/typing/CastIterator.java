@@ -672,24 +672,26 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkDateTimeMinMaxFacets(Item item, ItemType targetType) {
-        /*
-         * TODO: fix this that causes pipeline to fail all tests involving date/time/datetime
-         * if (
-         * (targetType.getMinInclusiveFacet() != null
-         * && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) == -1)
-         * || (targetType.getMaxInclusiveFacet() != null
-         * && item.getDateTimeValue().compareTo(targetType.getMaxInclusiveFacet().getDateTimeValue()) == 1)
-         * || (targetType.getMinExclusiveFacet() != null
-         * &&
-         * item.getDateTimeValue().compareTo(targetType.getMinExclusiveFacet().getDateTimeValue()) <= 0)
-         * || (targetType.getMaxExclusiveFacet() != null
-         * &&
-         * item.getDateTimeValue().compareTo(targetType.getMaxExclusiveFacet().getDateTimeValue()) >= 0)
-         * ) {
-         * return false;
-         * }
-         * 
-         */
+         //TODO: fix this that causes pipeline to fail all tests involving date/time/datetime
+        System.out.println(targetType.getMinInclusiveFacet());
+        System.out.println(targetType.getMaxInclusiveFacet());
+        System.out.println(targetType.getMinExclusiveFacet());
+        System.out.println(targetType.getMaxExclusiveFacet());
+         if (
+         (targetType.getMinInclusiveFacet() != null
+         && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) < 0)
+         || (targetType.getMaxInclusiveFacet() != null
+         && item.getDateTimeValue().compareTo(targetType.getMaxInclusiveFacet().getDateTimeValue()) > 0)
+         || (targetType.getMinExclusiveFacet() != null
+         &&
+         item.getDateTimeValue().compareTo(targetType.getMinExclusiveFacet().getDateTimeValue()) <= 0)
+         || (targetType.getMaxExclusiveFacet() != null
+         &&
+         item.getDateTimeValue().compareTo(targetType.getMaxExclusiveFacet().getDateTimeValue()) >= 0)
+         ) {
+         return false;
+         }
+
         return true;
     }
 
