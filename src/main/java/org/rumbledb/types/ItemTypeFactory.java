@@ -499,7 +499,6 @@ public class ItemTypeFactory {
     /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
-     * @param name of the new type (if null it is an anonymous type)
      * @param structType descriptor of the object
      * @return an object item type representing the type in Rumble
      */
