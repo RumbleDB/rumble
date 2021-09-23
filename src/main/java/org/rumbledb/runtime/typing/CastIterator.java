@@ -757,30 +757,28 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
         // * TODO: fix this that causes pipeline to fail all tests involving duration
-        /*
-         * if (
-         * (targetType.getMinInclusiveFacet() != null
-         * && item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) == -1)
-         * || (targetType.getMaxInclusiveFacet() != null
-         * && item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) == 1)
-         * || (targetType.getMinExclusiveFacet() != null
-         * &&
-         * item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
-         * || (targetType.getMaxExclusiveFacet() != null
-         * &&
-         * item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
-         * ) {
-         * return false;
-         * }
-         */
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDurationValue()
+                    .toStandardDuration()
+                    .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) < 0)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) > 0)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
+        ) {
+            return false;
+        }
 
 
         return true;
