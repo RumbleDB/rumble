@@ -673,10 +673,6 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
 
     public static boolean checkDateTimeMinMaxFacets(Item item, ItemType targetType) {
         // TODO: fix this that causes pipeline to fail all tests involving date/time/datetime
-        System.out.println(targetType.getMinInclusiveFacet());
-        System.out.println(targetType.getMaxInclusiveFacet());
-        System.out.println(targetType.getMinExclusiveFacet());
-        System.out.println(targetType.getMaxExclusiveFacet());
         if (
             (targetType.getMinInclusiveFacet() != null
                 && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) < 0)
