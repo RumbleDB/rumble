@@ -548,9 +548,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public static boolean checkFacetsInteger(Item item, ItemType targetType) {
         if (
             (targetType.getMinInclusiveFacet() != null
-                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) == -1)
+                && item.getIntegerValue().compareTo(targetType.getMinInclusiveFacet().getIntegerValue()) < 0)
                 || (targetType.getMaxInclusiveFacet() != null
-                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) == 1)
+                    && item.getIntegerValue().compareTo(targetType.getMaxInclusiveFacet().getIntegerValue()) > 0)
                 || (targetType.getMinExclusiveFacet() != null
                     &&
                     item.getIntegerValue().compareTo(targetType.getMinExclusiveFacet().getIntegerValue()) <= 0)
@@ -629,9 +629,9 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     public static boolean checkFacetsDecimal(Item item, ItemType targetType) {
         if (
             (targetType.getMinInclusiveFacet() != null
-                && item.getDecimalValue().compareTo(targetType.getMinInclusiveFacet().getDecimalValue()) == -1)
+                && item.getDecimalValue().compareTo(targetType.getMinInclusiveFacet().getDecimalValue()) < 0)
                 || (targetType.getMaxInclusiveFacet() != null
-                    && item.getDecimalValue().compareTo(targetType.getMaxInclusiveFacet().getDecimalValue()) == 1)
+                    && item.getDecimalValue().compareTo(targetType.getMaxInclusiveFacet().getDecimalValue()) > 0)
                 || (targetType.getMinExclusiveFacet() != null
                     &&
                     item.getDecimalValue().compareTo(targetType.getMinExclusiveFacet().getDecimalValue()) <= 0)
@@ -672,25 +672,25 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     }
 
     public static boolean checkDateTimeMinMaxFacets(Item item, ItemType targetType) {
-         //TODO: fix this that causes pipeline to fail all tests involving date/time/datetime
+        // TODO: fix this that causes pipeline to fail all tests involving date/time/datetime
         System.out.println(targetType.getMinInclusiveFacet());
         System.out.println(targetType.getMaxInclusiveFacet());
         System.out.println(targetType.getMinExclusiveFacet());
         System.out.println(targetType.getMaxExclusiveFacet());
-         if (
-         (targetType.getMinInclusiveFacet() != null
-         && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) < 0)
-         || (targetType.getMaxInclusiveFacet() != null
-         && item.getDateTimeValue().compareTo(targetType.getMaxInclusiveFacet().getDateTimeValue()) > 0)
-         || (targetType.getMinExclusiveFacet() != null
-         &&
-         item.getDateTimeValue().compareTo(targetType.getMinExclusiveFacet().getDateTimeValue()) <= 0)
-         || (targetType.getMaxExclusiveFacet() != null
-         &&
-         item.getDateTimeValue().compareTo(targetType.getMaxExclusiveFacet().getDateTimeValue()) >= 0)
-         ) {
-         return false;
-         }
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDateTimeValue().compareTo(targetType.getMinInclusiveFacet().getDateTimeValue()) < 0)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDateTimeValue().compareTo(targetType.getMaxInclusiveFacet().getDateTimeValue()) > 0)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDateTimeValue().compareTo(targetType.getMinExclusiveFacet().getDateTimeValue()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDateTimeValue().compareTo(targetType.getMaxExclusiveFacet().getDateTimeValue()) >= 0)
+        ) {
+            return false;
+        }
 
         return true;
     }
