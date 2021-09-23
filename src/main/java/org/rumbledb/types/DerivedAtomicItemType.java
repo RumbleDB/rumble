@@ -7,6 +7,8 @@ import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
 import java.util.List;
 import java.util.Set;
@@ -394,7 +396,9 @@ public class DerivedAtomicItemType implements ItemType {
             this.primitiveType = this.baseType.getPrimitiveType();
 
             if (this.length == null) {
-                this.length = this.baseType.getLengthFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                    this.length = this.baseType.getLengthFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
                     throw new InvalidSchemaException(
@@ -413,7 +417,9 @@ public class DerivedAtomicItemType implements ItemType {
             // TODO: Check list enumeration with for loop or by hash
 
             if (this.minLength == null) {
-                this.minLength = this.baseType.getMinLengthFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                    this.minLength = this.baseType.getMinLengthFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
                     throw new InvalidSchemaException(
@@ -426,7 +432,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxLength == null) {
-                this.maxLength = this.baseType.getMaxLengthFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                    this.maxLength = this.baseType.getMaxLengthFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
                     throw new InvalidSchemaException(
@@ -439,7 +447,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.minInclusive == null) {
-                this.minInclusive = this.baseType.getMinInclusiveFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                    this.minInclusive = this.baseType.getMinInclusiveFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
                     throw new InvalidSchemaException(
@@ -447,7 +457,16 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.minInclusive.getFloatValue() < this.baseType.getMinInclusiveFacet().getFloatValue()) {
+
+                if (
+                    this.baseType.getMinInclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.minInclusive,
+                            this.baseType.getMinInclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) < 0
+                ) {
                     throw new InvalidSchemaException(
                             "Out of bounds minInclusive facet.",
                             ExceptionMetadata.EMPTY_METADATA
@@ -455,7 +474,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxInclusive == null) {
-                this.maxInclusive = this.baseType.getMaxInclusiveFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                    this.maxInclusive = this.baseType.getMaxInclusiveFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
                     throw new InvalidSchemaException(
@@ -463,15 +484,27 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.maxInclusive.getFloatValue() < this.baseType.getMaxInclusiveFacet().getFloatValue()) {
+
+                if (
+                    this.baseType.getMaxInclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.maxInclusive,
+                            this.baseType.getMaxInclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
                     throw new InvalidSchemaException(
                             "Out of bounds maxInclusive facet.",
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
+
             }
             if (this.minExclusive == null) {
-                this.minExclusive = this.baseType.getMinExclusiveFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                    this.minExclusive = this.baseType.getMinExclusiveFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
                     throw new InvalidSchemaException(
@@ -479,7 +512,15 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.minExclusive.getFloatValue() < this.baseType.getMinExclusiveFacet().getFloatValue()) {
+                if (
+                    this.baseType.getMinExclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.minExclusive,
+                            this.baseType.getMinExclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
                     throw new InvalidSchemaException(
                             "Out of bounds minExclusive facet.",
                             ExceptionMetadata.EMPTY_METADATA
@@ -487,7 +528,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.maxExclusive == null) {
-                this.maxExclusive = this.baseType.getMaxExclusiveFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                    this.maxExclusive = this.baseType.getMaxExclusiveFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
                     throw new InvalidSchemaException(
@@ -495,7 +538,15 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.maxExclusive.getFloatValue() < this.baseType.getMaxExclusiveFacet().getFloatValue()) {
+                if (
+                    this.baseType.getMaxExclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.maxExclusive,
+                            this.baseType.getMaxExclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
                     throw new InvalidSchemaException(
                             "Out of bounds maxExclusive facet.",
                             ExceptionMetadata.EMPTY_METADATA
@@ -503,7 +554,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.totalDigits == null) {
-                this.totalDigits = this.baseType.getTotalDigitsFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                    this.totalDigits = this.baseType.getTotalDigitsFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
                     throw new InvalidSchemaException(
@@ -519,7 +572,9 @@ public class DerivedAtomicItemType implements ItemType {
                 }
             }
             if (this.fractionDigits == null) {
-                this.fractionDigits = this.baseType.getFractionDigitsFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                    this.fractionDigits = this.baseType.getFractionDigitsFacet();
+                }
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
                     throw new InvalidSchemaException(
@@ -527,12 +582,14 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.fractionDigits > this.baseType.getFractionDigitsFacet()) {
-                    throw new InvalidSchemaException(
-                            "Out of bounds fractionDigits facet.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
-                }
+                /*
+                 * if (this.fractionDigits > this.baseType.getFractionDigitsFacet()) {
+                 * throw new InvalidSchemaException(
+                 * "Out of bounds fractionDigits facet.",
+                 * ExceptionMetadata.EMPTY_METADATA
+                 * );
+                 * }
+                 */
             }
 
 
