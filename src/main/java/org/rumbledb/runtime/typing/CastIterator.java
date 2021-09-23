@@ -400,7 +400,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 } else {
                     return null;
                 }
-                if (!checkFacetsDateTime(result, targetType)) {
+                if (!checkFacetsDateTimeStamp(result, targetType)) {
                     return null;
                 }
                 if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
@@ -739,32 +739,46 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
         return true;
     }
 
+    public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
+        if (!checkDateTimeMinMaxFacets(item, targetType)) {
+            return false;
+        }
+
+        if (
+            targetType.getExplicitTimezoneFacet() != null
+                && !targetType.getExplicitTimezoneFacet()
+                    .equals(BuiltinTypesCatalogue.dateTimeStampItem.getExplicitTimezoneFacet())
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
     public static boolean checkFacetsDuration(Item item, ItemType targetType) {
         // * TODO: fix this that causes pipeline to fail all tests involving duration
-        /*
-         * if (
-         * (targetType.getMinInclusiveFacet() != null
-         * && item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) == -1)
-         * || (targetType.getMaxInclusiveFacet() != null
-         * && item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) == 1)
-         * || (targetType.getMinExclusiveFacet() != null
-         * &&
-         * item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
-         * || (targetType.getMaxExclusiveFacet() != null
-         * &&
-         * item.getDurationValue()
-         * .toStandardDuration()
-         * .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
-         * ) {
-         * return false;
-         * }
-         */
+        if (
+            (targetType.getMinInclusiveFacet() != null
+                && item.getDurationValue()
+                    .toStandardDuration()
+                    .compareTo(targetType.getMinInclusiveFacet().getDurationValue().toStandardDuration()) < 0)
+                || (targetType.getMaxInclusiveFacet() != null
+                    && item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxInclusiveFacet().getDurationValue().toStandardDuration()) > 0)
+                || (targetType.getMinExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMinExclusiveFacet().getDurationValue().toStandardDuration()) <= 0)
+                || (targetType.getMaxExclusiveFacet() != null
+                    &&
+                    item.getDurationValue()
+                        .toStandardDuration()
+                        .compareTo(targetType.getMaxExclusiveFacet().getDurationValue().toStandardDuration()) >= 0)
+        ) {
+            return false;
+        }
 
 
         return true;
