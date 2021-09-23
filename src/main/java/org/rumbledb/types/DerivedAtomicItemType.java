@@ -2,7 +2,11 @@ package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 
 import java.util.List;
 import java.util.Set;
@@ -11,15 +15,16 @@ public class DerivedAtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    private final ItemType baseType, primitiveType;
-    private final int typeTreeDepth;
+    private final ItemType baseType;
+    private ItemType primitiveType;
+    private int typeTreeDepth;
     private final boolean isUserDefined;
     private final Name name;
-    private final Item minInclusive, maxInclusive, minExclusive, maxExclusive;
-    private final Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private final List<String> constraints;
-    private final List<Item> enumeration;
-    private final TimezoneFacet explicitTimezone;
+    private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
+    private Integer minLength, length, maxLength, totalDigits, fractionDigits;
+    private List<String> constraints;
+    private List<Item> enumeration;
+    private TimezoneFacet explicitTimezone;
 
     DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
         this(name, baseType, primitiveType, facets, true);
@@ -56,6 +61,22 @@ public class DerivedAtomicItemType implements ItemType {
 
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
+
+        if (this.baseType.isResolved()) {
+            processBaseType();
+        }
+
+    }
+
+    DerivedAtomicItemType(
+            Name name,
+            ItemType baseType,
+            Facets facets,
+            boolean isUserDefined
+    ) {
+        // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
+        // to baseType
+        this(name, baseType, null, facets, isUserDefined);
     }
 
     @Override
@@ -349,5 +370,56 @@ public class DerivedAtomicItemType implements ItemType {
     @Override
     public boolean isCompatibleWithDataFrames() {
         return true;
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+    }
+
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isAtomicItemType()) {
+            this.primitiveType = this.baseType.getPrimitiveType();
+
+
+            if (this.minLength == null) {
+                this.minLength = this.baseType.getMinLengthFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable ...",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.minLength < this.baseType.getMinLengthFacet()) {
+                    throw new InvalidSchemaException("Out of bounds", ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+            if (this.maxLength == null) {
+                this.maxLength = this.baseType.getMaxLengthFacet();
+            }
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            // TODO: for all facets
+            // Check
+            return;
+        }
+        throw new InvalidSchemaException(
+                "The base type of a user-defined atomic type must be an atomic type.",
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 }
