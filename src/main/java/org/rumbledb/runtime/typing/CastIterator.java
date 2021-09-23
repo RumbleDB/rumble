@@ -400,7 +400,7 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
                 } else {
                     return null;
                 }
-                if (!checkFacetsDateTime(result, targetType)) {
+                if (!checkFacetsDateTimeStamp(result, targetType)) {
                     return null;
                 }
                 if (targetType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
@@ -732,6 +732,22 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             targetType.getExplicitTimezoneFacet() != null
                 && !targetType.getExplicitTimezoneFacet()
                     .equals(BuiltinTypesCatalogue.dateTimeItem.getExplicitTimezoneFacet())
+        ) {
+            return false;
+        }
+
+        return true;
+    }
+
+    public static boolean checkFacetsDateTimeStamp(Item item, ItemType targetType) {
+        if (!checkDateTimeMinMaxFacets(item, targetType)) {
+            return false;
+        }
+
+        if (
+            targetType.getExplicitTimezoneFacet() != null
+                && !targetType.getExplicitTimezoneFacet()
+                    .equals(BuiltinTypesCatalogue.dateTimeStampItem.getExplicitTimezoneFacet())
         ) {
             return false;
         }
