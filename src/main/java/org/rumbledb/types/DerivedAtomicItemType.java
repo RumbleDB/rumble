@@ -393,26 +393,149 @@ public class DerivedAtomicItemType implements ItemType {
         if (this.baseType.isAtomicItemType()) {
             this.primitiveType = this.baseType.getPrimitiveType();
 
+            if (this.length == null) {
+                this.length = this.baseType.getLengthFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.length != this.baseType.getLengthFacet()) {
+                    throw new InvalidSchemaException("Incompatible length facet.", ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+
+            if (this.enumeration == null) {
+                this.enumeration = this.baseType.getEnumerationFacet();
+            }
+            // TODO: Check list enumeration with for loop or by hash
 
             if (this.minLength == null) {
                 this.minLength = this.baseType.getMinLengthFacet();
             } else {
                 if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
                     throw new InvalidSchemaException(
-                            "This facet is not applicable ...",
+                            "This facet is not applicable to " + this.primitiveType,
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
                 if (this.minLength < this.baseType.getMinLengthFacet()) {
-                    throw new InvalidSchemaException("Out of bounds", ExceptionMetadata.EMPTY_METADATA);
+                    throw new InvalidSchemaException("Out of bounds minLength.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
             if (this.maxLength == null) {
                 this.maxLength = this.baseType.getMaxLengthFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.maxLength > this.baseType.getMaxLengthFacet()) {
+                    throw new InvalidSchemaException("Out of bounds maxLength.", ExceptionMetadata.EMPTY_METADATA);
+                }
             }
-            if (this.enumeration == null) {
-                this.enumeration = this.baseType.getEnumerationFacet();
+            if (this.minInclusive == null) {
+                this.minInclusive = this.baseType.getMinInclusiveFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.minInclusive.getFloatValue() < this.baseType.getMinInclusiveFacet().getFloatValue()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds minInclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
             }
+            if (this.maxInclusive == null) {
+                this.maxInclusive = this.baseType.getMaxInclusiveFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.maxInclusive.getFloatValue() < this.baseType.getMaxInclusiveFacet().getFloatValue()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds maxInclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.minExclusive == null) {
+                this.minExclusive = this.baseType.getMinExclusiveFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.minExclusive.getFloatValue() < this.baseType.getMinExclusiveFacet().getFloatValue()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds minExclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.maxExclusive == null) {
+                this.maxExclusive = this.baseType.getMaxExclusiveFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.maxExclusive.getFloatValue() < this.baseType.getMaxExclusiveFacet().getFloatValue()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds maxExclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.totalDigits == null) {
+                this.totalDigits = this.baseType.getTotalDigitsFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.totalDigits > this.baseType.getTotalDigitsFacet()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds totalDigits facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.fractionDigits == null) {
+                this.fractionDigits = this.baseType.getFractionDigitsFacet();
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.fractionDigits > this.baseType.getFractionDigitsFacet()) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds fractionDigits facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+
+
             // TODO: for all facets
             // Check
             return;

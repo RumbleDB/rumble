@@ -17,10 +17,7 @@ import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ItemTypeFactory {
 
@@ -294,10 +291,10 @@ public class ItemTypeFactory {
                 Integer minLength = null;
                 Integer maxLength = null;
                 Integer enumeration = null;
-                Integer minInclusive = null;
-                Integer maxInclusive = null;
-                Integer minExclusive = null;
-                Integer maxExclusive = null;
+                Item minInclusive = null;
+                Item maxInclusive = null;
+                Item minExclusive = null;
+                Item maxExclusive = null;
                 Integer totalDigits = null;
                 Integer fractionDigits = null;
 
@@ -341,6 +338,16 @@ public class ItemTypeFactory {
                         Collections.emptyList()
                 );
             case "atomic":
+                length = null;
+                minLength = null;
+                maxLength = null;
+                enumeration = null;
+                minInclusive = null;
+                maxInclusive = null;
+                minExclusive = null;
+                maxExclusive = null;
+                totalDigits = null;
+                fractionDigits = null;
                 if (baseType == null) {
                     throw new InvalidSchemaException(
                             "BaseType is required for an atomic user-defined type.",
@@ -395,7 +402,7 @@ public class ItemTypeFactory {
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
-                    minInclusive = minInclusiveItem.castToIntValue();
+                    minInclusive = minInclusiveItem;
                 }
                 if (keys.contains("maxInclusive")) {
                     Item maxInclusiveItem = item.getItemByKey("maxInclusive");
@@ -405,7 +412,7 @@ public class ItemTypeFactory {
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
-                    maxInclusive = maxInclusiveItem.castToIntValue();
+                    maxInclusive = maxInclusiveItem;
                 }
                 if (keys.contains("minExclusive")) {
                     Item minExclusiveItem = item.getItemByKey("minExclusive");
@@ -415,7 +422,7 @@ public class ItemTypeFactory {
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
-                    minExclusive = minExclusiveItem.castToIntValue();
+                    minExclusive = minExclusiveItem;
                 }
                 if (keys.contains("maxExclusive")) {
                     Item maxExclusiveItem = item.getItemByKey("maxExclusive");
@@ -425,7 +432,7 @@ public class ItemTypeFactory {
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
-                    maxExclusive = maxExclusiveItem.castToIntValue();
+                    maxExclusive = maxExclusiveItem;
                 }
                 if (keys.contains("totalDigits")) {
                     Item totalDigitsItem = item.getItemByKey("totalDigits");
@@ -448,9 +455,25 @@ public class ItemTypeFactory {
                     fractionDigits = fractionDigitsItem.castToIntValue();
                 }
 
+
                 // Item contains syntax of JSound schema
-                // return new DerivedAtomicItemType(name, baseType,
-                // new HashSet)
+                return new DerivedAtomicItemType(
+                        name,
+                        baseType,
+                        baseType,
+                        Facets.createAtomicTypeFacets(
+                            length,
+                            enumeration,
+                            minLength,
+                            maxLength,
+                            minInclusive,
+                            maxInclusive,
+                            minExclusive,
+                            maxExclusive,
+                            totalDigits,
+                            fractionDigits
+                        )
+                );
             case "union":
                 throw new OurBadException("Kind union is not supported yet.");
             default:
