@@ -430,12 +430,15 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 throw new CannotRetrieveResourceException("File " + uri + " not found.", expression.getMetadata());
             }
             try {
+                ItemType schemaItemType = null;
+                if(false) {
                 StructType s = SparkSessionManager.getInstance()
                     .getOrCreateSession()
                     .read()
                     .parquet(uri.toString())
                     .schema();
-                ItemType schemaItemType = ItemTypeFactory.createItemType(s);
+                schemaItemType = ItemTypeFactory.createItemType(s);
+                }
                 // TODO : check if arity is correct
                 expression.setStaticSequenceType(new SequenceType(schemaItemType, SequenceType.Arity.ZeroOrMore));
                 return true;

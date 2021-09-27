@@ -198,7 +198,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         if (this.dataFrameVariableValues.containsKey(varName)) {
             JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+            return null;//rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
 
         if (this.parent != null) {
@@ -265,8 +265,8 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, VariableValues.class);
         kryo.writeObject(output, this.localVariableValues);
-        // kryo.writeObject(output, this.rddVariableValues);
-        // kryo.writeObject(output, this.dataFrameVariableValues);
+        kryo.writeObject(output, this.rddVariableValues);
+        kryo.writeObject(output, this.dataFrameVariableValues);
     }
 
     @SuppressWarnings("unchecked")
@@ -274,8 +274,8 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void read(Kryo kryo, Input input) {
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
-        // this.rddVariableValues = kryo.readObject(input, HashMap.class);
-        // this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
+        this.rddVariableValues = kryo.readObject(input, HashMap.class);
+        this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
     }
 
     public Item getPosition() {

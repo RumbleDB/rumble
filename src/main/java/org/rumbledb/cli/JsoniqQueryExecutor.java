@@ -48,7 +48,10 @@ public class JsoniqQueryExecutor {
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        if(false)
+        {
+            SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
+        }
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {

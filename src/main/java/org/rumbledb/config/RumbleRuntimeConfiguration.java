@@ -41,7 +41,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private static final long serialVersionUID = 1L;
     private static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
-        "Invalid argument format. Required format: --property value";
+            "Invalid argument format. Required format: --property value";
+    private static final String MAIN_CLASS =
+            "org.rumbleDB.cli.Main";
     private HashMap<String, String> arguments;
 
     List<String> allowedPrefixes;
@@ -62,6 +64,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
         for (int i = 0; i < args.length; i += 2) {
+            if(args[i].equals(MAIN_CLASS))
+            {
+                --i;
+                continue;
+            }
             if (!args[i].startsWith(ARGUMENT_PREFIX)) {
                 throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
             }

@@ -88,7 +88,7 @@ public class Main {
 
     private static void handleException(Throwable ex, boolean showErrorInfo) {
         if (ex != null) {
-            if (ex instanceof SparkException) {
+            if (false && ex instanceof SparkException) {
                 Throwable sparkExceptionCause = ex.getCause();
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
