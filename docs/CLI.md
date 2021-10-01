@@ -6,6 +6,7 @@ The parameters that can be used on the command line as well as on the planned HT
 |  Shell parameter | HTTP parameter  | example values  | Semantics  |
 |---|---|---|---|
 | --shell  | N/A  |  yes, no |  yes runs the interactive shell. No executes a query specified with --query-path |
+| --query | query | 1+1  | A JSONiq query directly provided as a string.  |
 | --query-path  | query-path  | file:///folder/file.jq  | A JSONiq query file to read from (from any file system, even the Web!).  |
 | --output-path  |  output-path | file:///folder/output  | Where to output to (if the output is large, it will create a sharded directory, otherwise it will create a file) |
 | --output-format  |  N/A | json, csv, avro, parquet, or any other format supported by Spark | An output format to use for the output. Formats other than json can only be output if the query outputs a highly structured sequence of objects (you can nest your query in an annotate() call to specify a schema if it does not). |

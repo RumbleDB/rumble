@@ -101,7 +101,17 @@ public class JsoniqQueryExecutor {
 
         long startTime = System.currentTimeMillis();
         Rumble rumble = new Rumble(this.configuration);
-        SequenceOfItems sequence = rumble.runQuery(queryUri);
+        SequenceOfItems sequence = null;
+        if (this.configuration.getQuery() != null) {
+            if (this.configuration.getQueryPath() != null) {
+                throw new CliException(
+                        "It is not possible to specify both a --query and a --query-path. It is either or."
+                );
+            }
+            sequence = rumble.runQuery(this.configuration.getQuery());
+        } else {
+            sequence = rumble.runQuery(queryUri);
+        }
 
         if (
             !this.configuration.getOutputFormat().equals("json")
