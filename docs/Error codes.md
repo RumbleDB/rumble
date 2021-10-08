@@ -30,17 +30,17 @@ for an object or array selector.
 
 - [RBDY0005] - Materialization Error: the sequence is too big to be materialized. Use --materialization-cap to increase the maximum  materialization size, or add an output path to write to.
 
-- [RBML0001] - Unrecognized Rumble ML Class Reference
-An unrecognized classname is used in query while accessing the Rumble ML API.
+- [RBML0001] - Unrecognized RumbleDB ML Class Reference
+An unrecognized classname is used in query while accessing the RumbleDB ML API.
 
-- [RBML0002] - Unrecognized Rumble ML Param Reference
-An unrecognized parameter is used in query while operating with a Rumble ML class.
+- [RBML0002] - Unrecognized RumbleDB ML Param Reference
+An unrecognized parameter is used in query while operating with a RumbleDB ML class.
 
-- [RBML0003] - Invalid Rumble ML Param
-Provided parameter does not match the expected type or value for the referenced Rumble ML class.
+- [RBML0003] - Invalid RumbleDB ML Param
+Provided parameter does not match the expected type or value for the referenced RumbleDB ML class.
 
 - [RBML0004] - Input is not a DataFrame
-Provided input of items does not form a DataFrame as expected by RumbleML.
+Provided input of items does not form a DataFrame as expected by RumbleDB ML.
 
 - [RBML0005] - Invalid schema for DataFrame in annotate()
 The provided schema can not be applied to the item data while converting the data to a DataFrame
@@ -48,7 +48,7 @@ The provided schema can not be applied to the item data while converting the dat
 - [RBST0001] - CLI error. Raised when invalid parameters are supplied at launch.
 
 - [RBST0002] - Unimplemented feature error.
-Raised when a JSONiq feature that is not yet implemented in Rumble is used.
+Raised when a JSONiq feature that is not yet implemented in RumbleDB is used.
 
 - [RBST0003] - Invalid for clause expression error.
 Raised when an expression produces a different,

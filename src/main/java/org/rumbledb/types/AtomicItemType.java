@@ -1,7 +1,5 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 
@@ -17,8 +15,7 @@ public class AtomicItemType implements ItemType {
 
     static final AtomicItemType atomicItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "atomic"),
-            Collections.emptySet(),
-            DataTypes.BinaryType
+            Collections.emptySet()
     );
     static final AtomicItemType stringItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "string"),
@@ -30,16 +27,14 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.StringType
+            )
     );
 
     // numeric is an internal type for avoiding function overloading, it is not available in JSONiq
     // it is the base type for xs:decimal, xs:double, and xs:float (those are now treated specially in type functions)
     static final AtomicItemType numericItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "numeric"),
-            Collections.emptySet(),
-            DataTypes.BinaryType // TODO: consider if specific type is needed
+            Collections.emptySet()
     );
 
     static final AtomicItemType decimalItem = new AtomicItemType(
@@ -51,12 +46,11 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.TOTALDIGITS,
                         FacetTypes.FRACTIONDIGITS
                     )
-            ),
-            DataTypes.createDecimalType()
+            )
     );
     static final AtomicItemType doubleItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "double"),
@@ -67,10 +61,9 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
-            ),
-            DataTypes.DoubleType
+            )
     );
     static final AtomicItemType floatItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "float"),
@@ -81,21 +74,18 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
-            ),
-            DataTypes.FloatType
+            )
     );
 
     static final AtomicItemType booleanItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "boolean"),
-            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS)),
-            DataTypes.BooleanType
+            new HashSet<>(Arrays.asList(FacetTypes.ENUMERATION, FacetTypes.CONSTRAINTS))
     );
     static final AtomicItemType nullItem = new AtomicItemType(
             new Name(Name.JS_NS, "js", "null"),
-            Collections.emptySet(),
-            DataTypes.NullType // TODO : see appropriate type
+            Collections.emptySet()
     );
     static final AtomicItemType durationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "duration"),
@@ -106,10 +96,9 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     static final AtomicItemType yearMonthDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "yearMonthDuration"),
@@ -120,10 +109,9 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     static final AtomicItemType dayTimeDurationItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dayTimeDuration"),
@@ -134,10 +122,9 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
-            ),
-            DataTypes.BinaryType // TODO : appropriate datatype
+            )
     );
     static final AtomicItemType dateTimeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "dateTime"),
@@ -148,11 +135,24 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.DateType
+            )
+    );
+    static final AtomicItemType dateTimeStampItem = new AtomicItemType(
+            new Name(Name.XS_NS, "xs", "dateTimeStamp"),
+            new HashSet<>(
+                    Arrays.asList(
+                        FacetTypes.ENUMERATION,
+                        FacetTypes.CONSTRAINTS,
+                        FacetTypes.MININCLUSIVE,
+                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MINEXCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
+                        FacetTypes.EXPLICITTIMEZONE
+                    )
+            )
     );
     static final AtomicItemType dateItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "date"),
@@ -163,11 +163,10 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.TimestampType
+            )
     );
     static final AtomicItemType timeItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "time"),
@@ -178,11 +177,10 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
-            ),
-            DataTypes.TimestampType
+            )
     );
     static final AtomicItemType hexBinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "hexBinary"),
@@ -194,8 +192,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.BinaryType
+            )
     );
     static final AtomicItemType anyURIItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "anyURI"),
@@ -207,8 +204,7 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.StringType
+            )
     );
     static final AtomicItemType base64BinaryItem = new AtomicItemType(
             new Name(Name.XS_NS, "xs", "base64Binary"),
@@ -220,21 +216,18 @@ public class AtomicItemType implements ItemType {
                         FacetTypes.MINLENGTH,
                         FacetTypes.MAXLENGTH
                     )
-            ),
-            DataTypes.BinaryType
+            )
     );
 
     private Name name;
     private Set<FacetTypes> allowedFacets;
-    private DataType dataFrameType;
 
     public AtomicItemType() {
     }
 
-    private AtomicItemType(Name name, Set<FacetTypes> allowedFacets, DataType dataFrameType) {
+    AtomicItemType(Name name, Set<FacetTypes> allowedFacets) {
         this.name = name;
         this.allowedFacets = allowedFacets;
-        this.dataFrameType = dataFrameType;
     }
 
     @Override
@@ -242,7 +235,7 @@ public class AtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -297,6 +290,14 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
+    public ItemType getPrimitiveType() {
+        if (this.equals(dayTimeDurationItem) || this.equals(yearMonthDurationItem)) {
+            return durationItem;
+        }
+        return this;
+    }
+
+    @Override
     public boolean isStaticallyCastableAs(ItemType other) {
         // anything can be casted to itself
         if (this.equals(other))
@@ -336,16 +337,23 @@ public class AtomicItemType implements ItemType {
             else
                 return false;
         }
-        // DateTime can be cast also to Date or Time
+        // DateTime can be cast also to Date or Time or DateTimeStamp
         if (this.equals(dateTimeItem)) {
-            if (other.equals(dateItem) || other.equals(timeItem))
+            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeStampItem))
                 return true;
             else
                 return false;
         }
-        // Date can be cast also to DateTime
+        // DateTimeStamp can be cast also to Date or Time or DateTime
+        if (this.equals(dateTimeStampItem)) {
+            if (other.equals(dateItem) || other.equals(timeItem) || other.equals(dateTimeItem))
+                return true;
+            else
+                return false;
+        }
+        // Date can be cast also to DateTime or DateTimeStamp
         if (this.equals(dateItem)) {
-            if (other.equals(dateTimeItem))
+            if (other.equals(dateTimeItem) || other.equals(dateTimeStampItem))
                 return true;
             else
                 return false;
@@ -503,7 +511,35 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public DataType toDataFrameType() {
-        return this.dataFrameType;
+    public boolean isDataFrameType() {
+        if (this.getPrimitiveType().equals(timeItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(durationItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(dayTimeDurationItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(yearMonthDurationItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(anyURIItem)) {
+            return false;
+        }
+        if (this.getPrimitiveType().equals(base64BinaryItem)) {
+            return false;
+        }
+        return true;
+    }
+
+    @Override
+    public boolean isResolved() {
+        return true;
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        return true;
     }
 }

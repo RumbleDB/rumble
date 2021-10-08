@@ -26,14 +26,12 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.FunctionItem;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
@@ -41,8 +39,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.NoSuchElementException;
 
-public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
+public class GetTransformerFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     public static final List<Name> transformerParameterNames = new ArrayList<>(
@@ -55,8 +54,6 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
                 )
             )
     );
-    private String transformerShortName;
-    private Class<?> transformerSparkMLClass;
 
     public GetTransformerFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -67,92 +64,94 @@ public class GetTransformerFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        RuntimeIterator nameIterator = this.children.get(0);
-        nameIterator.open(context);
-        if (!nameIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Invalid args. Transformer lookup can't be performed with empty sequence as the transformer name",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(
+            DynamicContext dynamicContext
+    ) {
+        String transformerShortName = this.children.get(0).materializeFirstItemOrNull(dynamicContext).getStringValue();
+        Item paramMapItem = null;
+        if (this.children.size() >= 2) {
+            paramMapItem = this.children.get(1).materializeFirstItemOrNull(dynamicContext);
         }
-        this.transformerShortName = nameIterator.next().getStringValue();
-        if (nameIterator.hasNext()) {
-            throw new UnexpectedTypeException(
-                    "Transformer lookup can't be performed on a sequence.",
-                    getMetadata()
-            );
-        }
-        nameIterator.close();
 
         String transformerFullClassName = RumbleMLCatalog.getTransformerFullClassName(
-            this.transformerShortName,
+            transformerShortName,
             getMetadata()
         );
+
+        Class<?> transformerSparkMLClass = null;
         try {
-            this.transformerSparkMLClass = Class.forName(transformerFullClassName);
-            this.hasNext = true;
+            transformerSparkMLClass = Class.forName(transformerFullClassName);
         } catch (ClassNotFoundException e) {
             throw new OurBadException(
-                    "No SparkML transformer implementation found with the given full class name."
+                    transformerShortName
+                        + ": we could not find any transformer with that name. Please check the documentation."
             );
         }
-    }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            try {
-                Transformer transformer = (Transformer) this.transformerSparkMLClass.newInstance();
-                RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
-                        this.transformerShortName,
-                        transformer,
-                        ExecutionMode.DATAFRAME,
+        try {
+            Transformer transformer = (Transformer) transformerSparkMLClass.newInstance();
+
+            if (paramMapItem != null) {
+                for (int paramIndex = 0; paramIndex < paramMapItem.getKeys().size(); paramIndex++) {
+                    String paramName = paramMapItem.getKeys().get(paramIndex);
+                    Item paramValue = paramMapItem.getValues().get(paramIndex);
+
+                    RumbleMLCatalog.validateTransformerParameterByName(transformerShortName, paramName, getMetadata());
+
+                    String paramJavaTypeName = RumbleMLCatalog.getJavaTypeNameOfParamByName(paramName, getMetadata());
+                    Object paramValueInJava = RumbleMLUtils.convertParamItemToJava(
+                        paramName,
+                        paramValue,
+                        paramJavaTypeName,
                         getMetadata()
-                );
-                List<SequenceType> paramTypes = Collections.unmodifiableList(
-                    Arrays.asList(
-                        new SequenceType(
-                                BuiltinTypesCatalogue.item, // TODO: revert back to ObjectItem
-                                SequenceType.Arity.ZeroOrMore
-                        ),
-                        new SequenceType(
-                                BuiltinTypesCatalogue.objectItem,
-                                SequenceType.Arity.One
-                        )
-                    )
-                );
-                SequenceType returnType = new SequenceType(
-                        BuiltinTypesCatalogue.objectItem,
-                        SequenceType.Arity.ZeroOrMore
-                );
+                    );
 
-                return new FunctionItem(
-                        new FunctionIdentifier(
-                                Name.createVariableInDefaultFunctionNamespace(
-                                    this.transformerSparkMLClass.getName()
-                                ),
-                                2
-                        ),
-                        transformerParameterNames,
-                        new FunctionSignature(
-                                paramTypes,
-                                returnType
-                        ),
-                        new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
-                        bodyIterator
-                );
-
-            } catch (InstantiationException | IllegalAccessException e) {
-                throw new OurBadException("Error while generating an instance from transformer class.", getMetadata());
+                    try {
+                        transformer.set(paramName, paramValueInJava);
+                    } catch (NoSuchElementException e) {
+                        RumbleException ex = new OurBadException(
+                                "Error in a parameter for transformer " + transformerShortName + ": " + e.getMessage(),
+                                getMetadata()
+                        );
+                        ex.initCause(e);
+                    }
+                }
             }
+            RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
+                    transformerShortName,
+                    transformer,
+                    ExecutionMode.DATAFRAME,
+                    getMetadata()
+            );
+            List<SequenceType> paramTypes = Collections.unmodifiableList(
+                Arrays.asList(
+                    SequenceType.createSequenceType("object*"),
+                    SequenceType.createSequenceType("object")
+                )
+            );
+            SequenceType returnType = SequenceType.createSequenceType("object*");
+
+            return new FunctionItem(
+                    new FunctionIdentifier(
+                            Name.createVariableInDefaultFunctionNamespace(
+                                transformerSparkMLClass.getName()
+                            ),
+                            2
+                    ),
+                    transformerParameterNames,
+                    new FunctionSignature(
+                            paramTypes,
+                            returnType
+                    ),
+                    new DynamicContext(dynamicContext.getRumbleRuntimeConfiguration()),
+                    bodyIterator
+            );
+
+        } catch (InstantiationException | IllegalAccessException e) {
+            throw new OurBadException(
+                    "Error while generating an instance from transformer class + " + transformerFullClassName,
+                    getMetadata()
+            );
         }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + "get-transformer function",
-                getMetadata()
-        );
     }
 }

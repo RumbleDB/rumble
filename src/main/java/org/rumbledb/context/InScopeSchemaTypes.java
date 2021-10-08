@@ -1,7 +1,9 @@
 package org.rumbledb.context;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
@@ -56,6 +58,10 @@ public class InScopeSchemaTypes implements Serializable, KryoSerializable {
         return this.inScopeSchemaTypes.get(name);
     }
 
+    public List<ItemType> getInScopeSchemaTypes() {
+        return new ArrayList<ItemType>(this.inScopeSchemaTypes.values());
+    }
+
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.inScopeSchemaTypes);
@@ -65,6 +71,15 @@ public class InScopeSchemaTypes implements Serializable, KryoSerializable {
     @Override
     public void read(Kryo kryo, Input input) {
         this.inScopeSchemaTypes = kryo.readObject(input, HashMap.class);
+    }
+
+    public void importModuleTypes(InScopeSchemaTypes inScopeSchemaTypes, String targetNamespace) {
+        for (Name name : inScopeSchemaTypes.inScopeSchemaTypes.keySet()) {
+            if (name.getNamespace().equals(targetNamespace)) {
+                ItemType itemType = inScopeSchemaTypes.inScopeSchemaTypes.get(name);
+                this.inScopeSchemaTypes.put(name, itemType);
+            }
+        }
     }
 
 

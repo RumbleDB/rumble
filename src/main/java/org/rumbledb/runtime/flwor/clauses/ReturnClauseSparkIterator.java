@@ -33,6 +33,7 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -128,7 +129,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
-    public Dataset<Row> getDataFrame(DynamicContext context) {
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
             if (this.child.isDataFrame())
@@ -138,7 +139,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 );
             // context
             this.child.open(context);
-            Dataset<Row> result = null;
+            JSoundDataFrame result = null;
             while (this.child.hasNext()) {
                 FlworTuple tuple = this.child.next();
                 // We need a fresh context every time, because the evaluation of RDD is lazy.
@@ -146,7 +147,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 dynamicContext.getVariableValues().setBindingsFromTuple(tuple, getMetadata()); // assign new variables
                                                                                                // from new tuple
 
-                Dataset<Row> intermediateResult = this.expression.getDataFrame(dynamicContext);
+                JSoundDataFrame intermediateResult = this.expression.getDataFrame(dynamicContext);
                 if (result == null) {
                     result = intermediateResult;
                 } else {
@@ -154,7 +155,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                 }
             }
             if (result == null) {
-                return SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame();
+                return JSoundDataFrame.emptyDataFrame();
             }
             return result;
         }

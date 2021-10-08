@@ -1,9 +1,9 @@
 package org.rumbledb.types;
 
-import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UndefinedTypeException;
@@ -18,6 +18,9 @@ public class ItemTypeReference implements ItemType {
     private Name name;
 
     public ItemTypeReference(Name name) {
+        if (name == null) {
+            throw new OurBadException("A type name cannot be null!");
+        }
         this.name = name;
     }
 
@@ -30,6 +33,19 @@ public class ItemTypeReference implements ItemType {
             throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
         }
         this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if (!this.resolvedItemType.isResolved()) {
+            this.resolvedItemType.resolve(context, metadata);
+        }
+    }
+
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!context.getInScopeSchemaTypes().checkInScopeSchemaTypeExists(this.name)) {
+            throw new UndefinedTypeException("Type undefined: " + this.name, metadata);
+        }
+        this.resolvedItemType = context.getInScopeSchemaTypes().getInScopeSchemaType(this.name);
+        if (!this.resolvedItemType.isResolved()) {
+            this.resolvedItemType.resolve(context, metadata);
+        }
     }
 
     @Override
@@ -118,6 +134,9 @@ public class ItemTypeReference implements ItemType {
 
 
     public Name getName() {
+        if (this.resolvedItemType != null) {
+            return this.resolvedItemType.getName();
+        }
         return this.name;
     }
 
@@ -275,7 +294,7 @@ public class ItemTypeReference implements ItemType {
         return this.resolvedItemType.getClosedFacet();
     }
 
-    public ArrayContentDescriptor getArrayContentFacet() {
+    public ItemType getArrayContentFacet() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
@@ -293,13 +312,35 @@ public class ItemTypeReference implements ItemType {
         if (!this.hasName()) {
             return "<anonymous>";
         }
-        return this.name.toString();
+        if (this.resolvedItemType == null) {
+            return this.name.toString();
+        }
+        return this.resolvedItemType.getIdentifierString();
     }
 
-    public DataType toDataFrameType() {
+    public String toString() {
+        if (!this.hasName()) {
+            return "<anonymous>";
+        }
+        if (this.resolvedItemType == null) {
+            return this.name.toString();
+        }
+        return this.resolvedItemType.toString();
+    }
+
+    @Override
+    public boolean isDataFrameType() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
-        return this.resolvedItemType.toDataFrameType();
+        return this.resolvedItemType.isDataFrameType();
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (this.resolvedItemType == null) {
+            throw new OurBadException("Unresolved type: " + this.name);
+        }
+        return this.resolvedItemType.isCompatibleWithDataFrames();
     }
 }

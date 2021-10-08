@@ -22,22 +22,22 @@ package org.rumbledb.runtime.navigation;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.types.ItemType;
+
 import sparksoniq.spark.SparkSessionManager;
 
 import java.util.Arrays;
@@ -193,46 +193,38 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
         return newContext;
     }
 
-    public Dataset<Row> getDataFrame(DynamicContext context) {
-        Dataset<Row> childDataFrame = this.children.get(0).getDataFrame(context);
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
         childDataFrame.createOrReplaceTempView("array");
-        StructType schema = childDataFrame.schema();
-        String[] fieldNames = schema.fieldNames();
-        if (Arrays.asList(fieldNames).contains(SparkSessionManager.atomicJSONiqItemColumnName)) {
-            int i = schema.fieldIndex(SparkSessionManager.atomicJSONiqItemColumnName);
-            StructField field = schema.fields()[i];
-            DataType type = field.dataType();
-            if (type instanceof ArrayType) {
-                ArrayType arrayType = (ArrayType) type;
-                DataType elementType = arrayType.elementType();
-                if (elementType instanceof StructType) {
-                    return childDataFrame.sparkSession()
-                        .sql(
-                            String.format(
-                                "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                Integer.toString(this.lookup - 1),
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                SparkSessionManager.atomicJSONiqItemColumnName,
-                                Integer.toString(this.lookup)
-                            )
-                        );
-                }
-                return childDataFrame.sparkSession()
-                    .sql(
-                        String.format(
-                            "SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s",
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            Integer.toString(this.lookup - 1),
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            SparkSessionManager.atomicJSONiqItemColumnName,
-                            Integer.toString(this.lookup)
-                        )
-                    );
+        if (childDataFrame.getItemType().isArrayItemType()) {
+            ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
+            if (elementType.isObjectItemType()) {
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        Integer.toString(this.lookup - 1),
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        Integer.toString(this.lookup)
+                    ),
+                    elementType
+                );
             }
+            return childDataFrame.evaluateSQL(
+                String.format(
+                    "SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s",
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    Integer.toString(this.lookup - 1),
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    Integer.toString(this.lookup)
+                ),
+                elementType
+            );
         }
-        return childDataFrame.sparkSession().emptyDataFrame();
+        return JSoundDataFrame.emptyDataFrame();
     }
 }

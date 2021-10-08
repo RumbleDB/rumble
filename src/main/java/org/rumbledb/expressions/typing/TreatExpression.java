@@ -61,9 +61,8 @@ public class TreatExpression extends Expression {
             !sequenceType.isEmptySequence()
                 && sequenceType.getArity() != SequenceType.Arity.One
                 && sequenceType.getArity() != SequenceType.Arity.OneOrZero
-                && expression.getHighestExecutionMode(visitorConfig).isRDDOrDataFrame()
         ) {
-            return ExecutionMode.RDD;
+            return expression.getHighestExecutionMode(visitorConfig);
         }
         return ExecutionMode.LOCAL;
     }
@@ -91,9 +90,14 @@ public class TreatExpression extends Expression {
             buffer.append("  ");
         }
         buffer.append(getClass().getSimpleName());
-        buffer.append(" (" + (this.sequenceType.toString()) + ") ");
+        buffer.append(
+            " ("
+                + (this.sequenceType.toString())
+                + (this.getSequenceType().isResolved() ? " (resolved)" : " (unresolved)")
+                + ") "
+        );
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(" | " + (this.staticSequenceType == null ? "not set" : this.staticSequenceType));
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

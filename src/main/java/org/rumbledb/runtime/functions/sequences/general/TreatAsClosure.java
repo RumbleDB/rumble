@@ -30,7 +30,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                     throw new TreatException(
                             input.getDynamicType().toString()
                                 + " cannot be treated as type "
-                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getItemType().getIdentifierString()
                                 + this.sequenceType.getArity().getSymbol(),
                             this.metadata
                     );
@@ -38,7 +38,7 @@ public class TreatAsClosure implements Function<Item, Boolean> {
                     throw new UnexpectedTypeException(
                             input.getDynamicType().toString()
                                 + " is not expected here. The expected type is "
-                                + this.sequenceType.getItemType().toString()
+                                + this.sequenceType.getItemType().getIdentifierString()
                                 + this.sequenceType.getArity().getSymbol(),
                             this.metadata
                     );

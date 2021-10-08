@@ -21,21 +21,23 @@
 package org.rumbledb.types;
 
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 
 import java.io.Serializable;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 
 public class SequenceType implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private Arity arity;
     private ItemType itemType;
-    private boolean isEmptySequence = false;
+    private Arity arity;
 
-    public final static SequenceType MOST_GENERAL_SEQUENCE_TYPE = new SequenceType(
+    public final static SequenceType ITEM_STAR = new SequenceType(
             BuiltinTypesCatalogue.item,
             Arity.ZeroOrMore
     );
@@ -44,55 +46,79 @@ public class SequenceType implements Serializable {
 
 
     public SequenceType(ItemType itemType, Arity arity) {
+        if (arity == Arity.Zero) {
+            this.itemType = BuiltinTypesCatalogue.item;
+            this.arity = Arity.Zero;
+            return;
+        }
         this.itemType = itemType;
         this.arity = arity;
+        if (this.itemType == null) {
+            System.err.println(
+                "[WARNING] Missing item type in incomplete sequence type "
+                    + this.arity
+                    + ", defaulting to item. Please let us know as we would like to look into this!"
+            );
+            this.itemType = BuiltinTypesCatalogue.item;
+        }
+        if (this.arity == null) {
+            System.err.println(
+                "[WARNING] Missing arity in incomplete sequence type "
+                    + this.itemType
+                    + ", defaulting to *. Please let us know as we would like to look into this!"
+            );
+            this.arity = Arity.ZeroOrMore;
+        }
     }
 
     public SequenceType(ItemType itemType) {
         this.itemType = itemType;
         this.arity = Arity.One;
+        if (this.itemType == null) {
+            throw new OurBadException("Missing item type in incomplete sequence type " + this.arity);
+        }
     }
 
     private SequenceType() {
-        this.itemType = null;
-        this.arity = null;
-        this.isEmptySequence = true;
+        this.itemType = BuiltinTypesCatalogue.item;
+        this.arity = Arity.Zero;
     }
 
     public boolean isResolved() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return true;
         }
         return this.itemType.isResolved();
     }
 
     public void resolve(DynamicContext context, ExceptionMetadata metadata) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
+            return;
+        }
+        this.itemType.resolve(context, metadata);
+    }
+
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (isEmptySequence()) {
             return;
         }
         this.itemType.resolve(context, metadata);
     }
 
     public boolean isEmptySequence() {
-        return this.isEmptySequence;
+        return this.arity == Arity.Zero;
     }
 
     public ItemType getItemType() {
-        if (this.isEmptySequence) {
-            throw new OurBadException("Empty sequence type has no item");
-        }
         return this.itemType;
     }
 
     public Arity getArity() {
-        if (this.isEmptySequence) {
-            throw new OurBadException("Empty sequence type has no arity");
-        }
         return this.arity;
     }
 
     public boolean isSubtypeOf(SequenceType superType) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.itemType.isSubtypeOf(superType.getItemType())
@@ -102,7 +128,7 @@ public class SequenceType implements Serializable {
 
     // keep in consideration also automatic promotion of integer > decimal > double and anyURI > string
     public boolean isSubtypeOfOrCanBePromotedTo(SequenceType superType) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return superType.arity == Arity.OneOrZero || superType.arity == Arity.ZeroOrMore;
         }
         return this.isAritySubtypeOf(superType.arity)
@@ -118,7 +144,7 @@ public class SequenceType implements Serializable {
     }
 
     public boolean hasEffectiveBooleanValue() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return true;
         } else if (this.itemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)) {
             return true;
@@ -142,7 +168,7 @@ public class SequenceType implements Serializable {
 
     public boolean hasOverlapWith(SequenceType other) {
         // types overlap if both itemType and Arity overlap, we also need to take care of empty sequence
-        if (this.isEmptySequence()) {
+        if (isEmptySequence()) {
             return other.isEmptySequence()
                 || other.getArity() == Arity.OneOrZero
                 || other.getArity() == Arity.ZeroOrMore;
@@ -156,7 +182,7 @@ public class SequenceType implements Serializable {
     }
 
     public SequenceType leastCommonSupertypeWith(SequenceType other) {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             if (other.isEmptySequence()) {
                 return this;
             } else {
@@ -192,7 +218,7 @@ public class SequenceType implements Serializable {
 
     // increment arity of a sequence type from ? to * and from 1 to +, leave others arity or sequence types untouched
     public SequenceType incrementArity() {
-        if (!this.isEmptySequence()) {
+        if (!isEmptySequence()) {
             if (this.arity == Arity.One) {
                 return new SequenceType(this.getItemType(), Arity.OneOrMore);
             } else if (this.arity == Arity.OneOrZero) {
@@ -208,7 +234,7 @@ public class SequenceType implements Serializable {
             return false;
         }
         SequenceType sequenceType = (SequenceType) other;
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return sequenceType.isEmptySequence();
         }
         if (sequenceType.isEmptySequence()) {
@@ -241,11 +267,23 @@ public class SequenceType implements Serializable {
             public String getSymbol() {
                 return "";
             }
+        },
+        Zero {
+            @Override
+            public String getSymbol() {
+                return "<void>";
+            }
         };
 
         public abstract String getSymbol();
 
         public boolean isSubtypeOf(Arity superArity) {
+            if (superArity == Zero) {
+                return this == Arity.Zero;
+            }
+            if (this == Zero) {
+                return this == Arity.ZeroOrMore || this == Arity.OneOrZero;
+            }
             if (superArity == Arity.ZeroOrMore || superArity == this)
                 return true;
             else
@@ -253,6 +291,9 @@ public class SequenceType implements Serializable {
         }
 
         public Arity multiplyWith(Arity other) {
+            if (this == Zero || other == Zero) {
+                return Zero;
+            }
             if (this == One && other == One) {
                 return One;
             } else if (this.isSubtypeOf(OneOrZero) && other.isSubtypeOf(OneOrZero)) {
@@ -268,11 +309,12 @@ public class SequenceType implements Serializable {
 
     @Override
     public String toString() {
-        if (this.isEmptySequence) {
+        if (isEmptySequence()) {
             return "()";
         }
         StringBuilder result = new StringBuilder();
-        result.append(this.getItemType().toString());
+        Name name = this.getItemType().getName();
+        result.append(name != null ? name : "<anonymous>");
         result.append(this.arity.getSymbol());
         return result.toString();
     }
@@ -370,9 +412,26 @@ public class SequenceType implements Serializable {
             new SequenceType(BuiltinTypesCatalogue.dateTimeItem, SequenceType.Arity.OneOrZero)
         );
 
+        sequenceTypes.put(
+            "dateTimeStamp?",
+            new SequenceType(BuiltinTypesCatalogue.dateTimeStampItem, SequenceType.Arity.OneOrZero)
+        );
+
         sequenceTypes.put("date?", new SequenceType(BuiltinTypesCatalogue.dateItem, SequenceType.Arity.OneOrZero));
 
         sequenceTypes.put("time?", new SequenceType(BuiltinTypesCatalogue.timeItem, SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put("gDay?", new SequenceType(BuiltinTypesCatalogue.gDayItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("gMonth?", new SequenceType(BuiltinTypesCatalogue.gMonthItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put("gYear?", new SequenceType(BuiltinTypesCatalogue.gYearItem, SequenceType.Arity.OneOrZero));
+        sequenceTypes.put(
+            "gMonthDay?",
+            new SequenceType(BuiltinTypesCatalogue.gMonthDayItem, SequenceType.Arity.OneOrZero)
+        );
+        sequenceTypes.put(
+            "gYearMonth?",
+            new SequenceType(BuiltinTypesCatalogue.gYearMonthItem, SequenceType.Arity.OneOrZero)
+        );
 
         sequenceTypes.put("anyURI", new SequenceType(BuiltinTypesCatalogue.anyURIItem));
         sequenceTypes.put("anyURI?", new SequenceType(BuiltinTypesCatalogue.anyURIItem, SequenceType.Arity.OneOrZero));
@@ -388,6 +447,112 @@ public class SequenceType implements Serializable {
         );
 
         sequenceTypes.put("null?", new SequenceType(BuiltinTypesCatalogue.nullItem, SequenceType.Arity.OneOrZero));
+
+        sequenceTypes.put(
+            "function(object*, object) as object*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Arrays.asList(
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                ),
+                                new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore)
+                        )
+                    )
+            )
+        );
+
+        sequenceTypes.put(
+            "function(object*, object) as function(object*, object) as object*",
+            new SequenceType(
+                    ItemTypeFactory.createFunctionItemType(
+                        new FunctionSignature(
+                                Arrays.asList(
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem, SequenceType.Arity.ZeroOrMore),
+                                    new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                ),
+                                new SequenceType(
+                                        ItemTypeFactory.createFunctionItemType(
+                                            new FunctionSignature(
+                                                    Arrays.asList(
+                                                        new SequenceType(
+                                                                BuiltinTypesCatalogue.objectItem,
+                                                                SequenceType.Arity.ZeroOrMore
+                                                        ),
+                                                        new SequenceType(BuiltinTypesCatalogue.objectItem)
+                                                    ),
+                                                    new SequenceType(
+                                                            BuiltinTypesCatalogue.objectItem,
+                                                            SequenceType.Arity.ZeroOrMore
+                                                    )
+                                            )
+                                        )
+                                )
+                        )
+                    )
+            )
+        );
+
+        sequenceTypes.put(
+            "int?",
+            new SequenceType(BuiltinTypesCatalogue.intItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "long?",
+            new SequenceType(BuiltinTypesCatalogue.longItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "short?",
+            new SequenceType(BuiltinTypesCatalogue.shortItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "byte?",
+            new SequenceType(BuiltinTypesCatalogue.byteItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "positiveInteger?",
+            new SequenceType(BuiltinTypesCatalogue.positiveIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "negativeInteger?",
+            new SequenceType(BuiltinTypesCatalogue.negativeIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "nonPositiveInteger?",
+            new SequenceType(BuiltinTypesCatalogue.nonPositiveIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "nonNegativeInteger?",
+            new SequenceType(BuiltinTypesCatalogue.nonNegativeIntegerItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedInt?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedIntItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedLong?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedLongItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedShort?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedShortItem, SequenceType.Arity.OneOrZero)
+        );
+
+        sequenceTypes.put(
+            "unsignedByte?",
+            new SequenceType(BuiltinTypesCatalogue.unsignedByteItem, SequenceType.Arity.OneOrZero)
+        );
     }
 
     public static SequenceType createSequenceType(String userFriendlyName) {

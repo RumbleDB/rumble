@@ -26,7 +26,6 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
-import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.types.SequenceType;
@@ -47,24 +46,20 @@ public class VariableReferenceExpression extends Expression implements Serializa
         this.name = name;
     }
 
-    public void setHighestExecutionMode(ExecutionMode highestExecutionMode) {
-        this.highestExecutionMode = highestExecutionMode;
-    }
-
     public Name getVariableName() {
         return this.name;
     }
 
     // default to item* if type is null
     public SequenceType getType() {
-        return this.type == null ? SequenceType.MOST_GENERAL_SEQUENCE_TYPE : this.type;
+        return this.type == null ? SequenceType.ITEM_STAR : this.type;
     }
 
     public SequenceType getActualType() {
         return this.type;
     }
 
-    public void setType(SequenceType type) {
+    public void setActualType(SequenceType type) {
         this.type = type;
     }
 
@@ -92,7 +87,13 @@ public class VariableReferenceExpression extends Expression implements Serializa
         buffer.append(getClass().getSimpleName());
         buffer.append(" ($" + this.name + ") ");
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
         for (Node iterator : getChildren()) {
             iterator.print(buffer, indent + 1);

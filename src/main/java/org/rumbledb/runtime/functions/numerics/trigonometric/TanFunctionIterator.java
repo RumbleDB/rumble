@@ -23,19 +23,17 @@ package org.rumbledb.runtime.functions.numerics.trigonometric;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class TanFunctionIterator extends LocalFunctionCallIterator {
+public class TanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private RuntimeIterator iterator;
 
     public TanFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -46,26 +44,17 @@ public class TanFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-        this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        Item value = this.children.get(0).materializeFirstItemOrNull(context);
+        if (value == null) {
+            return null;
+        }
+        double dvalue = value.getDoubleValue();
+        if (Double.isNaN(dvalue) || Double.isInfinite(dvalue)) {
+            return ItemFactory.getInstance().createDoubleItem(Double.NaN);
+        }
+        return ItemFactory.getInstance().createDoubleItem(Math.tan(dvalue));
+
     }
 
-    @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return ItemFactory.getInstance()
-                .createDoubleItem(
-                    Math.tan(
-                        this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
-                            .castToDoubleValue()
-                    )
-                );
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " tan function", getMetadata());
-    }
 }

@@ -35,7 +35,6 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoTypedValueException;
 import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
@@ -382,7 +381,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             ) {
                 columnType = DataTypes.LongType;
             } else {
-                throw new RumbleException(
+                throw new OurBadException(
                         "Unexpected ordering type found while determining UDF return type."
                 );
             }
@@ -560,7 +559,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query: " + orderSql);
+        System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()

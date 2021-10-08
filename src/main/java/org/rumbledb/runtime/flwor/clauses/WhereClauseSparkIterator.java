@@ -381,8 +381,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         System.err.println(
-            "[INFO] Rumble was able to optimize a where clause to a native SQL query: "
-                + nativeQuery.getResultingQuery()
+            "[INFO] Rumble was able to optimize a where clause to a native SQL query."
         );
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()

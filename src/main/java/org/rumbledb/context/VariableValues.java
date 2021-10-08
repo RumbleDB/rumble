@@ -25,7 +25,6 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -33,6 +32,8 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.items.structured.JSoundDataFrame;
+
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
@@ -49,7 +50,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, List<Item>> localVariableValues;
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
-    private Map<Name, Dataset<Row>> dataFrameVariableValues;
+    private Map<Name, JSoundDataFrame> dataFrameVariableValues;
     private VariableValues parent;
 
     public VariableValues() {
@@ -75,7 +76,7 @@ public class VariableValues implements Serializable, KryoSerializable {
             VariableValues parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, Dataset<Row>> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues
     ) {
         if (parent == null) {
             throw new OurBadException("Variable values defined with null parent");
@@ -154,7 +155,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.rddVariableValues.put(varName, value);
     }
 
-    public void addVariableValue(Name varName, Dataset<Row> value) {
+    public void addVariableValue(Name varName, JSoundDataFrame value) {
         this.dataFrameVariableValues.put(varName, value);
     }
 
@@ -195,9 +196,9 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
-            Dataset<Row> df = this.dataFrameVariableValues.get(varName);
+            JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
-            return rowRDD.map(new RowToItemMapper(metadata));
+            return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
         }
 
         if (this.parent != null) {
@@ -210,7 +211,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         );
     }
 
-    public Dataset<Row> getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
+    public JSoundDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.dataFrameVariableValues.containsKey(varName)) {
             return this.dataFrameVariableValues.get(varName);
         }
@@ -357,7 +358,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
         for (Name name : moduleValues.dataFrameVariableValues.keySet()) {
             if (name.getNamespace().equals(targetNamespace)) {
-                Dataset<Row> items = moduleValues.dataFrameVariableValues.get(name);
+                JSoundDataFrame items = moduleValues.dataFrameVariableValues.get(name);
                 this.dataFrameVariableValues.put(name, items);
             }
         }

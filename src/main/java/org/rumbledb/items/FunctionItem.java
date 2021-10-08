@@ -31,8 +31,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
@@ -41,6 +41,7 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
@@ -50,6 +51,9 @@ import org.rumbledb.types.SequenceType;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
+
+import sparksoniq.spark.ml.ApplyEstimatorRuntimeIterator;
+import sparksoniq.spark.ml.ApplyTransformerRuntimeIterator;
 
 public class FunctionItem implements Item {
 
@@ -63,7 +67,7 @@ public class FunctionItem implements Item {
     private DynamicContext dynamicModuleContext;
     private Map<Name, List<Item>> localVariablesInClosure;
     private Map<Name, JavaRDD<Item>> RDDVariablesInClosure;
-    private Map<Name, Dataset<Row>> dataFrameVariablesInClosure;
+    private Map<Name, JSoundDataFrame> dataFrameVariablesInClosure;
 
     protected FunctionItem() {
         super();
@@ -94,7 +98,7 @@ public class FunctionItem implements Item {
             RuntimeIterator bodyIterator,
             Map<Name, List<Item>> localVariablesInClosure,
             Map<Name, JavaRDD<Item>> RDDVariablesInClosure,
-            Map<Name, Dataset<Row>> DFVariablesInClosure
+            Map<Name, JSoundDataFrame> DFVariablesInClosure
     ) {
         this.identifier = identifier;
         this.parameterNames = parameterNames;
@@ -161,7 +165,7 @@ public class FunctionItem implements Item {
         return this.RDDVariablesInClosure;
     }
 
-    public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         return this.dataFrameVariablesInClosure;
     }
 
@@ -327,4 +331,32 @@ public class FunctionItem implements Item {
             );
         }
     }
+
+    @Override
+    public boolean isEstimator() {
+        return this.bodyIterator instanceof ApplyEstimatorRuntimeIterator;
+    }
+
+    @Override
+    public Estimator<?> getEstimator() {
+        if (!isEstimator()) {
+            throw new OurBadException("This is not an estimator.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyEstimatorRuntimeIterator) this.bodyIterator).getEstimator();
+    }
+
+    @Override
+    public boolean isTransformer() {
+        return this.bodyIterator instanceof ApplyTransformerRuntimeIterator;
+    }
+
+    @Override
+    public Transformer getTransformer() {
+        if (!isTransformer()) {
+            throw new OurBadException("This is not a transformer.", ExceptionMetadata.EMPTY_METADATA);
+        }
+        return ((ApplyTransformerRuntimeIterator) this.bodyIterator).getTransformer();
+    }
+
+
 }

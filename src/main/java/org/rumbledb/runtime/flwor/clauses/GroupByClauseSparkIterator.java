@@ -570,8 +570,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(".sequence`");
             }
         }
-        System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query: " + selectString);
-        System.out.println("[INFO] group-by part: " + groupByString);
+        System.out.println("[INFO] Rumble was able to optimize a let clause to a native SQL query.");
         return dataFrame.sparkSession()
             .sql(
                 String.format(

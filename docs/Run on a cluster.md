@@ -1,25 +1,25 @@
-# Running Rumble on a cluster
+# Running RumbleDB on a cluster
 
-After you have tried Rumble locally as explained in the getting started section, you can take Rumble to a real cluster
+After you have tried RumbleDB locally as explained in the getting started section, you can take RumbleDB to a real cluster
 simply by modifying the command line parameters as documented [here for spark-submit](https://spark.apache.org/docs/latest/submitting-applications.html).
 
 If the Spark cluster is running on yarn, then the --master option can be changed from local[\*] to yarn compared to the getting started guide. Most of the time, though (e.g., on Amazon EMR), it needs not be specified, as this is already set up in the environment.
 
-    spark-submit spark-rumble-1.12.0.jar --shell yes
+    spark-submit rumbledb-1.15.0.jar --shell yes
                  
 or explicitly:
                  
-    spark-submit --master yarn --deploy-mode client spark-rumble-1.12.0.jar --shell yes
+    spark-submit --master yarn --deploy-mode client rumbledb-1.15.0.jar --shell yes
                  
 You can also adapt the number of executors, etc.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 spark-rumble-1.12.0.jar --shell yes
+                 rumbledb-1.15.0.jar --shell yes
 
 The size limit for materialization can also be made higher with --materialization-cap (the default is 200). This affects the number of items displayed on the shells as an answer to a query, as well as any materializations happening within the query with push-down is not supported. Warnings are issued if the cap is reached.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 spark-rumble-1.12.0.jar
+                 rumbledb-1.1r.0.jar
                  --shell yes --materialization-cap 10000
 
 ## Creation functions
@@ -56,10 +56,10 @@ Note that by default only the first 1000 items in the output will be displayed o
 
 ## Execution of single queries and output to HDFS
 
-Rumble also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, use the --query-path, --output-path and --log-path parameters.
+RumbleDB also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, use the --query-path, --output-path and --log-path parameters.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 spark-rumble-1.12.0.jar
+                 rumbledb-1.15.0.jar
                  --query-path "hdfs:///user/me/query.jq"
                  --output-path "hdfs:///user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"
@@ -67,7 +67,7 @@ Rumble also supports executing a single query from the command line, reading fro
 The query path, output path and log path can be any of the supported schemes (HDFS, file, S3, WASB...) and can be relative or absolute.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 spark-rumble-1.12.0.jar
+                 rumbledb-1.15.0.jar
                  --query-path "/home/me/my-local-machine/query.jq"
                  --output-path "/user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"

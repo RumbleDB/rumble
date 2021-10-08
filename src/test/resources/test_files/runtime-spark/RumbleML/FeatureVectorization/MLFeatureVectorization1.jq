@@ -2,11 +2,11 @@
 let $est := get-estimator("LogisticRegression")
 let $tra := $est(
     libsvm-file("../../../../queries/rumbleML/sample-libsvm-data-short.txt"),
-    {"featuresCol": ["features"]}
+    {"featuresCol": "features"}
 )
 for $resultRow in $tra(
     libsvm-file("../../../../queries/rumbleML/sample-libsvm-data-short.txt"),
-    {"featuresCol": ["features"] }
+    {"featuresCol": "features" }
 )
 return {
     "label": $resultRow.label,

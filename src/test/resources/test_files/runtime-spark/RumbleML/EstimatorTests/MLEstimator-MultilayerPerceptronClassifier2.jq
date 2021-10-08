@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("MultilayerPerceptronClassifier")
 let $tra := $est(
     $data,
-    { "labelCol": "binaryLabel", "featuresCol": ["age", "weight"], "layers": [2, 5, 4, 6], "blockSize": 128, "seed": 1234, "maxIter": 3}
+    { "labelCol": "binaryLabel", "layers": [2, 5, 4, 6], "blockSize": 128, "seed": 1234, "maxIter": 3}
 )
 for $result in $tra(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { }
 )
 return {
     "label": $result.label,

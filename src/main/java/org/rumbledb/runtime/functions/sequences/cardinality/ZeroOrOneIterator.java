@@ -20,22 +20,21 @@
 
 package org.rumbledb.runtime.functions.sequences.cardinality;
 
-import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.SequenceExceptionZeroOrOne;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 
 import java.util.List;
 
-public class ZeroOrOneIterator extends CardinalityFunctionIterator {
+public class ZeroOrOneIterator extends AtMostOneItemLocalRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
-    private Item nextResult;
 
     public ZeroOrOneIterator(
             List<RuntimeIterator> arguments,
@@ -46,53 +45,18 @@ public class ZeroOrOneIterator extends CardinalityFunctionIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            return this.nextResult;
-        }
-        throw new IteratorFlowException(
-                RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " ZERO-OR-ONE function",
-                getMetadata()
-        );
-    }
-
-    @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
+    public Item materializeFirstItemOrNull(DynamicContext context) {
         RuntimeIterator sequenceIterator = this.children.get(0);
-
-        if (!sequenceIterator.isRDDOrDataFrame()) {
-            sequenceIterator.open(context);
-            if (!sequenceIterator.hasNext()) {
-                this.hasNext = false;
-            } else {
-                this.nextResult = sequenceIterator.next();
-                if (sequenceIterator.hasNext()) {
-                    throw new SequenceExceptionZeroOrOne(
-                            "fn:zero-or-one() called with a sequence containing more than one item",
-                            getMetadata()
-                    );
-                } else {
-                    this.hasNext = true;
-                }
-            }
-            sequenceIterator.close();
-        } else {
-            JavaRDD<Item> rdd = sequenceIterator.getRDD(this.currentDynamicContextForLocalExecution);
-            List<Item> results = rdd.take(2);
-            if (results.size() == 0) {
-                this.hasNext = false;
-            } else if (results.size() == 1) {
-                this.hasNext = true;
-                this.nextResult = results.get(0);
-            } else if (results.size() > 1) {
-                throw new SequenceExceptionZeroOrOne(
-                        "fn:zero-or-one() called with a sequence containing more than one item",
-                        getMetadata()
-                );
-            }
+        Item result = null;
+        try {
+            result = sequenceIterator.materializeAtMostOneItemOrNull(context);
+        } catch (MoreThanOneItemException e) {
+            throw new SequenceExceptionZeroOrOne(
+                    "fn:zero-or-one() called with a sequence containing more than one item",
+                    getMetadata()
+            );
         }
+        return result;
     }
+
 }

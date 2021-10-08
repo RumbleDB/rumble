@@ -7,13 +7,14 @@ import java.util.List;
 import java.util.Map;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.apache.spark.ml.Estimator;
+import org.apache.spark.ml.Transformer;
 import org.joda.time.DateTime;
 import org.joda.time.Period;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.types.FunctionSignature;
@@ -214,6 +215,52 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Tests whether the item is an atomic item of type gDay.
+     *
+     * @return true if it is an atomic item of type gDay, false otherwise.
+     */
+    default boolean isGDay() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonth.
+     *
+     * @return true if it is an atomic item of type gMonth, false otherwise.
+     */
+    default boolean isGMonth() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gYear.
+     *
+     * @return true if it is an atomic item of type gYear, false otherwise.
+     */
+    default boolean isGYear() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGMonthDay() {
+        return false;
+    }
+
+    /**
+     * Tests whether the item is an atomic item of type gMonthDay.
+     *
+     * @return true if it is an atomic item of type gMonthDay, false otherwise.
+     */
+    default boolean isGYearMonth() {
+        return false;
+    }
+
+
+    /**
      * Tests whether the item is an atomic item of type anyURI.
      *
      * @return true if it is an atomic item of type anyURI, false otherwise.
@@ -306,7 +353,7 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
-     * Returns the string value of the item, if it is a string.
+     * Returns the string value of the item, if it is an atomic item.
      *
      * @return the string value.
      */
@@ -463,7 +510,7 @@ public interface Item extends Serializable, KryoSerializable {
      * 
      * @return the function signature.
      */
-    default public Map<Name, Dataset<Row>> getDFVariablesInClosure() {
+    default public Map<Name, JSoundDataFrame> getDFVariablesInClosure() {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
@@ -575,6 +622,15 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Checks doubles and floats for NaN.
+     *
+     * @return true if NaN, false if not NaN.
+     */
+    default boolean isNaN() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Tests for logical equality. The semantics are that of the eq operator.
      *
      * @param other another item.
@@ -599,5 +655,21 @@ public interface Item extends Serializable, KryoSerializable {
      */
     default NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return NativeClauseContext.NoNativeQuery;
+    }
+
+    default boolean isEstimator() {
+        return false;
+    }
+
+    default Estimator<?> getEstimator() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    default boolean isTransformer() {
+        return false;
+    }
+
+    default Transformer getTransformer() {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 }

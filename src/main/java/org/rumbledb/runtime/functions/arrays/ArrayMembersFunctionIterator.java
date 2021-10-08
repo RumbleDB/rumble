@@ -20,19 +20,22 @@
 
 package org.rumbledb.runtime.functions.arrays;
 
+import org.apache.spark.api.java.JavaRDD;
+import org.apache.spark.api.java.function.FlatMapFunction;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
+import org.rumbledb.runtime.navigation.ArrayMembersClosure;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Queue;
 
-public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
+public class ArrayMembersFunctionIterator extends HybridRuntimeIterator {
 
 
     private static final long serialVersionUID = 1L;
@@ -45,27 +48,37 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.iterator = this.children.get(0);
+        this.nextResults = new LinkedList<>();
     }
 
+
     @Override
-    public void open(DynamicContext context) {
-        super.open(context);
-
-        this.iterator = this.children.get(0);
+    protected void openLocal() {
         this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.nextResults = new LinkedList<>();
-
+        this.nextResults.clear();
         setNextResult();
     }
 
     @Override
-    public void close() {
-        super.close();
+    protected void closeLocal() {
         this.iterator.close();
     }
 
     @Override
-    public Item next() {
+    protected void resetLocal() {
+        this.iterator.reset(this.currentDynamicContextForLocalExecution);
+        this.nextResults.clear();
+        setNextResult();
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        return this.hasNext;
+    }
+
+    @Override
+    protected Item nextLocal() {
         if (this.hasNext) {
             Item result = this.nextResults.remove(); // save the result to be returned
             if (this.nextResults.isEmpty()) {
@@ -94,4 +107,16 @@ public class ArrayMembersFunctionIterator extends LocalFunctionCallIterator {
             this.hasNext = true;
         }
     }
+
+
+    @Override
+    public JavaRDD<Item> getRDDAux(DynamicContext context) {
+        JavaRDD<Item> childRDD = this.iterator.getRDD(context);
+        FlatMapFunction<Item, Item> transformation = new ArrayMembersClosure();
+        JavaRDD<Item> resultRDD = childRDD.flatMap(transformation);
+        return resultRDD;
+    }
+
+
+
 }

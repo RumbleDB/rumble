@@ -73,6 +73,11 @@ public class IntegerItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        return this.value.toString();
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.value.equals(BigInteger.ZERO);
     }

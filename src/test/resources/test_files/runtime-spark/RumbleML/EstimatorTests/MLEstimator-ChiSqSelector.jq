@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("ChiSqSelector")
 let $tra := $est(
     $data,
-    { "featuresCol": ["age", "weight"], "numTopFeatures": 1, "outputCol": "selectedFeatures"}
+    { "numTopFeatures": 1, "outputCol": "selectedFeatures"}
 )
 for $result in $tra(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { }
 )
 return {
     "label": $result.label,

@@ -103,7 +103,17 @@ public class ArrayItem implements Item {
         for (Item item : this.arrayItems) {
             sb.append(separator);
             separator = ", ";
-            boolean isStringValue = item.isString();
+            boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
+            if (item.isDouble()) {
+                if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
+                    isStringValue = true;
+                }
+            }
+            if (item.isFloat()) {
+                if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
+                    isStringValue = true;
+                }
+            }
             if (isStringValue) {
                 sb.append("\"");
                 sb.append(StringEscapeUtils.escapeJson(item.serialize()));
