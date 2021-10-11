@@ -440,6 +440,10 @@ public class FlworDataFrameUtils {
                     result.add(variableName.toString() + ".count");
                     return;
                 }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
                     return;
@@ -453,6 +457,10 @@ public class FlworDataFrameUtils {
             case SUM: {
                 if (columnNames.contains(variableName.toString() + ".sum")) {
                     result.add(variableName.toString() + ".sum");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
                     return;
                 }
                 if (columnNames.contains(variableName.toString())) {
@@ -470,6 +478,10 @@ public class FlworDataFrameUtils {
                     result.add(variableName.toString() + ".min");
                     return;
                 }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
                 if (columnNames.contains(variableName.toString())) {
                     result.add(variableName.toString());
                     return;
@@ -483,6 +495,10 @@ public class FlworDataFrameUtils {
             case MAX: {
                 if (columnNames.contains(variableName.toString() + ".max")) {
                     result.add(variableName.toString() + ".max");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
                     return;
                 }
                 if (columnNames.contains(variableName.toString())) {
