@@ -1,3 +1,4 @@
+(:JIQS: ShouldRun; Output="{ "c" : 2, "d" : 1 }" :)
 declare	type local:a as { "foo" : "string" };
 
 for $x in validate type	local:a* { { "foo" : "bar" }, { "foo" : "foobar" } }
