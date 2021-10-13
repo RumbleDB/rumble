@@ -544,6 +544,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash
     ) {
+        System.err.println("bindLetVariableInDataFrame");
+        dataFrame.show();
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
