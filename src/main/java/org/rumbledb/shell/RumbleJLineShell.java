@@ -39,7 +39,11 @@ import org.rumbledb.exceptions.RumbleException;
 
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.io.Writer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -99,6 +103,25 @@ public class RumbleJLineShell {
                     .map(x -> x.serialize())
                     .collect(Collectors.toList())
             );
+            String shell = this.configuration.getShellFilter();
+            if (shell != null) {
+                Process process = Runtime.getRuntime().exec(shell);
+                BufferedReader stdout = new BufferedReader(new InputStreamReader(process.getInputStream()));
+                Writer stdin = new OutputStreamWriter(process.getOutputStream());
+                stdin.write(result);
+                stdin.flush();
+                stdin.close();
+                StringBuffer sb = new StringBuffer();
+                String s = stdout.readLine();
+                while (s != null) {
+                    sb.append(s);
+                    sb.append("\n");
+                    s = stdout.readLine();
+                }
+                stdout.close();
+                result = sb.toString();
+                process.waitFor();
+            }
             output(result);
             if (count != -1) {
                 System.err.println(

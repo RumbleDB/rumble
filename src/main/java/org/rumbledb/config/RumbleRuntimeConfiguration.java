@@ -56,6 +56,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String outputPath;
     private String logPath;
     private String query;
+    private String shell;
 
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
@@ -224,6 +225,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.query = null;
         }
+
+        if (this.arguments.containsKey("shell-filter")) {
+            this.shell = this.arguments.get("shell-filter");
+        } else {
+            this.shell = null;
+        }
     }
 
     public boolean getOverwrite() {
@@ -258,6 +265,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.query;
     }
 
+    public String getShellFilter() {
+        return this.shell;
+    }
+
     public void setLogPath(String path) {
         this.logPath = path;
     }
@@ -272,6 +283,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setQuery(String query) {
         this.query = query;
+    }
+
+    public void setShellFilter(String shell) {
+        this.shell = shell;
     }
 
     /**
