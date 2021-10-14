@@ -25,9 +25,13 @@ public enum ErrorCode {
     DivisionByZero("FOAR0001"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
+    InvalidNaNOperation("FOCA0005"),
     CodepointNotValidErrorCode("FOCH0001"),
+    UnsupportedCollationExceptionCode("FOCH0002"),
     InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
+
+    UnidentifiedErrorExceptionCode("FOER0000"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
@@ -114,7 +118,7 @@ public enum ErrorCode {
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-
+    ArithmeticOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003");
 
 
