@@ -1,6 +1,5 @@
 package org.rumbledb.runtime.functions.datetime;
 
-import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -25,7 +24,7 @@ public class CurrentDateTimeFunctionIterator extends AtMostOneItemLocalRuntimeIt
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
-        return ItemFactory.getInstance().createDateTimeItem(new DateTime(), true);
+        return ItemFactory.getInstance().createDateTimeItem(context.getCurrentDateTime(), true);
     }
 
 }
