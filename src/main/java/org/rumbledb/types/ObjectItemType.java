@@ -15,15 +15,6 @@ public class ObjectItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    final static ObjectItemType anyObjectItem = new ObjectItemType(
-            new Name(Name.JS_NS, "js", "object"),
-            BuiltinTypesCatalogue.JSONItem,
-            false,
-            Collections.emptyMap(),
-            Collections.emptyList(),
-            null
-    );
-
     final static Set<FacetTypes> allowedFacets = new HashSet<>(
             Arrays.asList(
                 FacetTypes.ENUMERATION,
@@ -57,6 +48,9 @@ public class ObjectItemType implements ItemType {
         this.enumeration = enumeration;
         if (this.baseType.isResolved()) {
             processBaseType();
+            if (areContentTypesResolved()) {
+                checkSubtypeConsistency();
+            }
         }
     }
 
@@ -90,17 +84,17 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isUserDefined() {
-        return !(this.equals(anyObjectItem));
+        return !(this.equals(BuiltinTypesCatalogue.objectItem));
     }
 
     @Override
     public boolean isPrimitive() {
-        return this.equals(anyObjectItem);
+        return this.equals(BuiltinTypesCatalogue.objectItem);
     }
 
     @Override
     public ItemType getPrimitiveType() {
-        return anyObjectItem;
+        return BuiltinTypesCatalogue.objectItem;
     }
 
     @Override
@@ -128,14 +122,7 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public Map<String, FieldDescriptor> getObjectContentFacet() {
-        if (this.isPrimitive()) {
-            return this.content;
-        } else {
-            // recursively get content facet, overriding new descriptors
-            Map<String, FieldDescriptor> map = new LinkedHashMap<>(this.baseType.getObjectContentFacet());
-            map.putAll(this.content);
-            return map;
-        }
+        return this.content;
     }
 
     @Override
@@ -250,6 +237,10 @@ public class ObjectItemType implements ItemType {
 
     @Override
     public boolean isResolved() {
+        return this.baseType.isResolved() && areContentTypesResolved();
+    }
+
+    private boolean areContentTypesResolved() {
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
             if (!entry.getValue().getType().isResolved()) {
                 return false;
@@ -264,10 +255,11 @@ public class ObjectItemType implements ItemType {
             this.baseType.resolve(context, metadata);
             processBaseType();
         }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isResolved()) {
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
                 entry.getValue().resolve(context, metadata);
             }
+            checkSubtypeConsistency();
         }
     }
 
@@ -277,8 +269,11 @@ public class ObjectItemType implements ItemType {
             this.baseType.resolve(context, metadata);
             processBaseType();
         }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            entry.getValue().resolve(context, metadata);
+        if (!areContentTypesResolved()) {
+            for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+                entry.getValue().resolve(context, metadata);
+            }
+            checkSubtypeConsistency();
         }
     }
 
@@ -300,6 +295,27 @@ public class ObjectItemType implements ItemType {
         if (this.baseType.isObjectItemType()) {
             if (this.content == null) {
                 this.content = this.baseType.getObjectContentFacet();
+            } else {
+                for (Map.Entry<String, FieldDescriptor> entry : this.baseType.getObjectContentFacet().entrySet()) {
+                    if (!this.content.containsKey(entry.getKey())) {
+                        FieldDescriptor descriptor = entry.getValue();
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(false);
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(false);
+                        }
+                        this.content.put(entry.getKey(), descriptor);
+                    } else {
+                        FieldDescriptor descriptor = this.content.get(entry.getKey());
+                        if (!descriptor.requiredIsSet()) {
+                            descriptor.setRequired(entry.getValue().isRequired());
+                        }
+                        if (!descriptor.uniqueIsSet()) {
+                            descriptor.setUnique(entry.getValue().isUnique());
+                        }
+                    }
+                }
             }
             if (this.enumeration == null) {
                 this.enumeration = this.baseType.getEnumerationFacet();
@@ -314,6 +330,60 @@ public class ObjectItemType implements ItemType {
         }
         if (this.content == null) {
             throw new OurBadException("Content cannot be null in primitive object type.");
+        }
+    }
+
+    public void checkSubtypeConsistency() {
+        if (!this.baseType.isObjectItemType()) {
+            if (this.getTypeTreeDepth() >= 3) {
+                throw new InvalidSchemaException(
+                        "Any user-defined object type must have an object type as its base type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            return;
+        }
+        // TODO Check field types
+        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
+            if (!this.getBaseType().getObjectContentFacet().containsKey(entry.getKey())) {
+                if (this.baseType.getClosedFacet()) {
+                    throw new InvalidSchemaException(
+                            "If the base type is closed, it is not possible to add new fields.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                } else {
+                    continue;
+                }
+            }
+            FieldDescriptor superTypeDescriptor = this.getBaseType().getObjectContentFacet().get(entry.getKey());
+            if (!entry.getValue().getType().isSubtypeOf(superTypeDescriptor.getType())) {
+                throw new InvalidSchemaException(
+                        "The type of an object field descriptor (here: "
+                            + entry.getValue().getType()
+                            + ") associated with key "
+                            + entry.getKey()
+                            + " must be a subtype of the type declared for this field in its base type (here: "
+                            + superTypeDescriptor.getType()
+                            + ")",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+            System.err.println("Req " + entry.getValue().isRequired());
+            System.err.println("SReq " + superTypeDescriptor.isRequired());
+            if (!entry.getValue().isRequired() && superTypeDescriptor.isRequired()) {
+                throw new InvalidSchemaException(
+                        "Since the field "
+                            + entry.getKey()
+                            + " is required in the base type, it must also be required in the derived type.",
+                        ExceptionMetadata.EMPTY_METADATA
+                );
+            }
+        }
+        if (this.baseType.getClosedFacet() && !this.isClosed) {
+            throw new InvalidSchemaException(
+                    "If the base type is closed, it is not possible to re-open it.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
         }
     }
 }
