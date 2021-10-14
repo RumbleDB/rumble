@@ -44,7 +44,7 @@ public class Main {
                 launchShell(sparksoniqConf);
             } else if (sparksoniqConf.isServer()) {
                 launchServer(sparksoniqConf);
-            } else if (sparksoniqConf.getQueryPath() != null) {
+            } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
             } else {
                 System.out.println("    ____                  __    __   ");
@@ -56,24 +56,25 @@ public class Main {
                 System.out.println("spark-submit <Spark arguments> <path to rumble jar> <Rumble arguments>");
                 System.out.println("");
                 System.out.println("Example usage:");
-                System.out.println("spark-submit spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --shell yes");
-                System.out.println("spark-submit --master local[2] spark-rumble-1.7.0.jar --shell yes");
+                System.out.println("spark-submit rumbledb-1.15.0.jar --query '1+1'");
+                System.out.println("spark-submit rumbledb-1.15.0.jar --shell yes");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --shell yes");
+                System.out.println("spark-submit --master local[2] rumbledb-1.15.0.jar --shell yes");
                 System.out.println(
-                    "spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes"
+                    "spark-submit --master local[*] --driver-memory 10G rumbledb-1.15.0.jar --shell yes"
                 );
                 System.out.println("");
-                System.out.println("spark-submit --master yarn spark-rumble-1.7.0.jar --shell yes");
+                System.out.println("spark-submit --master yarn rumbledb-1.15.0.jar --shell yes");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --shell yes"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --shell yes"
                 );
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
                 );
                 System.out.println(
-                    "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
+                    "spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
                 );
             }
             System.exit(0);

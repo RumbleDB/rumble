@@ -80,7 +80,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
             List<Item> items = inputDataIterator.materialize(context);
             JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType);
-            jdf.getDataFrame().show();
+            // jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
@@ -338,6 +338,18 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             List<Item> members = new ArrayList<>();
             for (Item member : item.getItems()) {
                 members.add(validate(member, itemType.getArrayContentFacet(), metadata));
+            }
+            Integer minLength = itemType.getMinLengthFacet();
+            Integer maxLength = itemType.getMaxLengthFacet();
+            if (minLength != null && members.size() < minLength) {
+                throw new InvalidInstanceException(
+                        "Array has " + members.size() + " members but the type requires at least " + minLength
+                );
+            }
+            if (maxLength != null && members.size() > maxLength) {
+                throw new InvalidInstanceException(
+                        "Array has " + members.size() + " members but the type requires at most " + maxLength
+                );
             }
             Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
             if (itemType.getName() == null) {
