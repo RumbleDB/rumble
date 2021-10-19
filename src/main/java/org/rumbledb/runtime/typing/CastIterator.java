@@ -581,7 +581,24 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
             return false;
         }
 
+        // If no enumeration facet, can directly return true
+        /*
+         * boolean enumCorrect;
+         * if (targetType.getEnumerationFacet() != null) {
+         * enumCorrect = false;
+         * } else {
+         * enumCorrect = true;
+         * }
+         * for (Item allowedItem : targetType.getEnumerationFacet()) {
+         * if (item.getStringValue() == allowedItem.getStringValue()) {
+         * enumCorrect = true;
+         * break;
+         * }
+         * }
+         * return enumCorrect;
+         */
         return true;
+
     }
 
     public static boolean checkFacetsBoolean(Item item, ItemType targetType) {

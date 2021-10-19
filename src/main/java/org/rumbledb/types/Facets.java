@@ -167,7 +167,7 @@ public class Facets {
 
     public static Facets createAtomicTypeFacets(
             Integer length,
-            Integer enumeration,
+            List<Item> enumeration,
             Integer minLength,
             Integer maxLength,
             Item minInclusive,
@@ -179,6 +179,7 @@ public class Facets {
     ) {
         Facets facets = new Facets();
         facets.length = length;
+        facets.enumeration = enumeration;
         facets.minLength = minLength;
         facets.maxLength = maxLength;
         facets.minInclusive = minInclusive;
