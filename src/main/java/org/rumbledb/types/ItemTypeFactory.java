@@ -15,6 +15,7 @@ import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.*;
@@ -133,27 +134,42 @@ public class ItemTypeFactory {
                 );
             }
         }
+        if (keys.contains("enumeration")) {
+            throw new UnsupportedFeatureException(
+                    "The enumeration facet is not supported yet, but it will come in a subsequent release.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
+        if (keys.contains("constraints")) {
+            throw new UnsupportedFeatureException(
+                    "The constraints facet is not supported yet, but it will come in a subsequent release.",
+                    ExceptionMetadata.EMPTY_METADATA
+            );
+        }
         switch (kind) {
             case "object":
                 if (baseType == null) {
                     baseType = BuiltinTypesCatalogue.objectItem;
                 }
-                if (!keys.contains("content")) {
-                    throw new InvalidSchemaException(
-                            "The content facet is missing in an object type declaration.",
-                            ExceptionMetadata.EMPTY_METADATA
-                    );
-                }
+
                 Item contentItem = item.getItemByKey("content");
-                if (contentItem == null) {
-                    contentItem = ItemFactory.getInstance().createArrayItem();
-                }
-                if (!contentItem.isArray()) {
-                    throw new InvalidSchemaException(
-                            "The content facet must be an array",
-                            ExceptionMetadata.EMPTY_METADATA
+                if (!keys.contains("content")) {
+                    System.err.println(
+                        "[WARNING] The content facet of an object type is missing. By default, no fields are defined or overriden."
                     );
+                    contentItem = ItemFactory.getInstance().createArrayItem();
+                } else {
+                    if (contentItem == null) {
+                        contentItem = ItemFactory.getInstance().createArrayItem();
+                    }
+                    if (!contentItem.isArray()) {
+                        throw new InvalidSchemaException(
+                                "The content facet must be an array",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
                 }
+
                 boolean closed = false;
                 Item closedItem = item.getItemByKey("closed");
                 if (closedItem != null && !closedItem.isBoolean()) {
@@ -165,6 +181,9 @@ public class ItemTypeFactory {
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
                 } else {
+                    System.err.println(
+                        "[WARNING] The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
+                    );
                     closed = true;
                 }
                 List<Item> contents = contentItem.getItems();
@@ -179,7 +198,7 @@ public class ItemTypeFactory {
                     }
                     if (!fieldItem.isString()) {
                         throw new InvalidSchemaException(
-                                "Field descriptor must be a string.",
+                                "The name of a field must be a string.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
@@ -201,12 +220,13 @@ public class ItemTypeFactory {
                         type = createItemTypeFromJSoundVerboseItem(null, typeItem, staticContext);
                     } else {
                         throw new InvalidSchemaException(
-                                "Field descriptor must be a string or an object.",
+                                "The tyep of a field descriptor must be a string or an object.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
 
                     boolean required = false;
+                    boolean isRequiredSet = false;
                     Item requiredItem = c.getItemByKey("required");
                     if (requiredItem != null && !requiredItem.isBoolean()) {
                         throw new InvalidSchemaException(
@@ -216,11 +236,11 @@ public class ItemTypeFactory {
                     }
                     if (requiredItem != null) {
                         required = requiredItem.getBooleanValue();
-                    } else {
-                        required = false;
+                        isRequiredSet = true;
                     }
 
                     boolean unique = false;
+                    boolean isUniqueSet = false;
                     Item uniqueItem = c.getItemByKey("unique");
                     if (uniqueItem != null && !uniqueItem.isBoolean()) {
                         throw new InvalidSchemaException(
@@ -230,8 +250,7 @@ public class ItemTypeFactory {
                     }
                     if (uniqueItem != null) {
                         unique = uniqueItem.getBooleanValue();
-                    } else {
-                        unique = false;
+                        isUniqueSet = true;
                     }
 
                     Item defaultValue = c.getItemByKey("default");
@@ -243,9 +262,13 @@ public class ItemTypeFactory {
                     }
                     FieldDescriptor fieldDescriptor = new FieldDescriptor();
                     fieldDescriptor.setName(fieldName);
-                    fieldDescriptor.setRequired(required);
                     fieldDescriptor.setType(type);
-                    fieldDescriptor.setUnique(unique);
+                    if (isRequiredSet) {
+                        fieldDescriptor.setRequired(required);
+                    }
+                    if (isUniqueSet) {
+                        fieldDescriptor.setUnique(unique);
+                    }
                     if (defaultValue != null) {
                         fieldDescriptor.setDefaultValue(defaultValue);
                     }
