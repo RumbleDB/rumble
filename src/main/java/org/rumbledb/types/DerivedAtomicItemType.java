@@ -46,15 +46,14 @@ public class DerivedAtomicItemType implements ItemType {
         this.baseType = baseType;
         this.primitiveType = primitiveType;
         this.isUserDefined = isUserDefined;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
 
         this.minInclusive = facets.getMinInclusive();
         this.maxInclusive = facets.getMaxInclusive();
         this.minExclusive = facets.getMinExclusive();
         this.maxExclusive = facets.getMaxExclusive();
 
-        this.minLength = facets.getMinLength();
         this.length = facets.getLength();
+        this.minLength = facets.getMinLength();
         this.maxLength = facets.getMaxLength();
         this.totalDigits = facets.getTotalDigits();
         this.fractionDigits = facets.getFractionDigits();
@@ -406,7 +405,7 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.length != this.baseType.getLengthFacet()) {
+                if (this.baseType.getLengthFacet() != null && this.length != this.baseType.getLengthFacet()) {
                     throw new InvalidSchemaException("Incompatible length facet.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
@@ -427,7 +426,7 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.minLength < this.baseType.getMinLengthFacet()) {
+                if (this.baseType.getMinLengthFacet() != null && this.minLength < this.baseType.getMinLengthFacet()) {
                     throw new InvalidSchemaException("Out of bounds minLength.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
@@ -442,7 +441,7 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.maxLength > this.baseType.getMaxLengthFacet()) {
+                if (this.baseType.getMaxLengthFacet() != null && this.maxLength > this.baseType.getMaxLengthFacet()) {
                     throw new InvalidSchemaException("Out of bounds maxLength.", ExceptionMetadata.EMPTY_METADATA);
                 }
             }
@@ -564,7 +563,10 @@ public class DerivedAtomicItemType implements ItemType {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
-                if (this.totalDigits > this.baseType.getTotalDigitsFacet()) {
+                if (
+                    this.baseType.getTotalDigitsFacet() != null
+                        && this.totalDigits > this.baseType.getTotalDigitsFacet()
+                ) {
                     throw new InvalidSchemaException(
                             "Out of bounds totalDigits facet.",
                             ExceptionMetadata.EMPTY_METADATA

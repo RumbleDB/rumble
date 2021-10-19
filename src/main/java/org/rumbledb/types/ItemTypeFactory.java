@@ -389,6 +389,28 @@ public class ItemTypeFactory {
                     length = lengthItem.castToIntValue();
                 }
 
+                if (keys.contains("minLength")) {
+                    Item minLengthItem = item.getItemByKey("minLength");
+                    if (!minLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minLength facet must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minLength = minLengthItem.castToIntValue();
+                }
+
+                if (keys.contains("maxLength")) {
+                    Item maxLengthItem = item.getItemByKey("maxLength");
+                    if (!maxLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The maxLength facet must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    maxLength = maxLengthItem.castToIntValue();
+                }
+
                 if (keys.contains("enumeration")) {
                     Item enumerationItem = item.getItemByKey("enumeration");
                     if (!enumerationItem.isNumeric()) {
@@ -459,7 +481,6 @@ public class ItemTypeFactory {
                     }
                     fractionDigits = fractionDigitsItem.castToIntValue();
                 }
-
 
                 // Item contains syntax of JSound schema
                 return new DerivedAtomicItemType(

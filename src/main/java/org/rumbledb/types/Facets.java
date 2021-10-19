@@ -101,6 +101,13 @@ public class Facets {
         this.maxExclusive = maxExclusive;
     }
 
+    public Integer getLength() {
+        return this.length;
+    }
+
+    public void setLength(Integer length) {
+        this.length = length;
+    }
 
     public Integer getMinLength() {
         return this.minLength;
@@ -108,14 +115,6 @@ public class Facets {
 
     public void setMinLength(Integer minLength) {
         this.minLength = minLength;
-    }
-
-    public Integer getLength() {
-        return this.length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
     }
 
     public Integer getMaxLength() {

@@ -1,40 +1,15 @@
 (:JIQS: ShouldRun; Output="Success" :)
-declare type local:x as jsound verbose {
-  "kind" : "object",
-  "baseType" : "object",
-  "content" : [
-    {
-      "name" : "foo",
-      "type" : "integer"
-    },
-    {
-      "name" : "nested",
-      "type" : {
-        "kind" : "object",
-        "baseType" : "object",
-        "content" : [
-          {
-            "name" : "bar",
-            "type" : "positiveInteger",
-            "required" : true
-          },
-          {
-            "name" : "foobar",
-            "type" : "hexBinary",
-            "required" : false
-          }
-        ],
-        "closed" : false
-      },
-      "required" : false
-    }
-  ]
+
+declare type local:myPosInt as jsound verbose {
+    "name": "local:myPosInt",
+    "kind": "atomic",
+    "baseType": "xs:positiveInteger",
+    "minInclusive": 10
 };
 try {
-  validate type local:x* {
-    { "foo" : 2, "nested" : { "bar" : -20, "foobar" : "AABBCC" } }
+  validate type local:myPosInt {
+      5
   }
 } catch XQDY0027 {
   "Success"
 }
-

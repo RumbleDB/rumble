@@ -1,15 +1,12 @@
-(:JIQS: ShouldRun; Output="Success" :)
+(:JIQS: ShouldRun; Output="mylongstring" :)
 declare type local:mystring as jsound verbose {
     "name": "local:mystring",
     "kind": "atomic",
     "baseType": "xs:string",
     "maxLength": 5
 };
-try {
-  validate type local:mystring {
-    "mytoolongstring"
-  }
-} catch XQDY0027 {
-   "Success"
+validate type local:mystring {
+    "mylongstring"
 }
+
 
