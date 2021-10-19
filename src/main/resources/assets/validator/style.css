@@ -1,0 +1,9 @@
+.CodeMirror {
+  text-align: left!important;
+  border: solid 1px black;
+  margin: 10px;
+}
+
+div {
+    margin-top: 200px;
+}
