@@ -95,39 +95,6 @@ public class ArrayItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        String separator = " ";
-        for (Item item : this.arrayItems) {
-            sb.append(separator);
-            separator = ", ";
-            boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
-            if (item.isDouble()) {
-                if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
-                    isStringValue = true;
-                }
-            }
-            if (item.isFloat()) {
-                if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
-                    isStringValue = true;
-                }
-            }
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(item.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(item.serialize());
-            }
-        }
-
-        sb.append(" ]");
-        return sb.toString();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.arrayItems);
     }

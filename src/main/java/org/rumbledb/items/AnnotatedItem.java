@@ -368,11 +368,6 @@ public class AnnotatedItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return this.itemToAnnotate.serialize();
-    }
-
-    @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
         return this.itemToAnnotate.generateNativeQuery(context);
     }

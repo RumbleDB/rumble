@@ -91,7 +91,10 @@ public class gMonthDayItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.serialize();
+        String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
+                ? "Z"
+                : this.getDateTimeValue().getZone().toString();
+            return this.value.substring(0, 7) + (this.hasTimeZone ? zone : "");
     }
 
     @Override
@@ -102,14 +105,6 @@ public class gMonthDayItem implements Item {
     @Override
     public boolean isGMonthDay() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.getDateTimeValue().getZone().toString();
-        return this.value.substring(0, 7) + (this.hasTimeZone ? zone : "");
     }
 
     @Override

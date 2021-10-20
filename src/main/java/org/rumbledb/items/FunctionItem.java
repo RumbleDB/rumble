@@ -191,11 +191,6 @@ public class FunctionItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        throw new FunctionsNonSerializableException();
-    }
-
-    @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
         sb.append("Function\n");
