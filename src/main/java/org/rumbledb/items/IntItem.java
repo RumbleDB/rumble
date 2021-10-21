@@ -85,7 +85,7 @@ public class IntItem implements Item {
 
     @Override
     public String getStringValue() {
-        return String.valueOf(this.value);
+    	return String.valueOf(this.value);
     }
 
     public double castToDoubleValue() {
@@ -126,11 +126,6 @@ public class IntItem implements Item {
     @Override
     public boolean isDouble() {
         return false;
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.value);
     }
 
     @Override

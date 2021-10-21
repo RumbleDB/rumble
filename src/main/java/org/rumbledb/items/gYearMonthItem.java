@@ -108,7 +108,11 @@ public class gYearMonthItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.serialize();
+    	String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
+                ? "Z"
+                : this.getDateTimeValue().getZone().toString();
+            return (this.value.startsWith("-") ? this.value.substring(0, 8) : this.value.substring(0, 7))
+                + (this.hasTimeZone ? zone : "");
     }
 
     @Override
@@ -119,15 +123,6 @@ public class gYearMonthItem implements Item {
     @Override
     public boolean isGYearMonth() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.getDateTimeValue().getZone().toString();
-        return (this.value.startsWith("-") ? this.value.substring(0, 8) : this.value.substring(0, 7))
-            + (this.hasTimeZone ? zone : "");
     }
 
     @Override

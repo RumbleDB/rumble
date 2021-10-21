@@ -59,7 +59,7 @@ public class HexBinaryItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.stringValue;
+        return this.stringValue.toUpperCase();
     }
 
     private static boolean checkInvalidHexBinaryFormat(String hexBinaryString) {
@@ -95,11 +95,6 @@ public class HexBinaryItem implements Item {
     @Override
     public int hashCode() {
         return Arrays.hashCode(this.getValue());
-    }
-
-    @Override
-    public String serialize() {
-        return this.getStringValue().toUpperCase();
     }
 
     @Override

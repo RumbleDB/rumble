@@ -5,7 +5,7 @@ import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
 
 public class Serializer {
-    enum Method {
+    public enum Method {
         JSON,
         TYSON,
         XML_JSON_HYBRID
@@ -40,14 +40,14 @@ public class Serializer {
         return this.itemSeparator;
     }
     
-    String serialize(Item i)
+    public String serialize(Item i)
     {
         StringBuffer sb = new StringBuffer();
         serialize(i, sb, 0);
         return sb.toString();
     }
     
-    void serialize(Item item, StringBuffer sb, int indent)
+    public void serialize(Item item, StringBuffer sb, int indent)
     {
         if(item.isFunction())
         {

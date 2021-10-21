@@ -646,6 +646,10 @@ public interface Item extends Serializable, KryoSerializable {
      */
     int hashCode();
 
+    default String serialize() {
+        return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
+    }
+
     /**
      * Get sparkSql string for the item
      * 
