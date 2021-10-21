@@ -41,35 +41,18 @@ public class Serializer {
 
     public String serialize(Item i) {
         StringBuffer sb = new StringBuffer();
-        serialize(i, sb, "");
+        serialize(i, sb, "", true);
         return sb.toString();
     }
 
-    public void serialize(Item item, StringBuffer sb, String indent) {
+    public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
         if (item.isAtomic()) {
             switch (this.method) {
                 case JSON:
-                    boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
-                    if (item.isDouble()) {
-                        if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
-                            isStringValue = true;
-                        }
-                    }
-                    if (item.isFloat()) {
-                        if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
-                            isStringValue = true;
-                        }
-                    }
-                    if (isStringValue) {
-                        sb.append("\"");
-                        sb.append(StringEscapeUtils.escapeJson(item.getStringValue()));
-                        sb.append("\"");
-                    } else {
-                        sb.append(item.getStringValue());
-                    }
+                    appendJSONAtomicItem(item, sb);
                     return;
                 case TYSON:
                     sb.append("(\"");
@@ -80,7 +63,11 @@ public class Serializer {
                     sb.append("\"");
                     return;
                 case XML_JSON_HYBRID:
-                    sb.append(item.getStringValue());
+                    if (isTopLevel) {
+                        sb.append(item.getStringValue());
+                    } else {
+                        appendJSONAtomicItem(item, sb);
+                    }
                     return;
             }
         }
@@ -104,9 +91,9 @@ public class Serializer {
                     firstTime = false;
                 }
                 if (this.indent) {
-                    serialize(member, sb, indent + "  ");
+                    serialize(member, sb, indent + "  ", false);
                 } else {
-                    serialize(member, sb, "");
+                    serialize(member, sb, "", false);
                 }
 
             }
@@ -139,9 +126,9 @@ public class Serializer {
                 Item value = item.getItemByKey(key);
                 sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
                 if (this.indent) {
-                    serialize(value, sb, indent + "  ");
+                    serialize(value, sb, indent + "  ", false);
                 } else {
-                    serialize(value, sb, "");
+                    serialize(value, sb, "", false);
                 }
             }
             if (this.indent) {
@@ -150,6 +137,27 @@ public class Serializer {
                 sb.append(" ");
             }
             sb.append("}");
+        }
+    }
+
+    private void appendJSONAtomicItem(Item item, StringBuffer sb) {
+        boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
+        if (item.isDouble()) {
+            if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
+                isStringValue = true;
+            }
+        }
+        if (item.isFloat()) {
+            if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
+                isStringValue = true;
+            }
+        }
+        if (isStringValue) {
+            sb.append("\"");
+            sb.append(StringEscapeUtils.escapeJson(item.getStringValue()));
+            sb.append("\"");
+        } else {
+            sb.append(item.getStringValue());
         }
     }
 }
