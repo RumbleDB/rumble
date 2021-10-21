@@ -124,10 +124,6 @@ public class StringItem implements Item {
         return !this.getStringValue().isEmpty();
     }
 
-    public String serialize() {
-        return this.getValue();
-    }
-
     @Override
     public void write(Kryo kryo, Output output) {
         output.writeString(this.getValue());

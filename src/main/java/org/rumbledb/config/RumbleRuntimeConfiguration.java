@@ -23,6 +23,8 @@ package org.rumbledb.config;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.serialization.Serializer;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -457,5 +459,36 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     @Override
     public void read(Kryo kryo, Input input) {
         this.arguments = kryo.readObject(input, HashMap.class);
+    }
+
+    public Serializer getSerializer() {
+        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
+        if (this.getOutputFormat().equals("tyson")) {
+            method = Serializer.Method.TYSON;
+        }
+        if (this.getOutputFormat().equals("json")) {
+            method = Serializer.Method.JSON;
+        }
+        boolean indent = false;
+        Map<String, String> options = this.getOutputFormatOptions();
+        if (options.containsKey("indent")) {
+            if (options.get("indent").equals("yes")) {
+                indent = true;
+            }
+        }
+        String itemSeparator = "\n";
+        if (options.containsKey("item-separator")) {
+            itemSeparator = options.get("item-separator");
+        }
+        String encoding = "UTF-8";
+        if (options.containsKey("encoding")) {
+            itemSeparator = options.get("encoding");
+        }
+        return new Serializer(
+                encoding,
+                method,
+                indent,
+                itemSeparator
+        );
     }
 }

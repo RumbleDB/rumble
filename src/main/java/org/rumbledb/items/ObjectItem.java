@@ -23,7 +23,6 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.DuplicateObjectKeyException;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -156,43 +155,6 @@ public class ObjectItem implements Item {
     @Override
     public boolean isObject() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("{ ");
-        for (int i = 0; i < this.keys.size(); ++i) {
-            String key = this.keys.get(i);
-            Item value = this.values.get(i);
-            boolean isStringValue = value.isAtomic() && !value.isNumeric() && !value.isBoolean() && !value.isNull();
-            if (value.isDouble()) {
-                if (Double.isNaN(value.getDoubleValue()) || Double.isInfinite(value.getDoubleValue())) {
-                    isStringValue = true;
-                }
-            }
-            if (value.isFloat()) {
-                if (Float.isNaN(value.getFloatValue()) || Float.isInfinite(value.getFloatValue())) {
-                    isStringValue = true;
-                }
-            }
-            sb.append("\"").append(StringEscapeUtils.escapeJson(key)).append("\"").append(" : ");
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(value.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(value.serialize());
-            }
-
-            if (i < this.keys.size() - 1) {
-                sb.append(", ");
-            } else {
-                sb.append(" ");
-            }
-        }
-        sb.append("}");
-        return sb.toString();
     }
 
     @Override
