@@ -477,10 +477,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
         }
         String itemSeparator = "\n";
-        if (options.containsKey("itemSeparator")) {
-            itemSeparator = options.get("itemSeparator");
+        if (options.containsKey("item-separator")) {
+            itemSeparator = options.get("item-separator");
         }
-        String encoding = "UTF-*";
+        String encoding = "UTF-8";
         if (options.containsKey("encoding")) {
             itemSeparator = options.get("encoding");
         }
