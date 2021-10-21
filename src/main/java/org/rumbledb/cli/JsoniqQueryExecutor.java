@@ -30,9 +30,9 @@ import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.items.Serializer;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.Serializer;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
@@ -154,7 +154,7 @@ public class JsoniqQueryExecutor {
             }
         } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
-            Serializer serializer = setupSerializer();
+            Serializer serializer = this.configuration.getSerializer();
             JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
                 outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
@@ -164,7 +164,7 @@ public class JsoniqQueryExecutor {
         } else {
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
-            Serializer serializer = setupSerializer();
+            Serializer serializer = this.configuration.getSerializer();
             List<String> lines = outputList.stream().map(x -> serializer.serialize(x)).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
@@ -200,37 +200,6 @@ public class JsoniqQueryExecutor {
             );
         }
         return outputList;
-    }
-
-    private Serializer setupSerializer() {
-        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
-        if (this.configuration.getOutputFormat().equals("tyson")) {
-            method = Serializer.Method.TYSON;
-        }
-        if (this.configuration.getOutputFormat().equals("json")) {
-            method = Serializer.Method.JSON;
-        }
-        boolean indent = false;
-        Map<String, String> options = this.configuration.getOutputFormatOptions();
-        if (options.containsKey("indent")) {
-            if (options.get("indent").equals("yes")) {
-                indent = true;
-            }
-        }
-        String itemSeparator = "\n";
-        if (options.containsKey("itemSeparator")) {
-            itemSeparator = options.get("itemSeparator");
-        }
-        String encoding = "UTF-*";
-        if (options.containsKey("encoding")) {
-            itemSeparator = options.get("encoding");
-        }
-        return new Serializer(
-                encoding,
-                method,
-                indent,
-                itemSeparator
-        );
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {

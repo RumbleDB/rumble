@@ -1,4 +1,4 @@
-package org.rumbledb.items;
+package org.rumbledb.serialization;
 
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
