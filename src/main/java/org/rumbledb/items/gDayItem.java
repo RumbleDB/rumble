@@ -88,9 +88,9 @@ public class gDayItem implements Item {
     @Override
     public String getStringValue() {
         String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
-                ? "Z"
-                : this.getDateTimeValue().getZone().toString();
-            return this.value.substring(0, 5) + (this.hasTimeZone ? zone : "");
+            ? "Z"
+            : this.getDateTimeValue().getZone().toString();
+        return this.value.substring(0, 5) + (this.hasTimeZone ? zone : "");
     }
 
     @Override

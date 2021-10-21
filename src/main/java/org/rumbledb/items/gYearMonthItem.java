@@ -108,11 +108,11 @@ public class gYearMonthItem implements Item {
 
     @Override
     public String getStringValue() {
-    	String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
-                ? "Z"
-                : this.getDateTimeValue().getZone().toString();
-            return (this.value.startsWith("-") ? this.value.substring(0, 8) : this.value.substring(0, 7))
-                + (this.hasTimeZone ? zone : "");
+        String zone = this.getDateTimeValue().getZone() == DateTimeZone.UTC
+            ? "Z"
+            : this.getDateTimeValue().getZone().toString();
+        return (this.value.startsWith("-") ? this.value.substring(0, 8) : this.value.substring(0, 7))
+            + (this.hasTimeZone ? zone : "");
     }
 
     @Override

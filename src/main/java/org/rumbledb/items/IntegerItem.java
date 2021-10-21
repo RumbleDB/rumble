@@ -74,7 +74,7 @@ public class IntegerItem implements Item {
 
     @Override
     public String getStringValue() {
-    	return String.valueOf(this.value);
+        return String.valueOf(this.value);
     }
 
     @Override

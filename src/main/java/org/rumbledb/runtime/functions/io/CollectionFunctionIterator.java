@@ -14,9 +14,9 @@ import java.util.List;
 
 public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
 
-	private static final long serialVersionUID = 1L;
+    private static final long serialVersionUID = 1L;
 
-	public CollectionFunctionIterator(
+    public CollectionFunctionIterator(
             List<RuntimeIterator> children,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata
@@ -35,7 +35,7 @@ public class CollectionFunctionIterator extends DataFrameRuntimeIterator {
         if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
             throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
         }
-        //DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
+        // DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         return JSoundDataFrame.emptyDataFrame();
     }
 

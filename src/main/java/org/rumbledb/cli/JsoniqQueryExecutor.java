@@ -30,6 +30,7 @@ import org.rumbledb.api.SequenceOfItems;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.items.Serializer;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 
@@ -114,14 +115,17 @@ public class JsoniqQueryExecutor {
         }
 
         if (
-            !this.configuration.getOutputFormat().equals("json")
+            !(this.configuration.getOutputFormat().equals("json")
+                || this.configuration.getOutputFormat().equals("tyson")
+                || this.configuration.getOutputFormat().equals("xml-json-hybrid"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {
             throw new CliException(
-                    "Rumble cannot output another format than JSON if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+                    "Rumble cannot output another format than json or tyson or xml-json-hybrid if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
+
         if (sequence.availableAsDataFrame() && outputPath != null) {
             Dataset<Row> df = sequence.getAsDataFrame();
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
@@ -150,7 +154,8 @@ public class JsoniqQueryExecutor {
             }
         } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
-            JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
+            Serializer serializer = setupSerializer();
+            JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
                 outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
             }
@@ -159,7 +164,8 @@ public class JsoniqQueryExecutor {
         } else {
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
-            List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
+            Serializer serializer = setupSerializer();
+            List<String> lines = outputList.stream().map(x -> serializer.serialize(x)).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             } else {
@@ -194,6 +200,37 @@ public class JsoniqQueryExecutor {
             );
         }
         return outputList;
+    }
+
+    private Serializer setupSerializer() {
+        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
+        if (this.configuration.getOutputFormat().equals("tyson")) {
+            method = Serializer.Method.TYSON;
+        }
+        if (this.configuration.getOutputFormat().equals("json")) {
+            method = Serializer.Method.JSON;
+        }
+        boolean indent = false;
+        Map<String, String> options = this.configuration.getOutputFormatOptions();
+        if (options.containsKey("indent")) {
+            if (options.get("indent").equals("yes")) {
+                indent = true;
+            }
+        }
+        String itemSeparator = "\n";
+        if (options.containsKey("itemSeparator")) {
+            itemSeparator = options.get("itemSeparator");
+        }
+        String encoding = "UTF-*";
+        if (options.containsKey("encoding")) {
+            itemSeparator = options.get("encoding");
+        }
+        return new Serializer(
+                encoding,
+                method,
+                indent,
+                itemSeparator
+        );
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
