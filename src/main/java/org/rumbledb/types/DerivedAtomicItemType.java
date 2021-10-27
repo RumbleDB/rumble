@@ -411,7 +411,23 @@ public class DerivedAtomicItemType implements ItemType {
             }
 
             if (this.enumeration == null) {
-                this.enumeration = this.baseType.getEnumerationFacet();
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                    this.enumeration = this.baseType.getEnumerationFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.enumeration.hashCode() != this.baseType.getEnumerationFacet().hashCode()) {
+                    throw new InvalidSchemaException(
+                            "Enumeration facet is not valid.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+
             }
             // TODO: Check list enumeration with for loop or by hash
 
@@ -594,9 +610,6 @@ public class DerivedAtomicItemType implements ItemType {
                  */
             }
 
-
-            // TODO: for all facets
-            // Check
             return;
         }
         throw new InvalidSchemaException(

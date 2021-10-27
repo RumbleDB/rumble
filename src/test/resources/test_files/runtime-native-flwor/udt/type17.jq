@@ -1,8 +1,7 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, true, Success" :)
-declare type local:x as { "foo" : "integer" };
+(:JIQS: ShouldRun; Output="({ "foo" : 2 }, { "foo" : 3 }, { }, true, Success)" :)
+declare type local:x as { "foo" : "short" };
 declare type local:y as jsound compact { "foo" : [ "positiveInteger" ] };
 declare type local:z as jsound compact { "foo" : [ "positiveInteger" ] };
-
 validate type local:x* {
   { "foo" : 2 },
   { "foo" : 3 },
@@ -23,4 +22,4 @@ try {
   }
 } catch XQDY0027 {
   "Success"
-},
+}
