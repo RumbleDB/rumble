@@ -23,7 +23,6 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -92,29 +91,6 @@ public class ArrayItem implements Item {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        String separator = " ";
-        for (Item item : this.arrayItems) {
-            sb.append(separator);
-            separator = ", ";
-            boolean isStringValue = item.isString();
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(item.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(item.serialize());
-            }
-        }
-
-        sb.append(" ]");
-        return sb.toString();
     }
 
     @Override

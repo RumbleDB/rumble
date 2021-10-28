@@ -23,7 +23,10 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 
 import java.io.Serializable;
 import java.util.List;
@@ -37,11 +40,30 @@ public interface ItemType extends Serializable {
     /**
      * Tests for itemType equality.
      *
-     * @param other another item type.
+     * @param other another object.
      * @return true it is equal to other, false otherwise.
      */
     boolean equals(Object other);
 
+
+    /**
+     * Tests for itemType equality.
+     *
+     * @param otherType another item type.
+     * @return true it is equal to other, false otherwise.
+     */
+    default boolean isEqualTo(ItemType otherType) {
+        if (this instanceof FunctionItemType || otherType instanceof FunctionItemType) {
+            if (!(this instanceof FunctionItemType) || !(otherType instanceof FunctionItemType)) {
+                return false;
+            }
+            return this.toString().equals(otherType.toString());
+        }
+        if (this.getName() == null || otherType.getName() == null) {
+            return this == otherType;
+        }
+        return this.getName().equals(otherType.getName());
+    }
     // region kind
 
     /**
@@ -80,6 +102,13 @@ public interface ItemType extends Serializable {
      * @return true it [this] is a function item type.
      */
     default boolean isFunctionItemType() {
+        return false;
+    }
+
+    /**
+     * @return true it [this] is a type compatible with DataFrames.
+     */
+    default boolean isDataFrameType() {
         return false;
     }
 
@@ -368,7 +397,13 @@ public interface ItemType extends Serializable {
      * @return content facet value for object item types (cumulative facet)
      */
     default Map<String, FieldDescriptor> getObjectContentFacet() {
-        throw new UnsupportedOperationException("object content facet is allowed only for object item types");
+        throw new UnsupportedOperationException(
+                "object content facet is allowed only for object item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
     }
 
     /**
@@ -383,8 +418,14 @@ public interface ItemType extends Serializable {
      *
      * @return content facet value for array item types
      */
-    default ArrayContentDescriptor getArrayContentFacet() {
-        throw new UnsupportedOperationException("array content facet is allowed only for array item types");
+    default ItemType getArrayContentFacet() {
+        throw new UnsupportedOperationException(
+                "array content facet is allowed only for array item types, but "
+                    + getIdentifierString()
+                    + " is not one (class "
+                    + this.getClass().getCanonicalName()
+                    + ")"
+        );
     }
 
     /**
@@ -402,10 +443,19 @@ public interface ItemType extends Serializable {
      * @return a String that uniquely identify an item type
      */
     default String getIdentifierString() {
-        if (this.hasName()) {
-            return this.getName().toString();
+        if (!this.hasName()) {
+            return "<anonymous>";
         }
-        throw new UnsupportedOperationException("default implementation of uniqueString always requires a Name");
+        return this.getName().toString();
+    }
+
+    /**
+     * Checks compatibility with DataFrames.
+     * 
+     * @return true if compatible with DataFrames and false otherwise.
+     */
+    default boolean isCompatibleWithDataFrames() {
+        return false;
     }
 
     String toString();
@@ -414,5 +464,17 @@ public interface ItemType extends Serializable {
         throw new UnsupportedOperationException(
                 "toDataFrameType method is not supported for " + this.toString() + " item types"
         );
+    }
+
+    default boolean isResolved() {
+        return true;
+    }
+
+    default void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        return;
+    }
+
+    default void resolve(StaticContext context, ExceptionMetadata metadata) {
+        return;
     }
 }

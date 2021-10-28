@@ -42,10 +42,12 @@ public class DateTimeItem implements Item {
         + "))";
 
     private static final String dateTimeLexicalRep = dateFrag + "T" + timeFrag + "(" + timezoneFrag + ")?";
+    private static final String dateTimeStampLexicalRep = dateFrag + "T" + timeFrag + timezoneFrag;
     private static final String dateLexicalRep = "(" + dateFrag + "(" + timezoneFrag + ")?)";
     private static final String timeLexicalRep = "(" + timeFrag + "(" + timezoneFrag + ")?)";
 
     private static final Pattern dateTimePattern = Pattern.compile(dateTimeLexicalRep);
+    private static final Pattern dateTimeStampPattern = Pattern.compile(dateTimeStampLexicalRep);
     private static final Pattern datePattern = Pattern.compile(dateLexicalRep);
     private static final Pattern timePattern = Pattern.compile(timeLexicalRep);
 
@@ -86,13 +88,22 @@ public class DateTimeItem implements Item {
         return false;
     }
 
-    public DateTime getValue() {
+    @Override
+    public DateTime getDateTimeValue() {
         return this.value;
     }
 
     @Override
-    public DateTime getDateTimeValue() {
-        return this.getValue();
+    public String getStringValue() {
+        String value = this.value.toString();
+        String zoneString = this.value.getZone() == DateTimeZone.UTC
+            ? "Z"
+            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
+                ? ""
+                : value.substring(value.length() - 6);
+        value = value.substring(0, value.length() - zoneString.length());
+        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        return value + (this.hasTimeZone ? zoneString : "");
     }
 
     @Override
@@ -117,27 +128,14 @@ public class DateTimeItem implements Item {
 
     @Override
     public int hashCode() {
-        return this.getValue().hashCode();
-    }
-
-    @Override
-    public String serialize() {
-        String value = this.getValue().toString();
-        String zoneString = this.getValue().getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.getValue().getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - zoneString.length());
-        value = this.getValue().getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + (this.hasTimeZone ? zoneString : "");
+        return this.value.hashCode();
     }
 
     @Override
     public void write(Kryo kryo, Output output) {
-        output.writeLong(this.getDateTimeValue().getMillis(), true);
+        output.writeLong(this.value.getMillis(), true);
         output.writeBoolean(this.hasTimeZone);
-        output.writeString(this.getDateTimeValue().getZone().getID());
+        output.writeString(this.value.getZone().getID());
     }
 
     @Override
@@ -148,7 +146,10 @@ public class DateTimeItem implements Item {
         this.value = new DateTime(millis, zone);
     }
 
-    private static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+    static DateTimeFormatter getDateTimeFormatter(ItemType dateTimeType) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
+        }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return ISODateTimeFormat.dateTimeParser().withOffsetParsed();
         }
@@ -167,7 +168,10 @@ public class DateTimeItem implements Item {
         throw new IllegalArgumentException();
     }
 
-    private static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+    static boolean checkInvalidDateTimeFormat(String dateTime, ItemType dateTimeType) {
+        if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeStampItem)) {
+            return dateTimeStampPattern.matcher(dateTime).matches();
+        }
         if (dateTimeType.equals(BuiltinTypesCatalogue.dateTimeItem)) {
             return dateTimePattern.matcher(dateTime).matches();
         }

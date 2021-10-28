@@ -29,10 +29,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.ItemType;
 import java.math.BigDecimal;
 import java.math.BigInteger;
+import java.text.DecimalFormat;
 
 public class FloatItem implements Item {
 
@@ -71,6 +73,39 @@ public class FloatItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        if (Float.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Float.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Float.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Float.compare(this.value, 0f) == 0) {
+            return "0";
+        }
+        if (Float.compare(this.value, -0f) == 0) {
+            return "-0";
+        }
+        double abs = Math.abs(this.value);
+        // Mantissa from less or equal than 1.0E-7
+        if (abs >= 0.000001 && abs < 1000000) {
+            return new BigDecimal(this.value).toString();
+        }
+        // Mantissa already from 1.0E6, then let Float.toString take care of mantissa from 1.0E7
+        if (abs >= 1000000 && abs < 10000000) {
+            return new DecimalFormat("0.0#######E0").format(this.value);
+            // return String.format("%.4E", this.castToDecimalValue().stripTrailingZeros().toPlainString());
+        }
+        // If less than 0.000001 must use mantissa, so from 0.0000001 = 1.0E-7
+        // If more or = than 1.0E6
+        // When use float.toString or not
+        return Float.toString(this.value);
+    }
+
+    @Override
     public double castToDoubleValue() {
         return (double) this.value;
     }
@@ -101,30 +136,6 @@ public class FloatItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        if (Float.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Float.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Float.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Float.compare(this.value, 0f) == 0) {
-            return "0";
-        }
-        if (Float.compare(this.value, -0f) == 0) {
-            return "-0";
-        }
-        double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
-        }
-        return Float.toString(this.value);
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeFloat(this.value);
     }
@@ -151,5 +162,21 @@ public class FloatItem implements Item {
     @Override
     public boolean isAtomic() {
         return true;
+    }
+
+    @Override
+    public boolean isNaN() {
+        return Float.isNaN(this.value);
+    }
+
+    @Override
+    public NativeClauseContext generateNativeQuery(NativeClauseContext context) {
+        if (Float.isInfinite(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (Float.isNaN(this.value)) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        return new NativeClauseContext(context, "CAST (" + this.value + "D AS FLOAT)", BuiltinTypesCatalogue.floatItem);
     }
 }

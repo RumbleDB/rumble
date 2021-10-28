@@ -25,7 +25,8 @@ setter                  : defaultCollationDecl
 namespaceDecl           : 'declare' 'namespace' NCName '=' uriLiteral;
                         
 annotatedDecl           : functionDecl
-                        | varDecl;
+                        | varDecl
+                        | typeDecl;
 
 defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
 
@@ -38,10 +39,7 @@ decimalFormatDecl       : 'declare'
                           (dfPropertyName '=' stringLiteral)*;
 
 qname                   : ((ns=NCName | nskw=keyWords)':')?
-                          (local_name=nCNameOrKeyWord | local_namekw = keyWords);
-
-nCNameOrKeyWord         : NCName
-                        | NullLiteral;
+                          (local_name=NCName | local_namekw = keyWords);
 
 dfPropertyName          : 'decimal-separator'
                         | 'grouping-separator'
@@ -61,6 +59,12 @@ varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':='
 functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
+
+typeDecl                : 'declare' 'type' type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+
+schemaLanguage          : 'jsound' 'compact'
+                        | 'jsound' 'verbose'
+                        | 'json' 'schema';
 
 paramList               : param (',' param)*;
 
@@ -165,7 +169,12 @@ castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 
 arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
 
-unaryExpr               : op+=('-' | '+')* main_expr=simpleMapExpr;
+unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
+
+valueExpr               : simpleMap_expr=simpleMapExpr
+                        | validate_expr=validateExpr;
+
+validateExpr            : 'validate' 'type' sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
@@ -180,6 +189,8 @@ predicate               : '[' expr ']';
 objectLookup            : '.' ( kw=keyWords | lt=stringLiteral | nc=NCName | pe=parenthesizedExpr | vr=varRef | ci=contextItemExpr);
 
 primaryExpr             : NullLiteral
+                        | Ktrue
+                        | Kfalse
                         | Literal
                         | stringLiteral
                         | varRef
@@ -291,6 +302,9 @@ keyWords                : Kjsoniq
                         | Korder
                         | Kcount
                         | Kreturn
+                        | Kunordered
+                        | Ktrue
+                        | Kfalse
                         ;
 
 ///////////////////////// literals
@@ -383,6 +397,12 @@ Kversion                : 'version';
 
 Kjsoniq                 : 'jsoniq';
 
+Kunordered              : 'unordered';
+
+Ktrue                   : 'true';
+
+Kfalse                  : 'false';
+
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
 fragment ESC            : '\\' (["\\/bfnrt] | UNICODE);
@@ -395,11 +415,9 @@ ArgumentPlaceholder     : '?';
 
 NullLiteral             : 'null';
 
-Literal                 : NumericLiteral | BooleanLiteral;
+Literal                 : NumericLiteral;
 
 NumericLiteral          : IntegerLiteral | DecimalLiteral | DoubleLiteral;
-
-BooleanLiteral          : 'true' | 'false';
 
 IntegerLiteral          : Digits ;
 

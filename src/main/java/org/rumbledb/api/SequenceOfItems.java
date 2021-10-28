@@ -132,7 +132,7 @@ public class SequenceOfItems {
         if (this.isOpen) {
             throw new RuntimeException("Cannot obtain an RDD if the iterator is open.");
         }
-        return this.iterator.getDataFrame(this.dynamicContext);
+        return this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
     }
 
     public long populateList(List<Item> resultList) {

@@ -32,7 +32,34 @@ public class Facets {
         return facets;
     }
 
-    private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
+    public static Facets createMinFacets(Item min, boolean isInclusive) {
+        Facets facets = new Facets();
+        if (isInclusive) {
+            facets.setMinInclusive(min);
+        } else {
+            facets.setMinExclusive(min);
+        }
+        return facets;
+    }
+
+    public static Facets createMaxFacets(Item max, boolean isInclusive) {
+        Facets facets = new Facets();
+        if (isInclusive) {
+            facets.setMaxInclusive(max);
+        } else {
+            facets.setMaxExclusive(max);
+        }
+        return facets;
+    }
+
+    public static Facets createTimezoneFacets(TimezoneFacet explicitTimezone) {
+        Facets facets = new Facets();
+        facets.setExplicitTimezone(explicitTimezone);
+        return facets;
+    }
+
+    private Item minInclusive, maxInclusive;
+    private Item minExclusive, maxExclusive;
     private Integer minLength, length, maxLength, totalDigits, fractionDigits;
     private List<String> constraints = Collections.emptyList();
     private List<Item> enumeration;
@@ -74,20 +101,20 @@ public class Facets {
         this.maxExclusive = maxExclusive;
     }
 
-    public Integer getMinLength() {
-        return this.minLength;
-    }
-
-    public void setMinLength(Integer minLength) {
-        this.minLength = minLength;
-    }
-
     public Integer getLength() {
         return this.length;
     }
 
     public void setLength(Integer length) {
         this.length = length;
+    }
+
+    public Integer getMinLength() {
+        return this.minLength;
+    }
+
+    public void setMinLength(Integer minLength) {
+        this.minLength = minLength;
     }
 
     public Integer getMaxLength() {
@@ -136,5 +163,31 @@ public class Facets {
 
     public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
         this.explicitTimezone = explicitTimezone;
+    }
+
+    public static Facets createAtomicTypeFacets(
+            Integer length,
+            List<Item> enumeration,
+            Integer minLength,
+            Integer maxLength,
+            Item minInclusive,
+            Item maxInclusive,
+            Item minExclusive,
+            Item maxExclusive,
+            Integer totalDigits,
+            Integer fractionDigits
+    ) {
+        Facets facets = new Facets();
+        facets.length = length;
+        facets.enumeration = enumeration;
+        facets.minLength = minLength;
+        facets.maxLength = maxLength;
+        facets.minInclusive = minInclusive;
+        facets.maxInclusive = maxInclusive;
+        facets.minExclusive = minExclusive;
+        facets.maxExclusive = maxExclusive;
+        facets.totalDigits = totalDigits;
+        facets.fractionDigits = fractionDigits;
+        return facets;
     }
 }

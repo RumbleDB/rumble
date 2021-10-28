@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("GeneralizedLinearRegression")
 let $tra := $est(
     $data,
-    { "family": "gaussian", "link": "identity", "featuresCol": ["age", "weight"], "maxIter": 10, "regParam": 0.3 }
+    { "family": "gaussian", "link": "identity", "maxIter": 10, "regParam": 0.3 }
 )
 for $result in $tra(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { }
 )
 return {
     "label": $result.label,

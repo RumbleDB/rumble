@@ -35,6 +35,8 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.types.ItemType;
+
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -102,13 +104,24 @@ public class DataFrameContext implements Serializable {
      * 
      */
     public void setFromRow(Row row) {
+        setFromRow(row, null);
+    }
+
+    /**
+     * Sets the context from a DataFrame row.
+     *
+     * @param row An row, the column names and types of which must correspond to those passed in the constructor.
+     * @param itemType the itemType to use for the conversion.
+     *
+     */
+    public void setFromRow(Row row, ItemType itemType) {
         this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
         for (String columnName : this.columnNames) {
             int columnIndex = row.fieldIndex(columnName);
             if (columnName.endsWith(".sequence")) {
-                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
                         FlworDataFrameUtils.variableForColumnName(columnName),
@@ -116,7 +129,7 @@ public class DataFrameContext implements Serializable {
                     );
             }
             if (!columnName.endsWith(".count")) {
-                List<Item> i = readColumnAsSequenceOfItems(row, columnIndex);
+                List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
                         FlworDataFrameUtils.variableForColumnName(columnName),
@@ -184,7 +197,7 @@ public class DataFrameContext implements Serializable {
     }
 
     @SuppressWarnings("unchecked")
-    private List<Item> readColumnAsSequenceOfItems(Row row, int columnIndex) {
+    private List<Item> readColumnAsSequenceOfItems(Row row, ItemType itemType, int columnIndex) {
         Object o = row.get(columnIndex);
         DataType dt = row.schema().fields()[columnIndex].dataType();
         // There are three special cases:
@@ -220,14 +233,15 @@ public class DataFrameContext implements Serializable {
                     Item item = ItemParser.convertValueToItem(
                         object,
                         ((ArrayType) dt).elementType(),
-                        ExceptionMetadata.EMPTY_METADATA
+                        ExceptionMetadata.EMPTY_METADATA,
+                        itemType == null ? null : itemType.getArrayContentFacet()
                     );
                     items.add(item);
                 }
                 return items;
             }
         }
-        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA);
+        Item item = ItemParser.convertValueToItem(o, dt, ExceptionMetadata.EMPTY_METADATA, itemType);
         return Collections.singletonList(item);
     }
 }

@@ -144,6 +144,30 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     }
 
     /**
+     * Creates an expanded name resolving the prefix from namespace bindings.
+     * 
+     * @param prefixedName the QName literal.
+     * @param moduleContext the module context containing the bindings.
+     * @return the expanded name.
+     */
+    public static Name createTypeNameFromLiteral(String prefixedName, StaticContext moduleContext) {
+        int pos = prefixedName.indexOf(":");
+        String prefix = null;
+        String localName = prefixedName;
+        if (pos == -1) {
+            return new Name(JSONIQ_DEFAULT_TYPE_NS, prefix, localName);
+        }
+        prefix = prefixedName.substring(0, pos);
+        localName = prefixedName.substring(pos + 1);
+        String namespace = moduleContext.resolveNamespace(prefix);
+        if (namespace != null) {
+            return new Name(namespace, prefix, localName);
+        } else {
+            throw new OurBadException("Prefix " + prefix + " could not be resolved against a namespace in scope.");
+        }
+    }
+
+    /**
      * Converts the expanded name to an expanded name whose local name has a #n suffix, where n is the arity of the
      * function,
      * in order to encode the whole function identifier as an expanded name.

@@ -24,9 +24,7 @@ import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.comparison.ComparisonExpression.ComparisonOperator;
 import org.rumbledb.items.ItemFactory;
@@ -54,10 +52,28 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
         super(arguments, executionMode, iteratorMetadata);
         this.sequenceIterator = this.children.get(0);
         this.searchIterator = this.children.get(1);
+
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
+
     }
 
     @Override
     protected JavaRDD<Item> getRDDAux(DynamicContext context) {
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2)
+                .materializeFirstItemOrNull(context)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
         JavaRDD<Item> childRDD = this.sequenceIterator.getRDD(context);
         this.search = this.searchIterator.materializeFirstItemOrNull(context);
 
@@ -69,6 +85,14 @@ public class IndexOfFunctionIterator extends HybridRuntimeIterator {
     @Override
     protected void openLocal() {
         this.currentIndex = 0;
+        if (this.children.size() == 3) {
+            String collation = this.children.get(2)
+                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution)
+                .getStringValue();
+            if (!collation.equals("http://www.w3.org/2005/xpath-functions/collation/codepoint")) {
+                throw new DefaultCollationException("Wrong collation parameter", getMetadata());
+            }
+        }
         this.sequenceIterator.open(this.currentDynamicContextForLocalExecution);
         this.search = this.searchIterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
         setNextResult();

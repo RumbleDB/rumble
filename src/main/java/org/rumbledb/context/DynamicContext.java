@@ -25,11 +25,11 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
+import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.structured.JSoundDataFrame;
 
 import java.io.Serializable;
 import java.util.List;
@@ -42,6 +42,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private RumbleRuntimeConfiguration conf;
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
+    private InScopeSchemaTypes inScopeSchemaTypes;
+    private DateTime currentDateTime;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -51,6 +53,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.variableValues = null;
         this.conf = null;
         this.namedFunctions = null;
+        this.inScopeSchemaTypes = null;
+        this.currentDateTime = new DateTime();
     }
 
     /**
@@ -63,6 +67,8 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.variableValues = new VariableValues();
         this.conf = conf;
         this.namedFunctions = new NamedFunctions();
+        this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentDateTime = new DateTime();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -71,14 +77,16 @@ public class DynamicContext implements Serializable, KryoSerializable {
         }
         this.parent = parent;
         this.variableValues = new VariableValues(this.parent.variableValues);
+        this.conf = null;
         this.namedFunctions = null;
+        this.inScopeSchemaTypes = null;
     }
 
     public DynamicContext(
             DynamicContext parent,
             Map<Name, List<Item>> localVariableValues,
             Map<Name, JavaRDD<Item>> rddVariableValues,
-            Map<Name, Dataset<Row>> dataFrameVariableValues
+            Map<Name, JSoundDataFrame> dataFrameVariableValues
     ) {
         if (parent == null) {
             throw new OurBadException("Dynamic context defined with null parent");
@@ -91,7 +99,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 dataFrameVariableValues
         );
         this.namedFunctions = null;
-
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -191,5 +198,21 @@ public class DynamicContext implements Serializable, KryoSerializable {
         return this;
     }
 
+    public InScopeSchemaTypes getInScopeSchemaTypes() {
+        if (this.inScopeSchemaTypes != null) {
+            return this.inScopeSchemaTypes;
+        }
+        if (this.parent != null) {
+            return this.parent.getInScopeSchemaTypes();
+        }
+        throw new OurBadException("In-scope schema types are not set up properly in dynamic context.");
+    }
+
+    public DateTime getCurrentDateTime() {
+        if (this.parent != null) {
+            return this.parent.currentDateTime;
+        }
+        return this.currentDateTime;
+    }
 }
 

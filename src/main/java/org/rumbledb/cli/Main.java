@@ -20,6 +20,7 @@
 package org.rumbledb.cli;
 
 import java.io.IOException;
+import java.net.ConnectException;
 
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
@@ -43,7 +44,7 @@ public class Main {
                 launchShell(sparksoniqConf);
             } else if (sparksoniqConf.isServer()) {
                 launchServer(sparksoniqConf);
-            } else if (sparksoniqConf.getQueryPath() != null) {
+            } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
             } else {
                 System.out.println("    ____                  __    __   ");
@@ -55,24 +56,25 @@ public class Main {
                 System.out.println("spark-submit <Spark arguments> <path to rumble jar> <Rumble arguments>");
                 System.out.println("");
                 System.out.println("Example usage:");
-                System.out.println("spark-submit spark-rumble-1.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --shell yes");
-                System.out.println("spark-submit --master local[2] spark-rumble-1.7.0.jar --shell yes");
+                System.out.println("spark-submit rumbledb-1.15.0.jar --query '1+1'");
+                System.out.println("spark-submit rumbledb-1.15.0.jar --shell yes");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --shell yes");
+                System.out.println("spark-submit --master local[2] rumbledb-1.15.0.jar --shell yes");
                 System.out.println(
-                    "spark-submit --master local[*] --driver-memory 10G spark-rumble-1.0.jar --shell yes"
+                    "spark-submit --master local[*] --driver-memory 10G rumbledb-1.15.0.jar --shell yes"
                 );
                 System.out.println("");
-                System.out.println("spark-submit --master yarn spark-rumble-1.7.0.jar --shell yes");
+                System.out.println("spark-submit --master yarn rumbledb-1.15.0.jar --shell yes");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --shell yes"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --shell yes"
                 );
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master local[*] spark-rumble-1.7.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
+                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
                 System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G spark-rumble-1.7.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
+                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
                 );
                 System.out.println(
-                    "spark-submit --master local[*] spark-rumble-1.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
+                    "spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
                 );
             }
             System.exit(0);
@@ -92,7 +94,16 @@ public class Main {
                 if (sparkExceptionCause != null) {
                     handleException(sparkExceptionCause, showErrorInfo);
                 } else {
-                    handleException(new RumbleException(ex.getMessage()), showErrorInfo);
+                    if (showErrorInfo) {
+                        ex.printStackTrace();
+                    }
+                    handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        ),
+                        showErrorInfo
+                    );
                 }
             } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
                 System.err.println("⚠️  ️" + ex.getMessage());
@@ -129,11 +140,38 @@ public class Main {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(43);
-            } else {
-                System.err.println("An error has occured: " + ex.getMessage());
+                System.exit(44);
+            } else if (ex instanceof ConnectException) {
+                System.err.println("⚠️  There was a problem with the connection to the cluster.");
                 System.err.println(
-                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query."
+                    "For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(45);
+            } else if (ex instanceof NullPointerException) {
+                System.err.println(
+                    "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                );
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(-42);
+            } else {
+                System.err.println(
+                    "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
+                        + ex.getMessage()
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query."
                 );
                 System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
                 System.err.println(

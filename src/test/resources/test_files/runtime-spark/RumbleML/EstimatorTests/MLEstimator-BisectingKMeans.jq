@@ -3,15 +3,17 @@ let $data := annotate(
     json-file("../../../../queries/rumbleML/sample-ml-data-flat.json"),
     { "label": "integer", "binaryLabel": "integer", "name": "string", "age": "double", "weight": "double", "booleanCol": "boolean", "nullCol": "null", "stringCol": "string", "stringArrayCol": ["string"], "intArrayCol": ["integer"],  "doubleArrayCol": ["double"],  "doubleArrayArrayCol": [["double"]] }
 )
+let $vector-assembler := get-transformer("VectorAssembler")
+let $data := $vector-assembler($data, {"inputCols" : [ "age", "weight" ], "outputCol" : "features" })
 
 let $est := get-estimator("BisectingKMeans")
 let $tra := $est(
     $data,
-    { "featuresCol": ["age", "weight"], "k": 2, "seed": 1 }
+    { "k": 2, "seed": 1 }
 )
 for $result in $tra(
     $data,
-    { "featuresCol": ["age", "weight"] }
+    { }
 )
 return {
     "label": $result.label,

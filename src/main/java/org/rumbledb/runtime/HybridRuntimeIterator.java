@@ -21,7 +21,6 @@
 package org.rumbledb.runtime;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -31,6 +30,7 @@ import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.NoItemException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.parsing.RowToItemMapper;
+import org.rumbledb.items.structured.JSoundDataFrame;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -131,7 +131,7 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
     @Override
     public JavaRDD<Item> getRDD(DynamicContext context) {
         if (isDataFrame()) {
-            Dataset<Row> df = this.getDataFrame(context);
+            JSoundDataFrame df = this.getDataFrame(context);
             return dataFrameToRDDOfItems(df, getMetadata());
         } else if (isRDDOrDataFrame()) {
             return getRDDAux(context);
@@ -141,9 +141,10 @@ public abstract class HybridRuntimeIterator extends RuntimeIterator {
         }
     }
 
-    public static JavaRDD<Item> dataFrameToRDDOfItems(Dataset<Row> df, ExceptionMetadata metadata) {
+    public static JavaRDD<Item> dataFrameToRDDOfItems(JSoundDataFrame df, ExceptionMetadata metadata) {
         JavaRDD<Row> rowRDD = df.javaRDD();
-        return rowRDD.map(new RowToItemMapper(metadata));
+        JavaRDD<Item> result = rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
+        return result;
     }
 
     public void materialize(DynamicContext context, List<Item> result) {

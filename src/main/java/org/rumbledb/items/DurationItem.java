@@ -99,6 +99,14 @@ public class DurationItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        if (this.isNegative) {
+            return '-' + this.getValue().negated().toString();
+        }
+        return this.getValue().toString();
+    }
+
+    @Override
     public boolean isAtomic() {
         return true;
     }
@@ -119,16 +127,8 @@ public class DurationItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        if (this.isNegative) {
-            return '-' + this.getValue().negated().toString();
-        }
-        return this.getValue().toString();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
-        output.writeString(this.serialize());
+        output.writeString(this.getStringValue());
     }
 
     @Override

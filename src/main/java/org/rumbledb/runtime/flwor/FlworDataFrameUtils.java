@@ -54,11 +54,14 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.items.AnnotatedItem;
+import org.rumbledb.items.AnyURIItem;
 import org.rumbledb.items.ArrayItem;
 import org.rumbledb.items.Base64BinaryItem;
 import org.rumbledb.items.BooleanItem;
 import org.rumbledb.items.DateItem;
 import org.rumbledb.items.DateTimeItem;
+import org.rumbledb.items.DateTimeStampItem;
 import org.rumbledb.items.DayTimeDurationItem;
 import org.rumbledb.items.DecimalItem;
 import org.rumbledb.items.DoubleItem;
@@ -94,16 +97,29 @@ public class FlworDataFrameUtils {
 
     public static void registerKryoClassesKryo(Kryo kryo) {
         kryo.register(Item.class);
+        kryo.register(AnnotatedItem.class);
+
         kryo.register(ArrayItem.class);
         kryo.register(ObjectItem.class);
-        kryo.register(StringItem.class);
-        kryo.register(IntItem.class);
-        kryo.register(IntegerItem.class);
-        kryo.register(FloatItem.class);
-        kryo.register(DoubleItem.class);
-        kryo.register(DecimalItem.class);
-        kryo.register(NullItem.class);
+
+        kryo.register(AnyURIItem.class);
+        kryo.register(Base64BinaryItem.class);
         kryo.register(BooleanItem.class);
+        kryo.register(DateItem.class);
+        kryo.register(DateTimeItem.class);
+        kryo.register(DateTimeStampItem.class);
+        kryo.register(DayTimeDurationItem.class);
+        kryo.register(DecimalItem.class);
+        kryo.register(DoubleItem.class);
+        kryo.register(DurationItem.class);
+        kryo.register(FloatItem.class);
+        kryo.register(HexBinaryItem.class);
+        kryo.register(IntegerItem.class);
+        kryo.register(IntItem.class);
+        kryo.register(NullItem.class);
+        kryo.register(StringItem.class);
+        kryo.register(TimeItem.class);
+        kryo.register(YearMonthDurationItem.class);
 
         kryo.register(FunctionItem.class);
         kryo.register(FunctionIdentifier.class);
@@ -111,17 +127,6 @@ public class FlworDataFrameUtils {
         kryo.register(SequenceType.class);
         kryo.register(SequenceType.Arity.class);
         kryo.register(ItemType.class);
-
-        kryo.register(DurationItem.class);
-        kryo.register(YearMonthDurationItem.class);
-        kryo.register(DayTimeDurationItem.class);
-
-        kryo.register(DateTimeItem.class);
-        kryo.register(DateItem.class);
-        kryo.register(TimeItem.class);
-
-        kryo.register(Base64BinaryItem.class);
-        kryo.register(HexBinaryItem.class);
 
         kryo.register(ArrayList.class);
 
@@ -171,13 +176,38 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param variable the Name fo a variable
+     * @return true if the schema contains values for this variable.
+     */
+    public static boolean hasColumnForVariable(
+            StructType inputSchema,
+            Name variable
+    ) {
+        String escapedName = variable.getLocalName().replace("`", FlworDataFrameUtils.backtickEscape);
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (escapedName.equals(columnName)) {
+                    return true;
+                }
+            } else {
+                if (escapedName.equals(columnName.substring(0, pos))) {
+                    return true;
+                } ;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Checks if the specified variable only has a count in a DataFrame with the supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
      * @return true if it only has a count, false otherwise.
      */
-    public static boolean isVariableCountOnly(
+    public static boolean isVariableAvailableAsCountOnly(
             StructType inputSchema,
             Name variable
     ) {
@@ -197,14 +227,14 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Checks if the specified variable should be interpreted as a native sequence of items in a DataFrame with the
+     * Checks if the specified variable is available as a native sequence of items in a DataFrame with the
      * supplied schema.
      * 
      * @param inputSchema schema specifies the columns to be used in the query.
      * @param variable the name of the variable.
-     * @return true if it is a native sequence of items, false otherwise.
+     * @return true if it is available as a native sequence of items, false otherwise.
      */
-    public static boolean isVariableNativeSequence(
+    public static boolean isVariableAvailableAsNativeSequence(
             StructType inputSchema,
             Name variable
     ) {
@@ -224,6 +254,83 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Checks if the specified variable is available as a serialized sequence of items in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is available as a serialized sequence of items, false otherwise.
+     */
+    public static boolean isVariableAvailableAsSerializedSequence(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                        return true;
+                    }
+                    return false;
+                }
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * If the variable is available as a single native item, returns its native SQL data type.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return the native SQL data type of the variable.
+     */
+    public static DataType nativeTypeOfVariable(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    return inputSchema.fields()[index].dataType();
+                }
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
+     * Checks if the specified variable is available as a single native item in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is available as a single native item, false otherwise.
+     */
+    public static boolean isVariableAvailableAsNativeItem(
+            StructType inputSchema,
+            Name variable
+    ) {
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    int index = inputSchema.fieldIndex(columnName);
+                    if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+        }
+        throw new OurBadException("Variable " + variable + "not found.");
+    }
+
+    /**
      * Lists the names of the columns of the schema that needed by the dependencies.
      * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
      * 
@@ -236,6 +343,23 @@ public class FlworDataFrameUtils {
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
         return getColumnNames(inputSchema, dependencies, null, null);
+    }
+
+    /**
+     * Lists the names of the columns of the schema that needed by the dependencies.
+     * Pre-aggregrated counts have .count suffixes and might not exactly match the FLWOR variable name.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query
+     * @param dependencies restriction of the results to within a specified set
+     * @return list of SQL column names in the schema
+     */
+    public static List<String> getColumnNames(
+            StructType inputSchema,
+            Map.Entry<Name, DynamicContext.VariableDependency> dependencies
+    ) {
+        List<String> result = new ArrayList<>();
+        getColumnNames(inputSchema, dependencies, null, null, result);
+        return result;
     }
 
     /**
@@ -269,97 +393,134 @@ public class FlworDataFrameUtils {
             return result;
         }
         List<String> result = new ArrayList<>();
-        Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
-        for (Name variableName : dependencies.keySet()) {
-            if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
-                continue;
-            }
-            if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
-                continue;
-            }
-            switch (dependencies.get(variableName)) {
-                case FULL: {
-                    if (columnNames.contains(variableName.toString())) {
-                        result.add(variableName.toString());
-                        break;
-                    }
-                    if (columnNames.contains(variableName.toString() + ".sequence")) {
-                        result.add(variableName.toString() + ".sequence");
-                        break;
-                    }
-                    throw new OurBadException(
-                            "Expecting full variable dependency on "
-                                + variableName
-                                + " but column not found in the data frame."
-                    );
-                }
-                case COUNT: {
-                    if (columnNames.contains(variableName.toString() + ".count")) {
-                        result.add(variableName.toString() + ".count");
-                        break;
-                    }
-                    if (columnNames.contains(variableName.toString())) {
-                        result.add(variableName.toString());
-                        break;
-                    }
-                    throw new OurBadException(
-                            "Expecting count variable dependency on "
-                                + variableName
-                                + " but no appropriate column was found in the data frame."
-                    );
-                }
-                case SUM: {
-                    if (columnNames.contains(variableName.toString() + ".count")) {
-                        result.add(variableName.toString() + ".sum");
-                        break;
-                    }
-                    if (columnNames.contains(variableName.toString())) {
-                        result.add(variableName.toString());
-                        break;
-                    }
-                    throw new OurBadException(
-                            "Expecting sum variable dependency on "
-                                + variableName
-                                + "but no appropriate column was found in the data frame."
-                    );
-                }
-                case MIN: {
-                    if (columnNames.contains(variableName.toString() + ".count")) {
-                        result.add(variableName.toString() + ".min");
-                        break;
-                    }
-                    if (columnNames.contains(variableName.toString())) {
-                        result.add(variableName.toString());
-                        break;
-                    }
-                    throw new OurBadException(
-                            "Expecting min variable dependency on "
-                                + variableName
-                                + "but no appropriate column was found in the data frame."
-                    );
-                }
-                case MAX: {
-                    if (columnNames.contains(variableName.toString() + ".count")) {
-                        result.add(variableName.toString() + ".max");
-                        break;
-                    }
-                    if (columnNames.contains(variableName.toString())) {
-                        result.add(variableName.toString());
-                        break;
-                    }
-                    throw new OurBadException(
-                            "Expecting max variable dependency on "
-                                + variableName
-                                + "but no appropriate column was found in the data frame."
-                    );
-                }
-                default:
-                    throw new OurBadException(
-                            "Dependency " + dependencies.get(variableName) + " is not supported yet."
-                    );
-            }
+        for (Map.Entry<Name, DynamicContext.VariableDependency> dependency : dependencies.entrySet()) {
+            getColumnNames(inputSchema, dependency, variablesToRestrictTo, variablesToExclude, result);
         }
         return result;
+    }
+
+    /**
+     * Lists the names of the columns of the schema that needed by the dependencies, but except duplicates (which are
+     * overriden).
+     * 
+     * @param inputSchema schema specifies the type information for all input columns (included those not needed).
+     * @param dependency the one variable dependency to look for
+     * @param variablesToRestrictTo variables whose columns must refer to.
+     * @param variablesToExclude variables whose columns should be projected away.
+     * @param result the list for outputting SQL column names in the schema
+     */
+    public static void getColumnNames(
+            StructType inputSchema,
+            Map.Entry<Name, DynamicContext.VariableDependency> dependency,
+            List<Name> variablesToRestrictTo,
+            List<Name> variablesToExclude,
+            List<String> result
+    ) {
+        Name variableName = dependency.getKey();
+        Set<String> columnNames = new HashSet<>(Arrays.asList(inputSchema.fieldNames()));
+        if (variablesToExclude != null && variablesToExclude.contains(variableName)) {
+            return;
+        }
+        if (variablesToRestrictTo != null && !variablesToRestrictTo.contains(variableName)) {
+            return;
+        }
+        switch (dependency.getValue()) {
+            case FULL: {
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting full variable dependency on "
+                            + variableName
+                            + " but column not found in the data frame."
+                );
+            }
+            case COUNT: {
+                if (columnNames.contains(variableName.toString() + ".count")) {
+                    result.add(variableName.toString() + ".count");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting count variable dependency on "
+                            + variableName
+                            + " but no appropriate column was found in the data frame."
+                );
+            }
+            case SUM: {
+                if (columnNames.contains(variableName.toString() + ".sum")) {
+                    result.add(variableName.toString() + ".sum");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting sum variable dependency on "
+                            + variableName
+                            + "but no appropriate column was found in the data frame."
+                );
+            }
+            case MIN: {
+                if (columnNames.contains(variableName.toString() + ".min")) {
+                    result.add(variableName.toString() + ".min");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting min variable dependency on "
+                            + variableName
+                            + "but no appropriate column was found in the data frame."
+                );
+            }
+            case MAX: {
+                if (columnNames.contains(variableName.toString() + ".max")) {
+                    result.add(variableName.toString() + ".max");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting max variable dependency on "
+                            + variableName
+                            + "but no appropriate column was found in the data frame."
+                );
+            }
+            default:
+                throw new OurBadException(
+                        "Dependency " + dependency.getValue() + " is not supported yet."
+                );
+        }
     }
 
     /**
@@ -494,42 +655,56 @@ public class FlworDataFrameUtils {
     ) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
-        for (Name field : dependencies.keySet()) {
+        for (Map.Entry<Name, DynamicContext.VariableDependency> dependency : dependencies.entrySet()) {
             queryColumnString.append(comma);
             comma = ",";
-            int columnIndex = inputSchema.fieldIndex(field.getLocalName());
-            if (columnIndex == duplicateVariableIndex) {
-                continue;
+            for (String columnName : getColumnNames(inputSchema, dependency)) {
+                int columnIndex = inputSchema.fieldIndex(columnName);
+                if (columnIndex == duplicateVariableIndex) {
+                    continue;
+                }
+                DataType dt = inputSchema.fields()[columnIndex].dataType();
+
+                if (isCountPreComputed(inputSchema, columnName)) {
+                    queryColumnString.append("sum(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`)");
+                } else if (shouldCalculateCount(dependencies, columnName)) {
+                    queryColumnString.append("count(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`)");
+                    columnName += ".count";
+                } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
+                    // rows that end up in the same group have the same value for the grouping column
+                    // return a single instance of this value in the grouping column
+                    queryColumnString.append("first(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`)");
+                } else if (isNativeSequence(inputSchema, columnName)) {
+                    // aggregate the column values for each row in the group
+                    queryColumnString.append("arraymerge" + Math.abs(dt.hashCode()));
+                    queryColumnString.append("(collect_list(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`))");
+                } else if (dt.equals(DataTypes.BinaryType)) {
+                    // aggregate the column values for each row in the group
+                    queryColumnString.append(serializerUdfName);
+                    queryColumnString.append("(collect_list(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`))");
+                } else {
+                    // aggregate the column values for each row in the group
+                    queryColumnString.append("collect_list(`");
+                    queryColumnString.append(columnName);
+                    queryColumnString.append("`)");
+                    columnName += ".sequence";
+                }
+
+                queryColumnString.append(" as `");
+                queryColumnString.append(columnName);
+                queryColumnString.append("`");
+
             }
-
-            String columnName = field.getLocalName();
-            if (isCountPreComputed(inputSchema, columnName)) {
-                queryColumnString.append("sum(`");
-                queryColumnString.append(columnName);
-                queryColumnString.append("`)");
-            } else if (shouldCalculateCount(dependencies, columnName)) {
-                queryColumnString.append("count(`");
-                queryColumnString.append(columnName);
-                queryColumnString.append("`)");
-                columnName += ".count";
-            } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
-                // rows that end up in the same group have the same value for the grouping column
-                // return a single instance of this value in the grouping column
-                queryColumnString.append("first(`");
-                queryColumnString.append(columnName);
-                queryColumnString.append("`)");
-            } else {
-                // aggregate the column values for each row in the group
-                queryColumnString.append(serializerUdfName);
-                queryColumnString.append("(collect_list(`");
-                queryColumnString.append(columnName);
-                queryColumnString.append("`))");
-            }
-
-            queryColumnString.append(" as `");
-            queryColumnString.append(columnName);
-            queryColumnString.append("`");
-
         }
         if (comma.equals("")) {
             queryColumnString.append("TRUE");
@@ -546,6 +721,16 @@ public class FlworDataFrameUtils {
         for (String field : fields) {
             if (field.equals(columnName)) {
                 return columnName.endsWith(".count");
+            }
+        }
+        throw new OurBadException("Column does not exist: " + columnName);
+    }
+
+    public static boolean isNativeSequence(StructType schema, String columnName) {
+        String[] fields = schema.fieldNames();
+        for (String field : fields) {
+            if (field.equals(columnName)) {
+                return columnName.endsWith(".sequence");
             }
         }
         throw new OurBadException("Column does not exist: " + columnName);
@@ -589,11 +774,11 @@ public class FlworDataFrameUtils {
         for (Object serializedParam : serializedParams) {
             if (serializedParam == null) {
                 deserializedParams.add(Collections.emptyList());
-            } else {
-                @SuppressWarnings("unchecked")
-                List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
-                deserializedParams.add(deserializedParam);
+                continue;
             }
+            @SuppressWarnings("unchecked")
+            List<Item> deserializedParam = (List<Item>) deserializeByteArray((byte[]) serializedParam, kryo, input);
+            deserializedParams.add(deserializedParam);
         }
     }
 

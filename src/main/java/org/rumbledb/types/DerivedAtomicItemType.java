@@ -1,14 +1,15 @@
 package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
-import org.apache.spark.sql.types.DataType;
-import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
-import org.rumbledb.items.IntItem;
-import org.rumbledb.items.IntegerItem;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
+import org.rumbledb.runtime.misc.ComparisonIterator;
 
-import java.math.BigInteger;
 import java.util.List;
 import java.util.Set;
 
@@ -16,69 +17,28 @@ public class DerivedAtomicItemType implements ItemType {
 
     private static final long serialVersionUID = 1L;
 
-    static final DerivedAtomicItemType integerItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "integer"),
-            AtomicItemType.decimalItem,
-            AtomicItemType.decimalItem,
-            Facets.getIntegerFacets(),
-            false,
-            DataTypes.createDecimalType() // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType longItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "long"),
-            integerItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(
-                new IntegerItem(new BigInteger("-9223372036854775808")),
-                new IntegerItem(new BigInteger("9223372036854775807")),
-                true
-            ),
-            false,
-            DataTypes.LongType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType intItem = new DerivedAtomicItemType(
-            Name.createVariableInDefaultTypeNamespace("int"),
-            longItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-2147483648), new IntItem(2147483647), true),
-            false,
-            DataTypes.IntegerType // TODO : how to support arbitrary-sized integer
-    );
-
-    static final DerivedAtomicItemType shortItem = new DerivedAtomicItemType(
-            new Name(Name.XS_NS, "xs", "short"),
-            intItem,
-            AtomicItemType.decimalItem,
-            Facets.createMinMaxFacets(new IntItem(-32768), new IntItem(32767), true),
-            false,
-            DataTypes.ShortType // TODO : how to support arbitrary-sized integer
-    );
-
-    private final ItemType baseType, primitiveType;
-    private final int typeTreeDepth;
+    private final ItemType baseType;
+    private ItemType primitiveType;
+    private int typeTreeDepth;
     private final boolean isUserDefined;
     private final Name name;
-    private final Item minInclusive, maxInclusive, minExclusive, maxExclusive;
-    private final Integer minLength, length, maxLength, totalDigits, fractionDigits;
-    private final List<String> constraints;
-    private final List<Item> enumeration;
-    private final TimezoneFacet explicitTimezone;
-    private final DataType dataFrameType;
+    private Item minInclusive, maxInclusive, minExclusive, maxExclusive;
+    private Integer minLength, length, maxLength, totalDigits, fractionDigits;
+    private List<String> constraints;
+    private List<Item> enumeration;
+    private TimezoneFacet explicitTimezone;
 
-    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets, DataType dataFrameType) {
-        this(name, baseType, primitiveType, facets, true, dataFrameType);
+    DerivedAtomicItemType(Name name, ItemType baseType, ItemType primitiveType, Facets facets) {
+        this(name, baseType, primitiveType, facets, true);
     }
     // TODO : turn builtin derived atomic types into this class
 
-    private DerivedAtomicItemType(
+    DerivedAtomicItemType(
             Name name,
             ItemType baseType,
             ItemType primitiveType,
             Facets facets,
-            boolean isUserDefined,
-            DataType dataFrameType
+            boolean isUserDefined
     ) {
         // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
         // to baseType
@@ -86,15 +46,14 @@ public class DerivedAtomicItemType implements ItemType {
         this.baseType = baseType;
         this.primitiveType = primitiveType;
         this.isUserDefined = isUserDefined;
-        this.typeTreeDepth = baseType.getTypeTreeDepth() + 1;
 
         this.minInclusive = facets.getMinInclusive();
         this.maxInclusive = facets.getMaxInclusive();
         this.minExclusive = facets.getMinExclusive();
         this.maxExclusive = facets.getMaxExclusive();
 
-        this.minLength = facets.getMinLength();
         this.length = facets.getLength();
+        this.minLength = facets.getMinLength();
         this.maxLength = facets.getMaxLength();
         this.totalDigits = facets.getTotalDigits();
         this.fractionDigits = facets.getFractionDigits();
@@ -104,7 +63,21 @@ public class DerivedAtomicItemType implements ItemType {
         this.constraints = facets.getConstraints();
         this.enumeration = facets.getEnumeration();
 
-        this.dataFrameType = dataFrameType;
+        if (this.baseType.isResolved()) {
+            processBaseType();
+        }
+
+    }
+
+    DerivedAtomicItemType(
+            Name name,
+            ItemType baseType,
+            Facets facets,
+            boolean isUserDefined
+    ) {
+        // TODO : check in item factory that: name not already used or invalid, facets are correct and allowed according
+        // to baseType
+        this(name, baseType, null, facets, isUserDefined);
     }
 
     @Override
@@ -112,7 +85,7 @@ public class DerivedAtomicItemType implements ItemType {
         if (!(other instanceof ItemType)) {
             return false;
         }
-        return this.getIdentifierString().equals(((ItemType) other).getIdentifierString());
+        return isEqualTo((ItemType) other);
     }
 
     @Override
@@ -391,7 +364,257 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public DataType toDataFrameType() {
-        return this.dataFrameType != null ? this.dataFrameType : this.baseType.toDataFrameType();
+    public boolean isDataFrameType() {
+        return true;
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        return true;
+    }
+
+    @Override
+    public void resolve(DynamicContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+    }
+
+    @Override
+    public void resolve(StaticContext context, ExceptionMetadata metadata) {
+        if (!this.baseType.isResolved()) {
+            this.baseType.resolve(context, metadata);
+            processBaseType();
+        }
+    }
+
+    public void processBaseType() {
+        this.typeTreeDepth = this.baseType.getTypeTreeDepth() + 1;
+        if (this.baseType.isAtomicItemType()) {
+            this.primitiveType = this.baseType.getPrimitiveType();
+
+            if (this.length == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                    this.length = this.baseType.getLengthFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.LENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.baseType.getLengthFacet() != null && this.length != this.baseType.getLengthFacet()) {
+                    throw new InvalidSchemaException("Incompatible length facet.", ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+
+            if (this.enumeration == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                    this.enumeration = this.baseType.getEnumerationFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.ENUMERATION)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.enumeration.hashCode() != this.baseType.getEnumerationFacet().hashCode()) {
+                    throw new InvalidSchemaException(
+                            "Enumeration facet is not valid.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+
+            }
+            // TODO: Check list enumeration with for loop or by hash
+
+            if (this.minLength == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                    this.minLength = this.baseType.getMinLengthFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINLENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.baseType.getMinLengthFacet() != null && this.minLength < this.baseType.getMinLengthFacet()) {
+                    throw new InvalidSchemaException("Out of bounds minLength.", ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+            if (this.maxLength == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                    this.maxLength = this.baseType.getMaxLengthFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXLENGTH)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (this.baseType.getMaxLengthFacet() != null && this.maxLength > this.baseType.getMaxLengthFacet()) {
+                    throw new InvalidSchemaException("Out of bounds maxLength.", ExceptionMetadata.EMPTY_METADATA);
+                }
+            }
+            if (this.minInclusive == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                    this.minInclusive = this.baseType.getMinInclusiveFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MININCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+
+                if (
+                    this.baseType.getMinInclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.minInclusive,
+                            this.baseType.getMinInclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) < 0
+                ) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds minInclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.maxInclusive == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                    this.maxInclusive = this.baseType.getMaxInclusiveFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXINCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+
+                if (
+                    this.baseType.getMaxInclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.maxInclusive,
+                            this.baseType.getMaxInclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds maxInclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+
+            }
+            if (this.minExclusive == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                    this.minExclusive = this.baseType.getMinExclusiveFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MINEXCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (
+                    this.baseType.getMinExclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.minExclusive,
+                            this.baseType.getMinExclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds minExclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.maxExclusive == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                    this.maxExclusive = this.baseType.getMaxExclusiveFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.MAXEXCLUSIVE)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (
+                    this.baseType.getMaxExclusiveFacet() != null
+                        && ComparisonIterator.compareItems(
+                            this.maxExclusive,
+                            this.baseType.getMaxExclusiveFacet(),
+                            ComparisonExpression.ComparisonOperator.GC_LT,
+                            ExceptionMetadata.EMPTY_METADATA
+                        ) > 0
+                ) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds maxExclusive facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.totalDigits == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                    this.totalDigits = this.baseType.getTotalDigitsFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.TOTALDIGITS)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (
+                    this.baseType.getTotalDigitsFacet() != null
+                        && this.totalDigits > this.baseType.getTotalDigitsFacet()
+                ) {
+                    throw new InvalidSchemaException(
+                            "Out of bounds totalDigits facet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+            }
+            if (this.fractionDigits == null) {
+                if (this.baseType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                    this.fractionDigits = this.baseType.getFractionDigitsFacet();
+                }
+            } else {
+                if (!this.primitiveType.getAllowedFacets().contains(FacetTypes.FRACTIONDIGITS)) {
+                    throw new InvalidSchemaException(
+                            "This facet is not applicable to " + this.primitiveType,
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                /*
+                 * if (this.fractionDigits > this.baseType.getFractionDigitsFacet()) {
+                 * throw new InvalidSchemaException(
+                 * "Out of bounds fractionDigits facet.",
+                 * ExceptionMetadata.EMPTY_METADATA
+                 * );
+                 * }
+                 */
+            }
+
+            return;
+        }
+        throw new InvalidSchemaException(
+                "The base type of a user-defined atomic type must be an atomic type.",
+                ExceptionMetadata.EMPTY_METADATA
+        );
     }
 }

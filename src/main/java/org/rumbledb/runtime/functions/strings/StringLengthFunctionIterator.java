@@ -21,16 +21,17 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
+public class StringLengthFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,23 +44,19 @@ public class StringLengthFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-
-            Item stringItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-            if (stringItem == null) {
-                return ItemFactory.getInstance().createIntItem(0);
-            }
-
-            return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
-        } else {
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " string-length function",
-                    getMetadata()
-            );
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        if (this.children.size() == 0) {
+            List<Item> items = context.getVariableValues().getLocalVariableValue(Name.CONTEXT_ITEM, getMetadata());
+            return ItemFactory.getInstance().createIntItem(items.get(0).getStringValue().length());
         }
+        Item stringItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
+
+        if (stringItem == null) {
+            return ItemFactory.getInstance().createIntItem(0);
+        }
+
+        return ItemFactory.getInstance().createIntItem(stringItem.getStringValue().length());
     }
+
 }

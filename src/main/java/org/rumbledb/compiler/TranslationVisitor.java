@@ -20,7 +20,7 @@
 
 package org.rumbledb.compiler;
 
-import static org.rumbledb.types.SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+import static org.rumbledb.types.SequenceType.ITEM_STAR;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -39,6 +39,7 @@ import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.Token;
 import org.antlr.v4.runtime.tree.ParseTree;
 import org.antlr.v4.runtime.tree.TerminalNode;
+import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
@@ -50,6 +51,7 @@ import org.rumbledb.exceptions.DuplicateModuleTargetNamespaceException;
 import org.rumbledb.exceptions.DuplicateParamNameException;
 import org.rumbledb.exceptions.EmptyModuleURIException;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.JsoniqVersionException;
 import org.rumbledb.exceptions.ModuleNotFoundException;
 import org.rumbledb.exceptions.MoreThanOneEmptyOrderDeclarationException;
@@ -95,6 +97,7 @@ import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.ArrayLookupExpression;
 import org.rumbledb.expressions.postfix.ArrayUnboxingExpression;
@@ -119,6 +122,8 @@ import org.rumbledb.expressions.typing.CastableExpression;
 import org.rumbledb.expressions.typing.InstanceOfExpression;
 import org.rumbledb.expressions.typing.IsStaticallyExpression;
 import org.rumbledb.expressions.typing.TreatExpression;
+import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
@@ -130,6 +135,7 @@ import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
+import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
 
 
@@ -144,16 +150,19 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     private StaticContext moduleContext;
     private RumbleRuntimeConfiguration configuration;
     private boolean isMainModule;
+    private String code;
 
     public TranslationVisitor(
             StaticContext moduleContext,
             boolean isMainModule,
-            RumbleRuntimeConfiguration configuration
+            RumbleRuntimeConfiguration configuration,
+            String code
     ) {
         this.moduleContext = moduleContext;
         this.moduleContext.bindDefaultNamespaces();
         this.configuration = configuration;
         this.isMainModule = isMainModule;
+        this.code = code;
     }
 
     // endregion expr
@@ -270,6 +279,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         // parse variables and function
         List<VariableDeclaration> globalVariables = new ArrayList<>();
         List<FunctionDeclaration> functionDeclarations = new ArrayList<>();
+        List<TypeDeclaration> typeDeclarations = new ArrayList<>();
         for (JsoniqParser.AnnotatedDeclContext annotatedDeclaration : ctx.annotatedDecl()) {
             if (annotatedDeclaration.varDecl() != null) {
                 VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitVarDecl(
@@ -313,13 +323,39 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 functionDeclarations.add(
                     new FunctionDeclaration(inlineFunctionExpression, createMetadataFromContext(ctx))
                 );
+            } else if (annotatedDeclaration.typeDecl() != null) {
+                TypeDeclaration typeDeclaration = (TypeDeclaration) this.visitTypeDecl(
+                    annotatedDeclaration.typeDecl()
+                );
+
+                if (!this.isMainModule) {
+                    String moduleNamespace = this.moduleContext.getStaticBaseURI().toString();
+                    String typeNamespace = typeDeclaration.getDefinition().getName().getNamespace();
+                    if (typeNamespace == null || !typeNamespace.equals(moduleNamespace)) {
+                        throw new NamespaceDoesNotMatchModuleException(
+                                "Type "
+                                    + typeDeclaration.getDefinition().getName().getLocalName()
+                                    + ": namespace "
+                                    + typeNamespace
+                                    + " must match module namespace "
+                                    + moduleNamespace,
+                                generateMetadata(annotatedDeclaration.getStop())
+                        );
+                    }
+                }
+                typeDeclarations.add(typeDeclaration);
             }
         }
         for (JsoniqParser.ModuleImportContext module : ctx.moduleImport()) {
             this.visitModuleImport(module);
         }
 
-        Prolog prolog = new Prolog(globalVariables, functionDeclarations, createMetadataFromContext(ctx));
+        Prolog prolog = new Prolog(
+                globalVariables,
+                functionDeclarations,
+                typeDeclarations,
+                createMetadataFromContext(ctx)
+        );
         for (LibraryModule libraryModule : libraryModules) {
             prolog.addImportedModule(libraryModule);
         }
@@ -363,14 +399,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitFunctionDecl(JsoniqParser.FunctionDeclContext ctx) {
         Name name = parseName(ctx.qname(), true, false);
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
         SequenceType fnReturnType = null;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             name,
@@ -381,7 +417,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -403,6 +439,62 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 fnParams,
                 fnReturnType,
                 bodyExpression,
+                createMetadataFromContext(ctx)
+        );
+    }
+
+    @Override
+    public Node visitTypeDecl(JsoniqParser.TypeDeclContext ctx) {
+        String definitionString = ctx.type_definition.getText();
+        Item definitionItem = null;
+        if (definitionString.trim().startsWith("\"")) {
+            throw new InvalidSchemaException(
+                    "The schema definition must be an object.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        if (definitionString.trim().startsWith("[")) {
+            throw new InvalidSchemaException(
+                    "Schema definitions for top-level array types are not supported yet. Please let us know if you would like for us to prioritize this feature.",
+                    createMetadataFromContext(ctx)
+            );
+        }
+        try {
+            definitionItem = ItemParser.getItemFromString(definitionString, createMetadataFromContext(ctx));
+        } catch (ParsingException e) {
+            ParsingException pe = new ParsingException(
+                    "A type definition must be a JSON literal: no dynamic evaluation is allowed.",
+                    createMetadataFromContext(ctx)
+            );
+            pe.initCause(e);
+            throw pe;
+        }
+        Name name = parseName(ctx.qname(), false, true);
+        String schemaLanguage = null;
+        if (ctx.schema != null) {
+            schemaLanguage = ctx.schema.getText();
+        } else {
+            schemaLanguage = "jsoundcompact";
+        }
+        ItemType type = null;
+        switch (schemaLanguage) {
+            case "jsoundcompact":
+                type = ItemTypeFactory.createItemTypeFromJSoundCompactItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsoundverbose":
+                type = ItemTypeFactory.createItemTypeFromJSoundVerboseItem(name, definitionItem, this.moduleContext);
+                break;
+            case "jsonschema":
+                type = ItemTypeFactory.createItemTypeFromJSONSchemaItem(name, definitionItem, this.moduleContext);
+                break;
+            default:
+                throw new OurBadException(
+                        "Unrecognized schema syntax: " + schemaLanguage,
+                        createMetadataFromContext(ctx)
+                );
+        }
+        return new TypeDeclaration(
+                type,
                 createMetadataFromContext(ctx)
         );
     }
@@ -908,7 +1000,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitUnaryExpr(JsoniqParser.UnaryExprContext ctx) {
-        Expression mainExpression = (Expression) this.visitSimpleMapExpr(ctx.main_expr);
+        Expression mainExpression = (Expression) this.visitValueExpr(ctx.main_expr);
         if (ctx.op == null || ctx.op.isEmpty()) {
             return mainExpression;
         }
@@ -923,6 +1015,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 negated,
                 createMetadataFromContext(ctx)
         );
+    }
+
+
+    @Override
+    public Node visitValueExpr(JsoniqParser.ValueExprContext ctx) {
+        if (ctx.simpleMap_expr != null) {
+            return this.visitSimpleMapExpr(ctx.simpleMap_expr);
+        }
+        return this.visitValidateExpr(ctx.validate_expr);
+    }
+
+    @Override
+    public Node visitValidateExpr(JsoniqParser.ValidateExprContext ctx) {
+        Expression mainExpr = (Expression) this.visitExpr(ctx.expr());
+        SequenceType sequenceType = this.processSequenceType(ctx.sequenceType());
+        return new ValidateTypeExpression(mainExpr, sequenceType, createMetadataFromContext(ctx));
     }
     // endregion
 
@@ -1191,31 +1299,27 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 return BuiltinTypesCatalogue.anyFunctionItem;
             }
         }
-        return BuiltinTypesCatalogue.getItemTypeByName(parseName(itemTypeContext.qname(), false, true));
+        Name name = parseName(itemTypeContext.qname(), false, true);
+        if (!BuiltinTypesCatalogue.typeExists(name)) {
+            return new ItemTypeReference(name);
+        }
+        return BuiltinTypesCatalogue.getItemTypeByName(name);
     }
 
     private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
         Name name = parseName(ctx.fn_name, true, false);
-        if (
-            BuiltinTypesCatalogue.typeExists(name)
-                && children.size() == 1
-        ) {
-            return new CastExpression(
-                    children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
-                    createMetadataFromContext(ctx)
-            );
+        Name typeName = name;
+        if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
+            typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
         }
         if (
-            BuiltinTypesCatalogue.typeExists(Name.createVariableInDefaultTypeNamespace(name.getLocalName()))
+            BuiltinTypesCatalogue.typeExists(typeName)
                 && children.size() == 1
-                && name.getNamespace() != null
-                && name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)
-                && !name.getLocalName().equals("boolean")
+                && !name.equals(Name.createVariableInDefaultFunctionNamespace("boolean"))
         ) {
             return new CastExpression(
                     children.get(0),
-                    SequenceType.createSequenceType(name.getLocalName() + "?"),
+                    new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
                     createMetadataFromContext(ctx)
             );
         }
@@ -1272,8 +1376,9 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         try {
             arity = Integer.parseInt(ctx.arity.getText());
         } catch (NumberFormatException e) {
-            throw new RumbleException(
-                    "Parser error: In a named function reference, arity must be an integer."
+            throw new ParsingException(
+                    "Parser error: In a named function reference, arity must be an integer.",
+                    createMetadataFromContext(ctx)
             );
         }
         return new NamedFunctionReferenceExpression(
@@ -1284,14 +1389,14 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitInlineFunctionExpr(JsoniqParser.InlineFunctionExprContext ctx) {
-        Map<Name, SequenceType> fnParams = new LinkedHashMap<>();
-        SequenceType fnReturnType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+        LinkedHashMap<Name, SequenceType> fnParams = new LinkedHashMap<>();
+        SequenceType fnReturnType = SequenceType.ITEM_STAR;
         Name paramName;
         SequenceType paramType;
         if (ctx.paramList() != null) {
             for (JsoniqParser.ParamContext param : ctx.paramList().param()) {
                 paramName = parseName(param.qname(), false, false);
-                paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                paramType = SequenceType.ITEM_STAR;
                 if (fnParams.containsKey(paramName)) {
                     throw new DuplicateParamNameException(
                             Name.createVariableInDefaultFunctionNamespace("inline-function`"),
@@ -1302,7 +1407,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 if (param.sequenceType() != null) {
                     paramType = this.processSequenceType(param.sequenceType());
                 } else {
-                    paramType = SequenceType.MOST_GENERAL_SEQUENCE_TYPE;
+                    paramType = SequenceType.ITEM_STAR;
                 }
                 fnParams.put(paramName, paramType);
             }
@@ -1618,7 +1723,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return new ExceptionMetadata(
                 this.moduleContext.getStaticBaseURI().toString(),
                 token.getLine(),
-                token.getCharPositionInLine()
+                token.getCharPositionInLine(),
+                this.code
         );
     }
 

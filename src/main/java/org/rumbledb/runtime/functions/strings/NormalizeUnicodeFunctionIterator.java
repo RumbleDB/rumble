@@ -21,20 +21,20 @@
 package org.rumbledb.runtime.functions.strings;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidNormalizationException;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.text.Normalizer;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 
-public class NormalizeUnicodeFunctionIterator extends LocalFunctionCallIterator {
+public class NormalizeUnicodeFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private static final HashSet<Integer> exclusionCharacters = new HashSet<Integer>(
@@ -133,56 +133,49 @@ public class NormalizeUnicodeFunctionIterator extends LocalFunctionCallIterator 
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            boolean fullyNormalized = false;
-            Normalizer.Form normalizationForm = Normalizer.Form.NFC;
-            Item inputItem = this.children.get(0)
-                .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        boolean fullyNormalized = false;
+        Normalizer.Form normalizationForm = Normalizer.Form.NFC;
+        Item inputItem = this.children.get(0)
+            .materializeFirstItemOrNull(context);
 
-            if (inputItem == null) {
-                return ItemFactory.getInstance().createStringItem("");
+        if (inputItem == null) {
+            return ItemFactory.getInstance().createStringItem("");
+        }
+
+        if (this.children.size() > 1) {
+            Item normalizationFormItem = this.children.get(1)
+                .materializeFirstItemOrNull(context);
+
+            String normalizationFormRaw = normalizationFormItem.getStringValue();
+            if (normalizationFormRaw.length() == 0) {
+                return inputItem;
             }
 
-            if (this.children.size() > 1) {
-                Item normalizationFormItem = this.children.get(1)
-                    .materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-
-                String normalizationFormRaw = normalizationFormItem.getStringValue();
-                if (normalizationFormRaw.length() == 0) {
-                    return inputItem;
-                }
-
-                if (
-                    normalizationFormRaw.equals("NFC")
-                        || normalizationFormRaw.equals("NFD")
-                        || normalizationFormRaw.equals("NFKC")
-                        || normalizationFormRaw.equals("NFKD")
-                ) {
-                    normalizationForm = Normalizer.Form.valueOf(normalizationFormItem.getStringValue());
-                } else if (normalizationFormRaw.equals("FULLY-NORMALIZED")) {
-                    fullyNormalized = true;
-                    normalizationForm = Normalizer.Form.NFC;
-                } else {
-                    throw new InvalidNormalizationException(
-                            normalizationFormRaw + " is not a valid normalization form",
-                            getMetadata()
-                    );
-                }
+            if (
+                normalizationFormRaw.equals("NFC")
+                    || normalizationFormRaw.equals("NFD")
+                    || normalizationFormRaw.equals("NFKC")
+                    || normalizationFormRaw.equals("NFKD")
+            ) {
+                normalizationForm = Normalizer.Form.valueOf(normalizationFormItem.getStringValue());
+            } else if (normalizationFormRaw.equals("FULLY-NORMALIZED")) {
+                fullyNormalized = true;
+                normalizationForm = Normalizer.Form.NFC;
+            } else {
+                throw new InvalidNormalizationException(
+                        normalizationFormRaw + " is not a valid normalization form",
+                        getMetadata()
+                );
             }
+        }
 
-            String input = inputItem.getStringValue();
-            if (fullyNormalized && exclusionCharacters.contains(input.codePointAt(0))) {
-                input = " " + input;
-            }
-            String normalizedString = Normalizer.normalize(input, normalizationForm);
-            return ItemFactory.getInstance().createStringItem(normalizedString);
-
-        } else
-            throw new IteratorFlowException(
-                    RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " translate function",
-                    getMetadata()
-            );
+        String input = inputItem.getStringValue();
+        if (fullyNormalized && exclusionCharacters.contains(input.codePointAt(0))) {
+            input = " " + input;
+        }
+        String normalizedString = Normalizer.normalize(input, normalizationForm);
+        return ItemFactory.getInstance().createStringItem(normalizedString);
     }
+
 }

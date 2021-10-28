@@ -25,9 +25,13 @@ public enum ErrorCode {
     DivisionByZero("FOAR0001"),
 
     InvalidLexicalValueErrorCode("FOCA0002"),
+    InvalidNaNOperation("FOCA0005"),
     CodepointNotValidErrorCode("FOCH0001"),
+    UnsupportedCollationExceptionCode("FOCH0002"),
     InvalidNormalizationForm("FOCH0003"),
     CannotRetrieveResourceErrorCode("FODC0002"),
+
+    UnidentifiedErrorExceptionCode("FOER0000"),
 
     IncorrectSyntaxFormatDateTimeErrorCode("FOFD1340"),
     ComponentSpecifierNotAvailableErrorCode("FOFD1350"),
@@ -37,6 +41,7 @@ public enum ErrorCode {
     OneOrMoreErrorCode("FORG0004"),
     ExactlyOneErrorCode("FORG0005"),
     InvalidArgumentType("FORG0006"),
+    InconsistentTimezones("FORG0008"),
     InvalidRegexPatternErrorCode("FORX0002"),
     MatchesEmptyStringErrorCode("FORX0003"),
     InvalidReplacementStringErrorCode("FORX0004"),
@@ -61,13 +66,13 @@ public enum ErrorCode {
     UnrecognizedRumbleMLParamReferenceErrorCode("RBML0002"),
     InvalidRumbleMLParamErrorCode("RBML0003"),
     MLNotADataFrameErrorCode("RBML0004"),
-    MLInvalidDataFrameSchemaErrorCode("RBML0005"),
 
 
     CliErrorCode("RBST0001"),
     UnimplementedErrorCode("RBST0002"),
     JobWithinAJobErrorCode("RBST0003"),
     OurBadErrorCode("RBST0004"),
+    ClusterConnectionErrorCode("RBDY0005"),
 
     UnexpectedStaticType("RBTY0001"),
 
@@ -84,14 +89,17 @@ public enum ErrorCode {
     StaticallyInferredEmptySequenceNotFromCommaExpression("XPST0005"),
     UndeclaredVariableErrorCode("XPST0008"),
     InvalidFunctionCallErrorCode("XPST0017"),
+    UndefinedTypeErrorCode("XPST0051"),
     CastableErrorCode("XPST0080"),
     PrefixCannotBeExpandedErrorCode("XPST0081"),
 
 
     UnexpectedTypeErrorCode("XPTY0004"),
 
+    InvalidInstance("XQDY0027"),
     CycleInVariableDeclarationsErrorCode("XQDY0054"),
 
+    InvalidSchemaErrorCode("XQST0012"),
     ModuleDeclarationErrorCode("XQST0016"),
     InvalidJsoniqVersionErrorCode("XQST0031"),
     NamespacePrefixBoundTwiceCode("XQST0033"),
@@ -110,7 +118,7 @@ public enum ErrorCode {
 
     AtomizationError("FOTY0012"),
     UnexpectedFunctionItem("FOTY0015"),
-
+    ArithmeticOverflowOrUnderflow("FODT0002"),
     InvalidTimezoneValue("FODT0003");
 
 

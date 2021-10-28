@@ -73,6 +73,11 @@ public class DecimalItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return !this.getDecimalValue().equals(BigDecimal.ZERO);
     }
@@ -100,11 +105,6 @@ public class DecimalItem implements Item {
     @Override
     public boolean isDecimal() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
     @Override

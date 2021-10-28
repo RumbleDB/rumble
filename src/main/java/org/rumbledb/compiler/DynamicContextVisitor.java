@@ -23,7 +23,6 @@ package org.rumbledb.compiler;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -40,12 +39,16 @@ import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.runtime.typing.InstanceOfIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
@@ -81,9 +84,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     @Override
     public DynamicContext visitFunctionDeclaration(FunctionDeclaration declaration, DynamicContext argument) {
         InlineFunctionExpression expression = (InlineFunctionExpression) declaration.getExpression();
-        Map<Name, SequenceType> paramNameToSequenceTypes = new LinkedHashMap<>();
         for (Map.Entry<Name, SequenceType> paramEntry : expression.getParams().entrySet()) {
-            paramNameToSequenceTypes.put(paramEntry.getKey(), paramEntry.getValue());
+            if (!paramEntry.getValue().isResolved()) {
+                paramEntry.getValue().resolve(argument, expression.getMetadata());
+            }
+        }
+        if (!expression.getReturnType().isResolved()) {
+            expression.getReturnType().resolve(argument, expression.getMetadata());
         }
         RuntimeIterator bodyIterator = VisitorHelpers.generateRuntimeIterator(expression, this.configuration);
         List<Item> functionInList = bodyIterator.materialize(argument);
@@ -197,6 +204,26 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 item = ItemFactory.getInstance().createAnyURIItem(resolvedURI.toString());
             } else {
                 item = ItemFactory.getInstance().createStringItem(value);
+                ItemType itemType = variableDeclaration.getSequenceType().getItemType();
+                if (
+                    !InstanceOfIterator.doesItemTypeMatchItem(
+                        itemType,
+                        item
+                    )
+                ) {
+                    Item castItem = CastIterator.castItemToType(item, itemType, variableDeclaration.getMetadata());
+                    if (castItem == null) {
+                        throw new UnexpectedTypeException(
+                                "External variable value ("
+                                    + item.serialize()
+                                    + ") does not match the expected type ("
+                                    + variableDeclaration.getSequenceType()
+                                    + ").",
+                                variableDeclaration.getMetadata()
+                        );
+                    }
+                    item = castItem;
+                }
             }
             items.add(item);
             if (
@@ -208,7 +235,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
             ) {
                 throw new UnexpectedTypeException(
                         "External variable value ("
-                            + value
+                            + item.serialize()
                             + ") does not match the expected type ("
                             + variableDeclaration.getSequenceType()
                             + ").",
@@ -238,6 +265,13 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
     }
 
     @Override
+    public DynamicContext visitTypeDeclaration(TypeDeclaration declaration, DynamicContext argument) {
+        ItemType type = declaration.getDefinition();
+        argument.getInScopeSchemaTypes().addInScopeSchemaType(type, declaration.getMetadata());
+        return argument;
+    }
+
+    @Override
     public DynamicContext visitLibraryModule(LibraryModule module, DynamicContext argument) {
         if (!this.importedModuleContexts.containsKey(module.getNamespace())) {
             DynamicContext newContext = new DynamicContext(this.configuration);
@@ -250,6 +284,20 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 this.importedModuleContexts.get(module.getNamespace()).getVariableValues(),
                 module.getNamespace()
             );
+        argument.getInScopeSchemaTypes()
+            .importModuleTypes(
+                this.importedModuleContexts.get(module.getNamespace()).getInScopeSchemaTypes(),
+                module.getNamespace()
+            );
         return argument;
+    }
+
+    @Override
+    public DynamicContext visitProlog(Prolog prolog, DynamicContext argument) {
+        DynamicContext generatedContext = visitDescendants(prolog, argument);
+        for (ItemType itemType : generatedContext.getInScopeSchemaTypes().getInScopeSchemaTypes()) {
+            itemType.resolve(generatedContext, ExceptionMetadata.EMPTY_METADATA);
+        }
+        return generatedContext;
     }
 }

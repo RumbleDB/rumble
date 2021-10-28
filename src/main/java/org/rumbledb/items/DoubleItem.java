@@ -69,6 +69,30 @@ public class DoubleItem implements Item {
     }
 
     @Override
+    public String getStringValue() {
+        if (Double.isNaN(this.value)) {
+            return "NaN";
+        }
+        if (Double.isInfinite(this.value) && this.value > 0) {
+            return "INF";
+        }
+        if (Double.isInfinite(this.value) && this.value < 0) {
+            return "-INF";
+        }
+        if (Double.compare(this.value, 0d) == 0) {
+            return "0";
+        }
+        if (Double.compare(this.value, -0d) == 0) {
+            return "-0";
+        }
+        double abs = Math.abs(this.value);
+        if (abs >= 0.000001 && abs <= 1000000) {
+            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
+        }
+        return Double.toString(this.value);
+    }
+
+    @Override
     public boolean getEffectiveBooleanValue() {
         return this.value != 0;
     }
@@ -104,27 +128,8 @@ public class DoubleItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        if (Double.isNaN(this.value)) {
-            return "NaN";
-        }
-        if (Double.isInfinite(this.value) && this.value > 0) {
-            return "INF";
-        }
-        if (Double.isInfinite(this.value) && this.value < 0) {
-            return "-INF";
-        }
-        if (Double.compare(this.value, 0d) == 0) {
-            return "0";
-        }
-        if (Double.compare(this.value, -0d) == 0) {
-            return "-0";
-        }
-        double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
-        }
-        return Double.toString(this.value);
+    public boolean isNaN() {
+        return Double.isNaN(this.value);
     }
 
     @Override

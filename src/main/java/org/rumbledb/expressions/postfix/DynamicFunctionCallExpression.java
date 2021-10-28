@@ -20,11 +20,15 @@
 
 package org.rumbledb.expressions.postfix;
 
+import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
+import org.rumbledb.types.SequenceType.Arity;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -82,11 +86,18 @@ public class DynamicFunctionCallExpression extends Expression {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | " + this.highestExecutionMode);
-        buffer.append(" | " + (this.inferredSequenceType == null ? "not set" : this.inferredSequenceType));
+        buffer.append(
+            " | "
+                + (this.staticSequenceType == null
+                    ? "not set"
+                    : this.staticSequenceType
+                        + (this.staticSequenceType.isResolved() ? " (resolved)" : " (unresolved)"))
+        );
         buffer.append("\n");
+        this.mainExpression.print(buffer, indent + 1);
         for (Expression arg : this.arguments) {
             if (arg == null) {
-                for (int i = 0; i < indent; ++i) {
+                for (int i = 0; i < indent + 1; ++i) {
                     buffer.append("  ");
                 }
                 buffer.append("?\n");
@@ -114,5 +125,21 @@ public class DynamicFunctionCallExpression extends Expression {
             }
         }
         sb.append(")\n");
+    }
+
+    @Override
+    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
+        if (this.arguments.size() == 0) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        if (this.getStaticSequenceType().getArity().equals(Arity.One)) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+            return;
+        }
+        this.highestExecutionMode = this.arguments.get(0).getHighestExecutionMode(visitorConfig);
+        if (this.highestExecutionMode.equals(ExecutionMode.RDD)) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+        }
     }
 }

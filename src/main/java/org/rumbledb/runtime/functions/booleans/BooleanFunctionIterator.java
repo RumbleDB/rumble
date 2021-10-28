@@ -21,16 +21,16 @@
 package org.rumbledb.runtime.functions.booleans;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 
 import java.util.List;
 
-public class BooleanFunctionIterator extends LocalFunctionCallIterator {
+public class BooleanFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
 
@@ -43,15 +43,12 @@ public class BooleanFunctionIterator extends LocalFunctionCallIterator {
     }
 
     @Override
-    public Item next() {
-        if (this.hasNext) {
-            this.hasNext = false;
-            RuntimeIterator iterator = this.children.get(0);
-            boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
-                this.currentDynamicContextForLocalExecution
-            );
-            return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);
-        }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " boolean function", getMetadata());
+    public Item materializeFirstItemOrNull(DynamicContext context) {
+        RuntimeIterator iterator = this.children.get(0);
+        boolean effectiveBooleanValue = iterator.getEffectiveBooleanValue(
+            context
+        );
+        return ItemFactory.getInstance().createBooleanItem(effectiveBooleanValue);
     }
+
 }
