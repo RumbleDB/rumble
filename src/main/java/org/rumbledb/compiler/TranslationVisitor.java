@@ -127,7 +127,6 @@ import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.parser.JsoniqParser;
 import org.rumbledb.parser.JsoniqParser.DefaultCollationDeclContext;
 import org.rumbledb.parser.JsoniqParser.EmptyOrderDeclContext;
-import org.rumbledb.parser.JsoniqParser.FunctionCallContext;
 import org.rumbledb.parser.JsoniqParser.SetterContext;
 import org.rumbledb.parser.JsoniqParser.UriLiteralContext;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -985,13 +984,29 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitArrowExpr(JsoniqParser.ArrowExprContext ctx) {
         Expression mainExpression = (Expression) this.visitUnaryExpr(ctx.main_expr);
+        Expression functionExpression = null;
 
-        for (int i = 0; i < ctx.function_call_expr.size(); ++i) {
-            FunctionCallContext functionCallContext = ctx.function_call_expr.get(i);
+        for (int i = 0; i < ctx.function.size(); ++i) {
+        	JsoniqParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
             List<Expression> children = new ArrayList<Expression>();
             children.add(mainExpression);
-            children.addAll(getArgumentsFromArgumentListContext(functionCallContext.argumentList()));
-            mainExpression = processFunctionCall(functionCallContext, children);
+            children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
+            if(functionCallContext.qname() != null)
+            {
+            	Name name = parseName(functionCallContext.qname(), true, false);
+            	mainExpression = processFunctionCall(name, children, createMetadataFromContext(ctx));
+            	continue;
+            } else if (functionCallContext.varRef() != null)
+            {
+            	functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
+            } else {
+            	functionExpression = (Expression) this.visitParenthesizedExpr(functionCallContext.parenthesizedExpr());
+            }
+        	mainExpression = new DynamicFunctionCallExpression(
+        			functionExpression,
+                    children,
+                    createMetadataFromContext(ctx)
+            );
         }
         return mainExpression;
 
@@ -1306,8 +1321,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         return BuiltinTypesCatalogue.getItemTypeByName(name);
     }
 
-    private Expression processFunctionCall(JsoniqParser.FunctionCallContext ctx, List<Expression> children) {
-        Name name = parseName(ctx.fn_name, true, false);
+    private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
+        
         Name typeName = name;
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
@@ -1320,19 +1335,20 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             return new CastExpression(
                     children.get(0),
                     new SequenceType(BuiltinTypesCatalogue.getItemTypeByName(typeName), SequenceType.Arity.OneOrZero),
-                    createMetadataFromContext(ctx)
+                    metadata
             );
         }
         return new FunctionCallExpression(
                 name,
                 children,
-                createMetadataFromContext(ctx)
+                metadata
         );
     }
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-        return processFunctionCall(ctx, getArgumentsFromArgumentListContext(ctx.argumentList()));
+    	Name name = parseName(ctx.fn_name, true, false);
+        return processFunctionCall(name, getArgumentsFromArgumentListContext(ctx.argumentList()), createMetadataFromContext(ctx));
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {

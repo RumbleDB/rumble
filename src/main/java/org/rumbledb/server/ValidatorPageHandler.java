@@ -16,7 +16,7 @@ public class ValidatorPageHandler implements HttpHandler {
 
     @Override
     public void handle(HttpExchange exchange) throws IOException {
-        String response = IOUtils.toString(Main.class.getResourceAsStream("/assets/jsound-validator.html"), "UTF-8");;
+        String response = IOUtils.toString(Main.class.getResourceAsStream("/assets/jsound-validatorg.html"), "UTF-8");;
         exchange.sendResponseHeaders(200, response.getBytes().length);
         OutputStream stream = exchange.getResponseBody();
         stream.write(response.getBytes());
