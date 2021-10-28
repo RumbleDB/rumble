@@ -1322,7 +1322,7 @@ public class BuiltinFunctionCatalogue {
      */
     static final BuiltinFunction concat =
         new BuiltinFunction(
-                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), 100),
+                new FunctionIdentifier(new Name(Name.FN_NS, "fn", "concat"), 100),
                 new FunctionSignature(
                         Collections.nCopies(
                             100,
@@ -2641,7 +2641,7 @@ public class BuiltinFunctionCatalogue {
         builtinFunctions.put(substring_after2.getIdentifier(), substring_after2);
         for (int i = 0; i < 100; i++) {
             builtinFunctions.put(
-                new FunctionIdentifier(Name.createVariableInDefaultFunctionNamespace("concat"), i),
+                new FunctionIdentifier(concat.getIdentifier().getName(), i),
                 concat
             );
         }
