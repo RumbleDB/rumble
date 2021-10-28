@@ -101,6 +101,13 @@ public class Facets {
         this.maxExclusive = maxExclusive;
     }
 
+    public Integer getLength() {
+        return this.length;
+    }
+
+    public void setLength(Integer length) {
+        this.length = length;
+    }
 
     public Integer getMinLength() {
         return this.minLength;
@@ -108,14 +115,6 @@ public class Facets {
 
     public void setMinLength(Integer minLength) {
         this.minLength = minLength;
-    }
-
-    public Integer getLength() {
-        return this.length;
-    }
-
-    public void setLength(Integer length) {
-        this.length = length;
     }
 
     public Integer getMaxLength() {
@@ -164,5 +163,31 @@ public class Facets {
 
     public void setExplicitTimezone(TimezoneFacet explicitTimezone) {
         this.explicitTimezone = explicitTimezone;
+    }
+
+    public static Facets createAtomicTypeFacets(
+            Integer length,
+            List<Item> enumeration,
+            Integer minLength,
+            Integer maxLength,
+            Item minInclusive,
+            Item maxInclusive,
+            Item minExclusive,
+            Item maxExclusive,
+            Integer totalDigits,
+            Integer fractionDigits
+    ) {
+        Facets facets = new Facets();
+        facets.length = length;
+        facets.enumeration = enumeration;
+        facets.minLength = minLength;
+        facets.maxLength = maxLength;
+        facets.minInclusive = minInclusive;
+        facets.maxInclusive = maxInclusive;
+        facets.minExclusive = minExclusive;
+        facets.maxExclusive = maxExclusive;
+        facets.totalDigits = totalDigits;
+        facets.fractionDigits = fractionDigits;
+        return facets;
     }
 }

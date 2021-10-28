@@ -18,10 +18,7 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.items.ItemFactory;
 
-import java.util.Collections;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class ItemTypeFactory {
 
@@ -313,13 +310,28 @@ public class ItemTypeFactory {
                             ExceptionMetadata.EMPTY_METADATA
                     );
                 }
+                Integer length = null;
                 Integer minLength = null;
                 Integer maxLength = null;
+                List<Item> enumeration = null;
+                Item minInclusive = null;
+                Item maxInclusive = null;
+                Item minExclusive = null;
+                Item maxExclusive = null;
+                Integer totalDigits = null;
+                Integer fractionDigits = null;
+
+                if (keys.contains("enumeration")) {
+                    throw new InvalidSchemaException(
+                            "The enumeration facet is not released yet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
                 if (keys.contains("minLength")) {
                     Item minLengthItem = item.getItemByKey("minLength");
                     if (!minLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minLength fact must be a numeric value.",
+                                "The minLength facet must be a numeric value.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
@@ -329,24 +341,158 @@ public class ItemTypeFactory {
                     Item maxLengthItem = item.getItemByKey("maxLength");
                     if (!maxLengthItem.isNumeric()) {
                         throw new InvalidSchemaException(
-                                "The minLength fact must be a numeric value.",
+                                "The maxLength facet must be a numeric value.",
                                 ExceptionMetadata.EMPTY_METADATA
                         );
                     }
                     maxLength = maxLengthItem.castToIntValue();
                 }
+
                 return new ArrayItemType(
                         name,
                         baseType,
                         memberType,
                         minLength,
                         maxLength,
-                        Collections.emptyList()
+                        enumeration
                 );
             case "atomic":
-                throw new OurBadException("Kind atomic is not supported yet.");
+                length = null;
+                minLength = null;
+                maxLength = null;
+                enumeration = null;
+                minInclusive = null;
+                maxInclusive = null;
+                minExclusive = null;
+                maxExclusive = null;
+                totalDigits = null;
+                fractionDigits = null;
+                if (baseType == null) {
+                    throw new InvalidSchemaException(
+                            "BaseType is required for an atomic user-defined type.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (keys.contains("length")) {
+                    Item lengthItem = item.getItemByKey("length");
+                    if (!lengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The length facet must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    length = lengthItem.castToIntValue();
+                }
+
+                if (keys.contains("minLength")) {
+                    Item minLengthItem = item.getItemByKey("minLength");
+                    if (!minLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minLength facet must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minLength = minLengthItem.castToIntValue();
+                }
+
+                if (keys.contains("maxLength")) {
+                    Item maxLengthItem = item.getItemByKey("maxLength");
+                    if (!maxLengthItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The maxLength facet must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    maxLength = maxLengthItem.castToIntValue();
+                }
+
+                if (keys.contains("enumeration")) {
+                    throw new InvalidSchemaException(
+                            "The enumeration facet is not released yet.",
+                            ExceptionMetadata.EMPTY_METADATA
+                    );
+                }
+                if (keys.contains("minInclusive")) {
+                    Item minInclusiveItem = item.getItemByKey("minInclusive");
+                    if (!minInclusiveItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minInclusive fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minInclusive = minInclusiveItem;
+                }
+                if (keys.contains("maxInclusive")) {
+                    Item maxInclusiveItem = item.getItemByKey("maxInclusive");
+                    if (!maxInclusiveItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The maxInclusive fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    maxInclusive = maxInclusiveItem;
+                }
+                if (keys.contains("minExclusive")) {
+                    Item minExclusiveItem = item.getItemByKey("minExclusive");
+                    if (!minExclusiveItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The minExclusive fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    minExclusive = minExclusiveItem;
+                }
+                if (keys.contains("maxExclusive")) {
+                    Item maxExclusiveItem = item.getItemByKey("maxExclusive");
+                    if (!maxExclusiveItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The maxExclusive fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    maxExclusive = maxExclusiveItem;
+                }
+                if (keys.contains("totalDigits")) {
+                    Item totalDigitsItem = item.getItemByKey("totalDigits");
+                    if (!totalDigitsItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The totalDigits fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    totalDigits = totalDigitsItem.castToIntValue();
+                }
+                if (keys.contains("fractionDigits")) {
+                    Item fractionDigitsItem = item.getItemByKey("fractionDigits");
+                    if (!fractionDigitsItem.isNumeric()) {
+                        throw new InvalidSchemaException(
+                                "The fractionDigits fact must be a numeric value.",
+                                ExceptionMetadata.EMPTY_METADATA
+                        );
+                    }
+                    fractionDigits = fractionDigitsItem.castToIntValue();
+                }
+
+                // Item contains syntax of JSound schema
+                return new DerivedAtomicItemType(
+                        name,
+                        baseType,
+                        baseType,
+                        Facets.createAtomicTypeFacets(
+                            length,
+                            enumeration,
+                            minLength,
+                            maxLength,
+                            minInclusive,
+                            maxInclusive,
+                            minExclusive,
+                            maxExclusive,
+                            totalDigits,
+                            fractionDigits
+                        )
+                );
             case "union":
-                throw new OurBadException("Kind unionis not supported yet.");
+                throw new OurBadException("Kind union is not supported yet.");
             default:
                 throw new InvalidSchemaException(
                         "Kind '" + kind + "' does not exist.",
@@ -370,7 +516,6 @@ public class ItemTypeFactory {
     /**
      * Create an object item type from a spark struct type (count as restriction on generic object type)
      * 
-     * @param name of the new type (if null it is an anonymous type)
      * @param structType descriptor of the object
      * @return an object item type representing the type in Rumble
      */
