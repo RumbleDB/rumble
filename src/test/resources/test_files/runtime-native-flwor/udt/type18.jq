@@ -1,28 +1,20 @@
-(:JIQS: ShouldRun; Output="({ "foo" : 2 }, Success)" :)
+(:JIQS: ShouldRun; Output="Success" :)
 declare type local:x as jsound verbose {
-  "kind" : "object",
-  "baseType" : "object",
-  "content" : [
-    { "name" : "foo", "type" : "integer", "required" : true }
-  ],
-  "closed" : true
+  "kind" : "array",
+  "baseType" : "array",
+  "content" : "string",
+  "maxLength" : 2
 };
-
-declare type local:y as jsound verbose {
-  "kind" : "object",
-  "baseType" : "local:x",
-  "content" : [
-    { "name" : "foo", "type" : "int" }
-  ]
-};
-
-validate type local:y* {
-  { "foo" : 2 }
-},
 try {
-  validate type local:y* {
-    { }
-  }
+    validate type local:x* {
+      [ ],
+      [ "foo" ],
+      [ "foo", "bar" ],
+      [ "foo", "bar", 1, 2, 3 ]
+    }
 } catch XQDY0027 {
-  "Success"
+    "Success"
 }
+
+
+
