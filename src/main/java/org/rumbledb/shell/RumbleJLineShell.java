@@ -36,6 +36,7 @@ import org.rumbledb.cli.Main;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
+import org.rumbledb.serialization.Serializer;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -97,10 +98,11 @@ public class RumbleJLineShell {
         List<Item> results = new ArrayList<>();
         try {
             long count = this.jsoniqQueryExecutor.runInteractive(query, results);
+            Serializer serializer = this.configuration.getSerializer();
             String result = String.join(
                 "\n",
                 results.stream()
-                    .map(x -> x.serialize())
+                    .map(x -> serializer.serialize(x))
                     .collect(Collectors.toList())
             );
             String shell = this.configuration.getShellFilter();
