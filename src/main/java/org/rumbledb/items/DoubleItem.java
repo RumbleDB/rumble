@@ -38,7 +38,7 @@ import java.math.BigInteger;
 public class DoubleItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private double value;
+    private Double value;
 
     public DoubleItem() {
         super();
@@ -79,11 +79,11 @@ public class DoubleItem implements Item {
         if (Double.isInfinite(this.value) && this.value < 0) {
             return "-INF";
         }
-        if (Double.compare(this.value, 0d) == 0) {
-            return "0";
-        }
         if (Double.compare(this.value, -0d) == 0) {
             return "-0";
+        }
+        if (Double.compare(this.value, 0d) == 0) {
+            return "0";
         }
         double abs = Math.abs(this.value);
         if (abs >= 0.000001 && abs <= 1000000) {
@@ -104,7 +104,7 @@ public class DoubleItem implements Item {
 
     @Override
     public float castToFloatValue() {
-        return (float) this.value;
+        return this.value.floatValue();
     }
 
     public BigDecimal castToDecimalValue() {
