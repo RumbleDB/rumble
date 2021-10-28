@@ -1,34 +1,33 @@
 <!DOCTYPE html>
 <html>
-  <head>
-    <meta charset="utf-8" />
-    <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
-    <title>Public Rumble page</title>
-    <script type="text/javascript">
+<head>
+  <meta charset="utf-8" />
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.8.3/jquery.min.js"></script>
+  <title>Public Rumble page</title>
+
+  <script type="text/javascript">
 
         document.documentElement.style.setProperty('--color-result', "black");
         $(document).ready(function() {
           $('#submit').click(function() {
             // this is compact
-            schema = $('#schema').val();
-            instance = $('#instance').val();
+            schema1 = $('#schema').val();
+            instance1 = $('#instance').val();
             if (document.getElementById('selectSchemaType').selectedIndex == 0) {
-              query = "declare type local:mytype as  " + schema + "; validate type local:mytype {" + instance + "}";
+              query = "declare type local:mytype as  " + schema1 + "; validate type local:mytype {" + instance1 + "}";
             } else {
-              query = "declare type local:mytype as jsound verbose " + schema + "; validate type local:mytype {" + instance + "}";
+              query = "declare type local:mytype as jsound verbose " + schema1 + "; validate type local:mytype {" + instance1 + "}";
             }
             $.post(
               '/jsoniq',
               query,
               function(data) {
-                console.log(data);
                 if(data.values) {
                   document.documentElement.style.setProperty('--color-result', "green");
                   $("#result").html(data.values.map(x => JSON.stringify(x)).join('\n'))
                 } else if (data["error-message"])
                 {
                   document.documentElement.style.setProperty('--color-result', "red");
-                  console.log(data["error-code"]);
                   let error_msg = data["error-message"].substring(data["error-message"].indexOf('Message'), data["error-message"].indexOf('Metadata'));
                   switch (data["error-code"]) {
                     case "XPST0003":
@@ -46,37 +45,44 @@
               'json'
             );
 
-            return false;
-
           });
 
         });
   </script>
-  </head>
-  <body>
-    <h1 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; ">JSound validator</h1>
-    <div style="margin: auto; text-align: center;">
-      <div id="schema-div">
+</head>
+<body>
+
+<h1 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; margin-bottom: -10px; ">JSound validator</h1>
+<div style="margin: auto; text-align: center; ">
+  <div id="div-in-row" style="display: inline-block;">
+    <div id="schema-div" style="float: left;">
+      <div>
         <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Schema</h2>
         <body>Pick the schema type: </body>
         <select id="selectSchemaType" name="selectSchemaType" style="margin-bottom: 15px;">
-          <option value="jsound" selected="selected">JSound</option>
+          <option value="jsoundcompact" selected="selected">JSound compact</option>
           <option value="jsoundverbose">JSound verbose</option>
         </select>
       </div>
-      <textarea id="schema" spellcheck="false" oninput="update(this.value); sync_scroll(this);" onscroll="sync_scroll(this);" onkeydown="check_tab(this, event);" placeholder="Type your schema here" rows="20" cols="80">{"foo":"string"}</textarea>
-      <!--<pre id="highlighting" aria-hidden="true">
-      <code class="language-html" id="highlighting-content">
-      -->
-      <div id="instance-div">
-        <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Instance</h2>
-      <textarea id="instance" placeholder="Type your instance here" rows="20" cols="80" style="margin-bottom: 15px;">{"foo":"bar"}</textarea>
+      <textarea id="schema" spellcheck="false" oninput="update(this.value); sync_scroll(this);" onscroll="sync_scroll(this);" onkeydown="check_tab(this, event);" placeholder="Type your schema here" rows="20" cols="75" style="margin: 10px;">{"foo":"string"}</textarea>
+
+    </div>
+
+    <div id="instance-div"  style="float: right;">
+      <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Instance</h2>
+
+      <div id="instance-txtarea" style="margin-top: 63px;">
+        <textarea id="instance" name="instance" placeholder="Type your instance here" rows="20" cols="75">{"foo":"bar"}</textarea>
       </div>
 
-      <button id="submit" style="margin-top: 5px; padding: 10px;">Validate with RumbleDB 1.15.0</button>
-
-      <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
-      <textarea id="result" placeholder="Results come here" rows="15" cols="80" style="border: solid 3px var(--color-result);">The results will appear here.</textarea>
     </div>
-  </body>
+  </div>
+
+  <button id="submit" style="margin-top: 25px; padding: 10px;">Validate with RumbleDB 1.15.0</button>
+
+  <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
+  <textarea id="result" placeholder="Results come here" rows="15" cols="80" style="border: solid 3px var(--color-result);">The results will appear here.</textarea>
+</div>
+</body>
+
 </html>
