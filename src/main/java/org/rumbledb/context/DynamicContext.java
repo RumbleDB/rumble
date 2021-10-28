@@ -25,6 +25,7 @@ import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 import org.apache.spark.api.java.JavaRDD;
+import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
@@ -42,6 +43,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
     private VariableValues variableValues;
     private NamedFunctions namedFunctions;
     private InScopeSchemaTypes inScopeSchemaTypes;
+    private DateTime currentDateTime;
 
     /**
      * The default constructor is for Kryo deserialization purposes.
@@ -52,6 +54,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
+        this.currentDateTime = new DateTime();
     }
 
     /**
@@ -65,6 +68,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = conf;
         this.namedFunctions = new NamedFunctions();
         this.inScopeSchemaTypes = new InScopeSchemaTypes();
+        this.currentDateTime = new DateTime();
     }
 
     public DynamicContext(DynamicContext parent) {
@@ -95,7 +99,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 dataFrameVariableValues
         );
         this.namedFunctions = null;
-
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {
@@ -205,5 +208,11 @@ public class DynamicContext implements Serializable, KryoSerializable {
         throw new OurBadException("In-scope schema types are not set up properly in dynamic context.");
     }
 
+    public DateTime getCurrentDateTime() {
+        if (this.parent != null) {
+            return this.parent.currentDateTime;
+        }
+        return this.currentDateTime;
+    }
 }
 

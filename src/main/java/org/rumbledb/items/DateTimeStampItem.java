@@ -60,7 +60,15 @@ public class DateTimeStampItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        String value = this.value.toString();
+        String zoneString = this.value.getZone() == DateTimeZone.UTC
+            ? "Z"
+            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
+                ? ""
+                : value.substring(value.length() - 6);
+        value = value.substring(0, value.length() - zoneString.length());
+        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
+        return value + zoneString;
     }
 
     @Override
@@ -86,19 +94,6 @@ public class DateTimeStampItem implements Item {
     @Override
     public int hashCode() {
         return this.value.hashCode();
-    }
-
-    @Override
-    public String serialize() {
-        String value = this.value.toString();
-        String zoneString = this.value.getZone() == DateTimeZone.UTC
-            ? "Z"
-            : this.value.getZone().toString().equals(DateTimeZone.getDefault().toString())
-                ? ""
-                : value.substring(value.length() - 6);
-        value = value.substring(0, value.length() - zoneString.length());
-        value = this.value.getMillisOfSecond() == 0 ? value.substring(0, value.length() - 4) : value;
-        return value + zoneString;
     }
 
     @Override

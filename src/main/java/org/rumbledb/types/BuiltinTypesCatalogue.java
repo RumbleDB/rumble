@@ -48,7 +48,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.TOTALDIGITS,
                         FacetTypes.FRACTIONDIGITS
                     )
@@ -63,7 +63,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -76,7 +76,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -98,7 +98,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -111,7 +111,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -124,7 +124,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE
+                        FacetTypes.MAXEXCLUSIVE
                     )
             )
     );
@@ -137,7 +137,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -158,7 +158,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -172,7 +172,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -186,7 +186,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -200,7 +200,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -214,7 +214,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -228,7 +228,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )
@@ -242,7 +242,7 @@ public class BuiltinTypesCatalogue {
                         FacetTypes.MININCLUSIVE,
                         FacetTypes.MAXINCLUSIVE,
                         FacetTypes.MINEXCLUSIVE,
-                        FacetTypes.MAXINCLUSIVE,
+                        FacetTypes.MAXEXCLUSIVE,
                         FacetTypes.EXPLICITTIMEZONE
                     )
             )

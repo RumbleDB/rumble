@@ -23,6 +23,8 @@ package org.rumbledb.config;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.CliException;
+import org.rumbledb.serialization.Serializer;
+
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.KryoSerializable;
 import com.esotericsoftware.kryo.io.Input;
@@ -52,6 +54,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
     private boolean checkReturnTypeOfBuiltinFunctions;
+    private String queryPath;
+    private String outputPath;
+    private String logPath;
+    private String query;
+    private String shell;
+
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
@@ -82,14 +90,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public String getConfigurationArgument(String key) {
         if (this.arguments.containsKey(key)) {
             return this.arguments.get(key);
-        } else {
-            return null;
-        }
-    }
-
-    public String getOutputPath() {
-        if (this.arguments.containsKey("output-path")) {
-            return this.arguments.get("output-path");
         } else {
             return null;
         }
@@ -203,6 +203,36 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.checkReturnTypeOfBuiltinFunctions = false;
         }
+
+        if (this.arguments.containsKey("query-path")) {
+            this.queryPath = this.arguments.get("query-path");
+        } else {
+            this.queryPath = null;
+        }
+
+        if (this.arguments.containsKey("log-path")) {
+            this.logPath = this.arguments.get("log-path");
+        } else {
+            this.logPath = null;
+        }
+
+        if (this.arguments.containsKey("output-path")) {
+            this.outputPath = this.arguments.get("output-path");
+        } else {
+            this.outputPath = null;
+        }
+
+        if (this.arguments.containsKey("query")) {
+            this.query = this.arguments.get("query");
+        } else {
+            this.query = null;
+        }
+
+        if (this.arguments.containsKey("shell-filter")) {
+            this.shell = this.arguments.get("shell-filter");
+        } else {
+            this.shell = null;
+        }
     }
 
     public boolean getOverwrite() {
@@ -222,19 +252,43 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     }
 
     public String getLogPath() {
-        if (this.arguments.containsKey("log-path")) {
-            return this.arguments.get("log-path");
-        } else {
-            return null;
-        }
+        return this.logPath;
     }
 
     public String getQueryPath() {
-        if (this.arguments.containsKey("query-path")) {
-            return this.arguments.get("query-path");
-        } else {
-            return null;
-        }
+        return this.queryPath;
+    }
+
+    public String getOutputPath() {
+        return this.outputPath;
+    }
+
+    public String getQuery() {
+        return this.query;
+    }
+
+    public String getShellFilter() {
+        return this.shell;
+    }
+
+    public void setLogPath(String path) {
+        this.logPath = path;
+    }
+
+    public void setQueryPath(String path) {
+        this.queryPath = path;
+    }
+
+    public void setOutputPath(String path) {
+        this.outputPath = path;
+    }
+
+    public void setQuery(String query) {
+        this.query = query;
+    }
+
+    public void setShellFilter(String shell) {
+        this.shell = shell;
     }
 
     /**
@@ -405,5 +459,36 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     @Override
     public void read(Kryo kryo, Input input) {
         this.arguments = kryo.readObject(input, HashMap.class);
+    }
+
+    public Serializer getSerializer() {
+        Serializer.Method method = Serializer.Method.XML_JSON_HYBRID;
+        if (this.getOutputFormat().equals("tyson")) {
+            method = Serializer.Method.TYSON;
+        }
+        if (this.getOutputFormat().equals("json")) {
+            method = Serializer.Method.JSON;
+        }
+        boolean indent = false;
+        Map<String, String> options = this.getOutputFormatOptions();
+        if (options.containsKey("indent")) {
+            if (options.get("indent").equals("yes")) {
+                indent = true;
+            }
+        }
+        String itemSeparator = "\n";
+        if (options.containsKey("item-separator")) {
+            itemSeparator = options.get("item-separator");
+        }
+        String encoding = "UTF-8";
+        if (options.containsKey("encoding")) {
+            itemSeparator = options.get("encoding");
+        }
+        return new Serializer(
+                encoding,
+                method,
+                indent,
+                itemSeparator
+        );
     }
 }

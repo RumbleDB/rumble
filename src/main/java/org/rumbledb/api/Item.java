@@ -17,6 +17,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.serialization.Serializer;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
 
@@ -645,7 +646,9 @@ public interface Item extends Serializable, KryoSerializable {
      */
     int hashCode();
 
-    String serialize();
+    default String serialize() {
+        return new Serializer("UTF-8", Serializer.Method.XML_JSON_HYBRID, false, "\n").serialize(this);
+    }
 
     /**
      * Get sparkSql string for the item
