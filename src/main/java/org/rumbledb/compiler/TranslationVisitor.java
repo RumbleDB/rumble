@@ -987,23 +987,21 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Expression functionExpression = null;
 
         for (int i = 0; i < ctx.function.size(); ++i) {
-        	JsoniqParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
+            JsoniqParser.ArrowFunctionSpecifierContext functionCallContext = ctx.function.get(i);
             List<Expression> children = new ArrayList<Expression>();
             children.add(mainExpression);
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
-            if(functionCallContext.qname() != null)
-            {
-            	Name name = parseName(functionCallContext.qname(), true, false);
-            	mainExpression = processFunctionCall(name, children, createMetadataFromContext(ctx));
-            	continue;
-            } else if (functionCallContext.varRef() != null)
-            {
-            	functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
+            if (functionCallContext.qname() != null) {
+                Name name = parseName(functionCallContext.qname(), true, false);
+                mainExpression = processFunctionCall(name, children, createMetadataFromContext(ctx));
+                continue;
+            } else if (functionCallContext.varRef() != null) {
+                functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
             } else {
-            	functionExpression = (Expression) this.visitParenthesizedExpr(functionCallContext.parenthesizedExpr());
+                functionExpression = (Expression) this.visitParenthesizedExpr(functionCallContext.parenthesizedExpr());
             }
-        	mainExpression = new DynamicFunctionCallExpression(
-        			functionExpression,
+            mainExpression = new DynamicFunctionCallExpression(
+                    functionExpression,
                     children,
                     createMetadataFromContext(ctx)
             );
@@ -1322,7 +1320,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     }
 
     private Expression processFunctionCall(Name name, List<Expression> children, ExceptionMetadata metadata) {
-        
+
         Name typeName = name;
         if (name.getNamespace().equals(Name.JSONIQ_DEFAULT_FUNCTION_NS)) {
             typeName = Name.createVariableInDefaultTypeNamespace(name.getLocalName());
@@ -1347,8 +1345,12 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
 
     @Override
     public Node visitFunctionCall(JsoniqParser.FunctionCallContext ctx) {
-    	Name name = parseName(ctx.fn_name, true, false);
-        return processFunctionCall(name, getArgumentsFromArgumentListContext(ctx.argumentList()), createMetadataFromContext(ctx));
+        Name name = parseName(ctx.fn_name, true, false);
+        return processFunctionCall(
+            name,
+            getArgumentsFromArgumentListContext(ctx.argumentList()),
+            createMetadataFromContext(ctx)
+        );
     }
 
     private List<Expression> getArgumentsFromArgumentListContext(JsoniqParser.ArgumentListContext ctx) {
