@@ -61,7 +61,10 @@ public class DateItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.serialize();
+        String value = this.getValue().toString();
+        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
+        int dateTimeSeparatorIndex = value.indexOf("T");
+        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
     }
 
     @Override
@@ -87,14 +90,6 @@ public class DateItem implements Item {
     @Override
     public int hashCode() {
         return this.getValue().hashCode();
-    }
-
-    @Override
-    public String serialize() {
-        String value = this.getValue().toString();
-        String zone = this.getValue().getZone() == DateTimeZone.UTC ? "Z" : this.getValue().getZone().toString();
-        int dateTimeSeparatorIndex = value.indexOf("T");
-        return value.substring(0, dateTimeSeparatorIndex) + (this.hasTimeZone ? zone : "");
     }
 
     @Override
