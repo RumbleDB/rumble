@@ -18,6 +18,7 @@ public class ArrayItemType implements ItemType {
             Arrays.asList(
                 FacetTypes.ENUMERATION,
                 FacetTypes.CONTENT,
+
                 FacetTypes.MINLENGTH,
                 FacetTypes.MAXLENGTH
             )
