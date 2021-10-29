@@ -202,7 +202,7 @@ public class JsoniqQueryExecutor {
                 "Warning! The output sequence contains "
                     + "too many items and its materialization was capped at "
                     + SparkSessionManager.COLLECT_ITEM_LIMIT
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or is deprecated equivalent --result-size) at startup"
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
             );
         } else {
             System.err.println(
@@ -210,7 +210,7 @@ public class JsoniqQueryExecutor {
                     + materializationCount
                     + " items but its materialization was capped at "
                     + SparkSessionManager.COLLECT_ITEM_LIMIT
-                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or is deprecated equivalent --result-size) at startup"
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
             );
         }
     }
