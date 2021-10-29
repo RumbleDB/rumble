@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.8
+// Generated from ./src/main/java/org/rumbledb/parser/XQueryParser.g4 by ANTLR 4.7
 
 // Java header
 package org.rumbledb.parser;
@@ -25,7 +25,7 @@ import org.antlr.v4.runtime.tree.TerminalNode;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class XQueryParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.8", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -150,114 +150,104 @@ public class XQueryParser extends Parser {
 		RULE_keywordOKForFunction = 234, RULE_uriLiteral = 235, RULE_stringLiteralQuot = 236, 
 		RULE_stringLiteralApos = 237, RULE_stringLiteral = 238, RULE_stringContentQuot = 239, 
 		RULE_stringContentApos = 240, RULE_noQuotesNoBracesNoAmpNoLAng = 241;
-	private static String[] makeRuleNames() {
-		return new String[] {
-			"module", "xqDocComment", "versionDecl", "mainModule", "queryBody", "libraryModule", 
-			"moduleDecl", "prolog", "annotatedDecl", "defaultNamespaceDecl", "setter", 
-			"boundarySpaceDecl", "defaultCollationDecl", "baseURIDecl", "constructionDecl", 
-			"orderingModeDecl", "emptyOrderDecl", "copyNamespacesDecl", "preserveMode", 
-			"inheritMode", "decimalFormatDecl", "schemaImport", "schemaPrefix", "moduleImport", 
-			"namespaceDecl", "varDecl", "varValue", "varDefaultValue", "contextItemDecl", 
-			"functionDecl", "functionParams", "functionParam", "annotations", "annotation", 
-			"annotList", "annotationParam", "functionReturn", "optionDecl", "expr", 
-			"exprSingle", "flworExpr", "initialClause", "intermediateClause", "forClause", 
-			"forBinding", "allowingEmpty", "positionalVar", "letClause", "letBinding", 
-			"windowClause", "tumblingWindowClause", "slidingWindowClause", "windowStartCondition", 
-			"windowEndCondition", "windowVars", "countClause", "whereClause", "groupByClause", 
-			"groupingSpecList", "groupingSpec", "orderByClause", "orderSpec", "returnClause", 
-			"quantifiedExpr", "quantifiedVar", "switchExpr", "switchCaseClause", 
-			"switchCaseOperand", "typeswitchExpr", "caseClause", "sequenceUnionType", 
-			"ifExpr", "tryCatchExpr", "tryClause", "enclosedTryTargetExpression", 
-			"catchClause", "enclosedExpression", "catchErrorList", "existUpdateExpr", 
-			"existReplaceExpr", "existValueExpr", "existInsertExpr", "existDeleteExpr", 
-			"existRenameExpr", "orExpr", "andExpr", "comparisonExpr", "stringConcatExpr", 
-			"rangeExpr", "additiveExpr", "multiplicativeExpr", "unionExpr", "intersectExceptExpr", 
-			"instanceOfExpr", "treatExpr", "castableExpr", "castExpr", "arrowExpr", 
-			"complexArrow", "unaryExpr", "valueExpr", "generalComp", "valueComp", 
-			"nodeComp", "validateExpr", "validationMode", "extensionExpr", "simpleMapExpr", 
-			"pathExpr", "relativePathExpr", "stepExpr", "axisStep", "forwardStep", 
-			"forwardAxis", "abbrevForwardStep", "reverseStep", "reverseAxis", "abbrevReverseStep", 
-			"nodeTest", "nameTest", "wildcard", "postfixExpr", "argumentList", "predicateList", 
-			"predicate", "lookup", "keySpecifier", "arrowFunctionSpecifier", "primaryExpr", 
-			"literal", "numericLiteral", "varRef", "varName", "parenthesizedExpr", 
-			"contextItemExpr", "orderedExpr", "unorderedExpr", "functionCall", "argument", 
-			"nodeConstructor", "directConstructor", "dirElemConstructorOpenClose", 
-			"dirElemConstructorSingleTag", "dirAttributeList", "dirAttributeValueApos", 
-			"dirAttributeValueQuot", "dirAttributeValue", "dirAttributeContentQuot", 
-			"dirAttributeContentApos", "dirElemContent", "commonContent", "computedConstructor", 
-			"compMLJSONConstructor", "compMLJSONArrayConstructor", "compMLJSONObjectConstructor", 
-			"compMLJSONNumberConstructor", "compMLJSONBooleanConstructor", "compMLJSONNullConstructor", 
-			"compBinaryConstructor", "compDocConstructor", "compElemConstructor", 
-			"enclosedContentExpr", "compAttrConstructor", "compNamespaceConstructor", 
-			"prefix", "enclosedPrefixExpr", "enclosedURIExpr", "compTextConstructor", 
-			"compCommentConstructor", "compPIConstructor", "functionItemExpr", "namedFunctionRef", 
-			"inlineFunctionRef", "functionBody", "mapConstructor", "mapConstructorEntry", 
-			"arrayConstructor", "squareArrayConstructor", "curlyArrayConstructor", 
-			"stringConstructor", "stringConstructorContent", "charNoGrave", "charNoLBrace", 
-			"charNoRBrack", "stringConstructorChars", "stringConstructorInterpolation", 
-			"unaryLookup", "singleType", "typeDeclaration", "sequenceType", "itemType", 
-			"atomicOrUnionType", "kindTest", "anyKindTest", "binaryNodeTest", "documentTest", 
-			"textTest", "commentTest", "namespaceNodeTest", "piTest", "attributeTest", 
-			"attributeNameOrWildcard", "schemaAttributeTest", "elementTest", "elementNameOrWildcard", 
-			"schemaElementTest", "elementDeclaration", "attributeName", "elementName", 
-			"simpleTypeName", "typeName", "functionTest", "anyFunctionTest", "typedFunctionTest", 
-			"mapTest", "anyMapTest", "typedMapTest", "arrayTest", "anyArrayTest", 
-			"typedArrayTest", "parenthesizedItemTest", "attributeDeclaration", "mlNodeTest", 
-			"mlArrayNodeTest", "mlObjectNodeTest", "mlNumberNodeTest", "mlBooleanNodeTest", 
-			"mlNullNodeTest", "eqName", "qName", "ncName", "functionName", "keyword", 
-			"keywordNotOKForFunction", "keywordOKForFunction", "uriLiteral", "stringLiteralQuot", 
-			"stringLiteralApos", "stringLiteral", "stringContentQuot", "stringContentApos", 
-			"noQuotesNoBracesNoAmpNoLAng"
-		};
-	}
-	public static final String[] ruleNames = makeRuleNames();
+	public static final String[] ruleNames = {
+		"module", "xqDocComment", "versionDecl", "mainModule", "queryBody", "libraryModule", 
+		"moduleDecl", "prolog", "annotatedDecl", "defaultNamespaceDecl", "setter", 
+		"boundarySpaceDecl", "defaultCollationDecl", "baseURIDecl", "constructionDecl", 
+		"orderingModeDecl", "emptyOrderDecl", "copyNamespacesDecl", "preserveMode", 
+		"inheritMode", "decimalFormatDecl", "schemaImport", "schemaPrefix", "moduleImport", 
+		"namespaceDecl", "varDecl", "varValue", "varDefaultValue", "contextItemDecl", 
+		"functionDecl", "functionParams", "functionParam", "annotations", "annotation", 
+		"annotList", "annotationParam", "functionReturn", "optionDecl", "expr", 
+		"exprSingle", "flworExpr", "initialClause", "intermediateClause", "forClause", 
+		"forBinding", "allowingEmpty", "positionalVar", "letClause", "letBinding", 
+		"windowClause", "tumblingWindowClause", "slidingWindowClause", "windowStartCondition", 
+		"windowEndCondition", "windowVars", "countClause", "whereClause", "groupByClause", 
+		"groupingSpecList", "groupingSpec", "orderByClause", "orderSpec", "returnClause", 
+		"quantifiedExpr", "quantifiedVar", "switchExpr", "switchCaseClause", "switchCaseOperand", 
+		"typeswitchExpr", "caseClause", "sequenceUnionType", "ifExpr", "tryCatchExpr", 
+		"tryClause", "enclosedTryTargetExpression", "catchClause", "enclosedExpression", 
+		"catchErrorList", "existUpdateExpr", "existReplaceExpr", "existValueExpr", 
+		"existInsertExpr", "existDeleteExpr", "existRenameExpr", "orExpr", "andExpr", 
+		"comparisonExpr", "stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr", 
+		"unionExpr", "intersectExceptExpr", "instanceOfExpr", "treatExpr", "castableExpr", 
+		"castExpr", "arrowExpr", "complexArrow", "unaryExpr", "valueExpr", "generalComp", 
+		"valueComp", "nodeComp", "validateExpr", "validationMode", "extensionExpr", 
+		"simpleMapExpr", "pathExpr", "relativePathExpr", "stepExpr", "axisStep", 
+		"forwardStep", "forwardAxis", "abbrevForwardStep", "reverseStep", "reverseAxis", 
+		"abbrevReverseStep", "nodeTest", "nameTest", "wildcard", "postfixExpr", 
+		"argumentList", "predicateList", "predicate", "lookup", "keySpecifier", 
+		"arrowFunctionSpecifier", "primaryExpr", "literal", "numericLiteral", 
+		"varRef", "varName", "parenthesizedExpr", "contextItemExpr", "orderedExpr", 
+		"unorderedExpr", "functionCall", "argument", "nodeConstructor", "directConstructor", 
+		"dirElemConstructorOpenClose", "dirElemConstructorSingleTag", "dirAttributeList", 
+		"dirAttributeValueApos", "dirAttributeValueQuot", "dirAttributeValue", 
+		"dirAttributeContentQuot", "dirAttributeContentApos", "dirElemContent", 
+		"commonContent", "computedConstructor", "compMLJSONConstructor", "compMLJSONArrayConstructor", 
+		"compMLJSONObjectConstructor", "compMLJSONNumberConstructor", "compMLJSONBooleanConstructor", 
+		"compMLJSONNullConstructor", "compBinaryConstructor", "compDocConstructor", 
+		"compElemConstructor", "enclosedContentExpr", "compAttrConstructor", "compNamespaceConstructor", 
+		"prefix", "enclosedPrefixExpr", "enclosedURIExpr", "compTextConstructor", 
+		"compCommentConstructor", "compPIConstructor", "functionItemExpr", "namedFunctionRef", 
+		"inlineFunctionRef", "functionBody", "mapConstructor", "mapConstructorEntry", 
+		"arrayConstructor", "squareArrayConstructor", "curlyArrayConstructor", 
+		"stringConstructor", "stringConstructorContent", "charNoGrave", "charNoLBrace", 
+		"charNoRBrack", "stringConstructorChars", "stringConstructorInterpolation", 
+		"unaryLookup", "singleType", "typeDeclaration", "sequenceType", "itemType", 
+		"atomicOrUnionType", "kindTest", "anyKindTest", "binaryNodeTest", "documentTest", 
+		"textTest", "commentTest", "namespaceNodeTest", "piTest", "attributeTest", 
+		"attributeNameOrWildcard", "schemaAttributeTest", "elementTest", "elementNameOrWildcard", 
+		"schemaElementTest", "elementDeclaration", "attributeName", "elementName", 
+		"simpleTypeName", "typeName", "functionTest", "anyFunctionTest", "typedFunctionTest", 
+		"mapTest", "anyMapTest", "typedMapTest", "arrayTest", "anyArrayTest", 
+		"typedArrayTest", "parenthesizedItemTest", "attributeDeclaration", "mlNodeTest", 
+		"mlArrayNodeTest", "mlObjectNodeTest", "mlNumberNodeTest", "mlBooleanNodeTest", 
+		"mlNullNodeTest", "eqName", "qName", "ncName", "functionName", "keyword", 
+		"keywordNotOKForFunction", "keywordOKForFunction", "uriLiteral", "stringLiteralQuot", 
+		"stringLiteralApos", "stringLiteral", "stringContentQuot", "stringContentApos", 
+		"noQuotesNoBracesNoAmpNoLAng"
+	};
 
-	private static String[] makeLiteralNames() {
-		return new String[] {
-		};
-	}
-	private static final String[] _LITERAL_NAMES = makeLiteralNames();
-	private static String[] makeSymbolicNames() {
-		return new String[] {
-			null, "EscapeQuot", "EscapeApos", "DOUBLE_LBRACE", "DOUBLE_RBRACE", "IntegerLiteral", 
-			"DecimalLiteral", "DoubleLiteral", "DFPropertyName", "PredefinedEntityRef", 
-			"CharRef", "Quot", "Apos", "COMMENT", "XMLDECL", "PI", "CDATA", "PRAGMA", 
-			"WS", "EQUAL", "NOT_EQUAL", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET", 
-			"LBRACE", "RBRACE", "STAR", "PLUS", "MINUS", "COMMA", "DOT", "DDOT", 
-			"COLON", "COLON_EQ", "SEMICOLON", "SLASH", "DSLASH", "BACKSLASH", "VBAR", 
-			"LANGLE", "RANGLE", "QUESTION", "AT", "DOLLAR", "MOD", "BANG", "HASH", 
-			"CARAT", "ARROW", "GRAVE", "CONCATENATION", "TILDE", "KW_ALLOWING", "KW_ANCESTOR", 
-			"KW_ANCESTOR_OR_SELF", "KW_AND", "KW_ARRAY", "KW_AS", "KW_ASCENDING", 
-			"KW_AT", "KW_ATTRIBUTE", "KW_BASE_URI", "KW_BOUNDARY_SPACE", "KW_BINARY", 
-			"KW_BY", "KW_CASE", "KW_CAST", "KW_CASTABLE", "KW_CATCH", "KW_CHILD", 
-			"KW_COLLATION", "KW_COMMENT", "KW_CONSTRUCTION", "KW_CONTEXT", "KW_COPY_NS", 
-			"KW_COUNT", "KW_DECLARE", "KW_DEFAULT", "KW_DESCENDANT", "KW_DESCENDANT_OR_SELF", 
-			"KW_DESCENDING", "KW_DECIMAL_FORMAT", "KW_DIV", "KW_DOCUMENT", "KW_DOCUMENT_NODE", 
-			"KW_ELEMENT", "KW_ELSE", "KW_EMPTY", "KW_EMPTY_SEQUENCE", "KW_ENCODING", 
-			"KW_END", "KW_EQ", "KW_EVERY", "KW_EXCEPT", "KW_EXTERNAL", "KW_FOLLOWING", 
-			"KW_FOLLOWING_SIBLING", "KW_FOR", "KW_FUNCTION", "KW_GE", "KW_GREATEST", 
-			"KW_GROUP", "KW_GT", "KW_IDIV", "KW_IF", "KW_IMPORT", "KW_IN", "KW_INHERIT", 
-			"KW_INSTANCE", "KW_INTERSECT", "KW_IS", "KW_ITEM", "KW_LAX", "KW_LE", 
-			"KW_LEAST", "KW_LET", "KW_LT", "KW_MAP", "KW_MOD", "KW_MODULE", "KW_NAMESPACE", 
-			"KW_NE", "KW_NEXT", "KW_NAMESPACE_NODE", "KW_NO_INHERIT", "KW_NO_PRESERVE", 
-			"KW_NODE", "KW_OF", "KW_ONLY", "KW_OPTION", "KW_OR", "KW_ORDER", "KW_ORDERED", 
-			"KW_ORDERING", "KW_PARENT", "KW_PRECEDING", "KW_PRECEDING_SIBLING", "KW_PRESERVE", 
-			"KW_PREVIOUS", "KW_PI", "KW_RETURN", "KW_SATISFIES", "KW_SCHEMA", "KW_SCHEMA_ATTR", 
-			"KW_SCHEMA_ELEM", "KW_SELF", "KW_SLIDING", "KW_SOME", "KW_STABLE", "KW_START", 
-			"KW_STRICT", "KW_STRIP", "KW_SWITCH", "KW_TEXT", "KW_THEN", "KW_TO", 
-			"KW_TREAT", "KW_TRY", "KW_TUMBLING", "KW_TYPE", "KW_TYPESWITCH", "KW_UNION", 
-			"KW_UNORDERED", "KW_UPDATE", "KW_VALIDATE", "KW_VARIABLE", "KW_VERSION", 
-			"KW_WHEN", "KW_WHERE", "KW_WINDOW", "KW_XQUERY", "KW_ARRAY_NODE", "KW_BOOLEAN_NODE", 
-			"KW_NULL_NODE", "KW_NUMBER_NODE", "KW_OBJECT_NODE", "KW_REPLACE", "KW_WITH", 
-			"KW_VALUE", "KW_INSERT", "KW_INTO", "KW_DELETE", "KW_RENAME", "URIQualifiedName", 
-			"FullQName", "NCNameWithLocalWildcard", "NCNameWithPrefixWildcard", "NCName", 
-			"XQDOC_COMMENT_START", "XQDOC_COMMENT_END", "XQDocComment", "XQComment", 
-			"CHAR", "ENTER_STRING", "EXIT_INTERPOLATION", "ContentChar", "BASIC_CHAR", 
-			"ENTER_INTERPOLATION", "EXIT_STRING", "EscapeQuot_QuotString", "DOUBLE_LBRACE_QuotString", 
-			"DOUBLE_RBRACE_QuotString", "EscapeApos_AposString"
-		};
-	}
-	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
+	private static final String[] _LITERAL_NAMES = {
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, "EscapeQuot", "EscapeApos", "DOUBLE_LBRACE", "DOUBLE_RBRACE", "IntegerLiteral", 
+		"DecimalLiteral", "DoubleLiteral", "DFPropertyName", "PredefinedEntityRef", 
+		"CharRef", "Quot", "Apos", "COMMENT", "XMLDECL", "PI", "CDATA", "PRAGMA", 
+		"WS", "EQUAL", "NOT_EQUAL", "LPAREN", "RPAREN", "LBRACKET", "RBRACKET", 
+		"LBRACE", "RBRACE", "STAR", "PLUS", "MINUS", "COMMA", "DOT", "DDOT", "COLON", 
+		"COLON_EQ", "SEMICOLON", "SLASH", "DSLASH", "BACKSLASH", "VBAR", "LANGLE", 
+		"RANGLE", "QUESTION", "AT", "DOLLAR", "MOD", "BANG", "HASH", "CARAT", 
+		"ARROW", "GRAVE", "CONCATENATION", "TILDE", "KW_ALLOWING", "KW_ANCESTOR", 
+		"KW_ANCESTOR_OR_SELF", "KW_AND", "KW_ARRAY", "KW_AS", "KW_ASCENDING", 
+		"KW_AT", "KW_ATTRIBUTE", "KW_BASE_URI", "KW_BOUNDARY_SPACE", "KW_BINARY", 
+		"KW_BY", "KW_CASE", "KW_CAST", "KW_CASTABLE", "KW_CATCH", "KW_CHILD", 
+		"KW_COLLATION", "KW_COMMENT", "KW_CONSTRUCTION", "KW_CONTEXT", "KW_COPY_NS", 
+		"KW_COUNT", "KW_DECLARE", "KW_DEFAULT", "KW_DESCENDANT", "KW_DESCENDANT_OR_SELF", 
+		"KW_DESCENDING", "KW_DECIMAL_FORMAT", "KW_DIV", "KW_DOCUMENT", "KW_DOCUMENT_NODE", 
+		"KW_ELEMENT", "KW_ELSE", "KW_EMPTY", "KW_EMPTY_SEQUENCE", "KW_ENCODING", 
+		"KW_END", "KW_EQ", "KW_EVERY", "KW_EXCEPT", "KW_EXTERNAL", "KW_FOLLOWING", 
+		"KW_FOLLOWING_SIBLING", "KW_FOR", "KW_FUNCTION", "KW_GE", "KW_GREATEST", 
+		"KW_GROUP", "KW_GT", "KW_IDIV", "KW_IF", "KW_IMPORT", "KW_IN", "KW_INHERIT", 
+		"KW_INSTANCE", "KW_INTERSECT", "KW_IS", "KW_ITEM", "KW_LAX", "KW_LE", 
+		"KW_LEAST", "KW_LET", "KW_LT", "KW_MAP", "KW_MOD", "KW_MODULE", "KW_NAMESPACE", 
+		"KW_NE", "KW_NEXT", "KW_NAMESPACE_NODE", "KW_NO_INHERIT", "KW_NO_PRESERVE", 
+		"KW_NODE", "KW_OF", "KW_ONLY", "KW_OPTION", "KW_OR", "KW_ORDER", "KW_ORDERED", 
+		"KW_ORDERING", "KW_PARENT", "KW_PRECEDING", "KW_PRECEDING_SIBLING", "KW_PRESERVE", 
+		"KW_PREVIOUS", "KW_PI", "KW_RETURN", "KW_SATISFIES", "KW_SCHEMA", "KW_SCHEMA_ATTR", 
+		"KW_SCHEMA_ELEM", "KW_SELF", "KW_SLIDING", "KW_SOME", "KW_STABLE", "KW_START", 
+		"KW_STRICT", "KW_STRIP", "KW_SWITCH", "KW_TEXT", "KW_THEN", "KW_TO", "KW_TREAT", 
+		"KW_TRY", "KW_TUMBLING", "KW_TYPE", "KW_TYPESWITCH", "KW_UNION", "KW_UNORDERED", 
+		"KW_UPDATE", "KW_VALIDATE", "KW_VARIABLE", "KW_VERSION", "KW_WHEN", "KW_WHERE", 
+		"KW_WINDOW", "KW_XQUERY", "KW_ARRAY_NODE", "KW_BOOLEAN_NODE", "KW_NULL_NODE", 
+		"KW_NUMBER_NODE", "KW_OBJECT_NODE", "KW_REPLACE", "KW_WITH", "KW_VALUE", 
+		"KW_INSERT", "KW_INTO", "KW_DELETE", "KW_RENAME", "URIQualifiedName", 
+		"FullQName", "NCNameWithLocalWildcard", "NCNameWithPrefixWildcard", "NCName", 
+		"XQDOC_COMMENT_START", "XQDOC_COMMENT_END", "XQDocComment", "XQComment", 
+		"CHAR", "ENTER_STRING", "EXIT_INTERPOLATION", "ContentChar", "BASIC_CHAR", 
+		"ENTER_INTERPOLATION", "EXIT_STRING", "EscapeQuot_QuotString", "DOUBLE_LBRACE_QuotString", 
+		"DOUBLE_RBRACE_QuotString", "EscapeApos_AposString"
+	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
@@ -307,7 +297,6 @@ public class XQueryParser extends Parser {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
-
 	public static class ModuleContext extends ParserRuleContext {
 		public LibraryModuleContext libraryModule() {
 			return getRuleContext(LibraryModuleContext.class,0);

@@ -1,4 +1,4 @@
-// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.8
+// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
 package org.rumbledb.parser;
@@ -16,7 +16,7 @@ import org.antlr.v4.runtime.dfa.DFA;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class JsoniqLexer extends Lexer {
-	static { RuntimeMetaData.checkVersion("4.8", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -49,71 +49,61 @@ public class JsoniqLexer extends Lexer {
 		"DEFAULT_MODE"
 	};
 
-	private static String[] makeRuleNames() {
-		return new String[] {
-			"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
-			"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
-			"T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", "T__24", 
-			"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "T__31", "T__32", 
-			"T__33", "T__34", "T__35", "T__36", "T__37", "T__38", "T__39", "T__40", 
-			"T__41", "T__42", "T__43", "T__44", "T__45", "T__46", "T__47", "T__48", 
-			"T__49", "T__50", "T__51", "T__52", "T__53", "T__54", "T__55", "T__56", 
-			"T__57", "T__58", "T__59", "T__60", "T__61", "T__62", "T__63", "Kfor", 
-			"Klet", "Kwhere", "Kgroup", "Kby", "Korder", "Kreturn", "Kif", "Kin", 
-			"Kas", "Kat", "Kallowing", "Kempty", "Kcount", "Kstable", "Kascending", 
-			"Kdescending", "Ksome", "Kevery", "Ksatisfies", "Kcollation", "Kgreatest", 
-			"Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", "Kdefault", "Kthen", 
-			"Kelse", "Ktypeswitch", "Kor", "Kand", "Knot", "Kto", "Kinstance", "Kof", 
-			"Kstatically", "Kis", "Ktreat", "Kcast", "Kcastable", "Kversion", "Kjsoniq", 
-			"Kunordered", "Ktrue", "Kfalse", "STRING", "ESC", "UNICODE", "HEX", "ArgumentPlaceholder", 
-			"NullLiteral", "Literal", "NumericLiteral", "IntegerLiteral", "DecimalLiteral", 
-			"DoubleLiteral", "Digits", "WS", "NCName", "NameStartChar", "NameChar", 
-			"XQComment", "ContentChar"
-		};
-	}
-	public static final String[] ruleNames = makeRuleNames();
+	public static final String[] ruleNames = {
+		"T__0", "T__1", "T__2", "T__3", "T__4", "T__5", "T__6", "T__7", "T__8", 
+		"T__9", "T__10", "T__11", "T__12", "T__13", "T__14", "T__15", "T__16", 
+		"T__17", "T__18", "T__19", "T__20", "T__21", "T__22", "T__23", "T__24", 
+		"T__25", "T__26", "T__27", "T__28", "T__29", "T__30", "T__31", "T__32", 
+		"T__33", "T__34", "T__35", "T__36", "T__37", "T__38", "T__39", "T__40", 
+		"T__41", "T__42", "T__43", "T__44", "T__45", "T__46", "T__47", "T__48", 
+		"T__49", "T__50", "T__51", "T__52", "T__53", "T__54", "T__55", "T__56", 
+		"T__57", "T__58", "T__59", "T__60", "T__61", "T__62", "T__63", "Kfor", 
+		"Klet", "Kwhere", "Kgroup", "Kby", "Korder", "Kreturn", "Kif", "Kin", 
+		"Kas", "Kat", "Kallowing", "Kempty", "Kcount", "Kstable", "Kascending", 
+		"Kdescending", "Ksome", "Kevery", "Ksatisfies", "Kcollation", "Kgreatest", 
+		"Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", "Kdefault", "Kthen", "Kelse", 
+		"Ktypeswitch", "Kor", "Kand", "Knot", "Kto", "Kinstance", "Kof", "Kstatically", 
+		"Kis", "Ktreat", "Kcast", "Kcastable", "Kversion", "Kjsoniq", "Kunordered", 
+		"Ktrue", "Kfalse", "STRING", "ESC", "UNICODE", "HEX", "ArgumentPlaceholder", 
+		"NullLiteral", "Literal", "NumericLiteral", "IntegerLiteral", "DecimalLiteral", 
+		"DoubleLiteral", "Digits", "WS", "NCName", "NameStartChar", "NameChar", 
+		"XQComment", "ContentChar"
+	};
 
-	private static String[] makeLiteralNames() {
-		return new String[] {
-			null, "';'", "'module'", "'namespace'", "'='", "'declare'", "'ordering'", 
-			"'ordered'", "'decimal-format'", "':'", "'decimal-separator'", "'grouping-separator'", 
-			"'infinity'", "'minus-sign'", "'NaN'", "'percent'", "'per-mille'", "'zero-digit'", 
-			"'digit'", "'pattern-separator'", "'import'", "','", "'variable'", "':='", 
-			"'external'", "'function'", "'('", "')'", "'{'", "'}'", "'type'", "'jsound'", 
-			"'compact'", "'verbose'", "'json'", "'schema'", "'$'", "'|'", "'*'", 
-			"'eq'", "'ne'", "'lt'", "'le'", "'gt'", "'ge'", "'!='", "'<'", "'<='", 
-			"'>'", "'>='", "'||'", "'+'", "'-'", "'div'", "'idiv'", "'mod'", "'validate'", 
-			"'!'", "'['", "']'", "'.'", "'$$'", "'#'", "'{|'", "'|}'", "'for'", "'let'", 
-			"'where'", "'group'", "'by'", "'order'", "'return'", "'if'", "'in'", 
-			"'as'", "'at'", "'allowing'", "'empty'", "'count'", "'stable'", "'ascending'", 
-			"'descending'", "'some'", "'every'", "'satisfies'", "'collation'", "'greatest'", 
-			"'least'", "'switch'", "'case'", "'try'", "'catch'", "'default'", "'then'", 
-			"'else'", "'typeswitch'", "'or'", "'and'", "'not'", "'to'", "'instance'", 
-			"'of'", "'statically'", "'is'", "'treat'", "'cast'", "'castable'", "'version'", 
-			"'jsoniq'", "'unordered'", "'true'", "'false'", null, "'?'", "'null'"
-		};
-	}
-	private static final String[] _LITERAL_NAMES = makeLiteralNames();
-	private static String[] makeSymbolicNames() {
-		return new String[] {
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, "Kfor", "Klet", "Kwhere", "Kgroup", "Kby", 
-			"Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", 
-			"Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", 
-			"Ksatisfies", "Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", 
-			"Ktry", "Kcatch", "Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", 
-			"Kand", "Knot", "Kto", "Kinstance", "Kof", "Kstatically", "Kis", "Ktreat", 
-			"Kcast", "Kcastable", "Kversion", "Kjsoniq", "Kunordered", "Ktrue", "Kfalse", 
-			"STRING", "ArgumentPlaceholder", "NullLiteral", "Literal", "NumericLiteral", 
-			"IntegerLiteral", "DecimalLiteral", "DoubleLiteral", "WS", "NCName", 
-			"XQComment", "ContentChar"
-		};
-	}
-	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
+	private static final String[] _LITERAL_NAMES = {
+		null, "';'", "'module'", "'namespace'", "'='", "'declare'", "'ordering'", 
+		"'ordered'", "'decimal-format'", "':'", "'decimal-separator'", "'grouping-separator'", 
+		"'infinity'", "'minus-sign'", "'NaN'", "'percent'", "'per-mille'", "'zero-digit'", 
+		"'digit'", "'pattern-separator'", "'import'", "','", "'variable'", "':='", 
+		"'external'", "'function'", "'('", "')'", "'{'", "'}'", "'type'", "'jsound'", 
+		"'compact'", "'verbose'", "'json'", "'schema'", "'$'", "'|'", "'*'", "'eq'", 
+		"'ne'", "'lt'", "'le'", "'gt'", "'ge'", "'!='", "'<'", "'<='", "'>'", 
+		"'>='", "'||'", "'+'", "'-'", "'div'", "'idiv'", "'mod'", "'validate'", 
+		"'!'", "'['", "']'", "'.'", "'$$'", "'#'", "'{|'", "'|}'", "'for'", "'let'", 
+		"'where'", "'group'", "'by'", "'order'", "'return'", "'if'", "'in'", "'as'", 
+		"'at'", "'allowing'", "'empty'", "'count'", "'stable'", "'ascending'", 
+		"'descending'", "'some'", "'every'", "'satisfies'", "'collation'", "'greatest'", 
+		"'least'", "'switch'", "'case'", "'try'", "'catch'", "'default'", "'then'", 
+		"'else'", "'typeswitch'", "'or'", "'and'", "'not'", "'to'", "'instance'", 
+		"'of'", "'statically'", "'is'", "'treat'", "'cast'", "'castable'", "'version'", 
+		"'jsoniq'", "'unordered'", "'true'", "'false'", null, "'?'", "'null'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, "Kfor", "Klet", "Kwhere", "Kgroup", "Kby", 
+		"Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", 
+		"Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", "Ksatisfies", 
+		"Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", 
+		"Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", "Kand", "Knot", "Kto", 
+		"Kinstance", "Kof", "Kstatically", "Kis", "Ktreat", "Kcast", "Kcastable", 
+		"Kversion", "Kjsoniq", "Kunordered", "Ktrue", "Kfalse", "STRING", "ArgumentPlaceholder", 
+		"NullLiteral", "Literal", "NumericLiteral", "IntegerLiteral", "DecimalLiteral", 
+		"DoubleLiteral", "WS", "NCName", "XQComment", "ContentChar"
+	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
