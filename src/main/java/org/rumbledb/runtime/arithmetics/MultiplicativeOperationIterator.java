@@ -526,7 +526,7 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             case DIV: {
                 long durationInMillis = l.toStandardDuration().getMillis();
                 // Check r is 0 and throw exception
-                if (r == 0 || r == -0) {
+                if (r == 0) {
                     throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
                 }
                 long durationResult = Math.round(durationInMillis / r);
