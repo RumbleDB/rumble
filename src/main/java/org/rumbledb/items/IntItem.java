@@ -149,7 +149,7 @@ public class IntItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.integerItem;
+        return BuiltinTypesCatalogue.intItem;
     }
 
     @Override
