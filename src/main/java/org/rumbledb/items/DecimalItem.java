@@ -74,7 +74,7 @@ public class DecimalItem implements Item {
 
     @Override
     public String getStringValue() {
-        return this.value.toString();
+        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
     @Override
@@ -105,11 +105,6 @@ public class DecimalItem implements Item {
     @Override
     public boolean isDecimal() {
         return true;
-    }
-
-    @Override
-    public String serialize() {
-        return String.valueOf(this.value.stripTrailingZeros().toPlainString());
     }
 
     @Override

@@ -104,11 +104,6 @@ public class Base64BinaryItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return this.getStringValue();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeInt(this.getValue().length);
         output.writeBytes(this.getValue());
