@@ -79,11 +79,11 @@ public class DoubleItem implements Item {
         if (Double.isInfinite(this.value) && this.value < 0) {
             return "-INF";
         }
-        if (Double.compare(this.value, 0d) == 0) {
-            return "0";
-        }
         if (Double.compare(this.value, -0d) == 0) {
             return "-0";
+        }
+        if (Double.compare(this.value, 0d) == 0) {
+            return "0";
         }
         double abs = Math.abs(this.value);
         if (abs >= 0.000001 && abs <= 1000000) {
