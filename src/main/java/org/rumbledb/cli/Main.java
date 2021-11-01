@@ -50,7 +50,9 @@ public class Main {
             } else {
                 System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
                 System.out.println();
-                System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8"));
+                System.out.println(
+                    IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
+                );
             }
             System.exit(0);
         } catch (Exception ex) {
