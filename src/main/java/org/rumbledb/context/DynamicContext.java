@@ -100,8 +100,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
                 dataFrameVariableValues
         );
         this.namedFunctions = null;
-        this.currentDateTime = new DateTime();
-
     }
 
     public RumbleRuntimeConfiguration getRumbleRuntimeConfiguration() {

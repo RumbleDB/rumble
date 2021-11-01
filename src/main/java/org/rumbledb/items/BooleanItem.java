@@ -67,11 +67,6 @@ public class BooleanItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return String.valueOf(this.getValue());
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeBoolean(this.getValue());
     }
