@@ -294,10 +294,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             typesForAllColumns.put(columnIndex, columnType);
                         } else if (
                             (currentColumnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.intItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.floatItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
                                 && (columnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.intItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.floatItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
@@ -363,6 +365,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
+                columnType = DataTypes.IntegerType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
                 columnType = DataTypes.DoubleType;
