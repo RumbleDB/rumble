@@ -38,8 +38,6 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.Serializer;
 
-import sparksoniq.spark.SparkSessionManager;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
@@ -126,13 +124,7 @@ public class RumbleJLineShell {
             }
             output(result);
             if (count != -1) {
-                System.err.println(
-                    "Warning! The output sequence contains "
-                        + count
-                        + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
+                JsoniqQueryExecutor.issueMaterializationWarning(count);
             }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
