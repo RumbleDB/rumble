@@ -43,7 +43,7 @@ Create, in the same directory as RumbleDB to keep it simple, a file data.json an
 
 In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
-    spark-submit rumbledb-1.15.0.jar --shell yes
+    spark-submit rumbledb-1.16.0.jar --shell yes
                  
 The RumbleDB shell appears:
 
