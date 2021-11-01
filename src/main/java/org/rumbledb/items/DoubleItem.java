@@ -38,7 +38,7 @@ import java.math.BigInteger;
 public class DoubleItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private Double value;
+    private double value;
 
     public DoubleItem() {
         super();
@@ -104,7 +104,7 @@ public class DoubleItem implements Item {
 
     @Override
     public float castToFloatValue() {
-        return this.value.floatValue();
+        return (float) this.value;
     }
 
     public BigDecimal castToDecimalValue() {
