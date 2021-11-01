@@ -35,7 +35,7 @@ public class RumbleServer {
             context.setHandler(new RumbleHttpHandler(this.rumbleRuntimeConfiguration));
             context = server.createContext("/public.html");
             context.setHandler(new MainPageHandler());
-            context = server.createContext("/validserver.html");
+            context = server.createContext("/jsound-validator.html");
             context.setHandler(new ValidatorPageHandler());
             server.start();
             System.err.println("[INFO] Server running. Press Control+C to stop.");

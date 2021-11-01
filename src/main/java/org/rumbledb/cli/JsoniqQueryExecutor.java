@@ -32,6 +32,7 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
+import org.rumbledb.serialization.Serializer;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
@@ -114,14 +115,17 @@ public class JsoniqQueryExecutor {
         }
 
         if (
-            !this.configuration.getOutputFormat().equals("json")
+            !(this.configuration.getOutputFormat().equals("json")
+                || this.configuration.getOutputFormat().equals("tyson")
+                || this.configuration.getOutputFormat().equals("xml-json-hybrid"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {
             throw new CliException(
-                    "Rumble cannot output another format than JSON if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+                    "Rumble cannot output another format than json or tyson or xml-json-hybrid if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
+
         if (sequence.availableAsDataFrame() && outputPath != null) {
             Dataset<Row> df = sequence.getAsDataFrame();
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
@@ -150,7 +154,8 @@ public class JsoniqQueryExecutor {
             }
         } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
-            JavaRDD<String> outputRDD = rdd.map(o -> o.serialize());
+            Serializer serializer = this.configuration.getSerializer();
+            JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
                 outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
             }
@@ -159,20 +164,15 @@ public class JsoniqQueryExecutor {
         } else {
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
-            List<String> lines = outputList.stream().map(x -> x.serialize()).collect(Collectors.toList());
+            Serializer serializer = this.configuration.getSerializer();
+            List<String> lines = outputList.stream().map(x -> serializer.serialize(x)).collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             } else {
                 System.out.println(String.join("\n", lines));
             }
             if (materializationCount != -1) {
-                System.err.println(
-                    "Warning! The output sequence contains "
-                        + materializationCount
-                        + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --materialization-cap parameter at startup"
-                );
+                issueMaterializationWarning(materializationCount);
                 if (outputPath == null) {
                     System.err.println(
                         "Did you really intend to collect results to the standard input? If you want the complete output, consider using --output-path to select a destination on any file system."
@@ -194,6 +194,25 @@ public class JsoniqQueryExecutor {
             );
         }
         return outputList;
+    }
+
+    public static void issueMaterializationWarning(long materializationCount) {
+        if (materializationCount == Long.MAX_VALUE) {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + "too many items and its materialization was capped at "
+                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
+            );
+        } else {
+            System.err.println(
+                "Warning! The output sequence contains "
+                    + materializationCount
+                    + " items but its materialization was capped at "
+                    + SparkSessionManager.COLLECT_ITEM_LIMIT
+                    + " items. This value can be configured to something higher with the --materialization-cap parameter (or its deprecated equivalent --result-size) at startup"
+            );
+        }
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {

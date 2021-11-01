@@ -23,7 +23,6 @@ package org.rumbledb.items;
 import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
-import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -92,39 +91,6 @@ public class ArrayItem implements Item {
     @Override
     public int getSize() {
         return this.arrayItems.size();
-    }
-
-    @Override
-    public String serialize() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-
-        String separator = " ";
-        for (Item item : this.arrayItems) {
-            sb.append(separator);
-            separator = ", ";
-            boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
-            if (item.isDouble()) {
-                if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
-                    isStringValue = true;
-                }
-            }
-            if (item.isFloat()) {
-                if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
-                    isStringValue = true;
-                }
-            }
-            if (isStringValue) {
-                sb.append("\"");
-                sb.append(StringEscapeUtils.escapeJson(item.serialize()));
-                sb.append("\"");
-            } else {
-                sb.append(item.serialize());
-            }
-        }
-
-        sb.append(" ]");
-        return sb.toString();
     }
 
     @Override

@@ -93,11 +93,6 @@ public class AnyURIItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return this.getStringValue();
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.getValue());
     }
