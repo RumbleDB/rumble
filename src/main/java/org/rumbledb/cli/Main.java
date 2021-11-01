@@ -22,6 +22,7 @@ package org.rumbledb.cli;
 import java.io.IOException;
 import java.net.ConnectException;
 
+import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.exceptions.OurBadException;
@@ -47,34 +48,10 @@ public class Main {
             } else if (sparksoniqConf.getQuery() != null || sparksoniqConf.getQueryPath() != null) {
                 runQueryExecutor(sparksoniqConf);
             } else {
-                System.out.println("    ____                  __    __   ");
-                System.out.println("   / __ \\__  ______ ___  / /_  / /__ ");
-                System.out.println("  / /_/ / / / / __ `__ \\/ __ \\/ / _ \\");
-                System.out.println(" / _, _/ /_/ / / / / / / /_/ / /  __/");
-                System.out.println("/_/ |_|\\__,_/_/ /_/ /_/_.___/_/\\___/ ");
-                System.out.println("Usage:");
-                System.out.println("spark-submit <Spark arguments> <path to rumble jar> <Rumble arguments>");
-                System.out.println("");
-                System.out.println("Example usage:");
-                System.out.println("spark-submit rumbledb-1.15.0.jar --query '1+1'");
-                System.out.println("spark-submit rumbledb-1.15.0.jar --shell yes");
-                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --shell yes");
-                System.out.println("spark-submit --master local[2] rumbledb-1.15.0.jar --shell yes");
+                System.out.println(IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8"));
+                System.out.println();
                 System.out.println(
-                    "spark-submit --master local[*] --driver-memory 10G rumbledb-1.15.0.jar --shell yes"
-                );
-                System.out.println("");
-                System.out.println("spark-submit --master yarn rumbledb-1.15.0.jar --shell yes");
-                System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --shell yes"
-                );
-                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
-                System.out.println("spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq");
-                System.out.println(
-                    "spark-submit --master yarn --executor-cores 3 --executor-memory 5G rumbledb-1.15.0.jar --query-path hdfs://server:port/my-query.jq --output-path hdfs://server:port/my-output.json"
-                );
-                System.out.println(
-                    "spark-submit --master local[*] rumbledb-1.15.0.jar --query-path my-query.jq --output-path my-output.json --log-path my-log.txt"
+                    IOUtils.toString(Main.class.getResourceAsStream("/assets/defaultscreen.txt"), "UTF-8")
                 );
             }
             System.exit(0);
