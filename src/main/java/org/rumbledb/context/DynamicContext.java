@@ -80,7 +80,6 @@ public class DynamicContext implements Serializable, KryoSerializable {
         this.conf = null;
         this.namedFunctions = null;
         this.inScopeSchemaTypes = null;
-        this.currentDateTime = new DateTime();
     }
 
     public DynamicContext(

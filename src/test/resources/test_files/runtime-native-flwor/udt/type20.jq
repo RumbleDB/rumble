@@ -1,44 +1,51 @@
-(:JIQS: ShouldRun; Output="([ "foo" ], [ "foo", "bar" ], [ "foo", "bar", "foobar" ], Success, Success)" :)
-declare type local:x as jsound verbose {
+(:JIQS: ShouldRun; Output="([ 1, 2, 3, 4, 5, 6, 7 ], [ 1 ], [ 1, 2, 3 ], Success, Success, Success)" :)
+declare type local:a as jsound verbose {
   "kind" : "array",
   "baseType" : "array",
-  "content" : "string",
-  "minLength" : 1,
+  "content" : "integer"
+};
+
+declare type local:b as jsound verbose {
+  "kind" : "array",
+  "baseType" : "local:a",
+  "content" : "int",
+  "minLength" : 1
+};
+
+declare type local:c as jsound verbose {
+  "kind" : "array",
+  "baseType" : "local:b",
+  "content" : "short",
   "maxLength" : 3
 };
 
-declare type local:y as jsound verbose {
-  "kind" : "object",
-  "content" : [
-    {
-      "name" : "foo",
-      "type" : "local:x"
-    },
-    {
-      "name" : "bar",
-      "type" : "string"
-    }
-  ]
-};
-
-validate type local:x* {
-  [ "foo" ],
-  [ "foo", "bar" ],
-  [ "foo", "bar", "foobar" ]
+validate type local:a* {
+  [ 1, 2, 3, 4, 5, 6, 7 ]
+},
+validate type local:b* {
+  [ 1 ]
+},
+validate type local:c* {
+  [ 1, 2, 3 ]
 },
 try {
-  validate type local:x {
-    []
+  validate type local:b* {
+    [ ]
   }
 } catch XQDY0027 {
   "Success"
 },
 try {
-    validate type local:y {
-      { "foo" : ["foo", "bar", "foobar", "foobarfoo"], "bar" : "bar" }
-    }
+  validate type local:c* {
+    [ ]
+  }
 } catch XQDY0027 {
-   "Success"
+  "Success"
+},
+try {
+  validate type local:c* {
+    [ 1, 2, 3, 4 ]
+  }
+} catch XQDY0027 {
+  "Success"
 }
-
-(: test minLength and maxLength :)
