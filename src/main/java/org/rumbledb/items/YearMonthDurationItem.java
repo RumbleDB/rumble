@@ -39,11 +39,6 @@ public class YearMonthDurationItem extends DurationItem {
     }
 
     @Override
-    public String getStringValue() {
-        return this.value.toString();
-    }
-
-    @Override
     public boolean isYearMonthDuration() {
         return true;
     }
