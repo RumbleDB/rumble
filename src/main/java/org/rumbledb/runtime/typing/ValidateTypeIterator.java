@@ -341,6 +341,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
             if (minLength != null && members.size() < minLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at least " + minLength
@@ -351,10 +355,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         "Array has " + members.size() + " members but the type requires at most " + maxLength
                 );
             }
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            if (itemType.getName() == null) {
-                itemType = itemType.getBaseType();
-            }
+
             return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
         }
         if (itemType.isObjectItemType()) {
