@@ -217,6 +217,26 @@ where $i._col1 eq "some value"
 return $i
 ```
 
+### libSVM
+
+libSVM files can be opened with the function libsvm-file().
+
+Parses one or more libsvm files and returns a sequence of objects. This is similar to Spark's `spark.read().format("libsvm").load()`
+
+```
+for $i in libsvm-file("file.txt")
+where $i._col1 eq "some value"
+return $i
+```
+
+Several files or whole directories can be read with the same pattern syntax as in Spark.
+
+```
+for $i in libsvm-file("*.txt")
+where $i._col1 eq "some value"
+return $i
+```
+
 ### ROOT
 
 ROOT files can be open with the function root-file(). The second parameter specifies the path within the ROOT files (a ROOT file is like a mini-file system of its own). It is often `Events` or `tree`.

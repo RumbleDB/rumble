@@ -233,7 +233,7 @@ public class SparkSessionManager {
                             + count
                             + " items because the limit is set to "
                             + SparkSessionManager.COLLECT_ITEM_LIMIT
-                            + ". This value can be configured with the --result-size parameter at startup",
+                            + ". This value can be configured with the --materialization-cap parameter at startup",
                         metadata
                 );
             }

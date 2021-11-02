@@ -179,6 +179,7 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             if (candidateItemDecimal.compareTo(this.currentMinDecimal) < 0) {
                                 this.currentMinDecimal = candidateItemDecimal;
                                 this.returnType = candidateType;
+                                this.activeType = 2;
                             }
                         } else if (candidateItem.isFloat()) {
                             this.activeType = 3;

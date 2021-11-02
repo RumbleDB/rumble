@@ -181,6 +181,7 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                             if (candidateItemDecimal.compareTo(this.currentMaxDecimal) > 0) {
                                 this.currentMaxDecimal = candidateItemDecimal;
                                 this.returnType = candidateType;
+                                this.activeType = 2;
                             }
                         } else if (candidateItem.isFloat()) {
                             this.activeType = 3;

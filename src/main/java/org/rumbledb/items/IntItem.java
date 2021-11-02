@@ -129,11 +129,6 @@ public class IntItem implements Item {
     }
 
     @Override
-    public String serialize() {
-        return String.valueOf(this.value);
-    }
-
-    @Override
     public void write(Kryo kryo, Output output) {
         output.writeInt(this.value);
     }
@@ -149,7 +144,7 @@ public class IntItem implements Item {
 
     @Override
     public ItemType getDynamicType() {
-        return BuiltinTypesCatalogue.integerItem;
+        return BuiltinTypesCatalogue.intItem;
     }
 
     @Override

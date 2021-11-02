@@ -24,6 +24,7 @@ import com.esotericsoftware.kryo.Kryo;
 import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
+import org.apache.commons.lang.StringUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -38,7 +39,7 @@ import java.math.BigInteger;
 public class DoubleItem implements Item {
 
     private static final long serialVersionUID = 1L;
-    private Double value;
+    private double value;
 
     public DoubleItem() {
         super();
@@ -86,8 +87,26 @@ public class DoubleItem implements Item {
             return "0";
         }
         double abs = Math.abs(this.value);
-        if (abs >= 0.000001 && abs <= 1000000) {
-            return this.castToDecimalValue().stripTrailingZeros().toPlainString();
+        // Convert to decimal between 10E-7 to 10E6 we clean the output (remove .0 or trailing zero at the end of the
+        // string)
+        if (abs >= 0.00000001 && abs < 1000000) {
+            String c = new BigDecimal(Double.toString(this.value)).toString();
+            if (c.charAt(c.length() - 1) == '0') {
+                c = StringUtils.chop(c);
+                if (c.charAt(c.length() - 1) == '.') {
+                    c = StringUtils.chop(c);
+                }
+            }
+            return c;
+        }
+        // Java float uses mantissa only from 10E7, we force it from 10E6 to match standards by multiplying by an order
+        // of magnitude
+        // and manually decreasing the exponent with a string builder
+        if (abs > 1 && abs < 100000000) {
+            String str = Double.toString(this.value * 10);
+            char reducedChar = (char) ((int) str.charAt(str.length() - 1) - 1);
+            StringBuilder sb = new StringBuilder(str.substring(0, str.length() - 1)).append(reducedChar);
+            return sb.toString();
         }
         return Double.toString(this.value);
     }
@@ -104,7 +123,7 @@ public class DoubleItem implements Item {
 
     @Override
     public float castToFloatValue() {
-        return this.value.floatValue();
+        return (float) this.value;
     }
 
     public BigDecimal castToDecimalValue() {
@@ -130,11 +149,6 @@ public class DoubleItem implements Item {
     @Override
     public boolean isNaN() {
         return Double.isNaN(this.value);
-    }
-
-    @Override
-    public String serialize() {
-        return getStringValue();
     }
 
     @Override

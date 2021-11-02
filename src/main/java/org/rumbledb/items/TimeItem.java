@@ -57,11 +57,6 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public String getStringValue() {
-        return this.serialize();
-    }
-
-    @Override
     public boolean getEffectiveBooleanValue() {
         return false;
     }
@@ -87,7 +82,7 @@ public class TimeItem implements Item {
     }
 
     @Override
-    public String serialize() {
+    public String getStringValue() {
         String value = this.value.toString();
         String zoneString = this.value.getZone() == DateTimeZone.UTC ? "Z" : value.substring(value.length() - 6);
         value = value.substring(0, value.length() - zoneString.length());
