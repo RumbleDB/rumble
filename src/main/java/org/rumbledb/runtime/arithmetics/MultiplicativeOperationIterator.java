@@ -30,12 +30,7 @@ import org.joda.time.Period;
 import org.joda.time.PeriodType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.exceptions.DivisionByZeroException;
-import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.MoreThanOneItemException;
-import org.rumbledb.exceptions.NonAtomicKeyException;
-import org.rumbledb.exceptions.OurBadException;
-import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.exceptions.*;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression;
 import org.rumbledb.expressions.arithmetic.MultiplicativeExpression.MultiplicativeOperator;
@@ -452,6 +447,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
     ) {
+        if (Double.isNaN(r)) {
+            throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
                 int months = l.getYears() * 12 + l.getMonths();
@@ -463,6 +461,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             }
             case DIV: {
                 int months = l.getYears() * 12 + l.getMonths();
+                if (r == 0 || r == -0) {
+                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                }
                 int totalMonths = (int) Math.round(months / r);
                 return ItemFactory.getInstance()
                     .createYearMonthDurationItem(
@@ -512,6 +513,9 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             MultiplicativeExpression.MultiplicativeOperator multiplicativeOperator,
             ExceptionMetadata metadata
     ) {
+        if (Double.isNaN(r)) {
+            throw new InvalidNaNOperationException("Invalid operation with NaN value.", metadata);
+        }
         switch (multiplicativeOperator) {
             case MUL: {
                 long durationInMillis = l.toStandardDuration().getMillis();
@@ -521,6 +525,10 @@ public class MultiplicativeOperationIterator extends AtMostOneItemLocalRuntimeIt
             }
             case DIV: {
                 long durationInMillis = l.toStandardDuration().getMillis();
+                // Check r is 0 and throw exception
+                if (r == 0) {
+                    throw new ArithmeticOverflowOrUnderflow("Division of a duration by 0.", metadata);
+                }
                 long durationResult = Math.round(durationInMillis / r);
                 return ItemFactory.getInstance()
                     .createDayTimeDurationItem(new Period(durationResult, PeriodType.dayTime()));
