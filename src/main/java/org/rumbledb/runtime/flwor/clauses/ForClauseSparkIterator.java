@@ -962,7 +962,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println(
+        System.err.println(
             "[INFO] Rumble was able to optimize a for clause to a native SQL query."
         );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);

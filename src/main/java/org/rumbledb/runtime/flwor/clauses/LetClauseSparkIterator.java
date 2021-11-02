@@ -544,8 +544,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Map<Name, DynamicContext.VariableDependency> outputTupleVariableDependencies,
             boolean hash
     ) {
-        System.err.println("bindLetVariableInDataFrame");
-        dataFrame.show();
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
@@ -765,7 +763,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println(
+        System.err.println(
             "[INFO] Rumble was able to optimize a let clause to a native SQL query."
         );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
