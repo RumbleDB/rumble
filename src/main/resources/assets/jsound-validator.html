@@ -55,7 +55,7 @@
 <h1 style="text-align: center; font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699; font-weight: bold; margin-bottom: -10px; ">JSound validator</h1>
 <div style="margin: auto; text-align: center; ">
   <div id="div-in-row" style="display: inline-block;">
-    <div id="schema-div" style="float: left;">
+    <span id="schema-div" style="float: left;">
       <div>
         <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Schema</h2>
         <body>Pick the schema type: </body>
@@ -66,19 +66,20 @@
       </div>
       <textarea id="schema" spellcheck="false" oninput="update(this.value); sync_scroll(this);" onscroll="sync_scroll(this);" onkeydown="check_tab(this, event);" placeholder="Type your schema here" rows="20" cols="75" style="margin: 10px;">{"foo":"string"}</textarea>
 
-    </div>
+    </span>
 
-    <div id="instance-div"  style="float: right;">
+    <span id="instance-div"  style="float: right;">
       <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Instance</h2>
 
       <div id="instance-txtarea" style="margin-top: 63px;">
         <textarea id="instance" name="instance" placeholder="Type your instance here" rows="20" cols="75">{"foo":"bar"}</textarea>
       </div>
 
-    </div>
+    </span>
   </div>
-
-  <button id="submit" style="margin-top: 25px; padding: 10px;">Validate with RumbleDB 1.16.0</button>
+  <div>
+    <button id="submit" style="margin: 0 auto; padding: 10px;">Validate with RumbleDB 1.16.0</button>
+  </div>
 
   <h2 style="font-family: liberation sans, Myriad, Bitstream Vera Sans, sans-serif; color: #336699;">Results</h2>
   <textarea id="result" placeholder="Results come here" rows="15" cols="80" style="border: solid 3px var(--color-result);">The results will appear here.</textarea>
