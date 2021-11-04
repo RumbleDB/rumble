@@ -7,6 +7,8 @@ simply by modifying the command line parameters as documented [here for spark-su
 
 Creating a cluster is the easiest part, as most cloud providers today offer that with just a few clicks: Amazon EMR, Azure HDInsight, etc. You can start with 4-5 machines with a few CPUs each and a bit of memory, and increase later when you want to get serious on larger scales.
 
+Maybe sure to select a cluster that has Apache Spark. On Amazon EMR, this is not the default and you need to make sure that you check the box that has Spark below the cluster version dropdown.
+
 Do not forget to terminate the cluster when you are done!
 
 # How to tune the RumbleDB command
@@ -18,6 +20,8 @@ And once you have connected with ssh and are on the shell, you can start using R
 First you need to download it with wget (which is usually available by default on cloud virtual machines):
 
     wget https://github.com/RumbleDB/rumble/releases/download/v1.16.0/rumbledb-1.16.0.jar
+
+This is all you need to do, since Apache Spark is already installed. If spark-submit does not work, you might want to wait for a few more minutes as it might be that the cluster is not fully prepared yet.
 
 Often, the Spark cluster is running on yarn. The --master option can be changed from local[\*] (which was for running on your laptop) to yarn compared to the getting started guide.
 
