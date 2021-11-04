@@ -47,9 +47,11 @@ Create, in the same directory as RumbleDB to keep it simple, a file data.json an
     { "product" : "socks", "store number" : 2, "quantity" : 10 }
     { "product" : "shirt", "store number" : 3, "quantity" : 10 }
     
-If you want to later try a bigger version of this data, you can also download a larger version with 100,000 objects from [here](https://rumbledb.org/samples/products-small.json). RumbleDB even scales without any problems to datasets that have millions or (on a cluster) billions of objects.
+If you want to later try a bigger version of this data, you can also download a larger version with 100,000 objects from [here](https://rumbledb.org/samples/products-small.json). Wait, no, in fact you do not even need to download it: you can simply replace the file path in the queries below with "https://rumbledb.org/samples/products-small.json" and it will just work! RumbleDB feels just at home on the Web.
 
-In the JSON Lines format, you just need to make sure you have one object on each line (this is different from a plain JSON file, which has a single JSON value and can be indented). Of course, RumbleDB can read plain JSON files, too (with json-doc()), but below we will show you how to read JSON Line files, which is how JSON data scales.
+RumbleDB also scales without any problems to datasets that have millions or (on a cluster) billions of objects, although of course, for billions of objects HDFS or S3 are a better idea than the Web to store your data, for obvious reasons.
+
+In the JSON Lines format that this simple dataset uses, you just need to make sure you have one object on each line (this is different from a plain JSON file, which has a single JSON value and can be indented). Of course, RumbleDB can read plain JSON files, too (with json-doc()), but below we will show you how to read JSON Line files, which is how JSON data scales.
 
 ## Running simple queries locally
 
