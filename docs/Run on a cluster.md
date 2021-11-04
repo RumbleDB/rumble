@@ -15,6 +15,10 @@ Next, you need to use ssh to connect to the master node of your cluster (it migh
 
 And once you have connected with ssh and are on the shell, you can start using RumbleDB in a way similar to what you do on your laptop.
 
+First you need to download it with wget (which is usually available by default on cloud virtual machines):
+
+    wget https://github.com/RumbleDB/rumble/releases/download/v1.16.0/rumbledb-1.16.0.jar
+
 Often, the Spark cluster is running on yarn. The --master option can be changed from local[\*] (which was for running on your laptop) to yarn compared to the getting started guide.
 
     spark-submit --master yarn --deploy-mode client rumbledb-1.16.0.jar --shell yes
