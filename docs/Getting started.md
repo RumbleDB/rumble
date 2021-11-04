@@ -10,7 +10,7 @@ It is straightforward to directly [download it](https://spark.apache.org/downloa
 
 As an alternative, users who love the command line can also install Spark with a package management system instead, such as brew (on macOS) or apt-get (on Ubuntu).
 
-We recommend using Spark 3.1.2 with rumbledb-1.16.0.jar. We also provide RumbleDB jars for Spark 2 and Spark 3.0 for legacy purposes, however it is not recommended to use it for new projects.
+We recommend using Spark 3.1.2 although we also provide RumbleDB jars for Spark 2 and Spark 3.0 for legacy purposes. However it is not recommended to use older versions of Spark for new projects.
 
 You can test that Spark was correctly installed with:
 
@@ -31,7 +31,7 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.1, you can use the default jar. If you use Spark 2, make sure to use the corresponding jar (suffixed for-spark-2) and to replace the jar name accordingly in all our instructions. Like wuse, if you use Spark 3, use the RumbleDB jar with the suffix for-spark-3.0.
+If you use Spark 3.1, you can use the default jar. If you use Spark 2, make sure to use the corresponding jar (suffixed for-spark-2) and to replace the jar name accordingly in all our instructions. Likewise, if you use Spark 3, use the RumbleDB jar with the suffix for-spark-3.0.
 
 ### Create some data set
 
