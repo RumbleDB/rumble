@@ -2,7 +2,11 @@
 
 ## Running simple queries with Docker
 
-In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
+Docker is the easiest way to get a standard environment that just works.
+
+You can download Docker from [here](https://www.docker.com/).
+
+Then, in a shell, type, all on one line:
 
     docker run -i rumbledb/rumble --shell yes
                  
