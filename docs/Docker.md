@@ -103,7 +103,7 @@ Finally, RumbleDB can also parallelize data provided within the query, exactly l
 
 Mind the double parenthesis, as parallelize is a unary function to which we pass a sequence of objects.
 
-## Querying locak files with the docker version of RumbleDB
+## Querying local files with the docker version of RumbleDB
 
 In order to query your local files, you need to mount a local directory to a directory within the docker. This is done with the `--mount` option, and the source path must be absolute. For the target, you can pick anything that makes sense to you.
 
