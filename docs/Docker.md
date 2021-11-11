@@ -10,6 +10,8 @@ Then, in a shell, type, all on one line:
 
     docker run -i rumbledb/rumble --shell yes
                  
+The first time, it might take some time to download everything, but this is all done automatically. When there are RumbleDB updates, this will also trigger a re-download. Otherwise, subsequent commands will run immediately.
+
 The RumbleDB shell appears:
 
         ____                  __    __     ____  ____ 
@@ -19,13 +21,19 @@ The RumbleDB shell appears:
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     
+    App name: spark-rumble-jar-with-dependencies.jar
     Master: local[*]
+    Driver's memory: (not set)
+    Number of executors (only applies if running on a cluster): (not set)
+    Cores per executor (only applies if running on a cluster): (not set)
+    Memory per executor (only applies if running on a cluster): (not set)
+    Dynamic allocation: (not set)
     Item Display Limit: 200
     Output Path: -
     Log Path: -
     Query Path : -
 
-    rumble$
+    RumbleDB$
     
 You can now start typing simple queries like the following few examples. Press *three times* the return key to execute a query.
 
@@ -94,3 +102,15 @@ Finally, RumbleDB can also parallelize data provided within the query, exactly l
     return { "product" : $product, "total-quantity" : $sum }
 
 Mind the double parenthesis, as parallelize is a unary function to which we pass a sequence of objects.
+
+## Querying locak files with the docker version of RumbleDB
+
+In order to query your local files, you need to mount a local directory to a directory within the docker. This is done with the `--mount` option, and the source path must be absolute. For the target, you can pick anything that makes sense to you.
+
+    docker run -t -i --mount type=bind,source=/path/to/my/directory,target=/home rumbledb/rumble --shell yes
+    
+Then you can go ahead and use local paths in input functions, like so:
+
+    for $i in json-file("/path/to/my/directory/products-small.json", 10)
+    where $i.quantity gt 99
+    return $i
