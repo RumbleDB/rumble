@@ -50,22 +50,23 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private double currentMinDouble;
-    private float currentMinFloat;
-    private BigDecimal currentMinDecimal;
-    private long currentMinLong;
-    private String currentMinURI;
-    private String currentMinString;
-    private boolean currentMinBoolean;
-    private boolean hasTimeZone = false;
-    private DateTime currentMinDate; // TODO: Change to Date type but had issues with Java compiler
-    private DateTime currentMinDateTime;
-    private Period currentMinDayTimeDuration;
-    private Period currentMinYearMonthDuration;
-    private DateTime currentMinTime;
-    private byte activeType = 0;
-    private ItemType returnType;
-    private Item result;
+    private transient boolean currentMinIsNullItem = false; // Only happens if all elements are null
+    private transient double currentMinDouble;
+    private transient float currentMinFloat;
+    private transient BigDecimal currentMinDecimal;
+    private transient long currentMinLong;
+    private transient String currentMinURI;
+    private transient String currentMinString;
+    private transient boolean currentMinBoolean;
+    private transient boolean hasTimeZone = false;
+    private transient DateTime currentMinDate; // TODO: Change to Date type but had issues with Java compiler
+    private transient DateTime currentMinDateTime;
+    private transient Period currentMinDayTimeDuration;
+    private transient Period currentMinYearMonthDuration;
+    private transient DateTime currentMinTime;
+    private transient byte activeType = 0;
+    private transient ItemType returnType;
+    private transient Item result;
     private ItemComparator comparator;
 
 
@@ -93,7 +94,21 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-
+        this.currentMinIsNullItem = false;
+        this.currentMinDouble = 0;
+        this.currentMinFloat = 0;
+        this.currentMinDecimal = null;
+        this.currentMinLong = 0;
+        this.currentMinURI = null;
+        this.currentMinString = null;
+        this.currentMinBoolean = false;
+        this.hasTimeZone = false;
+        this.currentMinDate = null;
+        this.currentMinDateTime = null;
+        this.currentMinDayTimeDuration = null;
+        this.currentMinYearMonthDuration = null;
+        this.currentMinTime = null;
+        this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
             Item candidateItem = null;
