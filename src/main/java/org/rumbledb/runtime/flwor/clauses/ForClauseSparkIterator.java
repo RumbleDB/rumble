@@ -1125,7 +1125,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                             selectSQL,
                             arrIndex,
                             nativeQuery.getResultingQuery(),
-                            viewName2
+                            viewName2,
                             lateralViewString,
                             selectSQL,
                             rowIdField
