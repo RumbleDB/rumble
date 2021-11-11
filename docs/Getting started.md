@@ -2,7 +2,9 @@
 
 First, if you really want to start writing queries right now, there is a public sandbox [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) that will just work. You only need to have a Google account to be able to execute them, as this exposes our Jupyter notebook via the Colab environment. But of course, you are free to use this notebook with any other provider or even your own local Jupyter and it will work just the same: the queries are all shipped to our own, small public backend no matter what.
 
-Below, you will find instructions to install your RumbleDB on your own computer, which among others will allow you to query any files stored on your local disk.
+Below, you will find instructions to install your RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk.
+
+Note that, if you want something even more straightforward, you can alternatively use our RumbleDB docker file (go to the "Run with docker" section on the left menu) that contains everything RumbleDB needs.
 
 ## Prerequisites
 
