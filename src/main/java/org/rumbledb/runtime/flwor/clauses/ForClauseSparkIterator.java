@@ -794,7 +794,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT input.`%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                        "SELECT %s.`%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                        viewName,
                         variableName,
                         viewName
                     )

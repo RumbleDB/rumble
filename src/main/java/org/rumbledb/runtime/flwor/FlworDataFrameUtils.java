@@ -873,7 +873,7 @@ public class FlworDataFrameUtils {
     }
 
     public static String createTempView(Dataset<Row> df) {
-        String name = "input" + UUID.randomUUID();
+        String name = "input" + UUID.randomUUID().toString().replaceAll("-", "");
         df.createOrReplaceTempView(name);
         return name;
     }
