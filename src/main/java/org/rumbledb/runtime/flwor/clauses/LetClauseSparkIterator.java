@@ -354,7 +354,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         expressionDF = expressionDF.sparkSession()
             .sql(
                 String.format(
-                    "SELECT `%s`, collect_list(`%s`) AS `%s` FROM Rs GROUP BY `%s`",
+                    "SELECT `%s`, collect_list(`%s`) AS `%s` FROM %s GROUP BY `%s`",
                     SparkSessionManager.rightHandSideHashColumnName,
                     Name.CONTEXT_ITEM.toString(),
                     this.variableName,
