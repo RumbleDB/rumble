@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -869,5 +870,11 @@ public class FlworDataFrameUtils {
         StructField[] fields = new StructField[fieldList.size()];
         fieldList.toArray(fields);
         return new StructType(fields);
+    }
+
+    public static String createTempView(Dataset<Row> df) {
+        String name = "input" + UUID.randomUUID().toString().replaceAll("-", "");
+        df.createOrReplaceTempView(name);
+        return name;
     }
 }
