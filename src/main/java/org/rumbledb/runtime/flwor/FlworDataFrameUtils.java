@@ -871,11 +871,10 @@ public class FlworDataFrameUtils {
         fieldList.toArray(fields);
         return new StructType(fields);
     }
-    
-    public static String createTempView(Dataset<Row> df)
-    {
-    	String name = "input" + UUID.randomUUID();
-    	df.createOrReplaceTempView(name);
-    	return name;
+
+    public static String createTempView(Dataset<Row> df) {
+        String name = "input" + UUID.randomUUID();
+        df.createOrReplaceTempView(name);
+        return name;
     }
 }

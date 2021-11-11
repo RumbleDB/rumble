@@ -790,7 +790,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return df;
         }
         if (positionalVariableName == null && allowingEmpty) {
-        	String viewName = FlworDataFrameUtils.createTempView(df);
+            String viewName = FlworDataFrameUtils.createTempView(df);
             df = df.sparkSession()
                 .sql(
                     String.format(
@@ -1135,10 +1135,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
                 if (allowingEmpty) {
                     // register a support table to keep the empty values
-                	String allRowViewName = FlworDataFrameUtils.createTempView(
-                    dataFrame.sparkSession()
-                        .sql("select `" + rowIdField + "` from " + viewName2)
-                        );
+                    String allRowViewName = FlworDataFrameUtils.createTempView(
+                        dataFrame.sparkSession()
+                            .sql("select `" + rowIdField + "` from " + viewName2)
+                    );
 
                     // register previously created table
                     String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
@@ -1174,7 +1174,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         );
                 } else {
                     // register previously created table
-                	String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
+                    String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // finally we unwrap it with a single posexplode
                     return dataFrame.sparkSession()
