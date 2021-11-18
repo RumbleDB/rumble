@@ -161,25 +161,27 @@ public class ArrayUnboxingIterator extends HybridRuntimeIterator {
 
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        childDataFrame.createOrReplaceTempView("array");
+        String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
                     String.format(
-                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM array)",
+                        "SELECT `%s`.* FROM (SELECT explode(`%s`) as `%s` FROM %s)",
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         SparkSessionManager.atomicJSONiqItemColumnName,
-                        SparkSessionManager.atomicJSONiqItemColumnName
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        array
                     ),
                     elementType
                 );
             }
             return childDataFrame.evaluateSQL(
                 String.format(
-                    "SELECT explode(`%s`) AS `%s` FROM array",
+                    "SELECT explode(`%s`) AS `%s` FROM %s",
                     SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    array
                 ),
                 elementType
             );

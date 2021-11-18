@@ -34,6 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -456,12 +457,13 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (df.isEmptySequence()) {
                 return null;
             }
-            df.createOrReplaceTempView("input");
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             JSoundDataFrame maxDF = df.evaluateSQL(
                 String.format(
-                    "SELECT MAX(`%s`) as `%s` FROM input",
+                    "SELECT MAX(`%s`) as `%s` FROM %s",
                     SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
                 ),
                 df.getItemType()
             );

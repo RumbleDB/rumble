@@ -32,6 +32,7 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.arithmetics.AdditiveOperationIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -157,12 +158,13 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
         if (df.isEmptySequence()) {
             return zeroElement;
         }
-        df.createOrReplaceTempView("input");
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         JSoundDataFrame summedDF = df.evaluateSQL(
             String.format(
-                "SELECT SUM(`%s`) as `%s` FROM input",
+                "SELECT SUM(`%s`) as `%s` FROM %s",
                 SparkSessionManager.atomicJSONiqItemColumnName,
-                SparkSessionManager.atomicJSONiqItemColumnName
+                SparkSessionManager.atomicJSONiqItemColumnName,
+                input
             ),
             df.getItemType()
         );
