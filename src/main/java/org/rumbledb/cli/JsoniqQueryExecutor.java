@@ -32,7 +32,6 @@ import org.rumbledb.exceptions.CliException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.optimizations.Profiler;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
-import org.rumbledb.serialization.Serializer;
 
 import sparksoniq.spark.SparkSessionManager;
 import java.io.IOException;
@@ -154,8 +153,8 @@ public class JsoniqQueryExecutor {
             }
         } else if (sequence.availableAsRDD() && outputPath != null) {
             JavaRDD<Item> rdd = sequence.getAsRDD();
-            Serializer serializer = this.configuration.getSerializer();
-            JavaRDD<String> outputRDD = rdd.map(o -> serializer.serialize(o));
+            RumbleRuntimeConfiguration configuration = this.configuration;
+            JavaRDD<String> outputRDD = rdd.map(o -> configuration.getSerializer().serialize(o));
             if (this.configuration.getNumberOfOutputPartitions() > 0) {
                 outputRDD = outputRDD.repartition(this.configuration.getNumberOfOutputPartitions());
             }
@@ -164,8 +163,10 @@ public class JsoniqQueryExecutor {
         } else {
             outputList = new ArrayList<>();
             long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
-            Serializer serializer = this.configuration.getSerializer();
-            List<String> lines = outputList.stream().map(x -> serializer.serialize(x)).collect(Collectors.toList());
+            RumbleRuntimeConfiguration configuration = this.configuration;
+            List<String> lines = outputList.stream()
+                .map(x -> configuration.getSerializer().serialize(x))
+                .collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);
             } else {
