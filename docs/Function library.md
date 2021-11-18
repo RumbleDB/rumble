@@ -1460,7 +1460,164 @@ sum(json-file("file.json").foo)
 ```
 
 
-## Object functions
+## Functions giving access to external information
+
+### collection
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-collection)
+
+Not implemented
+
+## Parsing and serializing
+
+### serialize
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-serialize)
+
+Fully implemented
+
+Serializes the supplied input sequence, returning the serialized representation of the sequence as a string
+
+```
+serialize({hello: "world"})
+```
+returns { "hello" : "world" }
+
+# Context Functions
+
+### position
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-position)
+
+Fully implemented
+
+```
+(1 to 10)[position() eq 5]
+```
+
+returns 5
+
+### last
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-last)
+
+Fully implemented
+```
+(1 to 10)[position() eq last()]
+```
+returns 10
+
+
+```
+(1 to 10)[last()]
+```
+returns 10
+
+### current-dateTime
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-dateTime)
+
+Fully implemented
+
+```
+current-dateTime()
+```
+
+returns 2020-02-26T11:22:48.423+01:00
+
+### current-date
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-date)
+
+Fully implemented
+```
+current-date()
+```
+
+returns 2020-02-26Europe/Zurich
+
+### current-time
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-time)
+
+Fully implemented
+```
+current-time()
+```
+
+returns 11:24:10.064+01:00
+
+### implicit-timezone
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-implicit-timezone)
+
+Fully implemented
+```
+implicit-timezone()
+```
+
+returns PT1H.
+
+### default-collation
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-default-collation)
+
+Fully implemented
+```
+default-collation()
+```
+
+returns http://www.w3.org/2005/xpath-functions/collation/codepoint.
+
+
+# High order functions
+
+## Functions on functions
+
+### function-lookup
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-lookup)
+
+Not implemented
+
+### function-name
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-name)
+
+Not implemented
+
+### function-arity
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-arity)
+
+Not implemented
+
+## Basic higher-order functions
+
+### for-each
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each)
+
+Not implemented
+
+### filter
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-filter)
+
+Not implemented
+
+### fold-left
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-left)
+
+Not implemented
+
+### fold-right
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-right)
+
+Not implemented
+
+### for-each-pair
+
+[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each-pair)
+
+Not implemented
+
+
+
+# Object functions
 
 ### keys
 
@@ -1579,374 +1736,6 @@ null()
 
 Returns a JSON null (also available as the literal null).
 
-## Mathematic functions
-
-### abs
-
-```
-abs(-2)
-```
-
-returns 2.0
-
-### acos
-
-```
-acos(1)
-```
-
-### asin
-
-```
-asin(1)
-```
-
-### atan
-
-```
-atan(1)
-```
-
-### atan2
-
-```
-atan2(1)
-```
-
-
-### ceiling
-
-```
-ceiling(2.3)
-```
-
-returns 3.0
-
-### cos
-
-```
-cos(pi())
-```
-
-### exp
-
-```
-exp(10)
-```
-
-### exp10
-
-```
-exp10(10)
-```
-
-
-
-### floor
-
-```
-floor(2.3)
-```
-
-returns 2.0
-
-### log
-
-```
-log(100)
-```
-
-
-### log10
-
-```
-log10(100)
-```
-
-### number
-
-```
-number("15")
-```
-returns 15 as a double
-
-```
-number("foo")
-```
-returns NaN as a double
-
-```
-number(15)
-```
-returns 15 as a double
-
-### pow
-
-```
-pow(10, 2)
-```
-
-returns 100.0
-
-### round
-
-```
-round(2.3)
-```
-
-returns 2.0
-
-```
-round(2.2345, 2)
-```
-
-returns 2.23
-
-### round-half-to-even
-
-
-```
-round-half-to-even(2.2345, 2), round-half-to-even(2.2345)
-```
-
-### sqrt
-
-```
-sqrt(4)
-```
-
-returns 2
-
-
-
-### sin
-
-
-```
-sin(pi())
-```
-
-### tan
-
-
-```
-tan(pi())
-```
-
-## String functions
-
-### concat
-
-```
-concat("foo", "bar", "foobar")
-```
-
-returns "foobarfoobar"
-
-### contains
-
-```
-contains("foobar", "ob")
-```
-
-returns true.
-
-### ends-with
-
-```
-ends-with("foobar", "bar")
-```
-
-returns true.
-
-### matches
-
-Regular expression matching. The semantics of regular expressions are those of Java's Pattern class.
-
-```
-matches("foobar", "o+")
-```
-
-returns true.
-
-```
-matches("foobar", "^fo+.*")
-```
-
-returns true.
-
-###normalize-spaces
-
-Normalization of spaces in a string.
-
-```
-normalize-space(" The    wealthy curled darlings                                         of    our    nation. "),
-```
-
-returns "The wealthy curled darlings of our nation."
-
-### starts-with
-
-```
-starts-with("foobar", "foo")
-```
-
-returns true
-
-### string-join
-
-```
-string-join(("foo", "bar", "foobar"))
-```
-
-returns "foobarfoobar"
-
-```
-string-join(("foo", "bar", "foobar"), "-")
-```
-
-returns "foo-bar-foobar"
-
-### string-length
-
-Returns the length of the supplied string, or 0 if the empty sequence is supplied.
-
-```
-string-length("foo")
-```
-
-returns 3.
-
-```
-string-length(())
-```
-
-returns 0.
-
-### substring
-
-```
-substring("foobar", 4)
-```
-
-returns "bar"
-
-```
-substring("foobar", 4, 2)
-```
-
-returns "ba"
-
-### tokenize
-
-```
-tokenize("aa bb cc dd")
-```
-
-returns ("aa", "bb", "cc", "dd")
-
-```
-tokenize("aa;bb;cc;dd", ";")
-```
-
-returns ("aa", "bb", "cc", "dd")
-
-### replace
-
-Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
-
-```
-replace("abracadabra", "bra", "*")
-```
-
-returns "a\*cada\*"
-
-```
-replace("abracadabra", "a(.)", "a$1$1")
-```
-
-returns "abbraccaddabbra"
-
-### translate
-
-```
-translate("bar","abc","ABC")
-```
-returns "BAr"
-
-```
-translate("--aaa--","abc-","ABC")
-```
-returns "AAA"
-
-### codepoint-equal
-
-```
-codepoint-equal("abcd", "abcd")
-```
-returns true
-
-```
-codepoint-equal("", ())
-```
-returns ()
-
-### string-to-codepoint
-
-```
-string-to-codepoints("Thérèse")
-```
-returns (84, 104, 233, 114, 232, 115, 101)
-
-```
-string-to-codepoints("")
-```
-returns ()
-
-### codepoints-to-string
-
-```
-codepoints-to-string((2309, 2358, 2378, 2325))
-```
-returns "अशॊक"
-
-```
-codepoints-to-string(())
-```
-returns ""
-
-### upper-case
-
-```
-upper-case("abCd0")
-```
-returns "ABCD0"
-
-### lower-case
-
-```
-lower-case("ABc!D")
-```
-returns "abc!d"
-
-### serialize
-
-Serializes the supplied input sequence, returning the serialized representation of the sequence as a string
-
-```
-serialize({hello: "world"})
-```
-returns { "hello" : "world" }
-
-### normalize-unicode
-
-Returns the value of the input after applying Unicode normalization.
-
-```
-normalize-unicode("hello world", "NFC")
-```
-
-returns the unicode-normalized version of the input string. Normalization forms NFC, NFD, NFKC, and NFKD are supported. "FULLY-NORMALIZED" though supported, should be used with caution as only the composition exclusion characters supported FULLY-NORMALIZED are which are uncommented in the [following file](https://www.unicode.org/Public/UCD/latest/ucd/CompositionExclusions.txt).
 
 ## Date and time functions
 
@@ -1974,85 +1763,5 @@ time("13:20:00-05:00")
 
 returns 13:20:00-05:00
 
-## Formatting dates and times functions
-
-The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only:
-
-* One of the following component specifiers: Y, M, d, D, F, H, m, s, P
-* A first presentation modifier, for which the value can be:
-	* Nn, for all supported component specifiers, besides P
-	* N, if the component specifier is P
-	* a format token that indicates a numbering sequence of the the following form: '0001'
-* A second presentation modifier, for which the value can be t or c, which are also the default values
-* A width modifier, both minimum and maximum values
-
-### format-dateTime
-
-```
-format-dateTime(dateTime("2004-04-12T13:20:00"), "[m]-[H]-[D]-[M]-[Y]")
-```
-
-returns 20-13-12-4-2004
-
-### format-date
-
-```
-format-date(date("2004-04-12"), "[D]-[M]-[Y]")
-```
-
-returns 12-4-2004
-
-### format-time
-
-```
-format-time(time("13:20:00"), "[H]-[m]-[s]")
-```
-
-returns 13-20-0
-
-## Context functions
-
-### position
-
-```
-(1 to 10)[position() eq 5]
-```
-
-returns 5
-
-### last
-
-```
-(1 to 10)[position() eq last()]
-```
-returns 10
 
 
-```
-(1 to 10)[last()]
-```
-returns 10
-
-### current-dateTime
-
-```
-current-dateTime()
-```
-
-returns 2020-02-26T11:22:48.423+01:00
-
-### current-date
-
-```
-current-date()
-```
-
-returns 2020-02-26Europe/Zurich
-
-### current-time
-
-```
-current-time()
-```
-
-returns 11:24:10.064+01:00
