@@ -7,11 +7,11 @@ RumbleDB namespace, which is the default function namespace and does not require
 
 It is recommended that user-defined functions are put in the local namespace, i.e., their name should have the local: prefix (which is predefined). Otherwise, there is the risk that your code becomes incompatible with subsequent releases if new (unprefixed) builtin functions are introduced.
 
-#Functions and operators on numerics
-##Functions on numeric values
+## Functions and operators on numerics
+### Functions on numeric values
 
 ### abs
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-abs)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-abs)
 
 Fully implemented
 
@@ -22,7 +22,7 @@ abs(-2)
 returns 2.0
 
 ### ceiling
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-ceiling)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-ceiling)
 
 Fully implemented
 ```
@@ -32,7 +32,7 @@ ceiling(2.3)
 returns 3.0
 
 ### floor
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-floor)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-floor)
 
 Fully implemented
 ```
@@ -42,7 +42,7 @@ floor(2.3)
 returns 2.0
 
 ### round
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-round)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-round)
 
 Fully implemented
 ```
@@ -58,7 +58,7 @@ round(2.2345, 2)
 returns 2.23
 
 ### round-half-to-even
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-round-half-to-even)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-round-half-to-even)
 
 Fully implemented
 
@@ -66,10 +66,10 @@ Fully implemented
 round-half-to-even(2.2345, 2), round-half-to-even(2.2345)
 ```
 
-##Parsing numbers
+### Parsing numbers
 
 ### number
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-number)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-number)
 
 Fully implemented
 
@@ -89,24 +89,24 @@ number(15)
 returns 15 as a double
 
 
-##Formatting integers
+### Formatting integers
 
 ### format-integer
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-format-integer)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-format-integer)
 
 Not implemented
 
 ##Formatting numbers
 
 ### format-number
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-format-number)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-format-number)
 
 Not implemented
 
 ##Trigonometric and exponential functions
 
 ###pi
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-pi)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-pi)
 
 Fully implemented
 ```
@@ -115,7 +115,7 @@ pi()
 returns 3.141592653589793
 
 ###exp
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-exp)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-exp)
 
 Fully implemented
 
@@ -125,7 +125,7 @@ exp(10)
 
 
 ###exp10
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-exp10)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-exp10)
 
 Fully implemented
 
@@ -135,7 +135,7 @@ exp10(10)
 
 
 ### log
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-log)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-log)
 
 Fully implemented
 
@@ -145,7 +145,7 @@ log(100)
 
 
 ### log10
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-log10)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-log10)
 
 Fully implemented
 
@@ -154,7 +154,7 @@ log10(100)
 ```
 
 ### pow
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-pow)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-pow)
 
 Fully implemented
 
@@ -163,7 +163,7 @@ pow(10, 2)
 ```
 
 ### sqrt
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-sqrt)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-sqrt)
 
 Fully implemented
 
@@ -176,7 +176,7 @@ returns 2
 
 
 ### sin
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-sin)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-sin)
 
 Fully implemented
 
@@ -185,7 +185,7 @@ sin(pi())
 ```
 
 ### cos
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-cos)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-cos)
 
 Fully implemented
 
@@ -195,7 +195,7 @@ cos(pi())
 
 
 ### tan
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-tan)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-tan)
 
 Fully implemented
 
@@ -204,7 +204,7 @@ tan(pi())
 ```
 
 ### asin
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-asin)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-asin)
 
 Fully implemented
 
@@ -213,7 +213,7 @@ asin(1)
 ```
 
 ### acos
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-acos)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-acos)
 
 Fully implemented
 ```
@@ -222,7 +222,7 @@ acos(1)
 
 
 ### atan
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-atan)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-atan)
 
 Fully implemented
 ```
@@ -230,26 +230,26 @@ atan(1)
 ```
 
 ### atan2
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-atan2)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-atan2)
 
 Fully implemented
 ```
 atan2(1)
 ```
 
-## Random numbers
+### Random numbers
 ### random-number-generator
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-random-number-generator)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-random-number-generator)
 
 Not implemented
 
 
-# Functions on strings
+## Functions on strings
 
-## Functions to assemble and disassemble strings
+### Functions to assemble and disassemble strings
 
 ### string-to-codepoint
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-string-to-codepoint)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-string-to-codepoint)
 
 Fully implemented
 
@@ -264,7 +264,7 @@ string-to-codepoints("")
 returns ()
 
 ### codepoints-to-string
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-codepoints-to-string)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-codepoints-to-string)
 
 Fully implemented
 ```
@@ -278,16 +278,16 @@ codepoints-to-string(())
 returns ""
 
 
-## Comparison of strings
+### Comparison of strings
 
 ### compare
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-compare)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-compare)
 
 Not implemented
 
 ### codepoint-equal
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-codepoint-equal)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-codepoint-equal)
 
 Fully implemented
 
@@ -304,23 +304,23 @@ returns ()
 
 ### collation-key
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-collation-key)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-collation-key)
 
 Not implemented
 
 ### contains-token
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-contains-token)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-contains-token)
 
 Not implemented
 
 
-## Functions on string values
+### Functions on string values
 
 
 ### concat
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-concat)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-concat)
 
 Fully implemented
 
@@ -333,7 +333,7 @@ returns "foobarfoobar"
 
 ### string-join
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-string-join)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-string-join)
 
 Fully implemented
 
@@ -350,7 +350,7 @@ string-join(("foo", "bar", "foobar"), "-")
 returns "foo-bar-foobar"
 
 ### substring
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-substring)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-substring)
 
 Fully implemented
 
@@ -367,7 +367,7 @@ substring("foobar", 4, 2)
 returns "ba"
 
 ### string-length
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-string-length)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-string-length)
 
 Fully implemented
 
@@ -386,7 +386,7 @@ string-length(())
 returns 0.
 
 ###normalize-space
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-normalize-space)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-normalize-space)
 
 Fully implemented
 
@@ -400,7 +400,7 @@ returns "The wealthy curled darlings of our nation."
 
 ### normalize-unicode
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-normalize-unicode)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-normalize-unicode)
 
 Fully implemented
 
@@ -415,7 +415,7 @@ returns the unicode-normalized version of the input string. Normalization forms 
 
 ### upper-case
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-upper-case)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-upper-case)
 
 Fully implemented
 
@@ -426,7 +426,7 @@ returns "ABCD0"
 
 ### lower-case
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-lower-case)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-lower-case)
 
 Fully implemented
 
@@ -438,7 +438,7 @@ returns "abc!d"
 
 ### translate
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-translate)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-translate)
 
 Fully implemented
 
@@ -453,11 +453,11 @@ translate("--aaa--","abc-","ABC")
 returns "AAA"
 
 
-## Functions based on substring matching
+### Functions based on substring matching
 
 ### contains
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-contains)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-contains)
 
 Fully implemented
 
@@ -469,7 +469,7 @@ returns true.
 
 ### starts-with
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-starts-with)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-starts-with)
 
 Fully implemented
 
@@ -481,7 +481,7 @@ returns true
 
 ### ends-with
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-ends-with)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-ends-with)
 
 Fully implemented
 
@@ -494,7 +494,7 @@ returns true.
 
 ### substring-before
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-substring-before)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-substring-before)
 
 Fully implemented
 
@@ -512,7 +512,7 @@ returns "f"
 
 ### substring-after
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-substring-after)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-substring-after)
 
 Fully implemented
 
@@ -528,11 +528,11 @@ substring-after("foobar", "r")
 
 returns ""
 
-## String functions that use regular expressions
+### String functions that use regular expressions
 
 ### matches
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-matches)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-matches)
 
 Arity 2 implemented, arity 3 is not.
 
@@ -553,7 +553,7 @@ returns true.
 
 ### replace
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-replace)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-replace)
 
 Arity 2 implemented, arity 3 is not.
 
@@ -573,7 +573,7 @@ returns "abbraccaddabbra"
 
 ### tokenize
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-tokenize)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-tokenize)
 
 Arity 2 implemented, arity 3 is not.
 
@@ -592,15 +592,15 @@ returns ("aa", "bb", "cc", "dd")
 
 ### analyze-string
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-analyze-string)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-analyze-string)
 
 Not implemented
 
-# Functions that manipulate URIs
+## Functions that manipulate URIs
 
 ### resolve-uri
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-resolve-uri)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-resolve-uri)
 
 Fully implemented
 
@@ -611,7 +611,7 @@ returns http://www.examples.com/examples
 
 ### encode-for-uri
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-encode-for-uri)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-encode-for-uri)
 
 Fully implemented
 
@@ -622,23 +622,23 @@ returns 100%25%20organic
 
 ### iri-to-uri
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-iri-to-uri)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-iri-to-uri)
 
 Not implemented
 
 ### escape-html-uri
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-escape-html-uri)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-escape-html-uri)
 
 Not implemented
 
-# Functions and operators on Boolean values
+## Functions and operators on Boolean values
 
-## Boolean constant functions
+### Boolean constant functions
 
 ### true
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-true)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-true)
 
 Fully implemented
 
@@ -649,7 +649,7 @@ returns true
 
 ### false
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-false)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-false)
 
 Fully implemented
 
@@ -660,7 +660,7 @@ returns false
 
 ### boolean
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-boolean)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-boolean)
 
 Fully implemented
 
@@ -676,7 +676,7 @@ returns false
 
 ### not
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-not)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-not)
 
 Fully implemented
 
@@ -690,13 +690,13 @@ boolean("")
 ```
 returns true
 
-# Functions and operators on durations
+## Functions and operators on durations
 
-## Component extraction functions on durations
+### Component extraction functions on durations
 
 ### years-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-years-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-years-from-duration)
 
 Fully implemented
 
@@ -708,7 +708,7 @@ returns 2021.
 
 ### months-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-months-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-months-from-duration)
 
 Fully implemented
 
@@ -720,7 +720,7 @@ returns 6.
 
 ### days-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-days-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-days-from-duration)
 
 Fully implemented
 
@@ -732,7 +732,7 @@ returns 17.
 
 ### hours-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-duration)
 
 Fully implemented
 
@@ -745,7 +745,7 @@ returns 12.
 
 ### minutes-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-duration)
 
 Fully implemented
 
@@ -757,7 +757,7 @@ returns 35.
 
 ### seconds-from-duration
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-duration)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-duration)
 
 Fully implemented
 
@@ -768,13 +768,13 @@ minutes-from-duration(duration("P2021Y6M17DT12H35M30S"))
 returns 30.
 
 
-# Functions and operators on dates and times
+## Functions and operators on dates and times
 
-## Constructing a DateTime
+### Constructing a DateTime
 
 ### dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-dateTime)
 
 Fully implemented
 
@@ -784,11 +784,11 @@ dateTime("2004-04-12T13:20:00+14:00")
 
 returns 2004-04-12T13:20:00+14:00
 
-## Component extraction functions on dates and times
+### Component extraction functions on dates and times
 
 ### year-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-year-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-year-from-dateTime)
 
 Fully implemented
 
@@ -799,7 +799,7 @@ returns 2021.
 
 ### month-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-month-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-month-from-dateTime)
 
 Fully implemented
 
@@ -810,7 +810,7 @@ returns 04.
 
 ### day-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-day-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-day-from-dateTime)
 
 Fully implemented
 
@@ -821,7 +821,7 @@ returns 12.
 
 ### hours-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-dateTime)
 
 Fully implemented
 
@@ -832,7 +832,7 @@ returns 13.
 
 ### minutes-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-dateTime)
 
 Fully implemented
 
@@ -843,7 +843,7 @@ returns 20.
 
 ### seconds-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-dateTime)
 
 Fully implemented
 
@@ -854,7 +854,7 @@ returns 32.
 
 ### timezone-from-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-dateTime)
 
 Fully implemented
 
@@ -866,7 +866,7 @@ returns PT2H.
 
 ### year-from-date
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-year-from-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-year-from-date)
 
 Fully implemented
 
@@ -877,7 +877,7 @@ returns 2021.
 
 ### month-from-date
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-month-from-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-month-from-date)
 
 Fully implemented
 
@@ -888,7 +888,7 @@ returns 6.
 
 ### day-from-date
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-day-from-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-day-from-date)
 
 Fully implemented
 
@@ -899,7 +899,7 @@ returns 4.
 
 ### timezone-from-date
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-date)
 
 Fully implemented
 
@@ -910,7 +910,7 @@ returns -PT14H.
 
 ### hours-from-time
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-hours-from-time)
 
 Fully implemented
 
@@ -921,7 +921,7 @@ returns 13.
 
 ### minutes-from-time
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-minutes-from-time)
 
 Fully implemented
 
@@ -932,7 +932,7 @@ returns 20.
 
 ### seconds-from-time
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-seconds-from-time)
 
 Fully implemented
 
@@ -943,7 +943,7 @@ returns 32.123.
 
 ### timezone-from-time
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-timezone-from-time)
 
 Fully implemented
 
@@ -953,11 +953,11 @@ timezone-from-time(time("13:20:32.123+02:00"))
 returns PT2H.
 
 
-## Timezone adjustment functions on dates and time values
+### Timezone adjustment functions on dates and time values
 
 ### adjust-dateTime-to-timezone
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-dateTime-to-timezone)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-dateTime-to-timezone)
 
 Fully implemented
 
@@ -968,7 +968,7 @@ returns 2004-04-12T03:25:15+04:05.
 
 ### adjust-date-to-timezone
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-date-to-timezone)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-date-to-timezone)
 
 Fully implemented
 
@@ -979,7 +979,7 @@ returns 2014-03-12+04:00.
 
 ### adjust-time-to-timezone
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-time-to-timezone)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-adjust-time-to-timezone)
 
 Fully implemented
 
@@ -989,7 +989,7 @@ adjust-time-to-timezone(time("13:20:00-05:00"), dayTimeDuration("-PT14H"))
 returns 04:20:00-14:00.
 
 
-## Formatting dates and times functions
+### Formatting dates and times functions
 
 The functions in this section accept a simplified version of the picture string, in which a variable marker accepts only:
 
@@ -1003,7 +1003,7 @@ The functions in this section accept a simplified version of the picture string,
 
 ### format-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-format-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-format-dateTime)
 
 Fully implemented
 
@@ -1015,7 +1015,7 @@ returns 20-13-12-4-2004
 
 ### format-date
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-format-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-format-date)
 
 Fully implemented
 
@@ -1027,7 +1027,7 @@ returns 12-4-2004
 
 ### format-time
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-format-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-format-time)
 
 Fully implemented
 
@@ -1038,38 +1038,18 @@ format-time(time("13:20:00"), "[H]-[m]-[s]")
 returns 13-20-0
 
 
-# Functions related to QNames
+## Functions related to QNames
 
 
 
 
+## Functions and operators on sequences
 
-### date
-
-```
-date("2004-04-12+14:00")
-```
-
-returns 2004-04-12+14:00
-
-### time
-
-```
-time("13:20:00-05:00")
-```
-
-returns 13:20:00-05:00
-
-
-
-
-# Functions and operators on sequences
-
-## General functions and operators on sequences
+### General functions and operators on sequences
 
 ### empty
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-empty)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-empty)
 
 Fully implemented
 
@@ -1083,7 +1063,7 @@ returns false.
 
 ### exists
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-exists)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-exists)
 
 Fully implemented
 
@@ -1110,7 +1090,7 @@ exists(json-file("file.json"))
 
 ### head
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-head)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-head)
 
 Fully implemented
 
@@ -1138,7 +1118,7 @@ head(json-file("file.json"))
 
 ### tail
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-tail)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-tail)
 
 Fully implemented
 
@@ -1166,7 +1146,7 @@ tail(json-file("file.json"))
 
 ### insert-before
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-insert-before)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-insert-before)
 
 Fully implemented
 
@@ -1177,7 +1157,7 @@ returns (1, 2, 3, 4, 5).
 
 ### remove
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-remove)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-remove)
 
 Fully implemented
 
@@ -1189,7 +1169,7 @@ returns (1, 2).
 
 ### reverse
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-reverse)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-reverse)
 
 Fully implemented
 
@@ -1201,7 +1181,7 @@ returns (3, 2, 1).
 
 ### subsequence
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-subsequence)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-subsequence)
 
 Fully implemented
 
@@ -1213,7 +1193,7 @@ returns (2, 3).
 
 ### unordered
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-unordered)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-unordered)
 
 Fully implemented
 
@@ -1224,11 +1204,11 @@ unordered((1, 2, 3))
 returns (1, 2, 3).
 
 
-## Functions that compare values in sequences
+### Functions that compare values in sequences
 
 ### distinct-values
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-distinct-values)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-distinct-values)
 
 Fully implemented
 
@@ -1253,7 +1233,7 @@ distinct-values(text-file("file.txt"))
 
 ### index-of
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-index-of)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-index-of)
 
 Fully implemented
 
@@ -1270,7 +1250,7 @@ returns "".
 
 ### deep-equal
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-deep-equal)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-deep-equal)
 
 Fully implemented
 
@@ -1284,11 +1264,11 @@ deep-equal(("b", "0"), ("b", 0))
 ```
 returns false.
 
-## Functions that test the cardinality of sequences
+### Functions that test the cardinality of sequences
 
 ### zero-or-one
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-zero-or-one)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-zero-or-one)
 
 Fully implemented
 
@@ -1304,7 +1284,7 @@ returns an error.
 
 ### one-or-more
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-one-or-more)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-one-or-more)
 
 Fully implemented
 
@@ -1320,7 +1300,7 @@ returns an error.
 
 ### exactly-one
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-exactly-one)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-exactly-one)
 
 Fully implemented
 
@@ -1335,11 +1315,11 @@ exactly-one(("a", "b"))
 returns an error.
 
 
-## Aggregate functions
+### Aggregate functions
 
 ### count
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-count)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-count)
 
 Fully implemented
 
@@ -1366,7 +1346,7 @@ count(
 
 ### avg
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-avg)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-avg)
 
 Fully implemented
 
@@ -1388,7 +1368,7 @@ avg(json-file("file.json").foo)
 
 ### max
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-max)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-max)
 
 Fully implemented
 
@@ -1415,7 +1395,7 @@ max(json-file("file.json").foo)
 
 ### min
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-min)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-min)
 
 Fully implemented
 
@@ -1442,7 +1422,7 @@ min(json-file("file.json").foo)
 
 ### sum
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-sum)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-sum)
 
 Fully implemented
 
@@ -1460,19 +1440,19 @@ sum(json-file("file.json").foo)
 ```
 
 
-## Functions giving access to external information
+### Functions giving access to external information
 
 ### collection
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-collection)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-collection)
 
 Not implemented
 
-## Parsing and serializing
+### Parsing and serializing
 
 ### serialize
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-serialize)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-serialize)
 
 Fully implemented
 
@@ -1483,10 +1463,10 @@ serialize({hello: "world"})
 ```
 returns { "hello" : "world" }
 
-# Context Functions
+## Context Functions
 
 ### position
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-position)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-position)
 
 Fully implemented
 
@@ -1497,7 +1477,7 @@ Fully implemented
 returns 5
 
 ### last
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-last)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-last)
 
 Fully implemented
 ```
@@ -1513,7 +1493,7 @@ returns 10
 
 ### current-dateTime
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-dateTime)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-current-dateTime)
 
 Fully implemented
 
@@ -1524,7 +1504,7 @@ current-dateTime()
 returns 2020-02-26T11:22:48.423+01:00
 
 ### current-date
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-date)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-current-date)
 
 Fully implemented
 ```
@@ -1534,7 +1514,7 @@ current-date()
 returns 2020-02-26Europe/Zurich
 
 ### current-time
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-current-time)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-current-time)
 
 Fully implemented
 ```
@@ -1544,7 +1524,7 @@ current-time()
 returns 11:24:10.064+01:00
 
 ### implicit-timezone
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-implicit-timezone)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-implicit-timezone)
 
 Fully implemented
 ```
@@ -1554,7 +1534,7 @@ implicit-timezone()
 returns PT1H.
 
 ### default-collation
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-default-collation)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-default-collation)
 
 Fully implemented
 ```
@@ -1564,62 +1544,66 @@ default-collation()
 returns http://www.w3.org/2005/xpath-functions/collation/codepoint.
 
 
-# High order functions
+## High order functions
 
-## Functions on functions
+### Functions on functions
 
 ### function-lookup
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-lookup)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-lookup)
 
 Not implemented
 
 ### function-name
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-name)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-name)
 
 Not implemented
 
 ### function-arity
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-arity)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-arity)
 
 Not implemented
 
-## Basic higher-order functions
+### Basic higher-order functions
 
 ### for-each
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each)
 
 Not implemented
 
 ### filter
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-filter)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-filter)
 
 Not implemented
 
 ### fold-left
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-left)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-left)
 
 Not implemented
 
 ### fold-right
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-right)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-fold-right)
 
 Not implemented
 
 ### for-each-pair
 
-[W3 specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each-pair)
+[W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-function-for-each-pair)
 
 Not implemented
 
 
 
-# Object functions
+## JSONiq functions
 
 ### keys
+
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s01.html)
+
+Fully implemented
 
 ```
 keys({"foo" : "bar", "bar" : "foobar"})
@@ -1637,16 +1621,105 @@ Keys calls are pushed down to Spark, so this works on billions of items as well:
 keys(json-file("file.json"))
 ```
 
-### json-doc
+### members
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s02.html)
+
+Fully implemented
 
 ```
-json-doc("/Users/sheldon/object.json")
+members([1 to 100])
 ```
 
-returns the (unique) JSON value parsed from a local JSON (but not necessarily JSON Lines) file where this value may be spread over multiple lines.
+This function returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
+
+Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
+
+```
+members(([1 to 100], [ 300 to 1000 ]))
+```
+
+
+### null
+
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s03.html)
+
+Fully implemented
+
+```
+null()
+```
+
+Returns a JSON null (also available as the literal null).
+
+
+### parse-json
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s04.html)
+
+Fully implemented
+
+### size
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s05.html)
+
+Fully implemented
+```
+size([1 to 100])
+```
+
+returns 100. Also works if the empty sequence is supplied, in which case it returns the empty sequence.
+
+```
+size(())
+```
+
+
+### accumulate
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s06.html)
+
+Fully implemented
+
+### descendant-arrays
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s06.html)
+
+Fully implemented
+
+### descendant-objects
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s07.html)
+
+Fully implemented
+
+### descendant-pairs
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s08.html)
+
+Fully implemented
+
+
+### flatten
+
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s09.html)
+
+Fully implemented
+```
+flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
+```
+
+Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
+
+Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
+
+
+### intersect
+
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s10.html)
+
+Fully implemented
+
+
 
 
 ### project
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s11.html)
+
+Fully implemented
 
 ```
 project({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
@@ -1658,8 +1731,10 @@ returns the object {"foo" : "bar", "bar" : "foobar"}. Also works on an input seq
 project(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2"}), ("foo", "bar"))
 ```
 
-
 ### remove-keys
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s12.html)
+
+Fully implemented
 
 ```
 remove-keys({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, ("foo", "bar"))
@@ -1672,7 +1747,9 @@ remove-keys(({"foo" : "bar", "bar" : "foobar", "foobar" : "foo" }, {"foo": "bar2
 ```
 
 ### values
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s13.html)
 
+Fully implemented
 ```
 values({"foo" : "bar", "bar" : "foobar"})
 ```
@@ -1689,79 +1766,40 @@ Values calls are pushed down to Spark, so this works on billions of items as wel
 values(json-file("file.json"))
 ```
 
-## Array functions
+### encode-for-roundtrip
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s13.html)
 
-### size
+Not implemented
+
+### decode-from-roundtrip
+[JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s14.html)
+
+Not implemented
+
+
+### json-doc
+
 
 ```
-size([1 to 100])
+json-doc("/Users/sheldon/object.json")
 ```
 
-returns 100. Also works if the empty sequence is supplied, in which case it returns the empty sequence.
-
-```
-size(())
-```
-
-### members
-
-```
-members([1 to 100])
-```
-
-This function returns the members as an array, but not recursively, i.e., nested arrays are not unboxed.
-
-Returns the first 100 integers as a sequence.  Also works on an input sequence, in a distributive way.
-
-```
-members(([1 to 100], [ 300 to 1000 ]))
-```
+returns the (unique) JSON value parsed from a local JSON (but not necessarily JSON Lines) file where this value may be spread over multiple lines.
 
 
-### flatten
-
-```
-flatten(([1, 2], [[3, 4], [5, 6]], [7, [8, 9]]))
-```
-
-Unboxes arrays recursively, stopping the recursion when any other item is reached (object or atomic). Also works on an input sequence, in a distributive way.
-
-Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
-
-## Atomic functions
-
-```
-null()
-```
-
-Returns a JSON null (also available as the literal null).
 
 
-## Date and time functions
 
-### dateTime
 
-```
-dateTime("2004-04-12T13:20:00+14:00")
-```
 
-returns 2004-04-12T13:20:00+14:00
 
-### date
 
-```
-date("2004-04-12+14:00")
-```
 
-returns 2004-04-12+14:00
 
-### time
 
-```
-time("13:20:00-05:00")
-```
 
-returns 13:20:00-05:00
+
+
 
 
 
