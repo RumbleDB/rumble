@@ -293,7 +293,7 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
         } else {
             key = this.lookupKey.getStringValue();
         }
-        childDataFrame.createOrReplaceTempView("object");
+        String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.hasKey(key)) {
             FieldDescriptor fieldDescriptor = childDataFrame.getItemType().getObjectContentFacet().get(key);
             ItemType type = BuiltinTypesCatalogue.item;
@@ -302,16 +302,17 @@ public class ObjectLookupIterator extends HybridRuntimeIterator {
             }
             if (type.isObjectItemType()) {
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
-                    String.format("SELECT `%s`.* FROM object", key),
+                    String.format("SELECT `%s`.* FROM %s", key, object),
                     type
                 );
                 return result;
             } else {
                 JSoundDataFrame result = childDataFrame.evaluateSQL(
                     String.format(
-                        "SELECT `%s` AS `%s` FROM object",
+                        "SELECT `%s` AS `%s` FROM %s",
                         key,
-                        SparkSessionManager.atomicJSONiqItemColumnName
+                        SparkSessionManager.atomicJSONiqItemColumnName,
+                        object
                     ),
                     type
                 );

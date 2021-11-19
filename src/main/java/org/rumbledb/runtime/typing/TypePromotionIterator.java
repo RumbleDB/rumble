@@ -12,6 +12,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.functions.sequences.general.TypePromotionClosure;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
@@ -173,13 +174,16 @@ public class TypePromotionIterator extends HybridRuntimeIterator {
             dataItemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)
                 && this.itemType.equals(BuiltinTypesCatalogue.doubleItem)
         ) {
-            df.createOrReplaceTempView("input");
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             df = df.evaluateSQL(
-                "SELECT CAST (`"
-                    + SparkSessionManager.atomicJSONiqItemColumnName
-                    + "` AS double) AS `"
-                    + SparkSessionManager.atomicJSONiqItemColumnName
-                    + "` FROM input",
+                String.format(
+                    "SELECT CAST (`"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` AS double) AS `"
+                        + SparkSessionManager.atomicJSONiqItemColumnName
+                        + "` FROM %s",
+                    input
+                ),
                 this.itemType
             );
         }

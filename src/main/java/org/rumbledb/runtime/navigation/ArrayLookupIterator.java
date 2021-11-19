@@ -196,17 +196,18 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         initLookupPosition(context);
-        childDataFrame.createOrReplaceTempView("array");
+        String array = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (childDataFrame.getItemType().isArrayItemType()) {
             ItemType elementType = childDataFrame.getItemType().getArrayContentFacet();
             if (elementType.isObjectItemType()) {
                 return childDataFrame.evaluateSQL(
                     String.format(
-                        "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s)",
+                        "SELECT `%s`.* FROM (SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s)",
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         Integer.toString(this.lookup - 1),
                         SparkSessionManager.atomicJSONiqItemColumnName,
+                        array,
                         SparkSessionManager.atomicJSONiqItemColumnName,
                         Integer.toString(this.lookup)
                     ),
@@ -215,10 +216,11 @@ public class ArrayLookupIterator extends HybridRuntimeIterator {
             }
             return childDataFrame.evaluateSQL(
                 String.format(
-                    "SELECT `%s`[%s] as `%s` FROM array WHERE size(`%s`) >= %s",
+                    "SELECT `%s`[%s] as `%s` FROM %s WHERE size(`%s`) >= %s",
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     Integer.toString(this.lookup - 1),
                     SparkSessionManager.atomicJSONiqItemColumnName,
+                    array,
                     SparkSessionManager.atomicJSONiqItemColumnName,
                     Integer.toString(this.lookup)
                 ),

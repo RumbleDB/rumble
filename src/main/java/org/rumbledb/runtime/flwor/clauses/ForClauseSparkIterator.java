@@ -288,7 +288,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * expression does not depend on the input tuple.
      * 
      * @param context the dynamic context.
-     * @param outputTupleVariableDependencies the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromCartesianProduct(
@@ -569,7 +568,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * Non-starting clause and the child clause (above in the syntax) is parallelizable.
      * 
      * @param context the dynamic context.
-     * @param outputTuplesVariableDependencies the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameInParallel(
@@ -757,7 +755,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (iterator.isDataFrame()) {
             JSoundDataFrame rows = iterator.getDataFrame(context);
 
-            rows.createOrReplaceTempView("assignment");
+            String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
                 String[] fields = rows.getDataFrame().schema().fieldNames();
                 String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
@@ -765,9 +763,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "SELECT struct(%s) AS `%s` FROM assignment",
+                            "SELECT struct(%s) AS `%s` FROM %s",
                             columnNames,
-                            variableName
+                            variableName,
+                            assignment
                         )
                     );
             } else {
@@ -775,9 +774,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "SELECT `%s` AS `%s` FROM assignment",
+                            "SELECT `%s` AS `%s` FROM %s",
                             SparkSessionManager.atomicJSONiqItemColumnName,
-                            variableName
+                            variableName,
+                            assignment
                         )
                     );
             }
