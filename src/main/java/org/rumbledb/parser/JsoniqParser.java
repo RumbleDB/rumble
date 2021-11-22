@@ -1,31 +1,20 @@
-// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.8
+// Generated from ./src/main/java/org/rumbledb/parser/Jsoniq.g4 by ANTLR 4.7
 
 // Java header
 package org.rumbledb.parser;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import org.antlr.v4.runtime.NoViableAltException;
-import org.antlr.v4.runtime.Parser;
-import org.antlr.v4.runtime.ParserRuleContext;
-import org.antlr.v4.runtime.RecognitionException;
-import org.antlr.v4.runtime.RuntimeMetaData;
-import org.antlr.v4.runtime.Token;
-import org.antlr.v4.runtime.TokenStream;
-import org.antlr.v4.runtime.Vocabulary;
-import org.antlr.v4.runtime.VocabularyImpl;
-import org.antlr.v4.runtime.atn.ATN;
-import org.antlr.v4.runtime.atn.ATNDeserializer;
-import org.antlr.v4.runtime.atn.ParserATNSimulator;
-import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.atn.*;
 import org.antlr.v4.runtime.dfa.DFA;
-import org.antlr.v4.runtime.tree.ParseTreeVisitor;
-import org.antlr.v4.runtime.tree.TerminalNode;
+import org.antlr.v4.runtime.*;
+import org.antlr.v4.runtime.misc.*;
+import org.antlr.v4.runtime.tree.*;
+import java.util.List;
+import java.util.Iterator;
+import java.util.ArrayList;
 
 @SuppressWarnings({"all", "warnings", "unchecked", "unused", "cast"})
 public class JsoniqParser extends Parser {
-	static { RuntimeMetaData.checkVersion("4.8", RuntimeMetaData.VERSION); }
+	static { RuntimeMetaData.checkVersion("4.7", RuntimeMetaData.VERSION); }
 
 	protected static final DFA[] _decisionToDFA;
 	protected static final PredictionContextCache _sharedContextCache =
@@ -78,72 +67,61 @@ public class JsoniqParser extends Parser {
 		RULE_typedFunctionTest = 83, RULE_singleType = 84, RULE_pairConstructor = 85, 
 		RULE_arrayConstructor = 86, RULE_uriLiteral = 87, RULE_stringLiteral = 88, 
 		RULE_keyWords = 89;
-	private static String[] makeRuleNames() {
-		return new String[] {
-			"moduleAndThisIsIt", "module", "mainModule", "libraryModule", "prolog", 
-			"setter", "namespaceDecl", "annotatedDecl", "defaultCollationDecl", "orderingModeDecl", 
-			"emptyOrderDecl", "decimalFormatDecl", "qname", "dfPropertyName", "moduleImport", 
-			"varDecl", "functionDecl", "typeDecl", "schemaLanguage", "paramList", 
-			"param", "expr", "exprSingle", "flowrExpr", "forClause", "forVar", "letClause", 
-			"letVar", "whereClause", "groupByClause", "groupByVar", "orderByClause", 
-			"orderByExpr", "countClause", "quantifiedExpr", "quantifiedExprVar", 
-			"switchExpr", "switchCaseClause", "typeSwitchExpr", "caseClause", "ifExpr", 
-			"tryCatchExpr", "catchClause", "orExpr", "andExpr", "notExpr", "comparisonExpr", 
-			"stringConcatExpr", "rangeExpr", "additiveExpr", "multiplicativeExpr", 
-			"instanceOfExpr", "isStaticallyExpr", "treatExpr", "castableExpr", "castExpr", 
-			"arrowExpr", "unaryExpr", "valueExpr", "validateExpr", "simpleMapExpr", 
-			"postFixExpr", "arrayLookup", "arrayUnboxing", "predicate", "objectLookup", 
-			"primaryExpr", "varRef", "parenthesizedExpr", "contextItemExpr", "orderedExpr", 
-			"unorderedExpr", "functionCall", "argumentList", "argument", "functionItemExpr", 
-			"namedFunctionRef", "inlineFunctionExpr", "sequenceType", "objectConstructor", 
-			"itemType", "functionTest", "anyFunctionTest", "typedFunctionTest", "singleType", 
-			"pairConstructor", "arrayConstructor", "uriLiteral", "stringLiteral", 
-			"keyWords"
-		};
-	}
-	public static final String[] ruleNames = makeRuleNames();
+	public static final String[] ruleNames = {
+		"moduleAndThisIsIt", "module", "mainModule", "libraryModule", "prolog", 
+		"setter", "namespaceDecl", "annotatedDecl", "defaultCollationDecl", "orderingModeDecl", 
+		"emptyOrderDecl", "decimalFormatDecl", "qname", "dfPropertyName", "moduleImport", 
+		"varDecl", "functionDecl", "typeDecl", "schemaLanguage", "paramList", 
+		"param", "expr", "exprSingle", "flowrExpr", "forClause", "forVar", "letClause", 
+		"letVar", "whereClause", "groupByClause", "groupByVar", "orderByClause", 
+		"orderByExpr", "countClause", "quantifiedExpr", "quantifiedExprVar", "switchExpr", 
+		"switchCaseClause", "typeSwitchExpr", "caseClause", "ifExpr", "tryCatchExpr", 
+		"catchClause", "orExpr", "andExpr", "notExpr", "comparisonExpr", "stringConcatExpr", 
+		"rangeExpr", "additiveExpr", "multiplicativeExpr", "instanceOfExpr", "isStaticallyExpr", 
+		"treatExpr", "castableExpr", "castExpr", "arrowExpr", "unaryExpr", "valueExpr", 
+		"validateExpr", "simpleMapExpr", "postFixExpr", "arrayLookup", "arrayUnboxing", 
+		"predicate", "objectLookup", "primaryExpr", "varRef", "parenthesizedExpr", 
+		"contextItemExpr", "orderedExpr", "unorderedExpr", "functionCall", "argumentList", 
+		"argument", "functionItemExpr", "namedFunctionRef", "inlineFunctionExpr", 
+		"sequenceType", "objectConstructor", "itemType", "functionTest", "anyFunctionTest", 
+		"typedFunctionTest", "singleType", "pairConstructor", "arrayConstructor", 
+		"uriLiteral", "stringLiteral", "keyWords"
+	};
 
-	private static String[] makeLiteralNames() {
-		return new String[] {
-			null, "';'", "'module'", "'namespace'", "'='", "'declare'", "'ordering'", 
-			"'ordered'", "'decimal-format'", "':'", "'decimal-separator'", "'grouping-separator'", 
-			"'infinity'", "'minus-sign'", "'NaN'", "'percent'", "'per-mille'", "'zero-digit'", 
-			"'digit'", "'pattern-separator'", "'import'", "','", "'variable'", "':='", 
-			"'external'", "'function'", "'('", "')'", "'{'", "'}'", "'type'", "'jsound'", 
-			"'compact'", "'verbose'", "'json'", "'schema'", "'$'", "'|'", "'*'", 
-			"'eq'", "'ne'", "'lt'", "'le'", "'gt'", "'ge'", "'!='", "'<'", "'<='", 
-			"'>'", "'>='", "'||'", "'+'", "'-'", "'div'", "'idiv'", "'mod'", "'validate'", 
-			"'!'", "'['", "']'", "'.'", "'$$'", "'#'", "'{|'", "'|}'", "'for'", "'let'", 
-			"'where'", "'group'", "'by'", "'order'", "'return'", "'if'", "'in'", 
-			"'as'", "'at'", "'allowing'", "'empty'", "'count'", "'stable'", "'ascending'", 
-			"'descending'", "'some'", "'every'", "'satisfies'", "'collation'", "'greatest'", 
-			"'least'", "'switch'", "'case'", "'try'", "'catch'", "'default'", "'then'", 
-			"'else'", "'typeswitch'", "'or'", "'and'", "'not'", "'to'", "'instance'", 
-			"'of'", "'statically'", "'is'", "'treat'", "'cast'", "'castable'", "'version'", 
-			"'jsoniq'", "'unordered'", "'true'", "'false'", null, "'?'", "'null'"
-		};
-	}
-	private static final String[] _LITERAL_NAMES = makeLiteralNames();
-	private static String[] makeSymbolicNames() {
-		return new String[] {
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, null, null, null, null, null, null, null, 
-			null, null, null, null, null, "Kfor", "Klet", "Kwhere", "Kgroup", "Kby", 
-			"Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", 
-			"Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", 
-			"Ksatisfies", "Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", 
-			"Ktry", "Kcatch", "Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", 
-			"Kand", "Knot", "Kto", "Kinstance", "Kof", "Kstatically", "Kis", "Ktreat", 
-			"Kcast", "Kcastable", "Kversion", "Kjsoniq", "Kunordered", "Ktrue", "Kfalse", 
-			"STRING", "ArgumentPlaceholder", "NullLiteral", "Literal", "NumericLiteral", 
-			"IntegerLiteral", "DecimalLiteral", "DoubleLiteral", "WS", "NCName", 
-			"XQComment", "ContentChar"
-		};
-	}
-	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
+	private static final String[] _LITERAL_NAMES = {
+		null, "';'", "'module'", "'namespace'", "'='", "'declare'", "'ordering'", 
+		"'ordered'", "'decimal-format'", "':'", "'decimal-separator'", "'grouping-separator'", 
+		"'infinity'", "'minus-sign'", "'NaN'", "'percent'", "'per-mille'", "'zero-digit'", 
+		"'digit'", "'pattern-separator'", "'import'", "','", "'variable'", "':='", 
+		"'external'", "'function'", "'('", "')'", "'{'", "'}'", "'type'", "'jsound'", 
+		"'compact'", "'verbose'", "'json'", "'schema'", "'$'", "'|'", "'*'", "'eq'", 
+		"'ne'", "'lt'", "'le'", "'gt'", "'ge'", "'!='", "'<'", "'<='", "'>'", 
+		"'>='", "'||'", "'+'", "'-'", "'div'", "'idiv'", "'mod'", "'validate'", 
+		"'!'", "'['", "']'", "'.'", "'$$'", "'#'", "'{|'", "'|}'", "'for'", "'let'", 
+		"'where'", "'group'", "'by'", "'order'", "'return'", "'if'", "'in'", "'as'", 
+		"'at'", "'allowing'", "'empty'", "'count'", "'stable'", "'ascending'", 
+		"'descending'", "'some'", "'every'", "'satisfies'", "'collation'", "'greatest'", 
+		"'least'", "'switch'", "'case'", "'try'", "'catch'", "'default'", "'then'", 
+		"'else'", "'typeswitch'", "'or'", "'and'", "'not'", "'to'", "'instance'", 
+		"'of'", "'statically'", "'is'", "'treat'", "'cast'", "'castable'", "'version'", 
+		"'jsoniq'", "'unordered'", "'true'", "'false'", null, "'?'", "'null'"
+	};
+	private static final String[] _SYMBOLIC_NAMES = {
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, null, null, null, null, null, null, null, 
+		null, null, null, null, null, "Kfor", "Klet", "Kwhere", "Kgroup", "Kby", 
+		"Korder", "Kreturn", "Kif", "Kin", "Kas", "Kat", "Kallowing", "Kempty", 
+		"Kcount", "Kstable", "Kascending", "Kdescending", "Ksome", "Kevery", "Ksatisfies", 
+		"Kcollation", "Kgreatest", "Kleast", "Kswitch", "Kcase", "Ktry", "Kcatch", 
+		"Kdefault", "Kthen", "Kelse", "Ktypeswitch", "Kor", "Kand", "Knot", "Kto", 
+		"Kinstance", "Kof", "Kstatically", "Kis", "Ktreat", "Kcast", "Kcastable", 
+		"Kversion", "Kjsoniq", "Kunordered", "Ktrue", "Kfalse", "STRING", "ArgumentPlaceholder", 
+		"NullLiteral", "Literal", "NumericLiteral", "IntegerLiteral", "DecimalLiteral", 
+		"DoubleLiteral", "WS", "NCName", "XQComment", "ContentChar"
+	};
 	public static final Vocabulary VOCABULARY = new VocabularyImpl(_LITERAL_NAMES, _SYMBOLIC_NAMES);
 
 	/**
@@ -193,7 +171,6 @@ public class JsoniqParser extends Parser {
 		super(input);
 		_interp = new ParserATNSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
 	}
-
 	public static class ModuleAndThisIsItContext extends ParserRuleContext {
 		public ModuleContext module() {
 			return getRuleContext(ModuleContext.class,0);
@@ -802,7 +779,6 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class OrderingModeDeclContext extends ParserRuleContext {
-		public TerminalNode Kunordered() { return getToken(JsoniqParser.Kunordered, 0); }
 		public OrderingModeDeclContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -851,7 +827,6 @@ public class JsoniqParser extends Parser {
 	public static class EmptyOrderDeclContext extends ParserRuleContext {
 		public Token emptySequenceOrder;
 		public TerminalNode Kdefault() { return getToken(JsoniqParser.Kdefault, 0); }
-		public TerminalNode Korder() { return getToken(JsoniqParser.Korder, 0); }
 		public TerminalNode Kempty() { return getToken(JsoniqParser.Kempty, 0); }
 		public TerminalNode Kgreatest() { return getToken(JsoniqParser.Kgreatest, 0); }
 		public TerminalNode Kleast() { return getToken(JsoniqParser.Kleast, 0); }
@@ -1529,7 +1504,6 @@ public class JsoniqParser extends Parser {
 		public QnameContext type_name;
 		public SchemaLanguageContext schema;
 		public ExprSingleContext type_definition;
-		public TerminalNode Kas() { return getToken(JsoniqParser.Kas, 0); }
 		public QnameContext qname() {
 			return getRuleContext(QnameContext.class,0);
 		}
@@ -5497,7 +5471,6 @@ public class JsoniqParser extends Parser {
 	}
 
 	public static class UnorderedExprContext extends ParserRuleContext {
-		public TerminalNode Kunordered() { return getToken(JsoniqParser.Kunordered, 0); }
 		public ExprContext expr() {
 			return getRuleContext(ExprContext.class,0);
 		}
@@ -6007,7 +5980,6 @@ public class JsoniqParser extends Parser {
 		public ItemTypeContext itemType() {
 			return getRuleContext(ItemTypeContext.class,0);
 		}
-		public TerminalNode ArgumentPlaceholder() { return getToken(JsoniqParser.ArgumentPlaceholder, 0); }
 		public SequenceTypeContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -6380,7 +6352,6 @@ public class JsoniqParser extends Parser {
 		public SequenceTypeContext sequenceType;
 		public List<SequenceTypeContext> st = new ArrayList<SequenceTypeContext>();
 		public SequenceTypeContext rt;
-		public TerminalNode Kas() { return getToken(JsoniqParser.Kas, 0); }
 		public List<SequenceTypeContext> sequenceType() {
 			return getRuleContexts(SequenceTypeContext.class);
 		}
@@ -6463,7 +6434,6 @@ public class JsoniqParser extends Parser {
 		public ItemTypeContext itemType() {
 			return getRuleContext(ItemTypeContext.class,0);
 		}
-		public TerminalNode ArgumentPlaceholder() { return getToken(JsoniqParser.ArgumentPlaceholder, 0); }
 		public SingleTypeContext(ParserRuleContext parent, int invokingState) {
 			super(parent, invokingState);
 		}
@@ -6511,7 +6481,6 @@ public class JsoniqParser extends Parser {
 		public ExprSingleContext lhs;
 		public Token name;
 		public ExprSingleContext rhs;
-		public TerminalNode ArgumentPlaceholder() { return getToken(JsoniqParser.ArgumentPlaceholder, 0); }
 		public List<ExprSingleContext> exprSingle() {
 			return getRuleContexts(ExprSingleContext.class);
 		}
