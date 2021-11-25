@@ -114,26 +114,25 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        List<Item> results = iterator.materialize(context);
-        if (results.isEmpty()) {
-            return zeroElement;
-        }
+    	iterator.open(context);
 
-        Item result = results.get(0);
-        for (int i = 1; i < results.size(); ++i) {
-            Item sum = AdditiveOperationIterator.processItem(result, results.get(i), false);
+        Item result = zeroElement;
+        while(iterator.hasNext()) {
+            Item nextValue = iterator.next();
+            Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
             if (sum == null) {
                 throw new InvalidArgumentTypeException(
                         " \"+\": operation not possible with parameters of type \""
                             + result.getDynamicType().toString()
                             + "\" and \""
-                            + results.get(i).getDynamicType().toString()
+                            + result.getDynamicType().toString()
                             + "\"",
                         metadata
                 );
             }
             result = sum;
         }
+        iterator.close();
         return result;
     }
 
