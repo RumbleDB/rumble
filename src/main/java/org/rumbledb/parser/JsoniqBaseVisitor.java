@@ -21,7 +21,7 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitModuleAndThisIsIt(JsoniqParser.ModuleAndThisIsItContext ctx) { return visitChildren(ctx); }
-	/**s
+	/**
 	 * {@inheritDoc}
 	 *
 	 * <p>The default implementation returns the result of calling
@@ -413,6 +413,13 @@ public class JsoniqBaseVisitor<T> extends AbstractParseTreeVisitor<T> implements
 	 * {@link #visitChildren} on {@code ctx}.</p>
 	 */
 	@Override public T visitArrowExpr(JsoniqParser.ArrowExprContext ctx) { return visitChildren(ctx); }
+	/**
+	 * {@inheritDoc}
+	 *
+	 * <p>The default implementation returns the result of calling
+	 * {@link #visitChildren} on {@code ctx}.</p>
+	 */
+	@Override public T visitArrowFunctionSpecifier(JsoniqParser.ArrowFunctionSpecifierContext ctx) { return visitChildren(ctx); }
 	/**
 	 * {@inheritDoc}
 	 *
