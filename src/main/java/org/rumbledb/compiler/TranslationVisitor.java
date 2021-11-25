@@ -993,7 +993,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             children.addAll(getArgumentsFromArgumentListContext(ctx.arguments.get(i)));
             if (functionCallContext.qname() != null) {
                 Name name = parseName(functionCallContext.qname(), true, false);
-                mainExpression = processFunctionCall(name, children, createMetadataFromContext(ctx));
+                mainExpression = processFunctionCall(name, children, createMetadataFromContext(functionCallContext));
                 continue;
             } else if (functionCallContext.varRef() != null) {
                 functionExpression = (Expression) this.visitVarRef(functionCallContext.varRef());
@@ -1003,7 +1003,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             mainExpression = new DynamicFunctionCallExpression(
                     functionExpression,
                     children,
-                    createMetadataFromContext(ctx)
+                    createMetadataFromContext(functionCallContext)
             );
         }
         return mainExpression;
