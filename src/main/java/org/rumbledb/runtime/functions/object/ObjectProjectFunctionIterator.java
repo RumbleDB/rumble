@@ -160,7 +160,7 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
-        childDataFrame.createOrReplaceTempView("object");
+        String object = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         if (!childDataFrame.getItemType().isObjectItemType()) {
             return childDataFrame;
         }
@@ -177,8 +177,9 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         if (keys.isEmpty()) {
             return childDataFrame.evaluateSQL(
                 String.format(
-                    "SELECT NULL as `%s` FROM object",
-                    SparkSessionManager.emptyObjectJSONiqItemColumnName
+                    "SELECT NULL as `%s` FROM %s",
+                    SparkSessionManager.emptyObjectJSONiqItemColumnName,
+                    object
                 ),
                 BuiltinTypesCatalogue.objectItem
             );
@@ -186,8 +187,9 @@ public class ObjectProjectFunctionIterator extends HybridRuntimeIterator {
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(keys, false);
         JSoundDataFrame result = childDataFrame.evaluateSQL(
             String.format(
-                "SELECT %s FROM object",
-                projectionVariables
+                "SELECT %s FROM %s",
+                projectionVariables,
+                object
             ),
             BuiltinTypesCatalogue.objectItem
         );
