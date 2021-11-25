@@ -34,6 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -93,7 +94,21 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-
+        this.currentMinIsNullItem = false;
+        this.currentMinDouble = 0;
+        this.currentMinFloat = 0;
+        this.currentMinDecimal = null;
+        this.currentMinLong = 0;
+        this.currentMinURI = null;
+        this.currentMinString = null;
+        this.currentMinBoolean = false;
+        this.hasTimeZone = false;
+        this.currentMinDate = null;
+        this.currentMinDateTime = null;
+        this.currentMinDayTimeDuration = null;
+        this.currentMinYearMonthDuration = null;
+        this.currentMinTime = null;
+        this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
             Item candidateItem = null;

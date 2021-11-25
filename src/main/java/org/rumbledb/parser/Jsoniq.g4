@@ -167,8 +167,10 @@ castableExpr            : main_expr=castExpr ( Kcastable Kas single=singleType )
 
 castExpr                : main_expr=arrowExpr ( Kcast Kas single=singleType )?;
 
-arrowExpr               : main_expr=unaryExpr (('=' '>') function_call_expr+=functionCall)*;
+arrowExpr               : main_expr=unaryExpr (('=' '>') function+=arrowFunctionSpecifier arguments+=argumentList)*;
 
+arrowFunctionSpecifier  : qname | varRef | parenthesizedExpr;
+ 
 unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 
 valueExpr               : simpleMap_expr=simpleMapExpr

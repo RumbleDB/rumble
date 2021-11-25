@@ -34,6 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -94,7 +95,21 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-
+        this.currentMinIsNullItem = false;
+        this.currentMaxDouble = 0;
+        this.currentMaxFloat = 0;
+        this.currentMaxDecimal = null;
+        this.currentMaxLong = 0;
+        this.currentMaxURI = null;
+        this.currentMaxString = null;
+        this.currentMaxBoolean = false;
+        this.hasTimeZone = false;
+        this.currentMaxDate = null;
+        this.currentMaxDateTime = null;
+        this.currentMaxDayTimeDuration = null;
+        this.currentMaxYearMonthDuration = null;
+        this.currentMaxTime = null;
+        this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
             Item candidateItem = null;
