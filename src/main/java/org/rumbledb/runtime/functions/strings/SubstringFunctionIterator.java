@@ -73,7 +73,7 @@ public class SubstringFunctionIterator extends AtMostOneItemLocalRuntimeIterator
                 );
             }
             double endIndex = sanitizeEndIndex(stringItem, endIndexItem, index);
-            if (endIndex < index || index <= 0) {
+            if (endIndex < index || endIndex <= 0) {
                 return ItemFactory.getInstance().createStringItem("");
             }
             result = stringItem.getStringValue().substring(Math.max(index, 0), (int) Math.round(endIndex));
