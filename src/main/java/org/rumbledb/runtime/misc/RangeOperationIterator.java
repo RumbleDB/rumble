@@ -38,9 +38,9 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
     private static final long serialVersionUID = 1L;
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
-    private int left;
-    private int right;
-    private int index;
+    private long left;
+    private long right;
+    private long index;
 
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
@@ -63,7 +63,7 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
             if (this.index == this.right) {
                 this.hasNext = false;
             }
-            return ItemFactory.getInstance().createIntItem(this.index++);
+            return ItemFactory.getInstance().createLongItem(this.index++);
         }
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
@@ -94,8 +94,8 @@ public class RangeOperationIterator extends LocalRuntimeIterator {
                 );
             }
             try {
-                this.left = left.castToIntValue();
-                this.right = right.castToIntValue();
+                this.left = left.castToIntegerValue().longValue();
+                this.right = right.castToIntegerValue().longValue();
             } catch (IteratorFlowException e) {
                 throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
             }

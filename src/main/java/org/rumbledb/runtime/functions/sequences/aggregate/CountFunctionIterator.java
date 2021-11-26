@@ -102,8 +102,15 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-        List<Item> results = iterator.materialize(context);
-        return ItemFactory.getInstance().createLongItem(results.size());
+        iterator.open(context);
+        long result = 0;
+
+        while (iterator.hasNext()) {
+            iterator.next();
+            result += 1;
+        }
+        iterator.close();
+        return ItemFactory.getInstance().createLongItem(result);
     }
 
     private static Item computeRDD(
