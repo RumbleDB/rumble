@@ -114,10 +114,10 @@ public class SumFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             DynamicContext context,
             ExceptionMetadata metadata
     ) {
-    	iterator.open(context);
+        iterator.open(context);
 
         Item result = zeroElement;
-        while(iterator.hasNext()) {
+        while (iterator.hasNext()) {
             Item nextValue = iterator.next();
             Item sum = AdditiveOperationIterator.processItem(result, nextValue, false);
             if (sum == null) {
