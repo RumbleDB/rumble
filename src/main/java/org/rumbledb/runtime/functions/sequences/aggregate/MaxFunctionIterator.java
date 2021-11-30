@@ -34,6 +34,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
 import org.rumbledb.runtime.typing.CastIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -50,23 +51,23 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private boolean currentMinIsNullItem = false; // Only happens if all elements are null
-    private double currentMaxDouble;
-    private float currentMaxFloat;
-    private BigDecimal currentMaxDecimal;
-    private long currentMaxLong;
-    private String currentMaxURI;
-    private String currentMaxString;
-    private boolean currentMaxBoolean;
-    private boolean hasTimeZone = false;
-    private DateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
-    private DateTime currentMaxDateTime;
-    private Period currentMaxDayTimeDuration;
-    private Period currentMaxYearMonthDuration;
-    private DateTime currentMaxTime;
-    private byte activeType = 0;
-    private ItemType returnType;
-    private Item result;
+    private transient boolean currentMinIsNullItem = false; // Only happens if all elements are null
+    private transient double currentMaxDouble;
+    private transient float currentMaxFloat;
+    private transient BigDecimal currentMaxDecimal;
+    private transient long currentMaxLong;
+    private transient String currentMaxURI;
+    private transient String currentMaxString;
+    private transient boolean currentMaxBoolean;
+    private transient boolean hasTimeZone = false;
+    private transient DateTime currentMaxDate; // TODO: Change to Date type but had issues with Java compiler
+    private transient DateTime currentMaxDateTime;
+    private transient Period currentMaxDayTimeDuration;
+    private transient Period currentMaxYearMonthDuration;
+    private transient DateTime currentMaxTime;
+    private transient byte activeType = 0;
+    private transient ItemType returnType;
+    private transient Item result;
     private ItemComparator comparator;
 
 
@@ -94,7 +95,21 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-
+        this.currentMinIsNullItem = false;
+        this.currentMaxDouble = 0;
+        this.currentMaxFloat = 0;
+        this.currentMaxDecimal = null;
+        this.currentMaxLong = 0;
+        this.currentMaxURI = null;
+        this.currentMaxString = null;
+        this.currentMaxBoolean = false;
+        this.hasTimeZone = false;
+        this.currentMaxDate = null;
+        this.currentMaxDateTime = null;
+        this.currentMaxDayTimeDuration = null;
+        this.currentMaxYearMonthDuration = null;
+        this.currentMaxTime = null;
+        this.activeType = 0;
         if (!this.iterator.isRDDOrDataFrame()) {
             this.iterator.open(context);
             Item candidateItem = null;
@@ -456,12 +471,13 @@ public class MaxFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             if (df.isEmptySequence()) {
                 return null;
             }
-            df.createOrReplaceTempView("input");
+            String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
             JSoundDataFrame maxDF = df.evaluateSQL(
                 String.format(
-                    "SELECT MAX(`%s`) as `%s` FROM input",
+                    "SELECT MAX(`%s`) as `%s` FROM %s",
                     SparkSessionManager.atomicJSONiqItemColumnName,
-                    SparkSessionManager.atomicJSONiqItemColumnName
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
                 ),
                 df.getItemType()
             );
