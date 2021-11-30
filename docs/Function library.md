@@ -555,7 +555,7 @@ returns true.
 
 [W3C specification](https://www.w3.org/TR/xpath-functions-31/#func-replace)
 
-Arity 2 implemented, arity 3 is not.
+Arity 3 implemented, arity 4 is not.
 
 Regular expression matching and replacing. The semantics of regular expressions are those of Java's Pattern class.
 
@@ -1040,7 +1040,7 @@ returns 13-20-0
 
 ## Functions related to QNames
 
-
+Not implemented
 
 
 ## Functions and operators on sequences
@@ -1676,22 +1676,55 @@ size(())
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s06.html)
 
 Fully implemented
+```
+accumulate(({ "b" : 2 }, { "c" : 3 }, { "b" : [1, "abc"] }, {"c" : {"d" : 0.17}}))
+```
+returns
+```
+{ "b" : [ 2, [ 1, "abc" ] ], "c" : [ 3, { "d" : 0.17 } ] }
+```
 
 ### descendant-arrays
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s06.html)
 
 Fully implemented
+```
+descendant-arrays(([0, "x", { "a" : [1, {"b" : 2}, [2.5]], "o" : {"c" : 3} }]))
+```
+returns 
+```
+[ 0, "x", { "a" : [ 1, { "b" : 2 }, [ 2.5 ] ], "o" : {"c" : 3} } ]
+[ 1, { "b" : 2 }, [ 2.5 ] ]
+[ 2.5 ]
+```
 
 ### descendant-objects
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s07.html)
 
 Fully implemented
-
+```
+descendant-objects(([0, "x", { "a" : [1, {"b" : 2}, [2.5]], "o" : {"c" : 3} }]))
+```
+returns 
+```
+{ "a" : [ 1, { "b" : 2 }, [ 2.5 ] ], "o" : { "c" : 3 } }
+{ "b" : 2 }
+{ "c" : 3 }
+```
 ### descendant-pairs
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s08.html)
 
 Fully implemented
-
+```
+descendant-pairs(({ "a" : [1, {"b" : 2}], "d" : {"c" : 3} }))
+```
+returns 
+```
+{ "a" : [ 1, { "b" : 2 } ] }
+{ "b" : 2 }
+{ "d" : { "c" : 3 } }
+{ "c" : 3 }
+```
 
 ### flatten
 
@@ -1712,9 +1745,13 @@ Returns (1, 2, 3, 4, 5, 6, 7, 8, 9).
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s10.html)
 
 Fully implemented
-
-
-
+```
+intersect(({"a" : "abc", "b" : 2, "c" : [1, 2], "d" : "0"}, { "a" : 2, "b" : "ab", "c" : "foo" }))
+```
+returns 
+```
+{ "a" : [ "abc", 2 ], "b" : [ 2, "ab" ], "c" : [ [ 1, 2 ], "foo" ] }
+```
 
 ### project
 [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html#ch08s01s11.html)
