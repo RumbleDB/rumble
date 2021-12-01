@@ -254,7 +254,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-                childDataFrame.getDataFrame().show();
                 List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
                     childDataFrame.getDataFrame().schema(),
                     null,
@@ -271,13 +270,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         DataTypes.BooleanType
                     );
                 String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-                System.err.println(
-                    String.format(
-                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
-                        left,
-                        UDFParameters
-                    )
-                );
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT * FROM %s WHERE predicate(%s) = 'true'",
@@ -287,12 +279,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
                     childDataFrame.getItemType()
                 );
             } else {
-                childDataFrame.getDataFrame().show();
                 JSoundDataFrame zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
                     childDataFrame,
                     1L
                 );
-                zippedChildDataFrame.getDataFrame().show();
                 String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
                 List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
                     zippedChildDataFrame.getDataFrame().schema(),
@@ -323,15 +313,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                         DataTypes.BooleanType
                     );
                 String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-                String projection = FlworDataFrameUtils.getUDFParameters(originalcolumns);
-                System.err.println(
-                    String.format(
-                        "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
-                        projection,
-                        left,
-                        UDFParameters
-                    )
-                );
+                String projection = FlworDataFrameUtils.getSQLProjection(originalColumns, false);
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
