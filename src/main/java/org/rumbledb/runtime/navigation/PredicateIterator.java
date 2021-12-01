@@ -26,7 +26,6 @@ import org.apache.spark.api.java.function.Function;
 import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
-import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
@@ -247,10 +246,6 @@ public class PredicateIterator extends HybridRuntimeIterator {
          * );
          */
         // NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
-        Map<Name, VariableDependency> dependencies = filter.getVariableDependencies();
-        for (Name name : dependencies.keySet()) {
-            System.err.println(name);
-        }
         // TODO nativeQuery == NativeClauseContext.NoNativeQuery) {
         if (this.isBooleanOnlyFilter) {
             String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
