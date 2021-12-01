@@ -31,10 +31,12 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
@@ -238,99 +240,99 @@ public class PredicateIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
         RuntimeIterator filter = this.children.get(1);
-        /*
-         * NativeClauseContext nativeClauseContext = new NativeClauseContext(
-         * FLWOR_CLAUSES.FOR,
-         * childDataFrame.getDataFrame().schema(),
-         * context
-         * );
-         */
-        // NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
-        // TODO nativeQuery == NativeClauseContext.NoNativeQuery) {
-        if (this.isBooleanOnlyFilter) {
-            String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-            List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+        NativeClauseContext nativeClauseContext = new NativeClauseContext(
+                FLWOR_CLAUSES.FILTER,
                 childDataFrame.getDataFrame().schema(),
-                null,
-                null,
-                null
-            );
-
-            childDataFrame.getDataFrame()
-                .sparkSession()
-                .udf()
-                .register(
-                    "predicate",
-                    new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
-                    DataTypes.BooleanType
+                context
+        );
+        NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            if (this.isBooleanOnlyFilter) {
+                String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                    childDataFrame.getDataFrame().schema(),
+                    null,
+                    null,
+                    null
                 );
-            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-            return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT * FROM %s WHERE predicate(%s) = 'true'",
-                    left,
-                    UDFParameters
-                ),
-                childDataFrame.getItemType()
-            );
-        } else {
-            JSoundDataFrame zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
-                childDataFrame,
-                1L
-            );
-            String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
-            List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
-                zippedChildDataFrame.getDataFrame().schema(),
-                null,
-                null,
-                null
-            );
-            List<String> originalcolumns = FlworDataFrameUtils.getColumnNames(
-                childDataFrame.getDataFrame().schema(),
-                null,
-                null,
-                null
-            );
 
-            long contextSize = childDataFrame.getDataFrame().count();
-            childDataFrame.getDataFrame()
-                .sparkSession()
-                .udf()
-                .register(
-                    "predicate",
-                    new PredicateWithZipUDF(
-                            filter,
-                            context,
-                            getMetadata(),
-                            childDataFrame.getItemType(),
-                            contextSize
+                childDataFrame.getDataFrame()
+                    .sparkSession()
+                    .udf()
+                    .register(
+                        "predicate",
+                        new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
+                        DataTypes.BooleanType
+                    );
+                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
+                        left,
+                        UDFParameters
                     ),
-                    DataTypes.BooleanType
+                    childDataFrame.getItemType()
                 );
-            String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-            String projection = FlworDataFrameUtils.getSQLProjection(originalcolumns, false);
-            return childDataFrame.evaluateSQL(
-                String.format(
-                    "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
-                    projection,
-                    left,
-                    UDFParameters
-                ),
-                childDataFrame.getItemType()
-            );
+            } else {
+                JSoundDataFrame zippedChildDataFrame = FlworDataFrameUtils.zipWithIndex(
+                    childDataFrame,
+                    1L
+                );
+                String left = FlworDataFrameUtils.createTempView(zippedChildDataFrame.getDataFrame());
+                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                    zippedChildDataFrame.getDataFrame().schema(),
+                    null,
+                    null,
+                    null
+                );
+                List<String> originalcolumns = FlworDataFrameUtils.getColumnNames(
+                    childDataFrame.getDataFrame().schema(),
+                    null,
+                    null,
+                    null
+                );
+
+                long contextSize = childDataFrame.getDataFrame().count();
+                childDataFrame.getDataFrame()
+                    .sparkSession()
+                    .udf()
+                    .register(
+                        "predicate",
+                        new PredicateWithZipUDF(
+                                filter,
+                                context,
+                                getMetadata(),
+                                childDataFrame.getItemType(),
+                                contextSize
+                        ),
+                        DataTypes.BooleanType
+                    );
+                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                String projection = FlworDataFrameUtils.getSQLProjection(originalcolumns, false);
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
+                        projection,
+                        left,
+                        UDFParameters
+                    ),
+                    childDataFrame.getItemType()
+                );
+            }
         }
-        // }
-        /*
-         * String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-         * return childDataFrame.evaluateSQL(
-         * String.format(
-         * "SELECT * FROM %s WHERE %s",
-         * left,
-         * nativeQuery.getResultingQuery()
-         * ),
-         * childDataFrame.getItemType()
-         * );
-         */
+        System.err.println(
+            "[INFO] Rumble was able to optimize a predicate to a native SQL query."
+        );
+        String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        return childDataFrame.evaluateSQL(
+            String.format(
+                "SELECT * FROM %s WHERE %s",
+                left,
+                nativeQuery.getResultingQuery()
+            ),
+            childDataFrame.getItemType()
+        );
+
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
