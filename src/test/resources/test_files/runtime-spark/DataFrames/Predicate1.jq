@@ -11,6 +11,6 @@ let $data := validate type local:t* {
 }
 return (
   $data[$$.foo eq $$.bar],
-  $data[position() le 2]
+  $data[position() le 2],
   $data[position() ge last() - 1]
 )

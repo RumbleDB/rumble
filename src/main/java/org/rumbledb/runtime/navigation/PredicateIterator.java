@@ -335,6 +335,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 return childDataFrame.evaluateSQL(
                     String.format(
                         "SELECT %s FROM %s WHERE predicate(%s) = 'true'",
+                        projection,
                         left,
                         UDFParameters
                     ),
