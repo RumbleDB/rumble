@@ -384,7 +384,6 @@ public class FlworDataFrameUtils {
         if (dependencies == null) {
             List<String> result = new ArrayList<>();
             for (String columnName : inputSchema.fieldNames()) {
-                System.err.println("Add " + columnName);
                 Name name = variableForColumnName(columnName);
                 if (variablesToExclude != null && variablesToExclude.contains(name)) {
                     continue;
@@ -816,6 +815,13 @@ public class FlworDataFrameUtils {
         }
     }
 
+    /**
+     * Zips a JSoundDataFrame to a special column.
+     *
+     * @param df - df to perform the operation on
+     * @param offset - starting offset for the first index
+     * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
+     */
     public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
         return new JSoundDataFrame(
                 zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
