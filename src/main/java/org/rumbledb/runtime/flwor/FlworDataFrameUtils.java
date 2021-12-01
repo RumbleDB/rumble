@@ -87,6 +87,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 
@@ -814,10 +815,12 @@ public class FlworDataFrameUtils {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
     }
-    
-    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset, String indexName) {
-        // TODO extend the item type with count column
-        return new JSoundDataFrame(zipWithIndex(jdf.getDataFrame(), offset, indexName), jdf.getItemType());
+
+    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
+        return new JSoundDataFrame(
+                zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
+                jdf.getItemType()
+        );
     }
 
     /**
