@@ -95,8 +95,5 @@ public class FilterExpression extends Expression {
             }
         }
         this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
-        if (this.highestExecutionMode.equals(ExecutionMode.DATAFRAME)) {
-            this.highestExecutionMode = ExecutionMode.RDD;
-        }
     }
 }

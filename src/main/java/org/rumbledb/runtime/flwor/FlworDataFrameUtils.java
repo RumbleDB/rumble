@@ -77,6 +77,7 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -382,6 +383,7 @@ public class FlworDataFrameUtils {
         if (dependencies == null) {
             List<String> result = new ArrayList<>();
             for (String columnName : inputSchema.fieldNames()) {
+                System.err.println("Add " + columnName);
                 Name name = variableForColumnName(columnName);
                 if (variablesToExclude != null && variablesToExclude.contains(name)) {
                     continue;
@@ -811,6 +813,11 @@ public class FlworDataFrameUtils {
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
+    }
+    
+    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset, String indexName) {
+        // TODO extend the item type with count column
+        return new JSoundDataFrame(zipWithIndex(jdf.getDataFrame(), offset, indexName), jdf.getItemType());
     }
 
     /**

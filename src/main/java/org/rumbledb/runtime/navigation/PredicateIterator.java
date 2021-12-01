@@ -23,25 +23,38 @@ package org.rumbledb.runtime.navigation;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
 import org.rumbledb.runtime.logics.AndOperationIterator;
 import org.rumbledb.runtime.logics.NotOperationIterator;
 import org.rumbledb.runtime.logics.OrOperationIterator;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.primary.BooleanRuntimeIterator;
+import org.rumbledb.types.ItemType;
+
 import scala.Tuple2;
+import sparksoniq.spark.SparkSessionManager;
 
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -224,6 +237,99 @@ public class PredicateIterator extends HybridRuntimeIterator {
             JavaPairRDD<Item, Long> resultRDD = zippedChildRDD.filter(transformation);
             return resultRDD.keys();
         }
+    }
+
+    @Override
+    public boolean implementsDataFrames() {
+        return true;
+    }
+
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame childDataFrame = this.children.get(0).getDataFrame(context);
+        RuntimeIterator filter = this.children.get(1);
+        NativeClauseContext nativeClauseContext = new NativeClauseContext(FLWOR_CLAUSES.FOR, childDataFrame.getDataFrame().schema(), context);
+        NativeClauseContext nativeQuery = filter.generateNativeQuery(nativeClauseContext);
+        Map<Name, VariableDependency> dependencies = filter.getVariableDependencies();
+        for(Name name: dependencies.keySet())
+        {
+            System.err.println(name);
+        }
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            if (this.isBooleanOnlyFilter) {
+                String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+                childDataFrame.getDataFrame().show();
+                childDataFrame = FlworDataFrameUtils.zipWithIndex(childDataFrame, 1L, SparkSessionManager.temporaryColumnName.toString());
+                childDataFrame.getDataFrame().show();
+                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                    childDataFrame.getDataFrame().schema(),
+                    null,
+                    null,
+                    null
+                );
+    
+                childDataFrame.getDataFrame().sparkSession()
+                    .udf()
+                    .register(
+                        "predicate",
+                        new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
+                        DataTypes.BooleanType
+                    );
+                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                System.err.println(String.format(
+                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
+                        left,
+                        UDFParameters
+                    ));
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
+                        left,
+                        UDFParameters
+                    ),
+                    childDataFrame.getItemType()
+                );
+            } else {
+                String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+                childDataFrame.getDataFrame().show();
+                List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+                    childDataFrame.getDataFrame().schema(),
+                    null,
+                    null,
+                    null
+                );
+    
+                childDataFrame.getDataFrame().sparkSession()
+                    .udf()
+                    .register(
+                        "predicate",
+                        new PredicateUDF(filter, context, getMetadata(), childDataFrame.getItemType()),
+                        DataTypes.BooleanType
+                    );
+                String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+                System.err.println(String.format(
+                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
+                        left,
+                        UDFParameters
+                    ));
+                return childDataFrame.evaluateSQL(
+                    String.format(
+                        "SELECT * FROM %s WHERE predicate(%s) = 'true'",
+                        left,
+                        UDFParameters
+                    ),
+                    childDataFrame.getItemType()
+                );
+            }
+        }
+        String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+        return childDataFrame.evaluateSQL(
+            String.format(
+                "SELECT * FROM %s WHERE %s",
+                left,
+                nativeQuery.getResultingQuery()
+            ),
+            childDataFrame.getItemType()
+        );
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
