@@ -251,7 +251,7 @@ public class PredicateIterator extends HybridRuntimeIterator {
         for (Name name : dependencies.keySet()) {
             System.err.println(name);
         }
-        if (true) {//TODO nativeQuery == NativeClauseContext.NoNativeQuery) {
+        if (true) {// TODO nativeQuery == NativeClauseContext.NoNativeQuery) {
             if (this.isBooleanOnlyFilter) {
                 String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
                 List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
@@ -325,15 +325,17 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 );
             }
         }
-        /*String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
-        return childDataFrame.evaluateSQL(
-            String.format(
-                "SELECT * FROM %s WHERE %s",
-                left,
-                nativeQuery.getResultingQuery()
-            ),
-            childDataFrame.getItemType()
-        );*/
+        /*
+         * String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
+         * return childDataFrame.evaluateSQL(
+         * String.format(
+         * "SELECT * FROM %s WHERE %s",
+         * left,
+         * nativeQuery.getResultingQuery()
+         * ),
+         * childDataFrame.getItemType()
+         * );
+         */
     }
 
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
