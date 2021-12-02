@@ -818,7 +818,7 @@ public class FlworDataFrameUtils {
     /**
      * Zips a JSoundDataFrame to a special column.
      *
-     * @param df - df to perform the operation on
+     * @param jdf - the JSoundDataframe to perform the operation on
      * @param offset - starting offset for the first index
      * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
      */
