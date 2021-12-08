@@ -252,8 +252,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
 
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
-        leftInputTuple.createOrReplaceTempView(leftInputDFTableName);
-        rightInputTuple.createOrReplaceTempView(rightInputDFTableName);
+        leftInputDFTableName = FlworDataFrameUtils.createTempView(leftInputTuple);
+        rightInputDFTableName = FlworDataFrameUtils.createTempView(rightInputTuple);
 
         StructType leftSchema = leftInputTuple.schema();
         StructType rightSchema = rightInputTuple.schema();
@@ -465,8 +465,8 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         System.err.println(
             "[INFO] Rumble was able to optimize a join to a native SQL query."
         );
-        leftInputTuple.createOrReplaceTempView("left");
-        rightInputTuple.createOrReplaceTempView("right");
+        String left = FlworDataFrameUtils.createTempView(leftInputTuple);
+        String right = FlworDataFrameUtils.createTempView(rightInputTuple);
         List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
             unionSchema,
             outputTupleVariableDependencies,
@@ -480,8 +480,10 @@ public class JoinClauseSparkIterator extends RuntimeTupleIterator {
         return leftInputTuple.sparkSession()
             .sql(
                 String.format(
-                    "SELECT %s FROM left JOIN right ON %s",
+                    "SELECT %s FROM %s JOIN %s ON %s",
                     projectionVariables,
+                    left,
+                    right,
                     nativeQuery.getResultingQuery()
                 )
             );

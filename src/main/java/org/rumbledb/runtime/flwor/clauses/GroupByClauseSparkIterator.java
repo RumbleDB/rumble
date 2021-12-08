@@ -306,7 +306,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         inputSchema = df.schema();
 
-        df.createOrReplaceTempView("input");
+        String input = FlworDataFrameUtils.createTempView(df);
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
@@ -371,10 +371,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String createColumnsSQL = String.format(
-            "select %s createGroupingColumns(%s) as `%s` from input",
+            "select %s createGroupingColumns(%s) as `%s` from %s",
             selectSQL,
             UDFParameters,
-            appendedGroupingColumnsName
+            appendedGroupingColumnsName,
+            input
         );
 
         StructType schemaType = df.schema();
