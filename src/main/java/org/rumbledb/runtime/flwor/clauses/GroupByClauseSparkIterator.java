@@ -306,14 +306,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         inputSchema = df.schema();
 
-        df.createOrReplaceTempView("input");
+        String input = FlworDataFrameUtils.createTempView(df);
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
             variableAccessNames,
             this.outputTupleProjection,
             inputSchema,
-            context
+            context,
+            input
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -371,10 +372,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String createColumnsSQL = String.format(
-            "select %s createGroupingColumns(%s) as `%s` from input",
+            "select %s createGroupingColumns(%s) as `%s` from %s",
             selectSQL,
             UDFParameters,
-            appendedGroupingColumnsName
+            appendedGroupingColumnsName,
+            input
         );
 
         StructType schemaType = df.schema();
@@ -509,7 +511,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             List<Name> groupingVariables,
             Map<Name, DynamicContext.VariableDependency> dependencies,
             StructType inputSchema,
-            DynamicContext context
+            DynamicContext context,
+            String input
     ) {
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
@@ -574,8 +577,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame.sparkSession()
             .sql(
                 String.format(
-                    "select %s from input group by %s",
+                    "select %s from %s group by %s",
                     selectString,
+                    input,
                     groupByString
                 )
             );
