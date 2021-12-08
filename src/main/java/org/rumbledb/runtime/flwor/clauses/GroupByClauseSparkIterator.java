@@ -313,7 +313,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             variableAccessNames,
             this.outputTupleProjection,
             inputSchema,
-            context
+            context,
+            input
         );
         if (nativeQueryResult != null) {
             return nativeQueryResult;
@@ -510,7 +511,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             List<Name> groupingVariables,
             Map<Name, DynamicContext.VariableDependency> dependencies,
             StructType inputSchema,
-            DynamicContext context
+            DynamicContext context,
+            String input
     ) {
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
@@ -575,8 +577,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame.sparkSession()
             .sql(
                 String.format(
-                    "select %s from input group by %s",
+                    "select %s from %s group by %s",
                     selectString,
+                    input,
                     groupByString
                 )
             );
