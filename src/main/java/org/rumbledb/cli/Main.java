@@ -61,6 +61,12 @@ public class Main {
                 showErrorInfo = sparksoniqConf.getShowErrorInfo();
             }
             handleException(ex, showErrorInfo);
+        } catch (OutOfMemoryError ex) {
+            boolean showErrorInfo = false;
+            if (sparksoniqConf != null) {
+                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            }
+            handleException(ex, showErrorInfo);
         }
     }
 
