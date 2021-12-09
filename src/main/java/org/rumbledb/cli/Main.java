@@ -61,6 +61,12 @@ public class Main {
                 showErrorInfo = sparksoniqConf.getShowErrorInfo();
             }
             handleException(ex, showErrorInfo);
+        } catch (OutOfMemoryError ex) {
+            boolean showErrorInfo = false;
+            if (sparksoniqConf != null) {
+                showErrorInfo = sparksoniqConf.getShowErrorInfo();
+            }
+            handleException(ex, showErrorInfo);
         }
     }
 
@@ -88,6 +94,17 @@ public class Main {
                     ex.printStackTrace();
                 }
                 System.exit(42);
+            } else if (ex instanceof OutOfMemoryError) {
+                System.err.println(
+                    "⚠️  Java went out of memory."
+                );
+                System.err.println(
+                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(46);
             } else if (ex instanceof IllegalArgumentException) {
                 System.err.println(
                     "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
