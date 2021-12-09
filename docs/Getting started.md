@@ -12,11 +12,21 @@ Note that, if you want something even more straightforward, you can alternativel
 
 RumbleDB requires an Apache Spark installation on Linux, Mac or Windows.
 
-It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it, put it at a location of your choosing, and add the subdirectory "bin" within the unpacked directory to the PATH variable, as well as the location of the unpacked directory to SPARK_HOME.
+It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.1.2. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
 
-As an alternative, users who love the command line can also install Spark with a package management system instead, such as brew (on macOS) or apt-get (on Ubuntu).
+What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-We recommend using Spark 3.1.2 or 3.2.0, although we also provide RumbleDB jars for Spark 2 and Spark 3.0 for legacy purposes. However it is not recommended to use older versions of Spark for new projects.
+    export PATH=/your/spark-home/location/here/bin:$PATH
+
+to the file .zshrc in your home directory, then making sure to force the change with
+
+    . ~/.zshrc
+
+in the shell. In Windows, changing the PATH variable is done in the control panel. In Linux, it is similar to macOS.
+
+As an alternative, users who love the command line can also install Spark with a package management system instead, such as brew (on macOS) or apt-get (on Ubuntu). However, these might be less predictable than a raw download.
+
+Spark 3.2 has not been thoroughly tested by us yet. We had to fix an issue by downgrading the Kryo version we use to Kryo 4 because Spark uses Kryo 4 in a way incompatible with Kryo 5. This may lead to a performance regression if you use Spark 3.2.
 
 You can test that Spark was correctly installed with:
 
@@ -26,7 +36,7 @@ You can test that Spark was correctly installed with:
 
 If you use Spark 2.4, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8.
 
-Spark 3 is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
+Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
 
     java -version
 
@@ -37,7 +47,15 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 3.1 or Spark 3.2, you can use the default jar called rumbledb-1.16.0. If you use Spark 2, make sure to use the corresponding jar (suffixed for-spark-2) and to replace the jar name accordingly in all our instructions. Likewise, if you use Spark 3, use the RumbleDB jar with the suffix for-spark-3.0.
+If you use Spark 2.4+, use rumbledb-1.16.2-for-spark-2.4.jar.
+
+If you use Spark 3.0+, use rumbledb-1.16.2-for-spark-3.0.jar.
+
+If you use Spark 3.1+, use rumbledb-1.16.2-for-spark-3.1.jar.
+
+If you use Spark 3.2+, use rumbledb-1.16.2-for-spark-3.2.jar.
+
+Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 ### Create some data set
 
@@ -63,7 +81,7 @@ In the JSON Lines format that this simple dataset uses, you just need to make su
 
 In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
-    spark-submit rumbledb-1.16.0.jar --shell yes
+    spark-submit rumbledb.jar --shell yes
                  
 The RumbleDB shell appears:
 
