@@ -115,7 +115,7 @@ You can also run the docker as a server like so:
 docker run -p 8001:8001 --rm rumbledb/rumble --server yes --port 8001 --host 0.0.0.0
 ```
 
-You can change the port to something else than 8001 at all three places it appears. Do not forget `-p 8001:8001` that forwards the port to the outside of the docker. Then, you can use a [jupyter notebook](https://github.com/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) connected to the RumbleDB docker server to write queries in it.
+You can change the port to something else than 8001 at all three places it appears. Do not forget `-p 8001:8001` that forwards the port to the outside of the docker. Then, you can use a [jupyter notebook](https://github.com/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) connected to the RumbleDB docker server to write queries in it. Point the notebook to `http://localhost:8001/jsoniq` in the appropriate cell (or any other port).
 
 ## Querying local files with the docker version of RumbleDB
 
