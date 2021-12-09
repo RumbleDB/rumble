@@ -1,5 +1,9 @@
 # With docker
 
+## Known issue
+
+On occasion, the docker version of RumbleDB may throw a Kryo NoSuchMethodError on some systems. This is under investigation and we are working on a fix. If you get this error, we recommend trying a local installation.
+
 ## Running simple queries with Docker
 
 Docker is the easiest way to get a standard environment that just works.
