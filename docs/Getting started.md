@@ -16,9 +16,10 @@ It is straightforward to directly [download it](https://spark.apache.org/downloa
 
 What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-    export PATH=/your/spark-home/location/here/bin:$PATH
+    export SPARK_HOME=/path/to/spark-3.1.2-bin-hadoop3.2
+    export PATH=$SPARK_HOME/bin:$PATH
 
-to the file .zshrc in your home directory, then making sure to force the change with
+(with SPARK_HOME appropriately set to match your unzipped Spark directory) to the file .zshrc in your home directory, then making sure to force the change with
 
     . ~/.zshrc
 
