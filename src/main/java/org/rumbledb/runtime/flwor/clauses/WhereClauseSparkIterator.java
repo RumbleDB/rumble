@@ -194,11 +194,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
-        df.createOrReplaceTempView("input");
+        String input = FlworDataFrameUtils.createTempView(df);
         df = df.sparkSession()
             .sql(
                 String.format(
-                    "select * from input where whereClauseUDF(%s) = 'true'",
+                    "select * from %s where whereClauseUDF(%s) = 'true'",
+                    input,
                     UDFParameters
                 )
             );
@@ -383,11 +384,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         System.err.println(
             "[INFO] Rumble was able to optimize a where clause to a native SQL query."
         );
-        dataFrame.createOrReplaceTempView("input");
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()
             .sql(
                 String.format(
-                    "select * from input where %s",
+                    "select * from %s where %s",
+                    input,
                     nativeQuery.getResultingQuery()
                 )
             );

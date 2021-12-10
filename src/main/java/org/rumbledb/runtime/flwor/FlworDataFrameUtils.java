@@ -672,6 +672,8 @@ public class FlworDataFrameUtils {
                     queryColumnString.append("sum(`");
                     queryColumnString.append(columnName);
                     queryColumnString.append("`)");
+                } else if (shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, columnName)) {
+                    queryColumnString.append("1");
                 } else if (shouldCalculateCount(dependencies, columnName)) {
                     queryColumnString.append("count(`");
                     queryColumnString.append(columnName);
@@ -737,6 +739,18 @@ public class FlworDataFrameUtils {
             }
         }
         throw new OurBadException("Column does not exist: " + columnName);
+    }
+
+    private static boolean shouldCalculateCountGroupingColumn(
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> groupbyVariableNames,
+            String columnName
+    ) {
+        return dependencies.containsKey(variableForColumnName(columnName))
+            && dependencies.get(
+                variableForColumnName(columnName)
+            ) == DynamicContext.VariableDependency.COUNT
+            && groupbyVariableNames.contains(variableForColumnName(columnName));
     }
 
     private static boolean shouldCalculateCount(
