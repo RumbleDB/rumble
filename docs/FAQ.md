@@ -11,3 +11,7 @@ If this happens, you can download winutils.exe to solve the issue as explained [
 ## "java.lang.NoSuchMethodError: com.esotericsoftware.kryo.serializers. FieldSerializer.setIgnoreSyntheticFields" with docker
 
 This is a known issue under investigation. It is related to a version conflict between Kryo 4 and Kryo 5 that occasionally happens on some docker installations. We recommend trying a local installation instead, as described in the Getting Started section.
+
+## Java version
+
+A very common issue leading to some errors is using the wrong Java version. With Spark 2+, only Java 8 is supported. With Spark 3+, Java 8 or 11 are supported but no other version. You should make sure in particular you are not using a more recent Java version. Multiple Java versions can normally co-habit on the same machine but you need to make sure to set the JAVA_HOME variable appropriately.
