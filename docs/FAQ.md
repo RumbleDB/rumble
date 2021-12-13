@@ -10,4 +10,4 @@ If this happens, you can download winutils.exe to solve the issue as explained [
 
 ## "java.lang.NoSuchMethodError: com.esotericsoftware.kryo.serializers. FieldSerializer.setIgnoreSyntheticFields" with docker
 
-This is a known issue under investigation. It is related to a version conflict between Kryo 4 and Kryo 5 that occasionally happens on some docker installations.
+This is a known issue under investigation. It is related to a version conflict between Kryo 4 and Kryo 5 that occasionally happens on some docker installations. We recommend trying a local installation instead, as described in the Getting Started section.
