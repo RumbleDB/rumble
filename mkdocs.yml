@@ -11,7 +11,8 @@ pages:
   - '9. CLI and HTTP parameters': 'CLI.md'
   - '10. Define and validate your own types': 'Types.md'
   - '11. Machine learning library': 'RumbleML.md'
-  - '12. Error codes': 'Error codes.md'
-  - '13. Compile from GitHub': 'install.md'
-  - '14. Licenses': 'Licenses.md'
+  - '12. FAQ and common issues': 'FAQ.md'
+  - '13. Error codes': 'Error codes.md'
+  - '14. Compile from GitHub': 'install.md'
+  - '15. Licenses': 'Licenses.md'
 theme: readthedocs
