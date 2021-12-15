@@ -60,7 +60,7 @@ functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
 
-typeDecl                : 'declare' 'type' type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+typeDecl                : 'declare' Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
@@ -176,7 +176,7 @@ unaryExpr               : op+=('-' | '+')* main_expr=valueExpr;
 valueExpr               : simpleMap_expr=simpleMapExpr
                         | validate_expr=validateExpr;
 
-validateExpr            : 'validate' 'type' sequenceType '{' expr '}';
+validateExpr            : 'validate' Ktype sequenceType '{' expr '}';
 
 simpleMapExpr           : main_expr=postFixExpr ('!' map_expr+=postFixExpr)*;
 
@@ -307,6 +307,7 @@ keyWords                : Kjsoniq
                         | Kunordered
                         | Ktrue
                         | Kfalse
+                        | Ktype
                         ;
 
 ///////////////////////// literals
@@ -404,6 +405,8 @@ Kunordered              : 'unordered';
 Ktrue                   : 'true';
 
 Kfalse                  : 'false';
+
+Ktype                  : 'type';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 

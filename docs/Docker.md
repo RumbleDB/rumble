@@ -1,5 +1,9 @@
 # With docker
 
+## Known issue
+
+On occasion, the docker version of RumbleDB may throw a Kryo NoSuchMethodError on some systems. This is under investigation and we are working on a fix. If you get this error, we recommend trying a local installation.
+
 ## Running simple queries with Docker
 
 Docker is the easiest way to get a standard environment that just works.
@@ -103,6 +107,16 @@ Finally, RumbleDB can also parallelize data provided within the query, exactly l
 
 Mind the double parenthesis, as parallelize is a unary function to which we pass a sequence of objects.
 
+## Running the RumbleDB docker as a server
+
+You can also run the docker as a server like so:
+
+```
+docker run -p 8001:8001 --rm rumbledb/rumble --server yes --port 8001 --host 0.0.0.0
+```
+
+You can change the port to something else than 8001 at all three places it appears. Do not forget `-p 8001:8001` that forwards the port to the outside of the docker. Then, you can use a [jupyter notebook](https://github.com/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) connected to the RumbleDB docker server to write queries in it. Point the notebook to `http://localhost:8001/jsoniq` in the appropriate cell (or any other port).
+
 ## Querying local files with the docker version of RumbleDB
 
 In order to query your local files, you need to mount a local directory to a directory within the docker. This is done with the `--mount` option, and the source path must be absolute. For the target, you can pick anything that makes sense to you.
@@ -114,3 +128,5 @@ Then you can go ahead and use local paths in input functions, like so:
     for $i in json-file("/path/to/my/directory/products-small.json", 10)
     where $i.quantity gt 99
     return $i
+
+You can also mount a local directory in this way running it as a server rather than a shell.
