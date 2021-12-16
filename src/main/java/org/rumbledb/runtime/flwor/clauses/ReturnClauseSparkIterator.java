@@ -33,12 +33,15 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -61,16 +64,19 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private RuntimeIterator expression;
     private Item nextResult;
+    private ItemType itemType;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             ExecutionMode executionMode,
-            ExceptionMetadata iteratorMetadata
+            ExceptionMetadata iteratorMetadata,
+            ItemType itemType
     ) {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         this.child = child;
         this.expression = expression;
+        this.itemType = itemType;
         setInputAndOutputTupleVariableDependencies();
     }
 
@@ -129,6 +135,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     }
 
     @Override
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         RuntimeIterator expression = this.children.get(0);
         if (expression.isRDDOrDataFrame()) {
@@ -157,6 +168,40 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             if (result == null) {
                 return JSoundDataFrame.emptyDataFrame();
             }
+            return result;
+        }
+        if (!this.child.isDataFrame()) {
+            throw new OurBadException(
+                    "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
+                    getMetadata()
+            );
+        }
+
+        Dataset<Row> df = this.child.getDataFrame(context);
+        StructType inputSchema = df.schema();
+        Dataset<Row> nativeQueryResult = tryNativeQuery(
+            df,
+            this.expression,
+            inputSchema,
+            context
+        );
+        if (nativeQueryResult != null) {
+            if (this.itemType.isObjectItemType()) {
+                String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
+                nativeQueryResult =
+                    nativeQueryResult.sparkSession()
+                        .sql(
+                            String.format(
+                                "SELECT `%s`.* FROM %s",
+                                SparkSessionManager.atomicJSONiqItemColumnName,
+                                input
+                            )
+                        );
+            }
+            JSoundDataFrame result = new JSoundDataFrame(
+                    nativeQueryResult,
+                    this.itemType
+            );
             return result;
         }
 
@@ -264,6 +309,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         buffer.append(getClass().getSimpleName());
         buffer.append(" | ");
+        buffer.append(getHighestExecutionMode());
+        buffer.append(" | ");
 
         buffer.append("Variable dependencies: ");
         Map<Name, DynamicContext.VariableDependency> dependencies = getVariableDependencies();
@@ -283,6 +330,43 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
 
     private void writeObject(ObjectOutputStream i) throws IOException {
         i.defaultWriteObject();
+    }
+
+    /**
+     * Try to generate the native query for the let clause and run it, if successful return the resulting dataframe,
+     * otherwise it returns null
+     *
+     * @param dataFrame input dataframe for the query
+     * @param iterator where filtering expression iterator
+     * @param inputSchema input schema of the dataframe
+     * @param context current dynamic context of the dataframe
+     * @return resulting dataframe of the let clause if successful, null otherwise
+     */
+    public static Dataset<Row> tryNativeQuery(
+            Dataset<Row> dataFrame,
+            RuntimeIterator iterator,
+            StructType inputSchema,
+            DynamicContext context
+    ) {
+        NativeClauseContext letContext = new NativeClauseContext(FLWOR_CLAUSES.RETURN, inputSchema, context);
+        NativeClauseContext nativeQuery = iterator.generateNativeQuery(letContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            return null;
+        }
+        System.err.println(
+            "[INFO] Rumble was able to optimize a return clause to a native SQL query."
+        );
+        String input = FlworDataFrameUtils.createTempView(dataFrame);
+        Dataset<Row> result = dataFrame.sparkSession()
+            .sql(
+                String.format(
+                    "select %s as `%s` from %s",
+                    nativeQuery.getResultingQuery(),
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
+                )
+            );
+        return result;
     }
 
 }
