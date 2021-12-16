@@ -249,7 +249,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         Item item = items.get(0);
-        if (!item.isInt()) {
+        if (!item.isInteger()) {
             return null;
         }
         System.err.println(
@@ -257,7 +257,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         );
         Dataset<Row> df = this.child.getDataFrame(context);
         String input = FlworDataFrameUtils.createTempView(df);
-        return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getIntValue()));
+        return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
 
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {
