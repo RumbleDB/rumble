@@ -23,6 +23,7 @@ package org.rumbledb.runtime.flwor.clauses;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
+import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -41,6 +42,7 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
 import org.rumbledb.types.ItemType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -205,6 +207,35 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             return result;
         }
 
+        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
+            inputSchema,
+            this.expression.getVariableDependencies(),
+            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
+            null
+        );
+
+        df.sparkSession()
+            .udf()
+            .register(
+                "letClauseUDF",
+                new LetClauseUDF(this.expression, context, inputSchema, UDFcolumns),
+                DataTypes.BinaryType
+            );
+
+        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+
+        String input = FlworDataFrameUtils.createTempView(df);
+
+        df = df.sparkSession()
+            .sql(
+                String.format(
+                    "select letClauseUDF(%s) as %s from %s",
+                    UDFParameters,
+                    SparkSessionManager.temporaryColumnName,
+                    input
+                )
+            );
+        // return new JSoundDataFrame(df, this.itemType);
         throw new OurBadException(
                 "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
                 getMetadata()
