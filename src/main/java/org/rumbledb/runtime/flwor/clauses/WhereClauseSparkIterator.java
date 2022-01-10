@@ -225,7 +225,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
         ComparisonIterator comparisonIterator = (ComparisonIterator) this.expression;
-        if (!comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.VC_LE)) {
+        if (
+            !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.VC_LE)
+                &&
+                !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.GC_LE)
+        ) {
             return null;
         }
         RuntimeIterator left = comparisonIterator.getLeftIterator();
@@ -255,7 +259,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         System.err.println(
             "[INFO] Rumble detected a LIMIT in a count and where clause."
         );
-        Dataset<Row> df = this.child.getDataFrame(context);
+        Dataset<Row> df = this.child.getChildIterator().getDataFrame(context);
         String input = FlworDataFrameUtils.createTempView(df);
         return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
