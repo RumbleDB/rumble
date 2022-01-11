@@ -520,6 +520,9 @@ public class AtomicItemType implements ItemType {
         if (this.getPrimitiveType().equals(atomicItem)) {
             return false;
         }
+        if (this.getPrimitiveType().equals(dateItem)) {
+            return false; // xs:date has a time zone but not in DataFrames.
+        }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;
         }
