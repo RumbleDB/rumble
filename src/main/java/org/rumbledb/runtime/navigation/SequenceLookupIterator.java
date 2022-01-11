@@ -51,7 +51,7 @@ public class SequenceLookupIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         List<Item> materializedItems = new ArrayList<>();
         this.iterator.materializeNFirstItems(
-            this.currentDynamicContextForLocalExecution,
+            dynamicContext,
             materializedItems,
             this.position
         );
