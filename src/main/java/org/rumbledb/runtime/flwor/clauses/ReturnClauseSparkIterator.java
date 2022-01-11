@@ -42,7 +42,6 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
 import org.rumbledb.types.SequenceType;
-import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
