@@ -77,6 +77,7 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -86,6 +87,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 
@@ -825,6 +827,20 @@ public class FlworDataFrameUtils {
         } else {
             throw new OurBadException("Count is not available. Items should have been deserialized and counted.");
         }
+    }
+
+    /**
+     * Zips a JSoundDataFrame to a special column.
+     *
+     * @param jdf - the JSoundDataframe to perform the operation on
+     * @param offset - starting offset for the first index
+     * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
+     */
+    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
+        return new JSoundDataFrame(
+                zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
+                jdf.getItemType()
+        );
     }
 
     /**

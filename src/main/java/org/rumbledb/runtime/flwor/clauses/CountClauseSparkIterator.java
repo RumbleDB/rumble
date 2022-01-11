@@ -67,6 +67,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         this.currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
+    public Name getVariableName() {
+        return this.variableName;
+    }
+
     @Override
     public void open(DynamicContext context) {
         super.open(context);

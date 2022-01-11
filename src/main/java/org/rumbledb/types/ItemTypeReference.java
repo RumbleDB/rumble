@@ -329,14 +329,6 @@ public class ItemTypeReference implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
-        if (this.resolvedItemType == null) {
-            throw new OurBadException("Unresolved type: " + this.name);
-        }
-        return this.resolvedItemType.isDataFrameType();
-    }
-
-    @Override
     public boolean isCompatibleWithDataFrames() {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);

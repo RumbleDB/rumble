@@ -111,12 +111,12 @@ public class StaticContext implements Serializable, KryoSerializable {
         return this.parent;
     }
 
-    public RumbleRuntimeConfiguration getRumbleCOnfiguration() {
+    public RumbleRuntimeConfiguration getRumbleConfiguration() {
         if (this.configuration != null) {
             return this.configuration;
         }
         if (this.parent != null) {
-            return this.parent.getRumbleCOnfiguration();
+            return this.parent.getRumbleConfiguration();
         }
         throw new OurBadException("Configuration not set.");
     }

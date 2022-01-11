@@ -104,11 +104,6 @@ public class FunctionItemType implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
-        return false;
-    }
-
-    @Override
     public boolean isCompatibleWithDataFrames() {
         return false;
     }
