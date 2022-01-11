@@ -141,5 +141,8 @@ public class DynamicFunctionCallExpression extends Expression {
         if (this.highestExecutionMode.equals(ExecutionMode.RDD)) {
             this.highestExecutionMode = ExecutionMode.LOCAL;
         }
+        if (!this.staticContext.getRumbleConfiguration().getDataFrameExecutionModeDetection()) {
+            this.highestExecutionMode = ExecutionMode.LOCAL;
+        }
     }
 }
