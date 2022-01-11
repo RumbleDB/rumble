@@ -134,7 +134,7 @@ public class GetEstimatorFunctionIterator extends AtMostOneItemLocalRuntimeItera
                             paramTypes,
                             returnType
                     ),
-                    new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
+                    new DynamicContext(dynamicContext.getRumbleRuntimeConfiguration()),
                     bodyIterator
             );
 

@@ -650,7 +650,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame;
     }
 
-    private static void registerLetClauseUDF(
+    public static void registerLetClauseUDF(
             Dataset<Row> dataFrame,
             RuntimeIterator newVariableExpression,
             DynamicContext context,

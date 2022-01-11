@@ -47,12 +47,17 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -1205,5 +1210,98 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return false;
         }
         return this.child.containsClause(kind);
+    }
+
+    public static void registerForClauseUDF(
+            Dataset<Row> dataFrame,
+            RuntimeIterator newVariableExpression,
+            DynamicContext context,
+            StructType inputSchema,
+            List<String> UDFcolumns,
+            SequenceType sequenceType
+    ) {
+        if (
+            sequenceType != null
+                && !sequenceType.isEmptySequence()
+        ) {
+            ItemType itemType = sequenceType.getItemType();
+
+            if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<String>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "String"
+                        ),
+                        DataTypes.StringType
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Integer"
+                        ),
+                        DataTypes.IntegerType
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<BigDecimal>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
+                        DataTypes.createDecimalType()
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<Double>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Double"
+                        ),
+                        DataTypes.DoubleType
+                    );
+                return;
+            }
+        }
+
+        // if it is not one of the allowed sequence type we just return the default udf
+        dataFrame.sparkSession()
+            .udf()
+            .register(
+                "forClauseUDF",
+                new ForClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                DataTypes.BinaryType
+            );
     }
 }

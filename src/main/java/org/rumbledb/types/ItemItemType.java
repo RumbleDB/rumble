@@ -77,11 +77,6 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
-        return false;
-    }
-
-    @Override
     public boolean isResolved() {
         return true;
     }
