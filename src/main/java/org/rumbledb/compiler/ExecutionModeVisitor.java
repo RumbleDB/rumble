@@ -238,8 +238,13 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
-            return argument;
+            if (expression.getReturnExpr().getStaticSequenceType().getItemType().isCompatibleWithDataFrames()) {
+                expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                return argument;
+            } else {
+                expression.setHighestExecutionMode(ExecutionMode.RDD);
+                return argument;
+            }
         }
         if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isUnset()) {
             expression.setHighestExecutionMode(ExecutionMode.UNSET);
