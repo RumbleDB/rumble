@@ -213,13 +213,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             null
         );
 
-        LetClauseSparkIterator.registerLetClauseUDF(
+        ForClauseSparkIterator.registerForClauseUDF(
             df,
             this.expression,
             context,
             inputSchema,
             UDFcolumns,
-            new SequenceType(this.sequenceType.getItemType(), Arity.One)
+            this.sequenceType
         );
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
@@ -229,7 +229,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         df = df.sparkSession()
             .sql(
                 String.format(
-                    "select letClauseUDF(%s) as `%s` from %s",
+                    "select explode(forClauseUDF(%s)) as `%s` from %s",
                     UDFParameters,
                     SparkSessionManager.temporaryColumnName,
                     input
