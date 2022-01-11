@@ -523,6 +523,9 @@ public class AtomicItemType implements ItemType {
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;
         }
+        if (this.getPrimitiveType().equals(dateTimeItem)) {
+            return false;
+        }
         if (this.getPrimitiveType().equals(durationItem)) {
             return false;
         }
