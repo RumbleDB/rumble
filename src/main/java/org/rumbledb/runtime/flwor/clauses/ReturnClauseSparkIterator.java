@@ -229,7 +229,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         df = df.sparkSession()
             .sql(
                 String.format(
-                    "select letClauseUDF(%s) as %s from %s",
+                    "select letClauseUDF(%s) as `%s` from %s",
                     UDFParameters,
                     SparkSessionManager.temporaryColumnName,
                     input
