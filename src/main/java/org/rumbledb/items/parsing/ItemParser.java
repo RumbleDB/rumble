@@ -479,6 +479,9 @@ public class ItemParser implements Serializable {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.stringItem)) {
             return DataTypes.StringType;
         }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.anyURIItem)) {
+            return DataTypes.StringType;
+        }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.nullItem)) {
             return DataTypes.NullType;
         }

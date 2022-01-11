@@ -51,7 +51,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
-    private transient boolean currentMinIsNullItem = false; // Only happens if all elements are null
     private transient double currentMinDouble;
     private transient float currentMinFloat;
     private transient BigDecimal currentMinDecimal;
@@ -95,7 +94,6 @@ public class MinFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
                 throw new UnsupportedCollationException("Wrong collation parameter", getMetadata());
             }
         }
-        this.currentMinIsNullItem = false;
         this.currentMinDouble = 0;
         this.currentMinFloat = 0;
         this.currentMinDecimal = null;
