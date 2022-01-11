@@ -23,7 +23,6 @@ package org.rumbledb.runtime.flwor.clauses;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
-import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
@@ -42,8 +41,8 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
-import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
@@ -66,19 +65,19 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private DynamicContext tupleContext; // re-use same DynamicContext object for efficiency
     private RuntimeIterator expression;
     private Item nextResult;
-    private ItemType itemType;
+    private SequenceType sequenceType;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             ExecutionMode executionMode,
             ExceptionMetadata iteratorMetadata,
-            ItemType itemType
+            SequenceType sequenceType
     ) {
         super(Collections.singletonList(expression), executionMode, iteratorMetadata);
         this.child = child;
         this.expression = expression;
-        this.itemType = itemType;
+        this.sequenceType = sequenceType;
         setInputAndOutputTupleVariableDependencies();
     }
 
@@ -188,7 +187,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             context
         );
         if (nativeQueryResult != null) {
-            if (this.itemType.isObjectItemType()) {
+            if (this.sequenceType.getItemType().isObjectItemType()) {
                 String input = FlworDataFrameUtils.createTempView(nativeQueryResult);
                 nativeQueryResult =
                     nativeQueryResult.sparkSession()
@@ -202,7 +201,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             }
             JSoundDataFrame result = new JSoundDataFrame(
                     nativeQueryResult,
-                    this.itemType
+                    this.sequenceType.getItemType()
             );
             return result;
         }
@@ -214,13 +213,14 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             null
         );
 
-        df.sparkSession()
-            .udf()
-            .register(
-                "letClauseUDF",
-                new LetClauseUDF(this.expression, context, inputSchema, UDFcolumns),
-                DataTypes.BinaryType
-            );
+        LetClauseSparkIterator.registerLetClauseUDF(
+            df,
+            this.expression,
+            context,
+            inputSchema,
+            UDFcolumns,
+            new SequenceType(this.sequenceType.getItemType(), Arity.One)
+        );
 
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
@@ -235,11 +235,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
                     input
                 )
             );
-        // return new JSoundDataFrame(df, this.itemType);
-        throw new OurBadException(
-                "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
-                getMetadata()
-        );
+        return new JSoundDataFrame(df, this.sequenceType.getItemType());
     }
 
     @Override
