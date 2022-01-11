@@ -20,6 +20,7 @@
 
 package org.rumbledb.shell;
 
+import javassist.CannotCompileException;
 import org.apache.commons.io.IOUtils;
 import org.apache.spark.SparkException;
 import org.jline.reader.EndOfFileException;
@@ -38,13 +39,12 @@ import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.serialization.Serializer;
 
-import sparksoniq.spark.SparkSessionManager;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.io.Writer;
+import java.net.ConnectException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -126,13 +126,7 @@ public class RumbleJLineShell {
             }
             output(result);
             if (count != -1) {
-                System.err.println(
-                    "Warning! The output sequence contains "
-                        + count
-                        + " items but its materialization was capped at "
-                        + SparkSessionManager.COLLECT_ITEM_LIMIT
-                        + " items. This value can be configured with the --result-size parameter at startup"
-                );
+                JsoniqQueryExecutor.issueMaterializationWarning(count);
             }
             long time = System.currentTimeMillis() - startTime;
             if (this.printTime) {
@@ -174,22 +168,85 @@ public class RumbleJLineShell {
                     if (showErrorInfo) {
                         ex.printStackTrace();
                     }
-                    handleException(new OurBadException(ex.getMessage()), showErrorInfo);
+                    handleException(
+                        new OurBadException(
+                                "There was a problem with Spark, but Spark did not provide any cause or stracktrace. The message from Spark is:  "
+                                    + ex.getMessage()
+                        ),
+                        showErrorInfo
+                    );
                 }
-            } else if (ex instanceof RumbleException) {
-                System.err.println("⚠️  ️" + ANSIColor.RED + ex.getMessage() + ANSIColor.RESET);
+            } else if (ex instanceof RumbleException && !(ex instanceof OurBadException)) {
+                System.err.println("⚠️  ️" + ex.getMessage());
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(42);
+            } else if (ex instanceof OutOfMemoryError) {
+                System.err.println(
+                    "⚠️  Java went out of memory."
+                );
+                System.err.println(
+                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(46);
             } else if (ex instanceof IllegalArgumentException) {
-                System.err.println("⚠️  It seems that you are not using Java 8. Spark only works with Java 8.");
+                System.err.println(
+                    "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
+                );
                 System.err.println(
                     "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
                 );
                 System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
+                System.err.println(
+                    "For more debug info, please try again using --show-error-info yes in your command line."
+                );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+                System.exit(43);
+            } else if (ex instanceof CannotCompileException) {
+                System.err.println("⚠️  There was a CannotCompileException.");
+                System.err.println(
+                    "There is a known issue with this on Docker and on certain versions of OpenJDK due to the JSONiter library."
+                );
+                System.err.println(
+                    "We have a workaround: please try again using --deactivate-jsoniter-streaming yes on your command line. json-doc() will, however, not be available."
+                );
+                System.err.println(
+                    "For more debug info, please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(44);
+            } else if (ex instanceof ConnectException) {
+                System.err.println("⚠️  There was a problem with the connection to the cluster.");
+                System.err.println(
+                    "For more debug info including the exact exception and a stacktrace, please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(45);
+            } else if (ex instanceof NullPointerException) {
+                System.err.println(
+                    "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it in a subsequent release. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                );
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(-42);
             } else if (!(ex instanceof UserInterruptException)) {
                 System.err.println("[ERROR] An error has occurred: " + ex.getMessage());
                 System.err.println(
@@ -199,6 +256,22 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
+            } else {
+                System.err.println(
+                    "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
+                        + ex.getMessage()
+                );
+                System.err.println(
+                    "We would like to investigate this and make sure to fix it. We would be very grateful if you could contact us or file an issue on GitHub with your query."
+                );
+                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
+                System.err.println(
+                    "For more debug info (e.g., so you can communicate it to us), please try again using --show-error-info yes in your command line."
+                );
+                if (showErrorInfo) {
+                    ex.printStackTrace();
+                }
+                System.exit(-42);
             }
         }
     }

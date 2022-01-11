@@ -67,6 +67,10 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
         this.currentCountIndex = 1; // indices start at 1 in JSONiq
     }
 
+    public Name getVariableName() {
+        return this.variableName;
+    }
+
     @Override
     public void open(DynamicContext context) {
         super.open(context);
@@ -166,14 +170,15 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.BinaryType
             );
 
-        dfWithIndex.createOrReplaceTempView("input");
+        String viewName = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex = dfWithIndex.sparkSession()
             .sql(
                 String.format(
-                    "select %s serializeCountIndex(`%s`) as `%s` from input",
+                    "select %s serializeCountIndex(`%s`) as `%s` from %s",
                     selectSQL,
                     variableName,
-                    variableName
+                    variableName,
+                    viewName
                 )
             );
         return dfWithIndex;

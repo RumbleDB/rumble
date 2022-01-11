@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
 
-    $ spark-submit target/rumbledb-1.15.0.jar --shell yes
+    $ spark-submit target/rumbledb-1.16.0.jar --shell yes
 
 The RumbleDB shell should start:
 

@@ -47,12 +47,17 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
 import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -288,7 +293,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * expression does not depend on the input tuple.
      * 
      * @param context the dynamic context.
-     * @param outputTupleVariableDependencies the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameFromCartesianProduct(
@@ -322,10 +326,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         // Now we prepare the two views that we want to compute the Cartesian product of.
-        String inputDFTableName = "input";
-        String expressionDFTableName = "expression";
-        inputDF.createOrReplaceTempView(inputDFTableName);
-        expressionDF.createOrReplaceTempView(expressionDFTableName);
+        String inputDFTableName = FlworDataFrameUtils.createTempView(inputDF);
+        String expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
 
         // We gather the columns to select from the previous clause.
         // We need to project away the clause's variables from the previous clause.
@@ -445,7 +447,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     DataTypes.BinaryType
                 );
             long size = expressionDF.count();
-            expressionDF.createOrReplaceTempView(expressionDFTableName);
+            expressionDFTableName = FlworDataFrameUtils.createTempView(expressionDF);
             expressionDF = expressionDF.sparkSession()
                 .sql(
                     String.format(
@@ -523,7 +525,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 );
             }
             Dataset<Row> lateralView = getDataFrameStartingClause(this.tupleContext, startingClauseDependencies);
-            lateralView.createOrReplaceTempView("lateralView");
+            String lateralViewString = FlworDataFrameUtils.createTempView(lateralView);
 
             // We then get the (singleton) input tuple as a data frame
 
@@ -550,11 +552,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> inputTupleDataFrame = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .createDataFrame(inputTupleRDD, schema);
-            inputTupleDataFrame.createOrReplaceTempView("inputTuple");
+            String inputTuple = FlworDataFrameUtils.createTempView(inputTupleDataFrame);
 
             // And we join.
             inputTupleDataFrame = inputTupleDataFrame.sparkSession()
-                .sql("select * FROM inputTuple JOIN lateralView");
+                .sql(String.format("select * FROM %s JOIN %s", inputTuple, lateralViewString));
 
             if (df == null) {
                 df = inputTupleDataFrame;
@@ -571,7 +573,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
      * Non-starting clause and the child clause (above in the syntax) is parallelizable.
      * 
      * @param context the dynamic context.
-     * @param outputTuplesVariableDependencies the desired project.
      * @return the resulting DataFrame.
      */
     private Dataset<Row> getDataFrameInParallel(
@@ -630,26 +631,28 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         String projectionVariables = FlworDataFrameUtils.getSQLProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
-        df.createOrReplaceTempView("input");
+        String viewName = FlworDataFrameUtils.createTempView(df);
         if (this.positionalVariableName == null) {
             if (this.allowingEmpty) {
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s explode_outer(forClauseUDF(%s)) as `%s` from input",
+                            "select %s explode_outer(forClauseUDF(%s)) as `%s` from %s",
                             projectionVariables,
                             UDFParameters,
-                            this.variableName
+                            this.variableName,
+                            viewName
                         )
                     );
             } else {
                 df = df.sparkSession()
                     .sql(
                         String.format(
-                            "select %s explode(forClauseUDF(%s)) as `%s` from input",
+                            "select %s explode(forClauseUDF(%s)) as `%s` from %s",
                             projectionVariables,
                             UDFParameters,
-                            this.variableName
+                            this.variableName,
+                            viewName
                         )
                     );
             }
@@ -667,13 +670,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sql(
                         String.format(
                             "SELECT %s for_vars.`%s`, serializePositionIndex(IF(for_vars.`%s` IS NULL, 0, for_vars.`%s` + 1)) AS `%s` "
-                                + "FROM input "
+                                + "FROM %s "
                                 + "LATERAL VIEW OUTER posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                             projectionVariables,
                             this.variableName,
                             this.positionalVariableName,
                             this.positionalVariableName,
                             this.positionalVariableName,
+                            viewName,
                             UDFParameters,
                             this.positionalVariableName,
                             this.variableName
@@ -684,12 +688,13 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sql(
                         String.format(
                             "SELECT %s for_vars.`%s`, serializePositionIndex(for_vars.`%s` + 1) AS `%s` "
-                                + "FROM input "
+                                + "FROM %s "
                                 + "LATERAL VIEW posexplode(forClauseUDF(%s)) for_vars AS `%s`, `%s` ",
                             projectionVariables,
                             this.variableName,
                             this.positionalVariableName,
                             this.positionalVariableName,
+                            viewName,
                             UDFParameters,
                             this.positionalVariableName,
                             this.variableName
@@ -755,7 +760,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (iterator.isDataFrame()) {
             JSoundDataFrame rows = iterator.getDataFrame(context);
 
-            rows.createOrReplaceTempView("assignment");
+            String assignment = FlworDataFrameUtils.createTempView(rows.getDataFrame());
             if (rows.getItemType().isObjectItemType()) {
                 String[] fields = rows.getDataFrame().schema().fieldNames();
                 String columnNames = FlworDataFrameUtils.getSQLProjection(Arrays.asList(fields), false);
@@ -763,9 +768,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "SELECT struct(%s) AS `%s` FROM assignment",
+                            "SELECT struct(%s) AS `%s` FROM %s",
                             columnNames,
-                            variableName
+                            variableName,
+                            assignment
                         )
                     );
             } else {
@@ -773,9 +779,10 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     .sparkSession()
                     .sql(
                         String.format(
-                            "SELECT `%s` AS `%s` FROM assignment",
+                            "SELECT `%s` AS `%s` FROM %s",
                             SparkSessionManager.atomicJSONiqItemColumnName,
-                            variableName
+                            variableName,
+                            assignment
                         )
                     );
             }
@@ -788,12 +795,14 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return df;
         }
         if (positionalVariableName == null && allowingEmpty) {
-            df.createOrReplaceTempView("input");
+            String viewName = FlworDataFrameUtils.createTempView(df);
             df = df.sparkSession()
                 .sql(
                     String.format(
-                        "SELECT input.`%s` FROM VALUES(1) FULL OUTER JOIN input",
-                        variableName
+                        "SELECT %s.`%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                        viewName,
+                        variableName,
+                        viewName
                     )
                 );
             return df;
@@ -807,7 +816,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (!allowingEmpty) {
             return dfWithIndex;
         }
-        dfWithIndex.createOrReplaceTempView("inputWithIndex");
+        String inputWithIndex = FlworDataFrameUtils.createTempView(dfWithIndex);
         dfWithIndex.sparkSession()
             .udf()
             .register(
@@ -819,11 +828,15 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         dfWithIndex = dfWithIndex.sparkSession()
             .sql(
                 String.format(
-                    "SELECT inputWithIndex.`%s`, IF(inputWithIndex.`%s` IS NULL, serializeCountIndex(0), inputWithIndex.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN inputWithIndex",
+                    "SELECT %s.`%s`, IF(%s.`%s` IS NULL, serializeCountIndex(0), %s.`%s`) AS `%s` FROM VALUES(1) FULL OUTER JOIN %s",
+                    inputWithIndex,
                     variableName,
+                    inputWithIndex,
+                    positionalVariableName,
+                    inputWithIndex,
                     positionalVariableName,
                     positionalVariableName,
-                    positionalVariableName
+                    inputWithIndex
                 )
             );
         return dfWithIndex;
@@ -962,11 +975,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.out.println(
+        System.err.println(
             "[INFO] Rumble was able to optimize a for clause to a native SQL query."
         );
         String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
-        dataFrame.createOrReplaceTempView("input");
+        String viewName = FlworDataFrameUtils.createTempView(dataFrame);
 
         // let's distinguish 4 cases
         if (positionalVariableName == null) {
@@ -985,8 +998,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     // first we add an artificial unique id to the dataset and re-register the input table
                     String rowIdField = "idx-9384-3948-1272-4375";
                     dataFrame = dataFrame.sparkSession()
-                        .sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from input");
-                    dataFrame.createOrReplaceTempView("input");
+                        .sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from " + viewName);
+                    String viewName2 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // then we create the virtual exploded table as before
                     // but this time we store it and also get the index field
@@ -1002,25 +1015,31 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     Dataset<Row> lateralViewDf = dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select `%s`, arr%d.col%s as `%s` from input %s",
+                                "select `%s`, arr%d.col%s as `%s` from %s %s",
                                 rowIdField,
                                 arrIndex,
                                 nativeQuery.getResultingQuery(),
                                 newVariableName,
+                                viewName2,
                                 lateralViewString
                             )
                         );
-                    lateralViewDf.createOrReplaceTempView("lateral");
+                    String lateralViewName = FlworDataFrameUtils.createTempView(lateralViewDf);
 
                     // to return the correct number of empty results we perform a left join between input and
                     // lateral
                     return dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select %s lateral.`%s` from input left join lateral on input.`%s` = lateral.`%s`",
+                                "select %s %s.`%s` from %s left join %s on %s.`%s` = %s.`%s`",
                                 selectSQL,
+                                lateralViewName,
                                 newVariableName,
+                                viewName2,
+                                lateralViewName,
+                                viewName2,
                                 rowIdField,
+                                lateralViewName,
                                 rowIdField
                             )
                         );
@@ -1032,10 +1051,11 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     return dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select %s %s as `%s` from input",
+                                "select %s %s as `%s` from %s",
                                 selectSQL,
                                 nativeQuery.getResultingQuery(),
-                                newVariableName
+                                newVariableName,
+                                viewName
                             )
                         );
                 } else {
@@ -1053,11 +1073,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                     return dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select %s arr%d.col%s as `%s` from input %s",
+                                "select %s arr%d.col%s as `%s` from %s %s",
                                 selectSQL,
                                 arrIndex,
                                 nativeQuery.getResultingQuery(),
                                 newVariableName,
+                                viewName,
                                 lateralViewString
                             )
                         );
@@ -1076,11 +1097,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 return dataFrame.sparkSession()
                     .sql(
                         String.format(
-                            "select %s %s as `%s`, 1 as `%s` from input",
+                            "select %s %s as `%s`, 1 as `%s` from %s",
                             selectSQL,
                             nativeQuery.getResultingQuery(),
                             newVariableName,
-                            positionalVariableName
+                            positionalVariableName,
+                            viewName
                         )
                     );
             } else {
@@ -1090,8 +1112,8 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 // we first add unique index to guarantee grouping correctly
                 String rowIdField = "idx-9384-3948-1272-4375";
                 dataFrame = dataFrame.sparkSession()
-                    .sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from input");
-                dataFrame.createOrReplaceTempView("input");
+                    .sql("select *, monotonically_increasing_id() as `" + rowIdField + "` from " + viewName);
+                String viewName2 = FlworDataFrameUtils.createTempView(dataFrame);
 
                 // then we collect all values from lateral view
                 // and group by original tuple
@@ -1108,11 +1130,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 dataFrame = dataFrame.sparkSession()
                     .sql(
                         String.format(
-                            "select `%s`, %s collect_list(arr%d.col%s) as grouped from input %s group by %s `%s`",
+                            "select `%s`, %s collect_list(arr%d.col%s) as grouped from %s %s group by %s `%s`",
                             rowIdField,
                             selectSQL,
                             arrIndex,
                             nativeQuery.getResultingQuery(),
+                            viewName2,
                             lateralViewString,
                             selectSQL,
                             rowIdField
@@ -1122,48 +1145,56 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
 
                 if (allowingEmpty) {
                     // register a support table to keep the empty values
-                    dataFrame.sparkSession()
-                        .sql("select `" + rowIdField + "` from input")
-                        .createOrReplaceTempView("allrows");
+                    String allRowViewName = FlworDataFrameUtils.createTempView(
+                        dataFrame.sparkSession()
+                            .sql("select `" + rowIdField + "` from " + viewName2)
+                    );
 
                     // register previously created table
-                    dataFrame.createOrReplaceTempView("input");
+                    String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // insert null values
                     dataFrame = dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select allrows.`%s`, %s grouped from allrows left join input on allrows.`%s` = input.`%s`",
+                                "select %s.`%s`, %s grouped from %s left join %s on %s.`%s` = %s.`%s`",
+                                allRowViewName,
                                 rowIdField,
                                 selectSQL,
+                                allRowViewName,
+                                viewName3,
+                                allRowViewName,
                                 rowIdField,
+                                viewName3,
                                 rowIdField
                             )
                         );
-                    dataFrame.createOrReplaceTempView("input");
+                    String viewName4 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // we use a lateral view to handle proper counting and NULL handling
                     return dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select %s IF(exploded.pos IS NULL, 0, exploded.pos + 1) as `%s`, exploded.col as `%s`  from input lateral view outer posexplode(grouped) exploded",
+                                "select %s IF(exploded.pos IS NULL, 0, exploded.pos + 1) as `%s`, exploded.col as `%s`  from %s lateral view outer posexplode(grouped) exploded",
                                 selectSQL,
                                 positionalVariableName,
-                                newVariableName
+                                newVariableName,
+                                viewName4
                             )
                         );
                 } else {
                     // register previously created table
-                    dataFrame.createOrReplaceTempView("input");
+                    String viewName3 = FlworDataFrameUtils.createTempView(dataFrame);
 
                     // finally we unwrap it with a single posexplode
                     return dataFrame.sparkSession()
                         .sql(
                             String.format(
-                                "select %s (exploded.pos + 1) as `%s`, exploded.col as `%s`  from input lateral view posexplode(grouped) exploded",
+                                "select %s (exploded.pos + 1) as `%s`, exploded.col as `%s`  from %s lateral view posexplode(grouped) exploded",
                                 selectSQL,
                                 positionalVariableName,
-                                newVariableName
+                                newVariableName,
+                                viewName3
                             )
                         );
                 }
@@ -1179,5 +1210,98 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return false;
         }
         return this.child.containsClause(kind);
+    }
+
+    public static void registerForClauseUDF(
+            Dataset<Row> dataFrame,
+            RuntimeIterator newVariableExpression,
+            DynamicContext context,
+            StructType inputSchema,
+            List<String> UDFcolumns,
+            SequenceType sequenceType
+    ) {
+        if (
+            sequenceType != null
+                && !sequenceType.isEmptySequence()
+        ) {
+            ItemType itemType = sequenceType.getItemType();
+
+            if (itemType.equals(BuiltinTypesCatalogue.stringItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<String>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "String"
+                        ),
+                        DataTypes.StringType
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Integer"
+                        ),
+                        DataTypes.IntegerType
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<BigDecimal>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
+                        DataTypes.createDecimalType()
+                    );
+                return;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "forClauseUDF",
+                        new GenericForClauseUDF<Double>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "Double"
+                        ),
+                        DataTypes.DoubleType
+                    );
+                return;
+            }
+        }
+
+        // if it is not one of the allowed sequence type we just return the default udf
+        dataFrame.sparkSession()
+            .udf()
+            .register(
+                "forClauseUDF",
+                new ForClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                DataTypes.BinaryType
+            );
     }
 }

@@ -37,6 +37,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.UUID;
 
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
@@ -76,6 +77,7 @@ import org.rumbledb.items.ObjectItem;
 import org.rumbledb.items.StringItem;
 import org.rumbledb.items.TimeItem;
 import org.rumbledb.items.YearMonthDurationItem;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.SequenceType;
@@ -85,6 +87,7 @@ import com.esotericsoftware.kryo.io.Input;
 import com.esotericsoftware.kryo.io.Output;
 
 import scala.collection.mutable.WrappedArray;
+import sparksoniq.spark.SparkSessionManager;
 
 public class FlworDataFrameUtils {
 
@@ -669,6 +672,8 @@ public class FlworDataFrameUtils {
                     queryColumnString.append("sum(`");
                     queryColumnString.append(columnName);
                     queryColumnString.append("`)");
+                } else if (shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, columnName)) {
+                    queryColumnString.append("1");
                 } else if (shouldCalculateCount(dependencies, columnName)) {
                     queryColumnString.append("count(`");
                     queryColumnString.append(columnName);
@@ -734,6 +739,18 @@ public class FlworDataFrameUtils {
             }
         }
         throw new OurBadException("Column does not exist: " + columnName);
+    }
+
+    private static boolean shouldCalculateCountGroupingColumn(
+            Map<Name, DynamicContext.VariableDependency> dependencies,
+            List<Name> groupbyVariableNames,
+            String columnName
+    ) {
+        return dependencies.containsKey(variableForColumnName(columnName))
+            && dependencies.get(
+                variableForColumnName(columnName)
+            ) == DynamicContext.VariableDependency.COUNT
+            && groupbyVariableNames.contains(variableForColumnName(columnName));
     }
 
     private static boolean shouldCalculateCount(
@@ -813,6 +830,20 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Zips a JSoundDataFrame to a special column.
+     *
+     * @param jdf - the JSoundDataframe to perform the operation on
+     * @param offset - starting offset for the first index
+     * @return returns JSoundDataFrame with the added column containing indices (with some specific UUID)
+     */
+    public static JSoundDataFrame zipWithIndex(JSoundDataFrame jdf, Long offset) {
+        return new JSoundDataFrame(
+                zipWithIndex(jdf.getDataFrame(), offset, SparkSessionManager.countColumnName),
+                jdf.getItemType()
+        );
+    }
+
+    /**
      * Algorithm taken from following link and adapted to Java with minor improvements.
      * https://stackoverflow.com/a/48454000/10707488
      *
@@ -869,5 +900,11 @@ public class FlworDataFrameUtils {
         StructField[] fields = new StructField[fieldList.size()];
         fieldList.toArray(fields);
         return new StructType(fields);
+    }
+
+    public static String createTempView(Dataset<Row> df) {
+        String name = "input" + UUID.randomUUID().toString().replaceAll("-", "");
+        df.createOrReplaceTempView(name);
+        return name;
     }
 }

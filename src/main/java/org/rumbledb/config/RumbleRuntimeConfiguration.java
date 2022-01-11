@@ -59,6 +59,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String logPath;
     private String query;
     private String shell;
+    private boolean nativeSQLPredicates;
+    private boolean dataFrameExecutionModeDetection;
+    private boolean thirdFeature;
 
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
@@ -233,6 +236,25 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.shell = null;
         }
+
+        if (this.arguments.containsKey("native-sql-predicates")) {
+            this.nativeSQLPredicates = this.arguments.get("native-sql-predicates").equals("yes");
+        } else {
+            this.nativeSQLPredicates = true;
+        }
+
+        if (this.arguments.containsKey("data-frame-execution-mode-detection")) {
+            this.dataFrameExecutionModeDetection = this.arguments.get("data-frame-execution-mode-detection")
+                .equals("yes");
+        } else {
+            this.dataFrameExecutionModeDetection = true;
+        }
+
+        if (this.arguments.containsKey("third-feature")) {
+            this.thirdFeature = this.arguments.get("third-feature").equals("yes");
+        } else {
+            this.thirdFeature = true;
+        }
     }
 
     public boolean getOverwrite() {
@@ -271,6 +293,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return this.shell;
     }
 
+    public boolean getNativeSQLPredicates() {
+        return this.nativeSQLPredicates;
+    }
+
+    public boolean getDataFrameExecutionModeDetection() {
+        return this.dataFrameExecutionModeDetection;
+    }
+
+    public boolean getThirdFeature() {
+        return this.thirdFeature;
+    }
+
     public void setLogPath(String path) {
         this.logPath = path;
     }
@@ -289,6 +323,18 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setShellFilter(String shell) {
         this.shell = shell;
+    }
+
+    public void setNativeSQLPredicates(boolean value) {
+        this.nativeSQLPredicates = value;
+    }
+
+    public void setDataFrameExecutionModeDetection(boolean value) {
+        this.dataFrameExecutionModeDetection = value;
+    }
+
+    public void setThirdFeature(boolean value) {
+        this.thirdFeature = value;
     }
 
     /**

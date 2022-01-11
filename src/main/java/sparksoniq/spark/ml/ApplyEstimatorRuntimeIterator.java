@@ -193,7 +193,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
             throw ex;
         }
 
-        return generateTransformerFunctionItem(fittedModel);
+        return generateTransformerFunctionItem(fittedModel, dynamicContext);
     }
 
     private JSoundDataFrame getInputDataset(DynamicContext context) {
@@ -342,7 +342,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
         }
     }
 
-    private Item generateTransformerFunctionItem(Transformer fittedModel) {
+    private Item generateTransformerFunctionItem(Transformer fittedModel, DynamicContext dynamicContext) {
         RuntimeIterator bodyIterator = new ApplyTransformerRuntimeIterator(
                 RumbleMLCatalog.getRumbleMLShortName(fittedModel.getClass().getName()),
                 fittedModel,
@@ -376,7 +376,7 @@ public class ApplyEstimatorRuntimeIterator extends AtMostOneItemLocalRuntimeIter
                         paramTypes,
                         returnType
                 ),
-                new DynamicContext(this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration()),
+                new DynamicContext(dynamicContext.getRumbleRuntimeConfiguration()),
                 bodyIterator
         );
     }
