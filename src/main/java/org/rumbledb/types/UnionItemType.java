@@ -128,11 +128,6 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
-        return false;
-    }
-
-    @Override
     public boolean isResolved() {
         for (ItemType itemType : this.content.getTypes()) {
             if (!itemType.isResolved())

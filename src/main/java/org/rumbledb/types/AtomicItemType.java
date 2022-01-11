@@ -511,7 +511,15 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
+    public boolean isResolved() {
+        return true;
+    }
+
+    @Override
+    public boolean isCompatibleWithDataFrames() {
+        if (this.getPrimitiveType().equals(atomicItem)) {
+            return false;
+        }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;
         }
@@ -530,16 +538,6 @@ public class AtomicItemType implements ItemType {
         if (this.getPrimitiveType().equals(base64BinaryItem)) {
             return false;
         }
-        return true;
-    }
-
-    @Override
-    public boolean isResolved() {
-        return true;
-    }
-
-    @Override
-    public boolean isCompatibleWithDataFrames() {
         return true;
     }
 }

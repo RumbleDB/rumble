@@ -106,13 +106,6 @@ public interface ItemType extends Serializable {
     }
 
     /**
-     * @return true it [this] is a type compatible with DataFrames.
-     */
-    default boolean isDataFrameType() {
-        return false;
-    }
-
-    /**
      *
      * @return [true] if this is a numeric item type, false otherwise
      */
