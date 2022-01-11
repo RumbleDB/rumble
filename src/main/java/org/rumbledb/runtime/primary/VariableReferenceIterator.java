@@ -27,6 +27,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.context.VariableValues;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
@@ -136,11 +137,12 @@ public class VariableReferenceIterator extends HybridRuntimeIterator {
     @Override
     public void openLocal() {
         this.currentIndex = 0;
-        this.items = this.currentDynamicContextForLocalExecution.getVariableValues()
-            .getLocalVariableValue(
-                this.variableName,
-                getMetadata()
-            );
+        DynamicContext context = this.currentDynamicContextForLocalExecution;
+        VariableValues values = context.getVariableValues();
+        this.items = values.getLocalVariableValue(
+            this.variableName,
+            getMetadata()
+        );
         this.hasNext = this.items.size() != 0;
     }
 

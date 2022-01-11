@@ -24,6 +24,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
+import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
@@ -32,12 +33,15 @@ import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.comparison.ComparisonExpression;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.WhereClauseUDF;
+import org.rumbledb.runtime.misc.ComparisonIterator;
+import org.rumbledb.runtime.primary.VariableReferenceIterator;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
@@ -158,6 +162,11 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
         }
 
+        Dataset<Row> dataFrameIfLimit = getDataFrameIfLimit(context);
+        if (dataFrameIfLimit != null) {
+            return dataFrameIfLimit;
+        }
+
         Dataset<Row> dataFrameIfJoinPossible = getDataFrameIfJoinPossible(context);
         if (dataFrameIfJoinPossible != null) {
             return dataFrameIfJoinPossible;
@@ -204,6 +213,55 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 )
             );
         return df;
+    }
+
+    private Dataset<Row> getDataFrameIfLimit(DynamicContext context) {
+        if (!(this.child instanceof CountClauseSparkIterator)) {
+            return null;
+        }
+        CountClauseSparkIterator countClauseIterator = (CountClauseSparkIterator) this.child;
+        Name countVariable = countClauseIterator.getVariableName();
+        if (!(this.expression instanceof ComparisonIterator)) {
+            return null;
+        }
+        ComparisonIterator comparisonIterator = (ComparisonIterator) this.expression;
+        if (
+            !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.VC_LE)
+                &&
+                !comparisonIterator.getComparisonOperator().equals(ComparisonExpression.ComparisonOperator.GC_LE)
+        ) {
+            return null;
+        }
+        RuntimeIterator left = comparisonIterator.getLeftIterator();
+        if (!(left instanceof VariableReferenceIterator)) {
+            return null;
+        }
+        VariableReferenceIterator varRef = (VariableReferenceIterator) left;
+        if (!varRef.getVariableName().equals(countVariable)) {
+            return null;
+        }
+        RuntimeIterator right = comparisonIterator.getRightIterator();
+        Set<Name> usedVariables = right.getVariableDependencies().keySet();
+        List<Item> items = new ArrayList<>();
+        Set<Name> tuples = countClauseIterator.getOutputTupleVariableNames();
+        usedVariables.retainAll(tuples);
+        if (!usedVariables.isEmpty()) {
+            return null;
+        }
+        right.materializeNFirstItems(context, items, 2);
+        if (items.size() != 1) {
+            return null;
+        }
+        Item item = items.get(0);
+        if (!item.isInteger()) {
+            return null;
+        }
+        System.err.println(
+            "[INFO] Rumble detected a LIMIT in a count and where clause."
+        );
+        Dataset<Row> df = this.child.getChildIterator().getDataFrame(context);
+        String input = FlworDataFrameUtils.createTempView(df);
+        return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
     }
 
     private Dataset<Row> getDataFrameIfJoinPossible(DynamicContext context) {

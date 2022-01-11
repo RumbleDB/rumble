@@ -216,7 +216,8 @@ public class RuntimeIteratorVisitor extends AbstractNodeVisitor<RuntimeIterator>
                     argument
                 ),
                 expression.getReturnClause().getHighestExecutionMode(this.visitorConfig),
-                expression.getReturnClause().getMetadata()
+                expression.getReturnClause().getMetadata(),
+                expression.getStaticSequenceType()
         );
         runtimeIterator.setStaticContext(expression.getStaticContext());
         return runtimeIterator;
