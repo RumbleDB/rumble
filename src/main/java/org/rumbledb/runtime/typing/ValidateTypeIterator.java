@@ -96,6 +96,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             JavaRDD<Item> itemRDD,
             ItemType itemType
     ) {
+        if (!itemType.isCompatibleWithDataFrames()) {
+            throw new OurBadException(
+                    "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
+            );
+        }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {

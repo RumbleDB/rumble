@@ -41,6 +41,7 @@ import org.rumbledb.runtime.RuntimeTupleIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ReturnFlatMapClosure;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.jsoniq.tuple.FlworTuple;
@@ -172,7 +173,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
         if (!this.child.isDataFrame()) {
             throw new OurBadException(
-                    "Unexpected application state: a dataframe was expected even though the return expression does not produce one.",
+                    "Unexpected application state: a dataframe was expected even though the previous tuple does not produce one.",
                     getMetadata()
             );
         }
@@ -205,36 +206,8 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             return result;
         }
 
-        List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
-            inputSchema,
-            this.expression.getVariableDependencies(),
-            new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
-            null
-        );
-
-        ForClauseSparkIterator.registerForClauseUDF(
-            df,
-            this.expression,
-            context,
-            inputSchema,
-            UDFcolumns,
-            this.sequenceType
-        );
-
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
-
-        String input = FlworDataFrameUtils.createTempView(df);
-
-        df = df.sparkSession()
-            .sql(
-                String.format(
-                    "select explode(forClauseUDF(%s)) as `%s` from %s",
-                    UDFParameters,
-                    SparkSessionManager.temporaryColumnName,
-                    input
-                )
-            );
-        return new JSoundDataFrame(df, this.sequenceType.getItemType());
+        JavaRDD<Item> rdd = getRDDAux(context);
+        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, this.sequenceType.getItemType());
     }
 
     @Override
