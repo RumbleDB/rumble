@@ -631,7 +631,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         "select %s letClauseUDF(%s) as `%s` from %s",
                         selectSQL,
                         UDFParameters,
-                        newVariableName + ".sequence",
+                        isNative ? newVariableName : (newVariableName + ".sequence"),
                         input
                     )
                 );
