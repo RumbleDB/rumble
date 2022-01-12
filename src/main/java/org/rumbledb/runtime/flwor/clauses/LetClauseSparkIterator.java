@@ -597,8 +597,16 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         // System.out.println("UDF " + c);
         // }
 
+        boolean isNative = false;
         if (!hash) {
-            registerLetClauseUDF(dataFrame, newVariableExpression, context, inputSchema, UDFcolumns, sequenceType);
+            isNative = registerLetClauseUDF(
+                dataFrame,
+                newVariableExpression,
+                context,
+                inputSchema,
+                UDFcolumns,
+                sequenceType
+            );
         } else {
             dataFrame.sparkSession()
                 .udf()
@@ -623,7 +631,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         "select %s letClauseUDF(%s) as `%s` from %s",
                         selectSQL,
                         UDFParameters,
-                        newVariableName,
+                        newVariableName + ".sequence",
                         input
                     )
                 );
@@ -650,7 +658,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         return dataFrame;
     }
 
-    public static void registerLetClauseUDF(
+    public static boolean registerLetClauseUDF(
             Dataset<Row> dataFrame,
             RuntimeIterator newVariableExpression,
             DynamicContext context,
@@ -680,7 +688,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         ),
                         DataTypes.StringType
                     );
-                return;
+                return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
@@ -697,7 +705,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         ),
                         DataTypes.IntegerType
                     );
-                return;
+                return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
@@ -714,7 +722,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         ),
                         DataTypes.createDecimalType()
                     );
-                return;
+                return true;
             }
 
             if (itemType.equals(BuiltinTypesCatalogue.doubleItem)) {
@@ -731,7 +739,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         ),
                         DataTypes.DoubleType
                     );
-                return;
+                return true;
             }
         }
 
@@ -741,8 +749,9 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .register(
                 "letClauseUDF",
                 new LetClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
-                DataTypes.BinaryType
+                DataTypes.createArrayType(DataTypes.BinaryType)
             );
+        return false;
     }
 
     /**
