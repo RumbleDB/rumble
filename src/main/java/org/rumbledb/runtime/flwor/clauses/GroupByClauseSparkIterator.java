@@ -292,11 +292,11 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
 
             } else {
-                if (!columnNames.contains(expression.getVariableName().toString())) {
+                if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
                                 + expression.getVariableName()
-                                + " cannot be used in group clause",
+                                + " cannot be used as a grouping key because it is not in the input tuple stream. It must be a variable from the same FLWOR expression).",
                             getMetadata()
                     );
                 }
