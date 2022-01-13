@@ -573,6 +573,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 inputSchema,
                 context
             );
+
             if (nativeQueryResult != null) {
                 return nativeQueryResult;
             }
@@ -623,7 +624,6 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         String input = FlworDataFrameUtils.createTempView(dataFrame);
 
 
-
         if (!hash) {
             dataFrame = dataFrame.sparkSession()
                 .sql(
@@ -635,6 +635,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         input
                     )
                 );
+
         } else {
             // System.out.println(
             // String.format(

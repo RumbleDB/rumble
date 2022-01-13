@@ -291,6 +291,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 );
 
 
+
             } else {
                 if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
                     throw new InvalidGroupVariableException(
@@ -317,6 +318,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             input
         );
         if (nativeQueryResult != null) {
+
             return nativeQueryResult;
         }
 
@@ -540,6 +542,21 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
+            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
+                if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
+                    selectString.append("sum(cardinality(`");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".sequence`)) as `");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".count`");
+                } else {
+                    // we need a count
+                    selectString.append("count(`");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append("`) as `");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".count`");
+                }
             } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
                 // we are summing over a previous count
                 String columnName = entry.getKey().toString();
@@ -548,13 +565,6 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append("`) as `");
                 selectString.append(columnName);
                 selectString.append("`");
-            } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
-                // we need a count
-                selectString.append("count(`");
-                selectString.append(entry.getKey().toString());
-                selectString.append("`) as `");
-                selectString.append(entry.getKey().toString());
-                selectString.append(".count`");
             } else if (groupingVariables.contains(entry.getKey())) {
                 // we are considering one of the grouping variables
                 selectString.append(entry.getKey().toString());
