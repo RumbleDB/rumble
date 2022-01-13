@@ -169,12 +169,13 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Checks if the specified variable is available as a serialized sequence of items in a DataFrame with the
-     * supplied schema.
+     * Returns all the column names of the given DataFrame
+     * that correspond to the supplied variable.
      * 
-     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param inputSchema schema specifies the columns of the DataFrame.
      * @param variable the name of the variable.
-     * @return true if it is available as a serialized sequence of items, false otherwise.
+     * @param results where to store the found column names.
+     * @return true if there is at least one column for this variable.
      */
     public static boolean columnNamesForVariable(
             StructType inputSchema,
