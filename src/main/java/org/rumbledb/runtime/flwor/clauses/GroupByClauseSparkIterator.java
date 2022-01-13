@@ -562,9 +562,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 String columnName = entry.getKey().toString();
                 selectString.append("collect_list(`");
                 selectString.append(columnName);
-                selectString.append("`) as `");
+                selectString.append(".sequence`) as `");
                 selectString.append(columnName);
-                selectString.append("`");
+                selectString.append(".sequence`");
             } else if (groupingVariables.contains(entry.getKey())) {
                 // we are considering one of the grouping variables
                 selectString.append(entry.getKey().toString());
