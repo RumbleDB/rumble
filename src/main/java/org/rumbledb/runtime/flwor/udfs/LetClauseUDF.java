@@ -27,6 +27,8 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,5 +72,12 @@ public class LetClauseUDF implements UDF1<Row, List<byte[]>> {
         this.expression.close();
 
         return this.results;
+    }
+
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException,
+                ClassNotFoundException {
+        in.defaultReadObject();
+        this.results = new ArrayList<>();
     }
 }

@@ -169,6 +169,38 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Checks if the specified variable is available as a serialized sequence of items in a DataFrame with the
+     * supplied schema.
+     * 
+     * @param inputSchema schema specifies the columns to be used in the query.
+     * @param variable the name of the variable.
+     * @return true if it is available as a serialized sequence of items, false otherwise.
+     */
+    public static boolean columnNamesForVariable(
+            StructType inputSchema,
+            Name variable,
+            List<String> results
+    ) {
+        results.clear();
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    results.add(columnName);
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    results.add(columnName);
+                }
+            }
+        }
+        if (results.isEmpty()) {
+            return false;
+        }
+        return true;
+    }
+
+    /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of SQL column names in the schema
      */
@@ -278,6 +310,10 @@ public class FlworDataFrameUtils {
                     }
                     return false;
                 }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    return false;
+                }
             }
         }
         throw new OurBadException("Variable " + variable + "not found.");
@@ -328,9 +364,13 @@ public class FlworDataFrameUtils {
                     }
                     return true;
                 }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    return false;
+                }
             }
         }
-        throw new OurBadException("Variable " + variable + "not found.");
+        throw new OurBadException("Variable " + variable + " not found.");
     }
 
     /**
