@@ -517,8 +517,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
         for (Name groupingVar : groupingVariables) {
-            StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
-            if (field.dataType().equals(DataTypes.BinaryType)) {
+            if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(inputSchema, groupingVar)) {
                 // we got a non-native type for grouping, switch to udf version
                 return null;
             }
