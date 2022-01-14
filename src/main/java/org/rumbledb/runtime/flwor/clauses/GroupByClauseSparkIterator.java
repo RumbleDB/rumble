@@ -291,12 +291,13 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 );
 
 
+
             } else {
-                if (!columnNames.contains(expression.getVariableName().toString())) {
+                if (!FlworDataFrameUtils.hasColumnForVariable(inputSchema, expression.getVariableName())) {
                     throw new InvalidGroupVariableException(
                             "Variable "
                                 + expression.getVariableName()
-                                + " cannot be used in group clause",
+                                + " cannot be used as a grouping key because it is not in the input tuple stream. It must be a variable from the same FLWOR expression).",
                             getMetadata()
                     );
                 }
@@ -317,6 +318,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
             input
         );
         if (nativeQueryResult != null) {
+
             return nativeQueryResult;
         }
 
@@ -517,8 +519,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         StringBuilder groupByString = new StringBuilder();
         String sep = " ";
         for (Name groupingVar : groupingVariables) {
-            StructField field = inputSchema.fields()[inputSchema.fieldIndex(groupingVar.toString())];
-            if (field.dataType().equals(DataTypes.BinaryType)) {
+            if (!FlworDataFrameUtils.isVariableAvailableAsNativeItem(inputSchema, groupingVar)) {
                 // we got a non-native type for grouping, switch to udf version
                 return null;
             }
@@ -541,21 +542,24 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
                 selectString.append(".count");
                 selectString.append("`");
-            } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
-                // we are summing over a previous count
-                String columnName = entry.getKey().toString();
-                selectString.append("collect_list(`");
-                selectString.append(columnName);
-                selectString.append("`) as `");
-                selectString.append(columnName);
-                selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
-                // we need a count
-                selectString.append("count(`");
-                selectString.append(entry.getKey().toString());
-                selectString.append("`) as `");
-                selectString.append(entry.getKey().toString());
-                selectString.append(".count`");
+                if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
+                    selectString.append("sum(cardinality(`");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".sequence`)) as `");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".count`");
+                } else {
+                    // we need a count
+                    selectString.append("count(`");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append("`) as `");
+                    selectString.append(entry.getKey().toString());
+                    selectString.append(".count`");
+                }
+            } else if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
+                // we cannot merge arrays natively in Spark, strangely.
+                return null;
             } else if (groupingVariables.contains(entry.getKey())) {
                 // we are considering one of the grouping variables
                 selectString.append(entry.getKey().toString());
@@ -573,7 +577,7 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(".sequence`");
             }
         }
-        System.err.println("[INFO] Rumble was able to optimize a let clause to a native SQL query.");
+        System.err.println("[INFO] Rumble was able to optimize a group by clause to a native SQL query.");
         return dataFrame.sparkSession()
             .sql(
                 String.format(
