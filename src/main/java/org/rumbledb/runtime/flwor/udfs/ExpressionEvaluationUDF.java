@@ -28,20 +28,20 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
+public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;
     private RuntimeIterator expression;
 
-    private List<Item> nextResult;
-    private List<byte[]> results;
+    private transient List<byte[]> results;
 
-    public ForClauseUDF(
+    public ExpressionEvaluationUDF(
             RuntimeIterator expression,
             DynamicContext context,
             StructType schema,
@@ -49,7 +49,6 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
     ) {
         this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expression = expression;
-        this.nextResult = new ArrayList<>();
         this.results = new ArrayList<>();
     }
 
@@ -61,12 +60,10 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
         // apply expression in the dynamic context
         this.expression.open(this.dataFrameContext.getContext());
         while (this.expression.hasNext()) {
-            this.nextResult.clear();
             Item nextItem = this.expression.next();
-            this.nextResult.add(nextItem);
             this.results.add(
-                FlworDataFrameUtils.serializeItemList(
-                    this.nextResult,
+                FlworDataFrameUtils.serializeItem(
+                    nextItem,
                     this.dataFrameContext.getKryo(),
                     this.dataFrameContext.getOutput()
                 )
@@ -75,5 +72,12 @@ public class ForClauseUDF implements UDF1<Row, List<byte[]>> {
         this.expression.close();
 
         return this.results;
+    }
+
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException,
+                ClassNotFoundException {
+        in.defaultReadObject();
+        this.results = new ArrayList<>();
     }
 }

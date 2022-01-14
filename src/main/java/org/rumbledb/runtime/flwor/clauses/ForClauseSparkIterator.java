@@ -46,7 +46,7 @@ import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
 import org.rumbledb.runtime.flwor.udfs.DataFrameContext;
-import org.rumbledb.runtime.flwor.udfs.ForClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.flwor.udfs.GenericForClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.IntegerSerializeUDF;
 import org.rumbledb.runtime.navigation.PredicateIterator;
@@ -624,7 +624,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "forClauseUDF",
-                new ForClauseUDF(this.assignmentIterator, context, inputSchema, UDFcolumns),
+                new ExpressionEvaluationUDF(this.assignmentIterator, context, inputSchema, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
@@ -1300,7 +1300,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "forClauseUDF",
-                new ForClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                new ExpressionEvaluationUDF(newVariableExpression, context, inputSchema, UDFcolumns),
                 DataTypes.BinaryType
             );
     }

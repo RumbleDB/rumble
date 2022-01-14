@@ -159,7 +159,7 @@ public class FlworDataFrameUtils {
      * @param columnName the column name.
      * @return the variable name.
      */
-    public static Name variableForColumnName(String columnName) {
+    private static Name variableForColumnName(String columnName) {
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             return Name.createVariableInNoNamespace(columnName);

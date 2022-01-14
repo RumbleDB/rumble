@@ -43,7 +43,7 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
-import org.rumbledb.runtime.flwor.udfs.LetClauseUDF;
+import org.rumbledb.runtime.flwor.udfs.ExpressionEvaluationUDF;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.runtime.navigation.PredicateIterator;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -749,7 +749,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "letClauseUDF",
-                new LetClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                new ExpressionEvaluationUDF(newVariableExpression, context, inputSchema, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
         return false;
