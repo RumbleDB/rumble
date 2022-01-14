@@ -25,6 +25,7 @@ import java.io.Serializable;
 import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.OurBadException;
 
 public class FlworDataFrameColumn implements Serializable {
 
@@ -78,6 +79,7 @@ public class FlworDataFrameColumn implements Serializable {
                     this.columnFormat = ColumnFormat.MIN;
                     break;
                 default:
+                    throw new OurBadException("Unrecognized column name: " + columnName);
             }
         }
     }
