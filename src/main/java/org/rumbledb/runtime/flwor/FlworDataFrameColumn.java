@@ -7,7 +7,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.context.Name;
 
 public class FlworDataFrameColumn implements Serializable {
-   
+
     private static final long serialVersionUID = 1L;
 
     enum ColumnFormat {
@@ -19,17 +19,16 @@ public class FlworDataFrameColumn implements Serializable {
         MIN,
         MAX
     };
+
     private Name variableName;
     private ColumnFormat columnFormat;
-    
-    public FlworDataFrameColumn(Name variableName, ColumnFormat columnFormat)
-    {
+
+    public FlworDataFrameColumn(Name variableName, ColumnFormat columnFormat) {
         this.variableName = variableName;
         this.columnFormat = columnFormat;
     }
-    
-    public FlworDataFrameColumn(String columnName, StructType inputSchema)
-    {
+
+    public FlworDataFrameColumn(String columnName, StructType inputSchema) {
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             this.variableName = Name.createVariableInNoNamespace(columnName);
@@ -42,7 +41,7 @@ public class FlworDataFrameColumn implements Serializable {
             return;
         } else {
             this.variableName = Name.createVariableInNoNamespace(columnName.substring(0, pos));
-            switch(columnName.substring(pos)) {
+            switch (columnName.substring(pos)) {
                 case ".count":
                     this.columnFormat = ColumnFormat.COUNT;
                     break;
@@ -62,13 +61,13 @@ public class FlworDataFrameColumn implements Serializable {
             }
         }
     }
-    
+
     public String toString() {
         return "`" + getColumnName() + "`";
     }
-    
+
     public String getColumnName() {
-        switch(this.columnFormat) {
+        switch (this.columnFormat) {
             case SERIALIZED_SEQUENCE:
                 return this.variableName.toString();
             case FULLY_NATIVE:
@@ -86,31 +85,31 @@ public class FlworDataFrameColumn implements Serializable {
         }
         return null;
     }
-    
+
     public boolean isSerializedSequence() {
         return this.columnFormat.equals(ColumnFormat.SERIALIZED_SEQUENCE);
     }
-    
+
     public boolean isFullyNative() {
         return this.columnFormat.equals(ColumnFormat.FULLY_NATIVE);
     }
-    
+
     public boolean isNativeSequence() {
         return this.columnFormat.equals(ColumnFormat.NATIVE_SEQUENCE);
     }
-    
+
     public boolean isCount() {
         return this.columnFormat.equals(ColumnFormat.COUNT);
     }
-    
+
     public boolean isSum() {
         return this.columnFormat.equals(ColumnFormat.SUM);
     }
-    
+
     public boolean isMin() {
         return this.columnFormat.equals(ColumnFormat.MIN);
     }
-    
+
     public boolean isMax() {
         return this.columnFormat.equals(ColumnFormat.MAX);
     }

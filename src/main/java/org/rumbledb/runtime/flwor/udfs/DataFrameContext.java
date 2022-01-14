@@ -88,8 +88,7 @@ public class DataFrameContext implements Serializable {
             List<String> columnNames
     ) {
         this.columns = new ArrayList<>();
-        for(String columnName : columnNames)
-        {
+        for (String columnName : columnNames) {
             this.columns.add(new FlworDataFrameColumn(columnName, schema));
         }
 
