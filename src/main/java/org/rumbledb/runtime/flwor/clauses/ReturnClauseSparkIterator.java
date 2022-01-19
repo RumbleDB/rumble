@@ -120,6 +120,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
             new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
             null
         );
+        df.show();
         return df.toJavaRDD().flatMap(new ReturnFlatMapClosure(expression, context, oldSchema, UDFcolumns));
     }
 

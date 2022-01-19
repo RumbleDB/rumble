@@ -32,6 +32,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
@@ -215,7 +216,15 @@ public class DataFrameContext implements Serializable {
         if (o instanceof byte[]) {
             byte[] bytes = (byte[]) o;
             this.input.setBuffer(bytes);
-            return (List<Item>) this.kryo.readClassAndObject(this.input);
+            try {
+                return (List<Item>) this.kryo.readClassAndObject(this.input);
+            } catch (Exception e) {
+                RuntimeException ex = new OurBadException(
+                        "Error while deserializing column " + row.schema().fields()[columnIndex].name()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
         }
         if (dt instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) dt;
