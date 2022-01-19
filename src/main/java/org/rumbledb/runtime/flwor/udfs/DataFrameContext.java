@@ -32,8 +32,10 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.parsing.ItemParser;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.types.ItemType;
 
@@ -54,7 +56,7 @@ import java.util.List;
 public class DataFrameContext implements Serializable {
 
     private static final long serialVersionUID = 1L;
-    private List<String> columnNames;
+    private List<FlworDataFrameColumn> columns;
     private DynamicContext context;
 
     private transient Kryo kryo;
@@ -86,7 +88,10 @@ public class DataFrameContext implements Serializable {
             StructType schema,
             List<String> columnNames
     ) {
-        this.columnNames = columnNames;
+        this.columns = new ArrayList<>();
+        for (String columnName : columnNames) {
+            this.columns.add(new FlworDataFrameColumn(columnName, schema));
+        }
 
         this.context = new DynamicContext(context);
 
@@ -118,21 +123,21 @@ public class DataFrameContext implements Serializable {
         this.context.getVariableValues().removeAllVariables();
 
         // Create dynamic context with deserialized data but only with dependencies
-        for (String columnName : this.columnNames) {
-            int columnIndex = row.fieldIndex(columnName);
-            if (columnName.endsWith(".sequence")) {
+        for (FlworDataFrameColumn column : this.columns) {
+            int columnIndex = row.fieldIndex(column.getColumnName());
+            if (column.isNativeSequence()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
-                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        column.getVariableName(),
                         i
                     );
             }
-            if (!columnName.endsWith(".count")) {
+            if (!column.isCount()) {
                 List<Item> i = readColumnAsSequenceOfItems(row, itemType, columnIndex);
                 this.context.getVariableValues()
                     .addVariableValue(
-                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        column.getVariableName(),
                         i
                     );
             } else {
@@ -140,7 +145,7 @@ public class DataFrameContext implements Serializable {
                 Item i = ItemFactory.getInstance().createLongItem(count);
                 this.context.getVariableValues()
                     .addVariableCount(
-                        FlworDataFrameUtils.variableForColumnName(columnName),
+                        column.getVariableName(),
                         i
                     );
             }
@@ -211,7 +216,15 @@ public class DataFrameContext implements Serializable {
         if (o instanceof byte[]) {
             byte[] bytes = (byte[]) o;
             this.input.setBuffer(bytes);
-            return (List<Item>) this.kryo.readClassAndObject(this.input);
+            try {
+                return (List<Item>) this.kryo.readClassAndObject(this.input);
+            } catch (Exception e) {
+                RuntimeException ex = new OurBadException(
+                        "Error while deserializing column " + row.schema().fields()[columnIndex].name()
+                );
+                ex.initCause(e);
+                throw ex;
+            }
         }
         if (dt instanceof ArrayType) {
             ArrayType arrayType = (ArrayType) dt;

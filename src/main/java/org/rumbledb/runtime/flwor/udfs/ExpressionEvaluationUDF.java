@@ -32,7 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClauseUDF implements UDF1<Row, List<byte[]>> {
+public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
     private static final long serialVersionUID = 1L;
 
@@ -41,7 +41,7 @@ public class LetClauseUDF implements UDF1<Row, List<byte[]>> {
 
     private transient List<byte[]> results;
 
-    public LetClauseUDF(
+    public ExpressionEvaluationUDF(
             RuntimeIterator expression,
             DynamicContext context,
             StructType schema,
