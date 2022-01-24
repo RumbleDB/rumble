@@ -38,8 +38,10 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.udfs.GenericLetClauseUDF;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseSerializeAggregateResultsUDF;
 import org.rumbledb.runtime.flwor.udfs.HashUDF;
@@ -623,6 +625,8 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
 
         String input = FlworDataFrameUtils.createTempView(dataFrame);
 
+        FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(newVariableName, ColumnFormat.NATIVE_SEQUENCE);
+        FlworDataFrameColumn dfColumnNative = new FlworDataFrameColumn(newVariableName, ColumnFormat.FULLY_NATIVE);
 
         if (!hash) {
             dataFrame = dataFrame.sparkSession()
@@ -631,7 +635,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                         "select %s letClauseUDF(%s) as `%s` from %s",
                         selectSQL,
                         UDFParameters,
-                        isNative ? newVariableName : (newVariableName + ".sequence"),
+                        isNative ? dfColumnNative : dfColumnSequence,
                         input
                     )
                 );

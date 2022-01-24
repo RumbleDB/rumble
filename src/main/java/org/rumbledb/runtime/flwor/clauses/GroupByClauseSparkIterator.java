@@ -39,6 +39,8 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn.ColumnFormat;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.expression.GroupByClauseSparkIteratorExpression;
 import org.rumbledb.runtime.flwor.udfs.GroupClauseArrayMergeAggregateResultsUDF;
@@ -385,7 +387,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         for (StructField sf : schemaType.fields()) {
             DataType dataType = sf.dataType();
             String name = sf.name();
-            if (name.endsWith(".sequence")) {
+            FlworDataFrameColumn dfColumn = new FlworDataFrameColumn(name, schemaType);
+            if (dfColumn.isNativeSequence()) {
                 int i = Math.abs(dataType.hashCode());
                 df.sparkSession()
                     .udf()
@@ -544,11 +547,15 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append("`");
             } else if (entry.getValue() == DynamicContext.VariableDependency.COUNT) {
                 if (FlworDataFrameUtils.isVariableAvailableAsNativeSequence(inputSchema, entry.getKey())) {
-                    selectString.append("sum(cardinality(`");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append(".sequence`)) as `");
-                    selectString.append(entry.getKey().toString());
-                    selectString.append(".count`");
+                    FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(
+                            entry.getKey(),
+                            ColumnFormat.NATIVE_SEQUENCE
+                    );
+                    FlworDataFrameColumn dfColumnCount = new FlworDataFrameColumn(entry.getKey(), ColumnFormat.COUNT);
+                    selectString.append("sum(cardinality(");
+                    selectString.append(dfColumnSequence);
+                    selectString.append(")) as ");
+                    selectString.append(dfColumnCount);
                 } else {
                     // we need a count
                     selectString.append("count(`");
@@ -565,6 +572,10 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 selectString.append(entry.getKey().toString());
             } else {
                 // we collect all the values, if it is a binary object we just switch over to udf
+                FlworDataFrameColumn dfColumnSequence = new FlworDataFrameColumn(
+                        entry.getKey(),
+                        ColumnFormat.NATIVE_SEQUENCE
+                );
                 String columnName = entry.getKey().toString();
                 StructField field = inputSchema.fields()[inputSchema.fieldIndex(columnName)];
                 if (field.dataType().equals(DataTypes.BinaryType)) {
@@ -572,9 +583,8 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 }
                 selectString.append("collect_list(`");
                 selectString.append(columnName);
-                selectString.append("`) as `");
-                selectString.append(columnName);
-                selectString.append(".sequence`");
+                selectString.append("`) as ");
+                selectString.append(dfColumnSequence);
             }
         }
         System.err.println("[INFO] Rumble was able to optimize a group by clause to a native SQL query.");
