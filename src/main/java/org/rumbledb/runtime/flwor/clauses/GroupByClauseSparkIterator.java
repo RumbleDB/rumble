@@ -581,9 +581,9 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
                 if (field.dataType().equals(DataTypes.BinaryType)) {
                     return null;
                 }
-                selectString.append("collect_list(`");
+                selectString.append("collect_list(");
                 selectString.append(columnName);
-                selectString.append("`) as ");
+                selectString.append(") as ");
                 selectString.append(dfColumnSequence);
             }
         }
