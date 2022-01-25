@@ -100,6 +100,23 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
+                if (i == 0) {
+                    System.err.println("Did you know?");
+                    System.err.println(
+                        "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
+                    );
+                    System.err.println();
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run query.jq");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar serve -p 8001");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run -q '1+1'");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar repl -c 10");
+                    System.err.println();
+                    System.err.println(
+                        "The list of single-dash shortcuts is documented in our documentation page, accessible from www.rumbledb.org."
+                    );
+                    System.err.println();
+                    System.err.println("Try it out! The old parameters will continue to work, though.");
+                }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
                 if (i + 1 >= args.length || args[i + 1].startsWith(ARGUMENT_PREFIX)) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
@@ -127,31 +144,16 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     continue;
                 }
             }
-            if (args[i].equals("serve")) {
+            if (i == 0 && args[i].equals("serve")) {
                 this.arguments.put("server", "yes");
                 continue;
             }
-            if (args[i].equals("repl")) {
+            if (i == 0 && args[i].equals("repl")) {
                 this.arguments.put("shell", "yes");
                 continue;
             }
-            if (args[i].equals("run")) {
-                if (
-                    i + 1 < args.length
-                        && !args[i + 1].startsWith(ARGUMENT_PREFIX)
-                        && !args[i + 1].startsWith(SHORTCUT_PREFIX)
-                ) {
-                    this.arguments.put("query-path", args[i + 1]);
-                    ++i;
-                    continue;
-                }
-                continue;
+            if (i == 0 && args[i].equals("run")) {
             }
-            System.err.println(
-                "You did not specify \"run\" or a parameter. We assume you mean to use "
-                    + args[i]
-                    + " as the query path."
-            );
             this.arguments.put("query-path", args[i]);
         }
         init();
