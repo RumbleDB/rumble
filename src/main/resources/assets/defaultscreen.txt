@@ -9,18 +9,23 @@ Usage:
 spark-submit <Spark arguments> <path to RumbleDB's jar> <Rumble arguments>
 
 You can RumbleDB on a shell with:
+spark-submit rumbledb-1.17.0.jar repl
 spark-submit rumbledb-1.17.0.jar --shell yes
 
 You can directly inline a query on the command line with:
+spark-submit rumbledb-1.17.0.jar - '1+1'
 spark-submit rumbledb-1.17.0.jar --query '1+1'
 
 You can specify an output path with:
+spark-submit rumbledb-1.17.0.jar -q '1+1' -o my-output.txt
 spark-submit rumbledb-1.17.0.jar --query '1+1' --output-path my-output.txt
 
 You can specify a query path with:
+spark-submit rumbledb-1.17.0.jar run my-query.jq
 spark-submit rumbledb-1.17.0.jar --query-path my-query.jq
 
 You can run it as an HTTP server (e.g., for use with a Jupyter notebook) with:
+spark-submit rumbledb-1.17.0.jar serve -p 9090
 spark-submit rumbledb-1.17.0.jar --server yes --port 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
@@ -28,6 +33,7 @@ even more convenient if you are using a cluster.
 
 For local use, you can control the number of cores, as well as allocated
 memory, with:
+spark-submit --master local[*] rumbledb-1.17.0.jar --shell yes
 spark-submit --master local[*] rumbledb-1.17.0.jar --shell yes
 spark-submit --master local[2] rumbledb-1.17.0.jar --shell yes
 spark-submit --master local[*] --driver-memory 10G rumbledb-1.17.0.jar --shell yes
