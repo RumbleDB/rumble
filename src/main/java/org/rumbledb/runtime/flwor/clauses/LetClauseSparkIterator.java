@@ -632,7 +632,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             dataFrame = dataFrame.sparkSession()
                 .sql(
                     String.format(
-                        "select %s letClauseUDF(%s) as `%s` from %s",
+                        "select %s letClauseUDF(%s) as %s from %s",
                         selectSQL,
                         UDFParameters,
                         isNative ? dfColumnNative : dfColumnSequence,
