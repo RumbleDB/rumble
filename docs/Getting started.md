@@ -35,7 +35,7 @@ You can test that Spark was correctly installed with:
    
 ### Java version (important)
 
-If you use Spark 2.4, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8.
+You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
 
 Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
 
@@ -48,13 +48,11 @@ Like Spark, RumbleDB is just a download and no installation is required.
 
 In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
 
-If you use Spark 2.4+, use rumbledb-1.16.2-for-spark-2.4.jar.
+If you use Spark 3.0+, use rumbledb-1.17.0-for-spark-3.0.jar.
 
-If you use Spark 3.0+, use rumbledb-1.16.2-for-spark-3.0.jar.
+If you use Spark 3.1+, use rumbledb-1.17.0-for-spark-3.1.jar.
 
-If you use Spark 3.1+, use rumbledb-1.16.2-for-spark-3.1.jar.
-
-If you use Spark 3.2+, use rumbledb-1.16.2-for-spark-3.2.jar.
+If you use Spark 3.2+, use rumbledb-1.17.0-for-spark-3.2.jar.
 
 Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
@@ -89,7 +87,7 @@ The RumbleDB shell appears:
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.16.0 "Shagbark Hickory" beta
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.17.0 "Cacao Tree" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
 
     

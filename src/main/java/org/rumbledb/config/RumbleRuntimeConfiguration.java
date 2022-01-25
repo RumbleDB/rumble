@@ -35,12 +35,15 @@ import sparksoniq.spark.SparkSessionManager;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class RumbleRuntimeConfiguration implements Serializable, KryoSerializable {
 
     private static final long serialVersionUID = 1L;
+    private static final String SHORTCUT_PREFIX = "-";
     private static final String ARGUMENT_PREFIX = "--";
     private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
         "Invalid argument format. Required format: --property value";
@@ -63,25 +66,95 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean dataFrameExecutionModeDetection;
     private boolean thirdFeature;
 
+    private Map<String, String> shortcutMap;
+    private Set<String> yesNoShortcuts;
+
 
     private static final RumbleRuntimeConfiguration defaultConfiguration = new RumbleRuntimeConfiguration();
 
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
+        initShortcuts();
+    }
+
+    private void initShortcuts() {
+        this.shortcutMap = new HashMap<>();
+        this.shortcutMap.put("q", "query");
+        this.shortcutMap.put("o", "output-path");
+        this.shortcutMap.put("f", "output-format");
+        this.shortcutMap.put("O", "overwrite");
+        this.shortcutMap.put("c", "materialization-cap");
+        this.shortcutMap.put("P", "number-of-output-partitions");
+        this.shortcutMap.put("v", "show-error-info");
+        this.shortcutMap.put("t", "static-typing");
+        this.shortcutMap.put("h", "host");
+        this.shortcutMap.put("p", "port");
+        this.yesNoShortcuts = new HashSet<>();
+        this.yesNoShortcuts.add("O");
+        this.yesNoShortcuts.add("v");
+        this.yesNoShortcuts.add("t");
     }
 
     public RumbleRuntimeConfiguration(String[] args) {
         this.arguments = new HashMap<>();
-        for (int i = 0; i < args.length; i += 2) {
-            if (!args[i].startsWith(ARGUMENT_PREFIX)) {
-                throw new CliException(ARGUMENT_FORMAT_ERROR_MESSAGE);
+        initShortcuts();
+        for (int i = 0; i < args.length; ++i) {
+            if (args[i].startsWith(ARGUMENT_PREFIX)) {
+                if (i == 0) {
+                    System.err.println("Did you know?  🧑‍🏫");
+                    System.err.println(
+                        "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
+                    );
+                    System.err.println();
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run query.jq");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar serve -p 8001");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar run -q '1+1'");
+                    System.err.println("spark-submit <spark parameters> rumbledb-<version>.jar repl -c 10");
+                    System.err.println();
+                    System.err.println(
+                        "The list of single-dash shortcuts is documented in our documentation page, accessible from www.rumbledb.org."
+                    );
+                    System.err.println();
+                    System.err.println("Try it out! The old parameters will continue to work, though.");
+                }
+                String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
+                if (i + 1 >= args.length || args[i + 1].startsWith(ARGUMENT_PREFIX)) {
+                    throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
+                }
+                String argumentValue = args[i + 1];
+                this.arguments.put(argumentName, argumentValue);
+                ++i;
+                continue;
             }
-            String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-            if (i + 1 >= args.length || args[i + 1].startsWith(ARGUMENT_PREFIX)) {
-                throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
+            if (args[i].startsWith(SHORTCUT_PREFIX)) {
+                String argumentName = args[i].trim().replace(SHORTCUT_PREFIX, "");
+                if (!this.yesNoShortcuts.contains(argumentName)) {
+                    if (
+                        i + 1 >= args.length
+                            || args[i + 1].startsWith(ARGUMENT_PREFIX)
+                            || args[i + 1].startsWith(SHORTCUT_PREFIX)
+                    ) {
+                        throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
+                    }
+                    this.arguments.put(this.shortcutMap.get(argumentName), args[i + 1]);
+                    ++i;
+                    continue;
+                } else {
+                    this.arguments.put(this.shortcutMap.get(argumentName), "yes");
+                    continue;
+                }
             }
-            String argumentValue = args[i + 1];
-            this.arguments.put(argumentName, argumentValue);
+            if (i == 0 && args[i].equals("serve")) {
+                this.arguments.put("server", "yes");
+                continue;
+            }
+            if (i == 0 && args[i].equals("repl")) {
+                this.arguments.put("shell", "yes");
+                continue;
+            }
+            if (i == 0 && args[i].equals("run")) {
+            }
+            this.arguments.put("query-path", args[i]);
         }
         init();
     }

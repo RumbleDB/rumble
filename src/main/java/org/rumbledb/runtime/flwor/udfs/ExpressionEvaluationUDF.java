@@ -27,19 +27,21 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
-public class LetClauseUDF implements UDF1<Row, byte[]> {
+public class ExpressionEvaluationUDF implements UDF1<Row, List<byte[]>> {
 
     private static final long serialVersionUID = 1L;
 
     private DataFrameContext dataFrameContext;
     private RuntimeIterator expression;
 
-    private List<Item> nextResult;
+    private transient List<byte[]> results;
 
-    public LetClauseUDF(
+    public ExpressionEvaluationUDF(
             RuntimeIterator expression,
             DynamicContext context,
             StructType schema,
@@ -47,19 +49,35 @@ public class LetClauseUDF implements UDF1<Row, byte[]> {
     ) {
         this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
         this.expression = expression;
-        this.nextResult = new ArrayList<>();
+        this.results = new ArrayList<>();
     }
 
     @Override
-    public byte[] call(Row row) {
+    public List<byte[]> call(Row row) {
         this.dataFrameContext.setFromRow(row);
 
-        this.expression.materialize(this.dataFrameContext.getContext(), this.nextResult);
+        this.results.clear();
+        // apply expression in the dynamic context
+        this.expression.open(this.dataFrameContext.getContext());
+        while (this.expression.hasNext()) {
+            Item nextItem = this.expression.next();
+            this.results.add(
+                FlworDataFrameUtils.serializeItem(
+                    nextItem,
+                    this.dataFrameContext.getKryo(),
+                    this.dataFrameContext.getOutput()
+                )
+            );
+        }
+        this.expression.close();
 
-        return FlworDataFrameUtils.serializeItemList(
-            this.nextResult,
-            this.dataFrameContext.getKryo(),
-            this.dataFrameContext.getOutput()
-        );
+        return this.results;
+    }
+
+    private void readObject(java.io.ObjectInputStream in)
+            throws IOException,
+                ClassNotFoundException {
+        in.defaultReadObject();
+        this.results = new ArrayList<>();
     }
 }
