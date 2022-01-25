@@ -6,7 +6,7 @@ The parameters that can be used on the command line as well as on the planned HT
 |  Shell parameter | Shortcut | HTTP parameter  | example values  | Semantics  |
 |---|---|---|---|---|
 | --shell  | repl | N/A  |  yes, no |  yes runs the interactive shell. No executes a query specified with --query-path |
-| --shell-filter | A/A | N/A  |  jq . |  Post-processes the output of JSONiq queries on the shell with the specified command (reading the RumbleDB output via stdin) |
+| --shell-filter | N/A | N/A  |  jq . |  Post-processes the output of JSONiq queries on the shell with the specified command (reading the RumbleDB output via stdin) |
 | --query | -q | query | 1+1  | A JSONiq query directly provided as a string.  |
 | --query-path  | (after run) | query-path  | file:///folder/file.jq  | A JSONiq query file to read from (from any file system, even the Web!).  |
 | --output-path  | -o | output-path | file:///folder/output  | Where to output to (if the output is large, it will create a sharded directory, otherwise it will create a file) |
