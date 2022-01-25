@@ -31,7 +31,7 @@ public class FlworDataFrameColumn implements Serializable {
 
     private static final long serialVersionUID = 1L;
 
-    enum ColumnFormat {
+    public enum ColumnFormat {
         SERIALIZED_SEQUENCE,
         NATIVE_SEQUENCE,
         FULLY_NATIVE,

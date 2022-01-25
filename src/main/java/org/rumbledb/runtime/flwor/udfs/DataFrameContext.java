@@ -239,7 +239,12 @@ public class DataFrameContext implements Serializable {
                 }
                 return items;
             }
-            if (row.schema().fields()[columnIndex].name().endsWith(".sequence")) {
+            FlworDataFrameColumn dfColumn = new FlworDataFrameColumn(
+                    row.schema().fields()[columnIndex].name(),
+                    row.schema()
+            );
+
+            if (dfColumn.isNativeSequence()) {
                 List<Object> objects = row.getList(columnIndex);
                 List<Item> items = new ArrayList<>();
                 for (Object object : objects) {
