@@ -137,17 +137,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
             if (args[i].equals("run")) {
                 if (
-                    i + 1 >= args.length
-                        || args[i + 1].startsWith(ARGUMENT_PREFIX)
-                        || args[i + 1].startsWith(SHORTCUT_PREFIX)
+                    i + 1 < args.length
+                        && !args[i + 1].startsWith(ARGUMENT_PREFIX)
+                        && !args[i + 1].startsWith(SHORTCUT_PREFIX)
                 ) {
-                    throw new CliException("Missing JSONiq file to run.");
+                    this.arguments.put("query-path", args[i + 1]);
+                    ++i;
+                    continue;
                 }
-                this.arguments.put("query-path", args[i + 1]);
-                ++i;
                 continue;
             }
-            throw new CliException("Unrecognized argument: " + args[i]);
+            System.err.println(
+                "You did not specify \"run\" or a parameter. We assume you mean to use "
+                    + args[i]
+                    + " as the query path."
+            );
+            this.arguments.put("query-path", args[i]);
         }
         init();
     }
