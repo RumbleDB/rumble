@@ -159,13 +159,46 @@ public class FlworDataFrameUtils {
      * @param columnName the column name.
      * @return the variable name.
      */
-    public static Name variableForColumnName(String columnName) {
+    private static Name variableForColumnName(String columnName) {
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             return Name.createVariableInNoNamespace(columnName);
         } else {
             return Name.createVariableInNoNamespace(columnName.substring(0, pos));
         }
+    }
+
+    /**
+     * Returns all the column names of the given DataFrame
+     * that correspond to the supplied variable.
+     * 
+     * @param inputSchema schema specifies the columns of the DataFrame.
+     * @param variable the name of the variable.
+     * @param results where to store the found column names.
+     * @return true if there is at least one column for this variable.
+     */
+    public static boolean columnNamesForVariable(
+            StructType inputSchema,
+            Name variable,
+            List<String> results
+    ) {
+        results.clear();
+        for (String columnName : inputSchema.fieldNames()) {
+            int pos = columnName.indexOf(".");
+            if (pos == -1) {
+                if (variable.getLocalName().equals(columnName)) {
+                    results.add(columnName);
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    results.add(columnName);
+                }
+            }
+        }
+        if (results.isEmpty()) {
+            return false;
+        }
+        return true;
     }
 
     /**
@@ -249,7 +282,7 @@ public class FlworDataFrameUtils {
                 }
             } else {
                 if (variable.getLocalName().equals(columnName.substring(0, pos))) {
-                    return columnName.substring(pos).equals("sequence");
+                    return columnName.substring(pos).equals(".sequence");
                 } ;
             }
         }
@@ -276,6 +309,10 @@ public class FlworDataFrameUtils {
                     if (inputSchema.fields()[index].dataType().equals(DataTypes.BinaryType)) {
                         return true;
                     }
+                    return false;
+                }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
                     return false;
                 }
             }
@@ -328,9 +365,13 @@ public class FlworDataFrameUtils {
                     }
                     return true;
                 }
+            } else {
+                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
+                    return false;
+                }
             }
         }
-        throw new OurBadException("Variable " + variable + "not found.");
+        throw new OurBadException("Variable " + variable + " not found.");
     }
 
     /**
@@ -675,10 +716,16 @@ public class FlworDataFrameUtils {
                 } else if (shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, columnName)) {
                     queryColumnString.append("1");
                 } else if (shouldCalculateCount(dependencies, columnName)) {
-                    queryColumnString.append("count(`");
-                    queryColumnString.append(columnName);
-                    queryColumnString.append("`)");
-                    columnName += ".count";
+                    if (isNativeSequence(inputSchema, columnName)) {
+                        queryColumnString.append("sum(cardinality(`");
+                        queryColumnString.append(columnName + ".sequence");
+                        queryColumnString.append("`))");
+                    } else {
+                        queryColumnString.append("count(`");
+                        queryColumnString.append(columnName);
+                        queryColumnString.append("`)");
+                        columnName += ".count";
+                    }
                 } else if (isProcessingGroupingColumn(groupbyVariableNames, columnName)) {
                     // rows that end up in the same group have the same value for the grouping column
                     // return a single instance of this value in the grouping column
