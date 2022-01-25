@@ -101,7 +101,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
                 if (i == 0) {
-                    System.err.println("Did you know?");
+                    System.err.println("Did you know?  🧑‍🏫");
                     System.err.println(
                         "The RumbleDB command line interface was extended with convenient shortcuts. For example:"
                     );
