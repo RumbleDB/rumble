@@ -2,6 +2,16 @@
 
 The parameters that can be used on the command line as well as on the planned HTTP server are shown below.
 
+RumbleDB runs in three modes. You can select the mode passing a verb as the first parameter. For example:
+
+```
+   spark-submit rumbledb.org run file.jq -o output-dir -P 1
+   spark-submit rumbledb.org run -q '1+1'
+   spark-submit rumbledb.org serve -p 8001
+   spark-submit rumbledb.org repl -c 10
+```
+
+Previous parameters (--shell, --query-path, --server) work in a backward compatible fashion, however we do recommend to start using the new verb-based format.
 
 |  Shell parameter | Shortcut | HTTP parameter  | example values  | Semantics  |
 |---|---|---|---|---|
