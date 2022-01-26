@@ -80,7 +80,7 @@ In the JSON Lines format that this simple dataset uses, you just need to make su
 
 In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
-    spark-submit rumbledb.jar --shell yes
+    spark-submit rumbledb.jar repl
                  
 The RumbleDB shell appears:
 
