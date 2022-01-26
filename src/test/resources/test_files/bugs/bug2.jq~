@@ -1,0 +1,7 @@
+(:JIQS: ShouldRun; Output="" :)
+for $i in json-file("git-archive.json") 
+let $k := $i.payload.commits[].author 
+group by $r := $i.repo.id 
+order by count($k) descending 
+count $c where $c <= 5 
+return {"repo":$r, "count":count($k)}
