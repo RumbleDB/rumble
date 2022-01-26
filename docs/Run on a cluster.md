@@ -25,24 +25,23 @@ This is all you need to do, since Apache Spark is already installed. If spark-su
 
 Often, the Spark cluster is running on yarn. The --master option can be changed from local[\*] (which was for running on your laptop) to yarn compared to the getting started guide.
 
-    spark-submit --master yarn --deploy-mode client rumbledb-1.17.0.jar --shell yes
+    spark-submit --master yarn --deploy-mode client rumbledb-1.17.0.jar repl
                  
 Most of the time, though (e.g., on Amazon EMR), it needs not be specified, as this is already set up in the environment. So the same command will do:
 
-    spark-submit rumbledb-1.17.0.jar --shell yes
+    spark-submit rumbledb-1.17.0.jar repl
                  
 When you are on a cluster, you can also adapt the number of executors, how many cores you want per executor, etc. It is recommended to use sqrt(n) cores per executor if a node has n cores. For the executor memory, it is just primary school math: you need to divide the memory on a machine with the number of executors per machine (which is also roughly sqrt(n)).
 
 For example, if we have 6 worker nodes with each 16 cores and 64 GB, we can use 5 executores on each machine, with 3 cores and 10 GB per executor. This leaves a core and a bit of memory free for other cluster tasks.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 rumbledb-1.17.0.jar --shell yes
+                 rumbledb-1.17.0.jar repl
 
-If necesasry, the size limit for materialization can be made higher with --materialization-cap (the default is 200). This affects the number of items displayed on the shells as an answer to a query. It also affects the maximum number of items that can be materialized from a large sequence into, say, an array. Warnings are issued if the cap is reached.
+If necesasry, the size limit for materialization can be made higher with --materialization-cap or its shortcut -c (the default is 200). This affects the number of items displayed on the shells as an answer to a query. It also affects the maximum number of items that can be materialized from a large sequence into, say, an array. Warnings are issued if the cap is reached.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 rumbledb-1.17.0.jar
-                 --shell yes --materialization-cap 10000
+                 rumbledb-1.17.0.jar repl -c 10000
 
 ## Creation functions
 
@@ -78,19 +77,17 @@ Note that by default only the first 200 items in the output will be displayed on
 
 ## Execution of single queries and output to HDFS
 
-RumbleDB also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, use the --query-path, --output-path and --log-path parameters.
+RumbleDB also supports executing a single query from the command line, reading from HDFS and outputting the results to HDFS, with the query file being either local or on HDFS. For this, use the --query-path (optional as any text without parameter is recognized as a path in any case), --output-path (shortcut -o) and --log-path parameters.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 rumbledb-1.17.0.jar
-                 --query-path "hdfs:///user/me/query.jq"
-                 --output-path "hdfs:///user/me/results/output"
+                 rumbledb-1.17.0.jar run "hdfs:///user/me/query.jq"
+                 -o "hdfs:///user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"
 
 The query path, output path and log path can be any of the supported schemes (HDFS, file, S3, WASB...) and can be relative or absolute.
 
     spark-submit --num-executors 30 --executor-cores 3 --executor-memory 10g
-                 rumbledb-1.17.0.jar
-                 --query-path "/home/me/my-local-machine/query.jq"
-                 --output-path "/user/me/results/output"
+                 rumbledb-1.17.0.jar run "/home/me/my-local-machine/query.jq"
+                 -o "/user/me/results/output"
                  --log-path "hdfs:///user/me/logging/mylog"
 
