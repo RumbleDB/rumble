@@ -4,7 +4,7 @@ First, if you really want to start writing queries right now, there is a public 
 
 Below, you will find instructions to install your RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk.
 
-Note that, if you want something even more straightforward, you can alternatively use our RumbleDB docker file (go to the "Run with docker" section on the left menu) that contains everything RumbleDB needs.
+Note that, if you want something even more straightforward, you can alternatively use our RumbleDB docker file (go to the "Run with docker" section on the left menu) that contains everything RumbleDB needs. Florian Kellner also kindly contributed an [installation script](https://github.com/fkellner/rumbledb-install-script) for Linux users.
 
 ## Prerequisites
 
