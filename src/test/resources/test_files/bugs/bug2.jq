@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="" :)
+(:JIQS: ShouldRun; Output="({ "repo" : "r1", "count" : 1 }, { "repo" : "r2", "count" : 1 })" :)
 for $i in parallelize((
     { "commits" : [ { "author" : "Einstein" } ], "repo":"r2"},
     { "commits" : [ { "author" : "Goedel" }, { "author" : "Ramanujan" } ], "repo": "r1"}
