@@ -204,16 +204,6 @@ public class FlworDataFrameUtils {
 
     /**
      * @param inputSchema schema specifies the columns to be used in the query
-     * @return list of SQL column names in the schema
-     */
-    public static List<String> getColumnNames(
-            StructType inputSchema
-    ) {
-        return Arrays.asList(inputSchema.fieldNames());
-    }
-
-    /**
-     * @param inputSchema schema specifies the columns to be used in the query
      * @return list of FLWOR columns in the schema
      */
     public static List<FlworDataFrameColumn> getColumns(
@@ -778,6 +768,30 @@ public class FlworDataFrameUtils {
             queryColumnString.append("`");
             queryColumnString.append(var);
             queryColumnString.append("`");
+        }
+        if (trailingComma) {
+            queryColumnString.append(comma);
+        }
+        return queryColumnString.toString();
+    }
+
+    /**
+     * Prepares a SQL projection from the specified column names.
+     * 
+     * @param columnNames schema specifies the columns to be used in the query
+     * @param trailingComma boolean field to have a trailing comma
+     * @return comma separated variables to be used in spark SQL
+     */
+    public static String getSQLColumnProjection(
+            List<FlworDataFrameColumn> columnNames,
+            boolean trailingComma
+    ) {
+        StringBuilder queryColumnString = new StringBuilder();
+        String comma = "";
+        for (FlworDataFrameColumn var : columnNames) {
+            queryColumnString.append(comma);
+            comma = ",";
+            queryColumnString.append(var);
         }
         if (trailingComma) {
             queryColumnString.append(comma);
