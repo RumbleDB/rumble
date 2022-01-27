@@ -170,39 +170,6 @@ public class FlworDataFrameUtils {
     }
 
     /**
-     * Returns all the column names of the given DataFrame
-     * that correspond to the supplied variable.
-     * 
-     * @param inputSchema schema specifies the columns of the DataFrame.
-     * @param variable the name of the variable.
-     * @param results where to store the found column names.
-     * @return true if there is at least one column for this variable.
-     */
-    public static boolean columnNamesForVariable(
-            StructType inputSchema,
-            Name variable,
-            List<String> results
-    ) {
-        results.clear();
-        for (String columnName : inputSchema.fieldNames()) {
-            int pos = columnName.indexOf(".");
-            if (pos == -1) {
-                if (variable.getLocalName().equals(columnName)) {
-                    results.add(columnName);
-                }
-            } else {
-                if (variable.getLocalName().equals(columnName.substring(0, pos))) {
-                    results.add(columnName);
-                }
-            }
-        }
-        if (results.isEmpty()) {
-            return false;
-        }
-        return true;
-    }
-
-    /**
      * @param inputSchema schema specifies the columns to be used in the query
      * @return list of FLWOR columns in the schema
      */
@@ -387,11 +354,11 @@ public class FlworDataFrameUtils {
      * @param dependencies restriction of the results to within a specified set
      * @return list of SQL column names in the schema
      */
-    public static List<String> getColumnNames(
+    public static List<FlworDataFrameColumn> getColumns(
             StructType inputSchema,
             Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
-        return getColumnNames(inputSchema, dependencies, null, null);
+        return getColumns(inputSchema, dependencies, null, null);
     }
 
     /**
@@ -750,6 +717,23 @@ public class FlworDataFrameUtils {
     }
 
     /**
+     * Prepares the parameters supplied to a UDF, as a row obtained from the specified attributes.
+     * 
+     * @param columnNames the names of the columns to pass as a parameter.
+     * @return The parameters expressed in SQL.
+     */
+    public static String getUDFParametersFromColumns(
+            List<FlworDataFrameColumn> columnNames
+    ) {
+        String udfSQL = FlworDataFrameUtils.getSQLColumnProjection(columnNames, false);
+
+        return String.format(
+            "struct(%s)",
+            udfSQL
+        );
+    }
+
+    /**
      * Prepares a SQL projection from the specified column names.
      * 
      * @param columnNames schema specifies the columns to be used in the query
@@ -874,7 +858,6 @@ public class FlworDataFrameUtils {
      * @param serializerUdfName name of the serializer function
      * @param groupbyVariableNames names of group by variables
      * @param dependencies variable dependencies of the group by clause
-     * @param columnNames the attributes to include (not necessarily the entire input schema).
      * @return comma separated variables to be used in spark SQL
      */
     public static String getGroupBySQLProjection(
@@ -883,8 +866,7 @@ public class FlworDataFrameUtils {
             boolean trailingComma,
             String serializerUdfName,
             List<Name> groupbyVariableNames,
-            Map<Name, DynamicContext.VariableDependency> dependencies,
-            List<String> columnNames
+            Map<Name, DynamicContext.VariableDependency> dependencies
     ) {
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
