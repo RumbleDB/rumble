@@ -554,7 +554,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         StructType inputSchema = dataFrame.schema();
         // inputSchema.printTreeString();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             outputTupleVariableDependencies,
             null,
@@ -620,7 +620,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 );
         }
 
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String input = FlworDataFrameUtils.createTempView(dataFrame);
@@ -775,7 +775,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             Dataset<Row> dataFrame,
             Name newVariableName,
             RuntimeIterator iterator,
-            List<String> allColumns,
+            List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
     ) {
@@ -787,7 +787,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
         System.err.println(
             "[INFO] Rumble was able to optimize a let clause to a native SQL query."
         );
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()
             .sql(
