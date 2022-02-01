@@ -11,6 +11,7 @@ for $i in parallelize((
  {"guess": "Bulgarian", "target": null, "country": "AU", "choices": ["Arabic", "Bulgarian", "Hebrew", "Spanish"]}))
 let $guess := $i.guess, $target := $i.target, $country := $i.country
 group by $guess, $target, $country
+order by $guess, $target, $country
 return {"$guess": $guess, "$target": $target, "$country": $country, "$i": $i}
 
 (: complex test with nulls and empty sequences - grouping variable pre-defined with let:)

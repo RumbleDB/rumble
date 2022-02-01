@@ -6,6 +6,7 @@ for $i in parallelize((
  {"guess": "Bulgarian", "choices": ["Arabic", "Bulgarian", "Hebrew", "Spanish"]}))
 let $guess := $i.guess
 group by $guess
+order by $guess
 return {"$guess": $guess, "$i": $i}
 
 (: test with no null or empty entries - grouping variable pre-defined with let :)
