@@ -1,4 +1,4 @@
-(:JIQS: ShouldRun; Output="({ "id" : 0, "label" : 1, "col1" : -1, "col2" : 1.5, "col3" : 1.3, "features" : [ -1, 1.5, 1.3 ], "features2" : [ 0.6811443247067492, -1.6574062675838126 ], "rawPrediction" : [ -37.01954042181336, 37.01954042181336 ], "probability" : [ 8.36792679507173E-17, 0.9999999999999999 ], "ocol1" : 1 }, { "id" : 1, "label" : 0, "col1" : 3, "col2" : 2, "col3" : -0.1, "features" : [ 3, 2, -0.1 ], "features2" : [ -2.93898570550277, 0.48441694826197534 ], "rawPrediction" : [ 37.84452856415615, -37.84452856415615 ], "probability" : [ 1, 0 ], "ocol1" : 0 }, { "id" : 2, "label" : 1, "col1" : 0, "col2" : 2.2, "col3" : -1.5, "features" : [ 0, 2.2, -1.5 ], "features2" : [ 0.28609394877170796, 1.1822492465709793 ], "rawPrediction" : [ -18.53660987378593, 18.53660987378593 ], "probability" : [ 8.905383257304628E-9, 0.9999999910946168 ], "ocol1" : 1 })" :)
+(:JIQS: ShouldRun; Output="({ "id" : 0, "label" : 1, "col1" : -1, "col2" : 1.5, "col3" : 1.3, "features" : [ -1, 1.5, 1.3 ], "features2" : [ 0.6811443247067492, -1.657406267583813 ], "rawPrediction" : [ -37.806767087840996, 37.806767087840996 ], "probability" : [ 3.808287043115909E-17, 1 ], "ocol1" : 1 }, { "id" : 1, "label" : 0, "col1" : 3, "col2" : 2, "col3" : -0.1, "features" : [ 3, 2, -0.1 ], "features2" : [ -2.93898570550277, 0.484416948261975 ], "rawPrediction" : [ 37.567707092585735, -37.567707092585735 ], "probability" : [ 1, 0 ], "ocol1" : 0 }, { "id" : 2, "label" : 1, "col1" : 0, "col2" : 2.2, "col3" : -1.5, "features" : [ 0, 2.2, -1.5 ], "features2" : [ 0.28609394877170796, 1.1822492465709793 ], "rawPrediction" : [ -19.168353441006612, 19.168353441006612 ], "probability" : [ 4.734671708106412E-9, 0.9999999952653283 ], "ocol1" : 1 })" :)
 let $vector-assembler := get-transformer("VectorAssembler")
 let $training-data := (
     {"id": 0, "label": 1, "col1": 0.0, "col2": 1.1, "col3": 0.1},
@@ -26,4 +26,5 @@ for $i in $trained_est2(
     $my-new-test-data,
     {"featuresCol": "features2", "predictionCol": "ocol1"}
 )
+order by $i.id
 return $i
