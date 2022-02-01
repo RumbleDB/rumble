@@ -22,6 +22,7 @@ for $i in parallelize((
 ))
 let $j := flatten($i.a)
 group by $j
+order by $j
 return {
   "key" : $j, "count": sum($i.b)
 }
