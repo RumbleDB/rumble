@@ -153,6 +153,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 continue;
             }
             if (i == 0 && args[i].equals("run")) {
+                // This is the default, do nothing.
+                continue;
+            }
+            if (i == 0) {
+                System.err.println("Missing mode (run/serve/repl), assuming run.");
             }
             this.arguments.put("query-path", args[i]);
         }

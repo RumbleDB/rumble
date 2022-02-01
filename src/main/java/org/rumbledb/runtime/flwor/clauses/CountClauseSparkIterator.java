@@ -35,6 +35,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.udfs.LongSerializeUDF;
 import org.rumbledb.runtime.primary.VariableReferenceIterator;
@@ -151,14 +152,14 @@ public class CountClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         StructType inputSchema = df.schema();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             outputDependencies,
             null,
             Collections.singletonList(variableName)
         );
 
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
 
         Dataset<Row> dfWithIndex = FlworDataFrameUtils.zipWithIndex(df, 1L, variableName.toString());
 
