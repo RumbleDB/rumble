@@ -103,6 +103,27 @@ public class DataFrameContext implements Serializable {
     }
 
     /**
+     * Builds a new data frame context.
+     * 
+     * @param context the parent dynamic context, which contains all variable values except those in input tuples.
+     * @param columns the DataFrame columns applicable to the calling clause.
+     */
+    public DataFrameContext(
+            DynamicContext context,
+            List<FlworDataFrameColumn> columns
+    ) {
+        this.columns = columns;
+
+        this.context = new DynamicContext(context);
+
+        this.kryo = new Kryo();
+        this.kryo.setReferences(false);
+        FlworDataFrameUtils.registerKryoClassesKryo(this.kryo);
+        this.output = new Output(128, -1);
+        this.input = new Input();
+    }
+
+    /**
      * Sets the context from a DataFrame row.
      * 
      * @param row An row, the column names and types of which must correspond to those passed in the constructor.

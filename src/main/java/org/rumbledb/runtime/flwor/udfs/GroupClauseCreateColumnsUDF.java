@@ -30,6 +30,8 @@ import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.UnexpectedTypeException;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -58,10 +60,10 @@ public class GroupClauseCreateColumnsUDF implements UDF1<Row, Row> {
             List<Name> groupingVariableNames,
             DynamicContext context,
             StructType schema,
-            List<String> columnNames,
+            List<FlworDataFrameColumn> columns,
             ExceptionMetadata metadata
     ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+        this.dataFrameContext = new DataFrameContext(context, columns);
         this.groupingVariableNames = groupingVariableNames;
         this.results = new ArrayList<>();
         this.metadata = metadata;

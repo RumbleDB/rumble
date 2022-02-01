@@ -1,7 +1,14 @@
+.DS_Store
+.classpath
+.project
 .idea/
 target/
+.settings/
+.ipynb_checkpoints/
 *.iml
 /bin/
+*.jar
+*.*~
 
 # for now ignore jsound package
 src/main/java/jsound/

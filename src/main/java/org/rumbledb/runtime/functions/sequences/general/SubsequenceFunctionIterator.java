@@ -34,6 +34,7 @@ import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -96,9 +97,9 @@ public class SubsequenceFunctionIterator extends HybridRuntimeIterator {
         setInstanceVariables(dynamicContext);
         StructType inputSchema = df.getDataFrame().schema();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
 
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         if (this.length != -1) {
