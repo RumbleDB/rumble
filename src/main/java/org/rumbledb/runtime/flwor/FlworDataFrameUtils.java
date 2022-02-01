@@ -891,8 +891,8 @@ public class FlworDataFrameUtils {
                         queryColumnString.append(String.format("sum(cardinality(%s))", column));
                     } else {
                         queryColumnString.append(String.format("count(%s)", column));
-                        column = new FlworDataFrameColumn(column.getVariableName(), ColumnFormat.COUNT);
                     }
+                    column = new FlworDataFrameColumn(column.getVariableName(), ColumnFormat.COUNT);
                 } else if (isProcessingGroupingColumn(groupbyVariableNames, column.getColumnName())) {
                     // rows that end up in the same group have the same value for the grouping column
                     // return a single instance of this value in the grouping column
