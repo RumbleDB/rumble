@@ -54,7 +54,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
-        if (!this.itemType.isDataFrameType()) {
+        if (!this.itemType.isCompatibleWithDataFrames()) {
             throw new OurBadException(
                     "Cannot build a dataframe for a type not compatible with DataFrames: "
                         + this.itemType.getIdentifierString()
@@ -96,6 +96,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             JavaRDD<Item> itemRDD,
             ItemType itemType
     ) {
+        if (!itemType.isCompatibleWithDataFrames()) {
+            throw new OurBadException(
+                    "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
+            );
+        }
         StructType schema = convertToDataFrameSchema(itemType);
         JavaRDD<Row> rowRDD = itemRDD.map(
             new Function<Item, Row>() {
@@ -115,9 +120,21 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
     private static StructType convertToDataFrameSchema(ItemType itemType) {
+        if (itemType.isAtomicItemType()) {
+            List<StructField> fields = new ArrayList<>();
+            String columnName = SparkSessionManager.atomicJSONiqItemColumnName;
+            StructField field = createStructField(
+                columnName,
+                itemType,
+                false
+            );
+            fields.add(field);
+            return DataTypes.createStructType(fields);
+        }
         if (!itemType.isObjectItemType()) {
             throw new InvalidInstanceException(
-                    "Error while checking against the DataFrame schema: it is not an object type: " + itemType
+                    "Error while checking against the DataFrame schema: it is not an object or an atomic type: "
+                        + itemType
             );
 
         }
@@ -183,8 +200,9 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     }
 
     private static Row convertLocalItemToRow(Item item, StructType schema) {
-        Object[] rowColumns = new Object[schema.fields().length];
-        for (int fieldIndex = 0; fieldIndex < schema.fields().length; fieldIndex++) {
+        int numColumns = schema.fields().length;
+        Object[] rowColumns = new Object[numColumns];
+        for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
             Object rowColumn = convertColumn(item, field);
             rowColumns[fieldIndex] = rowColumn;
@@ -195,6 +213,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     private static Object convertColumn(Item item, StructField field) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
+        if (fieldName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
+            return getRowColumnFromItemUsingDataType(
+                item,
+                fieldDataType
+            );
+        }
         Item columnValueItem = item.getItemByKey(fieldName);
         return getRowColumnFromItemUsingDataType(
             columnValueItem,
@@ -341,6 +365,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             }
             Integer minLength = itemType.getMinLengthFacet();
             Integer maxLength = itemType.getMaxLengthFacet();
+            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
+            if (itemType.getName() == null) {
+                itemType = itemType.getBaseType();
+            }
             if (minLength != null && members.size() < minLength) {
                 throw new InvalidInstanceException(
                         "Array has " + members.size() + " members but the type requires at least " + minLength
@@ -351,10 +379,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                         "Array has " + members.size() + " members but the type requires at most " + maxLength
                 );
             }
-            Item arrayItem = ItemFactory.getInstance().createArrayItem(members);
-            if (itemType.getName() == null) {
-                itemType = itemType.getBaseType();
-            }
+
             return ItemFactory.getInstance().createAnnotatedItem(arrayItem, itemType);
         }
         if (itemType.isObjectItemType()) {

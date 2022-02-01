@@ -86,7 +86,7 @@ public class FilterExpression extends Expression {
             if (ItemFactory.getInstance().createIntegerItem(lexicalValue).isInt()) {
                 if (
                     ItemFactory.getInstance().createIntegerItem(lexicalValue).getIntValue() <= this.staticContext
-                        .getRumbleCOnfiguration()
+                        .getRumbleConfiguration()
                         .getResultSizeCap()
                 ) {
                     this.highestExecutionMode = ExecutionMode.LOCAL;
@@ -95,8 +95,10 @@ public class FilterExpression extends Expression {
             }
         }
         this.highestExecutionMode = this.mainExpression.getHighestExecutionMode(visitorConfig);
-        if (this.highestExecutionMode.equals(ExecutionMode.DATAFRAME)) {
-            this.highestExecutionMode = ExecutionMode.RDD;
+        if (!this.staticContext.getRumbleConfiguration().getNativeSQLPredicates()) {
+            if (this.highestExecutionMode.equals(ExecutionMode.DATAFRAME)) {
+                this.highestExecutionMode = ExecutionMode.RDD;
+            }
         }
     }
 }

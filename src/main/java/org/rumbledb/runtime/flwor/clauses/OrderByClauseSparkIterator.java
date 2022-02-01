@@ -41,6 +41,7 @@ import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
 import org.rumbledb.expressions.flowr.OrderByClauseSortingKey.EMPTY_ORDER;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.expression.OrderByClauseAnnotatedChildIterator;
@@ -227,7 +228,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
 
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(inputSchema);
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(inputSchema);
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
             null,
@@ -294,10 +295,12 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                             typesForAllColumns.put(columnIndex, columnType);
                         } else if (
                             (currentColumnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                || currentColumnType.equals(BuiltinTypesCatalogue.intItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.floatItem.getName())
                                 || currentColumnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
                                 && (columnType.equals(BuiltinTypesCatalogue.integerItem.getName())
+                                    || columnType.equals(BuiltinTypesCatalogue.intItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.doubleItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.floatItem.getName())
                                     || columnType.equals(BuiltinTypesCatalogue.decimalItem.getName()))
@@ -363,6 +366,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
+                columnType = DataTypes.IntegerType;
+            } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
                 columnType = DataTypes.DoubleType;
@@ -435,7 +440,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createStructType(typedFields)
             );
 
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String projectSQL = selectSQL.substring(0, selectSQL.length() - 1); // remove trailing comma
 
         return df.sparkSession()
@@ -517,7 +522,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
     public static Dataset<Row> tryNativeQuery(
             Dataset<Row> dataFrame,
             List<OrderByClauseAnnotatedChildIterator> expressionsWithIterator,
-            List<String> allColumns,
+            List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
     ) {
@@ -559,8 +564,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        System.out.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query.");
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, false);
+        System.err.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query.");
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()
             .sql(

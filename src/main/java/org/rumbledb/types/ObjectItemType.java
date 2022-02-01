@@ -223,19 +223,6 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isDataFrameType() {
-        if (!this.isClosed) {
-            return false;
-        }
-        for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isDataFrameType()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    @Override
     public boolean isResolved() {
         return this.baseType.isResolved() && areContentTypesResolved();
     }

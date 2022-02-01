@@ -135,6 +135,11 @@ public class SequenceOfItems {
         return this.iterator.getDataFrame(this.dynamicContext).getDataFrame();
     }
 
+    /*
+     * Populates a list of items with the output.
+     *
+     * @return -1 if successful. Returns Long.MAX_VALUE if there were more items beyond the materialization cap.
+     */
     public long populateList(List<Item> resultList) {
         resultList.clear();
         this.iterator.open(this.dynamicContext);

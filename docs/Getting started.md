@@ -1,29 +1,60 @@
 # Getting Started
 
+First, if you really want to start writing queries right now, there is a public sandbox [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) that will just work. You only need to have a Google account to be able to execute them, as this exposes our Jupyter notebook via the Colab environment. But of course, you are free to use this notebook with any other provider or even your own local Jupyter and it will work just the same: the queries are all shipped to our own, small public backend no matter what.
+
+Below, you will find instructions to install your RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk.
+
+Note that, if you want something even more straightforward, you can alternatively use our RumbleDB docker file (go to the "Run with docker" section on the left menu) that contains everything RumbleDB needs. Florian Kellner also kindly contributed an [installation script](https://github.com/fkellner/rumbledb-install-script) for Linux users.
+
 ## Prerequisites
 
 ### Install Spark
 
-RumbleDB requires a Spark installation on Linux, Mac or Windows.
+RumbleDB requires an Apache Spark installation on Linux, Mac or Windows.
 
-Users who love the command line can install Spark with a package management system, such as brew (on macOS) or apt-get (on Ubuntu).
+It is straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it and put it at a location of your choosing. We recommend to pick Spark 3.1.2. Let us call this location SPARK_HOME (it is a good idea, in fact to also define an environment variable SPARK_HOME pointing to the absolute path of this location).
 
-However, it is also straightforward to directly [download it](https://spark.apache.org/downloads.html), unpack it, and add the subdirectory "bin" within the unpacked directory to the PATH variable, as well as the location of the unpacked directory to SPARK_HOME.
+What you need to do then is to add the subdirectory "bin" within the unpacked directory to the PATH variable. On macOS this is done by adding
 
-We recommend installing either Spark 3.0.3, or Spark 3.1.2 (we also provide a RumbleDB jar for Spark 2 for legacy purposes, however it is not recommended to use it for new projects).
+    export SPARK_HOME=/path/to/spark-3.1.2-bin-hadoop3.2
+    export PATH=$SPARK_HOME/bin:$PATH
+
+(with SPARK_HOME appropriately set to match your unzipped Spark directory) to the file .zshrc in your home directory, then making sure to force the change with
+
+    . ~/.zshrc
+
+in the shell. In Windows, changing the PATH variable is done in the control panel. In Linux, it is similar to macOS.
+
+As an alternative, users who love the command line can also install Spark with a package management system instead, such as brew (on macOS) or apt-get (on Ubuntu). However, these might be less predictable than a raw download.
+
+Spark 3.2 has not been thoroughly tested by us yet. We had to fix an issue by downgrading the Kryo version we use to Kryo 4 because Spark uses Kryo 4 in a way incompatible with Kryo 5. This may lead to a performance regression if you use Spark 3.2.
 
 You can test that Spark was correctly installed with:
 
     spark-submit --version
-    
-Another important comment: if you use Spark 2.4.x, you need to make sure that you have Java 8 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8. Spark 2.4.x only supports Java 8. Spark 3.0.2 is documented to work with both Java 8 and Java 11, even though we have not tried Java 11 yet. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the version that is configured with:
+   
+### Java version (important)
+
+You need to make sure that you have Java 8 or 11 and that, if you have several versions installed, JAVA_HOME correctly points to Java 8 or 11. Spark only supports Java 8 or 11.
+
+Spark 3+ is documented to work with both Java 8 and Java 11. If there is an issue with the Java version, RumbleDB will inform you with an appropriate error message. You can check the Java version that is configured on your machine with:
 
     java -version
 
 
 ### Download RumbleDB
 
-RumbleDB is just a download with no installation. In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice (for example, right besides your data). If you use Spark 3, you can use the default jar. If you use Spark 2, make sure to use the corresponding jar (for-spark-2) and to replace the jar name accordingly in all our instructions.
+Like Spark, RumbleDB is just a download and no installation is required.
+
+In order to run RumbleDB, you simply need to download the .jar file from the [download page](https://github.com/RumbleDB/rumble/releases) and put it in a directory of your choice, for example, right besides your data.
+
+If you use Spark 3.0+, use rumbledb-1.17.0-for-spark-3.0.jar.
+
+If you use Spark 3.1+, use rumbledb-1.17.0-for-spark-3.1.jar.
+
+If you use Spark 3.2+, use rumbledb-1.17.0-for-spark-3.2.jar.
+
+Make sure to use the corresponding jar name accordingly in all our instructions in lieu of rumbledb.jar.
 
 ### Create some data set
 
@@ -38,20 +69,27 @@ Create, in the same directory as RumbleDB to keep it simple, a file data.json an
     { "product" : "socks", "store number" : 1, "quantity" : 500 }
     { "product" : "socks", "store number" : 2, "quantity" : 10 }
     { "product" : "shirt", "store number" : 3, "quantity" : 10 }
+    
+If you want to later try a bigger version of this data, you can also download a larger version with 100,000 objects from [here](https://rumbledb.org/samples/products-small.json). Wait, no, in fact you do not even need to download it: you can simply replace the file path in the queries below with "https://rumbledb.org/samples/products-small.json" and it will just work! RumbleDB feels just at home on the Web.
+
+RumbleDB also scales without any problems to datasets that have millions or (on a cluster) billions of objects, although of course, for billions of objects HDFS or S3 are a better idea than the Web to store your data, for obvious reasons.
+
+In the JSON Lines format that this simple dataset uses, you just need to make sure you have one object on each line (this is different from a plain JSON file, which has a single JSON value and can be indented). Of course, RumbleDB can read plain JSON files, too (with json-doc()), but below we will show you how to read JSON Line files, which is how JSON data scales.
 
 ## Running simple queries locally
 
 In a shell, from the directory where the RumbleDB .jar lies, type, all on one line:
 
-    spark-submit rumbledb-1.15.0.jar --shell yes
+    spark-submit rumbledb.jar repl
                  
 The RumbleDB shell appears:
 
         ____                  __    __     ____  ____ 
        / __ \__  ______ ___  / /_  / /__  / __ \/ __ )
       / /_/ / / / / __ `__ \/ __ \/ / _ \/ / / / __  |  The distributed JSONiq engine
-     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.15.0 "Ivory Palm
+     / _, _/ /_/ / / / / / / /_/ / /  __/ /_/ / /_/ /   1.17.0 "Cacao Tree" beta
     /_/ |_|\__,_/_/ /_/ /_/_.___/_/\___/_____/_____/  
+
     
     Master: local[*]
     Item Display Limit: 200
@@ -135,7 +173,7 @@ Further steps could involve:
 
 - Learning JSONiq. More details can be found in the JSONiq section of this documentation and in the [JSONiq specification](https://www.jsoniq.org/docs/JSONiq/webhelp/index.html) and [tutorials](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb).
 - Storing some data on S3, creating a Spark cluster on Amazon EMR (or Azure blob storage and Azure, etc), and querying the data with RumbleDB. More details are found in the cluster section of this documentation.
-- Using RumbleDB with Jupyter notebooks. For this, you can run RumbleDB as a server with a simple command, and get started by downloading the main JSONiq tutorial as a Jupyter notebook and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation. Jupyter notebooks work both locally and on a cluster.
+- Using RumbleDB with Jupyter notebooks. For this, you can run RumbleDB as a server with a simple command, and get started by downloading the [main JSONiq tutorial as a Jupyter notebook](https://raw.githubusercontent.com/RumbleDB/rumble/master/RumbleSandbox.ipynb) and just clicking your way through it. More details are found in the Jupyter notebook section of this documentation. Jupyter notebooks work both locally and on a cluster.
 - Write JSONiq code, and share it on the Web, as others can import it from HTTP in just one line from within their queries (no package publication or installation required) or specify an HTTP URL as an input query to RumbleDB!
 
 

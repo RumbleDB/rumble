@@ -143,7 +143,7 @@ public class ObjectRemoveKeysFunctionIterator extends HybridRuntimeIterator {
     @Override
     public JavaRDD<Item> getRDDAux(DynamicContext context) {
         JavaRDD<Item> childRDD = this.iterator.getRDD(context);
-        List<Item> removalKeys = this.children.get(1).materialize(this.currentDynamicContextForLocalExecution);
+        List<Item> removalKeys = this.children.get(1).materialize(context);
         if (removalKeys.isEmpty()) {
             throw new InvalidSelectorException(
                     "Invalid Key Removal Parameter; Object key removal can't be performed with zero keys: ",

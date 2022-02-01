@@ -63,7 +63,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         Item optionsObjectItem;
         DataFrameReader dfr = SparkSessionManager.getInstance().getOrCreateSession().read();
         try {
-            if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem()) != null)) {
+            if (this.children.size() > 1 && ((optionsObjectItem = getObjectItem(context)) != null)) {
                 ObjectItem options = (ObjectItem) optionsObjectItem;
                 List<String> keys = options.getKeys();
                 List<Item> values = options.getValues();
@@ -106,7 +106,7 @@ public class AvroFileFunctionIterator extends DataFrameRuntimeIterator {
         }
     }
 
-    private Item getObjectItem() {
-        return this.children.get(1).materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+    private Item getObjectItem(DynamicContext context) {
+        return this.children.get(1).materializeFirstItemOrNull(context);
     }
 }
