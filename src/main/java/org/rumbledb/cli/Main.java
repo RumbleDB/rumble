@@ -42,7 +42,7 @@ public class Main {
             System.err.println("Your Java version: " + System.getProperty("java.version"));
             System.err.println("You can download Java 8 or 11 from https://adoptium.net/");
             System.err.println("If you do have Java 8 or 11, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 8 or 11.");
-            System.exit(1);
+            System.exit(43);
         }
         RumbleRuntimeConfiguration sparksoniqConf = null;
         // Parse arguments
@@ -113,21 +113,6 @@ public class Main {
                     ex.printStackTrace();
                 }
                 System.exit(46);
-            } else if (ex instanceof IllegalArgumentException) {
-                System.err.println(
-                    "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
-                );
-                System.err.println(
-                    "If you have several versions of java installed, you need to set your JAVA_HOME accordingly."
-                );
-                System.err.println("If you do not have Java 8 installed, we recommend installing AdoptOpenJDK 1.8.");
-                System.err.println(
-                    "For more debug info, please try again using --show-error-info yes in your command line."
-                );
-                if (showErrorInfo) {
-                    ex.printStackTrace();
-                }
-                System.exit(43);
             } else if (ex instanceof CannotCompileException) {
                 System.err.println("⚠️  There was a CannotCompileException.");
                 System.err.println(
