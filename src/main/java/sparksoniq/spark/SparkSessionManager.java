@@ -117,16 +117,24 @@ public class SparkSessionManager {
         try {
             if (System.getProperty("hadoop.home.dir") == null) {
                 System.err.println(
-                        "[WARNING] The hadoop home directory was not set. Setting to \"/\"."
-                    );
+                    "[WARNING] The hadoop home directory was not set. Setting to \"/\"."
+                );
                 System.setProperty("hadoop.home.dir", "/");
             }
-            /*System.err.println(
-                    "[INFO] Total available memory: " + (Runtime.getRuntime().maxMemory() / 1000000000) + " GB"
-                );
-            System.err.println(
-                    "[INFO] Total available cores: " + Runtime.getRuntime().availableProcessors()
-                );*/
+            String javaVersion = System.getProperty("java.version");
+            if (!javaVersion.startsWith("1.8") && !javaVersion.startsWith("11.")) {
+                System.err.println("[Error] RumbleDB requires Java 8 or Java 11.");
+                System.err.println("Your Java version: " + System.getProperty("java.version"));
+            }
+
+            /*
+             * System.err.println(
+             * "[INFO] Total available memory: " + (Runtime.getRuntime().maxMemory() / 1000000000) + " GB"
+             * );
+             * System.err.println(
+             * "[INFO] Total available cores: " + Runtime.getRuntime().availableProcessors()
+             * );
+             */
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
                 System.err.println(
