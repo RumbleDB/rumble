@@ -41,7 +41,9 @@ public class Main {
             System.err.println("[Error] RumbleDB requires Java 8 or Java 11.");
             System.err.println("Your Java version: " + System.getProperty("java.version"));
             System.err.println("You can download Java 8 or 11 from https://adoptium.net/");
-            System.err.println("If you do have Java 8 or 11, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 8 or 11.");
+            System.err.println(
+                "If you do have Java 8 or 11, but the wrong version appears above, then it means you need to set your JAVA_HOME environment variable properly to point to Java 8 or 11."
+            );
             System.exit(43);
         }
         RumbleRuntimeConfiguration sparksoniqConf = null;
