@@ -115,6 +115,11 @@ public class SparkSessionManager {
 
     private void setDefaultConfiguration() {
         try {
+            String javaVersion = System.getProperty("java.version");
+            if (!javaVersion.startsWith("1.8") && !javaVersion.startsWith("11.")) {
+                System.err.println("[Error] RumbleDB requires Java 8 or Java 11.");
+                System.err.println("Your Java version: " + System.getProperty("java.version"));
+            }
             this.configuration = new SparkConf();
             if (this.configuration.get("spark.app.name", "<none>").equals("<none")) {
                 System.err.println(
