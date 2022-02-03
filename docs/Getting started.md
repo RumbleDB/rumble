@@ -27,6 +27,8 @@ RumbleDB works with both Java 8 and Java 11. You can check the Java version that
 
     java -version
 
+If you do not have Java, you can download version 8 or 11 from [AdoptOpenJDK](https://adoptopenjdk.net/).
+
 Do make sure it is not Java 17, which will not work.
 
 ### Download RumbleDB
