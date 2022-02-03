@@ -99,8 +99,14 @@ public class Main {
                     "⚠️  Java went out of memory."
                 );
                 System.err.println(
-                    "If running locally, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem. If running on a cluster, --executor-memory is the way to go."
-                );
+                        "If running locally with java -jar, try adding --Xmx10g (or any quantity you need) before the RumbleDB jar in the command line to see if it fixes the problem."
+                    );
+                System.err.println(
+                        "If running locally with spark-submit, try adding --driver-memory 10G (or any quantity you need) between spark-submit and the RumbleDB jar in the command line to see if it fixes the problem."
+                    );
+                System.err.println(
+                        "If running on a cluster, --executor-memory should be used instead."
+                    );
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }

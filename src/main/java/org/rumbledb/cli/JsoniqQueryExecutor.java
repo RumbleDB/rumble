@@ -52,9 +52,6 @@ public class JsoniqQueryExecutor implements Logging {
         initializeLogIfNecessary(true, true);
         this.configuration = configuration;
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
-        if (System.getProperty("hadoop.home.dir") == null) {
-            System.setProperty("hadoop.home.dir", "/");
-        }
     }
 
     private void checkOutputFile(URI outputUri) throws IOException {
