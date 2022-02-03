@@ -1,14 +1,23 @@
 # Getting Started
 
-First, if you really want to start writing queries right now, there is a public sandbox [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) that will just work. You only need to have a Google account to be able to execute them, as this exposes our Jupyter notebook via the Colab environment. But of course, you are free to use this notebook with any other provider or even your own local Jupyter and it will work just the same: the queries are all shipped to our own, small public backend no matter what.
+Below, you will find instructions to get started with RumbleDB, either in an online sandbox or on your own computer, which among others will allow you to query any files stored on your local disk. In short, there are four possibilities to get started:
 
-Below, you will find instructions to use RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk. In short, there are three possibilities:
+- Use one of our online sandboxes (Jupyter notebook or simple sandbox page)
+- Run the standalone RumbleDB jar (new and experimental) with Java on your laptop
+- Install Spark yourself on your laptop (for more control on Spark parameters) and use a small RumbleDB jar with spark-submit
+- Use our docker image on your laptop (go to the "Run with docker" section on the left menu)
 
-- A standalone jar (new and experimental)
-- Our docker image (go to the "Run with docker" section on the left menu)
-- Install Spark yourself (for more control on Spark parameters) and use the small jars
+## Method 0: you want to play with RumbleDB without installing anything
 
-## Method 1: with the large RumbleDB standalone jar (experimental)
+If you really want to start writing queries right now, there is a public sandbox [here](https://colab.research.google.com/github/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) that will just work and guide you. You only need to have a Google account to be able to execute them, as this exposes our Jupyter notebook via the Colab environment. You are also free to download and use this notebook with any other provider or even your own local Jupyter and it will work just the same: the queries are all shipped to our own, small public backend no matter what.
+
+If you do not have a Google account, you can also use our simpler sandbox page without Jupyter, [here](https://public.rumbledb.org:9090/public.html) where you can type small queries and see the results.
+
+With the sandboxes above, you can only inline your data in the query or access a dataset with an HTTP URL.
+
+Once you want to take it to the next level and query your own data on your laptop, you will find instructions below to use RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk.
+
+## Method 1: with the large, standalone, RumbleDB jar (experimental)
 
 ### Java version (important)
 
