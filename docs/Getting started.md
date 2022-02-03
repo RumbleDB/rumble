@@ -15,7 +15,7 @@ If you do not have a Google account, you can also use our simpler sandbox page w
 
 With the sandboxes above, you can only inline your data in the query or access a dataset with an HTTP URL.
 
-Once you want to take it to the next level and query your own data on your laptop, you will find instructions below to use RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk.
+Once you want to take it to the next level and query your own data on your laptop, you will find instructions below to use RumbleDB on your own computer manually, which among others will allow you to query any files stored on your local disk. And then, you can take a leap of faith and use RumbleDB on a large cluster (Amazon EMR, your company's cluster, etc).
 
 ## Method 1: with the large, standalone, RumbleDB jar (experimental)
 
@@ -40,6 +40,12 @@ Make sure to use the corresponding jar name accordingly in all our instructions 
 You can test that it works with:
 
     java -jar rumbledb-1.17.0-standalone.jar run -q '1+1'
+
+or launch a JSONiq shell with:
+
+    java -jar rumbledb-1.17.0-standalone.jar repl
+
+Scroll down this page skipping the method 2 section in order to continue.
 
 ## Method 2: Install Spark locally yourself and use a compact RumbleDB jar
 
