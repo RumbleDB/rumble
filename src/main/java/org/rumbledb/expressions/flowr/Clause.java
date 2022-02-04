@@ -24,6 +24,7 @@ import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
 /**
@@ -92,6 +93,56 @@ public abstract class Clause extends Node {
         }
         this.nextClause = otherClause;
         otherClause.previousClause = this;
+    }
+
+    public ReturnClause detachInitialLetClauses() {
+        if (this.nextClause != null) {
+            throw new OurBadException("Detaching a let clause can only be done from the last clause");
+        }
+        if (!this.getClauseType().equals(FLWOR_CLAUSES.RETURN)) {
+            throw new OurBadException("Detaching a let clause can only be done from a return clause");
+        }
+        ReturnClause returnClause = (ReturnClause) this;
+        Clause lastLetClause = this.getFirstClause();
+        if(!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET))
+        {
+        	System.err.println("Initial clause is not a let clause. No optimization.");
+        	return returnClause;
+        }
+        if(!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET) ||
+        		lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR)))
+        {
+        	System.err.println("Second let clause is not a for or a let. No optimization.");
+        	return returnClause;
+        }
+    	System.err.println("Optimization of a clause.");
+        Clause newFirstClause = lastLetClause.nextClause;
+        while(newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+    		&& (
+    				newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET) ||
+    				newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR)
+    			)
+    		)
+        {
+        	lastLetClause = lastLetClause.nextClause;
+        	newFirstClause = lastLetClause.nextClause;
+        	System.err.println("Optimization of another clause.");
+        }
+        newFirstClause.previousClause = null;
+        lastLetClause.nextClause = null;
+        
+        Expression returnExpr = new FlworExpression(
+        		returnClause,
+                this.getMetadata()
+        );
+        returnClause = new ReturnClause(
+                returnExpr,
+                this.getMetadata()
+                );
+        lastLetClause.chainWith(returnClause);
+
+        System.err.println(returnClause.toString());
+        return returnClause;
     }
 
     public void print(StringBuffer buffer, int indent) {
