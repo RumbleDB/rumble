@@ -129,11 +129,13 @@ You can change the port to something else than 8001 at all three places it appea
 
 In order to query your local files, you need to mount a local directory to a directory within the docker. This is done with the `--mount` option, and the source path must be absolute. For the target, you can pick anything that makes sense to you.
 
+For example, imagine you have a file products-small.json in the directory /path/to/my/directory. Then you need to run RumbleDB with:
+
     docker run -t -i --mount type=bind,source=/path/to/my/directory,target=/home rumbledb/rumble repl
     
-Then you can go ahead and use local paths in input functions, like so:
+Then you can go ahead and use absolute paths in the target directory in input functions, like so:
 
-    for $i in json-file("/path/to/my/directory/products-small.json", 10)
+    for $i in json-file("/home/products-small.json", 10)
     where $i.quantity gt 99
     return $i
 
