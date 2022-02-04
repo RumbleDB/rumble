@@ -127,6 +127,19 @@ public abstract class Clause extends Node {
         for (Clause c = newFirstClause; c != null; c = c.nextClause) {
             if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
                 // No optimization possible if there is a group by.
+                System.err.println(
+                    "[WARNING] It seems you are using a group by clause in a FLWOR expression that starts with a let clause. This is rather unusual and it might lead to surprises. We recommend always inserting a 'return' after a series of initial let clauses."
+                );
+                System.err.println("For example:");
+                System.err.println();
+                System.err.println("let $x := 1");
+                System.err.println("let $y := $x + 1");
+                System.err.println("let $z := $x + $y");
+                System.err.println("return");
+                System.err.println("  for $t in 1 to $z");
+                System.err.println("  group by $m := $t mod 2");
+                System.err.println("  return $m + $x");
+
                 return returnClause;
             }
         }
