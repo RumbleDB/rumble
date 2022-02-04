@@ -106,16 +106,13 @@ public abstract class Clause extends Node {
         Clause lastLetClause = this.getFirstClause();
         if(!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET))
         {
-        	System.err.println("Initial clause is not a let clause. No optimization.");
         	return returnClause;
         }
         if(!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET) ||
         		lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR)))
         {
-        	System.err.println("Second let clause is not a for or a let. No optimization.");
         	return returnClause;
         }
-    	System.err.println("Optimization of a clause.");
         Clause newFirstClause = lastLetClause.nextClause;
         while(newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
     		&& (
@@ -126,7 +123,6 @@ public abstract class Clause extends Node {
         {
         	lastLetClause = lastLetClause.nextClause;
         	newFirstClause = lastLetClause.nextClause;
-        	System.err.println("Optimization of another clause.");
         }
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
@@ -141,7 +137,6 @@ public abstract class Clause extends Node {
                 );
         lastLetClause.chainWith(returnClause);
 
-        System.err.println(returnClause.toString());
         return returnClause;
     }
 
