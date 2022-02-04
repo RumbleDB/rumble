@@ -15,9 +15,9 @@ Do not forget to terminate the cluster when you are done!
 
 # How to tune the RumbleDB command
 
-Next, you need to use ssh to connect to the master node of your cluster and specifying your private key file. You will find the hostname of the machine on the EMR cluster page. The command looks like:
+Next, you need to use ssh to connect to the master node of your cluster as the hadoop user and specifying your private key file. You will find the hostname of the machine on the EMR cluster page. The command looks like:
 
-ssh -i ~/.ssh/yourkey.pem ec2-a-bunch-if-numbers.eu-central-1.compute.amazonaws.com
+ssh -i ~/.ssh/yourkey.pem hadoop@ec2-a-bunch-if-numbers.eu-central-1.compute.amazonaws.com
 
 If ssh hangs, then you may need to authorize your IP for incoming connections in the security group of your cluster.
 
