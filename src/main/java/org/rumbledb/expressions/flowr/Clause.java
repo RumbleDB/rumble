@@ -104,37 +104,37 @@ public abstract class Clause extends Node {
         }
         ReturnClause returnClause = (ReturnClause) this;
         Clause lastLetClause = this.getFirstClause();
-        if(!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET))
-        {
-        	return returnClause;
+        if (!lastLetClause.getClauseType().equals(FLWOR_CLAUSES.LET)) {
+            return returnClause;
         }
-        if(!(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET) ||
-        		lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR)))
-        {
-        	return returnClause;
+        if (
+            !(lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                ||
+                lastLetClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
+        ) {
+            return returnClause;
         }
         Clause newFirstClause = lastLetClause.nextClause;
-        while(newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
-    		&& (
-    				newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET) ||
-    				newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR)
-    			)
-    		)
-        {
-        	lastLetClause = lastLetClause.nextClause;
-        	newFirstClause = lastLetClause.nextClause;
+        while (
+            newFirstClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                && (newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.LET)
+                    ||
+                    newFirstClause.nextClause.getClauseType().equals(FLWOR_CLAUSES.FOR))
+        ) {
+            lastLetClause = lastLetClause.nextClause;
+            newFirstClause = lastLetClause.nextClause;
         }
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
-        
+
         Expression returnExpr = new FlworExpression(
-        		returnClause,
+                returnClause,
                 this.getMetadata()
         );
         returnClause = new ReturnClause(
                 returnExpr,
                 this.getMetadata()
-                );
+        );
         lastLetClause.chainWith(returnClause);
 
         return returnClause;

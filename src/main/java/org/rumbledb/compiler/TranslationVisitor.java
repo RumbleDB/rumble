@@ -584,7 +584,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 generateMetadata(ctx.getStop())
         );
         previousFLWORClause.chainWith(returnClause);
-        
+
         returnClause = returnClause.detachInitialLetClauses();
 
         return new FlworExpression(
