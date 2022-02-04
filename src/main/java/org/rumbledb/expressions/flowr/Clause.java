@@ -124,6 +124,12 @@ public abstract class Clause extends Node {
             lastLetClause = lastLetClause.nextClause;
             newFirstClause = lastLetClause.nextClause;
         }
+        for (Clause c = newFirstClause; c != null; c = c.nextClause) {
+            if (c.getClauseType().equals(FLWOR_CLAUSES.GROUP_BY)) {
+                // No optimization possible if there is a group by.
+                return returnClause;
+            }
+        }
         newFirstClause.previousClause = null;
         lastLetClause.nextClause = null;
 
