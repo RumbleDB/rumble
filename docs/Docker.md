@@ -18,7 +18,11 @@ Then, in a shell, type, all on one line:
 
     docker run -i rumbledb/rumble repl
                  
-The first time, it might take some time to download everything, but this is all done automatically. When there are RumbleDB updates, this will also trigger a re-download. Otherwise, subsequent commands will run immediately.
+The first time, it might take some time to download everything, but this is all done automatically. Subsequent commands will run immediately.
+
+When there are new RumbleDB versions, you can upgrade with:
+
+    docker pull rumbledb/rumble
 
 The RumbleDB shell appears:
 
