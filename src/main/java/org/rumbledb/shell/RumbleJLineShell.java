@@ -181,7 +181,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(42);
             } else if (ex instanceof OutOfMemoryError) {
                 System.err.println(
                     "⚠️  Java went out of memory."
@@ -192,7 +191,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(46);
             } else if (ex instanceof IllegalArgumentException) {
                 System.err.println(
                     "⚠️  There was an IllegalArgumentException. Most of the time, this happens because you are not using Java 8. Spark only works with Java 8."
@@ -207,7 +205,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(43);
             } else if (ex instanceof CannotCompileException) {
                 System.err.println("⚠️  There was a CannotCompileException.");
                 System.err.println(
@@ -222,7 +219,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(44);
             } else if (ex instanceof ConnectException) {
                 System.err.println("⚠️  There was a problem with the connection to the cluster.");
                 System.err.println(
@@ -231,7 +227,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(45);
             } else if (ex instanceof NullPointerException) {
                 System.err.println(
                     "Oh my oh my, we are very embarrassed, because there was a null pointer exception. 🙈"
@@ -246,7 +241,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(-42);
             } else if (!(ex instanceof UserInterruptException)) {
                 System.err.println("[ERROR] An error has occurred: " + ex.getMessage());
                 System.err.println(
@@ -271,7 +265,6 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-                System.exit(-42);
             }
         }
     }
