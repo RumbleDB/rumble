@@ -45,8 +45,6 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private static final long serialVersionUID = 1L;
     private static final String SHORTCUT_PREFIX = "-";
     private static final String ARGUMENT_PREFIX = "--";
-    private static final String ARGUMENT_FORMAT_ERROR_MESSAGE =
-        "Invalid argument format. Required format: --property value";
     private HashMap<String, String> arguments;
 
     List<String> allowedPrefixes;

@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Row;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
@@ -37,6 +38,8 @@ import org.rumbledb.items.structured.JSoundDataFrame;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,6 +54,7 @@ public class VariableValues implements Serializable, KryoSerializable {
     private Map<Name, Item> localVariableCounts;
     private Map<Name, JavaRDD<Item>> rddVariableValues;
     private Map<Name, JSoundDataFrame> dataFrameVariableValues;
+    private boolean nestedQuery;
     private VariableValues parent;
 
     public VariableValues() {
@@ -59,6 +63,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.nestedQuery = false;
     }
 
     public VariableValues(VariableValues parent) {
@@ -70,6 +75,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = new HashMap<>();
         this.rddVariableValues = new HashMap<>();
         this.dataFrameVariableValues = new HashMap<>();
+        this.nestedQuery = false;
     }
 
     public VariableValues(
@@ -86,7 +92,7 @@ public class VariableValues implements Serializable, KryoSerializable {
         this.localVariableValues = localVariableValues;
         this.rddVariableValues = rddVariableValues;
         this.dataFrameVariableValues = dataFrameVariableValues;
-
+        this.nestedQuery = false;
     }
 
     public void setBindingsFromTuple(FlworTuple tuple, ExceptionMetadata metadata) {
@@ -111,6 +117,14 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public Set<Name> getDataFrameVariableNames() {
         return this.dataFrameVariableValues.keySet();
+    }
+
+    public boolean isParallelAccessAllowed() {
+        return this.nestedQuery;
+    }
+
+    public void setParallelAccess(boolean b) {
+        this.nestedQuery = b;
     }
 
     public boolean contains(Name varName) {
@@ -169,6 +183,9 @@ public class VariableValues implements Serializable, KryoSerializable {
         }
 
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             JavaRDD<Item> rdd = this.getRDDVariableValue(varName, metadata);
             return SparkSessionManager.collectRDDwithLimit(rdd, metadata);
         }
@@ -192,10 +209,16 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public JavaRDD<Item> getRDDVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return this.rddVariableValues.get(varName);
         }
 
         if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             JSoundDataFrame df = this.dataFrameVariableValues.get(varName);
             JavaRDD<Row> rowRDD = df.javaRDD();
             return rowRDD.map(new RowToItemMapper(metadata, df.getItemType()));
@@ -213,6 +236,9 @@ public class VariableValues implements Serializable, KryoSerializable {
 
     public JSoundDataFrame getDataFrameVariableValue(Name varName, ExceptionMetadata metadata) {
         if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return this.dataFrameVariableValues.get(varName);
         }
 
@@ -226,22 +252,28 @@ public class VariableValues implements Serializable, KryoSerializable {
         );
     }
 
-    public Item getVariableCount(Name varName) {
+    public Item getVariableCount(Name varName, ExceptionMetadata metadata) {
         if (this.localVariableCounts.containsKey(varName)) {
             return this.localVariableCounts.get(varName);
         }
         if (this.dataFrameVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return ItemFactory.getInstance()
                 .createLongItem(this.dataFrameVariableValues.get(varName).count());
         }
         if (this.rddVariableValues.containsKey(varName)) {
+            if (this.nestedQuery) {
+                throw new JobWithinAJobException(metadata);
+            }
             return ItemFactory.getInstance().createLongItem(this.rddVariableValues.get(varName).count());
         }
         if (this.localVariableValues.containsKey(varName)) {
             return ItemFactory.getInstance().createIntItem(this.localVariableValues.get(varName).size());
         }
         if (this.parent != null) {
-            return this.parent.getVariableCount(varName);
+            return this.parent.getVariableCount(varName, metadata);
         }
         throw new OurBadException("Runtime error retrieving variable " + varName + " value");
     }
@@ -265,17 +297,20 @@ public class VariableValues implements Serializable, KryoSerializable {
     public void write(Kryo kryo, Output output) {
         kryo.writeObjectOrNull(output, this.parent, VariableValues.class);
         kryo.writeObject(output, this.localVariableValues);
-        // kryo.writeObject(output, this.rddVariableValues);
-        // kryo.writeObject(output, this.dataFrameVariableValues);
+    }
+
+    private void readObject(ObjectInputStream ois) throws IOException, ClassNotFoundException {
+        ois.defaultReadObject();
+        this.nestedQuery = true;
     }
 
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
+        System.err.println("Deserializing VariableValues");
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
-        // this.rddVariableValues = kryo.readObject(input, HashMap.class);
-        // this.dataFrameVariableValues = kryo.readObject(input, HashMap.class);
+        this.nestedQuery = true;
     }
 
     public Item getPosition() {

@@ -50,7 +50,6 @@ import sparksoniq.jsoniq.tuple.FlworKey;
 import sparksoniq.jsoniq.tuple.FlworTuple;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -268,14 +267,14 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema;
-        String[] columnNamesArray;
-        List<String> columnNames;
+        // String[] columnNamesArray;
+        // List<String> columnNames;
 
         List<Name> variableAccessNames = new ArrayList<>();
         for (GroupByClauseSparkIteratorExpression expression : this.groupingExpressions) {
             inputSchema = df.schema();
-            columnNamesArray = inputSchema.fieldNames();
-            columnNames = Arrays.asList(columnNamesArray);
+            // columnNamesArray = inputSchema.fieldNames();
+            // columnNames = Arrays.asList(columnNamesArray);
 
             // TODO: consider add sequence type to group clause variable
             if (expression.getExpression() != null) {
