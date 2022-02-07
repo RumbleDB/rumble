@@ -307,7 +307,6 @@ public class VariableValues implements Serializable, KryoSerializable {
     @SuppressWarnings("unchecked")
     @Override
     public void read(Kryo kryo, Input input) {
-        System.err.println("Deserializing VariableValues");
         this.parent = kryo.readObjectOrNull(input, VariableValues.class);
         this.localVariableValues = kryo.readObject(input, HashMap.class);
         this.nestedQuery = true;
