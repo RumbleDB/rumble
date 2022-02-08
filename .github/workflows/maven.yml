@@ -28,6 +28,8 @@ jobs:
       run: mvn clean compile assembly:single
     - name: FrontendTests
       run: mvn -Dtest=FrontendTests test
+    - name: Bugs
+      run: mvn -Dtest=Bugs test
     - name: RuntimeTests
       run: mvn -Dtest=RuntimeTests test
     - name: SparkRuntimeTests

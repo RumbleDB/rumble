@@ -6,13 +6,13 @@ We show here how to install RumbleDB from the github repository if you wish to d
 
 The following software is required:
 
-- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 (and Scala 11 as of Spark 2.4.5).
-- [Spark](https://spark.apache.org/), version 2.4.5 (for example)
+- [Java SE](http://www.oracle.com/technetwork/java/javase/downloads/index.html) 8 (last tested on OpenJDK 8u251). The version of Java is important, as Spark only works with Java 8 or java 11.
+- [Spark](https://spark.apache.org/), version 3.1.2 (for example)
 - [Ant](http://www.ant.org/), version 1.11.1
-- [ANTLR](http://www.ant.org/), version 4.7 (supplied in our repository)
+- [ANTLR](http://www.ant.org/), version 4.8 (supplied in our repository)
 - [Maven](https://maven.apache.org/) 3.6.0
 
-Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 2.2.0 is with ANTLR 4.5.3, Spark 2.3.0 with ANTLR 4.7). The ANTLR runtime MUST match the ANTLR generator used to generate the RumbleDB jar file.
+Important: the ANTLR version varies with the Spark version, because Spark is also shipped with an ANTLR runtime (example: Spark 3.0 and 3.1 is with ANTLR 4.7, Spark 3.2 with ANTLR 4.8). The ANTLR runtime MUST match the ANTLR generator used to generate the RumbleDB jar file.
 
 ### Checking the requirements
 
@@ -64,7 +64,7 @@ After successful completion, you can check the `target` directory, which should 
 
 The most straightforward to test if the above steps were successful is to run the RumbleDB shell locally, like so:
 
-    $ spark-submit target/rumbledb-1.16.0.jar --shell yes
+    $ spark-submit target/rumbledb-1.17.0.jar repl
 
 The RumbleDB shell should start:
 

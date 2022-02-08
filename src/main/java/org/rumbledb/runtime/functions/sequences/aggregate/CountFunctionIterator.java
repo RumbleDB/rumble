@@ -61,7 +61,7 @@ public class CountFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             VariableReferenceIterator expr = (VariableReferenceIterator) iterator;
             // this.hasNext = false;
             return context.getVariableValues()
-                .getVariableCount(expr.getVariableName());
+                .getVariableCount(expr.getVariableName(), getMetadata());
         }
         return computeCount(
             iterator,

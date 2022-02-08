@@ -42,6 +42,7 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.flwor.closures.ItemsToBinaryColumn;
@@ -587,7 +588,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.positionalVariableName != null) {
             variableNamesToExclude.add(this.positionalVariableName);
         }
-        List<String> allColumns = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             this.outputTupleProjection,
             null,
@@ -628,7 +629,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
-        String projectionVariables = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
 
         String viewName = FlworDataFrameUtils.createTempView(df);
@@ -966,7 +967,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             Name positionalVariableName,
             boolean allowingEmpty,
             RuntimeIterator iterator,
-            List<String> allColumns,
+            List<FlworDataFrameColumn> allColumns,
             StructType inputSchema,
             DynamicContext context
     ) {
@@ -978,7 +979,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         System.err.println(
             "[INFO] Rumble was able to optimize a for clause to a native SQL query."
         );
-        String selectSQL = FlworDataFrameUtils.getSQLProjection(allColumns, true);
+        String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
         String viewName = FlworDataFrameUtils.createTempView(dataFrame);
 
         // let's distinguish 4 cases
