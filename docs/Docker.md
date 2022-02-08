@@ -2,7 +2,11 @@
 
 ## Known issue
 
-On occasion, the docker version of RumbleDB may throw a Kryo NoSuchMethodError on some systems. This is under investigation and we are working on a fix. If you get this error, we recommend trying a local installation.
+On occasion, the docker version of RumbleDB used to throw a Kryo NoSuchMethodError on some systems. This should be fixed with version 1.17, let us know if this is not the case.
+
+You can upgrade to the newest version with
+
+    docker pull rumbledb/rumble
 
 ## Running simple queries with Docker
 
@@ -12,9 +16,13 @@ You can download Docker from [here](https://www.docker.com/).
 
 Then, in a shell, type, all on one line:
 
-    docker run -i rumbledb/rumble --shell yes
+    docker run -i rumbledb/rumble repl
                  
-The first time, it might take some time to download everything, but this is all done automatically. When there are RumbleDB updates, this will also trigger a re-download. Otherwise, subsequent commands will run immediately.
+The first time, it might take some time to download everything, but this is all done automatically. Subsequent commands will run immediately.
+
+When there are new RumbleDB versions, you can upgrade with:
+
+    docker pull rumbledb/rumble
 
 The RumbleDB shell appears:
 
@@ -112,7 +120,7 @@ Mind the double parenthesis, as parallelize is a unary function to which we pass
 You can also run the docker as a server like so:
 
 ```
-docker run -p 8001:8001 --rm rumbledb/rumble --server yes --port 8001 --host 0.0.0.0
+docker run -p 8001:8001 --rm rumbledb/rumble serve -p 8001 -h 0.0.0.0
 ```
 
 You can change the port to something else than 8001 at all three places it appears. Do not forget `-p 8001:8001` that forwards the port to the outside of the docker. Then, you can use a [jupyter notebook](https://github.com/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb) connected to the RumbleDB docker server to write queries in it. Point the notebook to `http://localhost:8001/jsoniq` in the appropriate cell (or any other port).
@@ -121,11 +129,13 @@ You can change the port to something else than 8001 at all three places it appea
 
 In order to query your local files, you need to mount a local directory to a directory within the docker. This is done with the `--mount` option, and the source path must be absolute. For the target, you can pick anything that makes sense to you.
 
-    docker run -t -i --mount type=bind,source=/path/to/my/directory,target=/home rumbledb/rumble --shell yes
-    
-Then you can go ahead and use local paths in input functions, like so:
+For example, imagine you have a file products-small.json in the directory /path/to/my/directory. Then you need to run RumbleDB with:
 
-    for $i in json-file("/path/to/my/directory/products-small.json", 10)
+    docker run -t -i --mount type=bind,source=/path/to/my/directory,target=/home rumbledb/rumble repl
+    
+Then you can go ahead and use absolute paths in the target directory in input functions, like so:
+
+    for $i in json-file("/home/products-small.json", 10)
     where $i.quantity gt 99
     return $i
 
