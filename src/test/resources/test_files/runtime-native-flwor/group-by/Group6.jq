@@ -4,5 +4,4 @@ for $i in annotate(
   {"key" : "integer", "foo":{"bar":["integer"]}}
 )
 group by $k := ($i.key || "") cast as integer
-order by $k descending
 return { "k": $k, "c" : count($i) }

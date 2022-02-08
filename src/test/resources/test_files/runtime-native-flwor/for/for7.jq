@@ -4,5 +4,4 @@ for $i in annotate(
   {"foo":{"bar":["integer"]}}
 )
 for $j at $k in $i.foo.bar[]
-order by size($i.foo.bar), $k
 return { "k" : $k, "j": $j }
