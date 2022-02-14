@@ -174,8 +174,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
-        df.show();
-        inputSchema.printTreeString();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
@@ -187,8 +185,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
-        df.show();
-        inputSchema.printTreeString();
         // was not possible, we use let udf
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
