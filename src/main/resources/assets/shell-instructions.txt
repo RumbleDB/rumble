@@ -1,0 +1,24 @@
+
+This shell allows you to write queries interactively with JSONiq.
+
+Queries can be written on multiple lines with no empty lines inbetween.
+Press enter twice to execute your query.
+
+A few example queries you could try out to get started:
+
+1 + 1
+
+json-file("http://rumbledb.org/samples/products-small.json", 10)[1]
+
+count(json-file("http://rumbledb.org/samples/products-small.json", 10))
+
+for $product in json-file("http://rumbledb.org/samples/products-small.json", 10)
+where $product.quantity ge 995
+return $product
+
+for $i in parallelize(1 to 10000)
+group by $m := $i mod 2
+return { "m" : $m, "c" : count($i) }
+
+More examples and tutorials linked from http://www.rumbledb.org/ and http://www.jsoniq.org/
+

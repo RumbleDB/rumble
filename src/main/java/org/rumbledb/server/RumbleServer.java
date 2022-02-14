@@ -39,6 +39,26 @@ public class RumbleServer {
             context.setHandler(new ValidatorPageHandler());
             server.start();
             System.err.println("[INFO] Server running. Press Control+C to stop.");
+            System.err.println("RumbleDB is now running as a server and accepts requests.");
+            System.err.println();
+            System.err.println("What to do next?");
+            System.err.println();
+            String host = this.rumbleRuntimeConfiguration.getHost();
+            int port = this.rumbleRuntimeConfiguration.getPort();
+            System.err.println(
+                "- You can go to http://" + host + ":" + port + "/public.html in your browser and type queries there."
+            );
+            System.err.println();
+            System.err.println("- You can use Jupyter notebooks to write queries interactively.");
+            System.err.println(
+                "You can download a tutorial notebook from https://github.com/RumbleDB/rumble/blob/master/RumbleSandbox.ipynb (use a raw download) that you can point to http://"
+                    + host
+                    + ":"
+                    + port
+                    + "/jsoniq"
+            );
+            System.err.println();
+
             while (!Thread.currentThread().isInterrupted()) {
                 Thread.sleep(10000);
             }

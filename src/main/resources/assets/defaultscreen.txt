@@ -5,6 +5,9 @@ It runs on top of Apache Spark and must be invoked with spark-submit, both for
 local use and for cluster use. Spark must be installed either on your laptop,
 or on the cluster.
 
+If you do not want to install Spark, then you need to use the standalone jar
+instead from www.rumbledb.org.
+
 Usage:
 spark-submit <Spark arguments> <path to RumbleDB's jar> <mode> <parameters>
 
