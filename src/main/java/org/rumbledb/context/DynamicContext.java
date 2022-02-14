@@ -28,6 +28,7 @@ import org.apache.spark.api.java.JavaRDD;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
+import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
@@ -213,6 +214,15 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return this.parent.currentDateTime;
         }
         return this.currentDateTime;
+    }
+    
+    public static void printDependencies(Map<Name, VariableDependency> exprDependency)
+    {
+    	System.err.println("[DEBUG] Variable dependencies:");
+    	for(Map.Entry<Name, VariableDependency> e : exprDependency.entrySet())
+        {
+        	System.err.println(e.getKey() + " : " + e.getValue());
+        }
     }
 }
 

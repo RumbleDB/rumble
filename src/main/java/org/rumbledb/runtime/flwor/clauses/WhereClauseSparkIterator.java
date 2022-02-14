@@ -174,6 +174,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
 
         Dataset<Row> df = this.child.getDataFrame(context);
         StructType inputSchema = df.schema();
+        df.show();
+        inputSchema.printTreeString();
 
         Dataset<Row> nativeQueryResult = tryNativeQuery(
             df,
@@ -185,6 +187,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
+        df.show();
+        inputSchema.printTreeString();
         // was not possible, we use let udf
         List<String> UDFcolumns = FlworDataFrameUtils.getColumnNames(
             inputSchema,
@@ -368,6 +372,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
 
             this.setEvaluationDepthLimit(-1);
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
             return null;
         }
 
@@ -398,10 +403,12 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // copy over the projection needed by the parent clause.
         Map<Name, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
+        DynamicContext.printDependencies(projection);
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency = this.expression
             .getVariableDependencies();
+        DynamicContext.printDependencies(exprDependency);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -415,6 +422,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
+        DynamicContext.printDependencies(projection);
         return projection;
     }
 
