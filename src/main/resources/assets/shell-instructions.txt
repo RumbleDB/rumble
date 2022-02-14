@@ -20,3 +20,5 @@ for $i in parallelize(1 to 10000)
 group by $m := $i mod 2
 return { "m" : $m, "c" : count($i) }
 
+More examples and tutorials linked from http://www.rumbledb.org/ and http://www.jsoniq.org/
+
