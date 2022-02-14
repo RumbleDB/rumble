@@ -399,12 +399,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     ) {
         // copy over the projection needed by the parent clause.
         Map<Name, DynamicContext.VariableDependency> projection = new TreeMap<>(parentProjection);
-        DynamicContext.printDependencies(projection);
 
         // add the variable dependencies needed by this for clause's expression.
         Map<Name, DynamicContext.VariableDependency> exprDependency = this.expression
             .getVariableDependencies();
-        DynamicContext.printDependencies(exprDependency);
         for (Name variable : exprDependency.keySet()) {
             if (projection.containsKey(variable)) {
                 if (projection.get(variable) != exprDependency.get(variable)) {
@@ -418,7 +416,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
                 }
             }
         }
-        DynamicContext.printDependencies(projection);
         return projection;
     }
 
