@@ -368,6 +368,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
 
             this.setEvaluationDepthLimit(-1);
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
             return null;
         }
 
