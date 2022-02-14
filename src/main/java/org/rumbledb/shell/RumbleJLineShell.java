@@ -142,7 +142,10 @@ public class RumbleJLineShell {
     private void initialize() throws IOException {
         this.welcomeMessage = IOUtils.toString(Main.class.getResourceAsStream("/assets/banner.txt"), "UTF-8");
         this.welcomeMessage += "\n";
-        this.welcomeMessage += IOUtils.toString(Main.class.getResourceAsStream("/assets/shell-instructions.txt"), "UTF-8");
+        this.welcomeMessage += IOUtils.toString(
+            Main.class.getResourceAsStream("/assets/shell-instructions.txt"),
+            "UTF-8"
+        );
         Terminal terminal = TerminalBuilder.builder()
             .system(true)
             .build();
