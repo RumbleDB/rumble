@@ -49,11 +49,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
+    private String inputFormat;
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
+    private Map<Name, String> externalVariableValuesReadFromFiles;
     private boolean checkReturnTypeOfBuiltinFunctions;
     private String queryPath;
     private String outputPath;
@@ -82,6 +84,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.shortcutMap.put("f", "output-format");
         this.shortcutMap.put("O", "overwrite");
         this.shortcutMap.put("c", "materialization-cap");
+        this.shortcutMap.put("I", "context-item");
+        this.shortcutMap.put("i", "context-item-from-file");
         this.shortcutMap.put("P", "number-of-output-partitions");
         this.shortcutMap.put("v", "show-error-info");
         this.shortcutMap.put("t", "static-typing");
@@ -206,6 +210,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.outputFormat = newValue;
     }
 
+    public String getInputFormat() {
+        return this.inputFormat;
+    }
+
+    public void setInputFormat(String newValue) {
+        this.inputFormat = newValue;
+    }
+
     public int getNumberOfOutputPartitions() {
         return this.numberOfOutputPartitions;
     }
@@ -244,6 +256,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.outputFormat = "json";
         }
+        if (this.arguments.containsKey("input-format")) {
+            this.inputFormat = this.arguments.get("input-format").toLowerCase();
+        } else {
+            this.inputFormat = "json";
+        }
         if (this.arguments.containsKey("number-of-output-partitions")) {
             this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
         } else {
@@ -269,6 +286,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
+        this.externalVariableValuesReadFromFiles = new HashMap<>();
         for (String s : this.arguments.keySet()) {
             if (s.startsWith("variable:")) {
                 String variableLocalName = s.substring(9);
@@ -276,6 +294,22 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("variable-from-file:")) {
+                String variableLocalName = s.substring(9);
+                Name name = Name.createVariableInNoNamespace(variableLocalName);
+                this.externalVariableValuesReadFromFiles.put(name, this.arguments.get(s));
+            }
+        }
+        if (this.arguments.containsKey("context-item")) {
+            Name name = Name.CONTEXT_ITEM;
+            this.unparsedExternalVariableValues.put(name, this.arguments.get("context-item"));
+        }
+        if (this.arguments.containsKey("context-item-from-file")) {
+            Name name = Name.CONTEXT_ITEM;
+            this.externalVariableValuesReadFromFiles.put(name, this.arguments.get("context-item-file"));
+        }
+
         if (this.arguments.containsKey("check-return-types-of-builtin-functions")) {
             this.checkReturnTypeOfBuiltinFunctions = this.arguments.get("check-return-types-of-builtin-functions")
                 .equals("yes");
@@ -444,6 +478,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public String getUnparsedExternalVariableValue(Name name) {
         if (this.unparsedExternalVariableValues.containsKey(name)) {
             return this.unparsedExternalVariableValues.get(name);
+        }
+        return null;
+    }
+
+    public String getExternalVariableValueReadFromFile(Name name) {
+        if (this.externalVariableValuesReadFromFiles.containsKey(name)) {
+            return this.externalVariableValuesReadFromFiles.get(name);
         }
         return null;
     }
