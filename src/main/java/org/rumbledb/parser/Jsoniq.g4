@@ -22,19 +22,19 @@ setter                  : defaultCollationDecl
                         | emptyOrderDecl
                         | decimalFormatDecl;
                         
-namespaceDecl           : 'declare' 'namespace' NCName '=' uriLiteral;
+namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
                         
 annotatedDecl           : functionDecl
                         | varDecl
                         | typeDecl;
 
-defaultCollationDecl    : 'declare' Kdefault Kcollation uriLiteral;
+defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
 
-orderingModeDecl        : 'declare' 'ordering' ('ordered' | 'unordered');
+orderingModeDecl        : Kdeclare 'ordering' ('ordered' | 'unordered');
 
-emptyOrderDecl          : 'declare' Kdefault 'order' Kempty (emptySequenceOrder=(Kgreatest | Kleast));
+emptyOrderDecl          : Kdeclare Kdefault 'order' Kempty (emptySequenceOrder=(Kgreatest | Kleast));
 
-decimalFormatDecl       : 'declare'
+decimalFormatDecl       : Kdeclare
                           (('decimal-format' qname) | (Kdefault 'decimal-format'))
                           (dfPropertyName '=' stringLiteral)*;
 
@@ -54,13 +54,15 @@ dfPropertyName          : 'decimal-separator'
 
 moduleImport            : 'import' 'module' ('namespace' prefix=NCName '=')? targetNamespace=uriLiteral (Kat uriLiteral (',' uriLiteral)*)?;
 
-varDecl                 : 'declare' 'variable' varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+varDecl                 : Kdeclare Kvariable varRef (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
 
-functionDecl            : 'declare' 'function' fn_name=qname '(' paramList? ')'
+contextItemDecl         : Kdeclare Kcontext Kitem (Kas sequenceType)? ((':=' exprSingle) | (external='external' (':=' exprSingle)?));
+
+functionDecl            : Kdeclare 'function' fn_name=qname '(' paramList? ')'
                           (Kas return_type=sequenceType)?
                           ('{' (fn_body=expr)? '}' | 'external');
 
-typeDecl                : 'declare' Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
+typeDecl                : Kdeclare Ktype type_name=qname 'as' (schema=schemaLanguage)? type_definition=exprSingle;
 
 schemaLanguage          : 'jsound' 'compact'
                         | 'jsound' 'verbose'
@@ -264,12 +266,15 @@ keyWords                : Kjsoniq
                         | Kcast
                         | Kcastable
                         | Kcollation
+                        | Kcontext
+                        | Kdeclare
                         | Kdefault
                         | Kelse
                         | Kgreatest
                         | Kinstance
                         | Kstatically
                         | Kis
+                        | Kitem
                         | Kleast
                         | Knot
                         | NullLiteral
@@ -288,6 +293,7 @@ keyWords                : Kjsoniq
                         | Kevery
                         | Ksatisfies
                         | Kstable
+                        | Kvariable
                         | Kascending
                         | Kdescending
                         | Kempty
@@ -406,7 +412,15 @@ Ktrue                   : 'true';
 
 Kfalse                  : 'false';
 
-Ktype                  : 'type';
+Ktype                   : 'type';
+
+Kdeclare                : 'declare';
+
+Kcontext                : 'context';
+
+Kitem                   : 'item';
+
+Kvariable               : 'variable';
 
 STRING                  : '"' (ESC | ~ ["\\])* '"';
 
