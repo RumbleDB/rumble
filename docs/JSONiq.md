@@ -65,10 +65,11 @@ When an expression does not support pushdown, it will materialize automaticaly. 
 
 ## External global variables.
 
-Prologs with user-defined functions and global variables are now fully supported. Global external variables are supported (use "--variable:foo bar" on the command line to assign values to them). If the declared type is not string, then the literal supplied
+Prologs with user-defined functions and global variables are supported. Global external variables are supported (use "--variable:foo bar" on the command line to assign values to them). If the declared type is not string, then the literal supplied
 on the command line is cast. If the declared type is anyURI, the path supplied on the command line is also resolved against
 the working directory to an absolute URI. Thus, anyURI should be used to supply paths dynamically through an external variable.
 
+Context item declarations are supported and a global context item value can be passed with the "--context-item" or "-I" parameter on the command line.
 
 ## Library modules
 
@@ -156,8 +157,6 @@ Most core features of JSONiq are now in place, and we are working on getting the
 Some prolog settings (base URI, ordering mode, decimal format, namespace declarations) are not supported yet.
 
 Location hints for the resolution of modules are not supported yet.
-
-Context item declarations are not supported yet.
 
 ### FLWOR features
 
