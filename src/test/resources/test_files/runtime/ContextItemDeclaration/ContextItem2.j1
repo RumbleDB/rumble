@@ -1,0 +1,4 @@
+(:JIQS: ShouldRun; Output="2" :)
+declare context item as integer := 1;
+
+$$ + 1
