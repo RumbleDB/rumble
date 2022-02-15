@@ -303,7 +303,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         if (this.arguments.containsKey("context-item")) {
             Name name = Name.CONTEXT_ITEM;
-            this.unparsedExternalVariableValues.put(name, this.arguments.get("context-item-file"));
+            this.unparsedExternalVariableValues.put(name, this.arguments.get("context-item"));
         }
         if (this.arguments.containsKey("context-item-from-file")) {
             Name name = Name.CONTEXT_ITEM;
