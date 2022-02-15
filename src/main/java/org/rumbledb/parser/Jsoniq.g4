@@ -26,7 +26,8 @@ namespaceDecl           : Kdeclare 'namespace' NCName '=' uriLiteral;
                         
 annotatedDecl           : functionDecl
                         | varDecl
-                        | typeDecl;
+                        | typeDecl
+                        | contextItemDecl;
 
 defaultCollationDecl    : Kdeclare Kdefault Kcollation uriLiteral;
 
