@@ -194,7 +194,23 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
+        // We override with a context item declaration if not present already.
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
+        if (
+            commaExpression.isContextDependent() && !prolog.hasContextItemDeclaration()
+        ) {
+            System.err.println("[WARNING] Adding context item declaration.");
+            prolog.addDeclaration(
+                new VariableDeclaration(
+                        Name.CONTEXT_ITEM,
+                        true,
+                        SequenceType.ITEM,
+                        null,
+                        createMetadataFromContext(ctx)
+                )
+            );
+        }
+
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;

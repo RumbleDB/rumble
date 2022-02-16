@@ -65,6 +65,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean thirdFeature;
+    private boolean readContextItemFromStandardInput;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -365,6 +366,13 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.thirdFeature = true;
         }
+
+        if (this.arguments.containsKey("read-context-item-from-standard-input")) {
+            this.readContextItemFromStandardInput = this.arguments.get("read-context-item-from-standard-input")
+                .equals("yes");
+        } else {
+            this.readContextItemFromStandardInput = true;
+        }
     }
 
     public boolean getOverwrite() {
@@ -492,6 +500,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
         return this;
+    }
+
+    public boolean readContextItemFromStandardInput() {
+        return this.readContextItemFromStandardInput;
     }
 
     public boolean isShell() {
