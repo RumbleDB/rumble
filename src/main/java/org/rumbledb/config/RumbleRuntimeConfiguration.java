@@ -77,6 +77,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
         initShortcuts();
+        init();
     }
 
     private void initShortcuts() {
