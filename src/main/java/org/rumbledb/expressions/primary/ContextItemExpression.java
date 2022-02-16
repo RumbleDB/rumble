@@ -49,9 +49,4 @@ public class ContextItemExpression extends Expression {
         indentIt(sb, indent);
         sb.append("$$");
     }
-
-    @Override
-    public boolean isContextDependent() {
-        return true;
-    }
 }

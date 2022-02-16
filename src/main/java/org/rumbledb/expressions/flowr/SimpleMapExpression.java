@@ -95,9 +95,4 @@ public class SimpleMapExpression extends Expression {
         sb.append(")\n");
     }
 
-    @Override
-    public boolean isContextDependent() {
-        return this.leftExpression.isContextDependent();
-    }
-
 }

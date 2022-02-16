@@ -101,9 +101,4 @@ public class FilterExpression extends Expression {
             }
         }
     }
-
-    @Override
-    public boolean isContextDependent() {
-        return this.mainExpression.isContextDependent();
-    }
 }
