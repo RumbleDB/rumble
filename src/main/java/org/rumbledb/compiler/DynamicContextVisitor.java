@@ -20,6 +20,9 @@
 
 package org.rumbledb.compiler;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -44,6 +47,7 @@ import org.rumbledb.expressions.module.TypeDeclaration;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -249,6 +253,27 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 );
             return argument;
         }
+        if (name.equals(Name.CONTEXT_ITEM)) {
+            StringBuilder stringBuilder = new StringBuilder();
+            BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
+            String l;
+            try {
+                while ((l = reader.readLine()) != null) {
+                    stringBuilder.append(l);
+                }
+                value = stringBuilder.toString();
+            } catch (IOException e) {
+                value = null;
+            }
+            items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+            argument.getVariableValues()
+                .addVariableValue(
+                    name,
+                    items
+                );
+            return argument;
+        }
+
 
         // Variable is external and we do not have any supplied value: we fall back to expression, if any.
         Expression expression = variableDeclaration.getExpression();
