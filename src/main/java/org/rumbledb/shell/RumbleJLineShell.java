@@ -58,7 +58,6 @@ public class RumbleJLineShell {
     private LineReader lineReader;
     private JsoniqQueryExecutor jsoniqQueryExecutor;
     private boolean queryStarted;
-    private String previousLine = "";
     private String currentLine = "";
     private String currentQueryContent = "";
     private String welcomeMessage;
@@ -85,7 +84,6 @@ public class RumbleJLineShell {
                         processQuery();
                     }
                 }
-                this.previousLine = this.currentLine;
             } catch (Exception ex) {
                 handleException(ex, this.configuration.getShowErrorInfo());
             }

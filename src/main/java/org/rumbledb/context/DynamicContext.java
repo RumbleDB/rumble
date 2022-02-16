@@ -28,7 +28,6 @@ import org.apache.spark.api.java.JavaRDD;
 import org.joda.time.DateTime;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
-import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.items.structured.JSoundDataFrame;
 
