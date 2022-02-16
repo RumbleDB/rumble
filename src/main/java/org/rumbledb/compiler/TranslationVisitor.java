@@ -196,19 +196,22 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
         // We override with a context item declaration if not present already.
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
-        if (
-            commaExpression.isContextDependent() && !prolog.hasContextItemDeclaration()
-        ) {
-            System.err.println("[WARNING] Adding context item declaration.");
-            prolog.addDeclaration(
-                new VariableDeclaration(
-                        Name.CONTEXT_ITEM,
-                        true,
-                        SequenceType.ITEM,
-                        null,
-                        createMetadataFromContext(ctx)
-                )
-            );
+        if (!prolog.hasContextItemDeclaration()) {
+            if (
+                this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
+                    || this.configuration.getUnparsedExternalVariableValue(Name.CONTEXT_ITEM) != null
+            ) {
+                System.err.println("[WARNING] Adding context item declaration.");
+                prolog.addDeclaration(
+                    new VariableDeclaration(
+                            Name.CONTEXT_ITEM,
+                            true,
+                            SequenceType.ITEM,
+                            null,
+                            createMetadataFromContext(ctx)
+                    )
+                );
+            }
         }
 
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));

@@ -54,8 +54,6 @@ public class AnnotationsTestsBase {
     protected List<File> testFiles = new ArrayList<>();
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
             new String[] {
-                "--read-context-item-from-standard-input",
-                "no",
                 "--print-iterator-tree",
                 "yes",
                 "--variable:externalUnparsedString",

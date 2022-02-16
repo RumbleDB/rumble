@@ -34,4 +34,7 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --host  | -h | N/A  |  localhost (default) |  Changes the host of the RumbleDB HTTP server to any of your liking |
 | --variable:foo | N/A | variable:foo  |  bar |  --variable:foo bar initialize the global variable $foo to "bar". The query must contain the corresponding global variable declaration, e.g., "declare variable $foo external;" |
 | --context-item | -I | context-item  |  bar |  initializes the global context item $$ to "bar". The query must contain the corresponding global variable declaration, e.g., "declare context item external;" |
+| --context-item-input | -i | context-item-input  | - |  reads the context item value from the standard input |
+| --context-item-input-format | N/A | context-item-input-format  |  text or json |  sets the input format to use
+for parsing the standard input (as text or as a serialized json value) |
 

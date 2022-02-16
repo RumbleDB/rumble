@@ -254,7 +254,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 );
             return argument;
         }
-        if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readContextItemFromStandardInput()) {
+        if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)) {
             StringBuilder stringBuilder = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             String l;
@@ -263,7 +263,22 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     stringBuilder.append(l);
                 }
                 value = stringBuilder.toString();
-                items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                String inputFormat = this.configuration.getInputFormat(Name.CONTEXT_ITEM);
+                switch (inputFormat) {
+                    case "json":
+                        items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                        break;
+                    case "text":
+                        items.add(ItemFactory.getInstance().createStringItem(value));
+                        break;
+                    default:
+                        throw new AbsentPartOfDynamicContextException(
+                                "Unrecognized input format: "
+                                    + this.configuration.getInputFormat(Name.CONTEXT_ITEM)
+                                    + ". Expecting text or json.",
+                                variableDeclaration.getMetadata()
+                        );
+                }
                 argument.getVariableValues()
                     .addVariableValue(
                         name,
