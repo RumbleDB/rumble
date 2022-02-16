@@ -75,8 +75,9 @@ public class ItemParser implements Serializable {
      * @return the parsed item.
      */
     public static Item getItemFromString(String string, ExceptionMetadata metadata) {
+        string = "[ " + string + " ]";
         JsonReader object = new JsonReader(new StringReader(string));
-        return ItemParser.getItemFromObject(object, metadata);
+        return ItemParser.getItemFromObject(object, metadata).getItemAt(0);
     }
 
     /**

@@ -36,6 +36,7 @@ import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.AbsentPartOfDynamicContextException;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.OurBadException;
+import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -253,7 +254,7 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                 );
             return argument;
         }
-        if (name.equals(Name.CONTEXT_ITEM)) {
+        if (name.equals(Name.CONTEXT_ITEM) && this.configuration.readContextItemFromStandardInput()) {
             StringBuilder stringBuilder = new StringBuilder();
             BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
             String l;
@@ -262,16 +263,26 @@ public class DynamicContextVisitor extends AbstractNodeVisitor<DynamicContext> {
                     stringBuilder.append(l);
                 }
                 value = stringBuilder.toString();
+                items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
+                argument.getVariableValues()
+                    .addVariableValue(
+                        name,
+                        items
+                    );
+                return argument;
             } catch (IOException e) {
-                value = null;
-            }
-            items.add(ItemParser.getItemFromString(value, ExceptionMetadata.EMPTY_METADATA));
-            argument.getVariableValues()
-                .addVariableValue(
-                    name,
-                    items
+                throw new AbsentPartOfDynamicContextException(
+                        "Could not read context item from standard input!",
+                        variableDeclaration.getMetadata()
                 );
-            return argument;
+            } catch (ParsingException ex) {
+                RuntimeException e = new ParsingException(
+                        "The text read from the standard input is not a well-formed JSON value!",
+                        variableDeclaration.getMetadata()
+                );
+                e.initCause(ex);
+                throw e;
+            }
         }
 
 
