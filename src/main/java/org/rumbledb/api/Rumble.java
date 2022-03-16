@@ -6,8 +6,12 @@ import java.io.IOException;
 import org.rumbledb.compiler.VisitorHelpers;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.context.StaticContext;
+import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.module.MainModule;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.functions.input.FileSystemUtil;
+
 import sparksoniq.spark.SparkSessionManager;
 
 /**
@@ -23,6 +27,8 @@ import sparksoniq.spark.SparkSessionManager;
 public class Rumble {
 
     private RumbleRuntimeConfiguration configuration;
+    private DynamicContext dynamicContext;
+    private StaticContext staticContext;
 
     /**
      * Creates a new Rumble instance. This does NOT initialize Spark. You need to do so before instantiating Rumble.
@@ -30,9 +36,19 @@ public class Rumble {
      * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
      */
     public Rumble(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+        setConfiguration(configuration);
+        this.dynamicContext = null;
     }
+
+    /**
+     * Changes the configuration;
+     *
+     * @param configuration a RumbleRuntimeConfiguration object containing the configuration.
+     */
+    public void setConfiguration(RumbleRuntimeConfiguration configuration) {
+		this.configuration = configuration;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = this.configuration.getResultSizeCap();
+	}
 
     /**
      * Runs a query and returns an iterator over the resulting sequence of Items.
@@ -41,16 +57,29 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(String query) {
+        if(this.configuration.getResetDynamicContextForEachQuery() || this.staticContext == null)
+        {
+        	URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                    ".",
+                    this.configuration,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+        	this.staticContext = new StaticContext(location, this.configuration);
+        }
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
+            this.staticContext,
             this.configuration
         );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        if(this.configuration.getResetDynamicContextForEachQuery() || this.dynamicContext == null)
+        {
+        	this.dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        }
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(iterator, this.dynamicContext, this.configuration);
     }
 
     /**
@@ -61,16 +90,24 @@ public class Rumble {
      * @return the resulting sequence as an ItemIterator.
      */
     public SequenceOfItems runQuery(URI location) throws IOException {
+        if(this.configuration.getResetDynamicContextForEachQuery() || this.staticContext == null)
+        {
+        	this.staticContext = new StaticContext(location, this.configuration);
+        }
         MainModule mainModule = VisitorHelpers.parseMainModuleFromLocation(
             location,
+            this.staticContext,
             this.configuration
         );
-        DynamicContext dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        if(this.configuration.getResetDynamicContextForEachQuery() || this.dynamicContext == null)
+        {
+        	this.dynamicContext = VisitorHelpers.createDynamicContext(mainModule, this.configuration);
+        }
         RuntimeIterator iterator = VisitorHelpers.generateRuntimeIterator(
             mainModule,
             this.configuration
         );
-        return new SequenceOfItems(iterator, dynamicContext, this.configuration);
+        return new SequenceOfItems(iterator, this.dynamicContext, this.configuration);
     }
 
     /**
@@ -80,8 +117,18 @@ public class Rumble {
      * @return serialization of the JSONiq Expression Tree.
      */
     public String serializeToJSONiq(String query) {
+    	if(this.configuration.getResetDynamicContextForEachQuery() || this.staticContext == null)
+        {
+    		URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
+                    ".",
+                    this.configuration,
+                    ExceptionMetadata.EMPTY_METADATA
+                );
+    		this.staticContext = new StaticContext(location, this.configuration);
+        }
         MainModule mainModule = VisitorHelpers.parseMainModuleFromQuery(
             query,
+            this.staticContext,
             this.configuration
         );
         StringBuffer stringBuffer = new StringBuffer();

@@ -32,6 +32,7 @@ import sparksoniq.spark.SparkSessionManager;
 public class RumbleHttpHandler implements HttpHandler {
 
     private RumbleRuntimeConfiguration rumbleRuntimeConfiguration;
+    private JsoniqQueryExecutor translator;
 
     private enum StatusCode {
         SUCCESS(200),
@@ -51,6 +52,8 @@ public class RumbleHttpHandler implements HttpHandler {
 
     public RumbleHttpHandler(RumbleRuntimeConfiguration rumbleRuntimeConfiguration) {
         this.rumbleRuntimeConfiguration = rumbleRuntimeConfiguration;
+        SparkSessionManager.COLLECT_ITEM_LIMIT = this.rumbleRuntimeConfiguration.getResultSizeCap();
+        this.translator = new JsoniqQueryExecutor(this.rumbleRuntimeConfiguration);
     }
 
     private void sendResponse(HttpExchange exchange, StatusCode code, String response) throws IOException {
@@ -91,16 +94,16 @@ public class RumbleHttpHandler implements HttpHandler {
             String queryString = uri.getQuery();
             String[] args = getCLIArguments(queryString);
 
-            RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(args);
-            configuration.setAllowedURIPrefixes(this.rumbleRuntimeConfiguration.getAllowedURIPrefixes());
+            RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(this.rumbleRuntimeConfiguration, args);
+            // configuration.setAllowedURIPrefixes(this.rumbleRuntimeConfiguration.getAllowedURIPrefixes());
             validateConfiguration(exchange, configuration);
-            SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
 
-            JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
+            // JsoniqQueryExecutor translator = new JsoniqQueryExecutor(configuration);
+            this.translator.setConfiguration(configuration);
             List<Item> items = null;
             long count = -1;
             if (configuration.getQueryPath() != null) {
-                items = translator.runQuery();
+                items = this.translator.runQuery();
             } else {
                 InputStreamReader r = new InputStreamReader(exchange.getRequestBody());
                 BufferedReader r2 = new BufferedReader(r);
@@ -112,7 +115,7 @@ public class RumbleHttpHandler implements HttpHandler {
                 }
                 String JSONiqQuery = sb.toString();
                 items = new ArrayList<Item>();
-                count = translator.runInteractive(JSONiqQuery, items);
+                count = this.translator.runInteractive(JSONiqQuery, items);
             }
 
             Item output = assembleResponse(configuration, items, count);

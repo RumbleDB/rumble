@@ -71,11 +71,14 @@ public class VisitorHelpers {
         System.err.println(node.getStaticContext());
     }
 
-    public static MainModule parseMainModuleFromLocation(URI location, RumbleRuntimeConfiguration configuration)
+    public static MainModule parseMainModuleFromLocation(
+    		URI location,
+            StaticContext moduleContext,
+    		RumbleRuntimeConfiguration configuration)
             throws IOException {
         InputStream in = FileSystemUtil.getDataInputStream(location, configuration, ExceptionMetadata.EMPTY_METADATA);
         String query = IOUtils.toString(in, StandardCharsets.UTF_8.name());
-        return parseMainModule(query, location, configuration);
+        return parseMainModule(query, location, moduleContext, configuration);
     }
 
     public static LibraryModule parseLibraryModuleFromLocation(
@@ -90,16 +93,23 @@ public class VisitorHelpers {
         return parseLibraryModule(query, location, importingModuleContext, configuration);
     }
 
-    public static MainModule parseMainModuleFromQuery(String query, RumbleRuntimeConfiguration configuration) {
+    public static MainModule parseMainModuleFromQuery(
+    		String query,
+            StaticContext moduleContext,
+    		RumbleRuntimeConfiguration configuration) {
         URI location = FileSystemUtil.resolveURIAgainstWorkingDirectory(
             ".",
             configuration,
             ExceptionMetadata.EMPTY_METADATA
         );
-        return parseMainModule(query, location, configuration);
+        return parseMainModule(query, location, moduleContext, configuration);
     }
 
-    public static MainModule parseMainModule(String query, URI uri, RumbleRuntimeConfiguration configuration) {
+    private static MainModule parseMainModule(
+    		String query,
+    		URI uri,
+            StaticContext moduleContext,
+            RumbleRuntimeConfiguration configuration) {
         CharStream stream = CharStreams.fromString(query);
         StringBuffer sb = new StringBuffer();
         sb.append((char) stream.LA(1));
@@ -109,23 +119,23 @@ public class VisitorHelpers {
         sb.append((char) stream.LA(5));
         sb.append((char) stream.LA(6));
         if (sb.toString().equals("xquery")) {
-            return parseXQueryMainModule(query, uri, configuration);
+            return parseXQueryMainModule(query, uri, moduleContext, configuration);
         } else {
-            return parseJSONiqMainModule(query, uri, configuration);
+            return parseJSONiqMainModule(query, uri, moduleContext, configuration);
         }
 
     }
 
-    public static MainModule parseJSONiqMainModule(
+    private static MainModule parseJSONiqMainModule(
             String query,
             URI uri,
+            StaticContext moduleContext,
             RumbleRuntimeConfiguration configuration
     ) {
         CharStream stream = CharStreams.fromString(query);
         JsoniqLexer lexer = new JsoniqLexer(stream);
         JsoniqParser parser = new JsoniqParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         TranslationVisitor visitor = new TranslationVisitor(moduleContext, true, configuration, query);
         try {
@@ -157,16 +167,16 @@ public class VisitorHelpers {
         }
     }
 
-    public static MainModule parseXQueryMainModule(
+    private static MainModule parseXQueryMainModule(
             String query,
             URI uri,
+            StaticContext moduleContext,
             RumbleRuntimeConfiguration configuration
     ) {
         CharStream stream = CharStreams.fromString(query);
         XQueryLexer lexer = new XQueryLexer(stream);
         XQueryParser parser = new XQueryParser(new CommonTokenStream(lexer));
         parser.setErrorHandler(new BailErrorStrategy());
-        StaticContext moduleContext = new StaticContext(uri, configuration);
         moduleContext.setUserDefinedFunctionsExecutionModes(new UserDefinedFunctionExecutionModes());
         XQueryTranslationVisitor visitor = new XQueryTranslationVisitor(moduleContext, true, configuration, query);
         try {
@@ -197,7 +207,7 @@ public class VisitorHelpers {
         }
     }
 
-    public static LibraryModule parseLibraryModule(
+    private static LibraryModule parseLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,
@@ -219,7 +229,7 @@ public class VisitorHelpers {
 
     }
 
-    public static LibraryModule parseJSONiqLibraryModule(
+    private static LibraryModule parseJSONiqLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,
@@ -257,7 +267,7 @@ public class VisitorHelpers {
         }
     }
 
-    public static LibraryModule parseXQueryLibraryModule(
+    private static LibraryModule parseXQueryLibraryModule(
             String query,
             URI uri,
             StaticContext importingModuleContext,

@@ -67,6 +67,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
     private boolean thirdFeature;
+    private boolean resetDynamicContextForEachQuery;
 
     private Map<String, String> shortcutMap;
     private Set<String> yesNoShortcuts;
@@ -77,7 +78,20 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
         initShortcuts();
-        init();
+        initConfigurationFields();
+    }
+    
+    public RumbleRuntimeConfiguration(RumbleRuntimeConfiguration configuration, String[] args) {
+    	this.arguments = configuration.arguments;
+        initShortcuts();
+    	processArguments(args);
+    	initConfigurationFields();
+    }
+
+    public RumbleRuntimeConfiguration(String[] args) {
+        initShortcuts();
+        processArguments(args);
+        initConfigurationFields();
     }
 
     private void initShortcuts() {
@@ -100,9 +114,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.yesNoShortcuts.add("t");
     }
 
-    public RumbleRuntimeConfiguration(String[] args) {
+    private void processArguments(String[] args) {
         this.arguments = new HashMap<>();
-        initShortcuts();
         for (int i = 0; i < args.length; ++i) {
             if (args[i].startsWith(ARGUMENT_PREFIX)) {
                 if (i == 0) {
@@ -168,89 +181,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             }
             this.arguments.put("query-path", args[i]);
         }
-        init();
     }
 
-    public static RumbleRuntimeConfiguration getDefaultConfiguration() {
-        return RumbleRuntimeConfiguration.defaultConfiguration;
-    }
-
-    public String getConfigurationArgument(String key) {
-        if (this.arguments.containsKey(key)) {
-            return this.arguments.get(key);
-        } else {
-            return null;
-        }
-    }
-
-    public int getPort() {
-        if (this.arguments.containsKey("port")) {
-            return Integer.parseInt(this.arguments.get("port"));
-        } else {
-            return 8001;
-        }
-    }
-
-    public String getHost() {
-        if (this.arguments.containsKey("host")) {
-            return this.arguments.get("host");
-        } else {
-            return "localhost";
-        }
-    }
-
-    public List<String> getAllowedURIPrefixes() {
-        return this.allowedPrefixes;
-    }
-
-    public void setAllowedURIPrefixes(List<String> newValue) {
-        this.allowedPrefixes = newValue;
-    }
-
-    public String getOutputFormat() {
-        return this.outputFormat;
-    }
-
-    public void setOutputFormat(String newValue) {
-        this.outputFormat = newValue;
-    }
-
-    public String getInputFormat() {
-        return this.inputFormat;
-    }
-
-    public void setInputFormat(String newValue) {
-        this.inputFormat = newValue;
-    }
-
-    public int getNumberOfOutputPartitions() {
-        return this.numberOfOutputPartitions;
-    }
-
-    public RumbleRuntimeConfiguration setNumberOfOutputPartitions(int newValue) {
-        this.numberOfOutputPartitions = newValue;
-        return this;
-    }
-
-    public Map<String, String> getOutputFormatOptions() {
-        return this.outputFormatOptions;
-    }
-
-    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
-        this.outputFormatOptions.put(key, value);
-        return this;
-    }
-
-    public boolean isCheckReturnTypeOfBuiltinFunctions() {
-        return this.checkReturnTypeOfBuiltinFunctions;
-    }
-
-    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
-        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
-        return this;
-    }
-
-    public void init() {
+    private void initConfigurationFields() {
         if (this.arguments.containsKey("allowed-uri-prefixes")) {
             this.allowedPrefixes = Arrays.asList(this.arguments.get("allowed-uri-prefixes").split(";"));
         } else {
@@ -385,6 +318,91 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.thirdFeature = true;
         }
+
+        if (this.arguments.containsKey("reset-dynamic-context-for-each-query")) {
+            this.resetDynamicContextForEachQuery = this.arguments.get("reset-dynamic-context-for-each-query").equals("yes");
+        } else {
+            this.resetDynamicContextForEachQuery = true;
+        }
+    }
+
+    public static RumbleRuntimeConfiguration getDefaultConfiguration() {
+        return RumbleRuntimeConfiguration.defaultConfiguration;
+    }
+
+    public String getConfigurationArgument(String key) {
+        if (this.arguments.containsKey(key)) {
+            return this.arguments.get(key);
+        } else {
+            return null;
+        }
+    }
+
+    public int getPort() {
+        if (this.arguments.containsKey("port")) {
+            return Integer.parseInt(this.arguments.get("port"));
+        } else {
+            return 8001;
+        }
+    }
+
+    public String getHost() {
+        if (this.arguments.containsKey("host")) {
+            return this.arguments.get("host");
+        } else {
+            return "localhost";
+        }
+    }
+
+    public List<String> getAllowedURIPrefixes() {
+        return this.allowedPrefixes;
+    }
+
+    public void setAllowedURIPrefixes(List<String> newValue) {
+        this.allowedPrefixes = newValue;
+    }
+
+    public String getOutputFormat() {
+        return this.outputFormat;
+    }
+
+    public void setOutputFormat(String newValue) {
+        this.outputFormat = newValue;
+    }
+
+    public String getInputFormat() {
+        return this.inputFormat;
+    }
+
+    public void setInputFormat(String newValue) {
+        this.inputFormat = newValue;
+    }
+
+    public int getNumberOfOutputPartitions() {
+        return this.numberOfOutputPartitions;
+    }
+
+    public RumbleRuntimeConfiguration setNumberOfOutputPartitions(int newValue) {
+        this.numberOfOutputPartitions = newValue;
+        return this;
+    }
+
+    public Map<String, String> getOutputFormatOptions() {
+        return this.outputFormatOptions;
+    }
+
+    public RumbleRuntimeConfiguration setOutputFormatOption(String key, String value) {
+        this.outputFormatOptions.put(key, value);
+        return this;
+    }
+
+    public boolean isCheckReturnTypeOfBuiltinFunctions() {
+        return this.checkReturnTypeOfBuiltinFunctions;
+    }
+
+    public RumbleRuntimeConfiguration setCheckReturnTypeOfBuiltinFunctions(boolean checkReturnTypeOfBuiltinFunctions) {
+        this.checkReturnTypeOfBuiltinFunctions = checkReturnTypeOfBuiltinFunctions;
+        return this;
     }
 
     public boolean getOverwrite() {
@@ -465,6 +483,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     public void setThirdFeature(boolean value) {
         this.thirdFeature = value;
+    }
+
+    public void setResetDynamicContextForEachQuery(boolean flag) {
+        this.resetDynamicContextForEachQuery = flag;
+    }
+
+    public boolean getResetDynamicContextForEachQuery() {
+        return this.resetDynamicContextForEachQuery;
     }
 
     /**

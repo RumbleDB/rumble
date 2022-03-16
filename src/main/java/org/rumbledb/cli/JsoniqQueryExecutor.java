@@ -45,9 +45,11 @@ import java.util.stream.Collectors;
 
 public class JsoniqQueryExecutor {
     private RumbleRuntimeConfiguration configuration;
+    private Rumble rumble;
 
     public JsoniqQueryExecutor(RumbleRuntimeConfiguration configuration) {
         this.configuration = configuration;
+        this.rumble = new Rumble(this.configuration);
         SparkSessionManager.COLLECT_ITEM_LIMIT = configuration.getResultSizeCap();
     }
 
@@ -217,8 +219,7 @@ public class JsoniqQueryExecutor {
     }
 
     public long runInteractive(String query, List<Item> resultList) throws IOException {
-        Rumble rumble = new Rumble(this.configuration);
-        SequenceOfItems sequence = rumble.runQuery(query);
+        SequenceOfItems sequence = this.rumble.runQuery(query);
         if (!sequence.availableAsRDD()) {
             return sequence.populateList(resultList);
         }
@@ -226,5 +227,10 @@ public class JsoniqQueryExecutor {
         JavaRDD<Item> rdd = sequence.getAsRDD();
         return SparkSessionManager.collectRDDwithLimitWarningOnly(rdd, resultList);
     }
+
+	public void setConfiguration(RumbleRuntimeConfiguration conf) {
+		this.configuration = conf;
+		this.rumble.setConfiguration(this.configuration);
+	}
 
 }
