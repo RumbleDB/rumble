@@ -101,6 +101,32 @@ public abstract class Node {
         return this.highestExecutionMode;
     }
 
+    /**
+     * Says whether this expression evaluation triggers a Spark job.
+     *
+     * @param visitorConfig the configuration of the visitor.
+     * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
+     */
+    public boolean isSparkJobNeeded(VisitorConfig visitorConfig) {
+        for (Node n : this.getChildren()) {
+            if (n.isSparkJobNeeded(visitorConfig)) {
+                return true;
+            }
+        }
+        switch (this.highestExecutionMode) {
+            case DATAFRAME:
+                return true;
+            case LOCAL:
+                return false;
+            case RDD:
+                return true;
+            case UNSET:
+                return false;
+            default:
+                return false;
+        }
+    }
+
     public int numberOfUnsetExecutionModes() {
         int result = 0;
         for (Node n : this.getChildren()) {

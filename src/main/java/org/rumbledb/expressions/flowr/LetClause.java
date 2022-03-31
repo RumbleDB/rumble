@@ -23,6 +23,7 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -86,6 +87,12 @@ public class LetClause extends Clause {
             this.variableHighestStorageMode = this.expression.getHighestExecutionMode(visitorConfig);
         } else {
             this.variableHighestStorageMode = ExecutionMode.LOCAL;
+            if (this.expression.isSparkJobNeeded(visitorConfig)) {
+                throw new JobWithinAJobException(
+                        "The expression in this let clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                        getMetadata()
+                );
+            }
         }
     }
 
