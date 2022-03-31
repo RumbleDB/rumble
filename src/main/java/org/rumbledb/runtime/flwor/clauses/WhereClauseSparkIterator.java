@@ -467,7 +467,6 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
     /**
      * Says whether this expression evaluation triggers a Spark job.
      *
-     * @param visitorConfig the configuration of the visitor.
      * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
      */
     @Override
