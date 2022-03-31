@@ -391,7 +391,6 @@ public abstract class RuntimeTupleIterator implements RuntimeTupleIteratorInterf
     /**
      * Says whether this expression evaluation triggers a Spark job.
      *
-     * @param visitorConfig the configuration of the visitor.
      * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
      */
     public abstract boolean isSparkJobNeeded();
