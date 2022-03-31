@@ -23,7 +23,6 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
-import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.SemanticException;
 import org.rumbledb.expressions.AbstractNodeVisitor;
@@ -100,14 +99,6 @@ public class ForClause extends Clause {
                         ? ExecutionMode.DATAFRAME
                         : ExecutionMode.LOCAL;
 
-        if (this.previousClause != null && this.previousClause.getHighestExecutionMode(visitorConfig).isDataFrame()) {
-            if (this.expression.isSparkJobNeeded(visitorConfig)) {
-                throw new JobWithinAJobException(
-                        "The expression in this for clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
-                        getMetadata()
-                );
-            }
-        }
         this.variableHighestStorageMode = ExecutionMode.LOCAL;
     }
 

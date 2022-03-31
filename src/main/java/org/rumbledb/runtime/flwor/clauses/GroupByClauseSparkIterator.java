@@ -606,4 +606,36 @@ public class GroupByClauseSparkIterator extends RuntimeTupleIterator {
         }
         return this.child.containsClause(kind);
     }
+
+    /**
+     * Says whether this expression evaluation triggers a Spark job.
+     *
+     * @param visitorConfig the configuration of the visitor.
+     * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
+     */
+    @Override
+    public boolean isSparkJobNeeded() {
+        if (this.child.isSparkJobNeeded()) {
+            return true;
+        }
+        for (GroupByClauseSparkIteratorExpression i : this.groupingExpressions) {
+            if (i.getExpression() != null) {
+                if (i.getExpression().isSparkJobNeeded()) {
+                    return true;
+                }
+            }
+        }
+        switch (this.highestExecutionMode) {
+            case DATAFRAME:
+                return true;
+            case LOCAL:
+                return false;
+            case RDD:
+                return true;
+            case UNSET:
+                return false;
+            default:
+                return false;
+        }
+    }
 }
