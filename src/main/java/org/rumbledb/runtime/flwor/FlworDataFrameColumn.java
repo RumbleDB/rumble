@@ -47,7 +47,7 @@ public class FlworDataFrameColumn implements Serializable {
     private ColumnFormat columnFormat;
 
     public FlworDataFrameColumn(String tableName, Name variableName, ColumnFormat columnFormat) {
-    	this.tableName = tableName;
+        this.tableName = tableName;
         this.variableName = variableName;
         this.columnFormat = columnFormat;
     }
@@ -58,7 +58,7 @@ public class FlworDataFrameColumn implements Serializable {
     }
 
     public FlworDataFrameColumn(String columnName, StructType inputSchema) {
-    	this.tableName = null;
+        this.tableName = null;
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             this.variableName = Name.createVariableInNoNamespace(columnName);
@@ -97,15 +97,14 @@ public class FlworDataFrameColumn implements Serializable {
     }
 
     public String toString() {
-    	if(this.tableName != null)
-    	{
+        if (this.tableName != null) {
             return "`" + this.tableName + "`.`" + getColumnName() + "`";
-    	}
+        }
         return "`" + getColumnName() + "`";
     }
-    
+
     public String getTableName() {
-    	return this.tableName;
+        return this.tableName;
     }
 
     public String getColumnName() {

@@ -339,16 +339,28 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             overridenVariables.add(this.positionalVariableName);
         }
         List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
-                inputSchema,
-                this.outputTupleProjection,
-                null,
-                overridenVariables
-            );
+            inputSchema,
+            this.outputTupleProjection,
+            null,
+            overridenVariables
+        );
 
         // For the new variables, we need to disambiguate.
-        allColumns.add(new FlworDataFrameColumn(expressionDFTableName, this.variableName, FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE));
+        allColumns.add(
+            new FlworDataFrameColumn(
+                    expressionDFTableName,
+                    this.variableName,
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+            )
+        );
         if (this.positionalVariableName != null) {
-        	allColumns.add(new FlworDataFrameColumn(expressionDFTableName, this.positionalVariableName, FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE));
+            allColumns.add(
+                new FlworDataFrameColumn(
+                        expressionDFTableName,
+                        this.positionalVariableName,
+                        FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+                )
+            );
         }
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 

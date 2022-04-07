@@ -12,3 +12,4 @@ target/
 
 # for now ignore jsound package
 src/main/java/jsound/
+src/main/resources/log4j.properties
