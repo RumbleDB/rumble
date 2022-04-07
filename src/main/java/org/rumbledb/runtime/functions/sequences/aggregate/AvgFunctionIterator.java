@@ -84,7 +84,7 @@ public class AvgFunctionIterator extends AtMostOneItemLocalRuntimeIterator {
             VariableReferenceIterator expr = (VariableReferenceIterator) this.children.get(0);
             Map<Name, DynamicContext.VariableDependency> result =
                 new TreeMap<Name, DynamicContext.VariableDependency>();
-            result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVG);
+            result.put(expr.getVariableName(), DynamicContext.VariableDependency.AVERAGE);
             return result;
         } else {
             return super.getVariableDependencies();

@@ -461,7 +461,7 @@ public class FlworDataFrameUtils {
      * @param variablesToExclude variables whose columns should be projected away.
      * @param result the list for outputting SQL column names in the schema
      */
-    public static void getColumnNames(
+    private static void getColumnNames(
             StructType inputSchema,
             Map.Entry<Name, DynamicContext.VariableDependency> dependency,
             List<Name> variablesToRestrictTo,
@@ -564,6 +564,25 @@ public class FlworDataFrameUtils {
                 }
                 throw new OurBadException(
                         "Expecting max variable dependency on "
+                            + variableName
+                            + "but no appropriate column was found in the data frame."
+                );
+            }
+            case AVERAGE: {
+                if (columnNames.contains(variableName.toString() + ".average")) {
+                    result.add(variableName.toString() + ".average");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(variableName.toString() + ".sequence");
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(variableName.toString());
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting average variable dependency on "
                             + variableName
                             + "but no appropriate column was found in the data frame."
                 );
@@ -688,6 +707,25 @@ public class FlworDataFrameUtils {
                 }
                 throw new OurBadException(
                         "Expecting max variable dependency on "
+                            + variableName
+                            + "but no appropriate column was found in the data frame."
+                );
+            }
+            case AVERAGE: {
+                if (columnNames.contains(variableName.toString() + ".average")) {
+                    result.add(new FlworDataFrameColumn(variableName, ColumnFormat.MAX));
+                    return;
+                }
+                if (columnNames.contains(variableName.toString() + ".sequence")) {
+                    result.add(new FlworDataFrameColumn(variableName, ColumnFormat.NATIVE_SEQUENCE));
+                    return;
+                }
+                if (columnNames.contains(variableName.toString())) {
+                    result.add(new FlworDataFrameColumn(variableName.toString(), inputSchema));
+                    return;
+                }
+                throw new OurBadException(
+                        "Expecting average variable dependency on "
                             + variableName
                             + "but no appropriate column was found in the data frame."
                 );
@@ -882,6 +920,12 @@ public class FlworDataFrameUtils {
 
                 if (column.isCount()) {
                     queryColumnString.append(String.format("sum(%s)", column));
+                } else if (column.isSum()) {
+                    queryColumnString.append(String.format("sum(%s)", column));
+                } else if (column.isMax()) {
+                    queryColumnString.append(String.format("max(%s)", column));
+                } else if (column.isMin()) {
+                    queryColumnString.append(String.format("min(%s)", column));
                 } else if (
                     shouldCalculateCountGroupingColumn(dependencies, groupbyVariableNames, column.getColumnName())
                 ) {

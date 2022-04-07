@@ -597,7 +597,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
         if (this.child.isSparkJobNeeded()) {
             return true;
         }
-        for (OrderByClauseAnnotatedChildIterator i : expressionsWithIterator) {
+        for (OrderByClauseAnnotatedChildIterator i : this.expressionsWithIterator) {
             if (i.getIterator().isSparkJobNeeded()) {
                 return true;
             }
