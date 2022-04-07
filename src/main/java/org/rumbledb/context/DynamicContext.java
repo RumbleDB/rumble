@@ -131,7 +131,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         FULL,
         COUNT,
         SUM,
-        AVG,
+        AVERAGE,
         MAX,
         MIN
     }

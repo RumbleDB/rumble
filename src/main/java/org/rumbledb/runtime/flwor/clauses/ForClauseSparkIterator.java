@@ -338,7 +338,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         if (this.positionalVariableName != null) {
             overridenVariables.add(this.positionalVariableName);
         }
-        List<String> columnsToSelect = FlworDataFrameUtils.getColumnNames(
+        List<FlworDataFrameColumn> allColumns = FlworDataFrameUtils.getColumns(
             inputSchema,
             this.outputTupleProjection,
             null,
@@ -346,11 +346,23 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
         );
 
         // For the new variables, we need to disambiguate.
-        columnsToSelect.add(expressionDFTableName + "`.`" + this.variableName.toString());
+        allColumns.add(
+            new FlworDataFrameColumn(
+                    expressionDFTableName,
+                    this.variableName,
+                    FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+            )
+        );
         if (this.positionalVariableName != null) {
-            columnsToSelect.add(expressionDFTableName + "`.`" + this.positionalVariableName);
+            allColumns.add(
+                new FlworDataFrameColumn(
+                        expressionDFTableName,
+                        this.positionalVariableName,
+                        FlworDataFrameColumn.ColumnFormat.SERIALIZED_SEQUENCE
+                )
+            );
         }
-        String projectionVariables = FlworDataFrameUtils.getSQLProjection(columnsToSelect, false);
+        String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
 
         // And return the Cartesian product with the desired projection.
         return inputDF.sparkSession()
@@ -609,9 +621,9 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             return nativeQueryResult;
         }
 
-        List<String> UDFcolumns;
+        List<FlworDataFrameColumn> UDFcolumns;
         if (this.child != null && this.evaluationDepthLimit != 0) {
-            UDFcolumns = FlworDataFrameUtils.getColumnNames(
+            UDFcolumns = FlworDataFrameUtils.getColumns(
                 inputSchema,
                 this.assignmentIterator.getVariableDependencies(),
                 new ArrayList<Name>(this.child.getOutputTupleVariableNames()),
@@ -625,12 +637,12 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "forClauseUDF",
-                new ForClauseUDF(this.assignmentIterator, context, inputSchema, UDFcolumns),
+                new ForClauseUDF(this.assignmentIterator, context, UDFcolumns),
                 DataTypes.createArrayType(DataTypes.BinaryType)
             );
 
         String projectionVariables = FlworDataFrameUtils.getSQLColumnProjection(allColumns, true);
-        String UDFParameters = FlworDataFrameUtils.getUDFParameters(UDFcolumns);
+        String UDFParameters = FlworDataFrameUtils.getUDFParametersFromColumns(UDFcolumns);
 
         String viewName = FlworDataFrameUtils.createTempView(df);
         if (this.positionalVariableName == null) {
@@ -1218,7 +1230,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             RuntimeIterator newVariableExpression,
             DynamicContext context,
             StructType inputSchema,
-            List<String> UDFcolumns,
+            List<FlworDataFrameColumn> UDFcolumns,
             SequenceType sequenceType
     ) {
         if (
@@ -1235,7 +1247,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericForClauseUDF<String>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "String"
                         ),
@@ -1252,7 +1263,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericForClauseUDF<Integer>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Integer"
                         ),
@@ -1269,7 +1279,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericForClauseUDF<BigDecimal>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
@@ -1286,7 +1295,6 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
                         new GenericForClauseUDF<Double>(
                                 newVariableExpression,
                                 context,
-                                inputSchema,
                                 UDFcolumns,
                                 "Double"
                         ),
@@ -1301,7 +1309,7 @@ public class ForClauseSparkIterator extends RuntimeTupleIterator {
             .udf()
             .register(
                 "forClauseUDF",
-                new ForClauseUDF(newVariableExpression, context, inputSchema, UDFcolumns),
+                new ForClauseUDF(newVariableExpression, context, UDFcolumns),
                 DataTypes.BinaryType
             );
     }
