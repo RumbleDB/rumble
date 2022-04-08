@@ -54,7 +54,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
-        if (!this.itemType.isCompatibleWithDataFrames()) {
+        if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
                     "Cannot build a dataframe for a type not compatible with DataFrames: "
                         + this.itemType.getIdentifierString()
@@ -70,12 +70,12 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType);
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, context);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
@@ -94,9 +94,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
-            ItemType itemType
+            ItemType itemType,
+            DynamicContext context
     ) {
-        if (!itemType.isCompatibleWithDataFrames()) {
+        if (!itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
             );
