@@ -37,4 +37,5 @@ Previous parameters (--shell, --query-path, --server) work in a backward compati
 | --context-item-input | -i | context-item-input  | - |  reads the context item value from the standard input |
 | --context-item-input-format | N/A | context-item-input-format  |  text or json |  sets the input format to use
 for parsing the standard input (as text or as a serialized json value) |
+| --dates-with-timezone | N/A | dates-with-timezone  |  yes or no | activates timezone support for the type xs:date (deactivated by default) |
 
