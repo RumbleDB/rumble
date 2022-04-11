@@ -12,6 +12,7 @@ import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DatesWithTimezonesNotSupported;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
@@ -293,9 +294,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.DateType)) {
                 if (!context.getRumbleRuntimeConfiguration().dateWithTimezone()) {
                     if (item.hasTimeZone()) {
-                        throw new RuntimeException(
-                                "By default, dates timezones cannot be converted to DataFrames. Try --dates-with-timezone yes to avoid DataFrames for dates."
-                        );
+                        throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
                     }
                 }
                 return new Date(item.getDateTimeValue().getMillis());

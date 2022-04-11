@@ -11,6 +11,6 @@ public class DatesWithTimezonesNotSupported extends RumbleException {
         "By default, dates timezones cannot be converted to DataFrames. Try --dates-with-timezone yes to avoid DataFrames for dates.";
 
     public DatesWithTimezonesNotSupported(ExceptionMetadata metadata) {
-        super(message, ErrorCode.CastErrorCode, metadata);
+        super(message, ErrorCode.DatesWithTimezonesNotSupported, metadata);
     }
 }
