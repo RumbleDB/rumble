@@ -38,11 +38,19 @@ public class FlworDataFrameColumn implements Serializable {
         COUNT,
         SUM,
         MIN,
-        MAX
+        MAX,
+        AVERAGE
     };
 
+    private String tableName;
     private Name variableName;
     private ColumnFormat columnFormat;
+
+    public FlworDataFrameColumn(String tableName, Name variableName, ColumnFormat columnFormat) {
+        this.tableName = tableName;
+        this.variableName = variableName;
+        this.columnFormat = columnFormat;
+    }
 
     public FlworDataFrameColumn(Name variableName, ColumnFormat columnFormat) {
         this.variableName = variableName;
@@ -50,6 +58,7 @@ public class FlworDataFrameColumn implements Serializable {
     }
 
     public FlworDataFrameColumn(String columnName, StructType inputSchema) {
+        this.tableName = null;
         int pos = columnName.indexOf(".");
         if (pos == -1) {
             this.variableName = Name.createVariableInNoNamespace(columnName);
@@ -78,6 +87,9 @@ public class FlworDataFrameColumn implements Serializable {
                 case ".min":
                     this.columnFormat = ColumnFormat.MIN;
                     break;
+                case ".average":
+                    this.columnFormat = ColumnFormat.AVERAGE;
+                    break;
                 default:
                     throw new OurBadException("Unrecognized column name: " + columnName);
             }
@@ -85,7 +97,14 @@ public class FlworDataFrameColumn implements Serializable {
     }
 
     public String toString() {
+        if (this.tableName != null) {
+            return "`" + this.tableName + "`.`" + getColumnName() + "`";
+        }
         return "`" + getColumnName() + "`";
+    }
+
+    public String getTableName() {
+        return this.tableName;
     }
 
     public String getColumnName() {
@@ -104,6 +123,8 @@ public class FlworDataFrameColumn implements Serializable {
                 return this.variableName.toString() + ".max";
             case MIN:
                 return this.variableName.toString() + ".min";
+            case AVERAGE:
+                return this.variableName.toString() + ".average";
         }
         return null;
     }
@@ -134,6 +155,10 @@ public class FlworDataFrameColumn implements Serializable {
 
     public boolean isMax() {
         return this.columnFormat.equals(ColumnFormat.MAX);
+    }
+
+    public boolean isAverage() {
+        return this.columnFormat.equals(ColumnFormat.AVERAGE);
     }
 
     public Name getVariableName() {
