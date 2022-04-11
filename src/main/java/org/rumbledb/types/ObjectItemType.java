@@ -2,6 +2,7 @@ package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -265,12 +266,12 @@ public class ObjectItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         if (!this.isClosed) {
             return false;
         }
         for (Map.Entry<String, FieldDescriptor> entry : this.content.entrySet()) {
-            if (!entry.getValue().getType().isCompatibleWithDataFrames()) {
+            if (!entry.getValue().getType().isCompatibleWithDataFrames(configuration)) {
                 return false;
             }
         }

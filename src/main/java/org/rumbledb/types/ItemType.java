@@ -23,6 +23,7 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -447,7 +448,7 @@ public interface ItemType extends Serializable {
      * 
      * @return true if compatible with DataFrames and false otherwise.
      */
-    default boolean isCompatibleWithDataFrames() {
+    default boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
     }
 

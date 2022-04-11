@@ -66,6 +66,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String shell;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
+    private boolean datesWithTimeZone;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -385,6 +386,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.thirdFeature = true;
         }
+
+        if (this.arguments.containsKey("dates-with-timezone")) {
+            this.datesWithTimeZone = this.arguments.get("dates-with-timezone").equals("yes");
+        } else {
+            this.datesWithTimeZone = false;
+        }
     }
 
     public boolean getOverwrite() {
@@ -558,6 +565,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public boolean escapeBackticks() {
         return this.arguments.containsKey("escape-backticks")
             && this.arguments.get("escape-backticks").equals("yes");
+    }
+
+    public boolean dateWithTimezone() {
+        return this.datesWithTimeZone;
+    }
+
+    public void setDateWithTimezone(boolean b) {
+        this.datesWithTimeZone = b;
     }
 
     public boolean isLocal() {
