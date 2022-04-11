@@ -2,6 +2,7 @@ package sparksoniq.spark.ml;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
@@ -25,6 +26,7 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
             ExceptionMetadata iteratorMetadata
     ) {
         super(arguments, executionMode, iteratorMetadata);
+        this.configuration = configuration;
     }
 
     @Override
@@ -45,16 +47,28 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return ValidateTypeIterator.convertRDDToValidDataFrame(inputDataAsRDDOfItems, schemaType);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    inputDataAsRDDOfItems,
+                    schemaType,
+                    RumbleRuntimeConfiguration.getDefaultConfiguration()
+                );
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, schemaType);
+                return ValidateTypeIterator.convertRDDToValidDataFrame(
+                    rdd,
+                    schemaType,
+                    RumbleRuntimeConfiguration.getDefaultConfiguration()
+                );
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(items, schemaType);
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items,
+                schemaType,
+                RumbleRuntimeConfiguration.getDefaultConfiguration()
+            );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),

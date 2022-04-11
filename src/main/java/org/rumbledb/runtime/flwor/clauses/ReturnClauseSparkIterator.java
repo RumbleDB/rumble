@@ -25,6 +25,7 @@ import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.DynamicContext.VariableDependency;
 import org.rumbledb.context.Name;
@@ -66,11 +67,13 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
     private RuntimeIterator expression;
     private Item nextResult;
     private SequenceType sequenceType;
+    private RumbleRuntimeConfiguration configuration;
 
     public ReturnClauseSparkIterator(
             RuntimeTupleIterator child,
             RuntimeIterator expression,
             ExecutionMode executionMode,
+            RumbleRuntimeConfiguration configuration,
             ExceptionMetadata iteratorMetadata,
             SequenceType sequenceType
     ) {
@@ -79,6 +82,7 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         this.expression = expression;
         this.sequenceType = sequenceType;
         setInputAndOutputTupleVariableDependencies();
+        this.configuration = configuration;
     }
 
     @Override
@@ -207,7 +211,11 @@ public class ReturnClauseSparkIterator extends HybridRuntimeIterator {
         }
 
         JavaRDD<Item> rdd = getRDDAux(context);
-        return ValidateTypeIterator.convertRDDToValidDataFrame(rdd, this.sequenceType.getItemType());
+        return ValidateTypeIterator.convertRDDToValidDataFrame(
+            rdd,
+            this.sequenceType.getItemType(),
+            this.configuration
+        );
     }
 
     @Override

@@ -10,6 +10,7 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
@@ -37,14 +38,17 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
     private static final long serialVersionUID = 1L;
 
     private ItemType itemType;
+    private RumbleRuntimeConfiguration configuration;
 
     public ValidateTypeIterator(
             RuntimeIterator instance,
             ItemType itemType,
             ExecutionMode executionMode,
+            RumbleRuntimeConfiguration configuration,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(instance), executionMode, iteratorMetadata);
+        this.configuration = configuration;
         this.itemType = itemType;
     }
 
@@ -70,16 +74,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType);
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, this.configuration);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType);
+                return convertRDDToValidDataFrame(rdd, this.itemType, this.configuration);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType);
+            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, this.configuration);
             // jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
@@ -94,7 +98,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
-            ItemType itemType
+            ItemType itemType,
+            RumbleRuntimeConfiguration configuration
     ) {
         if (!itemType.isCompatibleWithDataFrames()) {
             throw new OurBadException(
@@ -109,7 +114,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 @Override
                 public Row call(Item item) {
                     item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
-                    return convertLocalItemToRow(item, schema);
+                    return convertLocalItemToRow(item, schema, configuration);
                 }
             }
         );
@@ -178,7 +183,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
-            ItemType itemType
+            ItemType itemType,
+            RumbleRuntimeConfiguration configuration
     ) {
         if (items.size() == 0) {
             return new JSoundDataFrame(
@@ -190,7 +196,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
-            Row row = convertLocalItemToRow(item, schema);
+            Row row = convertLocalItemToRow(item, schema, configuration);
             rows.add(row);
         }
         return new JSoundDataFrame(
@@ -199,34 +205,40 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    private static Row convertLocalItemToRow(Item item, StructType schema) {
+    private static Row convertLocalItemToRow(Item item, StructType schema, RumbleRuntimeConfiguration configuration) {
         int numColumns = schema.fields().length;
         Object[] rowColumns = new Object[numColumns];
         for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
-            Object rowColumn = convertColumn(item, field);
+            Object rowColumn = convertColumn(item, field, configuration);
             rowColumns[fieldIndex] = rowColumn;
         }
         return RowFactory.create(rowColumns);
     }
 
-    private static Object convertColumn(Item item, StructField field) {
+    private static Object convertColumn(Item item, StructField field, RumbleRuntimeConfiguration configuration) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         if (fieldName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return getRowColumnFromItemUsingDataType(
                 item,
-                fieldDataType
+                fieldDataType,
+                configuration
             );
         }
         Item columnValueItem = item.getItemByKey(fieldName);
         return getRowColumnFromItemUsingDataType(
             columnValueItem,
-            fieldDataType
+            fieldDataType,
+            configuration
         );
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(
+            Item item,
+            DataType dataType,
+            RumbleRuntimeConfiguration configuration
+    ) {
         if (item == null) {
             return null;
         }
@@ -239,14 +251,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     Item arrayItem = item.getItemAt(i);
                     arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
                         arrayItem,
-                        elementType
+                        elementType,
+                        configuration
                     );
                 }
                 return arrayItemsForRow;
             }
 
             if (dataType instanceof StructType) {
-                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType, configuration);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
