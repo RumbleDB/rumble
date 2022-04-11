@@ -54,7 +54,11 @@ public class AnnotateFunctionIterator extends DataFrameRuntimeIterator {
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            return ValidateTypeIterator.convertLocalItemsToDataFrame(items, schemaType);
+            return ValidateTypeIterator.convertLocalItemsToDataFrame(
+                items,
+                schemaType,
+                context
+            );
         } catch (InvalidInstanceException ex) {
             InvalidInstanceException e = new InvalidInstanceException(
                     "Schema error in annotate(); " + ex.getJSONiqErrorMessage(),
