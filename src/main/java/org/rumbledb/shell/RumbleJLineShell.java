@@ -244,15 +244,11 @@ public class RumbleJLineShell {
                 if (showErrorInfo) {
                     ex.printStackTrace();
                 }
-            } else if (!(ex instanceof UserInterruptException)) {
-                System.err.println("[ERROR] An error has occurred: " + ex.getMessage());
+            } else if (ex instanceof UserInterruptException) {
                 System.err.println(
-                    "We should investigate this 🙈. Please contact us or file an issue on GitHub with your query. "
+                    "On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!"
                 );
-                System.err.println("Link: https://github.com/RumbleDB/rumble/issues");
-                if (showErrorInfo) {
-                    ex.printStackTrace();
-                }
+                System.exit(0);
             } else {
                 System.err.println(
                     "We are very embarrassed, because an error has occured that we did not anticipate 🙈: "
