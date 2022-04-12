@@ -245,7 +245,9 @@ public class RumbleJLineShell {
                     ex.printStackTrace();
                 }
             } else if (ex instanceof UserInterruptException) {
-                System.err.println("On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!");
+                System.err.println(
+                    "On behalf of the RumbleDB team, I would like to thank you for querying with us and we are looking forward to having you with us again in the near future. Good bye!"
+                );
                 System.exit(0);
             } else {
                 System.err.println(
