@@ -1,6 +1,7 @@
 package org.rumbledb.types;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -329,10 +330,10 @@ public class ItemTypeReference implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         if (this.resolvedItemType == null) {
             throw new OurBadException("Unresolved type: " + this.name);
         }
-        return this.resolvedItemType.isCompatibleWithDataFrames();
+        return this.resolvedItemType.isCompatibleWithDataFrames(configuration);
     }
 }

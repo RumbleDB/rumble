@@ -199,4 +199,18 @@ public abstract class Node {
             buffer.append("  ");
         }
     }
+
+    /**
+     * Tells whether the expression is context dependent.
+     * 
+     * @return true if it is context dependent, false otherwise.
+     */
+    public boolean isContextDependent() {
+        for (Node node : this.getChildren()) {
+            if (node.isContextDependent()) {
+                return true;
+            }
+        }
+        return false;
+    }
 }

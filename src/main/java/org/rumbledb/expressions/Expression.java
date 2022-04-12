@@ -20,6 +20,7 @@
 
 package org.rumbledb.expressions;
 
+
 import org.rumbledb.context.StaticContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.types.SequenceType;

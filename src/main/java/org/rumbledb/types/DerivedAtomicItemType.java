@@ -2,6 +2,7 @@ package org.rumbledb.types;
 
 import org.apache.commons.collections.ListUtils;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -364,8 +365,8 @@ public class DerivedAtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
-        return this.baseType.isCompatibleWithDataFrames();
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
+        return this.baseType.isCompatibleWithDataFrames(configuration);
     }
 
     @Override

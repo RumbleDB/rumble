@@ -73,6 +73,7 @@ public enum ErrorCode {
     JobWithinAJobErrorCode("RBST0003"),
     OurBadErrorCode("RBST0004"),
     ClusterConnectionErrorCode("RBDY0005"),
+    DatesWithTimezonesNotSupported("RBDY0006"),
 
     UnexpectedStaticType("RBTY0001"),
 

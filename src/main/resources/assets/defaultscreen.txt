@@ -6,6 +6,9 @@ This is the standalone jar that does not require the installation of Spark.
 If you need more control over Spark or use it on a cluster, we recommend using
 the leaner jars instead, which you can download from www.rumbledb.org.
 
+If you do not want to install Spark, then you need to use the standalone jar
+instead from www.rumbledb.org.
+
 Usage:
 jar -jar <path to RumbleDB's jar> <mode> <parameters>
 
@@ -15,16 +18,16 @@ for directly running a query from an input file or (with -q) provided directly o
 
 It is the default mode.
 
-jar -jar rumbledb-1.17.0.jar run my-query.jq
-jar -jar rumbledb-1.17.0.jar run -q '1+1'
+jar -jar rumbledb-1.18.0.jar run my-query.jq
+jar -jar rumbledb-1.18.0.jar run -q '1+1'
 
 You can specify an output path with -o like so:
-jar -jar rumbledb-1.17.0.jar run -q '1+1' -o my-output.txt
+jar -jar rumbledb-1.18.0.jar run -q '1+1' -o my-output.txt
 
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
 
-jar -jar rumbledb-1.17.0.jar serve -p 9090
+jar -jar rumbledb-1.18.0.jar serve -p 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
 even more convenient if you are using a cluster.
@@ -32,7 +35,7 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb-1.17.0.jar repl
+spark-submit rumbledb-1.18.0.jar repl
 
 
 **** resource use configuration ****
@@ -40,6 +43,6 @@ spark-submit rumbledb-1.17.0.jar repl
 For a local use, you can control the number of cores, as well as allocated
 memory, with:
 
-java -jar -Xmx10g rumbledb-1.17.0.jar repl
+java -jar -Xmx10g rumbledb-1.18.0.jar repl
 
 More documentation on available CLI parameters is available on https://www.rumbledb.org/

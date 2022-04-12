@@ -10,7 +10,9 @@ import org.apache.spark.sql.types.DataTypes;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.DatesWithTimezonesNotSupported;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidInstanceException;
 import org.rumbledb.exceptions.OurBadException;
@@ -42,6 +44,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             RuntimeIterator instance,
             ItemType itemType,
             ExecutionMode executionMode,
+            RumbleRuntimeConfiguration configuration,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Collections.singletonList(instance), executionMode, iteratorMetadata);
@@ -54,7 +57,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         if (!this.itemType.isResolved()) {
             this.itemType.resolve(context, getMetadata());
         }
-        if (!this.itemType.isCompatibleWithDataFrames()) {
+        if (!this.itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
                     "Cannot build a dataframe for a type not compatible with DataFrames: "
                         + this.itemType.getIdentifierString()
@@ -70,16 +73,16 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     return inputDataAsDataFrame;
                 }
                 JavaRDD<Item> inputDataAsRDDOfItems = dataFrameToRDDOfItems(inputDataAsDataFrame, getMetadata());
-                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType);
+                return convertRDDToValidDataFrame(inputDataAsRDDOfItems, this.itemType, context);
             }
 
             if (inputDataIterator.isRDDOrDataFrame()) {
                 JavaRDD<Item> rdd = inputDataIterator.getRDD(context);
-                return convertRDDToValidDataFrame(rdd, this.itemType);
+                return convertRDDToValidDataFrame(rdd, this.itemType, context);
             }
 
             List<Item> items = inputDataIterator.materialize(context);
-            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType);
+            JSoundDataFrame jdf = convertLocalItemsToDataFrame(items, this.itemType, context);
             // jdf.getDataFrame().show();
             return jdf;
         } catch (InvalidInstanceException ex) {
@@ -94,9 +97,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     public static JSoundDataFrame convertRDDToValidDataFrame(
             JavaRDD<Item> itemRDD,
-            ItemType itemType
+            ItemType itemType,
+            DynamicContext context
     ) {
-        if (!itemType.isCompatibleWithDataFrames()) {
+        if (!itemType.isCompatibleWithDataFrames(context.getRumbleRuntimeConfiguration())) {
             throw new OurBadException(
                     "Type " + itemType + " cannot be converted to a DataFrame, but a DataFrame is expected."
             );
@@ -109,7 +113,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 @Override
                 public Row call(Item item) {
                     item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
-                    return convertLocalItemToRow(item, schema);
+                    return convertLocalItemToRow(item, schema, context);
                 }
             }
         );
@@ -178,7 +182,8 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
 
     public static JSoundDataFrame convertLocalItemsToDataFrame(
             List<Item> items,
-            ItemType itemType
+            ItemType itemType,
+            DynamicContext context
     ) {
         if (items.size() == 0) {
             return new JSoundDataFrame(
@@ -190,7 +195,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         List<Row> rows = new ArrayList<>();
         for (Item item : items) {
             item = validate(item, itemType, ExceptionMetadata.EMPTY_METADATA);
-            Row row = convertLocalItemToRow(item, schema);
+            Row row = convertLocalItemToRow(item, schema, context);
             rows.add(row);
         }
         return new JSoundDataFrame(
@@ -199,34 +204,40 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    private static Row convertLocalItemToRow(Item item, StructType schema) {
+    private static Row convertLocalItemToRow(Item item, StructType schema, DynamicContext context) {
         int numColumns = schema.fields().length;
         Object[] rowColumns = new Object[numColumns];
         for (int fieldIndex = 0; fieldIndex < numColumns; fieldIndex++) {
             StructField field = schema.fields()[fieldIndex];
-            Object rowColumn = convertColumn(item, field);
+            Object rowColumn = convertColumn(item, field, context);
             rowColumns[fieldIndex] = rowColumn;
         }
         return RowFactory.create(rowColumns);
     }
 
-    private static Object convertColumn(Item item, StructField field) {
+    private static Object convertColumn(Item item, StructField field, DynamicContext context) {
         String fieldName = field.name();
         DataType fieldDataType = field.dataType();
         if (fieldName.equals(SparkSessionManager.atomicJSONiqItemColumnName)) {
             return getRowColumnFromItemUsingDataType(
                 item,
-                fieldDataType
+                fieldDataType,
+                context
             );
         }
         Item columnValueItem = item.getItemByKey(fieldName);
         return getRowColumnFromItemUsingDataType(
             columnValueItem,
-            fieldDataType
+            fieldDataType,
+            context
         );
     }
 
-    private static Object getRowColumnFromItemUsingDataType(Item item, DataType dataType) {
+    private static Object getRowColumnFromItemUsingDataType(
+            Item item,
+            DataType dataType,
+            DynamicContext context
+    ) {
         if (item == null) {
             return null;
         }
@@ -239,14 +250,15 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                     Item arrayItem = item.getItemAt(i);
                     arrayItemsForRow[i] = getRowColumnFromItemUsingDataType(
                         arrayItem,
-                        elementType
+                        elementType,
+                        context
                     );
                 }
                 return arrayItemsForRow;
             }
 
             if (dataType instanceof StructType) {
-                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType);
+                return ValidateTypeIterator.convertLocalItemToRow(item, (StructType) dataType, context);
             }
 
             if (dataType.equals(DataTypes.BooleanType)) {
@@ -280,6 +292,11 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
                 return null;
             }
             if (dataType.equals(DataTypes.DateType)) {
+                if (!context.getRumbleRuntimeConfiguration().dateWithTimezone()) {
+                    if (item.hasTimeZone()) {
+                        throw new DatesWithTimezonesNotSupported(ExceptionMetadata.EMPTY_METADATA);
+                    }
+                }
                 return new Date(item.getDateTimeValue().getMillis());
             }
             if (dataType.equals(DataTypes.TimestampType)) {
