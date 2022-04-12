@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.BuiltinFunctionCatalogue;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.InScopeVariable;
@@ -61,9 +62,11 @@ import org.rumbledb.types.SequenceType.Arity;
 public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
 
     private VisitorConfig visitorConfig;
+    private RumbleRuntimeConfiguration configuration;
 
-    ExecutionModeVisitor() {
+    ExecutionModeVisitor(RumbleRuntimeConfiguration configuration) {
         this.visitorConfig = VisitorConfig.staticContextVisitorInitialPassConfig;
+        this.configuration = configuration;
     }
 
     void setVisitorConfig(VisitorConfig visitorConfig) {
@@ -225,7 +228,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
     public StaticContext visitReturnClause(ReturnClause expression, StaticContext argument) {
         visitDescendants(expression, expression.getStaticContext());
         if (expression.getPreviousClause().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            if (expression.getReturnExpr().getStaticSequenceType().getItemType().isCompatibleWithDataFrames()) {
+            if (
+                expression.getReturnExpr()
+                    .getStaticSequenceType()
+                    .getItemType()
+                    .isCompatibleWithDataFrames(this.configuration)
+            ) {
                 expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 return argument;
             } else {
@@ -238,7 +246,12 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             return argument;
         }
         if (expression.getReturnExpr().getHighestExecutionMode(this.visitorConfig).isDataFrame()) {
-            if (expression.getReturnExpr().getStaticSequenceType().getItemType().isCompatibleWithDataFrames()) {
+            if (
+                expression.getReturnExpr()
+                    .getStaticSequenceType()
+                    .getItemType()
+                    .isCompatibleWithDataFrames(this.configuration)
+            ) {
                 expression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 return argument;
             } else {
@@ -434,7 +447,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             case OneOrMore:
                 if (
                     expression.getSequenceType().getItemType().isObjectItemType()
-                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
                     System.err.println(
                         "[INFO] Validation against "
@@ -457,7 +470,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             case ZeroOrMore:
                 if (
                     expression.getSequenceType().getItemType().isObjectItemType()
-                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames()
+                        && expression.getSequenceType().getItemType().isCompatibleWithDataFrames(this.configuration)
                 ) {
                     System.err.println(
                         "[INFO] Validation against "

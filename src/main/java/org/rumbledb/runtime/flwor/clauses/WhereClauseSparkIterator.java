@@ -368,6 +368,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             );
 
             this.setEvaluationDepthLimit(-1);
+            this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
             return null;
         }
 
@@ -461,5 +462,32 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return false;
         }
         return this.child.containsClause(kind);
+    }
+
+    /**
+     * Says whether this expression evaluation triggers a Spark job.
+     *
+     * @return true if the execution triggers a Spark, false otherwise, null if undetermined yet.
+     */
+    @Override
+    public boolean isSparkJobNeeded() {
+        if (this.child.isSparkJobNeeded()) {
+            return true;
+        }
+        if (this.expression.isSparkJobNeeded()) {
+            return true;
+        }
+        switch (this.highestExecutionMode) {
+            case DATAFRAME:
+                return true;
+            case LOCAL:
+                return false;
+            case RDD:
+                return true;
+            case UNSET:
+                return false;
+            default:
+                return false;
+        }
     }
 }

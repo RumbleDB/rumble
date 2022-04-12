@@ -2,6 +2,7 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.context.StaticContext;
@@ -155,7 +156,7 @@ public class UnionItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
     }
 }

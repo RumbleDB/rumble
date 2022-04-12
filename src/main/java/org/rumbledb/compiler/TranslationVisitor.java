@@ -194,7 +194,26 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
     @Override
     public Node visitMainModule(JsoniqParser.MainModuleContext ctx) {
         Prolog prolog = (Prolog) this.visitProlog(ctx.prolog());
+        // We override with a context item declaration if not present already.
         Expression commaExpression = (Expression) this.visitExpr(ctx.expr());
+        if (!prolog.hasContextItemDeclaration()) {
+            if (
+                this.configuration.readFromStandardInput(Name.CONTEXT_ITEM)
+                    || this.configuration.getUnparsedExternalVariableValue(Name.CONTEXT_ITEM) != null
+            ) {
+                System.err.println("[WARNING] Adding context item declaration.");
+                prolog.addDeclaration(
+                    new VariableDeclaration(
+                            Name.CONTEXT_ITEM,
+                            true,
+                            SequenceType.ITEM,
+                            null,
+                            createMetadataFromContext(ctx)
+                    )
+                );
+            }
+        }
+
         MainModule module = new MainModule(prolog, commaExpression, createMetadataFromContext(ctx));
         module.setStaticContext(this.moduleContext);
         return module;
@@ -299,6 +318,11 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                         );
                     }
                 }
+                globalVariables.add(variableDeclaration);
+            } else if (annotatedDeclaration.contextItemDecl() != null) {
+                VariableDeclaration variableDeclaration = (VariableDeclaration) this.visitContextItemDecl(
+                    annotatedDeclaration.contextItemDecl()
+                );
                 globalVariables.add(variableDeclaration);
             } else if (annotatedDeclaration.functionDecl() != null) {
                 InlineFunctionExpression inlineFunctionExpression = (InlineFunctionExpression) this.visitFunctionDecl(
@@ -1631,6 +1655,28 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         SequenceType seq = null;
         boolean external;
         Name var = ((VariableReferenceExpression) this.visitVarRef(ctx.varRef())).getVariableName();
+        if (ctx.sequenceType() != null) {
+            seq = this.processSequenceType(ctx.sequenceType());
+        }
+        external = (ctx.external != null);
+        Expression expr = null;
+        if (ctx.exprSingle() != null) {
+            expr = (Expression) this.visitExprSingle(ctx.exprSingle());
+            if (seq != null) {
+                expr = new TreatExpression(expr, seq, ErrorCode.UnexpectedTypeErrorCode, expr.getMetadata());
+            }
+        }
+
+        return new VariableDeclaration(var, external, seq, expr, createMetadataFromContext(ctx));
+    }
+
+    @Override
+    public Node visitContextItemDecl(JsoniqParser.ContextItemDeclContext ctx) {
+        // if there is no 'as sequenceType' is set to null to differentiate from the case of 'as item*'
+        // but it is actually treated as if it was item*
+        SequenceType seq = null;
+        boolean external;
+        Name var = Name.CONTEXT_ITEM;
         if (ctx.sequenceType() != null) {
             seq = this.processSequenceType(ctx.sequenceType());
         }

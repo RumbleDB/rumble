@@ -2,6 +2,7 @@ package org.rumbledb.types;
 
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.util.Set;
@@ -82,7 +83,7 @@ public class ItemItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         return false;
     }
 }

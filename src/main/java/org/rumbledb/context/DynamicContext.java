@@ -131,7 +131,7 @@ public class DynamicContext implements Serializable, KryoSerializable {
         FULL,
         COUNT,
         SUM,
-        AVG,
+        AVERAGE,
         MAX,
         MIN
     }
@@ -213,6 +213,13 @@ public class DynamicContext implements Serializable, KryoSerializable {
             return this.parent.currentDateTime;
         }
         return this.currentDateTime;
+    }
+
+    public static void printDependencies(Map<Name, VariableDependency> exprDependency) {
+        System.err.println("[DEBUG] Variable dependencies:");
+        for (Map.Entry<Name, VariableDependency> e : exprDependency.entrySet()) {
+            System.err.println(e.getKey() + " : " + e.getValue());
+        }
     }
 }
 
