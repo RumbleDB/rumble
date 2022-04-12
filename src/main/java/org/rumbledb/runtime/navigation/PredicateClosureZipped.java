@@ -24,6 +24,7 @@ import org.apache.spark.api.java.function.Function;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.runtime.RuntimeIterator;
 import scala.Tuple2;
 
@@ -39,6 +40,12 @@ public class PredicateClosureZipped implements Function<Tuple2<Item, Long>, Bool
 
     public PredicateClosureZipped(RuntimeIterator expression, DynamicContext dynamicContext, long contextSize) {
         this.expression = expression;
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this predicate requires parallel execution, but the predicate is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getMetadata()
+            );
+        }
         this.dynamicContext = dynamicContext;
         this.contextSize = contextSize;
     }
