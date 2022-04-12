@@ -49,11 +49,15 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
 
     List<String> allowedPrefixes;
     private int resultsSizeCap;
+    private String inputFormat;
     private String outputFormat;
     private Map<String, String> outputFormatOptions;
     private int numberOfOutputPartitions;
     private Map<Name, List<Item>> externalVariableValues;
     private Map<Name, String> unparsedExternalVariableValues;
+    private Map<Name, String> externalVariableValuesReadFromFiles;
+    private Set<Name> externalVariablesReadFromStandardInput;
+    private Map<Name, String> externalVariablesInputFormats;
     private boolean checkReturnTypeOfBuiltinFunctions;
     private String queryPath;
     private String outputPath;
@@ -62,6 +66,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     private String shell;
     private boolean nativeSQLPredicates;
     private boolean dataFrameExecutionModeDetection;
+    private boolean datesWithTimeZone;
     private boolean thirdFeature;
 
     private Map<String, String> shortcutMap;
@@ -73,6 +78,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public RumbleRuntimeConfiguration() {
         this.arguments = new HashMap<>();
         initShortcuts();
+        init();
     }
 
     private void initShortcuts() {
@@ -82,6 +88,8 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.shortcutMap.put("f", "output-format");
         this.shortcutMap.put("O", "overwrite");
         this.shortcutMap.put("c", "materialization-cap");
+        this.shortcutMap.put("I", "context-item");
+        this.shortcutMap.put("i", "context-item-input");
         this.shortcutMap.put("P", "number-of-output-partitions");
         this.shortcutMap.put("v", "show-error-info");
         this.shortcutMap.put("t", "static-typing");
@@ -116,7 +124,7 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                     System.err.println("Try it out! The old parameters will continue to work, though.");
                 }
                 String argumentName = args[i].trim().replace(ARGUMENT_PREFIX, "");
-                if (i + 1 >= args.length || args[i + 1].startsWith(ARGUMENT_PREFIX)) {
+                if (i + 1 >= args.length || (!(args[i + 1].equals("-")) && args[i + 1].startsWith(ARGUMENT_PREFIX))) {
                     throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                 }
                 String argumentValue = args[i + 1];
@@ -129,8 +137,10 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 if (!this.yesNoShortcuts.contains(argumentName)) {
                     if (
                         i + 1 >= args.length
-                            || args[i + 1].startsWith(ARGUMENT_PREFIX)
-                            || args[i + 1].startsWith(SHORTCUT_PREFIX)
+                            || (!(args[i + 1].equals("-"))
+                                &&
+                                (args[i + 1].startsWith(ARGUMENT_PREFIX)
+                                    || args[i + 1].startsWith(SHORTCUT_PREFIX)))
                     ) {
                         throw new CliException("Missing argument value for a provided argument: " + argumentName + ".");
                     }
@@ -206,6 +216,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         this.outputFormat = newValue;
     }
 
+    public String getInputFormat() {
+        return this.inputFormat;
+    }
+
+    public void setInputFormat(String newValue) {
+        this.inputFormat = newValue;
+    }
+
     public int getNumberOfOutputPartitions() {
         return this.numberOfOutputPartitions;
     }
@@ -244,6 +262,11 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         } else {
             this.outputFormat = "json";
         }
+        if (this.arguments.containsKey("input-format")) {
+            this.inputFormat = this.arguments.get("input-format").toLowerCase();
+        } else {
+            this.inputFormat = "json";
+        }
         if (this.arguments.containsKey("number-of-output-partitions")) {
             this.numberOfOutputPartitions = Integer.valueOf(this.arguments.get("number-of-output-partitions"));
         } else {
@@ -269,6 +292,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         }
         this.externalVariableValues = new HashMap<>();
         this.unparsedExternalVariableValues = new HashMap<>();
+        this.externalVariableValuesReadFromFiles = new HashMap<>();
+        this.externalVariablesInputFormats = new HashMap<>();
+        this.externalVariablesReadFromStandardInput = new HashSet<>();
         for (String s : this.arguments.keySet()) {
             if (s.startsWith("variable:")) {
                 String variableLocalName = s.substring(9);
@@ -276,6 +302,35 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
                 this.unparsedExternalVariableValues.put(name, this.arguments.get(s));
             }
         }
+        for (String s : this.arguments.keySet()) {
+            if (s.startsWith("variable-from-file:")) {
+                String variableLocalName = s.substring(9);
+                Name name = Name.createVariableInNoNamespace(variableLocalName);
+                this.externalVariableValuesReadFromFiles.put(name, this.arguments.get(s));
+            }
+        }
+        if (this.arguments.containsKey("context-item")) {
+            Name name = Name.CONTEXT_ITEM;
+            this.unparsedExternalVariableValues.put(name, this.arguments.get("context-item"));
+            if (this.arguments.containsKey("context-item-input")) {
+                throw new CliException("It is not possible to both set --context-item and --context-item-input.");
+            }
+        }
+        if (this.arguments.containsKey("context-item-input")) {
+            String arg = this.arguments.get("context-item-input");
+            if (arg.equals("-")) {
+                this.externalVariablesReadFromStandardInput.add(Name.CONTEXT_ITEM);
+            } else {
+                this.externalVariableValuesReadFromFiles.put(Name.CONTEXT_ITEM, arg);
+            }
+        }
+        if (this.arguments.containsKey("context-item-input-format")) {
+            String arg = this.arguments.get("context-item-input-format");
+            this.externalVariablesInputFormats.put(Name.CONTEXT_ITEM, arg);
+        } else {
+            this.externalVariablesInputFormats.put(Name.CONTEXT_ITEM, "json");
+        }
+
         if (this.arguments.containsKey("check-return-types-of-builtin-functions")) {
             this.checkReturnTypeOfBuiltinFunctions = this.arguments.get("check-return-types-of-builtin-functions")
                 .equals("yes");
@@ -330,6 +385,12 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
             this.thirdFeature = this.arguments.get("third-feature").equals("yes");
         } else {
             this.thirdFeature = true;
+        }
+
+        if (this.arguments.containsKey("dates-with-timezone")) {
+            this.datesWithTimeZone = this.arguments.get("dates-with-timezone").equals("yes");
+        } else {
+            this.datesWithTimeZone = false;
         }
     }
 
@@ -448,9 +509,24 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         return null;
     }
 
+    public String getExternalVariableValueReadFromFile(Name name) {
+        if (this.externalVariableValuesReadFromFiles.containsKey(name)) {
+            return this.externalVariableValuesReadFromFiles.get(name);
+        }
+        return null;
+    }
+
     public RumbleRuntimeConfiguration setExternalVariableValue(Name name, List<Item> items) {
         this.externalVariableValues.put(name, items);
         return this;
+    }
+
+    public boolean readFromStandardInput(Name variableName) {
+        return this.externalVariablesReadFromStandardInput.contains(variableName);
+    }
+
+    public String getInputFormat(Name variableName) {
+        return this.externalVariablesInputFormats.get(variableName);
     }
 
     public boolean isShell() {
@@ -489,6 +565,14 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
     public boolean escapeBackticks() {
         return this.arguments.containsKey("escape-backticks")
             && this.arguments.get("escape-backticks").equals("yes");
+    }
+
+    public boolean dateWithTimezone() {
+        return this.datesWithTimeZone;
+    }
+
+    public void setDateWithTimezone(boolean b) {
+        this.datesWithTimeZone = b;
     }
 
     public boolean isLocal() {

@@ -2,11 +2,12 @@ package org.rumbledb.runtime.flwor.udfs;
 
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.api.java.UDF1;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
+import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameColumn;
 
 import java.util.List;
 
@@ -23,12 +24,18 @@ public class GenericForClauseUDF<T> implements UDF1<Row, List<T>> {
     public GenericForClauseUDF(
             RuntimeIterator expression,
             DynamicContext context,
-            StructType schema,
-            List<String> columnNames,
+            List<FlworDataFrameColumn> columnNames,
             String classSimpleName
     ) {
-        this.dataFrameContext = new DataFrameContext(context, schema, columnNames);
+        this.dataFrameContext = new DataFrameContext(context, columnNames);
         this.expression = expression;
+        if (this.expression.isSparkJobNeeded()) {
+            throw new JobWithinAJobException(
+                    "The expression in this clause requires parallel execution, but is itself executed in parallel. Please consider moving it up or unnest it if it is independent on previous FLWOR variables.",
+                    this.expression.getMetadata()
+            );
+        }
+
         this.classSimpleName = classSimpleName;
     }
 

@@ -1,6 +1,7 @@
 package org.rumbledb.types;
 
 import org.rumbledb.api.Item;
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.Name;
 
 import java.util.*;
@@ -516,12 +517,12 @@ public class AtomicItemType implements ItemType {
     }
 
     @Override
-    public boolean isCompatibleWithDataFrames() {
+    public boolean isCompatibleWithDataFrames(RumbleRuntimeConfiguration configuration) {
         if (this.getPrimitiveType().equals(atomicItem)) {
             return false;
         }
         if (this.getPrimitiveType().equals(dateItem)) {
-            return false; // xs:date has a time zone but not in DataFrames.
+            return !configuration.dateWithTimezone(); // xs:date has a time zone but not in DataFrames.
         }
         if (this.getPrimitiveType().equals(timeItem)) {
             return false;

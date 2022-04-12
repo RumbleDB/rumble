@@ -53,7 +53,11 @@ public class AnnotationsTestsBase {
     protected AnnotationProcessor.TestAnnotation currentAnnotation;
     protected List<File> testFiles = new ArrayList<>();
     protected static final RumbleRuntimeConfiguration configuration = new RumbleRuntimeConfiguration(
-            new String[] { "--print-iterator-tree", "yes", "--variable:externalUnparsedString", "unparsed string" }
+            new String[] {
+                "--print-iterator-tree",
+                "yes",
+                "--variable:externalUnparsedString",
+                "unparsed string" }
     ).setExternalVariableValue(
         Name.createVariableInNoNamespace("externalStringItem"),
         Collections.singletonList(ItemFactory.getInstance().createStringItem("this is a string"))

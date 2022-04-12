@@ -298,7 +298,7 @@ public class VisitorHelpers {
         if (conf.isPrintIteratorTree()) {
             printTree(module, conf);
         }
-        ExecutionModeVisitor visitor = new ExecutionModeVisitor();
+        ExecutionModeVisitor visitor = new ExecutionModeVisitor(conf);
         visitor.visit(module, module.getStaticContext());
 
 
