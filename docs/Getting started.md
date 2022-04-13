@@ -46,6 +46,25 @@ You can test that it works with:
 or launch a JSONiq shell with:
 
     java -jar rumbledb-1.18.0-standalone.jar repl
+    
+If you run out of memory, you can set allocate more memory to Java with an additional Java parameter, e.g., -Xmx10g
+
+Scroll down this page skipping the method 2 section in order to continue.
+
+## Method 1 bis: with Homebrew
+
+It is also possible to use RumbleDB with brew, however there is currently no way to adjust memory usage. To install RumbleDB with brew, type the commands:
+
+    brew tap rumbledb/rumble
+    brew install --build-from-source rumble
+
+You can test that it works with:
+
+    rumbledb run -q '1+1'
+
+Then, launch a JSONiq shell with:
+
+    rumbledb repl
 
 Scroll down this page skipping the method 2 section in order to continue.
 
