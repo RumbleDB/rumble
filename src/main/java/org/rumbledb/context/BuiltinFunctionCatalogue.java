@@ -54,6 +54,7 @@ import org.rumbledb.runtime.functions.input.JsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.LibSVMFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParallelizeFunctionIterator;
 import org.rumbledb.runtime.functions.input.ParquetFileFunctionIterator;
+import org.rumbledb.runtime.functions.input.RepartitionFunctionIterator;
 import org.rumbledb.runtime.functions.input.RootFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.StructuredJsonFileFunctionIterator;
 import org.rumbledb.runtime.functions.input.UnparsedTextLinesFunctionIterator;
@@ -140,6 +141,7 @@ import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.ml.AnnotateFunctionIterator;
+import sparksoniq.spark.ml.BinaryClassificationMetricsFunctionIterator;
 import sparksoniq.spark.ml.GetEstimatorFunctionIterator;
 import sparksoniq.spark.ml.GetTransformerFunctionIterator;
 
@@ -2542,6 +2544,44 @@ public class BuiltinFunctionCatalogue {
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
     );
 
+    static final BuiltinFunction repartition = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "repartition"
+        ),
+        "item*",
+        "integer",
+        "item*",
+        RepartitionFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.INHERIT_FROM_FIRST_ARGUMENT
+    );
+
+    static final BuiltinFunction binary_classification_metrics1 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "binary-classification-metrics"
+        ),
+        "array*",
+        "item*",
+        BinaryClassificationMetricsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
+    static final BuiltinFunction binary_classification_metrics2 = createBuiltinFunction(
+        new Name(
+                Name.JN_NS,
+                "jn",
+                "binary-classification-metrics"
+        ),
+        "array*",
+        "integer",
+        "item*",
+        BinaryClassificationMetricsFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+
     static {
         builtinFunctions = new HashMap<>();
 
@@ -2737,6 +2777,9 @@ public class BuiltinFunctionCatalogue {
 
         builtinFunctions.put(trace.getIdentifier(), trace);
 
+        builtinFunctions.put(repartition.getIdentifier(), repartition);
+        builtinFunctions.put(binary_classification_metrics1.getIdentifier(), binary_classification_metrics1);
+        builtinFunctions.put(binary_classification_metrics2.getIdentifier(), binary_classification_metrics2);
     }
 
 

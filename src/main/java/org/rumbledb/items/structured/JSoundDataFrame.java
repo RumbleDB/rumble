@@ -173,4 +173,9 @@ public class JSoundDataFrame implements Serializable {
     public List<Row> take(int n) {
         return Arrays.asList((Row[]) this.dataFrame.take(n));
     }
+    
+    public JSoundDataFrame repartition(int n)
+    {
+    	return new JSoundDataFrame(this.getDataFrame().repartition(n), this.itemType);
+    }
 }
