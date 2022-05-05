@@ -323,6 +323,34 @@ public class BuiltinFunctionCatalogue {
         );
     }
 
+    private static BuiltinFunction createBuiltinFunction(
+            Name functionName,
+            String param1Type,
+            String param2Type,
+            String param3Type,
+            String param4Type,
+            String returnType,
+            Class<? extends RuntimeIterator> functionIteratorClass,
+            BuiltinFunction.BuiltinFunctionExecutionMode builtInFunctionExecutionMode
+    ) {
+        return new BuiltinFunction(
+                new FunctionIdentifier(functionName, 4),
+                new FunctionSignature(
+                        Collections.unmodifiableList(
+                            Arrays.asList(
+                                SequenceType.createSequenceType(param1Type),
+                                SequenceType.createSequenceType(param2Type),
+                                SequenceType.createSequenceType(param3Type),
+                                SequenceType.createSequenceType(param4Type)
+                            )
+                        ),
+                        SequenceType.createSequenceType(returnType)
+                ),
+                functionIteratorClass,
+                builtInFunctionExecutionMode
+        );
+    }
+
     /**
      * function that returns the context position
      */
@@ -2563,7 +2591,9 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "binary-classification-metrics"
         ),
-        "array*",
+        "object*",
+        "string",
+        "string",
         "item*",
         BinaryClassificationMetricsFunctionIterator.class,
         BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
@@ -2575,7 +2605,9 @@ public class BuiltinFunctionCatalogue {
                 "jn",
                 "binary-classification-metrics"
         ),
-        "array*",
+        "object*",
+        "string",
+        "string",
         "integer",
         "item*",
         BinaryClassificationMetricsFunctionIterator.class,

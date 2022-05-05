@@ -37,15 +37,56 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
     @Override
     public Item materializeFirstItemOrNull(DynamicContext context) {
         JavaRDD<Item> scoresAndLabels = this.children.get(0).getRDD(context);
+        String scoreCol = this.children.get(1).materializeFirstItemOrNull(context).getStringValue();
+        String labelCol = this.children.get(2).materializeFirstItemOrNull(context).getStringValue();
+        int numBins = -1;
+        if (this.children.size() > 3) {
+            numBins = this.children.get(3).materializeFirstItemOrNull(context).getIntValue();
+        }
         JavaPairRDD<Object, Object> predictionAndLabels = scoresAndLabels.mapToPair(
-            p -> new Tuple2<>(p.getItemAt(0).castToDoubleValue(), p.getItemAt(1).castToDoubleValue())
+            p -> new Tuple2<>(
+                    p.getItemByKey(scoreCol).castToDoubleValue(),
+                    p.getItemByKey(labelCol).castToDoubleValue()
+            )
         );
-        BinaryClassificationMetrics bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd());
+        BinaryClassificationMetrics bcm = null;
+        if (numBins == -1) {
+            bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd());
+        } else {
+            bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd(), numBins);
+        }
         Item objectItem = ItemFactory.getInstance().createObjectItem();
         objectItem.putItemByKey("areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
         objectItem.putItemByKey("areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
-        JavaRDD<Tuple2<Object, Object>> pr1 = bcm.pr().toJavaRDD();
-        JavaRDD<Item> pr2 = pr1.map(
+        JavaRDD<Item> pr = tupleToArrays(bcm.pr().toJavaRDD());
+        addEntry(objectItem, "pr", context, pr);
+        JavaRDD<Item> fMeasureByThreshold = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD());
+        addEntry(objectItem, "fMeasureByThreshold", context, fMeasureByThreshold);
+        JavaRDD<Item> precisionByThreshold = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD());
+        addEntry(objectItem, "precisionByThreshold", context, precisionByThreshold);
+        JavaRDD<Item> recallByThreshold = tupleToArrays(bcm.precisionByThreshold().toJavaRDD());
+        addEntry(objectItem, "recallByThreshold", context, recallByThreshold);
+        JavaRDD<Item> roc = tupleToArrays(bcm.recallByThreshold().toJavaRDD());
+        addEntry(objectItem, "roc", context, roc);
+
+        return objectItem;
+    }
+
+    private void addEntry(Item objectItem, String name, DynamicContext context, JavaRDD<Item> items) {
+        objectItem.putItemByKey(
+            name,
+            new FunctionItem(
+                    null,
+                    Collections.emptyList(),
+                    new FunctionSignature(Collections.emptyList(), SequenceType.ITEM_STAR),
+                    context,
+                    new ConstantRDDRuntimeIterator(items, getMetadata())
+            )
+        );
+    }
+
+    private JavaRDD<Item> tupleToArrays(JavaRDD<Tuple2<Object, Object>> pr1) {
+        return pr1.map(
             new Function<Tuple2<Object, Object>, Item>() {
                 private static final long serialVersionUID = 1L;
 
@@ -57,18 +98,6 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
                 }
             }
         );
-        objectItem.putItemByKey(
-            "pr",
-            new FunctionItem(
-                    null,
-                    Collections.emptyList(),
-                    new FunctionSignature(Collections.emptyList(), SequenceType.ITEM_STAR),
-                    context,
-                    new ConstantRDDRuntimeIterator(pr2, getMetadata())
-            )
-        );
-
-        return objectItem;
     }
 
 }
