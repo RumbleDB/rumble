@@ -122,14 +122,19 @@ public class LazyObjectItem implements Item {
         return this.keys;
     }
 
+    private void materialize() {
+        for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
+            this.values.put(e.getKey(), e.getValue().getItem());
+        }
+        this.lazyValues.clear();
+    }
+
     @Override
     public List<Item> getValues() {
         List<Item> result = new ArrayList<>();
+        materialize();
         for (Item i : this.values.values()) {
             result.add(i);
-        }
-        for (LazyValue v : this.lazyValues.values()) {
-            result.add(v.getItem());
         }
         return result;
     }
@@ -152,7 +157,9 @@ public class LazyObjectItem implements Item {
                 return this.values.get(s);
             }
             if (this.lazyValues.containsKey(s)) {
-                return this.lazyValues.get(s).getItem();
+                Item i = this.lazyValues.get(s).getItem();
+                this.lazyValues.remove(s);
+                this.values.put(s, i);
             }
             throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
         } else {
@@ -183,10 +190,7 @@ public class LazyObjectItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.keys);
-        for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
-            this.values.put(e.getKey(), e.getValue().getItem());
-        }
-        this.lazyValues.clear();
+        materialize();
         kryo.writeObject(output, this.values);
     }
 
