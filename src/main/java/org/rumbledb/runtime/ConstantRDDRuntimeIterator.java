@@ -32,7 +32,7 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
     private JavaRDD<Item> items;
 
     public ConstantRDDRuntimeIterator(
-    		JavaRDD<Item> items,
+            JavaRDD<Item> items,
             ExceptionMetadata iteratorMetadata
     ) {
         super(null, ExecutionMode.RDD, iteratorMetadata);
@@ -44,33 +44,33 @@ public class ConstantRDDRuntimeIterator extends HybridRuntimeIterator {
         return this.items;
     }
 
-	@Override
-	protected void openLocal() {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    protected void openLocal() {
+        // TODO Auto-generated method stub
 
-	@Override
-	protected void closeLocal() {
-		// TODO Auto-generated method stub
-		
-	}
+    }
 
-	@Override
-	protected void resetLocal() {
-		// TODO Auto-generated method stub
-		
-	}
+    @Override
+    protected void closeLocal() {
+        // TODO Auto-generated method stub
 
-	@Override
-	protected boolean hasNextLocal() {
-		// TODO Auto-generated method stub
-		return false;
-	}
+    }
 
-	@Override
-	protected Item nextLocal() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    @Override
+    protected void resetLocal() {
+        // TODO Auto-generated method stub
+
+    }
+
+    @Override
+    protected boolean hasNextLocal() {
+        // TODO Auto-generated method stub
+        return false;
+    }
+
+    @Override
+    protected Item nextLocal() {
+        // TODO Auto-generated method stub
+        return null;
+    }
 }
