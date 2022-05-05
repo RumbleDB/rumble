@@ -576,7 +576,7 @@ public interface Item extends Serializable, KryoSerializable {
     default void putItemByKey(String key, Item value) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
-    
+
     /**
      * Adds a key-value pair, if it is an object item. The value is lazily computed.
      *
@@ -585,9 +585,8 @@ public interface Item extends Serializable, KryoSerializable {
      * @param context a dynamic context.
      * @param isArray whether to always wrap the result in an array.
      */
-    default public void putLazyItemByKey(String s, RuntimeIterator iterator, DynamicContext context, boolean isArray)
-    {
-    	throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    default public void putLazyItemByKey(String s, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
     /**

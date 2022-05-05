@@ -43,46 +43,42 @@ public class LazyObjectItem implements Item {
     private List<String> keys;
     private Map<String, Item> values;
     private Map<String, LazyValue> lazyValues;
-    
+
     public class LazyValue {
-    	private RuntimeIterator iterator;
-    	private DynamicContext context;
-    	private boolean isArray;
-    	
-    	public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray)
-    	{
-    		this.iterator = iterator;
-    		this.context = context;
-    		this.isArray = isArray;
-    	}
-    	
-    	public RuntimeIterator getIterator() {
-    		return this.iterator;
-    	}
-    	
-    	public DynamicContext getDynamicContext() {
-    		return this.context;
-    	}
-    	
-    	public boolean isArray() {
-    		return this.isArray();
-    	}
-    	
-    	public Item getItem() {
-			List<Item> items = this.iterator.materialize(this.context);
-    		if(!this.isArray)
-    		{
-    			if(items.size() == 1)
-    			{
-    				return items.get(0);
-    			}
-				if (items.size() == 0)
-    			{
-    				return ItemFactory.getInstance().createNullItem();
-    			}
-    		}
-			return ItemFactory.getInstance().createArrayItem(items);
-    	}
+        private RuntimeIterator iterator;
+        private DynamicContext context;
+        private boolean isArray;
+
+        public LazyValue(RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+            this.iterator = iterator;
+            this.context = context;
+            this.isArray = isArray;
+        }
+
+        public RuntimeIterator getIterator() {
+            return this.iterator;
+        }
+
+        public DynamicContext getDynamicContext() {
+            return this.context;
+        }
+
+        public boolean isArray() {
+            return this.isArray();
+        }
+
+        public Item getItem() {
+            List<Item> items = this.iterator.materialize(this.context);
+            if (!this.isArray) {
+                if (items.size() == 1) {
+                    return items.get(0);
+                }
+                if (items.size() == 0) {
+                    return ItemFactory.getInstance().createNullItem();
+                }
+            }
+            return ItemFactory.getInstance().createArrayItem(items);
+        }
     }
 
     public LazyObjectItem() {
@@ -128,15 +124,13 @@ public class LazyObjectItem implements Item {
 
     @Override
     public List<Item> getValues() {
-    	List<Item> result = new ArrayList<>();
-    	for(Item i : this.values.values())
-    	{
-    		result.add(i);
-    	}
-    	for(LazyValue v : this.lazyValues.values())
-    	{
-    		result.add(v.getItem());
-    	}
+        List<Item> result = new ArrayList<>();
+        for (Item i : this.values.values()) {
+            result.add(i);
+        }
+        for (LazyValue v : this.lazyValues.values()) {
+            result.add(v.getItem());
+        }
         return result;
     }
 
@@ -154,15 +148,13 @@ public class LazyObjectItem implements Item {
     @Override
     public Item getItemByKey(String s) {
         if (this.keys.contains(s)) {
-        	if(this.values.containsKey(s))
-        	{
-        		return this.values.get(s);
-        	}
-        	if(this.lazyValues.containsKey(s))
-        	{
-        		return this.lazyValues.get(s).getItem();
-        	}
-        	throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
+            if (this.values.containsKey(s)) {
+                return this.values.get(s);
+            }
+            if (this.lazyValues.containsKey(s)) {
+                return this.lazyValues.get(s).getItem();
+            }
+            throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
         } else {
             return null;
         }
@@ -191,9 +183,8 @@ public class LazyObjectItem implements Item {
     @Override
     public void write(Kryo kryo, Output output) {
         kryo.writeObject(output, this.keys);
-        for(Map.Entry<String, LazyValue> e : this.lazyValues.entrySet())
-        {
-        	this.values.put(e.getKey(), e.getValue().getItem());
+        for (Map.Entry<String, LazyValue> e : this.lazyValues.entrySet()) {
+            this.values.put(e.getKey(), e.getValue().getItem());
         }
         this.lazyValues.clear();
         kryo.writeObject(output, this.values);
