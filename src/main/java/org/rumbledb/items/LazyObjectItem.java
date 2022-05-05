@@ -42,7 +42,7 @@ public class LazyObjectItem implements Item {
     private static final long serialVersionUID = 1L;
     private List<String> keys;
     private Map<String, Item> values;
-    private Map<String, LazyValue> lazyValues;
+    transient private Map<String, LazyValue> lazyValues;
 
     public class LazyValue {
         private RuntimeIterator iterator;
@@ -160,6 +160,7 @@ public class LazyObjectItem implements Item {
                 Item i = this.lazyValues.get(s).getItem();
                 this.lazyValues.remove(s);
                 this.values.put(s, i);
+                return i;
             }
             throw new OurBadException("Key " + s + "not found in lazy object. Inconsistent layout.");
         } else {

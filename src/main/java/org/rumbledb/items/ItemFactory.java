@@ -196,6 +196,10 @@ public class ItemFactory {
         return new ObjectItem();
     }
 
+    public Item createLazyObjectItem() {
+        return new LazyObjectItem();
+    }
+
     public Item createArrayItem() {
         return new ArrayItem();
     }

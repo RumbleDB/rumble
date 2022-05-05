@@ -1,7 +1,6 @@
 package sparksoniq.spark.ml;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import org.apache.spark.api.java.JavaPairRDD;
@@ -12,13 +11,10 @@ import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.ExecutionMode;
-import org.rumbledb.items.FunctionItem;
 import org.rumbledb.items.ItemFactory;
 import org.rumbledb.runtime.AtMostOneItemLocalRuntimeIterator;
 import org.rumbledb.runtime.ConstantRDDRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
-import org.rumbledb.types.FunctionSignature;
-import org.rumbledb.types.SequenceType;
 
 import scala.Tuple2;
 
@@ -55,46 +51,41 @@ public class BinaryClassificationMetricsFunctionIterator extends AtMostOneItemLo
         } else {
             bcm = new BinaryClassificationMetrics(predictionAndLabels.rdd(), numBins);
         }
-        Item objectItem = ItemFactory.getInstance().createObjectItem();
+        Item objectItem = ItemFactory.getInstance().createLazyObjectItem();
         objectItem.putItemByKey("areaUnderPR", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderPR()));
         objectItem.putItemByKey("areaUnderROC", ItemFactory.getInstance().createDoubleItem(bcm.areaUnderROC()));
-        JavaRDD<Item> pr = tupleToArrays(bcm.pr().toJavaRDD());
-        addEntry(objectItem, "pr", context, pr);
-        JavaRDD<Item> fMeasureByThreshold = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD());
-        addEntry(objectItem, "fMeasureByThreshold", context, fMeasureByThreshold);
-        JavaRDD<Item> precisionByThreshold = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD());
-        addEntry(objectItem, "precisionByThreshold", context, precisionByThreshold);
-        JavaRDD<Item> recallByThreshold = tupleToArrays(bcm.precisionByThreshold().toJavaRDD());
-        addEntry(objectItem, "recallByThreshold", context, recallByThreshold);
-        JavaRDD<Item> roc = tupleToArrays(bcm.recallByThreshold().toJavaRDD());
-        addEntry(objectItem, "roc", context, roc);
+        JavaRDD<Item> rdd = tupleToArrays(bcm.pr().toJavaRDD(), "recall", "precision");
+        RuntimeIterator it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        objectItem.putLazyItemByKey("pr", it, context, true);
+        rdd = tupleToArrays(bcm.fMeasureByThreshold().toJavaRDD(), "threshold", "F-Measure");
+        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        objectItem.putLazyItemByKey("fMeasureByThreshold", it, context, true);
+        rdd = tupleToArrays(bcm.precisionByThreshold().toJavaRDD(), "threshold", "precision");
+        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        objectItem.putLazyItemByKey("precisionByThreshold", it, context, true);
+        rdd = tupleToArrays(bcm.recallByThreshold().toJavaRDD(), "threshold", "recall");
+        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        objectItem.putLazyItemByKey("recallByThreshold", it, context, true);
+        rdd = tupleToArrays(bcm.roc().toJavaRDD(), "false positive rate", "true positive rate");
+        it = new ConstantRDDRuntimeIterator(rdd, getMetadata());
+        objectItem.putLazyItemByKey("roc", it, context, true);
 
         return objectItem;
     }
 
-    private void addEntry(Item objectItem, String name, DynamicContext context, JavaRDD<Item> items) {
-        objectItem.putItemByKey(
-            name,
-            new FunctionItem(
-                    null,
-                    Collections.emptyList(),
-                    new FunctionSignature(Collections.emptyList(), SequenceType.ITEM_STAR),
-                    context,
-                    new ConstantRDDRuntimeIterator(items, getMetadata())
-            )
-        );
-    }
-
-    private JavaRDD<Item> tupleToArrays(JavaRDD<Tuple2<Object, Object>> pr1) {
+    private JavaRDD<Item> tupleToArrays(JavaRDD<Tuple2<Object, Object>> pr1, String key1, String key2) {
         return pr1.map(
             new Function<Tuple2<Object, Object>, Item>() {
                 private static final long serialVersionUID = 1L;
 
                 public Item call(Tuple2<Object, Object> a) {
-                    List<Item> list = new ArrayList<>();
-                    list.add(ItemFactory.getInstance().createDoubleItem((double) a._1()));
-                    list.add(ItemFactory.getInstance().createDoubleItem((double) a._2()));
-                    return ItemFactory.getInstance().createArrayItem(list);
+                    List<String> keys = new ArrayList<>();
+                    keys.add(key1);
+                    keys.add(key2);
+                    List<Item> values = new ArrayList<>();
+                    values.add(ItemFactory.getInstance().createDoubleItem((double) a._1()));
+                    values.add(ItemFactory.getInstance().createDoubleItem((double) a._2()));
+                    return ItemFactory.getInstance().createObjectItem(keys, values, ExceptionMetadata.EMPTY_METADATA);
                 }
             }
         );
