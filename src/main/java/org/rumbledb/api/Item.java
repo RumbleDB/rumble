@@ -585,7 +585,12 @@ public interface Item extends Serializable, KryoSerializable {
      * @param context a dynamic context.
      * @param isArray whether to always wrap the result in an array.
      */
-    default public void putLazyItemByKey(String key, RuntimeIterator iterator, DynamicContext context, boolean isArray) {
+    default public void putLazyItemByKey(
+            String key,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            boolean isArray
+    ) {
         throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
     }
 
