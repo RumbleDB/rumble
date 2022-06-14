@@ -9,7 +9,7 @@ If you do not want to install Spark, then you need to use the standalone jar
 instead from www.rumbledb.org.
 
 Usage:
-docker run -i rumbledb/rumble <mode> <parameters>
+rumbledb <mode> <parameters>
 
 The first optional argument specifies the mode:
 **** run ****
@@ -17,16 +17,16 @@ for directly running a query from an input file or (with -q) provided directly o
 
 It is the default mode.
 
-docker run -i rumbledb/rumble run my-query.jq
-docker run -i rumbledb/rumble run -q '1+1'
+rumbledb run my-query.jq
+rumbledb run -q '1+1'
 
 You can specify an output path with -o like so:
-docker run -i rumbledb/rumble run -q '1+1' -o my-output.txt
+rumbledb run -q '1+1' -o my-output.txt
 
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
 
-spark-submit rumbledb-1.19.0.jar serve -p 9090
+rumbledb serve -p 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
 even more convenient if you are using a cluster.
@@ -34,7 +34,7 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb-1.19.0.jar repl
+rumbledb repl
 
 
 **** resource use configuration ****
