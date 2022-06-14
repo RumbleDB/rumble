@@ -26,7 +26,7 @@ docker run -i rumbledb/rumble run -q '1+1' -o my-output.txt
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
 
-spark-submit rumbledb-1.19.0.jar serve -p 9090
+docker run -i rumbledb/rumble serve -p 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
 even more convenient if you are using a cluster.
@@ -34,7 +34,7 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb-1.19.0.jar repl
+docker run -i rumbledb/rumble repl
 
 
 **** resource use configuration ****
