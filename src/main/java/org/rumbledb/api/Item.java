@@ -578,6 +578,23 @@ public interface Item extends Serializable, KryoSerializable {
     }
 
     /**
+     * Adds a key-value pair, if it is an object item. The value is lazily computed.
+     *
+     * @param key a key.
+     * @param iterator a runtime iterator.
+     * @param context a dynamic context.
+     * @param isArray whether to always wrap the result in an array.
+     */
+    default public void putLazyItemByKey(
+            String key,
+            RuntimeIterator iterator,
+            DynamicContext context,
+            boolean isArray
+    ) {
+        throw new UnsupportedOperationException("Operation not defined for type " + this.getDynamicType());
+    }
+
+    /**
      * Casts the item to a double value (must be a numeric).
      *
      * @return the double value.

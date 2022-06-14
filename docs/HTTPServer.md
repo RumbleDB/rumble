@@ -4,7 +4,7 @@
 
 RumbleDB can be run as an HTTP server that listens for queries. In order to do so, you can use the --server and --port parameters:
 
-    spark-submit rumbledb-1.18.0.jar serve -p 8001
+    spark-submit rumbledb-1.19.0.jar serve -p 8001
     
 This command will not return until you force it to (Ctrl+C on Linux and Mac). This is because the server has to run permanently to listen to incoming requests.
 
@@ -36,44 +36,19 @@ A query can also be submitted in the request body:
 
 With the HTTP server running, if you have installed Python and Jupyter notebooks (for example with the Anaconda data science package that does all of it automatically), you can create a RumbleDB magic by just executing the following code in a cell:
 
-    import requests
-    import json
-    import ast
-    from IPython.core.magic import register_line_cell_magic
-
-    @register_line_cell_magic
-    def rumble(line, cell=None):
-
-    if cell is None:
-        data = line
-    else:   
-        data = cell
-
-    response = json.loads(requests.post(server, data=data).text)
-
-    if 'warning' in response:
-        print(ast.literal_eval(json.dumps(response['warning'])))
-    if 'values' in response:
-        for e in response['values']:
-            print(ast.literal_eval(json.dumps(e)))
-    elif 'error-message' in response:
-        return response['error-message']
-    else:
-        return response
-
-as well as (in another cell)
-
-    server='http://localhost:8001/jsoniq'
+    !pip install rumbledb
+    %load_ext rumbledb
+    %env RUMBLEDB_SERVER=http://locahost:8001/jsoniq
 
 Where, of course, you need to adapt the port (8001) to the one you picked previously.
 
 Then, you can execute queries in subsequent cells with:
 
-    %rumble 1 + 1
+    %jsoniq 1 + 1
 
 or on multiple lines:
 
-    %%rumble
+    %%jsoniq
     for $doc in json-file("my-file")
     where $doc.foo eq "bar"
     return $doc
@@ -94,11 +69,11 @@ Then there are two options
 - Connect to the master with SSH with an extra parameter for securely tunneling the HTTP connection (for example `-L 8001:localhost:8001` or any port of your choosing)
 - Download the RumbleDB jar to the master node
 
-    wget https://github.com/RumbleDB/rumble/releases/download/v1.12.0/rumbledb-1.18.0.jar
+    wget https://github.com/RumbleDB/rumble/releases/download/v1.19.0/rumbledb-1.19.0.jar
     
 - Launch the HTTP server on the master node (it will be accessible under `http://localhost:8001/jsoniq`).
 
-    spark-submit rumbledb-1.18.0.jar serve -p 8001
+    spark-submit rumbledb-1.19.0.jar serve -p 8001
 
 - And then use Jupyter notebooks in the same way you would do it locally (it magically works because of the tunneling)
 
@@ -106,7 +81,7 @@ Then there are two options
 
 There is also another way that does not need any tunnelling: you can specify the hostname of your EC2 machine (copied over from the EC2 dashboard) with the --host parameter. For example, with the placeholder <ec2-hostname>:
 
-    spark-submit rumbledb-1.18.0.jar serve -p 8001 -h <ec2-hostname>
+    spark-submit rumbledb-1.19.0.jar serve -p 8001 -h <ec2-hostname>
 
 You also need to make sure in your EMR security group that the chosen port (e.g., 8001) is accessible from the machine in which you run your Jupyter notebook. Then, you can point your Jupyter notebook on this machine to `http://<ec2-hostname>:8001/jsoniq`.
 

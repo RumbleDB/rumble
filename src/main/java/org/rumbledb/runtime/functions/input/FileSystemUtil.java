@@ -47,6 +47,9 @@ public class FileSystemUtil {
     }
 
     public static URI resolveURI(URI base, String url, ExceptionMetadata metadata) {
+        if (url.contains(" ")) {
+            url = url.replace(" ", "%20");
+        }
         if (url == null || url.isEmpty()) {
             throw new CannotRetrieveResourceException(
                     "No path provided!",
