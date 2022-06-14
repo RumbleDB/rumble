@@ -9,7 +9,7 @@ If you do not want to install Spark, then you need to use the standalone jar
 instead from www.rumbledb.org.
 
 Usage:
-spark-submit <Spark arguments> <path to RumbleDB's jar> <mode> <parameters>
+docker run -i rumbledb/rumble <mode> <parameters>
 
 The first optional argument specifies the mode:
 **** run ****
@@ -17,11 +17,11 @@ for directly running a query from an input file or (with -q) provided directly o
 
 It is the default mode.
 
-spark-submit rumbledb-1.19.0.jar run my-query.jq
-spark-submit rumbledb-1.19.0.jar run -q '1+1'
+docker run -i rumbledb/rumble run my-query.jq
+docker run -i rumbledb/rumble run -q '1+1'
 
 You can specify an output path with -o like so:
-spark-submit rumbledb-1.19.0.jar run -q '1+1' -o my-output.txt
+docker run -i rumbledb/rumble run -q '1+1' -o my-output.txt
 
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
@@ -39,24 +39,7 @@ spark-submit rumbledb-1.19.0.jar repl
 
 **** resource use configuration ****
 
-For a local use, you can control the number of cores, as well as allocated
-memory, with:
-spark-submit --master local[*] rumbledb-1.19.0.jar repl
-spark-submit --master local[*] rumbledb-1.19.0.jar repl
-spark-submit --master local[2] rumbledb-1.19.0.jar repl
-spark-submit --master local[*] --driver-memory 10G rumbledb-1.19.0.jar repl
-
-You can use RumbleDB remotely with:
-spark-submit --master yarn rumbledb-1.19.0.jar repl
-
-(Although for clusters provided as a service, --master yarn is often implicit
-and unnecessary).
-
-For remote use (e.g., logged in on the Spark cluster with ssh), you can set the
-number of executors, cores and memory, you can use:
-spark-submit --executor-cores 3 --executor-memory 5G rumbledb-1.19.0.jar repl
-
-For remote use, you can also use other file system paths such as S3, HDFS, etc:
-spark-submit rumbledb-1.19.0.jar run hdfs://server:port/my-query.jq -o hdfs://server:port/my-output.json
+The docker edition of RumbleDB cannot change the number of cores or the memory allocation.
+If you wish to do so, you could consider using the standalone RumbleDB jar.
 
 More documentation on available CLI parameters is available on https://www.rumbledb.org/
