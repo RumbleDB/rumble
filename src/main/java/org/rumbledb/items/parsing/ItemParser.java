@@ -41,6 +41,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -138,6 +139,85 @@ public class ItemParser implements Serializable {
         } catch (Exception e) {
             RumbleException r = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata
+            );
+            r.initCause(e);
+            throw r;
+        }
+    }
+    
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     * 
+     * @param object the JSON reader.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromYAML(YAMLParser parser, ExceptionMetadata metadata) {
+        try {
+        	com.fasterxml.jackson.core.JsonToken nextToken = parser.nextToken();
+            // System.err.println("Next token: " + nextToken.asString());
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
+                return ItemFactory.getInstance().createStringItem(parser.getValueAsString());
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
+                return ItemFactory.getInstance().createBooleanItem(true);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
+                List<Item> values = new ArrayList<>();
+                nextToken = parser.nextToken();
+                // System.err.println("Next token: " + nextToken.asString());
+                while (!nextToken.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
+                    values.add(getItemFromYAML(parser, metadata));
+                    // System.err.println("Next token: " + nextToken.asString());
+                }
+                return ItemFactory.getInstance().createArrayItem(values);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
+                List<String> keys = new ArrayList<>();
+                List<Item> values = new ArrayList<>();
+                nextToken = parser.nextToken();
+                // System.err.println("Next token: " + nextToken.asString());
+                while (!nextToken.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                    keys.add(parser.getText());
+                    // System.err.println("Next token: " + nextToken.asString());
+                    values.add(getItemFromYAML(parser, metadata));
+                    nextToken = parser.nextToken();
+                    // System.err.println("Next token: " + nextToken.asString());
+                }
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, metadata);
+            }
+            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
+                return ItemFactory.getInstance().createNullItem();
+            }
+            throw new ParsingException("Invalid value found while parsing. YAML is not well-formed!", metadata);
+        } catch (Exception e) {
+            RumbleException r = new ParsingException(
+                    "An error happened while parsing YAML. YAML is not well-formed!",
                     metadata
             );
             r.initCause(e);
