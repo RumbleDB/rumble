@@ -8,7 +8,8 @@ public class Serializer {
     public enum Method {
         JSON,
         TYSON,
-        XML_JSON_HYBRID
+        XML_JSON_HYBRID,
+        YAML
     };
 
     String encoding;
@@ -54,6 +55,9 @@ public class Serializer {
                 case JSON:
                     appendJSONAtomicItem(item, sb);
                     return;
+                case YAML:
+                    appendYAMLAtomicItem(item, sb);
+                    return;
                 case TYSON:
                     sb.append("(\"");
                     sb.append(item.getDynamicType().getIdentifierString());
@@ -72,6 +76,18 @@ public class Serializer {
             }
         }
         if (item.isArray()) {
+            if (this.method.equals(Method.YAML)) {
+                for (Item member : item.getItems()) {
+                    sb.append("\n" + indent + "  ");
+                    sb.append("- ");
+                    if (member.isObject()) {
+                        serialize(member, sb, indent + "    ", false);
+                    } else {
+                        serialize(member, sb, indent + "  ", false);
+                    }
+                }
+                return;
+            }
             if (this.method.equals(Method.TYSON)) {
                 sb.append("(\"");
                 sb.append(item.getDynamicType().getIdentifierString());
@@ -106,6 +122,27 @@ public class Serializer {
             return;
         }
         if (item.isObject()) {
+            if (this.method.equals(Method.YAML)) {
+                String separator = "";
+                for (String key : item.getKeys()) {
+                    sb.append(separator);
+                    separator = "\n" + indent;
+                    sb.append(key);
+                    sb.append(":");
+                    Item value = item.getItemByKey(key);
+                    if (value.isObject()) {
+                        sb.append(separator);
+                        sb.append("  ");
+                        serialize(value, sb, indent + "  ", false);
+                    } else if (value.isArray()) {
+                        serialize(value, sb, indent, false);
+                    } else {
+                        sb.append(" ");
+                        serialize(value, sb, indent, false);
+                    }
+                }
+                return;
+            }
             if (this.method.equals(Method.TYSON)) {
                 sb.append("(\"");
                 sb.append(item.getDynamicType().getIdentifierString());
@@ -142,6 +179,27 @@ public class Serializer {
 
     private void appendJSONAtomicItem(Item item, StringBuffer sb) {
         boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
+        if (item.isDouble()) {
+            if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
+                isStringValue = true;
+            }
+        }
+        if (item.isFloat()) {
+            if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
+                isStringValue = true;
+            }
+        }
+        if (isStringValue) {
+            sb.append("\"");
+            sb.append(StringEscapeUtils.escapeJson(item.getStringValue()));
+            sb.append("\"");
+        } else {
+            sb.append(item.getStringValue());
+        }
+    }
+
+    private void appendYAMLAtomicItem(Item item, StringBuffer sb) {
+        boolean isStringValue = false;
         if (item.isDouble()) {
             if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
                 isStringValue = true;

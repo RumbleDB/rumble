@@ -50,6 +50,7 @@ import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.reflect.Array;
@@ -145,7 +146,7 @@ public class ItemParser implements Serializable {
             throw r;
         }
     }
-    
+
     /**
      * Parses a JSON string, accessible via a reader, to an item.
      * 
@@ -153,14 +154,21 @@ public class ItemParser implements Serializable {
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
-    public static Item getItemFromYAML(YAMLParser parser, ExceptionMetadata metadata) {
+    public static Item getItemFromYAML(
+            YAMLParser parser,
+            com.fasterxml.jackson.core.JsonToken lookahead,
+            ExceptionMetadata metadata
+    ) {
         try {
-        	com.fasterxml.jackson.core.JsonToken nextToken = parser.nextToken();
-            // System.err.println("Next token: " + nextToken.asString());
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
+            if (lookahead == null) {
+                // System.err.println("End of file.");
+                return null;
+            }
+            // System.err.println("Lookahead (top level): " + lookahead.toString());
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
                 return ItemFactory.getInstance().createStringItem(parser.getValueAsString());
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
                 String number = parser.getValueAsString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
@@ -170,7 +178,7 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
                 String number = parser.getValueAsString();
                 if (number.contains("E") || number.contains("e")) {
                     return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
@@ -180,42 +188,52 @@ public class ItemParser implements Serializable {
                 }
                 return ItemFactory.getInstance().createIntegerItem(number);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
                 return ItemFactory.getInstance().createBooleanItem(false);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
                 return ItemFactory.getInstance().createBooleanItem(true);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
                 List<Item> values = new ArrayList<>();
-                nextToken = parser.nextToken();
-                // System.err.println("Next token: " + nextToken.asString());
-                while (!nextToken.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
-                    values.add(getItemFromYAML(parser, metadata));
-                    // System.err.println("Next token: " + nextToken.asString());
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading array): " + nt.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading array): " + nt.toString());
                 }
+                // System.err.println("Finished reading array.");
                 return ItemFactory.getInstance().createArrayItem(values);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
                 List<String> keys = new ArrayList<>();
                 List<Item> values = new ArrayList<>();
-                nextToken = parser.nextToken();
-                // System.err.println("Next token: " + nextToken.asString());
-                while (!nextToken.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading object): " + lookahead.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                    if (!nt.equals(com.fasterxml.jackson.core.JsonToken.FIELD_NAME)) {
+                        throw new ParsingException("Expected field name!", metadata);
+                    }
                     keys.add(parser.getText());
-                    // System.err.println("Next token: " + nextToken.asString());
-                    values.add(getItemFromYAML(parser, metadata));
-                    nextToken = parser.nextToken();
-                    // System.err.println("Next token: " + nextToken.asString());
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
                 }
+                // System.err.println("Finished reading object.");
                 return ItemFactory.getInstance()
                     .createObjectItem(keys, values, metadata);
             }
-            if (nextToken.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
                 return ItemFactory.getInstance().createNullItem();
             }
-            throw new ParsingException("Invalid value found while parsing. YAML is not well-formed!", metadata);
-        } catch (Exception e) {
+            throw new ParsingException(
+                    "Invalid value found while parsing. YAML is not well-formed! Unexpected " + lookahead.toString(),
+                    metadata
+            );
+        } catch (IOException e) {
             RumbleException r = new ParsingException(
                     "An error happened while parsing YAML. YAML is not well-formed!",
                     metadata

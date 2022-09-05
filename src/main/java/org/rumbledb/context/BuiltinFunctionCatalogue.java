@@ -412,19 +412,19 @@ public class BuiltinFunctionCatalogue {
      * function that parses a JSON doc file
      */
     static final BuiltinFunction json_doc = createBuiltinFunction(
-            new Name(Name.FN_NS, "fn", "json-doc"),
-            "string",
-            "item*",
-            JsonDocFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-        );
-    static final BuiltinFunction yaml_doc= createBuiltinFunction(
-            new Name(Name.JN_NS, "fn", "yaml-doc"),
-            "string",
-            "item*",
-            YamlDocFunctionIterator.class,
-            BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
-        );
+        new Name(Name.FN_NS, "fn", "json-doc"),
+        "string",
+        "item*",
+        JsonDocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
+    static final BuiltinFunction yaml_doc = createBuiltinFunction(
+        new Name(Name.JN_NS, "fn", "yaml-doc"),
+        "string",
+        "item*",
+        YamlDocFunctionIterator.class,
+        BuiltinFunction.BuiltinFunctionExecutionMode.LOCAL
+    );
     static final BuiltinFunction parse_json = createBuiltinFunction(
         new Name(Name.FN_NS, "fn", "parse-json"),
         "string?",

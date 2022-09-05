@@ -30,7 +30,9 @@ import org.rumbledb.items.parsing.ItemParser;
 
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
+
 import org.rumbledb.exceptions.ParsingException;
+import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.functions.base.LocalFunctionCallIterator;
 import org.rumbledb.runtime.functions.input.FileSystemUtil;
@@ -45,6 +47,8 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
 
     private static final long serialVersionUID = 1L;
     private RuntimeIterator iterator;
+    private YAMLParser parser;
+    private Item nextResult;
 
     public YamlDocFunctionIterator(
             List<RuntimeIterator> arguments,
@@ -58,37 +62,56 @@ public class YamlDocFunctionIterator extends LocalFunctionCallIterator {
     public void open(DynamicContext context) {
         super.open(context);
         this.iterator = this.children.get(0);
-        this.iterator.open(this.currentDynamicContextForLocalExecution);
-        this.hasNext = this.iterator.hasNext();
-        this.iterator.close();
+        Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
+        try {
+            URI uri = FileSystemUtil.resolveURI(
+                this.staticURI,
+                path.getStringValue(),
+                getMetadata()
+            );
+            InputStream is = FileSystemUtil.getDataInputStream(
+                uri,
+                this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
+                getMetadata()
+            );
+            YAMLFactory factory = new YAMLFactory();
+            this.parser = factory.createParser(new InputStreamReader(is));
+            getNextResult();
+        } catch (IOException e) {
+            throw new ParsingException(e.getMessage(), getMetadata());
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
     }
 
     @Override
     public Item next() {
         if (this.hasNext) {
-            this.hasNext = false;
-            Item path = this.iterator.materializeFirstItemOrNull(this.currentDynamicContextForLocalExecution);
-            try {
-                URI uri = FileSystemUtil.resolveURI(
-                    this.staticURI,
-                    path.getStringValue(),
-                    getMetadata()
-                );
-                InputStream is = FileSystemUtil.getDataInputStream(
-                    uri,
-                    this.currentDynamicContextForLocalExecution.getRumbleRuntimeConfiguration(),
-                    getMetadata()
-                );
-                YAMLFactory factory = new YAMLFactory();
-                YAMLParser parser = factory.createParser(new InputStreamReader(is));
-                return ItemParser.getItemFromYAML(parser, getMetadata());
-            } catch (IOException e) {
-                throw new ParsingException(e.getMessage(), getMetadata());
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+            Item result = this.nextResult;
+            getNextResult();
+            return result;
         }
-        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " json-doc function", getMetadata());
+        throw new IteratorFlowException(RuntimeIterator.FLOW_EXCEPTION_MESSAGE + " yaml-doc function", getMetadata());
+    }
+
+    public void getNextResult() {
+        com.fasterxml.jackson.core.JsonToken nt = null;
+        try {
+            nt = this.parser.nextToken();
+        } catch (IOException e) {
+            RumbleException r = new ParsingException(
+                    "An error happened while parsing YAML. YAML is not well-formed!",
+                    this.getMetadata()
+            );
+            r.initCause(e);
+            throw r;
+        }
+        this.nextResult = ItemParser.getItemFromYAML(this.parser, nt, getMetadata());
+        if (this.nextResult == null) {
+            this.hasNext = false;
+        } else {
+            this.hasNext = true;
+        }
     }
 
 
