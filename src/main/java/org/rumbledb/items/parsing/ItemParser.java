@@ -150,7 +150,8 @@ public class ItemParser implements Serializable {
     /**
      * Parses a JSON string, accessible via a reader, to an item.
      * 
-     * @param object the JSON reader.
+     * @param parser the YAML parser.
+     * @param lookahead the lookahead token.
      * @param metadata exception metadata is an error is thrown.
      * @return the parsed item.
      */
