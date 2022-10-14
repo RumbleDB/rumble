@@ -105,8 +105,8 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
-    public static ItemType createItemTypeFromStaticallyKnownNames(List<Expression> keys, List<Expression> values){
-        if(keys.size() != values.size()) {
+    public static ItemType createItemTypeFromStaticallyKnownNames(List<Expression> keys, List<Expression> values) {
+        if (keys.size() != values.size()) {
             throw new InvalidSchemaException(
                     "Key list and value list must have the same dimensions",
                     ExceptionMetadata.EMPTY_METADATA
@@ -115,7 +115,7 @@ public class ItemTypeFactory {
         Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (int i = 0; i < keys.size(); i++) {
             Expression key = keys.get(i);
-            if(!(key instanceof StringLiteralExpression)) {
+            if (!(key instanceof StringLiteralExpression)) {
                 throw new InvalidSchemaException(
                         "Field names must be statically known",
                         ExceptionMetadata.EMPTY_METADATA
@@ -129,7 +129,14 @@ public class ItemTypeFactory {
             fieldDescriptor.setRequired(false);
             content.put(name, fieldDescriptor);
         }
-        return new ObjectItemType(null, BuiltinTypesCatalogue.objectItem, true, content, Collections.emptyList(), Collections.emptyList());
+        return new ObjectItemType(
+                null,
+                BuiltinTypesCatalogue.objectItem,
+                true,
+                content,
+                Collections.emptyList(),
+                Collections.emptyList()
+        );
     }
 
     public static ItemType createItemTypeFromJSoundVerboseItem(Name name, Item item, StaticContext staticContext) {
