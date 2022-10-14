@@ -352,7 +352,16 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 }
             }
         }
-        expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        if (expression.getKeys() != null && expression.getKeys().stream()
+                .allMatch(key -> key instanceof StringLiteralExpression)) {
+            expression.setStaticSequenceType(
+                    new SequenceType(
+                            ItemTypeFactory.createItemTypeFromStaticallyKnownNames(expression.getKeys(), expression.getValues())
+                    )
+            );
+        } else {
+            expression.setStaticSequenceType(new SequenceType(BuiltinTypesCatalogue.objectItem));
+        }
         return argument;
     }
 
