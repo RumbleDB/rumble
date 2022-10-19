@@ -57,11 +57,23 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
         // empty sequences are treated as empty strings in concatenation
         if (this.leftIterator.hasNext()) {
             left = this.leftIterator.next();
+            if (this.leftIterator.hasNext()) {
+                throw new UnexpectedTypeException(
+                        "String concatenation expression requires at most one item in its left input sequence.",
+                        getMetadata()
+                );
+            }
         } else {
             left = ItemFactory.getInstance().createStringItem("");
         }
         if (this.rightIterator.hasNext()) {
             right = this.rightIterator.next();
+            if (this.rightIterator.hasNext()) {
+                throw new UnexpectedTypeException(
+                        "String concatenation expression requires at most one item in its right input sequence.",
+                        getMetadata()
+                );
+            }
         } else {
             right = ItemFactory.getInstance().createStringItem("");
         }
