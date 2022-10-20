@@ -166,7 +166,7 @@ public class JsoniqQueryExecutor {
             long materializationCount = sequence.populateListWithWarningOnlyIfCapReached(outputList);
             RumbleRuntimeConfiguration configuration = this.configuration;
             List<String> lines = outputList.stream()
-                .map(x -> configuration.getSerializer().serialize(x) + "\n---")
+                .map(x -> configuration.getSerializer().serialize(x))
                 .collect(Collectors.toList());
             if (outputPath != null) {
                 FileSystemUtil.write(outputUri, lines, this.configuration, ExceptionMetadata.EMPTY_METADATA);

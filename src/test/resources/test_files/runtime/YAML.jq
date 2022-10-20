@@ -1,6 +1,6 @@
-(:(:JIQS: ShouldRun; Output="([ 0, "x", { "a" : [ 1, { "b" : 2 }, [ 2.5 ] ], "o" : { "c" : 3 } } ], [ 1, { "b" : 2 }, [ 2.5 ] ], [ 2.5 ])" :)
+(:JIQS: ShouldRun; Output="([ 0, "x", { "a" : [ 1, { "b" : 2 }, [ 2.5 ] ], "o" : { "c" : 3 } } ], [ 1, { "b" : 2 }, [ 2.5 ] ], [ 2.5 ])" :)
 let $correct := (
-    for $item in yaml-doc("confusion_sample.yaml")
+    for $item in yaml-doc("../../queries/confusion_sample.yaml")
     let $guess := $item."guess", $target := $item."target"
     where $guess = $target
     group by $target
@@ -8,7 +8,7 @@ let $correct := (
 "Correct guesses": count($guess)})
 
 let $incorrect := (
-for $item in yaml-doc("confusion_sample.yaml")
+for $item in yaml-doc("../../queries/confusion_sample.yaml")
 let $guess := $item."guess", $target := $item."target"
 where $guess != $target
 group by $target
