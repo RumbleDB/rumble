@@ -7,6 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.spark.sql.AnalysisException;
 import org.apache.spark.sql.types.StructType;
@@ -357,12 +358,22 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
                 && expression.getKeys()
                     .stream()
                     .allMatch(key -> key instanceof StringLiteralExpression)
+                && expression.getValues()
+                    .stream()
+                    .map(Expression::getStaticSequenceType)
+                    .allMatch(type -> type.getArity() == SequenceType.Arity.One)
         ) {
             expression.setStaticSequenceType(
                 new SequenceType(
-                        ItemTypeFactory.createItemTypeFromStaticallyKnownNames(
-                            expression.getKeys(),
+                        ItemTypeFactory.createAnonymousObjectType(
+                            expression.getKeys()
+                                .stream()
+                                .map(key -> ((StringLiteralExpression) key).getValue())
+                                .collect(Collectors.toList()),
                             expression.getValues()
+                                .stream()
+                                .map(value -> value.getStaticSequenceType().getItemType())
+                                .collect(Collectors.toList())
                         )
                 )
             );

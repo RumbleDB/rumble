@@ -16,8 +16,6 @@ import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.InvalidSchemaException;
 import org.rumbledb.exceptions.OurBadException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
-import org.rumbledb.expressions.Expression;
-import org.rumbledb.expressions.primary.StringLiteralExpression;
 import org.rumbledb.items.ItemFactory;
 
 import java.util.*;
@@ -105,7 +103,14 @@ public class ItemTypeFactory {
         throw new InvalidSchemaException("Invalid JSound type definition: " + item, ExceptionMetadata.EMPTY_METADATA);
     }
 
-    public static ItemType createItemTypeFromStaticallyKnownNames(List<Expression> keys, List<Expression> values) {
+    /**
+     * Create an anonymous object type from keys and values.
+     * 
+     * @param keys a list of String representing the keys of the object
+     * @param values a list of ItemType of the values, all with arity == Arity.One
+     * @return an anonymous object type based on the provided keys and values
+     */
+    public static ItemType createAnonymousObjectType(List<String> keys, List<ItemType> values) {
         if (keys.size() != values.size()) {
             throw new InvalidSchemaException(
                     "Key list and value list must have the same dimensions",
@@ -114,20 +119,13 @@ public class ItemTypeFactory {
         }
         Map<String, FieldDescriptor> content = new LinkedHashMap<>();
         for (int i = 0; i < keys.size(); i++) {
-            Expression key = keys.get(i);
-            if (!(key instanceof StringLiteralExpression)) {
-                throw new InvalidSchemaException(
-                        "Field names must be statically known",
-                        ExceptionMetadata.EMPTY_METADATA
-                );
-            }
-            String name = ((StringLiteralExpression) key).getValue();
-            ItemType field = values.get(i).getStaticSequenceType().getItemType();
+            String key = keys.get(i);
+            ItemType field = values.get(i);
             FieldDescriptor fieldDescriptor = new FieldDescriptor();
-            fieldDescriptor.setName(name);
+            fieldDescriptor.setName(key);
             fieldDescriptor.setType(field);
-            fieldDescriptor.setRequired(false);
-            content.put(name, fieldDescriptor);
+            fieldDescriptor.setRequired(true);
+            content.put(key, fieldDescriptor);
         }
         return new ObjectItemType(
                 null,
