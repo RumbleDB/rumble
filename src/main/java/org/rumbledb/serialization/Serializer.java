@@ -1,8 +1,15 @@
 package org.rumbledb.serialization;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+
 import org.apache.commons.text.StringEscapeUtils;
 import org.rumbledb.api.Item;
 import org.rumbledb.exceptions.FunctionsNonSerializableException;
+import org.rumbledb.exceptions.OurBadException;
+
+import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
+import com.fasterxml.jackson.dataformat.yaml.YAMLGenerator;
 
 public class Serializer {
     public enum Method {
@@ -47,6 +54,25 @@ public class Serializer {
     }
 
     public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
+    	if(this.method.equals(Method.YAML))
+    	{
+    		YAMLFactory yamlFactory = new YAMLFactory();
+    		yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+    		// yamlFactory.enable(YAMLGenerator.Feature.CANONICAL_OUTPUT);
+    		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    		try {
+	    		YAMLGenerator yamlGenerator = yamlFactory.createGenerator(baos);
+	    		generateYAML(item, yamlGenerator);
+	    		yamlGenerator.flush();
+    		} catch (IOException ioe)
+    		{
+    			RuntimeException e = new OurBadException("Not able to output YAML.");
+    			e.initCause(ioe);
+    			throw e;
+    		}
+    		sb.append(baos.toString());
+    		return;
+    	}
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -54,9 +80,6 @@ public class Serializer {
             switch (this.method) {
                 case JSON:
                     appendJSONAtomicItem(item, sb);
-                    return;
-                case YAML:
-                    appendYAMLAtomicItem(item, sb);
                     return;
                 case TYSON:
                     sb.append("(\"");
@@ -73,21 +96,10 @@ public class Serializer {
                         appendJSONAtomicItem(item, sb);
                     }
                     return;
+                case YAML:
             }
         }
         if (item.isArray()) {
-            if (this.method.equals(Method.YAML)) {
-                for (Item member : item.getItems()) {
-                    sb.append("\n" + indent + "  ");
-                    sb.append("- ");
-                    if (member.isObject()) {
-                        serialize(member, sb, indent + "    ", false);
-                    } else {
-                        serialize(member, sb, indent + "  ", false);
-                    }
-                }
-                return;
-            }
             if (this.method.equals(Method.TYSON)) {
                 sb.append("(\"");
                 sb.append(item.getDynamicType().getIdentifierString());
@@ -122,27 +134,6 @@ public class Serializer {
             return;
         }
         if (item.isObject()) {
-            if (this.method.equals(Method.YAML)) {
-                String separator = "";
-                for (String key : item.getKeys()) {
-                    sb.append(separator);
-                    separator = "\n" + indent;
-                    sb.append(key);
-                    sb.append(":");
-                    Item value = item.getItemByKey(key);
-                    if (value.isObject()) {
-                        sb.append(separator);
-                        sb.append("  ");
-                        serialize(value, sb, indent + "  ", false);
-                    } else if (value.isArray()) {
-                        serialize(value, sb, indent, false);
-                    } else {
-                        sb.append(" ");
-                        serialize(value, sb, indent, false);
-                    }
-                }
-                return;
-            }
             if (this.method.equals(Method.TYSON)) {
                 sb.append("(\"");
                 sb.append(item.getDynamicType().getIdentifierString());
@@ -177,6 +168,31 @@ public class Serializer {
         }
     }
 
+    public void generateYAML(Item item, YAMLGenerator yamlGenerator) throws IOException {
+        if (item.isFunction()) {
+            throw new FunctionsNonSerializableException();
+        }
+        if (item.isAtomic()) {
+        	generateYAMLAtomicValue(item, yamlGenerator);
+        }
+        if (item.isArray()) {
+        	yamlGenerator.writeStartArray();
+            for (Item member : item.getItems()) {
+            	generateYAML(member, yamlGenerator);
+            }
+        	yamlGenerator.writeEndArray();
+        }
+        if (item.isObject()) {
+        	yamlGenerator.writeStartObject();
+            for (String key : item.getKeys()) {
+            	yamlGenerator.writeFieldName(key);
+                Item value = item.getItemByKey(key);
+            	generateYAML(value, yamlGenerator);
+            }
+            yamlGenerator.writeEndObject();
+        }
+    }
+
     private void appendJSONAtomicItem(Item item, StringBuffer sb) {
         boolean isStringValue = item.isAtomic() && !item.isNumeric() && !item.isBoolean() && !item.isNull();
         if (item.isDouble()) {
@@ -198,24 +214,24 @@ public class Serializer {
         }
     }
 
-    private void appendYAMLAtomicItem(Item item, StringBuffer sb) {
-        boolean isStringValue = false;
+    private void generateYAMLAtomicValue(Item item, YAMLGenerator generator) throws IOException {
         if (item.isDouble()) {
-            if (Double.isNaN(item.getDoubleValue()) || Double.isInfinite(item.getDoubleValue())) {
-                isStringValue = true;
-            }
+        	generator.writeNumber(item.getDoubleValue());
         }
-        if (item.isFloat()) {
-            if (Float.isNaN(item.getFloatValue()) || Float.isInfinite(item.getFloatValue())) {
-                isStringValue = true;
-            }
+        else if (item.isFloat()) {
+        	generator.writeNumber(item.getFloatValue());
         }
-        if (isStringValue) {
-            sb.append("\"");
-            sb.append(StringEscapeUtils.escapeJson(item.getStringValue()));
-            sb.append("\"");
-        } else {
-            sb.append(item.getStringValue());
+        else if (item.isInt()) {
+        	generator.writeNumber(item.getIntValue());
+        } 
+        else if (item.isInteger()) {
+        	generator.writeNumber(item.getIntegerValue());
+        }
+        else if (item.isDecimal()) {
+        	generator.writeNumber(item.getDecimalValue());
+        }
+        else {
+        	generator.writeString(item.getStringValue());
         }
     }
 }
