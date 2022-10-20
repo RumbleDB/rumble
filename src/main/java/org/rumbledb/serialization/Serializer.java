@@ -54,25 +54,23 @@ public class Serializer {
     }
 
     public void serialize(Item item, StringBuffer sb, String indent, boolean isTopLevel) {
-    	if(this.method.equals(Method.YAML))
-    	{
-    		YAMLFactory yamlFactory = new YAMLFactory();
-    		yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
-    		// yamlFactory.enable(YAMLGenerator.Feature.CANONICAL_OUTPUT);
-    		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-    		try {
-	    		YAMLGenerator yamlGenerator = yamlFactory.createGenerator(baos);
-	    		generateYAML(item, yamlGenerator);
-	    		yamlGenerator.flush();
-    		} catch (IOException ioe)
-    		{
-    			RuntimeException e = new OurBadException("Not able to output YAML.");
-    			e.initCause(ioe);
-    			throw e;
-    		}
-    		sb.append(baos.toString());
-    		return;
-    	}
+        if (this.method.equals(Method.YAML)) {
+            YAMLFactory yamlFactory = new YAMLFactory();
+            // yamlFactory.disable(YAMLGenerator.Feature.WRITE_DOC_START_MARKER);
+            // yamlFactory.enable(YAMLGenerator.Feature.CANONICAL_OUTPUT);
+            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            try {
+                YAMLGenerator yamlGenerator = yamlFactory.createGenerator(baos);
+                generateYAML(item, yamlGenerator);
+                yamlGenerator.flush();
+            } catch (IOException ioe) {
+                RuntimeException e = new OurBadException("Not able to output YAML.");
+                e.initCause(ioe);
+                throw e;
+            }
+            sb.append(baos.toString());
+            return;
+        }
         if (item.isFunction()) {
             throw new FunctionsNonSerializableException();
         }
@@ -173,21 +171,21 @@ public class Serializer {
             throw new FunctionsNonSerializableException();
         }
         if (item.isAtomic()) {
-        	generateYAMLAtomicValue(item, yamlGenerator);
+            generateYAMLAtomicValue(item, yamlGenerator);
         }
         if (item.isArray()) {
-        	yamlGenerator.writeStartArray();
+            yamlGenerator.writeStartArray();
             for (Item member : item.getItems()) {
-            	generateYAML(member, yamlGenerator);
+                generateYAML(member, yamlGenerator);
             }
-        	yamlGenerator.writeEndArray();
+            yamlGenerator.writeEndArray();
         }
         if (item.isObject()) {
-        	yamlGenerator.writeStartObject();
+            yamlGenerator.writeStartObject();
             for (String key : item.getKeys()) {
-            	yamlGenerator.writeFieldName(key);
+                yamlGenerator.writeFieldName(key);
                 Item value = item.getItemByKey(key);
-            	generateYAML(value, yamlGenerator);
+                generateYAML(value, yamlGenerator);
             }
             yamlGenerator.writeEndObject();
         }
@@ -216,22 +214,17 @@ public class Serializer {
 
     private void generateYAMLAtomicValue(Item item, YAMLGenerator generator) throws IOException {
         if (item.isDouble()) {
-        	generator.writeNumber(item.getDoubleValue());
-        }
-        else if (item.isFloat()) {
-        	generator.writeNumber(item.getFloatValue());
-        }
-        else if (item.isInt()) {
-        	generator.writeNumber(item.getIntValue());
-        } 
-        else if (item.isInteger()) {
-        	generator.writeNumber(item.getIntegerValue());
-        }
-        else if (item.isDecimal()) {
-        	generator.writeNumber(item.getDecimalValue());
-        }
-        else {
-        	generator.writeString(item.getStringValue());
+            generator.writeNumber(item.getDoubleValue());
+        } else if (item.isFloat()) {
+            generator.writeNumber(item.getFloatValue());
+        } else if (item.isInt()) {
+            generator.writeNumber(item.getIntValue());
+        } else if (item.isInteger()) {
+            generator.writeNumber(item.getIntegerValue());
+        } else if (item.isDecimal()) {
+            generator.writeNumber(item.getDecimalValue());
+        } else {
+            generator.writeString(item.getStringValue());
         }
     }
 }

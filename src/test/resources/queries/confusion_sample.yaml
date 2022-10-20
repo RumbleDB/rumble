@@ -1,3 +1,4 @@
+---
 guess: "Norwegian"
 target: "Norwegian"
 country: "AU"
@@ -8,6 +9,7 @@ choices:
 - "Tongan"
 sample: "48f9c924e0d98c959d8a6f1862b3ce9a"
 date: "2013-08-19"
+---
 guess: "Dinka"
 target: "Dinka"
 country: "AU"
@@ -18,6 +20,7 @@ choices:
 - "Lao"
 sample: "af5e8f27cef9e689a070b8814dcc02c3"
 date: "2013-08-19"
+---
 guess: "Turkish"
 target: "Samoan"
 country: "AU"
@@ -28,6 +31,7 @@ choices:
 - "Turkish"
 sample: "509c36eb58dbce009ccf93f375358d53"
 date: "2013-08-19"
+---
 guess: "Latvian"
 target: "Somali"
 country: "AU"
@@ -38,6 +42,7 @@ choices:
 - "Somali"
 sample: "a505ab771ae7c32744ad31b3051b8ee9"
 date: "2013-08-19"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -48,6 +53,7 @@ choices:
 - "Japanese"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-19"
+---
 guess: "Maltese"
 target: "Turkish"
 country: "AU"
@@ -58,6 +64,7 @@ choices:
 - "Turkish"
 sample: "af0e25c7637fb0dcdc56fac6d49aa55e"
 date: "2013-08-19"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -68,6 +75,7 @@ choices:
 - "Swedish"
 sample: "92f9e1c17e6df988780527341fdb471d"
 date: "2013-08-19"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -78,6 +86,7 @@ choices:
 - "Vietnamese"
 sample: "e77d97b712adffc39e531e20237a5589"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -88,6 +97,7 @@ choices:
 - "Spanish"
 sample: "dc3ace49393de518e87d4f8d3ae8d9db"
 date: "2013-08-19"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -98,6 +108,7 @@ choices:
 - "Romanian"
 sample: "903fc45cba5245f21deaaca3966f825b"
 date: "2013-08-19"
+---
 guess: "Cantonese"
 target: "Cantonese"
 country: "AU"
@@ -108,6 +119,7 @@ choices:
 - "Ukrainian"
 sample: "203628f42619d301e642b3553b7a684a"
 date: "2013-08-19"
+---
 guess: "Amharic"
 target: "Dinka"
 country: "AU"
@@ -118,6 +130,7 @@ choices:
 - "Thai"
 sample: "cd3dffdb83f221e09710cbfbcaffdb31"
 date: "2013-08-19"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -128,6 +141,7 @@ choices:
 - "Turkish"
 sample: "16ac545260ae198b7a3d882e06e5f261"
 date: "2013-08-19"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -138,6 +152,7 @@ choices:
 - "Yiddish"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-19"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -148,6 +163,7 @@ choices:
 - "Somali"
 sample: "9f849ff225f0d94a52c186924e225231"
 date: "2013-08-19"
+---
 guess: "Italian"
 target: "Italian"
 country: "AU"
@@ -158,6 +174,7 @@ choices:
 - "Khmer"
 sample: "88f3e5120091cffdf8abeb92b5da90a2"
 date: "2013-08-19"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -168,6 +185,7 @@ choices:
 - "Tamil"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-19"
+---
 guess: "Kannada"
 target: "Kannada"
 country: "AU"
@@ -178,6 +196,7 @@ choices:
 - "Serbian"
 sample: "c11a7723bd3fcd00e33e90c90a3492e5"
 date: "2013-08-19"
+---
 guess: "Dinka"
 target: "Dinka"
 country: "AU"
@@ -188,6 +207,7 @@ choices:
 - "Yiddish"
 sample: "cd3dffdb83f221e09710cbfbcaffdb31"
 date: "2013-08-19"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -198,6 +218,7 @@ choices:
 - "German"
 sample: "78213fa858b9a45d83121a8bf71712d1"
 date: "2013-08-19"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -208,6 +229,7 @@ choices:
 - "Lao"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-19"
+---
 guess: "Croatian"
 target: "Albanian"
 country: "AU"
@@ -218,6 +240,7 @@ choices:
 - "Indonesian"
 sample: "00b85faa8b878a14f8781be334deb137"
 date: "2013-08-19"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -228,6 +251,7 @@ choices:
 - "Tongan"
 sample: "4cf041f244960196b98c7d6ae8c79ed3"
 date: "2013-08-19"
+---
 guess: "Hungarian"
 target: "Turkish"
 country: "AU"
@@ -238,6 +262,7 @@ choices:
 - "Turkish"
 sample: "af0e25c7637fb0dcdc56fac6d49aa55e"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Swahili"
 country: "AU"
@@ -248,6 +273,7 @@ choices:
 - "Turkish"
 sample: "ac1275769d8aaf8758f95409271f8a2f"
 date: "2013-08-19"
+---
 guess: "Vietnamese"
 target: "Vietnamese"
 country: "AU"
@@ -258,6 +284,7 @@ choices:
 - "Vietnamese"
 sample: "8ea6892d1ddca321adc07b05176e3605"
 date: "2013-08-19"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -268,6 +295,7 @@ choices:
 - "Portuguese"
 sample: "5fd851c9e87a6b9b9da9eb2ab0de6686"
 date: "2013-08-19"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -278,6 +306,7 @@ choices:
 - "Ukrainian"
 sample: "faa86f6efaf2ee67f95239685d26fd88"
 date: "2013-08-19"
+---
 guess: "Malayalam"
 target: "Indonesian"
 country: "AU"
@@ -288,6 +317,7 @@ choices:
 - "Russian"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-19"
+---
 guess: "Finnish"
 target: "Finnish"
 country: "AU"
@@ -298,6 +328,7 @@ choices:
 - "Yiddish"
 sample: "4a3dfa40ed621940a0a38408956b86e0"
 date: "2013-08-19"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -308,6 +339,7 @@ choices:
 - "Tamil"
 sample: "78213fa858b9a45d83121a8bf71712d1"
 date: "2013-08-19"
+---
 guess: "Greek"
 target: "Fijian"
 country: "AU"
@@ -318,6 +350,7 @@ choices:
 - "Vietnamese"
 sample: "f53c7596c141ee6d5d2b3ab90361f802"
 date: "2013-08-19"
+---
 guess: "Burmese"
 target: "Burmese"
 country: "AU"
@@ -328,6 +361,7 @@ choices:
 - "Kurdish"
 sample: "878d3d845ccb0859aa05e80e1d35730f"
 date: "2013-08-19"
+---
 guess: "Turkish"
 target: "Khmer"
 country: "AU"
@@ -338,6 +372,7 @@ choices:
 - "Turkish"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-19"
+---
 guess: "Fijian"
 target: "Dinka"
 country: "AU"
@@ -348,6 +383,7 @@ choices:
 - "Thai"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-19"
+---
 guess: "Swahili"
 target: "Swahili"
 country: "AU"
@@ -358,6 +394,7 @@ choices:
 - "Swedish"
 sample: "1b959fe55794f6d4e1ea038bfe336759"
 date: "2013-08-19"
+---
 guess: "Norwegian"
 target: "Polish"
 country: "AU"
@@ -368,6 +405,7 @@ choices:
 - "Polish"
 sample: "f1aac78bec424c4d6c716553719b0b70"
 date: "2013-08-19"
+---
 guess: "Swedish"
 target: "Dutch"
 country: "AU"
@@ -378,6 +416,7 @@ choices:
 - "Swedish"
 sample: "5cd22cbf16be1a93d304d589431c3ec3"
 date: "2013-08-19"
+---
 guess: "Ukrainian"
 target: "Albanian"
 country: "AU"
@@ -388,6 +427,7 @@ choices:
 - "Ukrainian"
 sample: "efcd813daec1c836d9f030b30caa07ce"
 date: "2013-08-19"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -398,6 +438,7 @@ choices:
 - "Vietnamese"
 sample: "157085744728e35079622c71804cf722"
 date: "2013-08-19"
+---
 guess: "Slovenian"
 target: "Norwegian"
 country: "AU"
@@ -408,6 +449,7 @@ choices:
 - "Slovenian"
 sample: "208e1606aa365f3ed573adc7111f58e9"
 date: "2013-08-19"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -418,6 +460,7 @@ choices:
 - "Tongan"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-19"
+---
 guess: "Bulgarian"
 target: "Albanian"
 country: "AU"
@@ -428,6 +471,7 @@ choices:
 - "Ukrainian"
 sample: "00b85faa8b878a14f8781be334deb137"
 date: "2013-08-19"
+---
 guess: "Turkish"
 target: "Dinka"
 country: "AU"
@@ -438,6 +482,7 @@ choices:
 - "Turkish"
 sample: "cd3dffdb83f221e09710cbfbcaffdb31"
 date: "2013-08-19"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -448,6 +493,7 @@ choices:
 - "Vietnamese"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-19"
+---
 guess: "Urdu"
 target: "Estonian"
 country: "AU"
@@ -458,6 +504,7 @@ choices:
 - "Urdu"
 sample: "5af9790de5ecef3853d6d89f8e75916c"
 date: "2013-08-19"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -468,6 +515,7 @@ choices:
 - "Portuguese"
 sample: "5fd851c9e87a6b9b9da9eb2ab0de6686"
 date: "2013-08-19"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "AU"
@@ -478,6 +526,7 @@ choices:
 - "Serbian"
 sample: "ec4d6dad1be487091ec2b1b63820e329"
 date: "2013-08-19"
+---
 guess: "Dinka"
 target: "Samoan"
 country: "AU"
@@ -488,6 +537,7 @@ choices:
 - "Samoan"
 sample: "509c36eb58dbce009ccf93f375358d53"
 date: "2013-08-19"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -498,6 +548,7 @@ choices:
 - "Ukrainian"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-19"
+---
 guess: "Tagalog"
 target: "Tagalog"
 country: "AU"
@@ -508,6 +559,7 @@ choices:
 - "Turkish"
 sample: "34df5eca0db3967da23f8a210337c9d6"
 date: "2013-08-19"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "AU"
@@ -518,6 +570,7 @@ choices:
 - "Vietnamese"
 sample: "ec4d6dad1be487091ec2b1b63820e329"
 date: "2013-08-19"
+---
 guess: "Bulgarian"
 target: "Russian"
 country: "AU"
@@ -528,6 +581,7 @@ choices:
 - "Samoan"
 sample: "ff5b5a0d34c77d2e2027dad7e4deb094"
 date: "2013-08-19"
+---
 guess: "Polish"
 target: "Slovenian"
 country: "AU"
@@ -538,6 +592,7 @@ choices:
 - "Slovenian"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-19"
+---
 guess: "Nepali"
 target: "Dinka"
 country: "AU"
@@ -548,6 +603,7 @@ choices:
 - "Nepali"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-19"
+---
 guess: "Latvian"
 target: "Latvian"
 country: "AU"
@@ -558,6 +614,7 @@ choices:
 - "Portuguese"
 sample: "5aea2b93784263ae4b5a2524ddebebb2"
 date: "2013-08-19"
+---
 guess: "Hungarian"
 target: "Czech"
 country: "AU"
@@ -568,6 +625,7 @@ choices:
 - "Slovak"
 sample: "56626a14b479e47d5eb9568161dad285"
 date: "2013-08-19"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -578,6 +636,7 @@ choices:
 - "Nepali"
 sample: "faa86f6efaf2ee67f95239685d26fd88"
 date: "2013-08-19"
+---
 guess: "Urdu"
 target: "Urdu"
 country: "AU"
@@ -588,6 +647,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-19"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -598,6 +658,7 @@ choices:
 - "Hungarian"
 sample: "a7d34c215264677c8385e90fa5363ec1"
 date: "2013-08-19"
+---
 guess: "Swahili"
 target: "Tigrinya"
 country: "AU"
@@ -608,6 +669,7 @@ choices:
 - "Tigrinya"
 sample: "3ec316c78773bb826dd924926f5c0d07"
 date: "2013-08-19"
+---
 guess: "Tamil"
 target: "Tamil"
 country: "AU"
@@ -618,6 +680,7 @@ choices:
 - "Tamil"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-19"
+---
 guess: "Danish"
 target: "Danish"
 country: "AU"
@@ -628,6 +691,7 @@ choices:
 - "Kurdish"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-19"
+---
 guess: "Burmese"
 target: "Burmese"
 country: "AU"
@@ -638,6 +702,7 @@ choices:
 - "Ukrainian"
 sample: "31cba304794d1828c93d7b3c63aa840a"
 date: "2013-08-19"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -648,6 +713,7 @@ choices:
 - "Sinhalese"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-19"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -658,6 +724,7 @@ choices:
 - "Maltese"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-19"
+---
 guess: "Dutch"
 target: "Dutch"
 country: "AU"
@@ -668,6 +735,7 @@ choices:
 - "Mandarin"
 sample: "bf0f1eec2e9f147aba20ea9b3e9564bb"
 date: "2013-08-19"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -678,6 +746,7 @@ choices:
 - "Mandarin"
 sample: "01f51995ae86ff85e899d40768ab81a8"
 date: "2013-08-19"
+---
 guess: "Estonian"
 target: "Estonian"
 country: "AU"
@@ -688,6 +757,7 @@ choices:
 - "Urdu"
 sample: "b7e986bd3a0d5fd1db661e3bedf36111"
 date: "2013-08-19"
+---
 guess: "Serbian"
 target: "Armenian"
 country: "AU"
@@ -698,6 +768,7 @@ choices:
 - "Yiddish"
 sample: "d34689ff8c3532426256b0963d7df2bb"
 date: "2013-08-19"
+---
 guess: "Indonesian"
 target: "Indonesian"
 country: "AU"
@@ -708,6 +779,7 @@ choices:
 - "Romanian"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-19"
+---
 guess: "Sinhalese"
 target: "Sinhalese"
 country: "AU"
@@ -718,6 +790,7 @@ choices:
 - "Urdu"
 sample: "755de9092b301614712fae5e1d2d47d3"
 date: "2013-08-19"
+---
 guess: "Bangla"
 target: "Bangla"
 country: "AU"
@@ -728,6 +801,7 @@ choices:
 - "Yiddish"
 sample: "b2132278200e1e601b6814a15fdabcc1"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -738,6 +812,7 @@ choices:
 - "Thai"
 sample: "c8f4f097079404bf9a0e94d604efd1d5"
 date: "2013-08-19"
+---
 guess: "Italian"
 target: "Italian"
 country: "AU"
@@ -748,6 +823,7 @@ choices:
 - "Malayalam"
 sample: "88f3e5120091cffdf8abeb92b5da90a2"
 date: "2013-08-19"
+---
 guess: "Arabic"
 target: "Arabic"
 country: "AU"
@@ -758,6 +834,7 @@ choices:
 - "Urdu"
 sample: "8903e496bf04c3a85a70e1dc5e0da5f1"
 date: "2013-08-19"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "AU"
@@ -768,6 +845,7 @@ choices:
 - "Tongan"
 sample: "10ff356faf50696b30f8a58b9dd919b2"
 date: "2013-08-19"
+---
 guess: "Hindi"
 target: "Hindi"
 country: "AU"
@@ -778,6 +856,7 @@ choices:
 - "Spanish"
 sample: "568bfed6715c43735f95faef578d7cd5"
 date: "2013-08-19"
+---
 guess: "Dari"
 target: "Dari"
 country: "AU"
@@ -788,6 +867,7 @@ choices:
 - "Tamil"
 sample: "cad47cd466a2d8c25fa7a21c15cbb3cf"
 date: "2013-08-19"
+---
 guess: "Tongan"
 target: "Tongan"
 country: "AU"
@@ -798,6 +878,7 @@ choices:
 - "Tongan"
 sample: "838cfe7f928e1a41710e01b3ee12088f"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -808,6 +889,7 @@ choices:
 - "Samoan"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-19"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -818,6 +900,7 @@ choices:
 - "Romanian"
 sample: "903fc45cba5245f21deaaca3966f825b"
 date: "2013-08-19"
+---
 guess: "Malay"
 target: "Malay"
 country: "AU"
@@ -828,6 +911,7 @@ choices:
 - "Malay"
 sample: "610d45322ed5aa122cf9b4a79d603781"
 date: "2013-08-19"
+---
 guess: "Bangla"
 target: "Bangla"
 country: "AU"
@@ -838,6 +922,7 @@ choices:
 - "Portuguese"
 sample: "b2132278200e1e601b6814a15fdabcc1"
 date: "2013-08-19"
+---
 guess: "Hindi"
 target: "Hindi"
 country: "AU"
@@ -848,6 +933,7 @@ choices:
 - "Maltese"
 sample: "9dac641f173f2a225501e8e50fc4e66e"
 date: "2013-08-19"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -858,6 +944,7 @@ choices:
 - "Turkish"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-19"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -868,6 +955,7 @@ choices:
 - "Portuguese"
 sample: "4cf041f244960196b98c7d6ae8c79ed3"
 date: "2013-08-19"
+---
 guess: "Vietnamese"
 target: "Vietnamese"
 country: "AU"
@@ -878,6 +966,7 @@ choices:
 - "Vietnamese"
 sample: "8ea6892d1ddca321adc07b05176e3605"
 date: "2013-08-19"
+---
 guess: "Tagalog"
 target: "Tagalog"
 country: "AU"
@@ -888,6 +977,7 @@ choices:
 - "Ukrainian"
 sample: "34df5eca0db3967da23f8a210337c9d6"
 date: "2013-08-19"
+---
 guess: "Hungarian"
 target: "Danish"
 country: "AU"
@@ -898,6 +988,7 @@ choices:
 - "Samoan"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-19"
+---
 guess: "Polish"
 target: "Slovenian"
 country: "AU"
@@ -908,6 +999,7 @@ choices:
 - "Slovenian"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-19"
+---
 guess: "Kannada"
 target: "Kannada"
 country: "AU"
@@ -918,6 +1010,7 @@ choices:
 - "Thai"
 sample: "cf08af2ccb8382aa6c624095ec4f93fb"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -928,6 +1021,7 @@ choices:
 - "Spanish"
 sample: "c8f4f097079404bf9a0e94d604efd1d5"
 date: "2013-08-19"
+---
 guess: "Urdu"
 target: "Armenian"
 country: "AU"
@@ -938,6 +1032,7 @@ choices:
 - "Urdu"
 sample: "b46fa4a310d337db8f055083c68ba863"
 date: "2013-08-19"
+---
 guess: "Tagalog"
 target: "Tongan"
 country: "AU"
@@ -948,6 +1043,7 @@ choices:
 - "Urdu"
 sample: "6ba74243165c6e7fb5255890b18f8807"
 date: "2013-08-19"
+---
 guess: "Farsi"
 target: "Farsi"
 country: "AU"
@@ -958,6 +1054,7 @@ choices:
 - "Tongan"
 sample: "d7a4029f42521d56af05c9f947a516c1"
 date: "2013-08-19"
+---
 guess: "Indonesian"
 target: "Indonesian"
 country: "AU"
@@ -968,6 +1065,7 @@ choices:
 - "Japanese"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-19"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -978,6 +1076,7 @@ choices:
 - "Vietnamese"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -988,6 +1087,7 @@ choices:
 - "Yiddish"
 sample: "dc3ace49393de518e87d4f8d3ae8d9db"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Lao"
 country: "AU"
@@ -998,6 +1098,7 @@ choices:
 - "Punjabi"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -1008,6 +1109,7 @@ choices:
 - "Spanish"
 sample: "dc3ace49393de518e87d4f8d3ae8d9db"
 date: "2013-08-19"
+---
 guess: "Burmese"
 target: "Fijian"
 country: "AU"
@@ -1018,6 +1120,7 @@ choices:
 - "Maltese"
 sample: "f53c7596c141ee6d5d2b3ab90361f802"
 date: "2013-08-19"
+---
 guess: "Ukrainian"
 target: "Ukrainian"
 country: "AU"
@@ -1028,6 +1131,7 @@ choices:
 - "Ukrainian"
 sample: "6d86f6da48a5d151593317f64da0421f"
 date: "2013-08-19"
+---
 guess: "Indonesian"
 target: "Indonesian"
 country: "AU"
@@ -1038,6 +1142,7 @@ choices:
 - "Vietnamese"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-19"
+---
 guess: "Farsi"
 target: "Urdu"
 country: "AU"
@@ -1048,6 +1153,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-19"
+---
 guess: "Italian"
 target: "Greek"
 country: "AU"
@@ -1058,6 +1164,7 @@ choices:
 - "Slovenian"
 sample: "0f43daadf6a1ce6d769fa0daa630b5f6"
 date: "2013-08-19"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -1068,6 +1175,7 @@ choices:
 - "Spanish"
 sample: "01f51995ae86ff85e899d40768ab81a8"
 date: "2013-08-19"
+---
 guess: "Vietnamese"
 target: "Vietnamese"
 country: "AU"
@@ -1078,6 +1186,7 @@ choices:
 - "Vietnamese"
 sample: "3aab36435babaea46064d7f173bb0ba3"
 date: "2013-08-19"
+---
 guess: "Polish"
 target: "Maori"
 country: "AU"
@@ -1088,6 +1197,7 @@ choices:
 - "Polish"
 sample: "1e94210c21a6af48b9c418a7d6380a1c"
 date: "2013-08-19"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -1098,6 +1208,7 @@ choices:
 - "Italian"
 sample: "830854fd9c28424c604eaef2e97e61b3"
 date: "2013-08-19"
+---
 guess: "Vietnamese"
 target: "Vietnamese"
 country: "AU"
@@ -1108,6 +1219,7 @@ choices:
 - "Vietnamese"
 sample: "3aab36435babaea46064d7f173bb0ba3"
 date: "2013-08-19"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -1118,6 +1230,7 @@ choices:
 - "Russian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-19"
+---
 guess: "Punjabi"
 target: "Hindi"
 country: "AU"
@@ -1128,6 +1241,7 @@ choices:
 - "Punjabi"
 sample: "9dac641f173f2a225501e8e50fc4e66e"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -1138,6 +1252,7 @@ choices:
 - "Swedish"
 sample: "c8f4f097079404bf9a0e94d604efd1d5"
 date: "2013-08-19"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -1148,6 +1263,7 @@ choices:
 - "Swahili"
 sample: "830854fd9c28424c604eaef2e97e61b3"
 date: "2013-08-19"
+---
 guess: "Arabic"
 target: "Arabic"
 country: "AU"
@@ -1158,6 +1274,7 @@ choices:
 - "Serbian"
 sample: "8903e496bf04c3a85a70e1dc5e0da5f1"
 date: "2013-08-19"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -1168,6 +1285,7 @@ choices:
 - "Kurdish"
 sample: "78213fa858b9a45d83121a8bf71712d1"
 date: "2013-08-19"
+---
 guess: "Urdu"
 target: "Maltese"
 country: "AU"
@@ -1178,6 +1296,7 @@ choices:
 - "Urdu"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-19"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -1188,6 +1307,7 @@ choices:
 - "Turkish"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-19"
+---
 guess: "Urdu"
 target: "Yiddish"
 country: "AU"
@@ -1198,6 +1318,7 @@ choices:
 - "Yiddish"
 sample: "491ce6f2acb4a588a4e6ff3570d429a5"
 date: "2013-08-19"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -1208,6 +1329,7 @@ choices:
 - "Yiddish"
 sample: "fc3712715ddc748286256eb7a64f25ab"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -1218,6 +1340,7 @@ choices:
 - "Spanish"
 sample: "d8d9dfa02ff280d107d54fd8f19ab5bb"
 date: "2013-08-19"
+---
 guess: "Danish"
 target: "Danish"
 country: "AU"
@@ -1228,6 +1351,7 @@ choices:
 - "Punjabi"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-19"
+---
 guess: "Serbian"
 target: "Macedonian"
 country: "AU"
@@ -1238,6 +1362,7 @@ choices:
 - "Ukrainian"
 sample: "968e9c700742f65c43ad3cb99209e787"
 date: "2013-08-19"
+---
 guess: "Greek"
 target: "Greek"
 country: "AU"
@@ -1248,6 +1373,7 @@ choices:
 - "Greek"
 sample: "17527de743e8a5b5c339fb8ff117f65b"
 date: "2013-08-19"
+---
 guess: "Sinhalese"
 target: "Sinhalese"
 country: "AU"
@@ -1258,6 +1384,7 @@ choices:
 - "Sinhalese"
 sample: "755de9092b301614712fae5e1d2d47d3"
 date: "2013-08-19"
+---
 guess: "Bosnian"
 target: "Maltese"
 country: "AU"
@@ -1268,6 +1395,7 @@ choices:
 - "Maltese"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-19"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -1278,6 +1406,7 @@ choices:
 - "Slovenian"
 sample: "01f51995ae86ff85e899d40768ab81a8"
 date: "2013-08-19"
+---
 guess: "Tamil"
 target: "Tamil"
 country: "AU"
@@ -1288,6 +1417,7 @@ choices:
 - "Turkish"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-19"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -1298,6 +1428,7 @@ choices:
 - "Sinhalese"
 sample: "439672210d1feb96e012590ff2a73590"
 date: "2013-08-19"
+---
 guess: "Tongan"
 target: "Tongan"
 country: "AU"
@@ -1308,6 +1439,7 @@ choices:
 - "Tongan"
 sample: "838cfe7f928e1a41710e01b3ee12088f"
 date: "2013-08-19"
+---
 guess: "Slovenian"
 target: "Albanian"
 country: "AU"
@@ -1318,6 +1450,7 @@ choices:
 - "Swahili"
 sample: "efcd813daec1c836d9f030b30caa07ce"
 date: "2013-08-19"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -1328,6 +1461,7 @@ choices:
 - "Yiddish"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-19"
+---
 guess: "Czech"
 target: "Swedish"
 country: "AU"
@@ -1338,6 +1472,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-19"
+---
 guess: "Kannada"
 target: "Farsi"
 country: "AU"
@@ -1348,6 +1483,7 @@ choices:
 - "Turkish"
 sample: "70154ea13cf1c633cfe62d44919a347c"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -1358,6 +1494,7 @@ choices:
 - "Khmer"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-19"
+---
 guess: "German"
 target: "Danish"
 country: "AU"
@@ -1368,6 +1505,7 @@ choices:
 - "Turkish"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-19"
+---
 guess: "Korean"
 target: "Korean"
 country: "AU"
@@ -1378,6 +1516,7 @@ choices:
 - "Somali"
 sample: "ec371adb75ab6c7431adae3ef8fc9fc9"
 date: "2013-08-19"
+---
 guess: "Fijian"
 target: "Fijian"
 country: "AU"
@@ -1388,6 +1527,7 @@ choices:
 - "Somali"
 sample: "93b8857d01978401e679f0bde0a7b5b0"
 date: "2013-08-19"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -1398,6 +1538,7 @@ choices:
 - "Sinhalese"
 sample: "439672210d1feb96e012590ff2a73590"
 date: "2013-08-19"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -1408,6 +1549,7 @@ choices:
 - "Punjabi"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -1418,6 +1560,7 @@ choices:
 - "Latvian"
 sample: "84f7df7508e423234fd1adec4f84e528"
 date: "2013-08-19"
+---
 guess: "Estonian"
 target: "Dutch"
 country: "AU"
@@ -1428,6 +1571,7 @@ choices:
 - "Swedish"
 sample: "bf0f1eec2e9f147aba20ea9b3e9564bb"
 date: "2013-08-19"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -1438,6 +1582,7 @@ choices:
 - "Thai"
 sample: "dc3ace49393de518e87d4f8d3ae8d9db"
 date: "2013-08-19"
+---
 guess: "Cantonese"
 target: "Cantonese"
 country: "AU"
@@ -1448,6 +1593,7 @@ choices:
 - "Somali"
 sample: "78e21624c41e6efc3ac790735180615d"
 date: "2013-08-19"
+---
 guess: "Turkish"
 target: "Latvian"
 country: "AU"
@@ -1458,6 +1604,7 @@ choices:
 - "Turkish"
 sample: "447bcafdbe5d7d69e0db72ab5bfa043a"
 date: "2013-08-19"
+---
 guess: "Bulgarian"
 target: "Bulgarian"
 country: "AU"
@@ -1468,6 +1615,7 @@ choices:
 - "Khmer"
 sample: "69a5c674fe40942aaae4d10c9df46ee0"
 date: "2013-08-19"
+---
 guess: "Polish"
 target: "Polish"
 country: "AU"
@@ -1478,6 +1626,7 @@ choices:
 - "Polish"
 sample: "98890a26d68bcf75f6087566971f126f"
 date: "2013-08-19"
+---
 guess: "Farsi"
 target: "Slovak"
 country: "AU"
@@ -1488,6 +1637,7 @@ choices:
 - "Slovak"
 sample: "2c5efbd7364036976ec403a9ee36f614"
 date: "2013-08-19"
+---
 guess: "Latvian"
 target: "Latvian"
 country: "AU"
@@ -1498,6 +1648,7 @@ choices:
 - "Russian"
 sample: "447bcafdbe5d7d69e0db72ab5bfa043a"
 date: "2013-08-19"
+---
 guess: "Malay"
 target: "Malay"
 country: "AU"
@@ -1508,6 +1659,7 @@ choices:
 - "Tongan"
 sample: "6650448a5456ba88ea0971f2265f2bc7"
 date: "2013-08-19"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -1518,6 +1670,7 @@ choices:
 - "Urdu"
 sample: "84f7df7508e423234fd1adec4f84e528"
 date: "2013-08-19"
+---
 guess: "Farsi"
 target: "Armenian"
 country: "AU"
@@ -1528,6 +1681,7 @@ choices:
 - "Portuguese"
 sample: "e4588d7c735b9a87d93ada6d24a7bd53"
 date: "2013-08-19"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -1538,6 +1692,7 @@ choices:
 - "Romanian"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-19"
+---
 guess: "Burmese"
 target: "Dinka"
 country: "AU"
@@ -1548,6 +1703,7 @@ choices:
 - "Indonesian"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-19"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -1558,6 +1714,7 @@ choices:
 - "Sinhalese"
 sample: "56ecf19cff578aa76b81edb580ff343f"
 date: "2013-08-19"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -1568,6 +1725,7 @@ choices:
 - "Mandarin"
 sample: "fc3712715ddc748286256eb7a64f25ab"
 date: "2013-08-19"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -1578,6 +1736,7 @@ choices:
 - "Vietnamese"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-19"
+---
 guess: "Tongan"
 target: "Tongan"
 country: "AU"
@@ -1588,6 +1747,7 @@ choices:
 - "Tongan"
 sample: "838cfe7f928e1a41710e01b3ee12088f"
 date: "2013-08-19"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -1598,6 +1758,7 @@ choices:
 - "Tamil"
 sample: "faa86f6efaf2ee67f95239685d26fd88"
 date: "2013-08-19"
+---
 guess: "Estonian"
 target: "Maori"
 country: "AU"
@@ -1608,6 +1769,7 @@ choices:
 - "Portuguese"
 sample: "1e94210c21a6af48b9c418a7d6380a1c"
 date: "2013-08-19"
+---
 guess: "Latvian"
 target: "Sinhalese"
 country: "AU"
@@ -1618,6 +1780,7 @@ choices:
 - "Sinhalese"
 sample: "c4d4db8bf910cf4350fc87b3f3667976"
 date: "2013-08-19"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -1628,6 +1791,7 @@ choices:
 - "Turkish"
 sample: "e178a0abbbb171d9b785d8350a45f203"
 date: "2013-08-19"
+---
 guess: "Norwegian"
 target: "Norwegian"
 country: "AU"
@@ -1638,6 +1802,7 @@ choices:
 - "Norwegian"
 sample: "48f9c924e0d98c959d8a6f1862b3ce9a"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -1648,6 +1813,7 @@ choices:
 - "Urdu"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-20"
+---
 guess: "Ukrainian"
 target: "Ukrainian"
 country: "AU"
@@ -1658,6 +1824,7 @@ choices:
 - "Yiddish"
 sample: "064ca74dff16ce8dade4a7acdc0def8a"
 date: "2013-08-20"
+---
 guess: "Vietnamese"
 target: "Vietnamese"
 country: "AU"
@@ -1668,6 +1835,7 @@ choices:
 - "Vietnamese"
 sample: "8ea6892d1ddca321adc07b05176e3605"
 date: "2013-08-20"
+---
 guess: "Dutch"
 target: "Dutch"
 country: "AU"
@@ -1678,6 +1846,7 @@ choices:
 - "Serbian"
 sample: "bf0f1eec2e9f147aba20ea9b3e9564bb"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -1688,6 +1857,7 @@ choices:
 - "Punjabi"
 sample: "5fd851c9e87a6b9b9da9eb2ab0de6686"
 date: "2013-08-20"
+---
 guess: "Dari"
 target: "Serbian"
 country: "AU"
@@ -1698,6 +1868,7 @@ choices:
 - "Vietnamese"
 sample: "0d5b697ebb326b5043ce7fa60a7b968d"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -1708,6 +1879,7 @@ choices:
 - "Sinhalese"
 sample: "e178a0abbbb171d9b785d8350a45f203"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Czech"
 country: "AU"
@@ -1718,6 +1890,7 @@ choices:
 - "Macedonian"
 sample: "9769bab1b0b25eb730c704ef42a3e7a6"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -1728,6 +1901,7 @@ choices:
 - "Tongan"
 sample: "8df0a7cae5bb52d889fdbab7def4b5aa"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Czech"
 country: "AU"
@@ -1738,6 +1912,7 @@ choices:
 - "Tongan"
 sample: "1787b5c79a00b3513ce76847bc1f5b75"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Latvian"
 country: "AU"
@@ -1748,6 +1923,7 @@ choices:
 - "Slovenian"
 sample: "447bcafdbe5d7d69e0db72ab5bfa043a"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "AU"
@@ -1758,6 +1934,7 @@ choices:
 - "Ukrainian"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Burmese"
 country: "AU"
@@ -1768,6 +1945,7 @@ choices:
 - "Russian"
 sample: "31cba304794d1828c93d7b3c63aa840a"
 date: "2013-08-20"
+---
 guess: "Malay"
 target: "Japanese"
 country: "AU"
@@ -1778,6 +1956,7 @@ choices:
 - "Ukrainian"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Maori"
 country: "AU"
@@ -1788,6 +1967,7 @@ choices:
 - "Kannada"
 sample: "1e94210c21a6af48b9c418a7d6380a1c"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Turkish"
 country: "AU"
@@ -1798,6 +1978,7 @@ choices:
 - "Urdu"
 sample: "752c4c30d475748a342c68ebfba24d1e"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Fijian"
 country: "AU"
@@ -1808,6 +1989,7 @@ choices:
 - "Somali"
 sample: "93b8857d01978401e679f0bde0a7b5b0"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Sinhalese"
 country: "AU"
@@ -1818,6 +2000,7 @@ choices:
 - "Tamil"
 sample: "755de9092b301614712fae5e1d2d47d3"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Cantonese"
 country: "AU"
@@ -1828,6 +2011,7 @@ choices:
 - "Spanish"
 sample: "da6ed723fe60684a231c3e22a42610a7"
 date: "2013-08-20"
+---
 guess: "Arabic"
 target: "Arabic"
 country: "AU"
@@ -1838,6 +2022,7 @@ choices:
 - "Samoan"
 sample: "83c6ffcb085ce9c18c0e2aff00dda865"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Amharic"
 country: "AU"
@@ -1848,6 +2033,7 @@ choices:
 - "Kurdish"
 sample: "50a52cc16828c9cd27b9c26c75974e6d"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "Latvian"
 country: "AU"
@@ -1858,6 +2044,7 @@ choices:
 - "Latvian"
 sample: "5e609abac81edbf76a58bc1d2a850f12"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Sinhalese"
 country: "AU"
@@ -1868,6 +2055,7 @@ choices:
 - "Sinhalese"
 sample: "650061b92e1bf9fc20bc9757f333ddbb"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Latvian"
 country: "AU"
@@ -1878,6 +2066,7 @@ choices:
 - "Tamil"
 sample: "447bcafdbe5d7d69e0db72ab5bfa043a"
 date: "2013-08-20"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -1888,6 +2077,7 @@ choices:
 - "Spanish"
 sample: "dc3ace49393de518e87d4f8d3ae8d9db"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Farsi"
 country: "AU"
@@ -1898,6 +2088,7 @@ choices:
 - "Somali"
 sample: "c73ee42a45debb00fbcc86eb29682757"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -1908,6 +2099,7 @@ choices:
 - "Nepali"
 sample: "faa86f6efaf2ee67f95239685d26fd88"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Tamil"
 country: "AU"
@@ -1918,6 +2110,7 @@ choices:
 - "Tamil"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-20"
+---
 guess: "Estonian"
 target: "Ukrainian"
 country: "AU"
@@ -1928,6 +2121,7 @@ choices:
 - "Ukrainian"
 sample: "064ca74dff16ce8dade4a7acdc0def8a"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -1938,6 +2132,7 @@ choices:
 - "Thai"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Romanian"
 country: "AU"
@@ -1948,6 +2143,7 @@ choices:
 - "Romanian"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -1958,6 +2154,7 @@ choices:
 - "Hungarian"
 sample: "92f9e1c17e6df988780527341fdb471d"
 date: "2013-08-20"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -1968,6 +2165,7 @@ choices:
 - "Swedish"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -1978,6 +2176,7 @@ choices:
 - "Ukrainian"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-20"
+---
 guess: "Sinhalese"
 target: "Dinka"
 country: "AU"
@@ -1988,6 +2187,7 @@ choices:
 - "Urdu"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-20"
+---
 guess: "Spanish"
 target: "Bosnian"
 country: "AU"
@@ -1998,6 +2198,7 @@ choices:
 - "Vietnamese"
 sample: "421df072ac5abde4883d50b1fc789b14"
 date: "2013-08-20"
+---
 guess: "Swahili"
 target: "Gujarati"
 country: "AU"
@@ -2008,6 +2209,7 @@ choices:
 - "Swahili"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Dinka"
 country: "AU"
@@ -2018,6 +2220,7 @@ choices:
 - "Malayalam"
 sample: "cd3dffdb83f221e09710cbfbcaffdb31"
 date: "2013-08-20"
+---
 guess: "Dinka"
 target: "Korean"
 country: "AU"
@@ -2028,6 +2231,7 @@ choices:
 - "Thai"
 sample: "0f8e6818d2be77b75712bc9ea4e87171"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Kannada"
 country: "AU"
@@ -2038,6 +2242,7 @@ choices:
 - "Kannada"
 sample: "cf08af2ccb8382aa6c624095ec4f93fb"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -2048,6 +2253,7 @@ choices:
 - "Russian"
 sample: "84f7df7508e423234fd1adec4f84e528"
 date: "2013-08-20"
+---
 guess: "Bulgarian"
 target: "Greek"
 country: "AU"
@@ -2058,6 +2264,7 @@ choices:
 - "Sinhalese"
 sample: "17527de743e8a5b5c339fb8ff117f65b"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Hindi"
 country: "AU"
@@ -2068,6 +2275,7 @@ choices:
 - "Spanish"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Italian"
 target: "Italian"
 country: "AU"
@@ -2078,6 +2286,7 @@ choices:
 - "Swedish"
 sample: "88f3e5120091cffdf8abeb92b5da90a2"
 date: "2013-08-20"
+---
 guess: "Norwegian"
 target: "Norwegian"
 country: "AU"
@@ -2088,6 +2297,7 @@ choices:
 - "Norwegian"
 sample: "48f9c924e0d98c959d8a6f1862b3ce9a"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Hebrew"
 country: "AU"
@@ -2098,6 +2308,7 @@ choices:
 - "Malayalam"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-20"
+---
 guess: "Macedonian"
 target: "Macedonian"
 country: "AU"
@@ -2108,6 +2319,7 @@ choices:
 - "Punjabi"
 sample: "f852510abd74316fbde36d5d727a1059"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -2118,6 +2330,7 @@ choices:
 - "Turkish"
 sample: "a7d34c215264677c8385e90fa5363ec1"
 date: "2013-08-20"
+---
 guess: "Ukrainian"
 target: "Macedonian"
 country: "AU"
@@ -2128,6 +2341,7 @@ choices:
 - "Ukrainian"
 sample: "8fbe60533f007a91ae8ff2563a1bd568"
 date: "2013-08-20"
+---
 guess: "Bosnian"
 target: "Bosnian"
 country: "AU"
@@ -2138,6 +2352,7 @@ choices:
 - "Mandarin"
 sample: "421df072ac5abde4883d50b1fc789b14"
 date: "2013-08-20"
+---
 guess: "Malay"
 target: "Malay"
 country: "AU"
@@ -2148,6 +2363,7 @@ choices:
 - "Urdu"
 sample: "fffe43269856111df6231c0a57812c90"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Urdu"
 country: "AU"
@@ -2158,6 +2374,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Hungarian"
 country: "AU"
@@ -2168,6 +2385,7 @@ choices:
 - "Hungarian"
 sample: "7efab6f0c61694ba6e8aa72843d1bf15"
 date: "2013-08-20"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -2178,6 +2396,7 @@ choices:
 - "Urdu"
 sample: "01f51995ae86ff85e899d40768ab81a8"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -2188,6 +2407,7 @@ choices:
 - "Kannada"
 sample: "157085744728e35079622c71804cf722"
 date: "2013-08-20"
+---
 guess: "Danish"
 target: "Danish"
 country: "AU"
@@ -2198,6 +2418,7 @@ choices:
 - "Polish"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Armenian"
 country: "AU"
@@ -2208,6 +2429,7 @@ choices:
 - "Spanish"
 sample: "e4588d7c735b9a87d93ada6d24a7bd53"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "AU"
@@ -2218,6 +2440,7 @@ choices:
 - "Spanish"
 sample: "df76f85e2de71ac1a42c6009b7a995c7"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Finnish"
 country: "AU"
@@ -2228,6 +2451,7 @@ choices:
 - "Thai"
 sample: "4a3dfa40ed621940a0a38408956b86e0"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Malayalam"
 country: "AU"
@@ -2238,6 +2462,7 @@ choices:
 - "Vietnamese"
 sample: "41dae3a68b3c8c11aaa0381efefb8194"
 date: "2013-08-20"
+---
 guess: "Croatian"
 target: "French"
 country: "AU"
@@ -2248,6 +2473,7 @@ choices:
 - "Romanian"
 sample: "99d67cd704a7e25730cc91e215e41ae3"
 date: "2013-08-20"
+---
 guess: "Mandarin"
 target: "Tamil"
 country: "AU"
@@ -2258,6 +2484,7 @@ choices:
 - "Tamil"
 sample: "7c3fca32ce40e9b07e7b69a7d7191d4d"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Kannada"
 country: "AU"
@@ -2268,6 +2495,7 @@ choices:
 - "Vietnamese"
 sample: "cf08af2ccb8382aa6c624095ec4f93fb"
 date: "2013-08-20"
+---
 guess: "Maltese"
 target: "Maltese"
 country: "AU"
@@ -2278,6 +2506,7 @@ choices:
 - "Urdu"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -2288,6 +2517,7 @@ choices:
 - "Slovenian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Somali"
 country: "AU"
@@ -2298,6 +2528,7 @@ choices:
 - "Somali"
 sample: "a505ab771ae7c32744ad31b3051b8ee9"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Swedish"
 country: "AU"
@@ -2308,6 +2539,7 @@ choices:
 - "Tamil"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "AU"
@@ -2318,6 +2550,7 @@ choices:
 - "Punjabi"
 sample: "10ff356faf50696b30f8a58b9dd919b2"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Burmese"
 country: "AU"
@@ -2328,6 +2561,7 @@ choices:
 - "Turkish"
 sample: "31cba304794d1828c93d7b3c63aa840a"
 date: "2013-08-20"
+---
 guess: "Kannada"
 target: "Assyrian"
 country: "AU"
@@ -2338,6 +2572,7 @@ choices:
 - "Yiddish"
 sample: "ccebbc271377f7173e39564c74901f7c"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Amharic"
 country: "AU"
@@ -2348,6 +2583,7 @@ choices:
 - "Russian"
 sample: "50a52cc16828c9cd27b9c26c75974e6d"
 date: "2013-08-20"
+---
 guess: "Thai"
 target: "Indonesian"
 country: "AU"
@@ -2358,6 +2594,7 @@ choices:
 - "Turkish"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Polish"
 country: "AU"
@@ -2368,6 +2605,7 @@ choices:
 - "Romanian"
 sample: "2268bc4db45078e37d0fd1b2c53eb9c9"
 date: "2013-08-20"
+---
 guess: "Italian"
 target: "Italian"
 country: "AU"
@@ -2378,6 +2616,7 @@ choices:
 - "Korean"
 sample: "b64869a674fbf588fa2ace46d717bed6"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -2388,6 +2627,7 @@ choices:
 - "Portuguese"
 sample: "439672210d1feb96e012590ff2a73590"
 date: "2013-08-20"
+---
 guess: "Finnish"
 target: "Croatian"
 country: "AU"
@@ -2398,6 +2638,7 @@ choices:
 - "Samoan"
 sample: "a0d2070edd63b46a3e71b4fb7ffe5375"
 date: "2013-08-20"
+---
 guess: "Maltese"
 target: "Swedish"
 country: "AU"
@@ -2408,6 +2649,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Tagalog"
 target: "Tagalog"
 country: "AU"
@@ -2418,6 +2660,7 @@ choices:
 - "Thai"
 sample: "34df5eca0db3967da23f8a210337c9d6"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Fijian"
 country: "AU"
@@ -2428,6 +2671,7 @@ choices:
 - "Indonesian"
 sample: "93b8857d01978401e679f0bde0a7b5b0"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Lao"
 country: "AU"
@@ -2438,6 +2682,7 @@ choices:
 - "Tongan"
 sample: "c53434fd97e7082e948590932f0f0bcd"
 date: "2013-08-20"
+---
 guess: "Dari"
 target: "Lao"
 country: "AU"
@@ -2448,6 +2693,7 @@ choices:
 - "Slovak"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -2458,6 +2704,7 @@ choices:
 - "Punjabi"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "Turkish"
 country: "AU"
@@ -2468,6 +2715,7 @@ choices:
 - "Turkish"
 sample: "af0e25c7637fb0dcdc56fac6d49aa55e"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Gujarati"
 country: "AU"
@@ -2478,6 +2726,7 @@ choices:
 - "Swahili"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Tamil"
 country: "AU"
@@ -2488,6 +2737,7 @@ choices:
 - "Tamil"
 sample: "7c3fca32ce40e9b07e7b69a7d7191d4d"
 date: "2013-08-20"
+---
 guess: "Macedonian"
 target: "Bulgarian"
 country: "SE"
@@ -2498,6 +2748,7 @@ choices:
 - "Swahili"
 sample: "8102c4494405873dd7b8258a97396351"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Maltese"
 country: "AU"
@@ -2508,6 +2759,7 @@ choices:
 - "Turkish"
 sample: "589feca2e2009ad2e63458f17568cd13"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "AU"
@@ -2518,6 +2770,7 @@ choices:
 - "Ukrainian"
 sample: "d14f8f8b6933e7d9d68104ec7860db77"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Armenian"
 country: "AU"
@@ -2528,6 +2781,7 @@ choices:
 - "Yiddish"
 sample: "d34689ff8c3532426256b0963d7df2bb"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Hindi"
 country: "AU"
@@ -2538,6 +2792,7 @@ choices:
 - "Turkish"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Maori"
 target: "Nepali"
 country: "AU"
@@ -2548,6 +2803,7 @@ choices:
 - "Nepali"
 sample: "e178a0abbbb171d9b785d8350a45f203"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "AU"
@@ -2558,6 +2814,7 @@ choices:
 - "Punjabi"
 sample: "d14f8f8b6933e7d9d68104ec7860db77"
 date: "2013-08-20"
+---
 guess: "Romanian"
 target: "Latvian"
 country: "AU"
@@ -2568,6 +2825,7 @@ choices:
 - "Romanian"
 sample: "447bcafdbe5d7d69e0db72ab5bfa043a"
 date: "2013-08-20"
+---
 guess: "Bangla"
 target: "Samoan"
 country: "SE"
@@ -2578,6 +2836,7 @@ choices:
 - "Samoan"
 sample: "509c36eb58dbce009ccf93f375358d53"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "SE"
@@ -2588,6 +2847,7 @@ choices:
 - "Slovenian"
 sample: "99d67cd704a7e25730cc91e215e41ae3"
 date: "2013-08-20"
+---
 guess: "Urdu"
 target: "Urdu"
 country: "SE"
@@ -2598,6 +2858,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Czech"
 country: "SE"
@@ -2608,6 +2869,7 @@ choices:
 - "Turkish"
 sample: "1787b5c79a00b3513ce76847bc1f5b75"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Malayalam"
 country: "SE"
@@ -2618,6 +2880,7 @@ choices:
 - "Malayalam"
 sample: "41dae3a68b3c8c11aaa0381efefb8194"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Indonesian"
 country: "SE"
@@ -2628,6 +2891,7 @@ choices:
 - "Turkish"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-20"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "SE"
@@ -2638,6 +2902,7 @@ choices:
 - "Ukrainian"
 sample: "fc3712715ddc748286256eb7a64f25ab"
 date: "2013-08-20"
+---
 guess: "Dari"
 target: "Samoan"
 country: "SE"
@@ -2648,6 +2913,7 @@ choices:
 - "Spanish"
 sample: "509c36eb58dbce009ccf93f375358d53"
 date: "2013-08-20"
+---
 guess: "Maori"
 target: "Hindi"
 country: "SE"
@@ -2658,6 +2924,7 @@ choices:
 - "Korean"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "Hungarian"
 country: "SE"
@@ -2668,6 +2935,7 @@ choices:
 - "Maltese"
 sample: "7efab6f0c61694ba6e8aa72843d1bf15"
 date: "2013-08-20"
+---
 guess: "Dutch"
 target: "Dutch"
 country: "SE"
@@ -2678,6 +2946,7 @@ choices:
 - "Tamil"
 sample: "5cd22cbf16be1a93d304d589431c3ec3"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "SE"
@@ -2688,6 +2957,7 @@ choices:
 - "Vietnamese"
 sample: "ec4d6dad1be487091ec2b1b63820e329"
 date: "2013-08-20"
+---
 guess: "Estonian"
 target: "Estonian"
 country: "SE"
@@ -2698,6 +2968,7 @@ choices:
 - "Vietnamese"
 sample: "b8e22e10dbc944d7aaa9c00414c70be8"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "SE"
@@ -2708,6 +2979,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Dari"
 target: "Dari"
 country: "SE"
@@ -2718,6 +2990,7 @@ choices:
 - "Mandarin"
 sample: "f8c25418c2675fa8c3278aa7a21678f6"
 date: "2013-08-20"
+---
 guess: "Greek"
 target: "Serbian"
 country: "SE"
@@ -2728,6 +3001,7 @@ choices:
 - "Serbian"
 sample: "0d5b697ebb326b5043ce7fa60a7b968d"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Polish"
 country: "SE"
@@ -2738,6 +3012,7 @@ choices:
 - "Portuguese"
 sample: "f1aac78bec424c4d6c716553719b0b70"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Somali"
 country: "SE"
@@ -2748,6 +3023,7 @@ choices:
 - "Vietnamese"
 sample: "ee5ffba9c5cf1d6a1e2d95b0220c06d4"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Tigrinya"
 country: "SE"
@@ -2758,6 +3034,7 @@ choices:
 - "Tigrinya"
 sample: "05c96880846c583b0dc6e5043eab938d"
 date: "2013-08-20"
+---
 guess: "Malay"
 target: "Bangla"
 country: "SE"
@@ -2768,6 +3045,7 @@ choices:
 - "Malay"
 sample: "ca0d5c366b1eeb2115054e6a8518f778"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "SE"
@@ -2778,6 +3056,7 @@ choices:
 - "Swedish"
 sample: "df76f85e2de71ac1a42c6009b7a995c7"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Farsi"
 country: "AU"
@@ -2788,6 +3067,7 @@ choices:
 - "Turkish"
 sample: "70154ea13cf1c633cfe62d44919a347c"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Maltese"
 country: "SE"
@@ -2798,6 +3078,7 @@ choices:
 - "Slovenian"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-20"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -2808,6 +3089,7 @@ choices:
 - "Swahili"
 sample: "c57afc7ca3b4a454bf53dbca84bb4523"
 date: "2013-08-20"
+---
 guess: "Samoan"
 target: "Samoan"
 country: "AU"
@@ -2818,6 +3100,7 @@ choices:
 - "Samoan"
 sample: "cd9592f5c1899461ee5defa7423458b6"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -2828,6 +3111,7 @@ choices:
 - "Russian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Hindi"
 country: "AU"
@@ -2838,6 +3122,7 @@ choices:
 - "Turkish"
 sample: "568bfed6715c43735f95faef578d7cd5"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Maori"
 country: "AU"
@@ -2848,6 +3133,7 @@ choices:
 - "Nepali"
 sample: "90ae678a85eac78bc4b4f52809a7c09d"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Bosnian"
 country: "AU"
@@ -2858,6 +3144,7 @@ choices:
 - "Tigrinya"
 sample: "e36a808605adbe2dbdca9c76e5cbfe7c"
 date: "2013-08-20"
+---
 guess: "Greek"
 target: "Dinka"
 country: "AU"
@@ -2868,6 +3155,7 @@ choices:
 - "Serbian"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-20"
+---
 guess: "Macedonian"
 target: "Macedonian"
 country: "AU"
@@ -2878,6 +3166,7 @@ choices:
 - "Ukrainian"
 sample: "968e9c700742f65c43ad3cb99209e787"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -2888,6 +3177,7 @@ choices:
 - "Slovenian"
 sample: "92f9e1c17e6df988780527341fdb471d"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Russian"
 country: "AU"
@@ -2898,6 +3188,7 @@ choices:
 - "Serbian"
 sample: "b7df3f9d67cef259fbcaa5abcad9d774"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Kurdish"
 country: "AU"
@@ -2908,6 +3199,7 @@ choices:
 - "Tongan"
 sample: "9f849ff225f0d94a52c186924e225231"
 date: "2013-08-20"
+---
 guess: "Norwegian"
 target: "Malayalam"
 country: "AU"
@@ -2918,6 +3210,7 @@ choices:
 - "Norwegian"
 sample: "b0acf6983487f846c0830aa88d13d171"
 date: "2013-08-20"
+---
 guess: "Yiddish"
 target: "Assyrian"
 country: "AU"
@@ -2928,6 +3221,7 @@ choices:
 - "Yiddish"
 sample: "ccebbc271377f7173e39564c74901f7c"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "AU"
@@ -2938,6 +3232,7 @@ choices:
 - "Thai"
 sample: "ac81d9c1d39252811bf5d9fcfddc2231"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -2948,6 +3243,7 @@ choices:
 - "Slovenian"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Albanian"
 target: "Albanian"
 country: "AU"
@@ -2958,6 +3254,7 @@ choices:
 - "Portuguese"
 sample: "13722ceed1eede7ba597ade9b4cb9807"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Danish"
 country: "AU"
@@ -2968,6 +3265,7 @@ choices:
 - "Thai"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Fijian"
 country: "AU"
@@ -2978,6 +3276,7 @@ choices:
 - "Tongan"
 sample: "86727ddda4fff22b1b735331f665fed4"
 date: "2013-08-20"
+---
 guess: "Danish"
 target: "Estonian"
 country: "AU"
@@ -2988,6 +3287,7 @@ choices:
 - "Spanish"
 sample: "b8e22e10dbc944d7aaa9c00414c70be8"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Turkish"
 country: "AU"
@@ -2998,6 +3298,7 @@ choices:
 - "Turkish"
 sample: "af0e25c7637fb0dcdc56fac6d49aa55e"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Turkish"
 country: "AU"
@@ -3008,6 +3309,7 @@ choices:
 - "Vietnamese"
 sample: "752c4c30d475748a342c68ebfba24d1e"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Malayalam"
 country: "AU"
@@ -3018,6 +3320,7 @@ choices:
 - "Malayalam"
 sample: "73a09a8879e70e8648d7d75d656a5b79"
 date: "2013-08-20"
+---
 guess: "Kannada"
 target: "Amharic"
 country: "AU"
@@ -3028,6 +3331,7 @@ choices:
 - "Tigrinya"
 sample: "5c6664317cc1cc256f11b722835396b7"
 date: "2013-08-20"
+---
 guess: "Bulgarian"
 target: "Bulgarian"
 country: "AU"
@@ -3038,6 +3342,7 @@ choices:
 - "Serbian"
 sample: "8102c4494405873dd7b8258a97396351"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -3048,6 +3353,7 @@ choices:
 - "Romanian"
 sample: "a7d34c215264677c8385e90fa5363ec1"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Maltese"
 country: "AU"
@@ -3058,6 +3364,7 @@ choices:
 - "Urdu"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -3068,6 +3375,7 @@ choices:
 - "Swedish"
 sample: "ccebbc271377f7173e39564c74901f7c"
 date: "2013-08-20"
+---
 guess: "Romanian"
 target: "Albanian"
 country: "AU"
@@ -3078,6 +3386,7 @@ choices:
 - "Romanian"
 sample: "13722ceed1eede7ba597ade9b4cb9807"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "AU"
@@ -3088,6 +3397,7 @@ choices:
 - "Swedish"
 sample: "ac81d9c1d39252811bf5d9fcfddc2231"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -3098,6 +3408,7 @@ choices:
 - "Swedish"
 sample: "157085744728e35079622c71804cf722"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Russian"
 country: "AU"
@@ -3108,6 +3419,7 @@ choices:
 - "Russian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Urdu"
 target: "Nepali"
 country: "AU"
@@ -3118,6 +3430,7 @@ choices:
 - "Urdu"
 sample: "e178a0abbbb171d9b785d8350a45f203"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -3128,6 +3441,7 @@ choices:
 - "Urdu"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Malay"
 country: "AU"
@@ -3138,6 +3452,7 @@ choices:
 - "Malay"
 sample: "6650448a5456ba88ea0971f2265f2bc7"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Maltese"
 country: "AU"
@@ -3148,6 +3463,7 @@ choices:
 - "Turkish"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -3158,6 +3474,7 @@ choices:
 - "Kurdish"
 sample: "8df0a7cae5bb52d889fdbab7def4b5aa"
 date: "2013-08-20"
+---
 guess: "Korean"
 target: "Mandarin"
 country: "AU"
@@ -3168,6 +3485,7 @@ choices:
 - "Ukrainian"
 sample: "fc3712715ddc748286256eb7a64f25ab"
 date: "2013-08-20"
+---
 guess: "Thai"
 target: "Lao"
 country: "AU"
@@ -3178,6 +3496,7 @@ choices:
 - "Thai"
 sample: "4cf041f244960196b98c7d6ae8c79ed3"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Nepali"
 country: "AU"
@@ -3188,6 +3507,7 @@ choices:
 - "Slovak"
 sample: "e178a0abbbb171d9b785d8350a45f203"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -3198,6 +3518,7 @@ choices:
 - "Turkish"
 sample: "6c50f5972917a1ab11328233ef50db72"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Bosnian"
 country: "AU"
@@ -3208,6 +3529,7 @@ choices:
 - "Serbian"
 sample: "e36a808605adbe2dbdca9c76e5cbfe7c"
 date: "2013-08-20"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -3218,6 +3540,7 @@ choices:
 - "Mandarin"
 sample: "e77d97b712adffc39e531e20237a5589"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Kurdish"
 country: "AU"
@@ -3228,6 +3551,7 @@ choices:
 - "Polish"
 sample: "f54dad4973f899ba8e9e26dcca58d625"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Italian"
 country: "AU"
@@ -3238,6 +3562,7 @@ choices:
 - "Latvian"
 sample: "b64869a674fbf588fa2ace46d717bed6"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -3248,6 +3573,7 @@ choices:
 - "Portuguese"
 sample: "5fd851c9e87a6b9b9da9eb2ab0de6686"
 date: "2013-08-20"
+---
 guess: "Estonian"
 target: "Estonian"
 country: "AU"
@@ -3258,6 +3584,7 @@ choices:
 - "Malayalam"
 sample: "5af9790de5ecef3853d6d89f8e75916c"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -3268,6 +3595,7 @@ choices:
 - "Slovenian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Slovenian"
 country: "AU"
@@ -3278,6 +3606,7 @@ choices:
 - "Slovenian"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "Hungarian"
 country: "AU"
@@ -3288,6 +3617,7 @@ choices:
 - "Maltese"
 sample: "7efab6f0c61694ba6e8aa72843d1bf15"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -3298,6 +3628,7 @@ choices:
 - "Swahili"
 sample: "a7d34c215264677c8385e90fa5363ec1"
 date: "2013-08-20"
+---
 guess: "Sinhalese"
 target: "Sinhalese"
 country: "AU"
@@ -3308,6 +3639,7 @@ choices:
 - "Slovenian"
 sample: "755de9092b301614712fae5e1d2d47d3"
 date: "2013-08-20"
+---
 guess: "Maltese"
 target: "Indonesian"
 country: "AU"
@@ -3318,6 +3650,7 @@ choices:
 - "Polish"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "AU"
@@ -3328,6 +3661,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Malayalam"
 country: "AU"
@@ -3338,6 +3672,7 @@ choices:
 - "Malayalam"
 sample: "41dae3a68b3c8c11aaa0381efefb8194"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -3348,6 +3683,7 @@ choices:
 - "Macedonian"
 sample: "a892b7fd27c34fc81b65c0bb93113846"
 date: "2013-08-20"
+---
 guess: "Kannada"
 target: "Kannada"
 country: "AU"
@@ -3358,6 +3694,7 @@ choices:
 - "Norwegian"
 sample: "c11a7723bd3fcd00e33e90c90a3492e5"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -3368,6 +3705,7 @@ choices:
 - "Punjabi"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Somali"
 country: "AU"
@@ -3378,6 +3716,7 @@ choices:
 - "Vietnamese"
 sample: "2591d3700224a4729cbe46e53fdbd707"
 date: "2013-08-20"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -3388,6 +3727,7 @@ choices:
 - "Vietnamese"
 sample: "78213fa858b9a45d83121a8bf71712d1"
 date: "2013-08-20"
+---
 guess: "Vietnamese"
 target: "Korean"
 country: "AU"
@@ -3398,6 +3738,7 @@ choices:
 - "Vietnamese"
 sample: "871c938ad3b1243f42eec04057930d7e"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Amharic"
 country: "AU"
@@ -3408,6 +3749,7 @@ choices:
 - "Malayalam"
 sample: "50a52cc16828c9cd27b9c26c75974e6d"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Sinhalese"
 country: "AU"
@@ -3418,6 +3760,7 @@ choices:
 - "Tigrinya"
 sample: "650061b92e1bf9fc20bc9757f333ddbb"
 date: "2013-08-20"
+---
 guess: "Albanian"
 target: "Albanian"
 country: "AU"
@@ -3428,6 +3771,7 @@ choices:
 - "Urdu"
 sample: "00b85faa8b878a14f8781be334deb137"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Burmese"
 country: "AU"
@@ -3438,6 +3782,7 @@ choices:
 - "Spanish"
 sample: "31cba304794d1828c93d7b3c63aa840a"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -3448,6 +3793,7 @@ choices:
 - "Urdu"
 sample: "ccebbc271377f7173e39564c74901f7c"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Tamil"
 country: "AU"
@@ -3458,6 +3804,7 @@ choices:
 - "Yiddish"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "Slovak"
 country: "AU"
@@ -3468,6 +3815,7 @@ choices:
 - "Slovak"
 sample: "2c5efbd7364036976ec403a9ee36f614"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Tamil"
 country: "AU"
@@ -3478,6 +3826,7 @@ choices:
 - "Tamil"
 sample: "7c3fca32ce40e9b07e7b69a7d7191d4d"
 date: "2013-08-20"
+---
 guess: "Dari"
 target: "Hindi"
 country: "AU"
@@ -3488,6 +3837,7 @@ choices:
 - "Yiddish"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Estonian"
 target: "Danish"
 country: "AU"
@@ -3498,6 +3848,7 @@ choices:
 - "Slovak"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-20"
+---
 guess: "Korean"
 target: "Korean"
 country: "AU"
@@ -3508,6 +3859,7 @@ choices:
 - "Ukrainian"
 sample: "0f8e6818d2be77b75712bc9ea4e87171"
 date: "2013-08-20"
+---
 guess: "Slovenian"
 target: "Slovenian"
 country: "AU"
@@ -3518,6 +3870,7 @@ choices:
 - "Thai"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Armenian"
 country: "AU"
@@ -3528,6 +3881,7 @@ choices:
 - "Samoan"
 sample: "e4588d7c735b9a87d93ada6d24a7bd53"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Yiddish"
 country: "AU"
@@ -3538,6 +3892,7 @@ choices:
 - "Yiddish"
 sample: "07468dc58acd4228a618bcdafed773f9"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Assyrian"
 country: "AU"
@@ -3548,6 +3903,7 @@ choices:
 - "Somali"
 sample: "ccebbc271377f7173e39564c74901f7c"
 date: "2013-08-20"
+---
 guess: "Tagalog"
 target: "Tagalog"
 country: "AU"
@@ -3558,6 +3914,7 @@ choices:
 - "Gujarati"
 sample: "34df5eca0db3967da23f8a210337c9d6"
 date: "2013-08-20"
+---
 guess: "Finnish"
 target: "Finnish"
 country: "AU"
@@ -3568,6 +3925,7 @@ choices:
 - "Slovak"
 sample: "d47ff7f3aa1abf002cad40ef24122c08"
 date: "2013-08-20"
+---
 guess: "Bangla"
 target: "Bangla"
 country: "AU"
@@ -3578,6 +3936,7 @@ choices:
 - "Russian"
 sample: "b2132278200e1e601b6814a15fdabcc1"
 date: "2013-08-20"
+---
 guess: "Tongan"
 target: "Assyrian"
 country: "AU"
@@ -3588,6 +3947,7 @@ choices:
 - "Tongan"
 sample: "16ac545260ae198b7a3d882e06e5f261"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "AU"
@@ -3598,6 +3958,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -3608,6 +3969,7 @@ choices:
 - "Turkish"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Khmer"
 country: "AU"
@@ -3618,6 +3980,7 @@ choices:
 - "Tongan"
 sample: "84f7df7508e423234fd1adec4f84e528"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Hindi"
 country: "AU"
@@ -3628,6 +3991,7 @@ choices:
 - "Mandarin"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Malayalam"
 country: "AU"
@@ -3638,6 +4002,7 @@ choices:
 - "Vietnamese"
 sample: "1332d2299972d2e485cb070d2c4015e0"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Tamil"
 country: "AU"
@@ -3648,6 +4013,7 @@ choices:
 - "Urdu"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "Slovak"
 country: "AU"
@@ -3658,6 +4024,7 @@ choices:
 - "Ukrainian"
 sample: "2c5efbd7364036976ec403a9ee36f614"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -3668,6 +4035,7 @@ choices:
 - "Tamil"
 sample: "99d67cd704a7e25730cc91e215e41ae3"
 date: "2013-08-20"
+---
 guess: "Yiddish"
 target: "Serbian"
 country: "AU"
@@ -3678,6 +4046,7 @@ choices:
 - "Yiddish"
 sample: "ec4d6dad1be487091ec2b1b63820e329"
 date: "2013-08-20"
+---
 guess: "Bosnian"
 target: "Bosnian"
 country: "AU"
@@ -3688,6 +4057,7 @@ choices:
 - "Serbian"
 sample: "e36a808605adbe2dbdca9c76e5cbfe7c"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Macedonian"
 country: "AU"
@@ -3698,6 +4068,7 @@ choices:
 - "Slovenian"
 sample: "968e9c700742f65c43ad3cb99209e787"
 date: "2013-08-20"
+---
 guess: "Tongan"
 target: "Tongan"
 country: "AU"
@@ -3708,6 +4079,7 @@ choices:
 - "Yiddish"
 sample: "6ba74243165c6e7fb5255890b18f8807"
 date: "2013-08-20"
+---
 guess: "Bulgarian"
 target: "Dari"
 country: "AU"
@@ -3718,6 +4090,7 @@ choices:
 - "Sinhalese"
 sample: "33f2084165c0cca6303b45440623c88c"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Bangla"
 country: "AU"
@@ -3728,6 +4101,7 @@ choices:
 - "Tamil"
 sample: "b2132278200e1e601b6814a15fdabcc1"
 date: "2013-08-20"
+---
 guess: "Korean"
 target: "Korean"
 country: "AU"
@@ -3738,6 +4112,7 @@ choices:
 - "Mandarin"
 sample: "0f8e6818d2be77b75712bc9ea4e87171"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Amharic"
 country: "AU"
@@ -3748,6 +4123,7 @@ choices:
 - "Urdu"
 sample: "9b1340b8343bb267783e1bfb2dc55bf1"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -3758,6 +4134,7 @@ choices:
 - "Portuguese"
 sample: "439672210d1feb96e012590ff2a73590"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -3768,6 +4145,7 @@ choices:
 - "Slovenian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Ukrainian"
 target: "Ukrainian"
 country: "AU"
@@ -3778,6 +4156,7 @@ choices:
 - "Ukrainian"
 sample: "064ca74dff16ce8dade4a7acdc0def8a"
 date: "2013-08-20"
+---
 guess: "Samoan"
 target: "Farsi"
 country: "AU"
@@ -3788,6 +4167,7 @@ choices:
 - "Samoan"
 sample: "d7a4029f42521d56af05c9f947a516c1"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -3798,6 +4178,7 @@ choices:
 - "Urdu"
 sample: "ff5b5a0d34c77d2e2027dad7e4deb094"
 date: "2013-08-20"
+---
 guess: "Slovenian"
 target: "Slovenian"
 country: "AU"
@@ -3808,6 +4189,7 @@ choices:
 - "Urdu"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-20"
+---
 guess: "Arabic"
 target: "Arabic"
 country: "AU"
@@ -3818,6 +4200,7 @@ choices:
 - "Dutch"
 sample: "cd438a022d83ce4ded75d4f9c6ea7239"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "AU"
@@ -3828,6 +4211,7 @@ choices:
 - "Punjabi"
 sample: "56ecf19cff578aa76b81edb580ff343f"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Maori"
 country: "AU"
@@ -3838,6 +4222,7 @@ choices:
 - "Maltese"
 sample: "e0d71c2632a4fe69b42a49c8aeeec811"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Somali"
 country: "AU"
@@ -3848,6 +4233,7 @@ choices:
 - "Spanish"
 sample: "ee5ffba9c5cf1d6a1e2d95b0220c06d4"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "AU"
@@ -3858,6 +4244,7 @@ choices:
 - "Swedish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Kannada"
 target: "Kannada"
 country: "AU"
@@ -3868,6 +4255,7 @@ choices:
 - "Thai"
 sample: "cf08af2ccb8382aa6c624095ec4f93fb"
 date: "2013-08-20"
+---
 guess: "Dinka"
 target: "Malayalam"
 country: "AU"
@@ -3878,6 +4266,7 @@ choices:
 - "Ukrainian"
 sample: "73a09a8879e70e8648d7d75d656a5b79"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -3888,6 +4277,7 @@ choices:
 - "Tongan"
 sample: "439672210d1feb96e012590ff2a73590"
 date: "2013-08-20"
+---
 guess: "Yiddish"
 target: "Kurdish"
 country: "AU"
@@ -3898,6 +4288,7 @@ choices:
 - "Yiddish"
 sample: "9f849ff225f0d94a52c186924e225231"
 date: "2013-08-20"
+---
 guess: "Spanish"
 target: "Spanish"
 country: "AU"
@@ -3908,6 +4299,7 @@ choices:
 - "Spanish"
 sample: "c8f4f097079404bf9a0e94d604efd1d5"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Khmer"
 country: "AU"
@@ -3918,6 +4310,7 @@ choices:
 - "Yiddish"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-20"
+---
 guess: "Urdu"
 target: "Urdu"
 country: "AU"
@@ -3928,6 +4321,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Assyrian"
 country: "AU"
@@ -3938,6 +4332,7 @@ choices:
 - "Latvian"
 sample: "a7d34c215264677c8385e90fa5363ec1"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Albanian"
 country: "AU"
@@ -3948,6 +4343,7 @@ choices:
 - "Hungarian"
 sample: "efcd813daec1c836d9f030b30caa07ce"
 date: "2013-08-20"
+---
 guess: "Tongan"
 target: "Tongan"
 country: "AU"
@@ -3958,6 +4354,7 @@ choices:
 - "Tongan"
 sample: "838cfe7f928e1a41710e01b3ee12088f"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Finnish"
 country: "AU"
@@ -3968,6 +4365,7 @@ choices:
 - "Thai"
 sample: "76e16d2ed298968ff397294b18f04831"
 date: "2013-08-20"
+---
 guess: "Assyrian"
 target: "Somali"
 country: "AU"
@@ -3978,6 +4376,7 @@ choices:
 - "Somali"
 sample: "a505ab771ae7c32744ad31b3051b8ee9"
 date: "2013-08-20"
+---
 guess: "Dinka"
 target: "Tamil"
 country: "AU"
@@ -3988,6 +4387,7 @@ choices:
 - "Urdu"
 sample: "cc305dcad696147e28c6f36615aa0952"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -3998,6 +4398,7 @@ choices:
 - "Yiddish"
 sample: "8df0a7cae5bb52d889fdbab7def4b5aa"
 date: "2013-08-20"
+---
 guess: "German"
 target: "German"
 country: "AU"
@@ -4008,6 +4409,7 @@ choices:
 - "Malayalam"
 sample: "e77d97b712adffc39e531e20237a5589"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Tigrinya"
 country: "AU"
@@ -4018,6 +4420,7 @@ choices:
 - "Turkish"
 sample: "05c96880846c583b0dc6e5043eab938d"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "Slovak"
 country: "AU"
@@ -4028,6 +4431,7 @@ choices:
 - "Slovak"
 sample: "2c5efbd7364036976ec403a9ee36f614"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Somali"
 country: "AU"
@@ -4038,6 +4442,7 @@ choices:
 - "Spanish"
 sample: "a505ab771ae7c32744ad31b3051b8ee9"
 date: "2013-08-20"
+---
 guess: "Bulgarian"
 target: "Bulgarian"
 country: "AU"
@@ -4048,6 +4453,7 @@ choices:
 - "Nepali"
 sample: "8102c4494405873dd7b8258a97396351"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Armenian"
 country: "AU"
@@ -4058,6 +4464,7 @@ choices:
 - "Slovak"
 sample: "e4588d7c735b9a87d93ada6d24a7bd53"
 date: "2013-08-20"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -4068,6 +4475,7 @@ choices:
 - "Romanian"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Hebrew"
 country: "AU"
@@ -4078,6 +4486,7 @@ choices:
 - "Slovenian"
 sample: "1dc9a1bf90e4e788906dc716dc18d878"
 date: "2013-08-20"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "AU"
@@ -4088,6 +4497,7 @@ choices:
 - "Romanian"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Portuguese"
 country: "AU"
@@ -4098,6 +4508,7 @@ choices:
 - "Spanish"
 sample: "5fd851c9e87a6b9b9da9eb2ab0de6686"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Croatian"
 country: "AU"
@@ -4108,6 +4519,7 @@ choices:
 - "Sinhalese"
 sample: "bd3eefed0e12797c6e2b45b8db8d88d9"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Tigrinya"
 country: "AU"
@@ -4118,6 +4530,7 @@ choices:
 - "Ukrainian"
 sample: "05c96880846c583b0dc6e5043eab938d"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Malayalam"
 country: "AU"
@@ -4128,6 +4541,7 @@ choices:
 - "Tongan"
 sample: "b0acf6983487f846c0830aa88d13d171"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Latvian"
 country: "AU"
@@ -4138,6 +4552,7 @@ choices:
 - "Mandarin"
 sample: "5e609abac81edbf76a58bc1d2a850f12"
 date: "2013-08-20"
+---
 guess: "Macedonian"
 target: "Macedonian"
 country: "AU"
@@ -4148,6 +4563,7 @@ choices:
 - "Macedonian"
 sample: "968e9c700742f65c43ad3cb99209e787"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Latvian"
 country: "AU"
@@ -4158,6 +4574,7 @@ choices:
 - "Slovenian"
 sample: "5e609abac81edbf76a58bc1d2a850f12"
 date: "2013-08-20"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -4168,6 +4585,7 @@ choices:
 - "Thai"
 sample: "903fc45cba5245f21deaaca3966f825b"
 date: "2013-08-20"
+---
 guess: "Croatian"
 target: "Russian"
 country: "AU"
@@ -4178,6 +4596,7 @@ choices:
 - "Russian"
 sample: "ff5b5a0d34c77d2e2027dad7e4deb094"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "Hungarian"
 country: "AU"
@@ -4188,6 +4607,7 @@ choices:
 - "Spanish"
 sample: "7efab6f0c61694ba6e8aa72843d1bf15"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -4198,6 +4618,7 @@ choices:
 - "Slovak"
 sample: "b7df3f9d67cef259fbcaa5abcad9d774"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -4208,6 +4629,7 @@ choices:
 - "Turkish"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Yiddish"
 country: "AU"
@@ -4218,6 +4640,7 @@ choices:
 - "Yiddish"
 sample: "07468dc58acd4228a618bcdafed773f9"
 date: "2013-08-20"
+---
 guess: "Arabic"
 target: "Arabic"
 country: "IN"
@@ -4228,6 +4651,7 @@ choices:
 - "Spanish"
 sample: "8903e496bf04c3a85a70e1dc5e0da5f1"
 date: "2013-08-20"
+---
 guess: "Greek"
 target: "Bosnian"
 country: "IN"
@@ -4238,6 +4662,7 @@ choices:
 - "Serbian"
 sample: "e36a808605adbe2dbdca9c76e5cbfe7c"
 date: "2013-08-20"
+---
 guess: "Somali"
 target: "Finnish"
 country: "IN"
@@ -4248,6 +4673,7 @@ choices:
 - "Somali"
 sample: "4a3dfa40ed621940a0a38408956b86e0"
 date: "2013-08-20"
+---
 guess: "Gujarati"
 target: "Gujarati"
 country: "IN"
@@ -4258,6 +4684,7 @@ choices:
 - "Thai"
 sample: "16d80eee6659268a90460422dd2a2896"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Lao"
 country: "IN"
@@ -4268,6 +4695,7 @@ choices:
 - "Tongan"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Sinhalese"
 target: "Sinhalese"
 country: "IN"
@@ -4278,6 +4706,7 @@ choices:
 - "Slovenian"
 sample: "755de9092b301614712fae5e1d2d47d3"
 date: "2013-08-20"
+---
 guess: "Japanese"
 target: "Japanese"
 country: "IN"
@@ -4288,6 +4717,7 @@ choices:
 - "Punjabi"
 sample: "3569611136ea04bab18a0cd605ced358"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Punjabi"
 country: "IN"
@@ -4298,6 +4728,7 @@ choices:
 - "Tamil"
 sample: "d14f8f8b6933e7d9d68104ec7860db77"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Bosnian"
 country: "IN"
@@ -4308,6 +4739,7 @@ choices:
 - "Tigrinya"
 sample: "421df072ac5abde4883d50b1fc789b14"
 date: "2013-08-20"
+---
 guess: "Burmese"
 target: "Somali"
 country: "AU"
@@ -4318,6 +4750,7 @@ choices:
 - "Somali"
 sample: "2591d3700224a4729cbe46e53fdbd707"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "Maltese"
 country: "AU"
@@ -4328,6 +4761,7 @@ choices:
 - "Maltese"
 sample: "36d2f4e9173e2d4cad8b8594310c856b"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -4338,6 +4772,7 @@ choices:
 - "Russian"
 sample: "8a59d48e99e8a1df7e366c4648095e27"
 date: "2013-08-20"
+---
 guess: "Czech"
 target: "Czech"
 country: "AU"
@@ -4348,6 +4783,7 @@ choices:
 - "Punjabi"
 sample: "1787b5c79a00b3513ce76847bc1f5b75"
 date: "2013-08-20"
+---
 guess: "French"
 target: "French"
 country: "AU"
@@ -4358,6 +4794,7 @@ choices:
 - "Urdu"
 sample: "92f9e1c17e6df988780527341fdb471d"
 date: "2013-08-20"
+---
 guess: "Ukrainian"
 target: "Maori"
 country: "AU"
@@ -4368,6 +4805,7 @@ choices:
 - "Ukrainian"
 sample: "90ae678a85eac78bc4b4f52809a7c09d"
 date: "2013-08-20"
+---
 guess: "Malayalam"
 target: "Malayalam"
 country: "AU"
@@ -4378,6 +4816,7 @@ choices:
 - "Tamil"
 sample: "73a09a8879e70e8648d7d75d656a5b79"
 date: "2013-08-20"
+---
 guess: "Tongan"
 target: "Malay"
 country: "AU"
@@ -4388,6 +4827,7 @@ choices:
 - "Urdu"
 sample: "6650448a5456ba88ea0971f2265f2bc7"
 date: "2013-08-20"
+---
 guess: "Japanese"
 target: "Burmese"
 country: "AU"
@@ -4398,6 +4838,7 @@ choices:
 - "Japanese"
 sample: "878d3d845ccb0859aa05e80e1d35730f"
 date: "2013-08-20"
+---
 guess: "Thai"
 target: "Thai"
 country: "AU"
@@ -4408,6 +4849,7 @@ choices:
 - "Vietnamese"
 sample: "74b5340a230b1e0c1d45787bc4280b05"
 date: "2013-08-20"
+---
 guess: "Swedish"
 target: "Swedish"
 country: "AU"
@@ -4418,6 +4860,7 @@ choices:
 - "Yiddish"
 sample: "dfe8192c1bbd80b44ea4409d9889dc90"
 date: "2013-08-20"
+---
 guess: "Italian"
 target: "Italian"
 country: "AU"
@@ -4428,6 +4871,7 @@ choices:
 - "Slovak"
 sample: "b64869a674fbf588fa2ace46d717bed6"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Serbian"
 country: "AU"
@@ -4438,6 +4882,7 @@ choices:
 - "Somali"
 sample: "ac81d9c1d39252811bf5d9fcfddc2231"
 date: "2013-08-20"
+---
 guess: "Swahili"
 target: "Indonesian"
 country: "AU"
@@ -4448,6 +4893,7 @@ choices:
 - "Swahili"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-20"
+---
 guess: "Amharic"
 target: "Amharic"
 country: "AU"
@@ -4458,6 +4904,7 @@ choices:
 - "Serbian"
 sample: "50a52cc16828c9cd27b9c26c75974e6d"
 date: "2013-08-20"
+---
 guess: "Bosnian"
 target: "Tigrinya"
 country: "AU"
@@ -4468,6 +4915,7 @@ choices:
 - "Tigrinya"
 sample: "05c96880846c583b0dc6e5043eab938d"
 date: "2013-08-20"
+---
 guess: "Tigrinya"
 target: "Swahili"
 country: "AU"
@@ -4478,6 +4926,7 @@ choices:
 - "Yiddish"
 sample: "1b959fe55794f6d4e1ea038bfe336759"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Dinka"
 country: "AU"
@@ -4488,6 +4937,7 @@ choices:
 - "Yiddish"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-20"
+---
 guess: "Romanian"
 target: "Romanian"
 country: "AU"
@@ -4498,6 +4948,7 @@ choices:
 - "Tigrinya"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Kannada"
 country: "AU"
@@ -4508,6 +4959,7 @@ choices:
 - "Swedish"
 sample: "c11a7723bd3fcd00e33e90c90a3492e5"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Turkish"
 country: "AU"
@@ -4518,6 +4970,7 @@ choices:
 - "Turkish"
 sample: "752c4c30d475748a342c68ebfba24d1e"
 date: "2013-08-20"
+---
 guess: "Croatian"
 target: "Sinhalese"
 country: "AU"
@@ -4528,6 +4981,7 @@ choices:
 - "Sinhalese"
 sample: "650061b92e1bf9fc20bc9757f333ddbb"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Danish"
 country: "AU"
@@ -4538,6 +4992,7 @@ choices:
 - "Sinhalese"
 sample: "5fdcb0979e1c546ea05d7bd780bd4bc3"
 date: "2013-08-20"
+---
 guess: "Russian"
 target: "Russian"
 country: "AU"
@@ -4548,6 +5003,7 @@ choices:
 - "Ukrainian"
 sample: "ff5b5a0d34c77d2e2027dad7e4deb094"
 date: "2013-08-20"
+---
 guess: "Urdu"
 target: "Urdu"
 country: "AU"
@@ -4558,6 +5014,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-20"
+---
 guess: "Tagalog"
 target: "Tongan"
 country: "AU"
@@ -4568,6 +5025,7 @@ choices:
 - "Tongan"
 sample: "838cfe7f928e1a41710e01b3ee12088f"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Lao"
 country: "AU"
@@ -4578,6 +5036,7 @@ choices:
 - "Lao"
 sample: "b5aa4ea31e44899dc4d58d4a35e05504"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Kurdish"
 country: "AU"
@@ -4588,6 +5047,7 @@ choices:
 - "Vietnamese"
 sample: "f54dad4973f899ba8e9e26dcca58d625"
 date: "2013-08-20"
+---
 guess: "Yiddish"
 target: "Hindi"
 country: "AU"
@@ -4598,6 +5058,7 @@ choices:
 - "Yiddish"
 sample: "9dac641f173f2a225501e8e50fc4e66e"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Dinka"
 country: "AU"
@@ -4608,6 +5069,7 @@ choices:
 - "Russian"
 sample: "192e7c59bb734ee762a323219846295b"
 date: "2013-08-20"
+---
 guess: "Japanese"
 target: "Korean"
 country: "AU"
@@ -4618,6 +5080,7 @@ choices:
 - "Macedonian"
 sample: "ec371adb75ab6c7431adae3ef8fc9fc9"
 date: "2013-08-20"
+---
 guess: "Armenian"
 target: "Yiddish"
 country: "AU"
@@ -4628,6 +5091,7 @@ choices:
 - "Yiddish"
 sample: "491ce6f2acb4a588a4e6ff3570d429a5"
 date: "2013-08-20"
+---
 guess: "Slovenian"
 target: "Slovenian"
 country: "AU"
@@ -4638,6 +5102,7 @@ choices:
 - "Tigrinya"
 sample: "f2f07eb5c50e64c627f66566b3c7cc4a"
 date: "2013-08-20"
+---
 guess: "Serbian"
 target: "Fijian"
 country: "AU"
@@ -4648,6 +5113,7 @@ choices:
 - "Serbian"
 sample: "f53c7596c141ee6d5d2b3ab90361f802"
 date: "2013-08-20"
+---
 guess: "Mandarin"
 target: "Mandarin"
 country: "AU"
@@ -4658,6 +5124,7 @@ choices:
 - "Mandarin"
 sample: "01f51995ae86ff85e899d40768ab81a8"
 date: "2013-08-20"
+---
 guess: "Tamil"
 target: "Punjabi"
 country: "AU"
@@ -4668,6 +5135,7 @@ choices:
 - "Tamil"
 sample: "d14f8f8b6933e7d9d68104ec7860db77"
 date: "2013-08-20"
+---
 guess: "Samoan"
 target: "Samoan"
 country: "AU"
@@ -4678,6 +5146,7 @@ choices:
 - "Urdu"
 sample: "13fcc764659c579ae8df152a0de5833e"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Amharic"
 country: "AU"
@@ -4688,6 +5157,7 @@ choices:
 - "Polish"
 sample: "5c6664317cc1cc256f11b722835396b7"
 date: "2013-08-20"
+---
 guess: "Kannada"
 target: "Kannada"
 country: "AU"
@@ -4698,6 +5168,7 @@ choices:
 - "Turkish"
 sample: "c11a7723bd3fcd00e33e90c90a3492e5"
 date: "2013-08-20"
+---
 guess: "Sinhalese"
 target: "Dari"
 country: "AU"
@@ -4708,6 +5179,7 @@ choices:
 - "Sinhalese"
 sample: "cad47cd466a2d8c25fa7a21c15cbb3cf"
 date: "2013-08-20"
+---
 guess: "Punjabi"
 target: "Somali"
 country: "AU"
@@ -4718,6 +5190,7 @@ choices:
 - "Somali"
 sample: "a505ab771ae7c32744ad31b3051b8ee9"
 date: "2013-08-20"
+---
 guess: "Macedonian"
 target: "Slovak"
 country: "AU"
@@ -4728,6 +5201,7 @@ choices:
 - "Slovak"
 sample: "2c5efbd7364036976ec403a9ee36f614"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Assyrian"
 country: "AU"
@@ -4738,6 +5212,7 @@ choices:
 - "Farsi"
 sample: "16ac545260ae198b7a3d882e06e5f261"
 date: "2013-08-20"
+---
 guess: "Estonian"
 target: "Malay"
 country: "AU"
@@ -4748,6 +5223,7 @@ choices:
 - "Swahili"
 sample: "fffe43269856111df6231c0a57812c90"
 date: "2013-08-20"
+---
 guess: "Hindi"
 target: "Slovak"
 country: "AU"
@@ -4758,6 +5234,7 @@ choices:
 - "Slovak"
 sample: "a8895626173aa388e5d1d5252563ab72"
 date: "2013-08-20"
+---
 guess: "Finnish"
 target: "Finnish"
 country: "AU"
@@ -4768,6 +5245,7 @@ choices:
 - "Samoan"
 sample: "65b5bf9df0f8ec61111d20c6b48db671"
 date: "2013-08-20"
+---
 guess: "Portuguese"
 target: "Tamil"
 country: "AU"
@@ -4778,6 +5256,7 @@ choices:
 - "Tamil"
 sample: "7c3fca32ce40e9b07e7b69a7d7191d4d"
 date: "2013-08-20"
+---
 guess: "Farsi"
 target: "Farsi"
 country: "AU"
@@ -4788,6 +5267,7 @@ choices:
 - "Turkish"
 sample: "c73ee42a45debb00fbcc86eb29682757"
 date: "2013-08-20"
+---
 guess: "Kurdish"
 target: "Romanian"
 country: "AU"
@@ -4798,6 +5278,7 @@ choices:
 - "Romanian"
 sample: "6560ff4ce0b53a1b0bad2e7734f52381"
 date: "2013-08-20"
+---
 guess: "Indonesian"
 target: "Indonesian"
 country: "AU"
@@ -4808,6 +5289,7 @@ choices:
 - "Lao"
 sample: "ff8fcb796b7fdc540dd567c144024f82"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "Italian"
 country: "AU"
@@ -4818,6 +5300,7 @@ choices:
 - "Italian"
 sample: "88f3e5120091cffdf8abeb92b5da90a2"
 date: "2013-08-20"
+---
 guess: "Turkish"
 target: "Hindi"
 country: "AU"
@@ -4828,6 +5311,7 @@ choices:
 - "Turkish"
 sample: "b04f555ac04b11bbe45f4761978cbe7e"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -4838,6 +5322,7 @@ choices:
 - "Swahili"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-20"
+---
 guess: "Maori"
 target: "Armenian"
 country: "AU"
@@ -4848,6 +5333,7 @@ choices:
 - "Polish"
 sample: "b46fa4a310d337db8f055083c68ba863"
 date: "2013-08-20"
+---
 guess: "Hebrew"
 target: "German"
 country: "AU"
@@ -4858,6 +5344,7 @@ choices:
 - "Yiddish"
 sample: "1f8b9a59cd75fc429db54dceb6e0594b"
 date: "2013-08-20"
+---
 guess: "Khmer"
 target: "Khmer"
 country: "AU"
@@ -4868,6 +5355,7 @@ choices:
 - "Slovenian"
 sample: "714795c596ef0639a385fe620d2c42ab"
 date: "2013-08-20"
+---
 guess: "Polish"
 target: "Polish"
 country: "AU"
@@ -4878,6 +5366,7 @@ choices:
 - "Turkish"
 sample: "3a4ac5558394719c279ff50d5dc650a8"
 date: "2013-08-20"
+---
 guess: "Dutch"
 target: "Mandarin"
 country: "AU"
@@ -4888,6 +5377,7 @@ choices:
 - "Mandarin"
 sample: "fc3712715ddc748286256eb7a64f25ab"
 date: "2013-08-20"
+---
 guess: "Hungarian"
 target: "German"
 country: "AU"
@@ -4898,6 +5388,7 @@ choices:
 - "Swedish"
 sample: "78213fa858b9a45d83121a8bf71712d1"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "German"
 country: "AU"
@@ -4908,6 +5399,7 @@ choices:
 - "Slovak"
 sample: "e77d97b712adffc39e531e20237a5589"
 date: "2013-08-20"
+---
 guess: "Tagalog"
 target: "Arabic"
 country: "AU"
@@ -4918,6 +5410,7 @@ choices:
 - "Malayalam"
 sample: "154ac3670f21586ab168cd376290bcb7"
 date: "2013-08-20"
+---
 guess: "Nepali"
 target: "Bosnian"
 country: "AU"
@@ -4928,6 +5421,7 @@ choices:
 - "Ukrainian"
 sample: "08d1b7f052aa2014d54d699b2466910f"
 date: "2013-08-20"
+---
 guess: "Slovak"
 target: "Urdu"
 country: "AU"
@@ -4938,6 +5432,7 @@ choices:
 - "Urdu"
 sample: "3520fdcdf2658685928fc37e72ab2134"
 date: "2013-08-20"
+---
 guess: "German"
 target: "Punjabi"
 country: "AU"
@@ -4948,6 +5443,7 @@ choices:
 - "Thai"
 sample: "10ff356faf50696b30f8a58b9dd919b2"
 date: "2013-08-20"
+---
 guess: "Thai"
 target: "Yiddish"
 country: "AU"
@@ -4958,6 +5454,7 @@ choices:
 - "Yiddish"
 sample: "0c02a4ff41d9cd2ac7354357b193e2d1"
 date: "2013-08-20"
+---
 guess: "Bulgarian"
 target: "Greek"
 country: "AU"
@@ -4968,6 +5465,7 @@ choices:
 - "Hindi"
 sample: "0f43daadf6a1ce6d769fa0daa630b5f6"
 date: "2013-08-20"
+---
 guess: "Latvian"
 target: "Russian"
 country: "AU"
@@ -4978,6 +5476,7 @@ choices:
 - "Swahili"
 sample: "b7df3f9d67cef259fbcaa5abcad9d774"
 date: "2013-08-20"
+---
 guess: "Lao"
 target: "Turkish"
 country: "AU"
@@ -4988,6 +5487,7 @@ choices:
 - "Turkish"
 sample: "752c4c30d475748a342c68ebfba24d1e"
 date: "2013-08-20"
+---
 guess: "Dinka"
 target: "Bulgarian"
 country: "AU"
