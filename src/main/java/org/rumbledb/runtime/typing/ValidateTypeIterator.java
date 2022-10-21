@@ -283,9 +283,6 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.FloatType)) {
                 return item.getFloatValue();
             }
-            if (dataType instanceof DecimalType && ((DecimalType) dataType).scale() == 0) {
-                return item.getIntegerValue();
-            }
             if (dataType instanceof DecimalType) {
                 return item.getDecimalValue();
             }
