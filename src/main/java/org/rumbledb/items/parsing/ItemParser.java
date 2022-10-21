@@ -53,6 +53,7 @@ import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.reflect.Array;
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.sql.Date;
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -65,7 +66,8 @@ public class ItemParser implements Serializable {
 
     private static final long serialVersionUID = 1L;
     private static final DataType vectorType = new VectorUDT();
-    public static final DataType decimalType = new DecimalType(30, 15); // 30 and 15 are arbitrary
+    public static final DataType integerType = new DecimalType(38, 0);
+    public static final DataType decimalType = new DecimalType(38, 19);
 
     /**
      * Parses a JSON string to an item.
@@ -297,6 +299,20 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
+        } else if (fieldType instanceof DecimalType && ((DecimalType)fieldType).scale() == 0) {
+            BigDecimal value;
+            if (row != null) {
+                value = row.getDecimal(i);
+            } else {
+                value = (BigDecimal) o;
+            }
+            BigInteger integerValue = value.toBigIntegerExact();
+            Item item = ItemFactory.getInstance().createIntegerItem(integerValue);
+            if (itemType == null || itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                return item;
+            } else {
+                return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
+            }
         } else if (fieldType instanceof DecimalType) {
             BigDecimal value;
             if (row != null) {
@@ -478,6 +494,9 @@ public class ItemParser implements Serializable {
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.longItem)) {
             return DataTypes.LongType;
         }
+        if (itemType.isSubtypeOf(BuiltinTypesCatalogue.integerItem)) {
+            return integerType;
+        }
         if (itemType.isSubtypeOf(BuiltinTypesCatalogue.decimalItem)) {
             return decimalType;
         }
@@ -517,7 +536,13 @@ public class ItemParser implements Serializable {
         if (DataTypes.FloatType.equals(dataType)) {
             return BuiltinTypesCatalogue.floatItem.getName();
         }
-        if (dataType.equals(decimalType) || DataTypes.LongType.equals(dataType)) {
+        if (dataType instanceof DecimalType && ((DecimalType)dataType).scale() == 0) {
+            return BuiltinTypesCatalogue.integerItem.getName();
+        }
+        if (dataType instanceof DecimalType) {
+            return BuiltinTypesCatalogue.decimalItem.getName();
+        }
+        if (DataTypes.LongType.equals(dataType)) {
             return BuiltinTypesCatalogue.decimalItem.getName();
         }
         if (DataTypes.StringType.equals(dataType)) {

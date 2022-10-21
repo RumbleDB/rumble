@@ -62,6 +62,7 @@ import java.util.Set;
 import java.util.TreeMap;
 
 import static org.rumbledb.items.parsing.ItemParser.decimalType;
+import static org.rumbledb.items.parsing.ItemParser.integerType;
 
 public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
 
@@ -366,7 +367,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.stringItem.getName())) {
                 columnType = DataTypes.StringType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.integerItem.getName())) {
-                columnType = DataTypes.IntegerType;
+                columnType = integerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.intItem.getName())) {
                 columnType = DataTypes.IntegerType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.doubleItem.getName())) {
@@ -375,7 +376,6 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                 columnType = DataTypes.FloatType;
             } else if (columnTypeString.equals(BuiltinTypesCatalogue.decimalItem.getName())) {
                 columnType = decimalType;
-                // columnType = DataTypes.createDecimalType();
             } else if (
                 columnTypeString.equals(BuiltinTypesCatalogue.durationItem.getName())
                     || columnTypeString.equals(BuiltinTypesCatalogue.yearMonthDurationItem.getName())

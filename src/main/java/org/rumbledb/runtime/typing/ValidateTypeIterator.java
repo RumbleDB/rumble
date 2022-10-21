@@ -7,6 +7,7 @@ import org.apache.spark.sql.RowFactory;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.DataType;
 import org.apache.spark.sql.types.DataTypes;
+import org.apache.spark.sql.types.DecimalType;
 import org.apache.spark.sql.types.StructField;
 import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
@@ -282,7 +283,10 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
             if (dataType.equals(DataTypes.FloatType)) {
                 return item.getFloatValue();
             }
-            if (dataType.equals(ItemParser.decimalType)) {
+            if (dataType instanceof DecimalType && ((DecimalType)dataType).scale() == 0) {
+                return item.getIntegerValue();
+            }
+            if (dataType instanceof DecimalType) {
                 return item.getDecimalValue();
             }
             if (dataType.equals(DataTypes.StringType)) {
