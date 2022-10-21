@@ -51,8 +51,6 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
 
     @Override
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
-        this.leftIterator.open(dynamicContext);
-        this.rightIterator.open(dynamicContext);
         Item left = null;
         try {
             left = leftIterator.materializeAtMostOneItemOrDefault(
