@@ -41,6 +41,7 @@ import org.rumbledb.exceptions.ParsingException;
 import org.rumbledb.exceptions.RumbleException;
 import org.rumbledb.items.ItemFactory;
 
+import com.fasterxml.jackson.dataformat.yaml.YAMLParser;
 import com.google.gson.stream.JsonReader;
 import com.google.gson.stream.JsonToken;
 import org.rumbledb.types.BuiltinTypesCatalogue;
@@ -49,6 +50,7 @@ import org.rumbledb.types.ItemType;
 import scala.collection.mutable.WrappedArray;
 import sparksoniq.spark.SparkSessionManager;
 
+import java.io.IOException;
 import java.io.Serializable;
 import java.io.StringReader;
 import java.lang.reflect.Array;
@@ -138,6 +140,103 @@ public class ItemParser implements Serializable {
         } catch (Exception e) {
             RumbleException r = new ParsingException(
                     "An error happened while parsing JSON. JSON is not well-formed! Hint: if you use json-file(), it must be in the JSON Lines format, with one value per line. If this is not the case, consider using json-doc().",
+                    metadata
+            );
+            r.initCause(e);
+            throw r;
+        }
+    }
+
+    /**
+     * Parses a JSON string, accessible via a reader, to an item.
+     * 
+     * @param parser the YAML parser.
+     * @param lookahead the lookahead token.
+     * @param metadata exception metadata is an error is thrown.
+     * @return the parsed item.
+     */
+    public static Item getItemFromYAML(
+            YAMLParser parser,
+            com.fasterxml.jackson.core.JsonToken lookahead,
+            ExceptionMetadata metadata
+    ) {
+        try {
+            if (lookahead == null) {
+                // System.err.println("End of file.");
+                return null;
+            }
+            // System.err.println("Lookahead (top level): " + lookahead.toString());
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_STRING)) {
+                return ItemFactory.getInstance().createStringItem(parser.getValueAsString());
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_INT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NUMBER_FLOAT)) {
+                String number = parser.getValueAsString();
+                if (number.contains("E") || number.contains("e")) {
+                    return ItemFactory.getInstance().createDoubleItem(Double.parseDouble(number));
+                }
+                if (number.contains(".")) {
+                    return ItemFactory.getInstance().createDecimalItem(new BigDecimal(number));
+                }
+                return ItemFactory.getInstance().createIntegerItem(number);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_FALSE)) {
+                return ItemFactory.getInstance().createBooleanItem(false);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_TRUE)) {
+                return ItemFactory.getInstance().createBooleanItem(true);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_ARRAY)) {
+                List<Item> values = new ArrayList<>();
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading array): " + nt.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_ARRAY)) {
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading array): " + nt.toString());
+                }
+                // System.err.println("Finished reading array.");
+                return ItemFactory.getInstance().createArrayItem(values);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.START_OBJECT)) {
+                List<String> keys = new ArrayList<>();
+                List<Item> values = new ArrayList<>();
+                com.fasterxml.jackson.core.JsonToken nt = parser.nextToken();
+                // System.err.println("Next token (reading object): " + lookahead.toString());
+                while (!nt.equals(com.fasterxml.jackson.core.JsonToken.END_OBJECT)) {
+                    if (!nt.equals(com.fasterxml.jackson.core.JsonToken.FIELD_NAME)) {
+                        throw new ParsingException("Expected field name!", metadata);
+                    }
+                    keys.add(parser.getText());
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                    values.add(getItemFromYAML(parser, nt, metadata));
+                    nt = parser.nextToken();
+                    // System.err.println("Next token (reading object): " + nt.toString());
+                }
+                // System.err.println("Finished reading object.");
+                return ItemFactory.getInstance()
+                    .createObjectItem(keys, values, metadata);
+            }
+            if (lookahead.equals(com.fasterxml.jackson.core.JsonToken.VALUE_NULL)) {
+                return ItemFactory.getInstance().createNullItem();
+            }
+            throw new ParsingException(
+                    "Invalid value found while parsing. YAML is not well-formed! Unexpected " + lookahead.toString(),
+                    metadata
+            );
+        } catch (IOException e) {
+            RumbleException r = new ParsingException(
+                    "An error happened while parsing YAML. YAML is not well-formed!",
                     metadata
             );
             r.initCause(e);
