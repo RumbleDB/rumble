@@ -299,7 +299,7 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType instanceof DecimalType && ((DecimalType)fieldType).scale() == 0) {
+        } else if (fieldType instanceof DecimalType && ((DecimalType) fieldType).scale() == 0) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
@@ -536,7 +536,7 @@ public class ItemParser implements Serializable {
         if (DataTypes.FloatType.equals(dataType)) {
             return BuiltinTypesCatalogue.floatItem.getName();
         }
-        if (dataType instanceof DecimalType && ((DecimalType)dataType).scale() == 0) {
+        if (dataType instanceof DecimalType && ((DecimalType) dataType).scale() == 0) {
             return BuiltinTypesCatalogue.integerItem.getName();
         }
         if (dataType instanceof DecimalType) {

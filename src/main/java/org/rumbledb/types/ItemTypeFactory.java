@@ -578,6 +578,8 @@ public class ItemTypeFactory {
             return BuiltinTypesCatalogue.integerItem;
         } else if (dt.equals(DataTypes.FloatType)) {
             return BuiltinTypesCatalogue.floatItem;
+        } else if (dt instanceof DecimalType && ((DecimalType) dt).scale() == 0) {
+            return BuiltinTypesCatalogue.integerItem;
         } else if (dt instanceof DecimalType) {
             return BuiltinTypesCatalogue.decimalItem;
         } else if (dt.equals(DataTypes.LongType)) {
