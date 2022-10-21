@@ -268,6 +268,7 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
                     UDFParameters
                 )
             );
+
         Object columnTypesObject = columnTypesDf.collect();
         Row[] columnTypesOfRows = ((Row[]) columnTypesObject);
 
