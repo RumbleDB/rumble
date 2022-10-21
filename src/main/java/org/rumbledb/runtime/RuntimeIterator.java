@@ -348,6 +348,19 @@ public abstract class RuntimeIterator implements RuntimeIteratorInterface, KryoS
         return result;
     }
 
+    public Item materializeAtMostOneItemOrDefault(
+            DynamicContext context,
+            Item item
+    )
+            throws MoreThanOneItemException {
+        Item result = materializeAtMostOneItemOrNull(context);
+        if (result == null) {
+            return item;
+        } else {
+            return result;
+        }
+    }
+
     public Map<Name, DynamicContext.VariableDependency> getVariableDependencies() {
         Map<Name, DynamicContext.VariableDependency> result =
             new TreeMap<>();

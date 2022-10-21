@@ -25,6 +25,7 @@ import java.util.Arrays;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
+import org.rumbledb.exceptions.MoreThanOneItemException;
 import org.rumbledb.exceptions.UnexpectedTypeException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.items.ItemFactory;
@@ -52,18 +53,29 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
     public Item materializeFirstItemOrNull(DynamicContext dynamicContext) {
         this.leftIterator.open(dynamicContext);
         this.rightIterator.open(dynamicContext);
-        Item left;
-        Item right;
-        // empty sequences are treated as empty strings in concatenation
-        if (this.leftIterator.hasNext()) {
-            left = this.leftIterator.next();
-        } else {
-            left = ItemFactory.getInstance().createStringItem("");
+        Item left = null;
+        try {
+            left = leftIterator.materializeAtMostOneItemOrDefault(
+                dynamicContext,
+                ItemFactory.getInstance().createStringItem("")
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "String concatenation expression requires at most one item in its left input sequence.",
+                    getMetadata()
+            );
         }
-        if (this.rightIterator.hasNext()) {
-            right = this.rightIterator.next();
-        } else {
-            right = ItemFactory.getInstance().createStringItem("");
+        Item right = null;
+        try {
+            right = rightIterator.materializeAtMostOneItemOrDefault(
+                dynamicContext,
+                ItemFactory.getInstance().createStringItem("")
+            );
+        } catch (MoreThanOneItemException e) {
+            throw new UnexpectedTypeException(
+                    "String concatenation expression requires at most one item in its right input sequence.",
+                    getMetadata()
+            );
         }
         if (!(left.isAtomic()) || !(right.isAtomic())) {
             throw new UnexpectedTypeException(
@@ -76,12 +88,8 @@ public class StringConcatIterator extends AtMostOneItemLocalRuntimeIterator {
             );
         }
 
-        String leftStringValue = left.serialize();
-        String rightStringValue = right.serialize();
-
-        this.leftIterator.close();
-        this.rightIterator.close();
-        this.hasNext = false;
+        String leftStringValue = left.getStringValue();
+        String rightStringValue = right.getStringValue();
         return ItemFactory.getInstance().createStringItem(leftStringValue.concat(rightStringValue));
     }
 }
