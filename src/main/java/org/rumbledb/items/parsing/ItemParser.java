@@ -396,7 +396,7 @@ public class ItemParser implements Serializable {
             } else {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
-        } else if (fieldType.equals(decimalType)) {
+        } else if (fieldType instanceof DecimalType) {
             BigDecimal value;
             if (row != null) {
                 value = row.getDecimal(i);
