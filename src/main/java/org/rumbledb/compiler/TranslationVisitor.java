@@ -847,15 +847,16 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         JsoniqParser.StringConcatExprContext child = ctx.rhs.get(0);
         Expression childExpression = (Expression) this.visitStringConcatExpr(child);
 
-        ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText());
-        if(kind.isValueComparison())
-        {
-	        return new ComparisonExpression(
-	                mainExpression,
-	                childExpression,
-	                ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
-	                createMetadataFromContext(ctx)
-	        );
+        ComparisonExpression.ComparisonOperator kind = ComparisonExpression.ComparisonOperator.fromSymbol(
+            ctx.op.get(0).getText()
+        );
+        if (kind.isValueComparison()) {
+            return new ComparisonExpression(
+                    mainExpression,
+                    childExpression,
+                    ComparisonExpression.ComparisonOperator.fromSymbol(ctx.op.get(0).getText()),
+                    createMetadataFromContext(ctx)
+            );
         }
 
         SequenceType sequenceType = SequenceType.ITEM;
@@ -878,8 +879,8 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
                 childExpression,
                 createMetadataFromContext(ctx)
         );
-    	firstClause.chainWith(secondClause);
-    	Expression valueComparison = new ComparisonExpression(
+        firstClause.chainWith(secondClause);
+        Expression valueComparison = new ComparisonExpression(
                 new VariableReferenceExpression(variableNameLeft, createMetadataFromContext(ctx)),
                 new VariableReferenceExpression(variableNameRight, createMetadataFromContext(ctx)),
                 kind.getCorrespondingValueComparison(),
@@ -888,7 +889,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-        		new StringLiteralExpression("", null),
+                new StringLiteralExpression("", null),
                 generateMetadata(ctx.start)
         );
         whereClause.chainWith(returnClause);
