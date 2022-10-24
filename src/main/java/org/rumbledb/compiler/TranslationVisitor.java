@@ -888,7 +888,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         WhereClause whereClause = new WhereClause(valueComparison, createMetadataFromContext(ctx));
         secondClause.chainWith(whereClause);
         ReturnClause returnClause = new ReturnClause(
-                new NullLiteralExpression(generateMetadata(ctx.start)),
+        		new StringLiteralExpression("", null),
                 generateMetadata(ctx.start)
         );
         whereClause.chainWith(returnClause);
