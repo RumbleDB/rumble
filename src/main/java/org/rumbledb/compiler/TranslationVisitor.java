@@ -136,6 +136,7 @@ import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.ItemTypeReference;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.SequenceType.Arity;
 
 
 /**
@@ -859,7 +860,10 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
 
-        SequenceType sequenceType = SequenceType.ITEM;
+        SequenceType sequenceType = new SequenceType(
+                BuiltinTypesCatalogue.atomicItem,
+                Arity.One
+        );
         Name variableNameLeft = Name.TEMP_VAR1;
         Name variableNameRight = Name.TEMP_VAR2;
 
