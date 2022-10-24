@@ -63,6 +63,8 @@ public class Name implements Comparable<Name>, Serializable, KryoSerializable {
     public static final Name CONTEXT_ITEM = createVariableInNoNamespace("$");
     public static final Name CONTEXT_POSITION = createVariableInNoNamespace("$position");
     public static final Name CONTEXT_COUNT = createVariableInNoNamespace("$count");
+    public static final Name TEMP_VAR1 = createVariableInNoNamespace("$d3094969-fe9a-4cad-95e5-88475bbee008");
+    public static final Name TEMP_VAR2 = createVariableInNoNamespace("$a6b2b9fb-f60a-4ba2-af60-e668256c49ec");
 
     public Name() {
         this.namespace = null;
