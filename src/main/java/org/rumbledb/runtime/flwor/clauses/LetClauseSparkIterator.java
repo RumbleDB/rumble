@@ -641,6 +641,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
 
+
         } else {
             // System.out.println(
             // String.format(
@@ -697,7 +698,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return true;
             }
 
-            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.intItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -709,7 +710,24 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "Integer"
                         ),
-                        ItemParser.integerType
+                        DataTypes.IntegerType
+                    );
+                return true;
+            }
+
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
+                        ItemParser.decimalType
                     );
                 return true;
             }
