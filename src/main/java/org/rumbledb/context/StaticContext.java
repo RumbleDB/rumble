@@ -377,7 +377,7 @@ public class StaticContext implements Serializable, KryoSerializable {
 
     // replace all inScopeVariable in this context and all parents until [stopContext] with name not in [varToExclude]
     // with same variable with sequence type arity changed from 1 to + and form ? to *
-    // used by groupBy cluse
+    // used by groupBy clause
     public void incrementArities(StaticContext stopContext, Set<Name> varToExclude) {
         this.inScopeVariables.replaceAll(
             (key, value) -> varToExclude.contains(key)
@@ -392,7 +392,7 @@ public class StaticContext implements Serializable, KryoSerializable {
         StaticContext current = this.parent;
         while (current != null && current != stopContext) {
             for (Map.Entry<Name, InScopeVariable> entry : current.inScopeVariables.entrySet()) {
-                if (!this.inScopeVariables.containsKey(entry.getKey())) {
+                if (!varToExclude.contains(entry.getKey()) && !this.inScopeVariables.containsKey(entry.getKey())) {
                     this.addVariable(
                         entry.getKey(),
                         entry.getValue().getSequenceType().incrementArity(),
