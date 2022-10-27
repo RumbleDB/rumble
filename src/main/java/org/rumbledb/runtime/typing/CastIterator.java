@@ -805,14 +805,15 @@ public class CastIterator extends AtMostOneItemLocalRuntimeIterator {
     @Override
     public NativeClauseContext generateNativeQuery(NativeClauseContext nativeClauseContext) {
         NativeClauseContext childQuery = this.child.generateNativeQuery(nativeClauseContext);
-        if (childQuery != NativeClauseContext.NoNativeQuery) {
-            if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
-                return new NativeClauseContext(
-                        nativeClauseContext,
-                        "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
-                        BuiltinTypesCatalogue.floatItem
-                );
-            }
+        if (childQuery == NativeClauseContext.NoNativeQuery) {
+            return NativeClauseContext.NoNativeQuery;
+        }
+        if (this.sequenceType.getItemType().isSubtypeOf(BuiltinTypesCatalogue.floatItem)) {
+            return new NativeClauseContext(
+                    nativeClauseContext,
+                    "CAST (" + childQuery.getResultingQuery() + " AS FLOAT)",
+                    BuiltinTypesCatalogue.floatItem
+            );
         }
         return NativeClauseContext.NoNativeQuery;
     }
