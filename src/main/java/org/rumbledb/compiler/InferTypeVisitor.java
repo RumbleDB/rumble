@@ -1074,23 +1074,12 @@ public class InferTypeVisitor extends AbstractNodeVisitor<StaticContext> {
 
             // Type must be a strict subtype of atomic
             if (
-                leftItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
-                    || rightItemType.isSubtypeOf(BuiltinTypesCatalogue.JSONItem)
+                !leftItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
+                    || !rightItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
             ) {
                 throwStaticTypeException(
                     "It is not possible to compare with non-atomic types",
                     ErrorCode.NonAtomicElementErrorCode,
-                    expression.getMetadata()
-                );
-            }
-            if (
-                !leftItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                    || !rightItemType.isSubtypeOf(BuiltinTypesCatalogue.atomicItem)
-                    || leftItemType.equals(BuiltinTypesCatalogue.atomicItem)
-                    || rightItemType.equals(BuiltinTypesCatalogue.atomicItem)
-            ) {
-                throwStaticTypeException(
-                    "It is not possible to compare with non-atomic types",
                     expression.getMetadata()
                 );
             }
