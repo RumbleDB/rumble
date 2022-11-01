@@ -1,6 +1,8 @@
 package org.rumbledb.compiler;
 
+import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
+import org.rumbledb.errorcodes.ErrorCode;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.CommaExpression;
 import org.rumbledb.expressions.Expression;
@@ -16,21 +18,21 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.*;
+import org.rumbledb.expressions.module.FunctionDeclaration;
+import org.rumbledb.expressions.module.LibraryModule;
+import org.rumbledb.expressions.module.Prolog;
+import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
 import org.rumbledb.types.SequenceType;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 // maybe have to return expression and assign it
 public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
-    private final Map<Name, FunctionDeclaration> functionDeclarationMap;
+    private final Map<FunctionIdentifier, FunctionDeclaration> functionDeclarationMap;
 
     public FunctionInliningVisitor() {
         this.functionDeclarationMap = new HashMap<>();
@@ -55,10 +57,13 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitProlog(Prolog prolog, Node argument) {
-        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
-            this.functionDeclarationMap.put(declaration.getFunctionIdentifier().getName(), declaration);
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) { // mainModule.prolog.getImportedModules()
+            this.functionDeclarationMap.put(declaration.getFunctionIdentifier(), declaration);
         }
-        return null;
+        for (LibraryModule libraryModule : prolog.getImportedModules()) {
+            visit(libraryModule.getProlog(), argument);
+        }
+        return prolog;
     }
 
     // region flwor
@@ -203,7 +208,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
     // region primary
     public Node visitArrayConstructor(ArrayConstructorExpression expression, Node argument) {
         ArrayConstructorExpression result = new ArrayConstructorExpression(
-                (Expression) visit(expression.getExpression(), argument),
+                (expression.getExpression() == null)
+                    ? expression.getExpression()
+                    : (Expression) visit(expression.getExpression(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
@@ -238,11 +245,14 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        if (!this.functionDeclarationMap.containsKey(expression.getFunctionName())) {
+        if (!this.functionDeclarationMap.containsKey(expression.getFunctionIdentifier())) {
             // TODO this is a simplification, create new FunctionCallExpression and visit children
             return expression;
         }
-        FunctionDeclaration targetFunction = this.functionDeclarationMap.get(expression.getFunctionName());
+        if (expression.isPartialApplication()) {
+            return expression;
+        }
+        FunctionDeclaration targetFunction = this.functionDeclarationMap.get(expression.getFunctionIdentifier());
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
         Expression body = targetFunction.isRecursive()
             ? inlineFunction.getBody()
@@ -252,24 +262,54 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         }
         body.setStaticSequenceType(inlineFunction.getReturnType());
         ReturnClause returnClause = new ReturnClause(body, expression.getMetadata());
-        Clause current = null; // TODO need two lists later, use UUIDs
+        Clause expressionClauses = null;
+        Clause assignmentClauses = null;
         List<Name> paramNames = new ArrayList<>(inlineFunction.getParams().keySet());
         for (int i = 0; i < expression.getArguments().size(); i++) {
             Name paramName = paramNames.get(i);
             SequenceType paramType = inlineFunction.getParams().get(paramName);
-            Clause temp = new LetClause(
-                    paramName,
-                    null, // fixme only when it's not item*
-                    (Expression) visit(expression.getArguments().get(i), argument),
+            Expression argumentExpression = (Expression) visit(expression.getArguments().get(i), argument);
+
+            Name columnName = new Name("", "", "param" + UUID.randomUUID().toString().replaceAll("-", ""));
+            Clause expressionClause = new LetClause(
+                    columnName,
+                    null,
+                    argumentExpression,
                     expression.getMetadata()
             );
-            if (current != null) {
-                temp.chainWith(current);
+            Clause assignmentClause = new LetClause(
+                    paramName,
+                    (paramType == SequenceType.ITEM_STAR) ? null : paramType,
+                    // FIXME this is supposed to be a TypePromotion
+                    new TreatExpression(
+                            paramType.getArity() == SequenceType.Arity.OneOrMore
+                                    || paramType.getArity() == SequenceType.Arity.ZeroOrMore
+                                    ? new VariableReferenceExpression(columnName, expression.getMetadata())
+                                    : new CastExpression(
+                                    new VariableReferenceExpression(columnName, expression.getMetadata()),
+                                    paramType,
+                                    expression.getMetadata()
+                            ),
+                            paramType,
+                            ErrorCode.UnexpectedTypeErrorCode,
+                            expression.getMetadata()
+                    ),
+                    expression.getMetadata()
+            );
+            if(assignmentClauses != null){
+                assignmentClause.chainWith(assignmentClauses);
             }
-            current = temp;
+            assignmentClauses = assignmentClause;
+            if (expressionClauses != null) {
+                expressionClause.chainWith(expressionClauses);
+            }
+            expressionClauses = expressionClause;
         }
-        current.chainWith(returnClause);
-        return new FlworExpression(returnClause, expression.getMetadata());
+        assignmentClauses.getLastClause().chainWith(returnClause);
+        expressionClauses.getLastClause().chainWith(assignmentClauses);
+        FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
+        result.setStaticSequenceType(inlineFunction.getReturnType());
+        return result;
     }
 
     @Override
@@ -542,7 +582,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         TryCatchExpression result = new TryCatchExpression(
                 (Expression) visit(expression.getTryExpression(), argument),
                 catchExpressions,
-                (Expression) visit(expression.getExpressionCatchingAll(), argument),
+                (expression.getExpressionCatchingAll() == null)
+                    ? expression.getExpressionCatchingAll()
+                    : (Expression) visit(expression.getExpressionCatchingAll(), argument),
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
