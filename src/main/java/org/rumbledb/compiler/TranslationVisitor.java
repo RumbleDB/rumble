@@ -860,17 +860,13 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
             );
         }
 
-        SequenceType sequenceType = new SequenceType(
-                BuiltinTypesCatalogue.atomicItem,
-                Arity.One
-        );
         Name variableNameLeft = Name.TEMP_VAR1;
         Name variableNameRight = Name.TEMP_VAR2;
 
         Clause firstClause = new ForClause(
                 variableNameLeft,
                 false,
-                sequenceType,
+                null,
                 null,
                 mainExpression,
                 createMetadataFromContext(ctx)
@@ -878,7 +874,7 @@ public class TranslationVisitor extends org.rumbledb.parser.JsoniqBaseVisitor<No
         Clause secondClause = new ForClause(
                 variableNameRight,
                 false,
-                sequenceType,
+                null,
                 null,
                 childExpression,
                 createMetadataFromContext(ctx)
