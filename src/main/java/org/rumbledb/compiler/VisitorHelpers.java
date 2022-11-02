@@ -62,12 +62,11 @@ public class VisitorHelpers {
         }
     }
 
-    private static MainModule inlineFunctions(MainModule module) {
-        FunctionInliningVisitor functionInliningVisitor = new FunctionInliningVisitor();
-        functionInliningVisitor.visit(module.getProlog(), null);
+    private static MainModule inlineFunctions(MainModule module, RumbleRuntimeConfiguration configuration) {
+        FunctionInliningVisitor functionInliningVisitor = new FunctionInliningVisitor(configuration);
         MainModule result = new MainModule(
                 module.getProlog(),
-                (Expression) functionInliningVisitor.visit(module.getExpression(), null),
+                (Expression) functionInliningVisitor.visit(module.getExpression(), module.getProlog()),
                 module.getMetadata()
         );
         result.setStaticContext(module.getStaticContext());
@@ -153,7 +152,7 @@ public class VisitorHelpers {
             resolveDependencies(mainModule, configuration);
             FunctionDependenciesVisitor fdv = new FunctionDependenciesVisitor();
             fdv.visit(mainModule, null);
-            mainModule = inlineFunctions(mainModule);
+            mainModule = inlineFunctions(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);
             populateExecutionModes(mainModule, configuration);

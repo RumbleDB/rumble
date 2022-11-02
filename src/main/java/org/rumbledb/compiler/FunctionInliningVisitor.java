@@ -1,5 +1,6 @@
 package org.rumbledb.compiler;
 
+import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -32,10 +33,93 @@ import java.util.stream.Collectors;
 
 // maybe have to return expression and assign it
 public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
-    private final Map<FunctionIdentifier, FunctionDeclaration> functionDeclarationMap;
 
-    public FunctionInliningVisitor() {
-        this.functionDeclarationMap = new HashMap<>();
+    private final RumbleRuntimeConfiguration configuration;
+
+    public FunctionInliningVisitor(RumbleRuntimeConfiguration configuration) {
+        this.configuration = configuration;
+    }
+
+    private Prolog getPrologByFunctionIdentifier(Prolog prolog, FunctionIdentifier functionIdentifier) {
+        if (
+            prolog.getFunctionDeclarations()
+                .stream()
+                .anyMatch(declaration -> declaration.getFunctionIdentifier().equals(functionIdentifier))
+        ) {
+            return prolog;
+        }
+        for (LibraryModule module : prolog.getImportedModules()) {
+            if (
+                module.getProlog()
+                    .getFunctionDeclarations()
+                    .stream()
+                    .anyMatch(declaration -> declaration.getFunctionIdentifier().equals(functionIdentifier))
+            ) {
+                return module.getProlog();
+            }
+        }
+        return null;
+    }
+
+    private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
+        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
+            if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
+                return declaration;
+            }
+        }
+        // FIXME recursive search
+        for (LibraryModule module : prolog.getImportedModules()) {
+            FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+
+    private Prolog getPrologByVariableName(Prolog prolog, Name variableName) {
+        if (
+            prolog.getVariableDeclarations()
+                .stream()
+                .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
+        ) {
+            return prolog;
+        }
+        for (LibraryModule module : prolog.getImportedModules()) {
+            if (
+                module.getProlog()
+                    .getVariableDeclarations()
+                    .stream()
+                    .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
+            ) {
+                return module.getProlog();
+            }
+        }
+        // FIXME recursive search
+        for (LibraryModule module : prolog.getImportedModules()) {
+            Prolog result = getPrologByVariableName(module.getProlog(), variableName);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private Expression getVariableFromProlog(Prolog prolog, Name variableName) {
+        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
+            if (declaration.getVariableName().equals(variableName)) {
+                return declaration.getExpression();
+            }
+        }
+        // FIXME recursive search
+        for (LibraryModule module : prolog.getImportedModules()) {
+            Expression result = getVariableFromProlog(module.getProlog(), variableName);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
     }
 
     @Override
@@ -55,17 +139,6 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         return result;
     }
 
-    @Override
-    public Node visitProlog(Prolog prolog, Node argument) {
-        for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) { // mainModule.prolog.getImportedModules()
-            this.functionDeclarationMap.put(declaration.getFunctionIdentifier(), declaration);
-        }
-        for (LibraryModule libraryModule : prolog.getImportedModules()) {
-            visit(libraryModule.getProlog(), argument);
-        }
-        return prolog;
-    }
-
     // region flwor
     @Override
     public Node visitFlowrExpression(FlworExpression expression, Node argument) {
@@ -80,6 +153,23 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             clause = clause.getNextClause();
         }
         return new FlworExpression((ReturnClause) result, expression.getMetadata());
+    }
+
+    public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
+        // don't inline variables that are external
+        if (
+            configuration.getExternalVariableValue(expression.getVariableName()) != null
+                || configuration.getUnparsedExternalVariableValue(expression.getVariableName()) != null
+        ) {
+            return expression;
+        }
+        Prolog context = getPrologByVariableName((Prolog) argument, expression.getVariableName());
+        if (context == null) {
+            return expression;
+        }
+        Expression result = getVariableFromProlog(context, expression.getVariableName());
+        // FIXME recursive search
+        return result == null ? expression : visit(result, argument);
     }
 
     @Override
@@ -245,18 +335,25 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        if (!this.functionDeclarationMap.containsKey(expression.getFunctionIdentifier())) {
-            // TODO this is a simplification, create new FunctionCallExpression and visit children
-            return expression;
-        }
+        Prolog prolog = getPrologByFunctionIdentifier((Prolog) argument, expression.getFunctionIdentifier());
+        // if (prolog == null) {
+        // // TODO this is a simplification, create new FunctionCallExpression and visit children
+        // return expression;
+        // }
         if (expression.isPartialApplication()) {
             return expression;
         }
-        FunctionDeclaration targetFunction = this.functionDeclarationMap.get(expression.getFunctionIdentifier());
+        // FIXME recursive search
+        FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
+            (Prolog) argument,
+            expression.getFunctionIdentifier()
+        );
+        if (targetFunction == null || targetFunction.isRecursive()) {
+            return expression;
+        }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        Expression body = targetFunction.isRecursive()
-            ? inlineFunction.getBody()
-            : (Expression) visit(inlineFunction.getBody(), argument);
+        // FIXME recursive search
+        Expression body = (Expression) visit(inlineFunction.getBody(), argument);
         if (expression.getArguments().size() == 0) {
             return body;
         }
@@ -283,20 +380,20 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                     // FIXME this is supposed to be a TypePromotion
                     new TreatExpression(
                             paramType.getArity() == SequenceType.Arity.OneOrMore
-                                    || paramType.getArity() == SequenceType.Arity.ZeroOrMore
+                                || paramType.getArity() == SequenceType.Arity.ZeroOrMore
                                     ? new VariableReferenceExpression(columnName, expression.getMetadata())
                                     : new CastExpression(
-                                    new VariableReferenceExpression(columnName, expression.getMetadata()),
-                                    paramType,
-                                    expression.getMetadata()
-                            ),
+                                            new VariableReferenceExpression(columnName, expression.getMetadata()),
+                                            paramType,
+                                            expression.getMetadata()
+                                    ),
                             paramType,
                             ErrorCode.UnexpectedTypeErrorCode,
                             expression.getMetadata()
                     ),
                     expression.getMetadata()
             );
-            if(assignmentClauses != null){
+            if (assignmentClauses != null) {
                 assignmentClause.chainWith(assignmentClauses);
             }
             assignmentClauses = assignmentClause;
