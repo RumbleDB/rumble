@@ -62,6 +62,10 @@ public class VisitorHelpers {
         }
     }
 
+    private static void findFunctionDependencies(Module module){
+        new FunctionDependenciesVisitor().visit(module, null);
+    }
+
     private static MainModule inlineFunctions(MainModule module, RumbleRuntimeConfiguration configuration) {
         FunctionInliningVisitor functionInliningVisitor = new FunctionInliningVisitor(configuration);
         MainModule result = new MainModule(
@@ -150,8 +154,7 @@ public class VisitorHelpers {
             MainModule mainModule = (MainModule) visitor.visit(main);
             pruneModules(mainModule, configuration);
             resolveDependencies(mainModule, configuration);
-            FunctionDependenciesVisitor fdv = new FunctionDependenciesVisitor();
-            fdv.visit(mainModule, null);
+            findFunctionDependencies(mainModule);
             mainModule = inlineFunctions(mainModule, configuration);
             populateStaticContext(mainModule, configuration);
             inferTypes(mainModule, configuration);

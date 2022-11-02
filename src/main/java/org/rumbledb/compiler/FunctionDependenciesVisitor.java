@@ -115,7 +115,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
         this.functionDeclarations.put(name, expression);
         createVertex(name);
         visit(expression.getExpression(), name);
-        return null;
+        return argument;
     }
 
     public FunctionIdentifier visitFunctionCall(FunctionCallExpression expression, FunctionIdentifier argument) {
@@ -123,6 +123,6 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
             return defaultAction(expression, null);
         }
         createEdge(argument, expression.getFunctionIdentifier());
-        return null;
+        return argument;
     }
 }
