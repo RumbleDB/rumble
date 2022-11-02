@@ -158,8 +158,8 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
         // don't inline variables that are external
         if (
-            configuration.getExternalVariableValue(expression.getVariableName()) != null
-                || configuration.getUnparsedExternalVariableValue(expression.getVariableName()) != null
+            this.configuration.getExternalVariableValue(expression.getVariableName()) != null
+                || this.configuration.getUnparsedExternalVariableValue(expression.getVariableName()) != null
         ) {
             return expression;
         }
