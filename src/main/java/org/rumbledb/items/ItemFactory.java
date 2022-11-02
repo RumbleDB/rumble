@@ -15,6 +15,7 @@ public class ItemFactory {
 
     private static ItemFactory instance;
     private Item nullItem;
+    private Item emptyStringItem;
     private Item trueBooleanItem;
     private Item falseBooleanItem;
     private Item zeroItem;
@@ -29,6 +30,7 @@ public class ItemFactory {
         if (instance == null) {
             instance = new ItemFactory();
             instance.nullItem = new NullItem();
+            instance.emptyStringItem = new StringItem("");
             instance.trueBooleanItem = new BooleanItem(true);
             instance.falseBooleanItem = new BooleanItem(false);
             instance.zeroItem = new IntItem(0);
@@ -43,6 +45,9 @@ public class ItemFactory {
     }
 
     public Item createStringItem(String s) {
+        if (s.equals("")) {
+            return this.emptyStringItem;
+        }
         return new StringItem(s);
     }
 
