@@ -675,6 +675,9 @@ public class RumbleRuntimeConfiguration implements Serializable, KryoSerializabl
         if (this.getOutputFormat().equals("json")) {
             method = Serializer.Method.JSON;
         }
+        if (this.getOutputFormat().equals("yaml")) {
+            method = Serializer.Method.YAML;
+        }
         boolean indent = false;
         Map<String, String> options = this.getOutputFormatOptions();
         if (options.containsKey("indent")) {

@@ -119,12 +119,13 @@ public class JsoniqQueryExecutor implements Logging {
         if (
             !(this.configuration.getOutputFormat().equals("json")
                 || this.configuration.getOutputFormat().equals("tyson")
-                || this.configuration.getOutputFormat().equals("xml-json-hybrid"))
+                || this.configuration.getOutputFormat().equals("xml-json-hybrid")
+                || this.configuration.getOutputFormat().equals("yaml"))
                 &&
                 !sequence.availableAsDataFrame()
         ) {
             throw new CliException(
-                    "Rumble cannot output another format than json or tyson or xml-json-hybrid if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
+                    "Rumble cannot output another format than json or tyson or xml-json-hybrid or yaml if the query does not output a structured collection. You can create a structured collection from a sequence of objects by calling the function annotate(<your query here> , <a schema here>)."
             );
         }
 

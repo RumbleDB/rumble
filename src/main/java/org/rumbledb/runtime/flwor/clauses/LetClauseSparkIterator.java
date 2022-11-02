@@ -35,6 +35,7 @@ import org.rumbledb.exceptions.JobWithinAJobException;
 import org.rumbledb.exceptions.UnsupportedFeatureException;
 import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.parsing.ItemParser;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.RuntimeTupleIterator;
@@ -640,6 +641,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                     )
                 );
 
+
         } else {
             // System.out.println(
             // String.format(
@@ -671,7 +673,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
             List<String> UDFcolumns,
             SequenceType sequenceType
     ) {
-        // for the moment we only consider natively types with single arity (what about optional)
+        // for the moment we only consider native types with single arity (what about optional)
         if (
             sequenceType != null
                 && !sequenceType.isEmptySequence()
@@ -696,7 +698,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return true;
             }
 
-            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+            if (itemType.equals(BuiltinTypesCatalogue.intItem)) {
                 dataFrame.sparkSession()
                     .udf()
                     .register(
@@ -713,6 +715,23 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                 return true;
             }
 
+            if (itemType.equals(BuiltinTypesCatalogue.integerItem)) {
+                dataFrame.sparkSession()
+                    .udf()
+                    .register(
+                        "letClauseUDF",
+                        new GenericLetClauseUDF<Integer>(
+                                newVariableExpression,
+                                context,
+                                inputSchema,
+                                UDFcolumns,
+                                "BigDecimal"
+                        ),
+                        ItemParser.decimalType
+                    );
+                return true;
+            }
+
             if (itemType.equals(BuiltinTypesCatalogue.decimalItem)) {
                 dataFrame.sparkSession()
                     .udf()
@@ -725,7 +744,7 @@ public class LetClauseSparkIterator extends RuntimeTupleIterator {
                                 UDFcolumns,
                                 "BigDecimal"
                         ),
-                        DataTypes.createDecimalType()
+                        ItemParser.decimalType
                     );
                 return true;
             }
