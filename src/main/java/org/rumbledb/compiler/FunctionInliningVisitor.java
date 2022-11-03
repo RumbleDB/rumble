@@ -26,6 +26,7 @@ import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
+import org.rumbledb.types.BuiltinTypesCatalogue;
 import org.rumbledb.types.SequenceType;
 
 import java.util.*;
@@ -40,34 +41,12 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         this.configuration = configuration;
     }
 
-    private Prolog getPrologByFunctionIdentifier(Prolog prolog, FunctionIdentifier functionIdentifier) {
-        if (
-            prolog.getFunctionDeclarations()
-                .stream()
-                .anyMatch(declaration -> declaration.getFunctionIdentifier().equals(functionIdentifier))
-        ) {
-            return prolog;
-        }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            if (
-                module.getProlog()
-                    .getFunctionDeclarations()
-                    .stream()
-                    .anyMatch(declaration -> declaration.getFunctionIdentifier().equals(functionIdentifier))
-            ) {
-                return module.getProlog();
-            }
-        }
-        return null;
-    }
-
     private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
                 return declaration;
             }
         }
-        // FIXME recursive search
         for (LibraryModule module : prolog.getImportedModules()) {
             FunctionDeclaration result = getFunctionDeclarationFromProlog(module.getProlog(), functionIdentifier);
             if (result != null) {
@@ -77,49 +56,91 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         return null;
     }
 
-
-    private Prolog getPrologByVariableName(Prolog prolog, Name variableName) {
-        if (
-            prolog.getVariableDeclarations()
-                .stream()
-                .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
-        ) {
-            return prolog;
+    private Expression createTypePromotion(
+            VariableReferenceExpression variableReferenceExpression,
+            SequenceType paramType
+    ) {
+        if (!paramType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
+            return variableReferenceExpression;
         }
-        for (LibraryModule module : prolog.getImportedModules()) {
-            if (
-                module.getProlog()
-                    .getVariableDeclarations()
-                    .stream()
-                    .anyMatch(declaration -> declaration.getVariableName().equals(variableName))
-            ) {
-                return module.getProlog();
-            }
+        // integer > decimal > double
+        if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
+            List<TypeswitchCase> cases = new ArrayList<>();
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                paramType,
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
+            );
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                paramType,
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
+            );
+            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
+                    variableReferenceExpression,
+                    cases,
+                    new TypeswitchCase(null, variableReferenceExpression),
+                    variableReferenceExpression.getMetadata()
+            );
+            typeSwitchExpression.setStaticSequenceType(paramType);
+            return typeSwitchExpression;
         }
-        // FIXME recursive search
-        for (LibraryModule module : prolog.getImportedModules()) {
-            Prolog result = getPrologByVariableName(module.getProlog(), variableName);
-            if (result != null) {
-                return result;
-            }
+        if (paramType.getItemType() == BuiltinTypesCatalogue.decimalItem) {
+            List<TypeswitchCase> cases = new ArrayList<>();
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                paramType,
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
+            );
+            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
+                    variableReferenceExpression,
+                    cases,
+                    new TypeswitchCase(null, variableReferenceExpression),
+                    variableReferenceExpression.getMetadata()
+            );
+            typeSwitchExpression.setStaticSequenceType(paramType);
+            return typeSwitchExpression;
         }
-        return null;
-    }
-
-    private Expression getVariableFromProlog(Prolog prolog, Name variableName) {
-        for (VariableDeclaration declaration : prolog.getVariableDeclarations()) {
-            if (declaration.getVariableName().equals(variableName)) {
-                return declaration.getExpression();
-            }
+        // anyURI > string
+        if (paramType.getItemType() == BuiltinTypesCatalogue.stringItem) {
+            TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
+                    variableReferenceExpression,
+                    Collections.singletonList(
+                        new TypeswitchCase(
+                                null,
+                                Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
+                                new CastExpression(
+                                        variableReferenceExpression,
+                                        paramType,
+                                        variableReferenceExpression.getMetadata()
+                                )
+                        )
+                    ),
+                    new TypeswitchCase(null, variableReferenceExpression),
+                    variableReferenceExpression.getMetadata()
+            );
+            typeSwitchExpression.setStaticSequenceType(paramType);
+            return typeSwitchExpression;
         }
-        // FIXME recursive search
-        for (LibraryModule module : prolog.getImportedModules()) {
-            Expression result = getVariableFromProlog(module.getProlog(), variableName);
-            if (result != null) {
-                return result;
-            }
-        }
-        return null;
+        return variableReferenceExpression;
     }
 
     @Override
@@ -156,20 +177,12 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
     }
 
     public Node visitVariableReference(VariableReferenceExpression expression, Node argument) {
-        // don't inline variables that are external
-        if (
-            this.configuration.getExternalVariableValue(expression.getVariableName()) != null
-                || this.configuration.getUnparsedExternalVariableValue(expression.getVariableName()) != null
-        ) {
-            return expression;
-        }
-        Prolog context = getPrologByVariableName((Prolog) argument, expression.getVariableName());
-        if (context == null) {
-            return expression;
-        }
-        Expression result = getVariableFromProlog(context, expression.getVariableName());
-        // FIXME recursive search
-        return result == null ? expression : visit(result, argument);
+        VariableReferenceExpression result = new VariableReferenceExpression(
+                expression.getVariableName(),
+                expression.getMetadata()
+        );
+        result.setStaticSequenceType(expression.getStaticSequenceType());
+        return result;
     }
 
     @Override
@@ -335,26 +348,34 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitFunctionCall(FunctionCallExpression expression, Node argument) {
-        Prolog prolog = getPrologByFunctionIdentifier((Prolog) argument, expression.getFunctionIdentifier());
-        // if (prolog == null) {
-        // // TODO this is a simplification, create new FunctionCallExpression and visit children
-        // return expression;
-        // }
-        if (expression.isPartialApplication()) {
-            return expression;
-        }
-        // FIXME recursive search
         FunctionDeclaration targetFunction = getFunctionDeclarationFromProlog(
             (Prolog) argument,
             expression.getFunctionIdentifier()
         );
-        if (targetFunction == null || targetFunction.isRecursive()) {
-            return expression;
+        if (expression.isPartialApplication() || targetFunction == null || targetFunction.isRecursive()) {
+            List<Expression> arguments = new ArrayList<>();
+            for (Expression arg : expression.getArguments()) {
+                arguments.add(arg == null ? null : (Expression) visit(arg, argument));
+            }
+            FunctionCallExpression result = new FunctionCallExpression(
+                    expression.getFunctionName(),
+                    arguments,
+                    expression.getMetadata()
+            );
+            result.setStaticSequenceType(expression.getStaticSequenceType());
+            return result;
         }
         InlineFunctionExpression inlineFunction = (InlineFunctionExpression) targetFunction.getExpression();
-        // FIXME recursive search
         Expression body = (Expression) visit(inlineFunction.getBody(), argument);
         if (expression.getArguments().size() == 0) {
+            if (inlineFunction.getReturnType() != null) {
+                return new TreatExpression(
+                        body,
+                        inlineFunction.getReturnType(),
+                        ErrorCode.UnexpectedTypeErrorCode,
+                        expression.getMetadata()
+                );
+            }
             return body;
         }
         body.setStaticSequenceType(inlineFunction.getReturnType());
@@ -374,23 +395,15 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                     argumentExpression,
                     expression.getMetadata()
             );
+            Expression assignmentExpression = createTypePromotion(
+                new VariableReferenceExpression(columnName, expression.getMetadata()),
+                paramType
+            );
+
             Clause assignmentClause = new LetClause(
                     paramName,
-                    (paramType == SequenceType.ITEM_STAR) ? null : paramType,
-                    // FIXME this is supposed to be a TypePromotion
-                    new TreatExpression(
-                            paramType.getArity() == SequenceType.Arity.OneOrMore
-                                || paramType.getArity() == SequenceType.Arity.ZeroOrMore
-                                    ? new VariableReferenceExpression(columnName, expression.getMetadata())
-                                    : new CastExpression(
-                                            new VariableReferenceExpression(columnName, expression.getMetadata()),
-                                            paramType,
-                                            expression.getMetadata()
-                                    ),
-                            paramType,
-                            ErrorCode.UnexpectedTypeErrorCode,
-                            expression.getMetadata()
-                    ),
+                    null,
+                    assignmentExpression,
                     expression.getMetadata()
             );
             if (assignmentClauses != null) {
@@ -405,7 +418,14 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         assignmentClauses.getLastClause().chainWith(returnClause);
         expressionClauses.getLastClause().chainWith(assignmentClauses);
         FlworExpression result = new FlworExpression(returnClause, expression.getMetadata());
-        result.setStaticSequenceType(inlineFunction.getReturnType());
+        if (inlineFunction.getReturnType() != null) {
+            return new TreatExpression(
+                    result,
+                    inlineFunction.getReturnType(),
+                    ErrorCode.UnexpectedTypeErrorCode,
+                    expression.getMetadata()
+            );
+        }
         return result;
     }
 
