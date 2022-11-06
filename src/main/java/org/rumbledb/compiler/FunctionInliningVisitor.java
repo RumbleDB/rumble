@@ -242,6 +242,14 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
     }
 
     @Override
+    public Node visitCountClause(CountClause expression, Node argument) {
+        return new CountClause(
+                (VariableReferenceExpression) visit(expression.getCountVariable(), argument),
+                expression.getMetadata()
+        );
+    }
+
+    @Override
     public Node visitWhereClause(WhereClause clause, Node argument) {
         return new WhereClause((Expression) visit(clause.getWhereExpression(), argument), clause.getMetadata());
     }

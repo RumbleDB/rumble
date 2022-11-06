@@ -62,7 +62,7 @@ public class VisitorHelpers {
         }
     }
 
-    private static void findFunctionDependencies(Module module){
+    private static void findFunctionDependencies(Module module) {
         new FunctionDependenciesVisitor().visit(module, null);
     }
 
