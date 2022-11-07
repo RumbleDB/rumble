@@ -18,16 +18,16 @@ for directly running a query from an input file or (with -q) provided directly o
 
 It is the default mode.
 
-java -jar rumbledb-1.19.0.jar run my-query.jq
-java -jar rumbledb-1.19.0.jar run -q '1+1'
+java -jar rumbledb-1.20.0.jar run my-query.jq
+java -jar rumbledb-1.20.0.jar run -q '1+1'
 
 You can specify an output path with -o like so:
-java -jar rumbledb-1.19.0.jar run -q '1+1' -o my-output.txt
+java -jar rumbledb-1.20.0.jar run -q '1+1' -o my-output.txt
 
 **** serve ****
 for running as an HTTP server listening on the specified port (-p) and host (-h).
 
-java -jar rumbledb-1.19.0.jar serve -p 9090
+java -jar rumbledb-1.20.0.jar serve -p 9090
 
 RumbleDB also supports Apache Livy for use in Jupyter notebooks, which may be
 even more convenient if you are using a cluster.
@@ -35,7 +35,7 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb-1.19.0.jar repl
+spark-submit rumbledb-1.20.0.jar repl
 
 
 **** resource use configuration ****
@@ -43,6 +43,6 @@ spark-submit rumbledb-1.19.0.jar repl
 For a local use, you can control the number of cores, as well as allocated
 memory, with:
 
-java -jar -Xmx10g rumbledb-1.19.0.jar repl
+java -jar -Xmx10g rumbledb-1.20.0.jar repl
 
 More documentation on available CLI parameters is available on https://www.rumbledb.org/
