@@ -35,7 +35,7 @@ even more convenient if you are using a cluster.
 **** repl ****
 for shell mode.
 
-spark-submit rumbledb-1.20.0.jar repl
+java -jar rumbledb-1.20.0.jar repl
 
 
 **** resource use configuration ****
