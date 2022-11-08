@@ -1,6 +1,5 @@
 package org.rumbledb.compiler;
 
-import org.rumbledb.config.RumbleRuntimeConfiguration;
 import org.rumbledb.context.FunctionIdentifier;
 import org.rumbledb.context.Name;
 import org.rumbledb.errorcodes.ErrorCode;
@@ -35,12 +34,6 @@ import java.util.stream.Collectors;
 // maybe have to return expression and assign it
 public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
-    private final RumbleRuntimeConfiguration configuration;
-
-    public FunctionInliningVisitor(RumbleRuntimeConfiguration configuration) {
-        this.configuration = configuration;
-    }
-
     private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
         for (FunctionDeclaration declaration : prolog.getFunctionDeclarations()) {
             if (declaration.getFunctionIdentifier().equals(functionIdentifier)) {
@@ -64,26 +57,26 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
             cases.add(
-                    new TypeswitchCase(
-                            null,
-                            Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                            new CastExpression(
-                                    variableReferenceExpression,
-                                    SequenceType.createSequenceType("double?"),
-                                    variableReferenceExpression.getMetadata()
-                            )
-                    )
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                SequenceType.createSequenceType("double?"),
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
             );
             cases.add(
-                    new TypeswitchCase(
-                            null,
-                            Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                            new CastExpression(
-                                    variableReferenceExpression,
-                                    SequenceType.createSequenceType("double"),
-                                    variableReferenceExpression.getMetadata()
-                            )
-                    )
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                SequenceType.createSequenceType("double"),
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
             );
             cases.add(
                 new TypeswitchCase(

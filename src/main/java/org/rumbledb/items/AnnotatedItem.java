@@ -19,7 +19,6 @@ import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.misc.ComparisonIterator;
 import org.rumbledb.types.FunctionSignature;
 import org.rumbledb.types.ItemType;
-import org.rumbledb.types.ItemTypeReference;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
