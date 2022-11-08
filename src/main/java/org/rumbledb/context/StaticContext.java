@@ -312,18 +312,14 @@ public class StaticContext implements Serializable, KryoSerializable {
         this.emptySequenceOrderLeast = input.readBoolean();
     }
 
-    public void importModuleContext(StaticContext moduleContext, String targetNamespace) {
+    public void importModuleContext(StaticContext moduleContext) {
         for (Name name : moduleContext.inScopeVariables.keySet()) {
-            if (name.getNamespace().contentEquals(targetNamespace)) {
-                InScopeVariable variable = moduleContext.inScopeVariables.get(name);
-                this.inScopeVariables.put(name, variable);
-            }
+            InScopeVariable variable = moduleContext.inScopeVariables.get(name);
+            this.inScopeVariables.put(name, variable);
         }
         for (FunctionIdentifier fi : moduleContext.staticallyKnownFunctionSignatures.keySet()) {
-            if (fi.getName().getNamespace().contentEquals(targetNamespace)) {
-                FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
-                this.staticallyKnownFunctionSignatures.put(fi, signature);
-            }
+            FunctionSignature signature = moduleContext.staticallyKnownFunctionSignatures.get(fi);
+            this.staticallyKnownFunctionSignatures.put(fi, signature);
         }
     }
 
