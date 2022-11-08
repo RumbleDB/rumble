@@ -123,6 +123,7 @@ public class FunctionDependenciesVisitor extends AbstractNodeVisitor<FunctionIde
             return defaultAction(expression, null);
         }
         createEdge(argument, expression.getFunctionIdentifier());
+        visitDescendants(expression, argument);
         return argument;
     }
 }

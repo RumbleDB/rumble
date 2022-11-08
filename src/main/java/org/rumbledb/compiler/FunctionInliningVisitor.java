@@ -60,38 +60,50 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             VariableReferenceExpression variableReferenceExpression,
             SequenceType paramType
     ) {
-        if (!paramType.getArity().isSubtypeOf(SequenceType.Arity.OneOrZero)) {
-            return variableReferenceExpression;
-        }
         // integer > decimal > double
         if (paramType.getItemType() == BuiltinTypesCatalogue.doubleItem) {
             List<TypeswitchCase> cases = new ArrayList<>();
             cases.add(
-                new TypeswitchCase(
-                        null,
-                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
-                        new CastExpression(
-                                variableReferenceExpression,
-                                paramType,
-                                variableReferenceExpression.getMetadata()
-                        )
-                )
+                    new TypeswitchCase(
+                            null,
+                            Collections.singletonList(SequenceType.createSequenceType("integer?")),
+                            new CastExpression(
+                                    variableReferenceExpression,
+                                    SequenceType.createSequenceType("double?"),
+                                    variableReferenceExpression.getMetadata()
+                            )
+                    )
+            );
+            cases.add(
+                    new TypeswitchCase(
+                            null,
+                            Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                            new CastExpression(
+                                    variableReferenceExpression,
+                                    SequenceType.createSequenceType("double"),
+                                    variableReferenceExpression.getMetadata()
+                            )
+                    )
             );
             cases.add(
                 new TypeswitchCase(
                         null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
-                        new CastExpression(
-                                variableReferenceExpression,
-                                paramType,
-                                variableReferenceExpression.getMetadata()
-                        )
+                        Collections.singletonList(SequenceType.createSequenceType("double?")),
+                        variableReferenceExpression
                 )
             );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     variableReferenceExpression,
                     cases,
-                    new TypeswitchCase(null, variableReferenceExpression),
+                    new TypeswitchCase(
+                            null,
+                            new TreatExpression(
+                                    variableReferenceExpression,
+                                    paramType,
+                                    ErrorCode.UnexpectedTypeErrorCode,
+                                    variableReferenceExpression.getMetadata()
+                            )
+                    ),
                     variableReferenceExpression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
@@ -102,18 +114,33 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
             cases.add(
                 new TypeswitchCase(
                         null,
-                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                        Collections.singletonList(SequenceType.createSequenceType("integer?")),
                         new CastExpression(
                                 variableReferenceExpression,
-                                paramType,
+                                SequenceType.createSequenceType("decimal?"),
                                 variableReferenceExpression.getMetadata()
                         )
+                )
+            );
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("decimal?")),
+                        variableReferenceExpression
                 )
             );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     variableReferenceExpression,
                     cases,
-                    new TypeswitchCase(null, variableReferenceExpression),
+                    new TypeswitchCase(
+                            null,
+                            new TreatExpression(
+                                    variableReferenceExpression,
+                                    paramType,
+                                    ErrorCode.UnexpectedTypeErrorCode,
+                                    variableReferenceExpression.getMetadata()
+                            )
+                    ),
                     variableReferenceExpression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
@@ -121,20 +148,37 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         }
         // anyURI > string
         if (paramType.getItemType() == BuiltinTypesCatalogue.stringItem) {
+            List<TypeswitchCase> cases = new ArrayList<>();
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
+                        new CastExpression(
+                                variableReferenceExpression,
+                                SequenceType.createSequenceType("string?"),
+                                variableReferenceExpression.getMetadata()
+                        )
+                )
+            );
+            cases.add(
+                new TypeswitchCase(
+                        null,
+                        Collections.singletonList(SequenceType.createSequenceType("string?")),
+                        variableReferenceExpression
+                )
+            );
             TypeSwitchExpression typeSwitchExpression = new TypeSwitchExpression(
                     variableReferenceExpression,
-                    Collections.singletonList(
-                        new TypeswitchCase(
-                                null,
-                                Collections.singletonList(SequenceType.createSequenceType("anyURI?")),
-                                new CastExpression(
-                                        variableReferenceExpression,
-                                        paramType,
-                                        variableReferenceExpression.getMetadata()
-                                )
-                        )
+                    cases,
+                    new TypeswitchCase(
+                            null,
+                            new TreatExpression(
+                                    variableReferenceExpression,
+                                    paramType,
+                                    ErrorCode.UnexpectedTypeErrorCode,
+                                    variableReferenceExpression.getMetadata()
+                            )
                     ),
-                    new TypeswitchCase(null, variableReferenceExpression),
                     variableReferenceExpression.getMetadata()
             );
             typeSwitchExpression.setStaticSequenceType(paramType);
