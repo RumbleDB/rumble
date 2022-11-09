@@ -31,7 +31,7 @@ import org.rumbledb.types.SequenceType;
 import java.util.*;
 import java.util.stream.Collectors;
 
-// maybe have to return expression and assign it
+
 public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     private FunctionDeclaration getFunctionDeclarationFromProlog(Prolog prolog, FunctionIdentifier functionIdentifier) {
@@ -73,7 +73,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                         Collections.singletonList(SequenceType.createSequenceType("decimal?")),
                         new CastExpression(
                                 variableReferenceExpression,
-                                SequenceType.createSequenceType("double"),
+                                SequenceType.createSequenceType("double?"),
                                 variableReferenceExpression.getMetadata()
                         )
                 )
@@ -385,10 +385,9 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         }
     }
 
-    // FIXME is this needed?
     @Override
     public Node visitContextExpr(ContextItemExpression expression, Node argument) {
-        return expression;
+        return new ContextItemExpression(expression.getMetadata());
     }
 
     @Override
@@ -626,7 +625,6 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
 
     @Override
     public Node visitTreatExpression(TreatExpression expression, Node argument) {
-        // TODO assuming difference between getsequenceType and getSequenceType
         TreatExpression result = new TreatExpression(
                 (Expression) visit(expression.getMainExpression(), argument),
                 expression.getsequenceType(),
