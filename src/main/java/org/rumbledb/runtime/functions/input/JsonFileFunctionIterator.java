@@ -93,9 +93,11 @@ public class JsonFileFunctionIterator extends RDDRuntimeIterator {
                     );
             }
         } else {
-            if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
-                throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
-            }
+            /*
+             * if (!FileSystemUtil.exists(uri, context.getRumbleRuntimeConfiguration(), getMetadata())) {
+             * throw new CannotRetrieveResourceException("File " + uri + " not found.", getMetadata());
+             * }
+             */
 
             String path = uri.toString();
             if (uri.getScheme().contentEquals("file")) {

@@ -808,6 +808,9 @@ public class FlworDataFrameUtils {
             List<FlworDataFrameColumn> columnNames,
             boolean trailingComma
     ) {
+        if (columnNames.isEmpty()) {
+            return "'' AS `" + SparkSessionManager.temporaryColumnName + "`";
+        }
         StringBuilder queryColumnString = new StringBuilder();
         String comma = "";
         for (FlworDataFrameColumn var : columnNames) {
