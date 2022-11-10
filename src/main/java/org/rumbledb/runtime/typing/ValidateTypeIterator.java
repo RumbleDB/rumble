@@ -124,7 +124,7 @@ public class ValidateTypeIterator extends HybridRuntimeIterator {
         );
     }
 
-    private static StructType convertToDataFrameSchema(ItemType itemType) {
+    public static StructType convertToDataFrameSchema(ItemType itemType) {
         if (itemType.isAtomicItemType()) {
             List<StructField> fields = new ArrayList<>();
             String columnName = SparkSessionManager.atomicJSONiqItemColumnName;

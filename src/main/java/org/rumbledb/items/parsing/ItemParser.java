@@ -426,13 +426,13 @@ public class ItemParser implements Serializable {
                 return ItemFactory.getInstance().createAnnotatedItem(item, itemType);
             }
         } else if (fieldType.equals(DataTypes.LongType)) {
-            BigDecimal value;
+            long value;
             if (row != null) {
-                value = new BigDecimal(row.getLong(i));
+                value = row.getLong(i);
             } else {
-                value = new BigDecimal((Long) o);
+                value = ((Long) o).longValue();
             }
-            Item item = ItemFactory.getInstance().createDecimalItem(value);
+            Item item = ItemFactory.getInstance().createLongItem(value);
             if (itemType == null || itemType.equals(BuiltinTypesCatalogue.longItem)) {
                 return item;
             } else {

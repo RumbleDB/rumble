@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.sql.Dataset;
@@ -57,6 +58,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     private long left;
     private long right;
     private long index;
+    public static final int PARTITION_SIZE = 200000;
 
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
@@ -157,13 +159,16 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     public JSoundDataFrame getDataFrame(DynamicContext context) {
         if (init(this.currentDynamicContextForLocalExecution)) {
             List<Long> list = new ArrayList<>();
-            for (long i = this.left; i <= this.right; i += 200000) {
+            for (long i = this.left; i <= this.right; i += PARTITION_SIZE) {
                 list.add(i);
             }
-            System.err.println("Number of partitions " + list.size());
             JavaRDD<Long> rdd = SparkSessionManager.getInstance()
                 .getJavaSparkContext()
                 .parallelize(list, list.size());
+            rdd = rdd.flatMap(
+                i -> LongStream.range(i, Math.min(this.right, i + PARTITION_SIZE - 1)).iterator()
+            );
+
             List<StructField> fields = Collections.singletonList(
                 DataTypes.createStructField(SparkSessionManager.atomicJSONiqItemColumnName, DataTypes.LongType, true)
             );
@@ -173,7 +178,6 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
             // apply the schema to row RDD
             Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-            df.show();
             return new JSoundDataFrame(df, BuiltinTypesCatalogue.longItem);
         }
         return new JSoundDataFrame(

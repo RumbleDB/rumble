@@ -57,6 +57,7 @@ import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
 import org.rumbledb.items.ItemFactory;
+import org.rumbledb.runtime.misc.RangeOperationIterator;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -513,10 +514,7 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
             BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
             BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
-            System.err.println("Left : " + leftValue);
-            System.err.println("Right : " + rightValue);
-            if (rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(200000)) > 0) {
-                System.err.println("DataFrame");
+            if (rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(RangeOperationIterator.PARTITION_SIZE)) >= 0) {
                 rangeExpression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 return argument;
             }

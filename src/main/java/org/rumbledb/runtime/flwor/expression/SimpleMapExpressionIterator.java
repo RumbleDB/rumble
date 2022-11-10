@@ -22,14 +22,27 @@ package org.rumbledb.runtime.flwor.expression;
 
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
+import org.apache.spark.sql.Dataset;
+import org.apache.spark.sql.Row;
+import org.apache.spark.sql.RowFactory;
+import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.context.Name;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.exceptions.IteratorFlowException;
 import org.rumbledb.expressions.ExecutionMode;
+import org.rumbledb.expressions.flowr.FLWOR_CLAUSES;
+import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
+import org.rumbledb.runtime.flwor.NativeClauseContext;
+import org.rumbledb.runtime.typing.ValidateTypeIterator;
+import org.rumbledb.types.BuiltinTypesCatalogue;
+import org.rumbledb.types.ItemType;
+
+import sparksoniq.spark.SparkSessionManager;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -148,4 +161,54 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         result.putAll(this.leftIterator.getVariableDependencies());
         return result;
     }
+
+    protected boolean implementsDataFrames() {
+        return true;
+    }
+
+    @Override
+    public JSoundDataFrame getDataFrame(DynamicContext context) {
+        JSoundDataFrame df = this.leftIterator.getDataFrame(context);
+        if (df.isEmptySequence()) {
+            return df;
+        }
+        NativeClauseContext forContext = new NativeClauseContext(
+                FLWOR_CLAUSES.FOR,
+                df.getDataFrame().schema(),
+                context
+        );
+        NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
+        if (nativeQuery == NativeClauseContext.NoNativeQuery) {
+            System.err.println(
+                "No native query."
+            );
+            JavaRDD<Item> rdd = getRDDAux(context);
+            JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
+            ItemType type = BuiltinTypesCatalogue.integerItem;
+            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(type);
+            schema.printTreeString();
+            Dataset<Row> result = SparkSessionManager.getInstance()
+                .getOrCreateSession()
+                .createDataFrame(rowRDD, schema);
+            return new JSoundDataFrame(result, type);
+        }
+        System.err.println(
+            "[INFO] Rumble was able to optimize a simple map expression to a native SQL query."
+        );
+        String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
+        Dataset<Row> result = df.getDataFrame()
+            .sparkSession()
+            .sql(
+                String.format(
+                    "select %s as `%s` from %s",
+                    nativeQuery.getResultingQuery(),
+                    SparkSessionManager.atomicJSONiqItemColumnName,
+                    input
+                )
+            );
+        // execute query
+        return new JSoundDataFrame(result, BuiltinTypesCatalogue.integerItem);
+    }
+
+
 }
