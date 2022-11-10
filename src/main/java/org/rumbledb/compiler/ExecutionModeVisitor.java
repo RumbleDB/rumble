@@ -20,6 +20,7 @@
 
 package org.rumbledb.compiler;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
@@ -44,6 +45,7 @@ import org.rumbledb.expressions.flowr.ForClause;
 import org.rumbledb.expressions.flowr.GroupByClause;
 import org.rumbledb.expressions.flowr.LetClause;
 import org.rumbledb.expressions.flowr.ReturnClause;
+import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.module.FunctionDeclaration;
 import org.rumbledb.expressions.module.LibraryModule;
 import org.rumbledb.expressions.module.MainModule;
@@ -51,8 +53,10 @@ import org.rumbledb.expressions.module.Prolog;
 import org.rumbledb.expressions.module.VariableDeclaration;
 import org.rumbledb.expressions.primary.FunctionCallExpression;
 import org.rumbledb.expressions.primary.InlineFunctionExpression;
+import org.rumbledb.expressions.primary.IntegerLiteralExpression;
 import org.rumbledb.expressions.primary.VariableReferenceExpression;
 import org.rumbledb.expressions.typing.ValidateTypeExpression;
+import org.rumbledb.items.ItemFactory;
 import org.rumbledb.types.SequenceType;
 import org.rumbledb.types.SequenceType.Arity;
 
@@ -493,6 +497,32 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             default:
                 return argument;
         }
+    }
+
+    @Override
+    public StaticContext visitRangeExpr(RangeExpression rangeExpression, StaticContext argument) {
+        visitDescendants(rangeExpression, argument);
+        Expression left = rangeExpression.getLeftExpression();
+        Expression right = rangeExpression.getRightExpression();
+        if (
+            left instanceof IntegerLiteralExpression
+                &&
+                right instanceof IntegerLiteralExpression
+        ) {
+            String leftLiteral = ((IntegerLiteralExpression) left).getLexicalValue();
+            String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
+            BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
+            BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
+            System.err.println("Left : " + leftValue);
+            System.err.println("Right : " + rightValue);
+            if (rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(200000)) > 0) {
+                System.err.println("DataFrame");
+                rangeExpression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
+                return argument;
+            }
+        }
+        rangeExpression.setHighestExecutionMode(ExecutionMode.LOCAL);
+        return argument;
     }
 
 }
