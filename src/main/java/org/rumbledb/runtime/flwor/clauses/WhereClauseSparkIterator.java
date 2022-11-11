@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataTypes;
@@ -256,9 +257,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (!item.isInteger()) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble detected a LIMIT in a count and where clause."
-        );
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info(
+                "Rumble detected a LIMIT in a count and where clause."
+            );
         Dataset<Row> df = this.child.getChildIterator().getDataFrame(context);
         String input = FlworDataFrameUtils.createTempView(df);
         return df.sparkSession().sql(String.format("SELECT * FROM %s LIMIT %s", input, item.getStringValue()));
@@ -326,9 +328,8 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             return null;
         }
 
-        System.err.println(
-            "[INFO] Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ")."
-        );
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info("Rumble detected a join predicate in the where clause (limit=" + limit + " of " + height + ").");
 
         try {
             Dataset<Row> leftTuples = getSubtreeBeyondLimit(limit).getDataFrame(context);
@@ -363,10 +364,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // result.show();
             return result;
         } catch (Exception e) {
-            e.printStackTrace();
-            System.err.println(
-                "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
-            );
+            LogManager.getLogger("WhereClauseSparkIterator")
+                .warn(
+                    "Join failed. Falling back to regular execution (nevertheless, please let us know!)."
+                );
 
             this.setEvaluationDepthLimit(-1);
             this.child.setInputAndOutputTupleVariableDependencies(this.inputTupleProjection);
@@ -441,9 +442,10 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
             return null;
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a where clause to a native SQL query."
-        );
+        LogManager.getLogger("WhereClauseSparkIterator")
+            .info(
+                "Rumble was able to optimize a where clause to a native SQL query."
+            );
         String input = FlworDataFrameUtils.createTempView(dataFrame);
         return dataFrame.sparkSession()
             .sql(

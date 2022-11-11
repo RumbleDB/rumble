@@ -21,7 +21,6 @@
 package org.rumbledb.expressions.flowr;
 
 
-import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
 import org.rumbledb.expressions.Expression;
@@ -50,13 +49,16 @@ public class SimpleMapExpression extends Expression {
     }
 
     @Override
-    public void initHighestExecutionMode(VisitorConfig visitorConfig) {
-        this.highestExecutionMode = this.leftExpression.getHighestExecutionMode(visitorConfig);
-    }
-
-    @Override
     public List<Node> getChildren() {
         return Arrays.asList(this.leftExpression, this.rightExpression);
+    }
+
+    public Expression getLeftExpression() {
+        return this.leftExpression;
+    }
+
+    public Expression getRightExpression() {
+        return this.rightExpression;
     }
 
     public void print(StringBuffer buffer, int indent) {

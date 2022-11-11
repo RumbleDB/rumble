@@ -22,7 +22,7 @@ public class RumbleServer {
     public void start() {
         try {
             System.err.println(
-                "[INFO] Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
+                "Starting Rumble in server mode on port " + this.rumbleRuntimeConfiguration.getPort() + "..."
             );
             HttpServer server = HttpServer.create(
                 new InetSocketAddress(
@@ -38,7 +38,7 @@ public class RumbleServer {
             context = server.createContext("/jsound-validator.html");
             context.setHandler(new ValidatorPageHandler());
             server.start();
-            System.err.println("[INFO] Server running. Press Control+C to stop.");
+            System.err.println("Server running. Press Control+C to stop.");
             System.err.println("RumbleDB is now running as a server and accepts requests.");
             System.err.println();
             System.err.println("What to do next?");
@@ -65,7 +65,7 @@ public class RumbleServer {
         } catch (IOException e) {
             throw new OurBadException(e.getMessage(), ExceptionMetadata.EMPTY_METADATA);
         } catch (InterruptedException e) {
-            System.err.println("[INFO] Interrupted.");
+            System.err.println("Interrupted.");
         }
     }
 

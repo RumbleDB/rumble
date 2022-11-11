@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.navigation;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaPairRDD;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.Function;
@@ -320,9 +321,10 @@ public class PredicateIterator extends HybridRuntimeIterator {
                 );
             }
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a predicate to a native SQL query."
-        );
+        LogManager.getLogger("PredicateIterator")
+            .info(
+                "Rumble was able to optimize a predicate to a native SQL query."
+            );
         String left = FlworDataFrameUtils.createTempView(childDataFrame.getDataFrame());
         return childDataFrame.evaluateSQL(
             String.format(

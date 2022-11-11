@@ -341,6 +341,7 @@ public class FlworDataFrameUtils {
                     return true;
                 }
             }
+            return false;
         }
         for (String columnName : inputSchema.fieldNames()) {
             int pos = columnName.indexOf(".");

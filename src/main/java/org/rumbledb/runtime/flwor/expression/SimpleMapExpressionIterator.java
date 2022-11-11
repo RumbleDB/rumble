@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.expression;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.api.java.JavaRDD;
 import org.apache.spark.api.java.function.FlatMapFunction;
 import org.apache.spark.sql.Dataset;
@@ -39,8 +40,7 @@ import org.rumbledb.runtime.RuntimeIterator;
 import org.rumbledb.runtime.flwor.FlworDataFrameUtils;
 import org.rumbledb.runtime.flwor.NativeClauseContext;
 import org.rumbledb.runtime.typing.ValidateTypeIterator;
-import org.rumbledb.types.BuiltinTypesCatalogue;
-import org.rumbledb.types.ItemType;
+import org.rumbledb.types.SequenceType;
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -58,6 +58,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
     private RuntimeIterator leftIterator;
     private RuntimeIterator rightIterator;
     private Item nextResult;
+    private SequenceType staticType;
     private DynamicContext mapDynamicContext;
     private Queue<Item> mapValues;
 
@@ -66,12 +67,14 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
             RuntimeIterator sequence,
             RuntimeIterator mapExpression,
             ExecutionMode executionMode,
+            SequenceType staticType,
             ExceptionMetadata iteratorMetadata
     ) {
         super(Arrays.asList(sequence, mapExpression), executionMode, iteratorMetadata);
         this.leftIterator = sequence;
         this.rightIterator = mapExpression;
         this.mapDynamicContext = null;
+        this.staticType = staticType;
     }
 
     @Override
@@ -179,22 +182,17 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
         );
         NativeClauseContext nativeQuery = this.rightIterator.generateNativeQuery(forContext);
         if (nativeQuery == NativeClauseContext.NoNativeQuery) {
-            System.err.println(
-                "No native query."
-            );
             JavaRDD<Item> rdd = getRDDAux(context);
             JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i.castToDecimalValue()));
-            ItemType type = BuiltinTypesCatalogue.integerItem;
-            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(type);
+            StructType schema = ValidateTypeIterator.convertToDataFrameSchema(this.staticType.getItemType());
             schema.printTreeString();
             Dataset<Row> result = SparkSessionManager.getInstance()
                 .getOrCreateSession()
                 .createDataFrame(rowRDD, schema);
-            return new JSoundDataFrame(result, type);
+            return new JSoundDataFrame(result, this.staticType.getItemType());
         }
-        System.err.println(
-            "[INFO] Rumble was able to optimize a simple map expression to a native SQL query."
-        );
+        LogManager.getLogger("SimpleMapExpressionIterator")
+            .info("Rumble was able to optimize a simple map expression to a native SQL query.");
         String input = FlworDataFrameUtils.createTempView(df.getDataFrame());
         Dataset<Row> result = df.getDataFrame()
             .sparkSession()
@@ -207,7 +205,7 @@ public class SimpleMapExpressionIterator extends HybridRuntimeIterator {
                 )
             );
         // execute query
-        return new JSoundDataFrame(result, BuiltinTypesCatalogue.integerItem);
+        return new JSoundDataFrame(result, this.staticType.getItemType());
     }
 
 

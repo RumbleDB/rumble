@@ -20,6 +20,7 @@
 
 package org.rumbledb.runtime.flwor.clauses;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.sql.Dataset;
 import org.apache.spark.sql.Row;
 import org.apache.spark.sql.types.DataType;
@@ -565,7 +566,8 @@ public class OrderByClauseSparkIterator extends RuntimeTupleIterator {
             }
         }
 
-        System.err.println("[INFO] Rumble was able to optimize an order-by clause to a native SQL query.");
+        LogManager.getLogger("OrderByClauseSparkIterator")
+            .info("Rumble was able to optimize an order-by clause to a native SQL query.");
         String selectSQL = FlworDataFrameUtils.getSQLColumnProjection(allColumns, false);
         dataFrame.createOrReplaceTempView("input");
         return dataFrame.sparkSession()
