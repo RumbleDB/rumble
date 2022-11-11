@@ -58,7 +58,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     private long left;
     private long right;
     private long index;
-    public static final int PARTITION_SIZE = 2000000;
+    public static final int PARTITION_SIZE = 1000000;
 
     public RangeOperationIterator(
             RuntimeIterator leftIterator,
@@ -166,7 +166,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
                 .getJavaSparkContext()
                 .parallelize(list, list.size());
             rdd = rdd.flatMap(
-                i -> LongStream.range(i, Math.min(this.right, i + PARTITION_SIZE - 1)).iterator()
+                i -> LongStream.range(i, Math.min(this.right + 1, i + PARTITION_SIZE)).iterator()
             );
 
             List<StructField> fields = Collections.singletonList(
