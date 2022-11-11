@@ -58,7 +58,7 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
     private long left;
     private long right;
     private long index;
-    public static final int PARTITION_SIZE = 200000;
+    public static final int PARTITION_SIZE = 2000000;
 
     public RangeOperationIterator(
             RuntimeIterator leftIterator,

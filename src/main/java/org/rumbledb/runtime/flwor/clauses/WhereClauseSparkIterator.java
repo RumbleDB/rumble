@@ -363,6 +363,7 @@ public class WhereClauseSparkIterator extends RuntimeTupleIterator {
             // result.show();
             return result;
         } catch (Exception e) {
+            e.printStackTrace();
             System.err.println(
                 "[INFO] Join failed. Falling back to regular execution (nevertheless, please let us know!)."
             );

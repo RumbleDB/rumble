@@ -514,7 +514,9 @@ public class ExecutionModeVisitor extends AbstractNodeVisitor<StaticContext> {
             String rightLiteral = ((IntegerLiteralExpression) right).getLexicalValue();
             BigInteger leftValue = ItemFactory.getInstance().createIntegerItem(leftLiteral).getIntegerValue();
             BigInteger rightValue = ItemFactory.getInstance().createIntegerItem(rightLiteral).getIntegerValue();
-            if (rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(RangeOperationIterator.PARTITION_SIZE)) >= 0) {
+            if (
+                rightValue.subtract(leftValue).compareTo(BigInteger.valueOf(RangeOperationIterator.PARTITION_SIZE)) >= 0
+            ) {
                 rangeExpression.setHighestExecutionMode(ExecutionMode.DATAFRAME);
                 return argument;
             }
