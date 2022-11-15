@@ -18,10 +18,7 @@ import org.rumbledb.expressions.logic.NotExpression;
 import org.rumbledb.expressions.logic.OrExpression;
 import org.rumbledb.expressions.miscellaneous.RangeExpression;
 import org.rumbledb.expressions.miscellaneous.StringConcatExpression;
-import org.rumbledb.expressions.module.FunctionDeclaration;
-import org.rumbledb.expressions.module.LibraryModule;
-import org.rumbledb.expressions.module.Prolog;
-import org.rumbledb.expressions.module.VariableDeclaration;
+import org.rumbledb.expressions.module.*;
 import org.rumbledb.expressions.postfix.*;
 import org.rumbledb.expressions.primary.*;
 import org.rumbledb.expressions.typing.*;
@@ -485,8 +482,37 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
         result.setStaticSequenceType(expression.getStaticSequenceType());
         return result;
     }
+
+    public Node visitNamedFunctionRef(NamedFunctionReferenceExpression expression, Node argument) {
+        return new NamedFunctionReferenceExpression(expression.getIdentifier(), expression.getMetadata());
+    }
     // endregion
 
+    // region literal
+    public Node visitInteger(IntegerLiteralExpression expression, Node argument) {
+        return new IntegerLiteralExpression(expression.getLexicalValue(), expression.getMetadata());
+    }
+
+    public Node visitString(StringLiteralExpression expression, Node argument) {
+        return new StringLiteralExpression(expression.getValue(), expression.getMetadata());
+    }
+
+    public Node visitDouble(DoubleLiteralExpression expression, Node argument) {
+        return new DoubleLiteralExpression(expression.getValue(), expression.getMetadata());
+    }
+
+    public Node visitDecimal(DecimalLiteralExpression expression, Node argument) {
+        return new DecimalLiteralExpression(expression.getValue(), expression.getMetadata());
+    }
+
+    public Node visitNull(NullLiteralExpression expression, Node argument) {
+        return new NullLiteralExpression(expression.getMetadata());
+    }
+
+    public Node visitBoolean(BooleanLiteralExpression expression, Node argument) {
+        return new BooleanLiteralExpression(expression.getValue(), expression.getMetadata());
+    }
+    // endregion
 
     // region operational
     @Override
@@ -668,7 +694,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        return defaultAction(expression, argument);
+        return result;
     }
 
     @Override
@@ -688,7 +714,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        return defaultAction(expression, argument);
+        return result;
     }
 
     @Override
@@ -730,7 +756,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        return defaultAction(expression, argument);
+        return result;
     }
 
     @Override
@@ -748,7 +774,7 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 expression.getMetadata()
         );
         result.setStaticSequenceType(expression.getStaticSequenceType());
-        return defaultAction(expression, argument);
+        return result;
     }
     // endregion
 
@@ -770,6 +796,10 @@ public class FunctionInliningVisitor extends AbstractNodeVisitor<Node> {
                 (InlineFunctionExpression) visit(expression.getExpression(), argument),
                 expression.getMetadata()
         );
+    }
+
+    public Node visitTypeDeclaration(TypeDeclaration expression, Node argument) {
+        return new TypeDeclaration(expression.getDefinition(), expression.getMetadata());
     }
 
     @Override
