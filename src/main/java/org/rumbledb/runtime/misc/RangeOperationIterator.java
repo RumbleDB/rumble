@@ -22,17 +22,10 @@ package org.rumbledb.runtime.misc;
 
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.stream.LongStream;
 
 import org.apache.spark.api.java.JavaRDD;
-import org.apache.spark.sql.Dataset;
-import org.apache.spark.sql.Row;
-import org.apache.spark.sql.RowFactory;
-import org.apache.spark.sql.types.DataTypes;
-import org.apache.spark.sql.types.StructField;
-import org.apache.spark.sql.types.StructType;
 import org.rumbledb.api.Item;
 import org.rumbledb.context.DynamicContext;
 import org.rumbledb.exceptions.ExceptionMetadata;
@@ -44,8 +37,8 @@ import org.rumbledb.items.ItemFactory;
 import org.rumbledb.items.structured.JSoundDataFrame;
 import org.rumbledb.runtime.HybridRuntimeIterator;
 import org.rumbledb.runtime.RuntimeIterator;
+import org.rumbledb.runtime.typing.TreatIterator;
 import org.rumbledb.types.BuiltinTypesCatalogue;
-
 
 import sparksoniq.spark.SparkSessionManager;
 
@@ -87,6 +80,12 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
         throw new IteratorFlowException("Invalid next call in Range Operation", getMetadata());
     }
 
+    /**
+     * Initializes the boundaries of the range.
+     * 
+     * @param context the dynamic context.
+     * @return true if the two bounds are defined, false if one of them is the empty sequence.
+     */
     public Boolean init(DynamicContext context) {
         Item left;
         Item right;
@@ -106,29 +105,29 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
                     getMetadata()
             );
         }
-        if (left != null && right != null) {
-            if (
-                !(left.isInteger())
-                    || !(right.isInteger())
-            ) {
-                throw new UnexpectedTypeException(
-                        "Range expression must have integer input, but instead received "
-                            +
-                            left.getDynamicType()
-                            + " and "
-                            + right.getDynamicType(),
-                        getMetadata()
-                );
-            }
-            try {
-                this.left = left.castToIntegerValue().longValue();
-                this.right = right.castToIntegerValue().longValue();
-                return true;
-            } catch (IteratorFlowException e) {
-                throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
-            }
+        if (left == null || right == null) {
+            return false;
         }
-        return false;
+        if (
+            !(left.isInteger())
+                || !(right.isInteger())
+        ) {
+            throw new UnexpectedTypeException(
+                    "Range expression must have integer input, but instead received "
+                        +
+                        left.getDynamicType()
+                        + " and "
+                        + right.getDynamicType(),
+                    getMetadata()
+            );
+        }
+        try {
+            this.left = left.castToIntegerValue().longValue();
+            this.right = right.castToIntegerValue().longValue();
+        } catch (IteratorFlowException e) {
+            throw new IteratorFlowException(e.getJSONiqErrorMessage(), getMetadata());
+        }
+        return true;
     }
 
     @Override
@@ -157,33 +156,34 @@ public class RangeOperationIterator extends HybridRuntimeIterator {
 
     @Override
     public JSoundDataFrame getDataFrame(DynamicContext context) {
-        if (init(this.currentDynamicContextForLocalExecution)) {
-            List<Long> list = new ArrayList<>();
-            for (long i = this.left; i <= this.right; i += PARTITION_SIZE) {
-                list.add(i);
-            }
-            JavaRDD<Long> rdd = SparkSessionManager.getInstance()
-                .getJavaSparkContext()
-                .parallelize(list, list.size());
-            rdd = rdd.flatMap(
-                i -> LongStream.range(i, Math.min(this.right + 1, i + PARTITION_SIZE)).iterator()
+        if (!init(this.currentDynamicContextForLocalExecution)) {
+            return new JSoundDataFrame(
+                    SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
+                    BuiltinTypesCatalogue.item
             );
-
-            List<StructField> fields = Collections.singletonList(
-                DataTypes.createStructField(SparkSessionManager.atomicJSONiqItemColumnName, DataTypes.LongType, true)
-            );
-            StructType schema = DataTypes.createStructType(fields);
-
-            JavaRDD<Row> rowRDD = rdd.map(i -> RowFactory.create(i));
-
-            // apply the schema to row RDD
-            Dataset<Row> df = SparkSessionManager.getInstance().getOrCreateSession().createDataFrame(rowRDD, schema);
-            return new JSoundDataFrame(df, BuiltinTypesCatalogue.longItem);
         }
-        return new JSoundDataFrame(
-                SparkSessionManager.getInstance().getOrCreateSession().emptyDataFrame(),
-                BuiltinTypesCatalogue.item
+        return createLongInterval(this.left, this.right);
+    }
+
+    /**
+     * Creates a dataframe with a sequence of increasing numbers, of type long.
+     * 
+     * @param left the left bound(inclusive).
+     * @param right the right bound (inclusive).
+     * @return
+     */
+    public static JSoundDataFrame createLongInterval(long left, long right) {
+        List<Long> list = new ArrayList<>();
+        for (long i = left; i <= right; i += PARTITION_SIZE) {
+            list.add(i);
+        }
+        JavaRDD<Long> rdd = SparkSessionManager.getInstance()
+            .getJavaSparkContext()
+            .parallelize(list, list.size());
+        rdd = rdd.flatMap(
+            i -> LongStream.range(i, Math.min(right + 1, i + PARTITION_SIZE)).iterator()
         );
+        return TreatIterator.convertToDataFrame(rdd, BuiltinTypesCatalogue.longItem);
     }
 
     @Override
