@@ -1,5 +1,6 @@
 package org.rumbledb.types;
 
+import org.apache.log4j.LogManager;
 import org.apache.spark.ml.linalg.VectorUDT;
 import org.apache.spark.sql.types.ArrayType;
 import org.apache.spark.sql.types.CharType;
@@ -154,9 +155,10 @@ public class ItemTypeFactory {
 
                 Item contentItem = item.getItemByKey("content");
                 if (!keys.contains("content")) {
-                    System.err.println(
-                        "[WARNING] The content facet of an object type is missing. By default, no fields are defined or overriden."
-                    );
+                    LogManager.getLogger("ItemTypeFactory")
+                        .warn(
+                            "The content facet of an object type is missing. By default, no fields are defined or overriden."
+                        );
                     contentItem = ItemFactory.getInstance().createArrayItem();
                 } else {
                     if (contentItem == null) {
@@ -181,9 +183,10 @@ public class ItemTypeFactory {
                 if (closedItem != null) {
                     closed = closedItem.getBooleanValue();
                 } else {
-                    System.err.println(
-                        "[WARNING] The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
-                    );
+                    LogManager.getLogger("ItemTypeFactory")
+                        .warn(
+                            "The closed facet of an object type is missing. By default, a closed object type is created. Set closed to false to keep the type open and allow arbitrary fields."
+                        );
                     closed = true;
                 }
                 List<Item> contents = contentItem.getItems();
