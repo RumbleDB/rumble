@@ -24,6 +24,7 @@ package org.rumbledb.expressions.flowr;
 import org.rumbledb.compiler.VisitorConfig;
 import org.rumbledb.exceptions.ExceptionMetadata;
 import org.rumbledb.expressions.AbstractNodeVisitor;
+import org.rumbledb.expressions.ExecutionMode;
 import org.rumbledb.expressions.Expression;
 import org.rumbledb.expressions.Node;
 
@@ -52,6 +53,9 @@ public class SimpleMapExpression extends Expression {
     @Override
     public void initHighestExecutionMode(VisitorConfig visitorConfig) {
         this.highestExecutionMode = this.leftExpression.getHighestExecutionMode(visitorConfig);
+        if(this.highestExecutionMode == ExecutionMode.DATAFRAME){
+            this.highestExecutionMode = ExecutionMode.RDD;
+        }
     }
 
     @Override
