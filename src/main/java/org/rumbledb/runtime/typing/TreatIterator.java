@@ -26,6 +26,7 @@ import org.rumbledb.runtime.functions.sequences.general.TreatAsClosure;
 import org.rumbledb.types.ItemType;
 import org.rumbledb.types.ItemTypeFactory;
 import org.rumbledb.types.SequenceType;
+import org.rumbledb.types.TypeMappings;
 import org.rumbledb.types.SequenceType.Arity;
 
 import sparksoniq.spark.SparkSessionManager;
@@ -237,7 +238,7 @@ public class TreatIterator extends HybridRuntimeIterator {
         List<StructField> fields = Collections.singletonList(
             DataTypes.createStructField(
                 SparkSessionManager.atomicJSONiqItemColumnName,
-                ValidateTypeIterator.getDataFrameDataTypeFromItemType(itemType),
+                TypeMappings.getDataFrameDataTypeFromItemType(itemType),
                 true
             )
         );
